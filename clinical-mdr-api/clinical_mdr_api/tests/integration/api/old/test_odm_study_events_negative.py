@@ -195,4 +195,4 @@ def test_cannot_add_odm_forms_to_an_odm_study_event_that_is_in_retired_status(
     res = response.json()
 
     assert res["type"] == "BusinessLogicException"
-    assert res["message"] == "The object is inactive"
+    assert res["message"] == "ODM element is not in Draft."

@@ -191,7 +191,6 @@ ERROR_409 = {
     "description": "The request could not be completed due to a conflict with the current state of the target resource. "
     "This typically occurs when attempting to create or modify a resource that already exists or violates a uniqueness constraint.",
 }
-ERROR_422 = {"model": ErrorResponse, "description": "Unprocessable Content"}
 
 
 SYNTAX_FILTERS = (

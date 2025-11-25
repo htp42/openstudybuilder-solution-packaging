@@ -19,7 +19,7 @@ class StudySelectionActivityGroupVO(study_selection_base.StudySelectionBaseVO):
     activity_group_uid: str
     activity_group_name: str | None
     activity_group_version: str | None
-    show_activity_group_in_protocol_flowchart: bool | None
+    show_activity_group_in_protocol_flowchart: bool
     order: int | None
     study_soa_group_uid: str | None
     study_activity_subgroup_uids: list[str] | None
@@ -40,7 +40,7 @@ class StudySelectionActivityGroupVO(study_selection_base.StudySelectionBaseVO):
         order: int | None = None,
         study_soa_group_uid: str | None = None,
         study_activity_subgroup_uids: list[str] | None = None,
-        show_activity_group_in_protocol_flowchart: bool | None = True,
+        show_activity_group_in_protocol_flowchart: bool = True,
         study_selection_uid: str | None = None,
         start_date: datetime.datetime | None = None,
         accepted_version: bool = False,

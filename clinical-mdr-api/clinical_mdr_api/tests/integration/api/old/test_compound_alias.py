@@ -77,6 +77,11 @@ def test_post_create_compound1(api_client):
     assert res["possible_actions"] == ["approve", "delete", "edit"]
 
 
+def test_post_approve_compound1(api_client):
+    response = api_client.post("/concepts/compounds/Compound_000001/approvals")
+    assert_response_status_code(response, 201)
+
+
 def test_post_create_compound_alias(api_client):
     data = {
         "name": "compound_alias_name1",

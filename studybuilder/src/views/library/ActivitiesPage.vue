@@ -46,6 +46,16 @@
             requested
           />
         </v-window-item>
+        <v-window-item value="activity-instance-classes">
+          <Suspense>
+            <ActivityInstanceClassTable />
+          </Suspense>
+        </v-window-item>
+        <v-window-item value="activity-item-classes">
+          <Suspense>
+            <ActivityItemClassTable />
+          </Suspense>
+        </v-window-item>
       </template>
     </NavigationTabs>
   </div>
@@ -53,6 +63,8 @@
 
 <script setup>
 import ActivitiesTable from '@/components/library/ActivitiesTable.vue'
+import ActivityInstanceClassTable from '@/components/library/ActivityInstanceClassTable.vue'
+import ActivityItemClassTable from '@/components/library/ActivityItemClassTable.vue'
 import HelpButtonWithPanels from '@/components/tools/HelpButtonWithPanels.vue'
 import NavigationTabs from '@/components/tools/NavigationTabs.vue'
 import { useI18n } from 'vue-i18n'
@@ -77,6 +89,14 @@ const tabs = [
   {
     tab: 'requested-activities',
     name: t('ActivityTable.requested'),
+  },
+  {
+    tab: 'activity-instance-classes',
+    name: t('ActivityTable.activity_instance_classes'),
+  },
+  {
+    tab: 'activity-item-classes',
+    name: t('ActivityTable.activity_item_classes'),
   },
 ]
 const helpItems = [

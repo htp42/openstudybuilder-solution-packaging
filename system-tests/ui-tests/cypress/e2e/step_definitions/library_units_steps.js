@@ -1,7 +1,7 @@
 const { Given, When, Then } = require('@badeball/cypress-cucumber-preprocessor')
 
 let unitName
-let library = 'Sponsor', ctUnits = '%', ctUnitsSymbol = '%', unitSubsets = 'Dosage Form Unit'
+let library = 'Sponsor', ctUnits = '%', ctUnitsSymbol = '%', unitSubsets = 'Dose Unit'
 let unitDimension = 'Degrees', legacyCode = `LegacyCode${Date.now()}`, conversionFactorToMaster = '1'
 let convertableUnit = 'Yes', displayUnit = 'Yes', masterUnit = 'No', usConventionalUnit = 'Yes'
 

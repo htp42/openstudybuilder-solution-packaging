@@ -1,51 +1,113 @@
 <template>
   <div>
     <v-row v-if="!doc" class="mt-2 ml-2 mr-2">
-      <v-col cols="2">
+      <v-col cols="4">
         <v-select
           v-model="data.target_type"
           :items="types"
-          :label="$t('OdmViewer.odm_element_type')"
+          :label="$t('OdmViewer.element_type')"
           density="comfortable"
           clearable
           item-title="name"
           item-value="value"
           class="mt-2"
+          :class="{ shake: shakeit && !data.target_type }"
           @update:model-value="setElements()"
+          @click:clear="data.target_uid = null"
         />
       </v-col>
-      <v-col cols="2">
+      <v-col cols="4" @click="() => activateShake(!data.target_type)">
         <v-select
           v-model="data.target_uid"
           :items="elements"
-          :label="$t('OdmViewer.odm_element_name')"
+          :label="targetUidLabel"
           density="comfortable"
           clearable
           class="mt-2"
           item-title="name"
           item-value="uid"
+          :disabled="!data.target_type"
+          :class="{ shake: shakeit && data.target_type && !data.target_uid }"
+          @update:model-value="setElementVersions()"
         />
       </v-col>
-      <v-col cols="2">
+      <v-col cols="4" @click="() => activateShake(!data.target_uid)">
         <v-select
-          v-model="element_status"
-          :items="elementStatuses"
-          :label="$t('OdmViewer.element_status')"
+          ref="versionSelect"
+          v-model="elementVersion"
+          :items="elementFinalVersions"
+          :label="$t('OdmViewer.element_version')"
           density="comfortable"
           class="mt-2"
-        />
+          :disabled="!data.target_uid"
+        >
+          <template #prepend-item>
+            <v-list-item
+              style="cursor: pointer"
+              @click="
+                () => {
+                  elementVersion = $t('OdmViewer.latest_version')
+                  $refs.versionSelect.blur()
+                }
+              "
+            >
+              <v-list-item-title class="ms-4">
+                {{ $t('OdmViewer.latest_version') }}
+              </v-list-item-title>
+            </v-list-item>
+            <v-divider v-if="elementFinalVersions.length > 0" />
+          </template>
+
+          <template #no-data />
+        </v-select>
       </v-col>
     </v-row>
-    <v-row v-if="!doc" class="mt-2 ml-2 mr-2">
-      <v-col cols="2">
+    <v-row
+      v-if="!doc"
+      class="mt-2 ml-2 mr-2"
+      @click="() => activateShake(!data.target_uid)"
+    >
+      <v-col cols="4">
+        <v-select
+          v-model="data.selectedStylesheet"
+          :items="data.stylesheet"
+          density="comfortable"
+          :label="$t('OdmViewer.stylesheet')"
+          :disabled="!data.target_uid"
+        />
+      </v-col>
+      <v-col cols="4">
         <v-select
           v-model="selectedNamespaces"
           :items="allowedNamespaces"
           :label="$t('OdmViewer.allowed_namespaces')"
           density="comfortable"
           clearable
+          :disabled="!data.target_uid"
           multiple
         >
+          <template #prepend-item>
+            <v-list-item
+              :title="
+                allNamespacesSelected
+                  ? t('_global.unselect_all')
+                  : t('_global.select_all')
+              "
+              @click="toggleNamespace"
+            >
+              <template #prepend>
+                <v-checkbox-btn
+                  :indeterminate="
+                    !allNamespacesSelected && someNamespacesSelected
+                  "
+                  :model-value="allNamespacesSelected"
+                ></v-checkbox-btn>
+              </template>
+            </v-list-item>
+
+            <v-divider class="mt-2"></v-divider>
+          </template>
+
           <template #selection="{ item, index }">
             <v-chip
               v-if="index < 2"
@@ -63,42 +125,35 @@
           </template>
         </v-select>
       </v-col>
-      <v-col cols="2">
-        <v-select
-          v-model="data.selectedStylesheet"
-          :items="data.stylesheet"
-          density="comfortable"
-          :label="$t('OdmViewer.stylesheet')"
-        />
-      </v-col>
-      <v-col cols="2">
+      <v-col cols="4">
         <v-btn
           :disabled="!data.target_uid"
-          color="primary"
+          color="secondary"
+          rounded="xl"
           :label="$t('_global.load')"
           size="large"
           block
           @click="loadXml"
         >
-          {{ $t('OdmViewer.load') }}
+          {{ $t('OdmViewer.generate') }}
         </v-btn>
       </v-col>
     </v-row>
     <v-row v-else class="mt-0 ml-2">
       <v-btn
-        class="ml-2 mt-1"
+        v-show="doc"
         size="small"
         color="primary"
-        :label="$t('_global.load')"
+        class="mr-4 mt-3 white--text"
+        icon="mdi-arrow-left"
+        :title="$t('_global.back')"
         @click="clearXml"
-      >
-        {{ $t('OdmViewer.load_another') }}
-      </v-btn>
+      />
       <v-btn
         v-show="doc"
         size="small"
         color="nnGreen1"
-        class="ml-4 white--text"
+        class="ml-4 mt-3 white--text"
         :title="$t('DataTableExportButton.export_xml')"
         :loading="xmlDownloadLoading"
         icon="mdi-file-xml-box"
@@ -108,7 +163,7 @@
         v-show="doc !== ''"
         size="small"
         color="nnGreen1"
-        class="ml-4 white--text"
+        class="ml-4 mt-3 white--text"
         :title="$t('DataTableExportButton.export_pdf')"
         :loading="pdfDownloadLoading"
         icon="mdi-file-pdf-box"
@@ -118,7 +173,7 @@
         v-show="doc !== ''"
         size="small"
         color="nnGreen1"
-        class="ml-4 white--text"
+        class="ml-4 mt-3 white--text"
         :title="$t('DataTableExportButton.export_html')"
         :loading="htmlDownloadLoading"
         icon="mdi-file-document-outline"
@@ -164,10 +219,9 @@
 <script setup>
 import _isEmpty from 'lodash/isEmpty'
 import crfs from '@/api/crfs'
-import statuses from '@/constants/statuses'
 import exportLoader from '@/utils/exportLoader'
 import { DateTime } from 'luxon'
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -189,23 +243,19 @@ const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
 
-const elementStatuses = [
-  statuses.LATEST,
-  statuses.FINAL,
-  statuses.DRAFT,
-  statuses.RETIRED,
-]
-
 const allowedNamespaces = ref([])
 const selectedNamespaces = ref([])
 const showOdmXml = ref(false)
 
 const elements = ref([])
+const elementFinalVersions = ref(new Set())
 let xml = ''
 const xmlString = ref('')
 const doc = ref(null)
 const data = ref({
   target_type: 'form',
+  target_uid: null,
+  version: '',
   stylesheet: [
     {
       title: t('OdmViewer.crf_with_annotations'),
@@ -224,12 +274,12 @@ const xmlDownloadLoading = ref(false)
 const pdfDownloadLoading = ref(false)
 const htmlDownloadLoading = ref(false)
 const types = [
-  { name: t('OdmViewer.template'), value: 'study_event' },
+  { name: t('OdmViewer.collection'), value: 'study_event' },
   { name: t('OdmViewer.form'), value: 'form' },
   { name: t('OdmViewer.item_group'), value: 'item_group' },
   { name: t('OdmViewer.item'), value: 'item' },
 ]
-const element_status = ref(statuses.LATEST)
+const elementVersion = ref(t('OdmViewer.latest_version'))
 let url = ''
 
 watch(
@@ -253,9 +303,44 @@ onMounted(() => {
   automaticLoad()
 })
 
+const shakeit = ref(false)
+
+const targetUidLabel = computed(() => {
+  switch (data.value.target_type) {
+    case 'study_event':
+      return t('OdmViewer.collection_name')
+    case 'form':
+      return t('OdmViewer.form_name')
+    case 'item_group':
+      return t('OdmViewer.item_group_name')
+    case 'item':
+      return t('OdmViewer.item_name')
+    default:
+      return t('OdmViewer.element_name')
+  }
+})
+
+const allNamespacesSelected = computed(() => {
+  return (
+    someNamespacesSelected.value &&
+    selectedNamespaces.value.length === allowedNamespaces.value.length
+  )
+})
+const someNamespacesSelected = computed(() => {
+  return selectedNamespaces.value.length > 0
+})
+
+function toggleNamespace() {
+  if (allNamespacesSelected.value) {
+    selectedNamespaces.value = []
+  } else {
+    selectedNamespaces.value = [...allowedNamespaces.value]
+  }
+}
+
 function automaticLoad() {
   data.value.target_type = route.params.type || 'form'
-  data.value.target_uid = route.params.uid
+  data.value.target_uid = route.params.uid || null
   setElements()
   if (_isEmpty(allowedNamespaces.value)) {
     crfs.getAllNamespaces({ page_size: 0 }).then((resp) => {
@@ -296,6 +381,49 @@ function setElements() {
   }
 }
 
+function setElementVersions() {
+  const isFinalVersion = (version) => version.endsWith('.0')
+
+  switch (data.value.target_type) {
+    case 'study_event':
+      crfs.getCollectionAuditTrail(data.value.target_uid).then((resp) => {
+        elementFinalVersions.value = new Set(
+          resp.data
+            .filter((item) => isFinalVersion(item.version))
+            .map((item) => item.version)
+        )
+      })
+      return
+    case 'form':
+      crfs.getFormAuditTrail(data.value.target_uid).then((resp) => {
+        elementFinalVersions.value = new Set(
+          resp.data
+            .filter((item) => isFinalVersion(item.version))
+            .map((item) => item.version)
+        )
+      })
+      return
+    case 'item_group':
+      crfs.getGroupAuditTrail(data.value.target_uid).then((resp) => {
+        elementFinalVersions.value = new Set(
+          resp.data
+            .filter((item) => isFinalVersion(item.version))
+            .map((item) => item.version)
+        )
+      })
+      return
+    case 'item':
+      crfs.getItemAuditTrail(data.value.target_uid).then((resp) => {
+        elementFinalVersions.value = new Set(
+          resp.data
+            .filter((item) => isFinalVersion(item.version))
+            .map((item) => item.version)
+        )
+      })
+      return
+  }
+}
+
 function getAllowedNamespaces() {
   if (_isEmpty(selectedNamespaces.value)) {
     return ''
@@ -313,7 +441,11 @@ function getAllowedNamespaces() {
 async function loadXml() {
   doc.value = ''
   loading.value = true
-  data.value.status = element_status.value.toLowerCase()
+  data.value.version =
+    elementVersion.value == t('OdmViewer.latest_version')
+      ? ''
+      : elementVersion.value
+
   data.value.allowed_namespaces = getAllowedNamespaces()
   data.value.target_uids = `target_uids=${data.value.target_uid}&`
   crfs.getXml(data.value).then((resp) => {
@@ -339,7 +471,7 @@ async function loadXml() {
     })
   })
   router.push({
-    name: 'Crfs',
+    name: 'CrfBuilder',
     params: {
       tab: 'odm-viewer',
       type: data.value.target_type,
@@ -400,6 +532,15 @@ function clearXml() {
   doc.value = null
   url = ''
   router.push({ name: 'Crfs', params: { tab: 'odm-viewer' } })
+}
+
+function activateShake(condition) {
+  if (condition === false) return
+
+  shakeit.value = true
+  setTimeout(() => {
+    shakeit.value = false
+  }, 1000)
 }
 </script>
 <style>

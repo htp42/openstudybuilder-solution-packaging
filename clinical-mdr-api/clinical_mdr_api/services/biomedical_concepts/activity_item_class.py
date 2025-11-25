@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Any
 
 from clinical_mdr_api.domain_repositories.biomedical_concepts.activity_item_class_repository import (
@@ -14,10 +15,13 @@ from clinical_mdr_api.models.biomedical_concepts.activity_item_class import (
     ActivityItemClass,
     ActivityItemClassCodelist,
     ActivityItemClassCreateInput,
+    ActivityItemClassDetail,
     ActivityItemClassEditInput,
     ActivityItemClassMappingInput,
+    ActivityItemClassOverview,
     ActivityItemClassVersion,
     CompactActivityItemClass,
+    SimpleActivityInstanceClassForItem,
 )
 from clinical_mdr_api.models.controlled_terminologies.ct_codelist import (
     CTCodelistNameAndAttributes,
@@ -32,6 +36,7 @@ from clinical_mdr_api.services.controlled_terminologies.ct_codelist import (
 )
 from clinical_mdr_api.services.neomodel_ext_generic import NeomodelExtGenericService
 from common.exceptions import NotFoundException
+from common.utils import version_string_to_tuple
 
 
 class ActivityItemClassService(NeomodelExtGenericService[ActivityItemClassAR]):
@@ -187,12 +192,147 @@ class ActivityItemClassService(NeomodelExtGenericService[ActivityItemClassAR]):
         return GenericFilteringReturn.create(items, count)
 
     def get_all_for_activity_instance_class(
-        self, activity_item_class_uid: str
+        self, activity_item_class_uid: str, dataset_uid: str | None = None
     ) -> list[CompactActivityItemClass]:
         item_classes = self.repository.get_all_for_activity_instance_class(
-            activity_item_class_uid
+            activity_item_class_uid, dataset_uid
         )
         return [
             CompactActivityItemClass.model_validate(item_class)
             for item_class in item_classes
         ]
+
+    def get_activity_item_class_overview(
+        self, activity_item_class_uid: str, version: str | None = None
+    ) -> ActivityItemClassOverview:
+        """
+        Get a complete overview of an activity item class including details,
+        Activity Instance Classes that use it, and version history.
+
+        Args:
+            activity_item_class_uid: The UID of the activity item class
+            version: Optional specific version, or None for latest
+
+        Returns:
+            ActivityItemClassOverview object with complete item class information
+        """
+        # Get the item class details with specific version
+        item_class_ar = self._find_by_uid_or_raise_not_found(
+            uid=activity_item_class_uid, version=version, for_update=False
+        )
+
+        # Transform to detail model
+        item_class_detail = ActivityItemClassDetail(
+            uid=item_class_ar.uid,
+            name=item_class_ar.name,
+            definition=item_class_ar.activity_item_class_vo.definition,
+            nci_code=item_class_ar.activity_item_class_vo.nci_concept_id,
+            library_name=item_class_ar.library.name if item_class_ar.library else None,
+            start_date=(
+                item_class_ar.item_metadata.start_date.isoformat()
+                if item_class_ar.item_metadata.start_date
+                else None
+            ),
+            end_date=(
+                item_class_ar.item_metadata.end_date.isoformat()
+                if item_class_ar.item_metadata.end_date
+                else None
+            ),
+            status=item_class_ar.item_metadata.status.value,
+            version=item_class_ar.item_metadata.version,
+            change_description=item_class_ar.item_metadata.change_description,
+            author_username=item_class_ar.item_metadata.author_username,
+            modified_date=(
+                item_class_ar.item_metadata.start_date.isoformat()
+                if item_class_ar.item_metadata.start_date
+                else None
+            ),
+        )
+
+        # Get all versions
+        version_history = self.get_version_history(activity_item_class_uid)
+        all_versions = list(set(v.version for v in version_history))
+        all_versions = self._sort_semantic_versions(all_versions, reverse=True)
+
+        return ActivityItemClassOverview(
+            activity_item_class=item_class_detail,
+            all_versions=all_versions,
+        )
+
+    def get_activity_instance_classes_using_item_paginated(
+        self,
+        activity_item_class_uid: str,
+        version: str | None = None,
+        page_number: int = 1,
+        page_size: int = 10,
+        total_count: bool = False,
+    ) -> GenericFilteringReturn[SimpleActivityInstanceClassForItem]:
+        """Get paginated Activity Instance Classes that use this Activity Item Class."""
+        instance_classes_data, total = (
+            self._repos.activity_item_class_repository.get_activity_instance_classes_using_item(
+                activity_item_class_uid,
+                version=version,
+                page_number=page_number,
+                page_size=page_size,
+                total_count=total_count,
+            )
+        )
+
+        instance_classes = []
+        for instance in instance_classes_data:
+            instance_classes.append(
+                SimpleActivityInstanceClassForItem(
+                    uid=instance["uid"],
+                    name=instance["name"],
+                    adam_param_specific_enabled=(
+                        bool(instance.get("adam_param_specific_enabled"))
+                        if instance.get("adam_param_specific_enabled") is not None
+                        else False
+                    ),
+                    mandatory=(
+                        bool(instance.get("mandatory"))
+                        if instance.get("mandatory") is not None
+                        else False
+                    ),
+                    modified_date=(
+                        instance["modified_date"].isoformat()
+                        if instance.get("modified_date")
+                        else None
+                    ),
+                    modified_by=instance.get("modified_by") or "unknown",
+                    version=instance.get("version") or "1.0",
+                    status=instance.get("status") or "Final",
+                )
+            )
+        return GenericFilteringReturn(items=instance_classes, total=total)
+
+    def _find_by_uid_or_raise_not_found(  # pylint: disable=arguments-renamed
+        self,
+        uid: str,
+        version: str | None = None,
+        at_specific_date: datetime | None = None,
+        status: str | None = None,
+        for_update: bool = False,
+    ) -> ActivityItemClassAR:
+        """Find an activity item class by UID with optional version."""
+        item = self._repos.activity_item_class_repository.find_by_uid_2(
+            uid=uid,
+            version=version,
+            at_specific_date=at_specific_date,
+            status=status,
+            for_update=for_update,
+        )
+
+        NotFoundException.raise_if(
+            item is None,
+            "Activity Item Class",
+            f"{uid} (version: {version or 'latest'})",
+        )
+
+        return item
+
+    def _sort_semantic_versions(
+        self, versions: list[str], reverse: bool = True
+    ) -> list[str]:
+        """Sort semantic version strings properly (e.g., '2.0' before '10.0')."""
+        return sorted(versions, key=version_string_to_tuple, reverse=reverse)

@@ -25,7 +25,7 @@
                 data-cy="item-group-name"
                 density="compact"
                 clearable
-                :readonly="readOnly"
+                :disabled="readOnly"
                 :rules="[formRules.required]"
               />
             </v-col>
@@ -36,7 +36,7 @@
                 data-cy="item-group-oid"
                 density="compact"
                 clearable
-                :readonly="readOnly"
+                :disabled="readOnly"
               />
             </v-col>
           </v-row>
@@ -46,14 +46,14 @@
                 v-model="form.repeating"
                 class="mt-2"
                 :label="$t('CRFItemGroups.repeating')"
-                :readonly="readOnly"
+                :disabled="readOnly"
               >
                 <v-radio :label="$t('_global.yes')" value="Yes" />
                 <v-radio :label="$t('_global.no')" value="No" />
               </v-radio-group>
             </v-col>
             <v-col cols="5">
-              <div class="subtitle-2 text--disabled">
+              <div class="subtitle-2">
                 {{ $t('_global.description') }}
               </div>
               <div v-show="readOnly">
@@ -74,8 +74,8 @@
               </div>
             </v-col>
             <v-col cols="5">
-              <div class="subtitle-2 text--disabled">
-                {{ $t('CRFItemGroups.impl_notes') }}
+              <div class="subtitle-2">
+                {{ $t('CRFDescriptions.sponsor_instruction') }}
               </div>
               <div v-show="readOnly">
                 <QuillEditor
@@ -91,7 +91,7 @@
                   v-model:content="engDescription.sponsor_instruction"
                   content-type="html"
                   :toolbar="customToolbar"
-                  :placeholder="$t('CRFItemGroups.impl_notes')"
+                  :placeholder="$t('CRFDescriptions.sponsor_instruction')"
                   data-cy="crf-item-group-help-for-sponsor"
                 />
               </div>
@@ -106,16 +106,16 @@
             <v-col cols="3">
               <v-text-field
                 v-model="engDescription.name"
-                :label="$t('CRFForms.displayed_text')"
+                :label="$t('CRFDescriptions.name')"
                 data-cy="crf-item-group-displayed-text"
                 density="compact"
                 clearable
-                :readonly="readOnly"
+                :disabled="readOnly"
               />
             </v-col>
             <v-col cols="9">
-              <div class="subtitle-2 text--disabled">
-                {{ $t('CRFItemGroups.compl_instructions') }}
+              <div class="subtitle-2">
+                {{ $t('CRFDescriptions.instruction') }}
               </div>
               <div v-show="readOnly">
                 <QuillEditor
@@ -131,7 +131,7 @@
                   v-model:content="engDescription.instruction"
                   content-type="html"
                   :toolbar="customToolbar"
-                  :placeholder="$t('CRFItemGroups.compl_instructions')"
+                  :placeholder="$t('CRFDescriptions.instruction')"
                   data-cy="crf-item-group-help-for-site"
                 />
               </div>
@@ -145,23 +145,65 @@
           <v-row>
             <v-col cols="6">
               <v-select
-                v-model="form.sdtm_domain_uids"
+                v-model="form.sdtm_domains"
                 :label="$t('CRFItemGroups.domain')"
                 data-cy="item-group-domain"
                 :items="domains"
                 :item-props="sdtmDataDomainProps"
                 density="compact"
+                single-line
                 clearable
+                return-object
                 multiple
-                :readonly="readOnly"
               >
+                <template #item="{ props }">
+                  <v-list-item
+                    v-bind="props"
+                    @click="
+                      () => {
+                        props.onClick()
+                        domainSearch = ''
+                      }
+                    "
+                  >
+                    <template #prepend="{ isActive }">
+                      <v-list-item-action start>
+                        <v-checkbox-btn :model-value="isActive" />
+                      </v-list-item-action>
+                    </template>
+                    <template #title>
+                      {{ props.title }}
+                    </template>
+                  </v-list-item>
+                </template>
+
                 <template #selection="{ index }">
                   <div v-if="index === 0">
-                    <span>{{ getFirstDomainDisplay() }}</span>
+                    <span>{{
+                      form.sdtm_domains[0].sponsor_preferred_name ||
+                      form.sdtm_domains[0].term_name
+                    }}</span>
                   </div>
                   <span v-if="index === 1" class="grey--text text-caption mr-1">
-                    (+{{ form.sdtm_domain_uids.length - 1 }})
+                    (+{{ form.sdtm_domains.length - 1 }})
                   </span>
+                </template>
+
+                <template #prepend-item>
+                  <v-row @keydown.stop>
+                    <v-text-field
+                      v-model="domainSearch"
+                      class="pl-6"
+                      :placeholder="$t('_global.search')"
+                    />
+                    <v-btn
+                      variant="text"
+                      size="small"
+                      icon="mdi-close"
+                      class="mr-3 mt-3"
+                      @click="domainSearch = ''"
+                    />
+                  </v-row>
                 </template>
               </v-select>
             </v-col>
@@ -172,7 +214,7 @@
                 data-cy="item-group-sas-dataset-name"
                 density="compact"
                 clearable
-                :readonly="readOnly"
+                :disabled="readOnly"
               />
             </v-col>
           </v-row>
@@ -182,7 +224,7 @@
                 v-model="form.is_reference_data"
                 class="mt-2"
                 :label="$t('CRFItemGroups.is_referential')"
-                :readonly="readOnly"
+                :disabled="readOnly"
               >
                 <v-radio :label="$t('_global.yes')" value="Yes" />
                 <v-radio :label="$t('_global.no')" value="No" />
@@ -198,7 +240,7 @@
                 item-value="nci_preferred_name"
                 density="compact"
                 clearable
-                :readonly="readOnly"
+                :disabled="readOnly"
               />
             </v-col>
           </v-row>
@@ -210,7 +252,7 @@
                 data-cy="item-group-purpose"
                 density="compact"
                 clearable
-                :readonly="readOnly"
+                :disabled="readOnly"
               />
             </v-col>
             <v-col cols="6">
@@ -220,7 +262,7 @@
                 data-cy="item-group-comment"
                 density="compact"
                 clearable
-                :readonly="readOnly"
+                :disabled="readOnly"
               />
             </v-col>
           </v-row>
@@ -237,71 +279,12 @@
     </template>
     <template #[`step.alias`]="{ step }">
       <v-form :ref="`observer_${step}`">
-        <div class="mb-5">
-          {{ $t('CRFItemGroups.create') }}
-        </div>
-        <v-row>
-          <v-col>
-            <v-text-field
-              v-model="alias.context"
-              :label="$t('CRFItemGroups.context')"
-              data-cy="item-group-alias-context"
-              density="compact"
-              clearable
-              :readonly="readOnly"
-            />
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col cols="10">
-            <v-text-field
-              v-model="alias.name"
-              :label="$t('CRFItemGroups.name')"
-              data-cy="item-group-alias-name"
-              density="compact"
-              clearable
-              :readonly="readOnly"
-            />
-          </v-col>
-          <v-col>
-            <v-btn
-              data-cy="save-button"
-              color="secondary"
-              class="mr-2"
-              :disabled="readOnly"
-              @click="createAlias"
-            >
-              {{ $t('_global.save') }}
-            </v-btn>
-          </v-col>
-        </v-row>
-        <div class="mb-5">
-          {{ $t('CRFItemGroups.select') }}
-        </div>
-        <NNTable
-          ref="aliasTable"
-          key="aliasTable"
-          v-model="form.alias_uids"
-          :headers="aliasesHeaders"
-          :items="aliases"
-          hide-default-switches
-          hide-export-button
-          show-select
-          table-height="400px"
-          :items-length="aliasesTotal"
-          :readonly="readOnly"
-          column-data-resource="concepts/odms/aliases"
-          @filter="getAliases"
-        />
+        <CrfAliasSelection v-model="form.aliases" :disabled="readOnly" />
       </v-form>
     </template>
     <template #[`step.description`]="{ step }">
       <v-form :ref="`observer_${step}`">
-        <CrfDescriptionTable
-          :edit-descriptions="desc"
-          :read-only="readOnly"
-          @set-desc="setDesc"
-        />
+        <CrfDescriptionSelection v-model="desc" :disabled="readOnly" />
       </v-form>
     </template>
     <template #[`step.change_description`]="{ step }">
@@ -313,7 +296,7 @@
               :label="$t('CRFForms.change_desc')"
               data-cy="item-group-change-description"
               clearable
-              :readonly="readOnly"
+              :disabled="readOnly"
               :rules="[formRules.required]"
             />
           </v-col>
@@ -331,6 +314,8 @@
     @close="closeLinkForm"
   />
   <ConfirmDialog ref="confirm" :text-cols="6" :action-cols="5" />
+  <CrfApprovalSummaryConfirmDialog ref="confirmApproval" />
+  <CrfNewVersionSummaryConfirmDialog ref="confirmNewVersion" />
 </template>
 
 <script>
@@ -338,7 +323,8 @@ import crfs from '@/api/crfs'
 import terms from '@/api/controlledTerminology/terms'
 import HorizontalStepperForm from '@/components/tools/HorizontalStepperForm.vue'
 import libraries from '@/constants/libraries'
-import CrfDescriptionTable from '@/components/library/crfs/CrfDescriptionTable.vue'
+import CrfAliasSelection from '@/components/library/crfs/CrfAliasSelection.vue'
+import CrfDescriptionSelection from '@/components/library/crfs/CrfDescriptionSelection.vue'
 import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
 import ActionsMenu from '@/components/tools/ActionsMenu.vue'
@@ -347,8 +333,8 @@ import actions from '@/constants/actions'
 import parameters from '@/constants/parameters'
 import CrfExtensionsManagementTable from '@/components/library/crfs/CrfExtensionsManagementTable.vue'
 import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
-import crfTypes from '@/constants/crfTypes'
-import NNTable from '@/components/tools/NNTable.vue'
+import CrfApprovalSummaryConfirmDialog from '@/components/library/crfs/CrfApprovalSummaryConfirmDialog.vue'
+import CrfNewVersionSummaryConfirmDialog from '@/components/library/crfs/CrfNewVersionSummaryConfirmDialog.vue'
 import filteringParameters from '@/utils/filteringParameters'
 import { useAppStore } from '@/stores/app'
 import { computed } from 'vue'
@@ -357,13 +343,15 @@ import regex from '@/utils/regex'
 export default {
   components: {
     HorizontalStepperForm,
-    CrfDescriptionTable,
+    CrfAliasSelection,
+    CrfDescriptionSelection,
     QuillEditor,
     ActionsMenu,
     CrfActivitiesModelsLinkForm,
     CrfExtensionsManagementTable,
     ConfirmDialog,
-    NNTable,
+    CrfApprovalSummaryConfirmDialog,
+    CrfNewVersionSummaryConfirmDialog,
   },
   inject: ['eventBusEmit', 'formRules'],
   props: {
@@ -392,9 +380,9 @@ export default {
         'CRFItemGroups.oid',
         'CRFItemGroups.repeating',
         'CRFItemGroups.description',
-        'CRFItemGroups.impl_notes',
+        'CRFItemGroups.sponsor_instruction',
+        'CRFItemGroups.instruction',
         'CRFItemGroups.displayed_text',
-        'CRFItemGroups.compl_instructions',
         'CRFItemGroups.aliases',
         'CRFItemGroups.context',
       ],
@@ -402,8 +390,9 @@ export default {
         oid: 'G.',
         repeating: 'No',
         isReferenceData: 'No',
-        alias_uids: [],
-        sdtm_domain_uids: [],
+        aliases: [],
+        descriptions: [],
+        sdtm_domains: [],
       },
       desc: [],
       aliases: [],
@@ -411,10 +400,6 @@ export default {
       alias: {},
       steps: [],
       selectedExtensions: [],
-      aliasesHeaders: [
-        { title: this.$t('CRFItemGroups.context'), key: 'context' },
-        { title: this.$t('_global.name'), key: 'name' },
-      ],
       createSteps: [
         { name: 'form', title: this.$t('CRFItemGroups.group_details') },
         {
@@ -442,7 +427,7 @@ export default {
       ],
       origins: [],
       domains: [],
-      engDescription: { library_name: 'Sponsor', language: parameters.ENG },
+      engDescription: { language: parameters.ENG },
       customToolbar: [
         ['bold', 'italic', 'underline'],
         [{ script: 'sub' }, { script: 'super' }],
@@ -481,13 +466,14 @@ export default {
           click: this.delete,
         },
         {
-          label: this.$t('CrfLinikingForm.link_activity_sub_groups'),
+          label: this.$t('CRFLinkingForm.link_activity_sub_groups'),
           icon: 'mdi-plus',
           iconColor: 'primary',
           condition: () => this.readOnly,
           click: this.openLinkForm,
         },
       ],
+      domainSearch: '',
     }
   },
   computed: {
@@ -508,6 +494,9 @@ export default {
   watch: {
     readOnlyProp(value) {
       this.readOnly = value
+    },
+    domainSearch() {
+      this.filterSdtmDomains()
     },
     userData: {
       handler() {
@@ -541,9 +530,9 @@ export default {
     terms.getTermsByCodelist('originType').then((resp) => {
       this.origins = resp.data.items
     })
-    terms.getTermsByCodelist('sdtmDomainAbbreviation').then((resp) => {
-      this.domains = resp.data.items
-    })
+
+    this.filterSdtmDomains()
+
     if (this.isEdit()) {
       this.steps = this.readOnly ? this.createSteps : this.editSteps
     } else {
@@ -556,9 +545,53 @@ export default {
     }
   },
   methods: {
+    async filterSdtmDomains() {
+      clearTimeout(this.domainSearchTimeout)
+      const baseParams = {
+        page_size: 10,
+        sort_by: JSON.stringify({ submission_value: true }),
+      }
+      let params = { ...baseParams }
+      if (this.domainSearch && this.domainSearch.trim().length > 0) {
+        params.filters = JSON.stringify({
+          sponsor_preferred_name: { v: [this.domainSearch], op: 'co' },
+          submission_value: { v: [this.domainSearch], op: 'co' },
+        })
+        params.operator = 'or'
+        this.domainSearchTimeout = setTimeout(async () => {
+          const resp = await terms.getTermsByCodelist(
+            'sdtmDomainAbbreviation',
+            params
+          )
+          this.domains = [
+            ...this.form.sdtm_domains,
+            ...resp.data.items.filter(
+              (item) =>
+                !this.form.sdtm_domains.some(
+                  (domain) => domain.term_uid === item.term_uid
+                )
+            ),
+          ]
+        }, 400)
+      } else {
+        const resp = await terms.getTermsByCodelist(
+          'sdtmDomainAbbreviation',
+          baseParams
+        )
+        this.domains = [
+          ...this.form.sdtm_domains,
+          ...resp.data.items.filter(
+            (item) =>
+              !this.form.sdtm_domains.some(
+                (domain) => domain.term_uid === item.term_uid
+              )
+          ),
+        ]
+      }
+    },
     sdtmDataDomainProps(item) {
       return {
-        title: `${item.sponsor_preferred_name} (${item.submission_value})`,
+        title: `${item.sponsor_preferred_name || item.term_name} (${item.submission_value})`,
         value: item.term_uid,
       }
     },
@@ -575,50 +608,41 @@ export default {
       this.getGroup()
     },
     async newVersion() {
-      let relationships = 0
-      await crfs
-        .getRelationships(this.selectedGroup.uid, 'item-groups')
-        .then((resp) => {
-          if (resp.data.OdmForm && resp.data.OdmForm.length > 0) {
-            relationships = resp.data.OdmForm.length
-          }
-        })
-      const options = {
-        type: 'warning',
-        cancelLabel: this.$t('_global.cancel'),
-        agreeLabel: this.$t('_global.continue'),
-      }
       if (
-        relationships > 1 &&
-        (await this.$refs.confirm.open(
-          `${this.$t('CRFForms.new_version_warning')}`,
-          options
-        ))
+        await this.$refs.confirmNewVersion.open({
+          agreeLabel: this.$t('CRFItemGroups.create_new_version'),
+          itemGroup: this.selectedGroup,
+        })
       ) {
         crfs.newVersion('item-groups', this.selectedGroup.uid).then((resp) => {
-          this.$emit('updateItemGroup', {
-            type: crfTypes.GROUP,
-            element: resp.data,
-          })
+          this.$emit('updateItemGroup', resp.data)
           this.readOnly = false
           this.getGroup()
-        })
-      } else if (relationships <= 1) {
-        crfs.newVersion('item-groups', this.selectedGroup.uid).then((resp) => {
-          this.$emit('updateItemGroup', {
-            type: crfTypes.GROUP,
-            element: resp.data,
+
+          this.eventBusEmit('notification', {
+            msg: this.$t('_global.new_version_success'),
           })
-          this.readOnly = false
-          this.getGroup()
         })
       }
     },
-    approve() {
-      crfs.approve('item-groups', this.selectedGroup.uid).then(() => {
-        this.readOnly = true
-        this.getGroup()
-      })
+    async approve() {
+      if (
+        await this.$refs.confirmApproval.open({
+          agreeLabel: this.$t('CRFItemGroups.approve_group'),
+          itemGroup: this.selectedGroup,
+        })
+      ) {
+        crfs.approve('item-groups', this.selectedGroup.uid).then((resp) => {
+          this.$emit('updateItemGroup', resp.data)
+          this.readOnly = true
+          this.close()
+          this.getGroup()
+
+          this.eventBusEmit('notification', {
+            msg: this.$t('CRFItemGroups.approved'),
+          })
+        })
+      }
     },
     async delete() {
       let relationships = 0
@@ -637,7 +661,7 @@ export default {
       if (
         relationships > 0 &&
         (await this.$refs.confirm.open(
-          `${this.$t('CRFItemGroups.delete_warning_1')} ${relationships} ${this.$t('CRFItemGroups.delete_warning_2')}`,
+          `${this.$t('CRFItemGroups.delete_warning', { count: relationships })}`,
           options
         ))
       ) {
@@ -653,15 +677,6 @@ export default {
     setDesc(desc) {
       this.desc = desc
     },
-    getFirstDomainDisplay() {
-      if (
-        this.domains.find((el) => el.term_uid === this.form.sdtm_domain_uids[0])
-      ) {
-        return this.domains.find(
-          (el) => el.term_uid === this.form.sdtm_domain_uids[0]
-        ).sponsor_preferred_name
-      }
-    },
     getObserver(step) {
       return this.$refs[`observer_${step}`]
     },
@@ -670,13 +685,12 @@ export default {
         oid: 'G.',
         repeating: 'No',
         isReferenceData: 'No',
-        alias_uids: [],
-        sdtm_domain_uids: [],
+        aliases: [],
+        sdtm_domains: [],
       }
       this.desc = []
       this.selectedExtensions = []
       this.engDescription = {
-        library_name: 'Sponsor',
         language: parameters.ENG,
       }
       this.$refs.stepper.reset()
@@ -687,16 +701,16 @@ export default {
         this.close()
         return
       }
-      await this.createOrUpdateDescription()
+      await this.setDescription()
       this.form.library_name = libraries.LIBRARY_SPONSOR
       if (this.form.oid === 'G.') {
         this.form.oid = null
       }
       try {
+        this.form.sdtm_domain_uids = this.form.sdtm_domains.map(
+          (el) => el.term_uid
+        )
         if (this.isEdit()) {
-          this.form.alias_uids = this.form.alias_uids.map((alias) =>
-            alias.uid ? alias.uid : alias
-          )
           await crfs
             .updateItemGroup(this.form, this.selectedGroup.uid)
             .then(async () => {
@@ -750,47 +764,34 @@ export default {
         filters,
         filtersUpdated
       )
-      crfs.getAllAliases(params).then((resp) => {
-        this.aliases = resp.data.items.map(
-          (alias) =>
-            (alias = {
-              uid: alias.uid,
-              name: alias.name,
-              context: alias.context,
-              version: alias.version,
-            })
-        )
+      crfs.getAliases(params).then((resp) => {
+        this.aliases = resp.data.items
         this.aliasesTotal = resp.data.total
       })
     },
-    async createAlias() {
-      this.alias.library_name = libraries.LIBRARY_SPONSOR
-      await crfs.createAlias(this.alias).then((resp) => {
-        this.form.alias_uids.push({
-          uid: resp.data.uid,
-          name: resp.data.name,
-          context: resp.data.context,
-          version: resp.data.version,
-        })
-        this.$refs.aliasTable.filterTable()
-        this.eventBusEmit('notification', {
-          msg: this.$t('CRFForms.alias_created'),
-        })
-      })
+    addAlias() {
+      if (!this.alias.name || !this.alias.context) {
+        return
+      }
+      const alias = {
+        name: this.alias.name,
+        context: this.alias.context,
+      }
+
+      const isDuplicate = this.aliases.some(
+        (a) => a.name === alias.name && a.context === alias.context
+      )
+
+      if (!isDuplicate) {
+        this.aliases.push({ ...alias })
+      }
+
+      this.form.aliases.push({ ...alias })
+      this.alias = {}
     },
-    async createOrUpdateDescription() {
+    async setDescription() {
       const descArray = []
-      this.desc.forEach((e) => {
-        if (e.uid) {
-          e.change_description = this.$t(
-            'CRFItemGroups.description_change_description'
-          )
-          descArray.push(e)
-        } else {
-          e.library_name = libraries.LIBRARY_SPONSOR
-          descArray.push(e)
-        }
-      })
+
       if (!this.engDescription.name) {
         this.engDescription.name = this.form.name
       }
@@ -803,16 +804,13 @@ export default {
       this.engDescription.sponsor_instruction = this.clearEmptyHtml(
         this.engDescription.sponsor_instruction
       )
-      this.engDescription.change_description = this.$t(
-        'CRFItemGroups.description_change_description'
-      )
       descArray.push(this.engDescription)
-      this.form.descriptions = descArray
+      this.form.descriptions = [...descArray, ...this.desc]
     },
     async initForm(item) {
       this.form = item
-      this.form.alias_uids = item.aliases
-      this.form.sdtm_domain_uids = item.sdtm_domains.map((el) => el.term_uid)
+      this.form.aliases = item.aliases
+      this.form.sdtm_domains = item.sdtm_domains
       this.form.change_description = this.$t('_global.draft_change')
       if (item.descriptions.find((el) => el.language === parameters.ENG)) {
         this.engDescription = item.descriptions.find(

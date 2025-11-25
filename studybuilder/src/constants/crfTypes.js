@@ -2,7 +2,7 @@ const ITEM = 'item'
 const GROUP = 'group'
 const ITEM_GROUP = 'item_group'
 const FORM = 'form'
-const TEMPLATE = 'template'
+const COLLECTION = 'collection'
 const COMMENT = 'COMMENT'
 const ELEMENT = 'Element'
 const NAMESPACE = 'Namespace'
@@ -13,7 +13,7 @@ export default {
   GROUP,
   ITEM_GROUP,
   FORM,
-  TEMPLATE,
+  COLLECTION,
   COMMENT,
   ELEMENT,
   NAMESPACE,

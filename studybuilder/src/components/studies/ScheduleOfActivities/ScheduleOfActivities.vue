@@ -22,9 +22,6 @@
         <v-btn value="protocol">
           {{ $t('DetailedFlowchart.protocol') }}
         </v-btn>
-        <v-btn value="operational">
-          {{ $t('DetailedFlowchart.operational') }}
-        </v-btn>
       </v-btn-toggle>
     </v-row>
     <ProtocolFlowchart
@@ -53,6 +50,26 @@
           @update:model-value="toggleAllRowState"
         />
         <v-spacer />
+
+        <div
+          v-if="
+            featureFlagsStore.getFeatureFlag('complexity_score_calculation') ===
+            true
+          "
+          style="width: 280px"
+        >
+          {{ $t('DetailedFlowchart.complexity_score') }}
+          <b v-if="!complexityScoreLoading" class="pl-1">{{
+            complexityScore
+          }}</b>
+          <v-progress-circular
+            v-else
+            color="primary"
+            indeterminate
+            size="24"
+            class="ml-2"
+          />
+        </div>
         <template v-if="!props.readOnly">
           <v-btn
             v-show="multipleConsecutiveVisitsSelected()"
@@ -1002,7 +1019,9 @@ import ReorderingDetailedSoATbody from './ReorderingDetailedSoATbody.vue'
 import scheduleMethods from '@/utils/scheduleMethods'
 import EmptySoATbody from './EmptySoATbody.vue'
 import { escapeHTML, sanitizeHTML } from '@/utils/sanitize'
+import { useFeatureFlagsStore } from '@/stores/feature-flags'
 
+const featureFlagsStore = useFeatureFlagsStore()
 const { t } = useI18n()
 const eventBusEmit = inject('eventBusEmit')
 const roles = inject('roles')
@@ -1033,6 +1052,8 @@ const secondCol = ref()
 const table = ref()
 const confirm = ref()
 const tableContainer = ref()
+const complexityScore = ref(0)
+const complexityScoreLoading = ref(false)
 
 const currentSelectionMatrix = ref({})
 const expandAllRows = ref(false)
@@ -1331,6 +1352,7 @@ function observeWidth() {
 }
 
 async function removeActivity(activity) {
+  localStorage.setItem('refresh-activities', true)
   activity = activity.row.cells[0].refs[0]
   const options = { type: 'warning' }
   if (
@@ -1354,6 +1376,7 @@ async function removeActivity(activity) {
 }
 
 function addStudyActivity(item) {
+  localStorage.setItem('refresh-activities', true)
   item = item.row.cells[0].refs[0]
   scrollItemId.value = `row-scroll-${item?.uid}`
   study
@@ -1365,6 +1388,7 @@ function addStudyActivity(item) {
 }
 
 function exchangeStudyActivity(item) {
+  localStorage.setItem('refresh-activities', true)
   item = item.row.cells[0].refs[0]
   selectedStudyActivity.value = item.uid
   activityExchangeMode.value = true
@@ -1386,6 +1410,7 @@ function onActivityExchanged() {
 }
 
 function editStudyActivity(item) {
+  localStorage.setItem('refresh-activities', true)
   try {
     item = item.row.cells[0].refs[0]
     scrollItemId.value = `row-scroll-${item?.uid}`
@@ -1612,6 +1637,20 @@ function fetchFootnotes() {
   footnotesStore.fetchStudyFootnotes(params)
 }
 
+function getComplexityScore() {
+  if (
+    featureFlagsStore.getFeatureFlag('complexity_score_calculation') === true
+  ) {
+    complexityScoreLoading.value = true
+    study
+      .getComplexityScore(studiesGeneralStore.selectedStudy.uid)
+      .then((resp) => {
+        complexityScore.value = resp.data
+        complexityScoreLoading.value = false
+      })
+  }
+}
+
 function isCheckboxDisabled(studyActivityUid, studyVisitUid) {
   const state = currentSelectionMatrix.value[studyActivityUid][studyVisitUid]
   return (
@@ -1706,6 +1745,7 @@ function updateGroupedSchedule(value, studyActivityUid, studyVisitCell) {
         currentSelectionMatrix.value[studyActivityUid][
           studyVisitCell.refs[0].uid
         ].uid = scheduleUids
+        getComplexityScore()
       })
   } else {
     const data = []
@@ -1728,11 +1768,13 @@ function updateGroupedSchedule(value, studyActivityUid, studyVisitCell) {
         currentSelectionMatrix.value[studyActivityUid][
           studyVisitCell.refs[0].uid
         ].uid = null
+        getComplexityScore()
       })
   }
 }
 
 function updateSchedule(value, studyActivityUid, studyVisitCell) {
+  complexityScoreLoading.value = true
   if (studyVisitCell.refs.length > 1) {
     updateGroupedSchedule(value, studyActivityUid, studyVisitCell)
     return
@@ -1748,6 +1790,7 @@ function updateSchedule(value, studyActivityUid, studyVisitCell) {
         currentSelectionMatrix.value[studyActivityUid][
           studyVisitCell.refs[0].uid
         ].uid = resp.data.study_activity_schedule_uid
+        getComplexityScore()
       })
   } else {
     const scheduleUid =
@@ -1762,11 +1805,13 @@ function updateSchedule(value, studyActivityUid, studyVisitCell) {
         currentSelectionMatrix.value[studyActivityUid][
           studyVisitCell.refs[0].uid
         ].uid = null
+        getComplexityScore()
       })
   }
 }
 
 async function openBatchEditForm() {
+  localStorage.setItem('refresh-activities', true)
   if (!studyActivitySelection.value.length) {
     eventBusEmit('notification', {
       type: 'warning',
@@ -1784,6 +1829,7 @@ function unselectItem(item) {
 }
 
 async function batchRemoveStudyActivities() {
+  localStorage.setItem('refresh-activities', true)
   if (!studyActivitySelection.value.length) {
     eventBusEmit('notification', {
       type: 'warning',
@@ -1869,6 +1915,7 @@ async function loadSoaContent(keepDisplayState) {
   soaContentLoadingStore.changeLoadingState()
   studyActivitySelection.value = []
   try {
+    getComplexityScore()
     const resp = await study.getStudyProtocolFlowchart(
       studiesGeneralStore.selectedStudy.uid,
       { layout: 'detailed' }
@@ -1970,7 +2017,9 @@ function onResize() {
 
 function groupSelectedVisits() {
   const visitUids = selectedVisitIndexes.value
-    .sort()
+    .sort(function (a, b) {
+      return a - b
+    })
     .map((cell) => soaVisitRow.value[cell].refs[0].uid)
   const data = {
     visits_to_assign: visitUids,

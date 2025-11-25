@@ -47,8 +47,8 @@
                   <div class="mt-3 ml-4">
                     {{
                       item.type
-                        ? $t('CrfExtensions.attribute')
-                        : $t('CrfExtensions.element')
+                        ? $t('CRFExtensions.attribute')
+                        : $t('CRFExtensions.element')
                     }}
                   </div>
                 </v-row>
@@ -87,7 +87,7 @@
                         <v-btn icon variant="text" />
                         <ActionsMenu :actions="actions" :item="item" />
                         <div class="mt-3 ml-4">
-                          {{ $t('CrfExtensions.attribute') }}
+                          {{ $t('CRFExtensions.attribute') }}
                         </div>
                       </v-row>
                     </td>
@@ -115,7 +115,7 @@
               @click="addElement"
             >
               <v-icon dark> mdi-plus </v-icon>
-              {{ $t('CrfExtensions.element') }}
+              {{ $t('CRFExtensions.element') }}
             </v-btn>
             <v-btn
               class="ml-2 mb-2"
@@ -126,7 +126,7 @@
               @click="addAttribute"
             >
               <v-icon dark> mdi-plus </v-icon>
-              {{ $t('CrfExtensions.attribute') }}
+              {{ $t('CRFExtensions.attribute') }}
             </v-btn>
           </template>
         </NNTable>
@@ -142,7 +142,6 @@
     <CrfElementForm
       :parent-uid="editItem.uid"
       :open="showElementForm"
-      :attributes="attributes"
       :edit-item="elementToEdit"
       @close="closeElementForm"
     />
@@ -199,7 +198,7 @@ const actions = [
     click: editElement,
   },
   {
-    label: t('CrfExtensions.add_new_attr'),
+    label: t('CRFExtensions.add_new_attr'),
     icon: 'mdi-plus',
     iconColor: 'primary',
     condition: (item) =>
@@ -259,7 +258,7 @@ const parentUid = ref('')
 const tableElements = ref([])
 
 const title = computed(() => {
-  return t('CrfExtensions.extension') + props.editItem.name
+  return t('CRFExtensions.extension') + props.editItem.name
 })
 
 watch(

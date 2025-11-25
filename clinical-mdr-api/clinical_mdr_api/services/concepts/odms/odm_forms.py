@@ -15,21 +15,14 @@ from clinical_mdr_api.models.concepts.odms.odm_common_models import (
     OdmVendorRelationPostInput,
     OdmVendorsPostInput,
 )
-from clinical_mdr_api.models.concepts.odms.odm_description import (
-    OdmDescriptionBatchPatchInput,
-)
 from clinical_mdr_api.models.concepts.odms.odm_form import (
     OdmForm,
-    OdmFormActivityGroupPostInput,
     OdmFormItemGroupPostInput,
     OdmFormPatchInput,
     OdmFormPostInput,
     OdmFormVersion,
 )
 from clinical_mdr_api.services._utils import get_input_or_new_value
-from clinical_mdr_api.services.concepts.odms.odm_descriptions import (
-    OdmDescriptionService,
-)
 from clinical_mdr_api.services.concepts.odms.odm_generic_service import (
     OdmGenericService,
 )
@@ -48,9 +41,6 @@ class OdmFormService(OdmGenericService[OdmFormAR]):
     ) -> OdmForm:
         return OdmForm.from_odm_form_ar(
             odm_form_ar=item_ar,
-            find_odm_description_by_uid=self._repos.odm_description_repository.find_by_uid_2,
-            find_odm_alias_by_uid=self._repos.odm_alias_repository.find_by_uid_2,
-            find_activity_group_by_uid=self._repos.activity_group_repository.find_by_uid_2,
             find_odm_vendor_attribute_by_uid=self._repos.odm_vendor_attribute_repository.find_by_uid_2,
             find_odm_item_group_by_uid_with_form_relation=self._repos.odm_item_group_repository.find_by_uid_with_form_relation,
             find_odm_vendor_element_by_uid_with_odm_element_relation=(
@@ -67,16 +57,12 @@ class OdmFormService(OdmGenericService[OdmFormAR]):
         return OdmFormAR.from_input_values(
             author_id=self.author_id,
             concept_vo=OdmFormVO.from_repository_values(
-                oid=concept_input.oid,
+                oid=get_input_or_new_value(concept_input.oid, "F.", concept_input.name),
                 name=concept_input.name,
                 sdtm_version=concept_input.sdtm_version,
                 repeating=strtobool(concept_input.repeating),
-                description_uids=[
-                    description if isinstance(description, str) else description.uid
-                    for description in concept_input.descriptions
-                ],
-                alias_uids=concept_input.alias_uids,
-                activity_group_uids=[],
+                descriptions=concept_input.descriptions,
+                aliases=concept_input.aliases,
                 item_group_uids=[],
                 vendor_element_uids=[],
                 vendor_attribute_uids=[],
@@ -85,9 +71,6 @@ class OdmFormService(OdmGenericService[OdmFormAR]):
             library=library,
             generate_uid_callback=self.repository.generate_uid,
             odm_object_exists_callback=self._repos.odm_form_repository.odm_object_exists,
-            odm_description_exists_by_callback=self._repos.odm_description_repository.exists_by,
-            get_odm_description_parent_uids_callback=self._repos.odm_description_repository.get_parent_uids,
-            odm_alias_exists_by_callback=self._repos.odm_alias_repository.exists_by,
         )
 
     def _edit_aggregate(
@@ -101,125 +84,16 @@ class OdmFormService(OdmGenericService[OdmFormAR]):
                 name=concept_edit_input.name,
                 sdtm_version=concept_edit_input.sdtm_version,
                 repeating=strtobool(concept_edit_input.repeating),
-                description_uids=[
-                    description if isinstance(description, str) else description.uid
-                    for description in concept_edit_input.descriptions
-                ],
-                alias_uids=concept_edit_input.alias_uids,
-                activity_group_uids=[],
-                item_group_uids=[],
-                vendor_element_uids=[],
-                vendor_attribute_uids=[],
-                vendor_element_attribute_uids=[],
+                descriptions=concept_edit_input.descriptions,
+                aliases=concept_edit_input.aliases,
+                item_group_uids=item.concept_vo.item_group_uids,
+                vendor_element_uids=item.concept_vo.vendor_element_uids,
+                vendor_attribute_uids=item.concept_vo.vendor_attribute_uids,
+                vendor_element_attribute_uids=item.concept_vo.vendor_element_attribute_uids,
             ),
             odm_object_exists_callback=self._repos.odm_form_repository.odm_object_exists,
-            odm_description_exists_by_callback=self._repos.odm_description_repository.exists_by,
-            get_odm_description_parent_uids_callback=self._repos.odm_description_repository.get_parent_uids,
-            odm_alias_exists_by_callback=self._repos.odm_alias_repository.exists_by,
         )
         return item
-
-    @db.transaction
-    def create_with_relations(self, concept_input: OdmFormPostInput) -> OdmForm:
-        description_uids = [
-            (
-                description
-                if isinstance(description, str)
-                else OdmDescriptionService()
-                .non_transactional_create(concept_input=description)
-                .uid
-            )
-            for description in concept_input.descriptions
-        ]
-
-        form = self.non_transactional_create(
-            concept_input=OdmFormPostInput(
-                library_name=concept_input.library_name,
-                name=concept_input.name,
-                sdtm_version=concept_input.sdtm_version,
-                oid=get_input_or_new_value(concept_input.oid, "F.", concept_input.name),
-                repeating=concept_input.repeating,
-                descriptions=description_uids,
-                alias_uids=concept_input.alias_uids,
-            )
-        )
-
-        return self._transform_aggregate_root_to_pydantic_model(
-            self._repos.odm_form_repository.find_by_uid_2(form.uid)
-        )
-
-    @db.transaction
-    def update_with_relations(
-        self, uid: str, concept_edit_input: OdmFormPatchInput
-    ) -> OdmForm:
-        description_uids = [
-            (
-                description
-                if isinstance(description, str)
-                else (
-                    OdmDescriptionService()
-                    .non_transactional_edit(
-                        uid=description.uid, concept_edit_input=description
-                    )
-                    .uid
-                    if isinstance(description, OdmDescriptionBatchPatchInput)
-                    else OdmDescriptionService()
-                    .non_transactional_create(concept_input=description)
-                    .uid
-                )
-            )
-            for description in concept_edit_input.descriptions
-        ]
-
-        form = self.non_transactional_edit(
-            uid=uid,
-            concept_edit_input=OdmFormPatchInput(
-                change_description=concept_edit_input.change_description,
-                name=concept_edit_input.name,
-                sdtm_version=concept_edit_input.sdtm_version,
-                oid=concept_edit_input.oid,
-                repeating=concept_edit_input.repeating,
-                descriptions=description_uids,
-                alias_uids=concept_edit_input.alias_uids,
-            ),
-        )
-
-        return self._transform_aggregate_root_to_pydantic_model(
-            self._repos.odm_form_repository.find_by_uid_2(form.uid)
-        )
-
-    @db.transaction
-    def add_activity_groups(
-        self,
-        uid: str,
-        odm_form_activity_group_post_input: list[OdmFormActivityGroupPostInput],
-        override: bool = False,
-    ) -> OdmForm:
-        odm_form_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
-
-        BusinessLogicException.raise_if(
-            odm_form_ar.item_metadata.status == LibraryItemStatus.RETIRED,
-            msg=self.OBJECT_IS_INACTIVE,
-        )
-
-        if override:
-            self._repos.odm_form_repository.remove_relation(
-                uid=uid,
-                relation_uid=None,
-                relationship_type=RelationType.ACTIVITY_GROUP,
-                disconnect_all=True,
-            )
-
-        for activity_group in odm_form_activity_group_post_input:
-            self._repos.odm_form_repository.add_relation(
-                uid=uid,
-                relation_uid=activity_group.uid,
-                relationship_type=RelationType.ACTIVITY_GROUP,
-            )
-
-        odm_form_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
-
-        return self._transform_aggregate_root_to_pydantic_model(odm_form_ar)
 
     @db.transaction
     def add_item_groups(
@@ -241,8 +115,8 @@ class OdmFormService(OdmGenericService[OdmFormAR]):
         odm_form_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 
         BusinessLogicException.raise_if(
-            odm_form_ar.item_metadata.status == LibraryItemStatus.RETIRED,
-            msg=self.OBJECT_IS_INACTIVE,
+            odm_form_ar.item_metadata.status != LibraryItemStatus.DRAFT,
+            msg=self.OBJECT_NOT_IN_DRAFT,
         )
 
         if override:
@@ -304,8 +178,8 @@ class OdmFormService(OdmGenericService[OdmFormAR]):
         odm_form_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 
         BusinessLogicException.raise_if(
-            odm_form_ar.item_metadata.status == LibraryItemStatus.RETIRED,
-            msg=self.OBJECT_IS_INACTIVE,
+            odm_form_ar.item_metadata.status != LibraryItemStatus.DRAFT,
+            msg=self.OBJECT_NOT_IN_DRAFT,
         )
 
         self.are_elements_vendor_compatible(
@@ -349,8 +223,8 @@ class OdmFormService(OdmGenericService[OdmFormAR]):
         odm_form_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 
         BusinessLogicException.raise_if(
-            odm_form_ar.item_metadata.status == LibraryItemStatus.RETIRED,
-            msg=self.OBJECT_IS_INACTIVE,
+            odm_form_ar.item_metadata.status != LibraryItemStatus.DRAFT,
+            msg=self.OBJECT_NOT_IN_DRAFT,
         )
 
         self.fail_if_these_attributes_cannot_be_added(
@@ -390,8 +264,8 @@ class OdmFormService(OdmGenericService[OdmFormAR]):
         odm_form_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 
         BusinessLogicException.raise_if(
-            odm_form_ar.item_metadata.status == LibraryItemStatus.RETIRED,
-            msg=self.OBJECT_IS_INACTIVE,
+            odm_form_ar.item_metadata.status != LibraryItemStatus.DRAFT,
+            msg=self.OBJECT_NOT_IN_DRAFT,
         )
 
         self.fail_if_these_attributes_cannot_be_added(

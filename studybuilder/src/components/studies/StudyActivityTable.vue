@@ -379,7 +379,11 @@ function closeUpdateForm() {
 }
 
 function actionsMenuBadge(item) {
-  if (item.activity.replaced_by_activity || isDifferent(item)) {
+  if (
+    item.activity.replaced_by_activity ||
+    isDifferent(item) ||
+    item.latest_activity?.is_request_rejected
+  ) {
     return {
       color: item.keep_old_version ? 'green' : 'error',
       icon: 'mdi-exclamation',
@@ -575,6 +579,10 @@ function getItemRowClass(item) {
       : 'bg-warning'
     : ''
 }
+
+defineExpose({
+  onStudyActivitiesUpdated,
+})
 </script>
 
 <style scoped>

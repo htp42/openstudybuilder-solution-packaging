@@ -7,6 +7,7 @@
     :export-data-url="exportDataUrl"
     :export-object-label="type"
     show-column-names-toggle-button
+    disable-filtering
     @filter="fetchData"
   />
 </template>

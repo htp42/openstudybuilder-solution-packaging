@@ -68,7 +68,7 @@ class OdmVendorElementService(OdmGenericService[OdmVendorElementAR]):
                     for compatible_type in concept_edit_input.compatible_types
                 ],
                 vendor_namespace_uid=item.concept_vo.vendor_namespace_uid,
-                vendor_attribute_uids=[],
+                vendor_attribute_uids=item.concept_vo.vendor_attribute_uids,
             ),
         )
         return item

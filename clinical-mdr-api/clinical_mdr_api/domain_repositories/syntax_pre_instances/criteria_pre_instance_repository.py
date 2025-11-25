@@ -152,27 +152,33 @@ class CriteriaPreInstanceRepository(
         return ar.name != value.name or ar.guidance_text != value.guidance_text
 
     def _get_or_create_value(
-        self, root: CriteriaPreInstanceRoot, ar: CriteriaPreInstanceAR
+        self,
+        root: CriteriaPreInstanceRoot,
+        ar: CriteriaPreInstanceAR,
+        force_new_value_node: bool = False,
     ) -> VersionValue:
-        (
-            has_version_rel,
-            _,
-            latest_draft_rel,
-            latest_final_rel,
-            latest_retired_rel,
-        ) = self._get_version_relation_keys(root)
-        for itm in has_version_rel.filter(name=ar.name, guidance_text=ar.guidance_text):
-            return itm
+        if not force_new_value_node:
+            (
+                has_version_rel,
+                _,
+                latest_draft_rel,
+                latest_final_rel,
+                latest_retired_rel,
+            ) = self._get_version_relation_keys(root)
+            for itm in has_version_rel.filter(
+                name=ar.name, guidance_text=ar.guidance_text
+            ):
+                return itm
 
-        latest_draft = latest_draft_rel.get_or_none()
-        if latest_draft and not self._has_data_changed(ar, latest_draft):
-            return latest_draft
-        latest_final = latest_final_rel.get_or_none()
-        if latest_final and not self._has_data_changed(ar, latest_final):
-            return latest_final
-        latest_retired = latest_retired_rel.get_or_none()
-        if latest_retired and not self._has_data_changed(ar, latest_retired):
-            return latest_retired
+            latest_draft = latest_draft_rel.get_or_none()
+            if latest_draft and not self._has_data_changed(ar, latest_draft):
+                return latest_draft
+            latest_final = latest_final_rel.get_or_none()
+            if latest_final and not self._has_data_changed(ar, latest_final):
+                return latest_final
+            latest_retired = latest_retired_rel.get_or_none()
+            if latest_retired and not self._has_data_changed(ar, latest_retired):
+                return latest_retired
 
         new_value = self.value_class(
             name=ar.name, guidance_text=ar.guidance_text, name_plain=strip_html(ar.name)

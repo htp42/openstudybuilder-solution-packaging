@@ -2,7 +2,7 @@ from abc import abstractmethod
 from typing import Any, TypeVar
 
 from neomodel import NodeSet
-from neomodel.sync_.match import NodeNameResolver
+from neomodel.sync_.match import NodeNameResolver, RelationNameResolver
 from pydantic import BaseModel
 
 from clinical_mdr_api.repositories._utils import (
@@ -10,6 +10,7 @@ from clinical_mdr_api.repositories._utils import (
     get_field,
     get_field_path,
     get_order_by_clause,
+    is_injected_field,
     merge_q_query_filters,
     transform_filters_into_neomodel,
     validate_filter_by_dict,
@@ -37,6 +38,12 @@ class NeomodelExtBaseRepository:
         """
 
         raise NotImplementedError
+
+    def extend_distinct_headers_query(self, nodeset: NodeSet) -> NodeSet:
+        """
+        Method to extend the query built for distinct header retrieval.
+        """
+        return nodeset
 
     def check_for_incorrect_optional_markers(
         self, nodes: NodeSet, q_filters: list[Any]
@@ -130,7 +137,15 @@ class NeomodelExtBaseRepository:
         field = get_field(prop=field_name, model=self.return_model)
         field_path = get_field_path(prop=field_name, field=field)
         nodeset = self.root_class.nodes
-        if "__" in field_path:
+        if "|" in field_path:
+            path, prop = field_path.rsplit("|", 1)
+            if is_injected_field(field):
+                # We don't want to add a traversal in this case
+                source = path
+            else:
+                source = RelationNameResolver(path)
+                nodeset = nodeset.traverse(path)
+        elif "__" in field_path:
             path, prop = field_path.rsplit("__", 1)
             source = NodeNameResolver(path)
             nodeset = nodeset.fetch_relations(path)
@@ -139,21 +154,18 @@ class NeomodelExtBaseRepository:
             # does not support 'self'...)
             source = self.root_class.__name__.lower()
             prop = field_path
-        values = (
-            nodeset.filter(*q_filters)[:page_size]
-            .intermediate_transform(
-                {
-                    field_path: {
-                        "source": source,
-                        "source_prop": prop,
-                        "include_in_return": True,
-                    }
-                },
-                distinct=True,
-            )
-            .all()
+        nodeset = nodeset.filter(*q_filters)[:page_size].intermediate_transform(
+            {
+                field_name: {
+                    "source": source,
+                    "source_prop": prop,
+                    "include_in_return": True,
+                }
+            },
+            distinct=True,
         )
-        return values
+        nodeset = self.extend_distinct_headers_query(nodeset)
+        return nodeset.all()
 
 
 def _get_author_id(node) -> str:

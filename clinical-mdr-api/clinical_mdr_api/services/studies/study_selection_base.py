@@ -405,11 +405,6 @@ class StudySelectionMixin:
             medicinal_product_ar=self._repos.medicinal_product_repository.find_by_uid_2(
                 uid
             ),
-            find_term_by_uid=self._repos.ct_term_name_repository.find_by_uid,
-            find_numeric_value_by_uid=self._repos.numeric_value_with_unit_repository.find_by_uid_2,
-            find_unit_by_uid=self._repos.unit_definition_repository.find_by_uid_2,
-            find_compound_by_uid=self._repos.compound_repository.find_by_uid_2,
-            find_pharmaceutical_product_by_uid=self._repos.pharmaceutical_product_repository.find_by_uid_2,
         )
 
     @trace_calls

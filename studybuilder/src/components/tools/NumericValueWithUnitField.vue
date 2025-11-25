@@ -9,9 +9,10 @@
         hide-details="auto"
         :disabled="disabled"
         density="compact"
-        @input="update"
+        variant="outlined"
+        @update:model-value="update"
       />
-      <v-select
+      <v-autocomplete
         v-model="form.unit_definition_uid"
         class="unit-selector ml-4"
         :label="$t('DurationField.label')"
@@ -21,8 +22,9 @@
         density="compact"
         clearable
         hide-details="auto"
+        variant="outlined"
         :disabled="disabled"
-        @input="update"
+        @update:model-value="update"
       />
     </div>
     <div class="mt-1 v-messages theme--light">
@@ -33,67 +35,64 @@
   </div>
 </template>
 
-<script>
-import units from '@/api/units'
+<script setup>
+import { onMounted, ref, watch } from 'vue'
+import unitsApi from '@/api/units'
 
-export default {
-  props: {
-    initialValue: {
-      type: Object,
-      default: undefined,
-    },
-    label: {
-      type: String,
-      default: '',
-    },
-    hint: {
-      type: String,
-      default: '',
-    },
-    subset: {
-      type: String,
-      default: '',
-    },
-    errors: {
-      type: Array,
-      default: () => [],
-    },
-    disabled: {
-      type: Boolean,
-      default: false,
-    },
+const props = defineProps({
+  modelValue: {
+    type: Object,
+    default: undefined,
   },
-  emits: ['input'],
-  data() {
-    return {
-      form: {},
-      units: [],
-    }
+  label: {
+    type: String,
+    default: '',
   },
-  watch: {
-    initialValue(val) {
-      this.form = { ...val }
-    },
+  hint: {
+    type: String,
+    default: '',
   },
-  created() {
-    this.form = { ...this.initialValue }
+  subset: {
+    type: String,
+    default: '',
   },
-  mounted() {
-    units.getBySubset(this.subset).then((resp) => {
-      this.units = resp.data.items
-    })
+  errors: {
+    type: Array,
+    default: () => [],
   },
-  methods: {
-    update() {
-      this.$emit('input', this.form)
-    },
+  disabled: {
+    type: Boolean,
+    default: false,
   },
+})
+const emit = defineEmits(['update:modelValue'])
+
+const form = ref({})
+const units = ref([])
+
+watch(
+  () => props.modelValue,
+  (val) => {
+    form.value = { ...val }
+  }
+)
+
+form.value = { ...props.modelValue }
+
+onMounted(() => {
+  unitsApi.getBySubset(props.subset).then((resp) => {
+    units.value = resp.data.items
+  })
+})
+
+function update() {
+  emit('update:modelValue', form.value)
 }
 </script>
 
 <style>
 .value-selector {
-  max-width: 100px;
+  max-width: 200px;
 }
 .unit-selector {
   max-width: 200px;

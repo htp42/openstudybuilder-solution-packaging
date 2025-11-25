@@ -63,17 +63,31 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
         compound_uid: str,
         compound_alias_uid: str,
         medicinal_product_uid: str,
+        study_compound_dosing_uid: str,
         terms_at_specific_datetime: datetime.datetime | None,
         study_value_version: str | None = None,
     ) -> StudySelectionCompound:
-        (
-            study_compound,
-            order,
-        ) = self._repos.study_compound_repository.find_by_uid(
-            study_uid=study_uid,
-            study_compound_uid=study_compound_uid,
-            study_value_version=study_value_version,
-        )
+
+        try:
+            (
+                study_compound,
+                order,
+            ) = self._repos.study_compound_repository.find_by_uid(
+                study_uid=study_uid,
+                study_compound_uid=study_compound_uid,
+                study_value_version=study_value_version,
+            )
+        except exceptions.NotFoundException:
+            # Deleted study compound is not connected to a study value, try to find it by dosing uid
+            (
+                study_compound,
+                order,
+            ) = self._repos.study_compound_repository.find_by_uid_and_dosing_uid(
+                study_uid=study_uid,
+                study_compound_uid=study_compound_uid,
+                study_compound_dosing_uid=study_compound_dosing_uid,
+            )
+
         compound = self._transform_compound_model(compound_uid)
         compound_alias = self._transform_compound_alias_model(compound_alias_uid)
         medicinal_product = self._transform_medicinal_product_model(
@@ -146,6 +160,7 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
                 compound_dosing_vo.compound_uid,
                 compound_dosing_vo.compound_alias_uid,
                 compound_dosing_vo.medicinal_product_uid,
+                study_compound_dosing_uid=compound_dosing_vo.study_selection_uid,
                 study_value_version=study_value_version,
                 terms_at_specific_datetime=terms_at_specific_datetime,
             ),
@@ -285,6 +300,7 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
                         history.compound_uid,
                         history.compound_alias_uid,
                         history.medicinal_product_uid,
+                        study_compound_dosing_uid=history.study_selection_uid,
                         terms_at_specific_datetime=None,
                     ),
                     self._transform_study_element_model(

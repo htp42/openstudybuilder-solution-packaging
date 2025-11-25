@@ -6,6 +6,8 @@ let rationaleforrequest = "RFR", abbreviation = "ABB", definition = "DEF"
 
 When('The Add activity request button is clicked', () => cy.clickButton('add-activity'))
 
+Then('The add activity request button is not available', () => cy.get('add-activity').should('not.exist'))
+
 When('The activity request container is filled with data and saved', () => addActivity())
 
 When('The activity request form is filled with data', () => addActivity(false))

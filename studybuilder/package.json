@@ -14,7 +14,8 @@
     "format:staged": "prettier --write",
     "update-config": "cat public/config.json | scripts/update-config.awk | tee public/config.json",
     "i18n:report": "vue-cli-service i18n:report --src './src/**/*.?(js|vue)' --locales './src/locales/**/*.json'",
-    "prepare": "husky"
+    "prepare": "husky",
+    "build-sbom": "python3 assbom.py --yarn --append sbom-append.md --fallback-dir doc/licenses --level 2 --output sbom.md"
   },
   "dependencies": {
     "@formkit/drag-and-drop": "^0.3.3",

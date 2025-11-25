@@ -1,7 +1,7 @@
 <template>
   <v-card>
     <v-card-title>
-      {{ $t('CrfDuplicationForm.duplicate') }}
+      {{ $t('CRFDuplicationForm.duplicate') }}
     </v-card-title>
     <v-card-text>
       <v-form ref="observer">
@@ -9,7 +9,7 @@
           <v-col v-if="type !== crfTypes.ITEM" cols="2">
             <v-checkbox
               v-model="relations"
-              :label="$t('CrfDuplicationForm.include')"
+              :label="$t('CRFDuplicationForm.include')"
               class="mt-6 ml-2"
             />
           </v-col>
@@ -26,7 +26,7 @@
         </v-row>
         <v-row>
           <div class="ml-4">
-            {{ $t('CrfDuplicationForm.attributes') }}
+            {{ $t('CRFDuplicationForm.attributes') }}
           </div>
         </v-row>
         <v-row>
@@ -49,10 +49,10 @@
           </v-col>
           <v-col cols="4">
             <v-autocomplete
-              v-if="type !== crfTypes.TEMPLATE"
+              v-if="type !== crfTypes.COLLECTION"
               v-model="itemToLinkTo"
               :items="itemsToLinkTo"
-              :label="$t('CrfDuplicationForm.item_to_link')"
+              :label="$t('CRFDuplicationForm.item_to_link')"
               item-title="name"
               item-value="uid"
               density="compact"
@@ -145,10 +145,10 @@ export default {
       this.form = Object.assign(this.form, this.item)
       this.form.name = this.name
       this.form.oid = this.oid
-      if (this.type === crfTypes.TEMPLATE) {
-        resp = await crfs.createTemplate(this.form)
+      if (this.type === crfTypes.COLLECTION) {
+        resp = await crfs.createCollection(this.form)
         if (this.relations) {
-          await crfs.addFormsToTemplate(this.item.forms, resp.data.uid, true)
+          await crfs.addFormsToCollection(this.item.forms, resp.data.uid, true)
         }
         this.close()
       } else if (this.type === crfTypes.FORM) {
@@ -158,7 +158,11 @@ export default {
         if (this.relations) {
           crfs.addItemGroupsToForm(this.item.item_groups, resp.data.uid, true)
         }
-        await crfs.addFormsToTemplate([this.form], this.itemToLinkTo.uid, false)
+        await crfs.addFormsToCollection(
+          [this.form],
+          this.itemToLinkTo.uid,
+          false
+        )
         this.close()
       } else if (this.type === crfTypes.GROUP) {
         this.form.alias_uids = this.form.aliases.map((alias) => alias.uid)

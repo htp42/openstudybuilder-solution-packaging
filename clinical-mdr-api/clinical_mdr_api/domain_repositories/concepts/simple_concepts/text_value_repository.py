@@ -13,7 +13,6 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     VersionRoot,
     VersionValue,
 )
-from clinical_mdr_api.domains._utils import ObjectStatus
 from clinical_mdr_api.domains.concepts.simple_concepts.text_value import (
     TextValueAR,
     TextValueVO,
@@ -89,7 +88,5 @@ class TextValueRepository(SimpleConceptGenericRepository[TextValueAR]):
             item_metadata=self._library_item_metadata_vo_from_relation(relationship),
         )
 
-    def specific_alias_clause(
-        self, only_specific_status: str = ObjectStatus.LATEST.name, **kwargs
-    ) -> str:
+    def specific_alias_clause(self, **kwargs) -> str:
         return ""

@@ -1039,6 +1039,13 @@ async function selectAllStudyActivities() {
       selectedActivities.value.push(copy)
     }
   }
+  selectedActivities.value = selectedActivities.value.filter(
+    (activity1, i, arr) =>
+      arr.findIndex(
+        (activity2) =>
+          activity2.study_activity_uid === activity1.study_activity_uid
+      ) === i
+  )
 }
 
 function isActivitySelected(activity) {
@@ -1154,7 +1161,7 @@ async function batchCreateStudyActivities() {
 async function exchangeStudyActivity() {
   for (const item of selectedActivities.value) {
     let payload = getCreationPayload(item)
-    payload.show_activity_in_protocol_flowchart = true
+    payload.show_activity_in_protocol_flowchart = false
     await study.exchangeStudyActivity(
       studiesGeneralStore.selectedStudy.uid,
       props.exchangeActivityUid,

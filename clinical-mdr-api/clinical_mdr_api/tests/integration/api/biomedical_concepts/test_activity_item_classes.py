@@ -820,3 +820,91 @@ def test_get_activity_item_class_codelists(api_client):
     # term uids should be None, indicating that all terms of the codelist are available
     assert len(res["items"]) == 1
     assert res["items"][0]["term_uids"] is None
+
+
+def test_get_activity_item_class_overview(api_client: TestClient) -> None:
+    """Test GET /activity-item-classes/{uid}/overview endpoint"""
+    activity_item_class = activity_item_classes_all[0]
+
+    # Test basic overview
+    response = api_client.get(
+        f"/activity-item-classes/{activity_item_class.uid}/overview"
+    )
+    assert_response_status_code(response, 200)
+
+    result = response.json()
+    assert "activity_item_class" in result
+    assert "all_versions" in result
+
+    item_detail = result["activity_item_class"]
+    assert item_detail["uid"] == activity_item_class.uid
+    assert item_detail["name"] == activity_item_class.name
+    assert item_detail["definition"] == activity_item_class.definition
+    assert item_detail["nci_code"] == activity_item_class.nci_concept_id
+    assert item_detail["status"] == "Final"  # Test data creates items with Final status
+    assert item_detail["version"] == "1.0"  # Test data creates version 1.0
+
+    # Test with version parameter
+    response = api_client.get(
+        f"/activity-item-classes/{activity_item_class.uid}/overview?version=0.1"
+    )
+    assert_response_status_code(response, 200)
+
+    result = response.json()
+    assert result["activity_item_class"]["version"] == "0.1"
+
+    # Test with non-existent UID
+    response = api_client.get("/activity-item-classes/INVALID_UID/overview")
+    assert_response_status_code(response, 404)
+
+
+def test_get_activity_instance_classes_using_item(api_client: TestClient) -> None:
+    """Test GET /activity-item-classes/{uid}/activity-instance-classes endpoint"""
+    activity_item_class = activity_item_classes_all[0]
+
+    # Test basic request
+    response = api_client.get(
+        f"/activity-item-classes/{activity_item_class.uid}/activity-instance-classes"
+    )
+    assert_response_status_code(response, 200)
+
+    result = response.json()
+    assert "items" in result
+    assert "total" in result
+    assert len(result["items"]) > 0
+
+    # Check first item structure
+    first_item = result["items"][0]
+    assert "uid" in first_item
+    assert "name" in first_item
+    assert "adam_param_specific_enabled" in first_item
+    assert "mandatory" in first_item
+    assert "modified_date" in first_item
+    assert "modified_by" in first_item
+    assert "version" in first_item
+    assert "status" in first_item
+
+    # Test with pagination
+    response = api_client.get(
+        f"/activity-item-classes/{activity_item_class.uid}/activity-instance-classes?page_size=1&page_number=1&total_count=true"
+    )
+    assert_response_status_code(response, 200)
+
+    result = response.json()
+    assert len(result["items"]) <= 1
+    assert result["total"] >= 1
+
+    # Test with version parameter
+    response = api_client.get(
+        f"/activity-item-classes/{activity_item_class.uid}/activity-instance-classes?version=0.1"
+    )
+    assert_response_status_code(response, 200)
+
+    # Test with non-existent UID - returns empty results
+    response = api_client.get(
+        "/activity-item-classes/INVALID_UID/activity-instance-classes"
+    )
+    assert_response_status_code(response, 200)
+    result = response.json()
+    assert result["items"] == []
+    assert result["total"] == 0

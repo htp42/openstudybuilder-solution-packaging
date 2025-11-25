@@ -1,10 +1,10 @@
+import asyncio
 import copy
+import csv
 import json
 import logging
-import time
-import csv
-import asyncio
 import threading
+import time
 from collections.abc import Callable
 from functools import lru_cache, wraps
 from typing import Dict
@@ -12,7 +12,6 @@ from typing import Dict
 import aiohttp
 import requests
 
-from ..functions.caselessdict import CaselessDict
 from ..functions.utils import create_logger, load_env
 from ..utils import import_templates
 from .api_bindings import (
@@ -192,7 +191,6 @@ class BaseImporter:
             except KeyError:
                 pass
 
-
     async def post_and_approve_term(self, data: dict, session: aiohttp.ClientSession):
         post_data = {
             "catalogue_names": data.get("catalogue_names", []),
@@ -200,7 +198,9 @@ class BaseImporter:
             "nci_preferred_name": data["nci_preferred_name"],
             "definition": data["definition"],
             "sponsor_preferred_name": data["sponsor_preferred_name"],
-            "sponsor_preferred_name_sentence_case": data["sponsor_preferred_name_sentence_case"],
+            "sponsor_preferred_name_sentence_case": data[
+                "sponsor_preferred_name_sentence_case"
+            ],
             "library_name": data["library_name"],
             "concept_id": None,
         }
@@ -233,7 +233,7 @@ class BaseImporter:
         else:
             self.log.info(f"Approved term name '{term_name}' with uid '{term_uid}'")
             metrics.icrement("/ct/terms--NamesApprove")
-        
+
         # Approve the term attributes
         status, result = await self.api.approve_async(
             "/ct/terms/" + term_uid + "/attributes/approvals", session=session
@@ -250,13 +250,19 @@ class BaseImporter:
             metrics.icrement("/ct/terms--AttributesApprove")
         return term_uid
 
-    async def patch_term_if_required(self, existing_data: dict, new_data: str, session: aiohttp.ClientSession):
-        self.log.info(f"Checking if term with uid '{existing_data['term_uid']}' needs updating, TODO!")
+    async def patch_term_if_required(
+        self, existing_data: dict, new_data: str, session: aiohttp.ClientSession
+    ):
+        self.log.info(
+            f"Checking if term with uid '{existing_data['term_uid']}' needs updating, TODO!"
+        )
         pass
 
     def find_term_in_codelists(self, codelists):
         for codelist in codelists:
-            existing_term = self.api.find_term_by_submission_value(codelist["codelist_uid"], codelist["submission_value"])
+            existing_term = self.api.find_term_by_submission_value(
+                codelist["codelist_uid"], codelist["submission_value"]
+            )
             if existing_term:
                 return existing_term
 
@@ -282,9 +288,14 @@ class BaseImporter:
             self.log.info(
                 f"Found term with uid '{term_uid}' for concept id '{data['term']['concept_id']}'"
             )
-        elif data["term"]["existing_cl_submval"] and data["term"]["existing_term_submval"]:
+        elif (
+            data["term"]["existing_cl_submval"]
+            and data["term"]["existing_term_submval"]
+        ):
             # This is a term that already exists in a codelist, look it up
-            existing_cl_uid = self.api.get_codelist_uid(data["term"]["existing_cl_submval"])
+            existing_cl_uid = self.api.get_codelist_uid(
+                data["term"]["existing_cl_submval"]
+            )
             if existing_cl_uid is None:
                 self.log.error(
                     f"Could not find codelist with submission value '{data['term']['existing_cl_submval']}', skipping"
@@ -317,7 +328,7 @@ class BaseImporter:
                 await self.patch_term_if_required(existing_term, data["term"], session)
                 term_uid = existing_term["term_uid"]
             else:
-            # Term is not already in any of the current codelists, look for a matching term by name and definition 
+                # Term is not already in any of the current codelists, look for a matching term by name and definition
                 existing_term = self.api.find_sponsor_term_by_name_and_definition(
                     term_name, term_definition
                 )
@@ -335,15 +346,23 @@ class BaseImporter:
                     )
         if "parents" in data:
             for parent in data["parents"]:
-                if parent["parent_type"] in  ["type", "subtype"]:
-                    parent_term = self.api.find_term_by_submission_value(parent["parent_codelist_uid"], parent["parent_term_submval"])
+                if parent["parent_type"] in ["type", "subtype"]:
+                    parent_term = self.api.find_term_by_submission_value(
+                        parent["parent_codelist_uid"], parent["parent_term_submval"]
+                    )
                 elif parent["parent_type"] == "predecessor":
-                    parent_term = self.api.find_term_by_concept_id(parent["parent_concept_id"])
+                    parent_term = self.api.find_term_by_concept_id(
+                        parent["parent_concept_id"]
+                    )
                 else:
-                    self.log.error(f"Unknown relationship type '{parent['parent_type']}'")
+                    self.log.error(
+                        f"Unknown relationship type '{parent['parent_type']}'"
+                    )
                     parent_term = None
                 if parent_term:
-                    self.log.info(f"Add term '{parent_term['term_uid']}' as parent of type '{parent['parent_type']}' of term '{term_uid}'")
+                    self.log.info(
+                        f"Add term '{parent_term['term_uid']}' as parent of type '{parent['parent_type']}' of term '{term_uid}'"
+                    )
                     self.api.post_to_api(
                         {
                             "path": f"/ct/terms/{term_uid}/parents?parent_uid={parent_term['term_uid']}&relationship_type={parent['parent_type']}",
@@ -363,7 +382,11 @@ class BaseImporter:
                 order = None
             status, result = await self.api.post_to_api_async(
                 url=f"/ct/codelists/{codelist_uid}/terms",
-                body={"term_uid": term_uid, "order": order, "submission_value": codelist["submission_value"]},
+                body={
+                    "term_uid": term_uid,
+                    "order": order,
+                    "submission_value": codelist["submission_value"],
+                },
                 session=session,
             )
             if status != 201:
@@ -375,11 +398,16 @@ class BaseImporter:
                     f"Added term with uid '{term_uid}' to codelist with uid '{codelist_uid}'"
                 )
 
-
     async def update_term_order(
-        self, codelist_uid: str, term_submval: str, order: int, session: aiohttp.ClientSession
+        self,
+        codelist_uid: str,
+        term_submval: str,
+        order: int,
+        session: aiohttp.ClientSession,
     ):
-        existing_term = self.api.find_term_by_submission_value(codelist_uid, term_submval)
+        existing_term = self.api.find_term_by_submission_value(
+            codelist_uid, term_submval
+        )
         if not existing_term:
             self.log.error(
                 f"Could not find term with submission value '{term_submval}' in codelist with uid '{codelist_uid}', skipping"
@@ -390,10 +418,9 @@ class BaseImporter:
             "order": order,
             "submission_value": term_submval,
         }
-        return await self.api.patch_to_api_async(f"ct/terms/{existing_term['term_uid']}/codelists", data, session)
-
-
-
+        return await self.api.patch_to_api_async(
+            f"ct/terms/{existing_term['term_uid']}/codelists", data, session
+        )
 
     # Retry a function that sporadically fails.
     # After the first failure it will sleep for retry_delay seconds,
@@ -419,7 +446,7 @@ class BaseImporter:
     def lookup_concept_uid(
         self, name, endpoint, subset=None, library=None, only_final=False
     ):
-        self.log.info(f"Looking up concept {endpoint} with name '{name}'")
+        self.log.debug(f"Looking up concept {endpoint} with name '{name}'")
         filt = {"name": {"v": [name], "op": "eq"}}
         if library is not None:
             if isinstance(library, tuple):
@@ -435,7 +462,7 @@ class BaseImporter:
         items = self.api.get_all_from_api(path, params={"filters": json.dumps(filt)})
         if items is not None and len(items) > 0:
             uid = items[0].get("uid", None)
-            self.log.info(
+            self.log.debug(
                 f"Found concept {endpoint} with name '{name}' and uid '{uid}'"
             )
             return uid
@@ -447,7 +474,7 @@ class BaseImporter:
     ):
         filt = {key: {"v": [value], "op": "eq"}}
         if codelist_name in CODELIST_NAME_MAP:
-            self.log.info(
+            self.log.debug(
                 f"Looking up term with '{key}' == '{value}' in codelist '{codelist_name}': {CODELIST_NAME_MAP[codelist_name]}, returning uid from '{uid_key}'"
             )
             params = {
@@ -456,7 +483,7 @@ class BaseImporter:
                 "filters": json.dumps(filt),
             }
         else:
-            self.log.info(
+            self.log.debug(
                 f"Looking up term with '{key}' == '{value}' in codelist '{codelist_name}', returning uid from '{uid_key}'"
             )
             params = {
@@ -482,25 +509,28 @@ class BaseImporter:
     def lookup_unit_uid(self, name, subset=None):
         uid = self.lookup_concept_uid(name, "unit-definitions", subset=subset)
         if uid is None:
-            self.log.info(
+            self.log.debug(
                 f"Unit name '{name}' not found, trying again with lowercase '{name.lower()}'"
             )
             uid = self.lookup_concept_uid(
                 name.lower(), "unit-definitions", subset=subset
             )
         if uid is None:
-            self.log.info(
+            self.log.debug(
                 f"Unit name '{name}' not found, trying again with uppercase '{name.upper()}'"
             )
             uid = self.lookup_concept_uid(
                 name.upper(), "unit-definitions", subset=subset
             )
-        self.log.info(f"Looked up unit name '{name}', found uid '{uid}'")
+        if uid is None:
+            self.log.warning(f"Could not find unit with name '{name}'")
+        else:
+            self.log.debug(f"Looked up unit name '{name}', found uid '{uid}'")
         return uid
 
     @lru_cache(maxsize=10000)
     def lookup_codelist_term_uid(self, codelist_name, sponsor_preferred_name):
-        self.log.info(
+        self.log.debug(
             f"Looking up term with name '{sponsor_preferred_name}' from codelist '{codelist_name}'"
         )
         terms = self.fetch_codelist_terms(codelist_name)
@@ -519,12 +549,12 @@ class BaseImporter:
     @lru_cache(maxsize=10000)
     def fetch_codelist_terms(self, name):
         if name in CODELIST_NAME_MAP:
-            self.log.info(
+            self.log.debug(
                 f"Fetching terms for codelist with name '{name}', id {CODELIST_NAME_MAP[name]}"
             )
             params = {"codelist_uid": CODELIST_NAME_MAP[name]}
         else:
-            self.log.info(f"Fetching terms for codelist with name '{name}'")
+            self.log.debug(f"Fetching terms for codelist with name '{name}'")
             params = {"codelist_name": name}
         items = self.api.get_all_from_api("/ct/terms", params=params)
         if items is None:
@@ -534,10 +564,16 @@ class BaseImporter:
 
     @lru_cache(maxsize=10000)
     def get_codelist_uid_from_submval(self, submval):
-        params = {"filters": json.dumps({"submission_value": {"v": [submval], "op": "eq"}}), "page_number": 1, "page_size": 0}
+        params = {
+            "filters": json.dumps({"submission_value": {"v": [submval], "op": "eq"}}),
+            "page_number": 1,
+            "page_size": 0,
+        }
         cl_attrs = self.api.get_all_from_api("/ct/codelists/attributes", params=params)
         if len(cl_attrs) == 0:
-            self.log.warning(f"Unable to find codelist for submission value '{submval}'")
+            self.log.warning(
+                f"Unable to find codelist for submission value '{submval}'"
+            )
             return
         cl_uid = cl_attrs[0]["codelist_uid"]
         return cl_uid
@@ -590,9 +626,9 @@ class BaseImporter:
 
     @lru_cache(maxsize=10000)
     def lookup_dictionary_uid(self, name):
-        self.log.info(f"Looking up dictionary with name '{name}'")
+        self.log.debug(f"Looking up dictionary with name '{name}'")
         items = self.api.get_all_from_api(
-            f"/dictionaries/codelists", params={"library_name": name}
+            "/dictionaries/codelists", params={"library_name": name}
         )
         if items is not None and len(items) > 0:
             uid = items[0].get("codelist_uid", None)
@@ -602,7 +638,7 @@ class BaseImporter:
 
     @lru_cache(maxsize=10000)
     def lookup_ct_codelist_uid(self, name):
-        self.log.info(f"Looking up ct codelist with name '{name}'")
+        self.log.debug(f"Looking up ct codelist with name '{name}'")
         filt = {"name": {"v": [name], "op": "eq"}}
         items = self.api.get_all_from_api(
             "/ct/codelists/names", params={"filters": json.dumps(filt)}
@@ -616,7 +652,7 @@ class BaseImporter:
     @lru_cache(maxsize=10000)
     def fetch_dictionary_terms(self, name):
         uid = self.lookup_dictionary_uid(name)
-        self.log.info(f"Fetching terms for dictionary with name '{name}'")
+        self.log.debug(f"Fetching terms for dictionary with name '{name}'")
         items = self.api.get_all_from_api(
             "/dictionaries/terms", params={"codelist_uid": uid}
         )
@@ -627,7 +663,7 @@ class BaseImporter:
 
     @lru_cache(maxsize=10000)
     def lookup_dictionary_term_uid(self, dictionary_name, term_name):
-        self.log.info(
+        self.log.debug(
             f"Looking up term with name '{term_name}' from dictionary '{dictionary_name}'"
         )
         snomed_uid = self.lookup_dictionary_uid(dictionary_name)
@@ -644,7 +680,7 @@ class BaseImporter:
 
     @lru_cache(maxsize=10000)
     def lookup_codelist_term_name_from_concept_id(self, codelist_name, concept_id):
-        self.log.info(
+        self.log.debug(
             f"Looking up term with concept id '{concept_id}' from codelist '{codelist_name}'"
         )
         terms = self.fetch_codelist_terms(codelist_name)
@@ -660,10 +696,9 @@ class BaseImporter:
             f"Could not find term with concept id '{concept_id}' in codelist '{codelist_name}'"
         )
 
-
     @open_file_async()
     async def import_codelist_terms(self, csvfile, session):
-        #self.code_lists_uids = self.api.get_code_lists_uids()
+        # self.code_lists_uids = self.api.get_code_lists_uids()
         readCSV = csv.DictReader(csvfile, delimiter=",")
         api_tasks = []
         codelist_uid = None
@@ -740,7 +775,9 @@ class BaseImporter:
             ]
             use_existing_cl_term = row.get("USE_EXISTING_CL_TERM", None)
             if use_existing_cl_term:
-                existing_cl_submval, existing_term_submval = use_existing_cl_term.split(":")
+                existing_cl_submval, existing_term_submval = use_existing_cl_term.split(
+                    ":"
+                )
             else:
                 existing_cl_submval = None
                 existing_term_submval = None
@@ -765,13 +802,14 @@ class BaseImporter:
             self.log.info(
                 f"Adding term with name '{name}' to codelist with uid '{codelist_uid}'"
             )
-            api_tasks.append(self.process_simple_term_migration(data=data, session=session))
+            api_tasks.append(
+                self.process_simple_term_migration(data=data, session=session)
+            )
         await asyncio.gather(*api_tasks)
-
 
     @open_file_async()
     async def import_codelist_term_ordering(self, csvfile, session):
-        #self.code_lists_uids = self.api.get_code_lists_uids()
+        # self.code_lists_uids = self.api.get_code_lists_uids()
         readCSV = csv.DictReader(csvfile, delimiter=",")
         api_tasks = []
         codelist_uid = None
@@ -788,22 +826,21 @@ class BaseImporter:
                 self.log.warning(
                     f"Codelist submission value '{codelist_submval}' not found, skipping."
                 )
-                self.metrics.icrement(
-                    "/ct/codelists - SkippedASMissingcodelist_uid"
-                )
+                self.metrics.icrement("/ct/codelists - SkippedASMissingcodelist_uid")
                 continue
             try:
                 order = int(row.get("ORDER"))
             except ValueError:
-                self.log.error(
-                    f"Row does not have a valid order, skipping: {row}"
-                )
+                self.log.error(f"Row does not have a valid order, skipping: {row}")
                 continue
             term_submval = row.get("TERM_SUBMVAL")
             self.log.info(
                 f"Setting order {order} for term '{term_submval}' in codelist '{codelist_uid}'"
             )
 
-
-            api_tasks.append(self.update_term_order(codelist_uid, term_submval, order, session=session))
+            api_tasks.append(
+                self.update_term_order(
+                    codelist_uid, term_submval, order, session=session
+                )
+            )
         await asyncio.gather(*api_tasks)

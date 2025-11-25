@@ -94,6 +94,9 @@ def get_all_odm_study_events(
     total_count: Annotated[
         bool, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
+    version: Annotated[
+        str | None, Query(description="Get a specific version of the ODM element")
+    ] = None,
 ) -> CustomPage[OdmStudyEvent]:
     odm_study_event_service = OdmStudyEventService()
     results = odm_study_event_service.get_all_concepts(
@@ -104,6 +107,7 @@ def get_all_odm_study_events(
         total_count=total_count,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
+        version=version or None,
     )
     return CustomPage(
         items=results.items, total=results.total, page=page_number, size=page_size
@@ -170,9 +174,14 @@ def get_distinct_values_for_header(
 )
 def get_odm_study_event(
     odm_study_event_uid: Annotated[str, OdmStudyEventUID],
+    version: Annotated[
+        str | None, Query(description="Get a specific version of the ODM element")
+    ] = None,
 ) -> OdmStudyEvent:
     odm_study_event_service = OdmStudyEventService()
-    return odm_study_event_service.get_by_uid(uid=odm_study_event_uid)
+    return odm_study_event_service.get_by_uid(
+        uid=odm_study_event_uid, version=version or None
+    )
 
 
 @router.get(
@@ -318,9 +327,17 @@ Possible errors:
 )
 def create_odm_study_event_version(
     odm_study_event_uid: Annotated[str, OdmStudyEventUID],
+    cascade_new_version: Annotated[
+        bool,
+        Query(description="If true, all child elements will also get a new version."),
+    ] = False,
 ) -> OdmStudyEvent:
     odm_study_event_service = OdmStudyEventService()
-    return odm_study_event_service.create_new_version(uid=odm_study_event_uid)
+    return odm_study_event_service.create_new_version(
+        uid=odm_study_event_uid,
+        cascade_new_version=cascade_new_version,
+        force_new_value_node=True,
+    )
 
 
 @router.post(
@@ -347,7 +364,9 @@ def approve_odm_study_event(
     odm_study_event_uid: Annotated[str, OdmStudyEventUID],
 ) -> OdmStudyEvent:
     odm_study_event_service = OdmStudyEventService()
-    return odm_study_event_service.approve(uid=odm_study_event_uid)
+    return odm_study_event_service.approve(
+        uid=odm_study_event_uid, cascade_edit_and_approve=True
+    )
 
 
 @router.delete(
@@ -373,7 +392,9 @@ def inactivate_odm_study_event(
     odm_study_event_uid: Annotated[str, OdmStudyEventUID],
 ) -> OdmStudyEvent:
     odm_study_event_service = OdmStudyEventService()
-    return odm_study_event_service.inactivate_final(uid=odm_study_event_uid)
+    return odm_study_event_service.inactivate_final(
+        uid=odm_study_event_uid, force_new_value_node=True
+    )
 
 
 @router.post(
@@ -399,7 +420,9 @@ def reactivate_odm_study_event(
     odm_study_event_uid: Annotated[str, OdmStudyEventUID],
 ) -> OdmStudyEvent:
     odm_study_event_service = OdmStudyEventService()
-    return odm_study_event_service.reactivate_retired(uid=odm_study_event_uid)
+    return odm_study_event_service.reactivate_retired(
+        uid=odm_study_event_uid, force_new_value_node=True
+    )
 
 
 @router.post(

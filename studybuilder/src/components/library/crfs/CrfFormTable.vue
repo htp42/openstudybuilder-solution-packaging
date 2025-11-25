@@ -43,41 +43,50 @@
           <template #activator="{ props }">
             <div
               v-bind="props"
-              v-html="sanitizeHTMLHandler(getDescription(item, true))"
+              v-html="
+                sanitizeHTMLHandler(
+                  getDescriptionAttribute(item, 'description', true)
+                )
+              "
             />
           </template>
-          <span>{{ getDescription(item, false) }}</span>
+          <span>{{ getDescriptionAttribute(item, 'description', false) }}</span>
         </v-tooltip>
       </template>
-      <template #[`item.notes`]="{ item }">
+      <template #[`item.sponsor_instruction`]="{ item }">
         <v-tooltip bottom>
           <template #activator="{ props }">
             <div
               v-bind="props"
-              v-html="sanitizeHTMLHandler(getNotes(item, true))"
+              v-html="
+                sanitizeHTMLHandler(
+                  getDescriptionAttribute(item, 'sponsor_instruction', true)
+                )
+              "
             />
           </template>
-          <span>{{ getNotes(item, false) }}</span>
+          <span>{{
+            getDescriptionAttribute(item, 'sponsor_instruction', false)
+          }}</span>
+        </v-tooltip>
+      </template>
+      <template #[`item.instruction`]="{ item }">
+        <v-tooltip bottom>
+          <template #activator="{ props }">
+            <div
+              v-bind="props"
+              v-html="
+                sanitizeHTMLHandler(
+                  getDescriptionAttribute(item, 'instruction', true)
+                )
+              "
+            />
+          </template>
+          <span>{{ getDescriptionAttribute(item, 'instruction', false) }}</span>
         </v-tooltip>
       </template>
       <template #[`item.repeating`]="{ item }">
         {{ item.repeating }}
-      </template>
-      <template #[`item.activity_groups`]="{ item }">
-        <v-tooltip bottom>
-          <template #activator="{ props }">
-            <div v-bind="props">
-              {{
-                item.activity_groups[0]
-                  ? item.activity_groups.length > 1
-                    ? item.activity_groups[0].name + '...'
-                    : item.activity_groups[0].name
-                  : ''
-              }}
-            </div>
-          </template>
-          <span>{{ $filters.names(item.activity_groups) }}</span>
-        </v-tooltip>
       </template>
       <template #[`item.status`]="{ item }">
         <StatusChip :status="item.status" />
@@ -113,6 +122,8 @@
       @close="closeLinkForm"
     />
     <ConfirmDialog ref="confirm" :text-cols="6" :action-cols="5" />
+    <CrfApprovalSummaryConfirmDialog ref="confirmApproval" />
+    <CrfNewVersionSummaryConfirmDialog ref="confirmNewVersion" />
   </div>
 </template>
 
@@ -127,13 +138,14 @@ import CrfActivitiesModelsLinkForm from '@/components/library/crfs/CrfActivities
 import statuses from '@/constants/statuses'
 import filteringParameters from '@/utils/filteringParameters'
 import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
+import CrfApprovalSummaryConfirmDialog from '@/components/library/crfs/CrfApprovalSummaryConfirmDialog.vue'
 import crfTypes from '@/constants/crfTypes'
 import parameters from '@/constants/parameters'
-import dataFormating from '@/utils/dataFormating'
 import { useAccessGuard } from '@/composables/accessGuard'
 import { useCrfsStore } from '@/stores/crfs'
 import { computed } from 'vue'
 import { sanitizeHTML } from '@/utils/sanitize'
+import CrfNewVersionSummaryConfirmDialog from '@/components/library/crfs/CrfNewVersionSummaryConfirmDialog.vue'
 
 export default {
   components: {
@@ -144,14 +156,16 @@ export default {
     HistoryTable,
     CrfActivitiesModelsLinkForm,
     ConfirmDialog,
+    CrfApprovalSummaryConfirmDialog,
+    CrfNewVersionSummaryConfirmDialog,
   },
+  inject: ['eventBusEmit'],
   props: {
     elementProp: {
       type: Object,
       default: null,
     },
   },
-  emits: ['updateForm'],
   setup() {
     const crfsStore = useCrfsStore()
 
@@ -227,14 +241,6 @@ export default {
           click: this.delete,
         },
         {
-          label: this.$t('CrfLinikingForm.link_activity_groups'),
-          icon: 'mdi-plus',
-          iconColor: 'primary',
-          condition: (item) => item.status === statuses.DRAFT,
-          accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.openLinkForm,
-        },
-        {
           label: this.$t('_global.history'),
           icon: 'mdi-history',
           click: this.openFormHistory,
@@ -250,19 +256,19 @@ export default {
           filteringName: 'descriptions.description',
         },
         {
-          title: this.$t('CRFItems.impl_notes'),
-          key: 'notes',
+          title: this.$t('CRFDescriptions.sponsor_instruction'),
+          key: 'sponsor_instruction',
           filteringName: 'descriptions.sponsor_instruction',
         },
         {
-          title: this.$t('CrfFormTable.repeating'),
-          key: 'repeating',
-          width: '1%',
+          title: this.$t('CRFDescriptions.instruction'),
+          key: 'instruction',
+          filteringName: 'descriptions.instruction',
         },
         {
-          title: this.$t('_global.links'),
-          key: 'activity_groups',
-          filteringName: 'activity_groups.name',
+          title: this.$t('CRFFormTable.repeating'),
+          key: 'repeating',
+          width: '1%',
         },
         { title: this.$t('_global.version'), key: 'version', width: '1%' },
         { title: this.$t('_global.status'), key: 'status', width: '1%' },
@@ -279,7 +285,7 @@ export default {
   computed: {
     formHistoryTitle() {
       if (this.selectedForm) {
-        return this.$t('CrfFormTable.form_history_title', {
+        return this.$t('CRFFormTable.form_history_title', {
           formUid: this.selectedForm.uid,
         })
       }
@@ -309,37 +315,24 @@ export default {
     sanitizeHTMLHandler(html) {
       return sanitizeHTML(html)
     },
-    getDescription(item, short) {
+    getDescriptionAttribute(item, attr, short) {
       const engDesc = item.descriptions.find(
         (el) => el.language === parameters.ENG
       )
-      if (engDesc && engDesc.description) {
+      if (engDesc && engDesc[attr]) {
         return short
-          ? engDesc.description.length > 40
-            ? engDesc.description.substring(0, 40) + '...'
-            : engDesc.description
-          : engDesc.description
-      }
-      return ''
-    },
-    getNotes(item, short) {
-      const engDesc = item.descriptions.find(
-        (el) => el.language === parameters.ENG
-      )
-      if (engDesc && engDesc.sponsor_instruction) {
-        return short
-          ? engDesc.sponsor_instruction.length > 40
-            ? engDesc.sponsor_instruction.substring(0, 40) + '...'
-            : engDesc.sponsor_instruction
-          : engDesc.sponsor_instruction
+          ? engDesc[attr].length > 40
+            ? engDesc[attr].substring(0, 40) + '...'
+            : engDesc[attr]
+          : engDesc[attr]
       }
       return ''
     },
     async delete(item) {
       let relationships = 0
       await crfs.getRelationships(item.uid, 'forms').then((resp) => {
-        if (resp.data.OdmTemplate && resp.data.OdmTemplate.length > 0) {
-          relationships = resp.data.OdmTemplate.length
+        if (resp.data.OdmStudyEvent && resp.data.OdmStudyEvent.length > 0) {
+          relationships = resp.data.OdmStudyEvent.length
         }
       })
       const options = {
@@ -350,7 +343,7 @@ export default {
       if (
         relationships > 0 &&
         (await this.$refs.confirm.open(
-          `${this.$t('CRFForms.delete_warning_1')} ${relationships} ${this.$t('CRFForms.delete_warning_2')}`,
+          `${this.$t('CRFForms.delete_warning', { count: relationships })}`,
           options
         ))
       ) {
@@ -363,51 +356,45 @@ export default {
         })
       }
     },
-    approve(item) {
-      crfs.approve('forms', item.uid).then((resp) => {
-        this.$emit('updateForm', { type: crfTypes.FORM, element: resp.data })
-        this.$refs.table.filterTable()
-      })
+    async approve(item) {
+      if (
+        await this.$refs.confirmApproval.open({
+          agreeLabel: this.$t('CRFForms.approve_form'),
+          form: item,
+        })
+      ) {
+        crfs.approve('forms', item.uid).then(() => {
+          this.$refs.table.filterTable()
+
+          this.eventBusEmit('notification', {
+            msg: this.$t('CRFForms.approved'),
+          })
+        })
+      }
     },
     inactivate(item) {
-      crfs.inactivate('forms', item.uid).then((resp) => {
-        this.$emit('updateForm', { type: crfTypes.FORM, element: resp.data })
+      crfs.inactivate('forms', item.uid).then(() => {
         this.$refs.table.filterTable()
       })
     },
     reactivate(item) {
-      crfs.reactivate('forms', item.uid).then((resp) => {
-        this.$emit('updateForm', { type: crfTypes.FORM, element: resp.data })
+      crfs.reactivate('forms', item.uid).then(() => {
         this.$refs.table.filterTable()
       })
     },
     async newVersion(item) {
-      let relationships = 0
-      await crfs.getRelationships(item.uid, 'forms').then((resp) => {
-        if (resp.data.OdmTemplate && resp.data.OdmTemplate.length > 0) {
-          relationships = resp.data.OdmTemplate.length
-        }
-      })
-      const options = {
-        type: 'warning',
-        cancelLabel: this.$t('_global.cancel'),
-        agreeLabel: this.$t('_global.continue'),
-      }
       if (
-        relationships > 1 &&
-        (await this.$refs.confirm.open(
-          `${this.$t('CRFForms.new_version_warning')}`,
-          options
-        ))
-      ) {
-        crfs.newVersion('forms', item.uid).then((resp) => {
-          this.$emit('updateForm', { type: crfTypes.FORM, element: resp.data })
-          this.$refs.table.filterTable()
+        await this.$refs.confirmNewVersion.open({
+          agreeLabel: this.$t('CRFForms.create_new_version'),
+          form: item,
         })
-      } else if (relationships <= 1) {
-        crfs.newVersion('forms', item.uid).then((resp) => {
-          this.$emit('updateForm', { type: crfTypes.FORM, element: resp.data })
+      ) {
+        crfs.newVersion('forms', item.uid).then(() => {
           this.$refs.table.filterTable()
+
+          this.eventBusEmit('notification', {
+            msg: this.$t('_global.new_version_success'),
+          })
         })
       }
     },
@@ -435,25 +422,12 @@ export default {
     async openFormHistory(form) {
       this.selectedForm = form
       const resp = await crfs.getFormAuditTrail(form.uid)
-      this.formHistoryItems = this.transformItems(resp.data)
+      this.formHistoryItems = resp.data
       this.showFormHistory = true
     },
     closeFormHistory() {
       this.selectedForm = null
       this.showFormHistory = false
-    },
-    transformItems(items) {
-      const result = []
-      for (const item of items) {
-        const newItem = { ...item }
-        if (newItem.activity_groups) {
-          newItem.activity_groups = dataFormating.names(newItem.activity_groups)
-        } else {
-          newItem.activity_groups = ''
-        }
-        result.push(newItem)
-      }
-      return result
     },
     openLinkForm(item) {
       this.selectedForm = item

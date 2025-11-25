@@ -19,7 +19,6 @@ from clinical_mdr_api.models.concepts.activities.activity_instance import (
     ActivityInstanceCreateInput,
     ActivityInstanceEditInput,
     ActivityInstanceOverview,
-    ActivityInstancePreviewInput,
     ActivityInstanceVersion,
     SimpleActivityInstanceGrouping,
     SimplifiedActivityItem,
@@ -53,13 +52,6 @@ class ActivityInstanceService(ConceptGenericService[ActivityInstanceAR]):
             find_activity_group_by_uid=self._repos.activity_group_repository.find_by_uid_2,
         )
 
-    def create(
-        self,
-        concept_input: ActivityInstanceCreateInput | ActivityInstancePreviewInput,
-        preview: bool = False,
-    ) -> ActivityInstance:
-        return self.non_transactional_create(concept_input, preview=preview)
-
     def _create_aggregate_root(
         self,
         concept_input: ActivityInstanceCreateInput,
@@ -84,18 +76,6 @@ class ActivityInstanceService(ConceptGenericService[ActivityInstanceAR]):
                     )
                     for ct_term in item.ct_terms
                 ]
-                odm_forms: list[CompactOdmForm] = [
-                    CompactOdmForm(uid=odm_form_uid, oid=None, name=None)
-                    for odm_form_uid in item.odm_form_uids
-                ]
-                odm_item_groups: list[CompactOdmItemGroup] = [
-                    CompactOdmItemGroup(uid=odm_item_group_uid, oid=None, name=None)
-                    for odm_item_group_uid in item.odm_item_group_uids
-                ]
-                odm_items: list[CompactOdmItem] = [
-                    CompactOdmItem(uid=odm_item_uid, oid=None, name=None)
-                    for odm_item_uid in item.odm_item_uids
-                ]
                 activity_items.append(
                     ActivityItemVO.from_repository_values(
                         is_adam_param_specific=item.is_adam_param_specific,
@@ -103,9 +83,9 @@ class ActivityInstanceService(ConceptGenericService[ActivityInstanceAR]):
                         activity_item_class_name=None,
                         ct_terms=ct_terms,
                         unit_definitions=unit_definitions,
-                        odm_forms=odm_forms,
-                        odm_item_groups=odm_item_groups,
-                        odm_items=odm_items,
+                        odm_form=CompactOdmForm(uid=item.odm_form_uid),
+                        odm_item_group=CompactOdmItemGroup(uid=item.odm_item_group_uid),
+                        odm_item=CompactOdmItem(uid=item.odm_item_uid),
                     )
                 )
 
@@ -153,9 +133,9 @@ class ActivityInstanceService(ConceptGenericService[ActivityInstanceAR]):
             concept_exists_by_library_and_property_value_callback=self._repos.activity_instance_repository.latest_concept_in_library_exists_by_property_value,
             ct_term_exists_by_uid_callback=self._repos.ct_term_name_repository.term_exists,
             unit_definition_exists_by_uid_callback=self._repos.unit_definition_repository.final_concept_exists,
-            odm_form_exists_by_uid_callback=self._repos.odm_form_repository.final_concept_exists,
-            odm_item_group_exists_by_uid_callback=self._repos.odm_item_group_repository.final_concept_exists,
-            odm_item_exists_by_uid_callback=self._repos.odm_item_repository.final_concept_exists,
+            get_odm_form_by_uid_callback=self._repos.odm_form_repository.find_by_uid_2,
+            get_odm_item_group_by_uid_callback=self._repos.odm_item_group_repository.find_by_uid_2,
+            get_odm_item_by_uid_callback=self._repos.odm_item_repository.find_by_uid_2,
             get_final_activity_value_by_uid_callback=self._repos.activity_repository.final_concept_value,
             activity_group_exists=self._repos.activity_group_repository.final_concept_exists,
             activity_subgroup_exists=self._repos.activity_subgroup_repository.final_concept_exists,
@@ -216,18 +196,6 @@ class ActivityInstanceService(ConceptGenericService[ActivityInstanceAR]):
                         )
                         for ct_term in activity_item.ct_terms
                     ]
-                    odm_forms: list[CompactOdmForm] = [
-                        CompactOdmForm(uid=odm_form_uid, oid=None, name=None)
-                        for odm_form_uid in activity_item.odm_form_uids
-                    ]
-                    odm_item_groups: list[CompactOdmItemGroup] = [
-                        CompactOdmItemGroup(uid=odm_item_group_uid, oid=None, name=None)
-                        for odm_item_group_uid in activity_item.odm_item_group_uids
-                    ]
-                    odm_items: list[CompactOdmItem] = [
-                        CompactOdmItem(uid=odm_item_uid, oid=None, name=None)
-                        for odm_item_uid in activity_item.odm_item_uids
-                    ]
                     activity_items.append(
                         ActivityItemVO.from_repository_values(
                             is_adam_param_specific=activity_item.is_adam_param_specific,
@@ -235,9 +203,11 @@ class ActivityInstanceService(ConceptGenericService[ActivityInstanceAR]):
                             activity_item_class_name=None,
                             ct_terms=ct_terms,
                             unit_definitions=unit_definitions,
-                            odm_forms=odm_forms,
-                            odm_item_groups=odm_item_groups,
-                            odm_items=odm_items,
+                            odm_form=CompactOdmForm(uid=activity_item.odm_form_uid),
+                            odm_item_group=CompactOdmItemGroup(
+                                uid=activity_item.odm_item_group_uid
+                            ),
+                            odm_item=CompactOdmItem(uid=activity_item.odm_item_uid),
                         )
                     )
         else:
@@ -310,9 +280,9 @@ class ActivityInstanceService(ConceptGenericService[ActivityInstanceAR]):
             concept_exists_by_library_and_property_value_callback=self._repos.activity_instance_repository.latest_concept_in_library_exists_by_property_value,
             ct_term_exists_by_uid_callback=self._repos.ct_term_name_repository.term_exists,
             unit_definition_exists_by_uid_callback=self._repos.unit_definition_repository.final_concept_exists,
-            odm_form_exists_by_uid_callback=self._repos.odm_form_repository.final_concept_exists,
-            odm_item_group_exists_by_uid_callback=self._repos.odm_item_group_repository.final_concept_exists,
-            odm_item_exists_by_uid_callback=self._repos.odm_item_repository.final_concept_exists,
+            get_odm_form_by_uid_callback=self._repos.odm_form_repository.find_by_uid_2,
+            get_odm_item_group_by_uid_callback=self._repos.odm_item_group_repository.find_by_uid_2,
+            get_odm_item_by_uid_callback=self._repos.odm_item_repository.find_by_uid_2,
             get_final_activity_value_by_uid_callback=self._repos.activity_repository.final_concept_value,
             activity_group_exists=self._repos.activity_group_repository.final_concept_exists,
             activity_subgroup_exists=self._repos.activity_subgroup_repository.final_concept_exists,

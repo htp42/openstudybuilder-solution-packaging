@@ -652,16 +652,8 @@ node.CTCatalogue {
   border-color: #5db665;
   text-color-internal: #2A2C34;
 }
-node.OdmDescriptionRoot {
-  defaultCaption: "<id>";
-  diameter: 10px;
-  color: #569480;
-  border-color: #447666;
-  text-color-internal: #FFFFFF;
-  caption: "{uid}";
-}
-node.OdmDescriptionValue {
-  defaultCaption: "<id>";
+node.OdmDescription {
+  defaultCaption: "<name>";
   color: #569480;
   border-color: #447666;
   text-color-internal: #FFFFFF;
@@ -1829,29 +1821,13 @@ node.OdmAliasCounter {
   diameter: 50px;
   caption: "{count}";
 }
-node.OdmAliasRoot {
-  defaultCaption: "<id>";
-  color: #569480;
-  border-color: #447666;
-  text-color-internal: #FFFFFF;
-  caption: "{uid}";
-  diameter: 10px;
-}
-node.OdmAliasValue {
-  defaultCaption: "<id>";
+node.OdmAlias {
+  defaultCaption: "<name>";
   color: #569480;
   border-color: #447666;
   text-color-internal: #FFFFFF;
   diameter: 80px;
   caption: "{name}";
-}
-node.OdmDescriptionCounter {
-  defaultCaption: "<id>";
-  color: #569480;
-  border-color: #447666;
-  text-color-internal: #FFFFFF;
-  diameter: 50px;
-  caption: "{count}";
 }
 node.OdmFormCounter {
   defaultCaption: "<id>";

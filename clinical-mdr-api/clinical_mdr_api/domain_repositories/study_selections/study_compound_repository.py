@@ -117,15 +117,17 @@ class StudySelectionCompoundRepository:
             query += " OPTIONAL MATCH (sc)-[:HAS_TYPE_OF_TREATMENT]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(tot:CTTermRoot)"
         query += """
             WITH DISTINCT sr, sv, sc, car, cr, mpr, tot
-            OPTIONAL MATCH (sc)-[:HAS_DOSE_FREQUENCY]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(doseFrequency:CTTermRoot)
-            OPTIONAL MATCH (sc)-[:HAS_DELIVERY_DEVICE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(deliveryDevice:CTTermRoot)
-            OPTIONAL MATCH (sc)-[:HAS_DISPENSED_IN]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(di:CTTermRoot)
+            OPTIONAL MATCH (sc)-[:HAS_DOSE_FREQUENCY]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(doseFrequency:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(doseFrequencyNameVal:CTTermNameValue)
+            OPTIONAL MATCH (sc)-[:HAS_DELIVERY_DEVICE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(deliveryDevice:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(deliveryDeviceNameVal:CTTermNameValue)
+            OPTIONAL MATCH (sc)-[:HAS_DISPENSED_IN]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(dispenser:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(dispenserNameVal:CTTermNameValue)
             OPTIONAL MATCH (sc)-[:HAS_REASON_FOR_NULL_VALUE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(nvr:CTTermRoot)
             OPTIONAL MATCH (sc)-[:STUDY_COMPOUND_HAS_COMPOUND_DOSING]->(scd:StudyCompoundDosing)<-[:HAS_STUDY_COMPOUND_DOSING]-(sv)
 
             MATCH (sc)<-[:AFTER]-(sa:StudyAction)
 
-            WITH sr, sc, car, cr, mpr, tot, doseFrequency, deliveryDevice, di, nvr, scd, sa
+            WITH sr, sc, car, cr, mpr, tot,
+                doseFrequency, doseFrequencyNameVal, deliveryDevice, deliveryDeviceNameVal, dispenser, dispenserNameVal,
+                nvr, scd, sa
             RETURN
                 sr.uid AS study_uid,
                 sc.uid AS study_compound_uid,
@@ -136,8 +138,11 @@ class StudySelectionCompoundRepository:
                 mpr.uid AS medicinal_product_uid,
                 tot.uid AS type_of_treatment_uid,
                 doseFrequency.uid AS dose_frequency_uid,
+                {uid: doseFrequency.uid, name: doseFrequencyNameVal.name} AS dose_frequency,
                 deliveryDevice.uid AS delivery_device_uid,
-                di.uid AS dispenser_uid,
+                {uid: deliveryDevice.uid, name: deliveryDeviceNameVal.name} AS delivery_device,
+                dispenser.uid AS dispenser_uid,
+                {uid: dispenser.uid, name: dispenserNameVal.name} AS dispenser,
                 nvr.uid AS reason_for_missing,
                 count(scd) AS study_compound_dosing_count,
                 sa.date AS start_date,
@@ -155,8 +160,11 @@ class StudySelectionCompoundRepository:
                 medicinal_product_uid=selection["medicinal_product_uid"],
                 type_of_treatment_uid=selection["type_of_treatment_uid"],
                 dose_frequency_uid=selection["dose_frequency_uid"],
+                dose_frequency=selection["dose_frequency"],
                 delivery_device_uid=selection["delivery_device_uid"],
+                delivery_device=selection["delivery_device"],
                 dispenser_uid=selection["dispenser_uid"],
+                dispenser=selection["dispenser"],
                 reason_for_missing_value_uid=selection["reason_for_missing"],
                 study_compound_dosing_count=selection["study_compound_dosing_count"],
                 study_selection_uid=selection["study_compound_uid"],
@@ -248,14 +256,16 @@ class StudySelectionCompoundRepository:
         WITH DISTINCT sr, sv, sc, car, cr, mpr
         OPTIONAL MATCH (sc)-[:HAS_TYPE_OF_TREATMENT]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(tot:CTTermRoot)
         WITH DISTINCT sr, sv, sc, car, cr, mpr, tot
-        OPTIONAL MATCH (sc)-[:HAS_DOSE_FREQUENCY]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(doseFrequency:CTTermRoot)
-        OPTIONAL MATCH (sc)-[:HAS_DELIVERY_DEVICE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(deliveryDevice:CTTermRoot)
-        OPTIONAL MATCH (sc)-[:HAS_DISPENSED_IN]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(di:CTTermRoot)
+        OPTIONAL MATCH (sc)-[:HAS_DOSE_FREQUENCY]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(doseFrequency:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(doseFrequencyNameVal:CTTermNameValue)
+        OPTIONAL MATCH (sc)-[:HAS_DELIVERY_DEVICE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(deliveryDevice:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(deliveryDeviceNameVal:CTTermNameValue)
+        OPTIONAL MATCH (sc)-[:HAS_DISPENSED_IN]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(dispenser:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(dispenserNameVal:CTTermNameValue)
         OPTIONAL MATCH (sc)-[:HAS_REASON_FOR_NULL_VALUE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(nvr:CTTermRoot)
         OPTIONAL MATCH (sc)-[:STUDY_COMPOUND_HAS_COMPOUND_DOSING]->(scd)<-[:HAS_STUDY_COMPOUND_DOSING]-(sv)
         MATCH (sc)<-[:AFTER]-(sa:StudyAction)
 
-        WITH sr, sc, car, cr, mpr, tot, doseFrequency, deliveryDevice, di, nvr, scd, sa
+        WITH sr, sc, car, cr, mpr, tot,
+            doseFrequency, doseFrequencyNameVal, deliveryDevice, deliveryDeviceNameVal, dispenser, dispenserNameVal,
+            nvr, scd, sa
         RETURN
             sr.uid AS study_uid,
             sc.uid AS study_compound_uid,
@@ -266,8 +276,11 @@ class StudySelectionCompoundRepository:
             mpr.uid AS medicinal_product_uid,
             tot.uid AS type_of_treatment_uid,
             doseFrequency.uid AS dose_frequency_uid,
+            {uid: doseFrequency.uid, name: doseFrequencyNameVal.name} AS dose_frequency,
             deliveryDevice.uid AS delivery_device_uid,
-            di.uid AS dispenser_uid,
+            {uid: deliveryDevice.uid, name: deliveryDeviceNameVal.name} AS delivery_device,
+            dispenser.uid AS dispenser_uid,
+            {uid: dispenser.uid, name: dispenserNameVal.name} AS dispenser,
             nvr.uid AS reason_for_missing,
             count(scd) AS study_compound_dosing_count,
             sa.date AS start_date,
@@ -293,8 +306,94 @@ class StudySelectionCompoundRepository:
             medicinal_product_uid=selection["medicinal_product_uid"],
             type_of_treatment_uid=selection["type_of_treatment_uid"],
             dose_frequency_uid=selection["dose_frequency_uid"],
+            dose_frequency=selection["dose_frequency"],
             delivery_device_uid=selection["delivery_device_uid"],
+            delivery_device=selection["delivery_device"],
             dispenser_uid=selection["dispenser_uid"],
+            dispenser=selection["dispenser"],
+            reason_for_missing_value_uid=selection["reason_for_missing"],
+            study_compound_dosing_count=selection["study_compound_dosing_count"],
+            study_selection_uid=selection["study_compound_uid"],
+            start_date=convert_to_datetime(value=selection["start_date"]),
+            author_id=selection["author_id"],
+        )
+        return selection_vo, selection["order"]
+
+    def find_by_uid_and_dosing_uid(
+        self,
+        study_uid: str,
+        study_compound_uid: str,
+        study_compound_dosing_uid: str,
+    ) -> tuple[StudySelectionCompoundVO, int]:
+        """Find a study compound by its UID and linked study compound dosing UID.
+        Both of these UIDs are needed as a deleted study compound is not linked to any study value.
+        """
+        query_parameters = {
+            "study_uid": study_uid,
+            "study_compound_uid": study_compound_uid,
+            "study_compound_dosing_uid": study_compound_dosing_uid,
+        }
+        query = """
+        MATCH (sa:StudyAction)-[:AFTER]->(sc:StudyCompound {uid: $study_compound_uid})-[:STUDY_COMPOUND_HAS_COMPOUND_DOSING]->(scd:StudyCompoundDosing {uid: $study_compound_dosing_uid})
+        OPTIONAL MATCH (sc)-[:HAS_SELECTED_COMPOUND]->(:CompoundAliasValue)<-[:LATEST]-(car:CompoundAliasRoot)
+        OPTIONAL MATCH (sc)-[:HAS_SELECTED_COMPOUND]->(:CompoundAliasValue)-[:IS_COMPOUND]->(cr:CompoundRoot)
+        OPTIONAL MATCH (sc)-[:HAS_MEDICINAL_PRODUCT]->(:MedicinalProductValue)<-[:HAS_VERSION]-(mpr:MedicinalProductRoot)
+        WITH DISTINCT sc, sa, scd, car, cr, mpr
+        OPTIONAL MATCH (sc)-[:HAS_TYPE_OF_TREATMENT]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(tot:CTTermRoot)
+        WITH DISTINCT sc, sa, scd, car, cr, mpr, tot
+        OPTIONAL MATCH (sc)-[:HAS_DOSE_FREQUENCY]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(doseFrequency:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(doseFrequencyNameVal:CTTermNameValue)
+        OPTIONAL MATCH (sc)-[:HAS_DELIVERY_DEVICE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(deliveryDevice:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(deliveryDeviceNameVal:CTTermNameValue)
+        OPTIONAL MATCH (sc)-[:HAS_DISPENSED_IN]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(dispenser:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(dispenserNameVal:CTTermNameValue)
+        OPTIONAL MATCH (sc)-[:HAS_REASON_FOR_NULL_VALUE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(nvr:CTTermRoot)
+
+        WITH sc, sa, car, cr, mpr, tot,
+            doseFrequency, doseFrequencyNameVal, deliveryDevice, deliveryDeviceNameVal, dispenser, dispenserNameVal,
+            nvr, scd
+        RETURN
+            $study_uid AS study_uid,
+            sc.uid AS study_compound_uid,
+            sc.order AS order,
+            sc.other_information AS other_information,
+            cr.uid AS compound_uid,
+            car.uid AS compound_alias_uid,
+            mpr.uid AS medicinal_product_uid,
+            tot.uid AS type_of_treatment_uid,
+            doseFrequency.uid AS dose_frequency_uid,
+            {uid: doseFrequency.uid, name: doseFrequencyNameVal.name} AS dose_frequency,
+            deliveryDevice.uid AS delivery_device_uid,
+            {uid: deliveryDevice.uid, name: deliveryDeviceNameVal.name} AS delivery_device,
+            dispenser.uid AS dispenser_uid,
+            {uid: dispenser.uid, name: dispenserNameVal.name} AS dispenser,
+            nvr.uid AS reason_for_missing,
+            count(scd) AS study_compound_dosing_count,
+            sa.date AS start_date,
+            sa.author_id AS author_id
+            ORDER BY order
+        """
+
+        result = db.cypher_query(query, query_parameters)
+        result = utils.db_result_to_list(result)
+        NotFoundException.raise_if(
+            len(result) == 0,
+            msg=f"Study Compound with UID '{study_compound_uid}' doesn't exist for Study Compound Dosing with UID '{study_compound_dosing_uid}'",
+        )
+        assert (
+            len(result) == 1
+        ), f"Found more than 1 study compound with uid {study_compound_uid}"
+        selection = result[0]
+        selection_vo = StudySelectionCompoundVO.from_input_values(
+            study_uid=selection["study_uid"],
+            other_info=selection["other_information"],
+            compound_uid=selection["compound_uid"],
+            compound_alias_uid=selection["compound_alias_uid"],
+            medicinal_product_uid=selection["medicinal_product_uid"],
+            type_of_treatment_uid=selection["type_of_treatment_uid"],
+            dose_frequency_uid=selection["dose_frequency_uid"],
+            dose_frequency=selection["dose_frequency"],
+            delivery_device_uid=selection["delivery_device_uid"],
+            delivery_device=selection["delivery_device"],
+            dispenser_uid=selection["dispenser_uid"],
+            dispenser=selection["dispenser"],
             reason_for_missing_value_uid=selection["reason_for_missing"],
             study_compound_dosing_count=selection["study_compound_dosing_count"],
             study_selection_uid=selection["study_compound_uid"],
@@ -615,7 +714,7 @@ class StudySelectionCompoundRepository:
 
             WITH all_sc, cr, car, tot, mpr, doseFrequency, deliveryDevice, di, nvr, asa, bsa
             ORDER BY all_sc.uid, asa.date DESC
-            RETURN
+            RETURN DISTINCT
                 all_sc.uid AS study_selection_uid,
                 all_sc.order AS order,
                 all_sc.other_information AS other_information,

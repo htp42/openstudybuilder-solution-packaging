@@ -446,6 +446,7 @@ export default {
   },
   watch: {
     creationMode(value) {
+      this.preInstanceMode = true
       if (value === 'template') {
         this.steps = this.getInitialSteps()
         this.getFootnoteTemplates()

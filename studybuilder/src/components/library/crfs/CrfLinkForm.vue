@@ -1,7 +1,7 @@
 <template>
   <SimpleFormDialog
     ref="form"
-    :title="$t('CrfTree.link') + ' ' + itemsTypeName"
+    :title="$t('CRFTree.link') + ' ' + itemsTypeName"
     :help-items="helpItems"
     :open="open"
     max-width="1200px"
@@ -87,7 +87,7 @@ export default {
         { title: '', key: 'add', width: '5%' },
         { title: this.$t('_global.name'), key: 'name', width: '25%' },
         { title: this.$t('_global.description'), key: 'desc', width: '35%' },
-        { title: this.$t('CrfTree.impl_notes'), key: 'notes', width: '35%' },
+        { title: this.$t('CRFTree.impl_notes'), key: 'notes', width: '35%' },
       ],
       total: 0,
     }
@@ -95,10 +95,10 @@ export default {
   computed: {
     itemsTypeName() {
       return this.itemsType === 'forms'
-        ? this.$t('CrfTree.forms')
+        ? this.$t('CRFTree.forms')
         : this.itemsType === 'item-groups'
-          ? this.$t('CrfTree.item_groups')
-          : this.$t('CrfTree.items')
+          ? this.$t('CRFTree.item_groups')
+          : this.$t('CRFTree.items')
     },
   },
   watch: {
@@ -146,7 +146,7 @@ export default {
       switch (this.itemsType) {
         case 'forms':
           crfs
-            .addFormsToTemplate(payload, this.itemToLink.uid, true)
+            .addFormsToCollection(payload, this.itemToLink.uid, true)
             .then(() => {
               this.$emit('close')
             })

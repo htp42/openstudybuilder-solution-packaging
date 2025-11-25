@@ -25,7 +25,7 @@
                 data-cy="form-oid-name"
                 density="compact"
                 clearable
-                :readonly="readOnly"
+                :disabled="readOnly"
                 :rules="[formRules.required]"
               />
             </v-col>
@@ -36,7 +36,7 @@
                 data-cy="form-oid"
                 density="compact"
                 clearable
-                :readonly="readOnly"
+                :disabled="readOnly"
               />
             </v-col>
           </v-row>
@@ -45,14 +45,14 @@
               <v-radio-group
                 v-model="form.repeating"
                 :label="$t('CRFForms.repeating')"
-                :readonly="readOnly"
+                :disabled="readOnly"
               >
                 <v-radio :label="$t('_global.yes')" value="Yes" />
                 <v-radio :label="$t('_global.no')" value="No" />
               </v-radio-group>
             </v-col>
             <v-col cols="5">
-              <div class="subtitle-2 text--disabled">
+              <div class="subtitle-2">
                 {{ $t('_global.description') }}
               </div>
               <div v-show="readOnly">
@@ -75,8 +75,8 @@
               </div>
             </v-col>
             <v-col cols="5">
-              <div class="subtitle-2 text--disabled">
-                {{ $t('CRFForms.impl_notes') }}
+              <div class="subtitle-2">
+                {{ $t('CRFDescriptions.sponsor_instruction') }}
               </div>
               <div v-show="readOnly">
                 <QuillEditor
@@ -93,7 +93,7 @@
                   v-model:content="engDescription.sponsor_instruction"
                   content-type="html"
                   :toolbar="customToolbar"
-                  :placeholder="$t('CRFForms.impl_notes')"
+                  :placeholder="$t('CRFDescriptions.sponsor_instruction')"
                   data-cy="help-for-sponsor"
                   theme="snow"
                 />
@@ -109,16 +109,16 @@
             <v-col cols="3">
               <v-text-field
                 v-model="engDescription.name"
-                :label="$t('CRFForms.displayed_text')"
+                :label="$t('CRFDescriptions.name')"
                 data-cy="form-oid-displayed-text"
                 density="compact"
                 clearable
-                :readonly="readOnly"
+                :disabled="readOnly"
               />
             </v-col>
             <v-col cols="9">
-              <div class="subtitle-2 text-disabled">
-                {{ $t('CRFForms.compl_instructions') }}
+              <div class="subtitle-2">
+                {{ $t('CRFDescriptions.instruction') }}
               </div>
               <div v-show="readOnly">
                 <QuillEditor
@@ -135,7 +135,7 @@
                   v-model:content="engDescription.instruction"
                   content-type="html"
                   :toolbar="customToolbar"
-                  :placeholder="$t('CRFForms.compl_instructions')"
+                  :placeholder="$t('CRFDescriptions.instruction')"
                   data-cy="form-help-for-site"
                   theme="snow"
                 />
@@ -155,71 +155,12 @@
     </template>
     <template #[`step.alias`]="{ step }">
       <v-form :ref="`observer_${step}`">
-        <div class="mb-5">
-          {{ $t('CRFForms.create') }}
-        </div>
-        <v-row>
-          <v-col>
-            <v-text-field
-              v-model="alias.context"
-              :label="$t('CRFForms.context')"
-              data-cy="form-context"
-              density="compact"
-              clearable
-              :readonly="readOnly"
-            />
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col cols="10">
-            <v-text-field
-              v-model="alias.name"
-              :label="$t('CRFForms.name')"
-              data-cy="form-alias-name"
-              density="compact"
-              clearable
-              :readonly="readOnly"
-            />
-          </v-col>
-          <v-col>
-            <v-btn
-              data-cy="save-button"
-              color="secondary"
-              class="mr-2"
-              :disabled="readOnly"
-              @click="createAlias"
-            >
-              {{ $t('_global.save') }}
-            </v-btn>
-          </v-col>
-        </v-row>
-        <div class="mb-5">
-          {{ $t('CRFForms.select') }}
-        </div>
-        <NNTable
-          ref="aliasTable"
-          key="aliasTable"
-          v-model="form.alias_uids"
-          :headers="aliasesHeaders"
-          :items="aliases"
-          hide-default-switches
-          hide-export-button
-          show-select
-          table-height="400px"
-          :items-length="aliasesTotal"
-          :readonly="readOnly"
-          column-data-resource="concepts/odms/aliases"
-          @filter="getAliases"
-        />
+        <CrfAliasSelection v-model="form.aliases" :disabled="readOnly" />
       </v-form>
     </template>
     <template #[`step.description`]="{ step }">
       <v-form :ref="`observer_${step}`">
-        <CrfDescriptionTable
-          :edit-descriptions="desc"
-          :read-only="readOnly"
-          @set-desc="setDesc"
-        />
+        <CrfDescriptionSelection v-model="desc" :disabled="readOnly" />
       </v-form>
     </template>
     <template #[`step.change_description`]="{ step }">
@@ -248,11 +189,14 @@
     @close="closeLinkForm"
   />
   <ConfirmDialog ref="confirm" :text-cols="6" :action-cols="5" />
+  <CrfApprovalSummaryConfirmDialog ref="confirmApproval" />
+  <CrfNewVersionSummaryConfirmDialog ref="confirmNewVersion" />
 </template>
 
 <script>
 import crfs from '@/api/crfs'
-import CrfDescriptionTable from '@/components/library/crfs/CrfDescriptionTable.vue'
+import CrfAliasSelection from '@/components/library/crfs/CrfAliasSelection.vue'
+import CrfDescriptionSelection from '@/components/library/crfs/CrfDescriptionSelection.vue'
 import HorizontalStepperForm from '@/components/tools/HorizontalStepperForm.vue'
 import constants from '@/constants/libraries'
 import { QuillEditor } from '@vueup/vue-quill'
@@ -263,23 +207,25 @@ import actions from '@/constants/actions'
 import parameters from '@/constants/parameters'
 import CrfExtensionsManagementTable from '@/components/library/crfs/CrfExtensionsManagementTable.vue'
 import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
-import crfTypes from '@/constants/crfTypes'
-import NNTable from '@/components/tools/NNTable.vue'
+import CrfApprovalSummaryConfirmDialog from '@/components/library/crfs/CrfApprovalSummaryConfirmDialog.vue'
 import filteringParameters from '@/utils/filteringParameters'
 import { useAppStore } from '@/stores/app'
 import { computed } from 'vue'
 import regex from '@/utils/regex'
+import CrfNewVersionSummaryConfirmDialog from '@/components/library/crfs/CrfNewVersionSummaryConfirmDialog.vue'
 
 export default {
   components: {
     HorizontalStepperForm,
-    CrfDescriptionTable,
+    CrfAliasSelection,
+    CrfDescriptionSelection,
     QuillEditor,
     ActionsMenu,
     CrfActivitiesModelsLinkForm,
     CrfExtensionsManagementTable,
     ConfirmDialog,
-    NNTable,
+    CrfApprovalSummaryConfirmDialog,
+    CrfNewVersionSummaryConfirmDialog,
   },
   inject: ['eventBusEmit', 'formRules'],
   props: {
@@ -308,9 +254,9 @@ export default {
         'CRFForms.oid',
         'CRFForms.repeating',
         'CRFForms.description',
-        'CRFForms.impl_notes',
+        'CRFForms.sponsor_instruction',
+        'CRFForms.instruction',
         'CRFForms.displayed_text',
-        'CRFForms.compl_instructions',
         'CRFForms.vendor_extensions',
         'CRFForms.aliases',
         'CRFForms.context',
@@ -318,16 +264,12 @@ export default {
       form: {
         oid: 'F.',
         repeating: 'No',
-        alias_uids: [],
+        aliases: [],
+        descriptions: [],
       },
       aliases: [],
       aliasesTotal: 0,
       alias: {},
-      descriptionUids: [],
-      aliasesHeaders: [
-        { title: this.$t('CRFForms.context'), key: 'context' },
-        { title: this.$t('_global.name'), key: 'name' },
-      ],
       createSteps: [
         { name: 'form', title: this.$t('CRFForms.form_details') },
         {
@@ -363,7 +305,7 @@ export default {
       quillOptions: {
         readOnly: true,
       },
-      engDescription: { library_name: 'Sponsor', language: parameters.ENG },
+      engDescription: { language: parameters.ENG },
       readOnly: this.readOnlyProp,
       linkForm: false,
       selectedExtensions: [],
@@ -398,7 +340,7 @@ export default {
           click: this.delete,
         },
         {
-          label: this.$t('CrfLinikingForm.link_activities'),
+          label: this.$t('CRFLinkingForm.link_activities'),
           icon: 'mdi-plus',
           iconColor: 'primary',
           condition: () => this.readOnly,
@@ -484,52 +426,49 @@ export default {
       this.getForm()
     },
     async newVersion() {
-      let relationships = 0
-      await crfs
-        .getRelationships(this.selectedForm.uid, 'forms')
-        .then((resp) => {
-          if (resp.data.OdmTemplate && resp.data.OdmTemplate.length > 0) {
-            relationships = resp.data.OdmTemplate.length
-          }
-        })
-      const options = {
-        type: 'warning',
-        cancelLabel: this.$t('_global.cancel'),
-        agreeLabel: this.$t('_global.continue'),
-      }
       if (
-        relationships > 1 &&
-        (await this.$refs.confirm.open(
-          `${this.$t('CRFForms.new_version_warning')}`,
-          options
-        ))
+        await this.$refs.confirmNewVersion.open({
+          agreeLabel: this.$t('CRFForms.create_new_version'),
+          form: this.selectedForm,
+        })
       ) {
         crfs.newVersion('forms', this.selectedForm.uid).then((resp) => {
-          this.$emit('updateForm', { type: crfTypes.FORM, element: resp.data })
+          this.$emit('updateForm', resp.data)
           this.readOnly = false
           this.getForm()
-        })
-      } else if (relationships <= 1) {
-        crfs.newVersion('forms', this.selectedForm.uid).then((resp) => {
-          this.$emit('updateForm', { type: crfTypes.FORM, element: resp.data })
-          this.readOnly = false
-          this.getForm()
+
+          this.eventBusEmit('notification', {
+            msg: this.$t('_global.new_version_success'),
+          })
         })
       }
     },
     async approve() {
-      crfs.approve('forms', this.selectedForm.uid).then(() => {
-        this.readOnly = true
-        this.getForm()
-      })
+      if (
+        await this.$refs.confirmApproval.open({
+          agreeLabel: this.$t('CRFForms.approve_form'),
+          form: this.selectedForm,
+        })
+      ) {
+        crfs.approve('forms', this.selectedForm.uid).then((resp) => {
+          this.$emit('updateForm', resp.data)
+          this.readOnly = true
+          this.close()
+          this.getForm()
+
+          this.eventBusEmit('notification', {
+            msg: this.$t('CRFForms.approved'),
+          })
+        })
+      }
     },
     async delete() {
       let relationships = 0
       await crfs
         .getRelationships(this.selectedForm.uid, 'forms')
         .then((resp) => {
-          if (resp.data.OdmTemplate && resp.data.OdmTemplate.length > 0) {
-            relationships = resp.data.OdmTemplate.length
+          if (resp.data.OdmStudyEvent && resp.data.OdmStudyEvent.length > 0) {
+            relationships = resp.data.OdmStudyEvent.length
           }
         })
       const options = {
@@ -540,7 +479,7 @@ export default {
       if (
         relationships > 0 &&
         (await this.$refs.confirm.open(
-          `${this.$t('CRFForms.delete_warning_1')} ${relationships} ${this.$t('CRFForms.delete_warning_2')}`,
+          `${this.$t('CRFForms.delete_warning', { count: relationships })}`,
           options
         ))
       ) {
@@ -563,10 +502,9 @@ export default {
       this.form = {
         oid: 'F.',
         repeating: 'No',
-        alias_uids: [],
+        aliases: [],
       }
       this.engDescription = {
-        library_name: 'Sponsor',
         language: parameters.ENG,
       }
       this.desc = []
@@ -579,17 +517,13 @@ export default {
         this.close()
         return
       }
-      await this.createOrUpdateDescription()
+      await this.setDescription()
       this.form.library_name = constants.LIBRARY_SPONSOR
       if (this.form.oid === 'F.') {
         this.form.oid = null
       }
       try {
         if (this.isEdit()) {
-          this.form.alias_uids = this.form.alias_uids.map((alias) =>
-            alias.uid ? alias.uid : alias
-          )
-          this.form.scope_uid = null
           await crfs
             .updateForm(this.form, this.selectedForm.uid)
             .then(async () => {
@@ -619,47 +553,34 @@ export default {
         filters,
         filtersUpdated
       )
-      crfs.getAllAliases(params).then((resp) => {
-        this.aliases = resp.data.items.map(
-          (alias) =>
-            (alias = {
-              uid: alias.uid,
-              name: alias.name,
-              context: alias.context,
-              version: alias.version,
-            })
-        )
+      crfs.getAliases(params).then((resp) => {
+        this.aliases = resp.data.items
         this.aliasesTotal = resp.data.total
       })
     },
-    async createAlias() {
-      this.alias.library_name = constants.LIBRARY_SPONSOR
-      await crfs.createAlias(this.alias).then((resp) => {
-        this.form.alias_uids.push({
-          uid: resp.data.uid,
-          name: resp.data.name,
-          context: resp.data.context,
-          version: resp.data.version,
-        })
-        this.$refs.aliasTable.filterTable()
-        this.eventBusEmit('notification', {
-          msg: this.$t('CRFForms.alias_created'),
-        })
-      })
+    addAlias() {
+      if (!this.alias.name || !this.alias.context) {
+        return
+      }
+      const alias = {
+        name: this.alias.name,
+        context: this.alias.context,
+      }
+
+      const isDuplicate = this.aliases.some(
+        (a) => a.name === alias.name && a.context === alias.context
+      )
+
+      if (!isDuplicate) {
+        this.aliases.push({ ...alias })
+      }
+
+      this.form.aliases.push({ ...alias })
+      this.alias = {}
     },
-    async createOrUpdateDescription() {
+    async setDescription() {
       const descArray = []
-      this.desc.forEach((e) => {
-        if (e.uid) {
-          e.change_description = this.$t(
-            'CRFForms.description_change_description'
-          )
-          descArray.push(e)
-        } else {
-          e.library_name = constants.LIBRARY_SPONSOR
-          descArray.push(e)
-        }
-      })
+
       if (!this.engDescription.name) {
         this.engDescription.name = this.form.name
       }
@@ -672,11 +593,8 @@ export default {
       this.engDescription.sponsor_instruction = this.clearEmptyHtml(
         this.engDescription.sponsor_instruction
       )
-      this.engDescription.change_description = this.$t(
-        'CRFForms.description_change_description'
-      )
       descArray.push(this.engDescription)
-      this.form.descriptions = descArray
+      this.form.descriptions = [...descArray, ...this.desc]
     },
     setExtensions(extensions) {
       this.selectedExtensions = extensions
@@ -704,7 +622,7 @@ export default {
     },
     async initForm(item) {
       this.form = item
-      this.form.alias_uids = item.aliases
+      this.form.aliases = item.aliases
       this.form.change_description = this.$t('_global.draft_change')
       if (item.descriptions.find((el) => el.language === parameters.ENG)) {
         this.engDescription = item.descriptions.find(

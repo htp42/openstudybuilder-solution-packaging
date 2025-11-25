@@ -130,6 +130,21 @@ export const useAppStore = defineStore('app', {
                 url: { name: 'Units' },
               },
               {
+                title: i18n.t('Sidebar.library.compounds'),
+                url: { name: 'Compounds' },
+                featureFlag: 'compounds_library',
+              },
+            ],
+          },
+          {
+            id: 'data_collection_standards_title',
+            title: i18n.t('Sidebar.library.data_collection_standards'),
+            icon: 'mdi-arrow-collapse-all',
+            description: i18n.t(
+              'Library.data_collection_standards_description'
+            ),
+            children: [
+              {
                 title: i18n.t('Sidebar.library.crf_viewer'),
                 url: { name: 'CrfViewer' },
               },
@@ -137,11 +152,6 @@ export const useAppStore = defineStore('app', {
                 title: i18n.t('Sidebar.library.crf_builder'),
                 url: { name: 'CrfBuilder' },
               },
-              // Temporarily removed
-              // {
-              //   title: i18n.t('Sidebar.library.compounds'),
-              //   url: { name: 'Compounds' },
-              // },
             ],
           },
           {
@@ -412,15 +422,15 @@ export const useAppStore = defineStore('app', {
                 },
                 studyRequired: true,
               },
-              // Temporarily removed
-              // {
-              //   title: i18n.t('Sidebar.study.study_interventions'),
-              //   url: {
-              //     name: 'StudyInterventions',
-              //     params: { study_id: studyId },
-              //   },
-              //   studyRequired: true,
-              // },
+              {
+                title: i18n.t('Sidebar.study.study_interventions'),
+                url: {
+                  name: 'StudyInterventions',
+                  params: { study_id: studyId },
+                },
+                studyRequired: true,
+                featureFlag: 'compounds_studies',
+              },
               {
                 title: i18n.t('Sidebar.study.purpose'),
                 url: { name: 'StudyPurpose', params: { study_id: studyId } },
@@ -594,6 +604,17 @@ export const useAppStore = defineStore('app', {
             title: i18n.t('Sidebar.admin.announcements'),
             url: { name: 'SystemAnnouncements' },
             icon: 'mdi-information-outline',
+          },
+          {
+            title: i18n.t('Sidebar.admin.complexity_burdens'),
+            url: { name: 'ComplexityBurdens' },
+            icon: 'mdi-sigma',
+            featureFlag: 'complexity_score_calculation',
+          },
+          {
+            title: i18n.t('Sidebar.admin.odm_vendor_extensions'),
+            url: { name: 'OdmVendorExtensions' },
+            icon: 'mdi-puzzle-outline',
           },
         ],
       },

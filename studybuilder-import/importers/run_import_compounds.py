@@ -89,7 +89,7 @@ class Compounds(BaseImporter):
 
     @lru_cache(maxsize=10000)
     def lookup_substance_uid(self, unii_value):
-        self.log.info(f"Looking up substance with unii code '{unii_value}'")
+        self.log.debug(f"Looking up substance with unii code '{unii_value}'")
         filt = {"dictionary_id": {"v": [unii_value], "op": "eq"}}
         items = self.api.get_all_from_api(
             "/dictionaries/substances",
@@ -221,11 +221,6 @@ class Compounds(BaseImporter):
         existing_compound_aliases_by_name = {
             x["name"]: x for x in existing_compound_aliases
         }
-
-        projects = self.api.get_all_from_api("/projects")
-        projects_by_name = {x["name"]: x for x in projects}
-        brands = self.api.get_all_from_api("/brands")
-        brands_by_name = {x["name"]: x for x in brands}
 
         for compound in import_data:
             data = fill_template(compound, import_templates.compound)

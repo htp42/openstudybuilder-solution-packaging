@@ -3,8 +3,8 @@ import crfs from '@/api/crfs'
 
 export const useCrfsStore = defineStore('crfs', {
   state: () => ({
-    templates: [],
-    totalTemplates: 0,
+    collections: [],
+    totalCollections: 0,
     forms: [],
     totalForms: 0,
     itemGroups: [],
@@ -14,13 +14,13 @@ export const useCrfsStore = defineStore('crfs', {
   }),
 
   actions: {
-    fetchTemplates(params) {
+    fetchCollections(params) {
       if (!params) {
         params.total_count = true
       }
       return crfs.get('study-events', { params }).then((resp) => {
-        this.templates = resp.data.items
-        this.totalTemplates = resp.data.total
+        this.collections = resp.data.items
+        this.totalCollections = resp.data.total
       })
     },
     fetchForms(params) {

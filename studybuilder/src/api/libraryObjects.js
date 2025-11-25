@@ -14,6 +14,9 @@ export default (basePath) => {
     getFiltered(params) {
       return repository.get(`${basePath}`, { params })
     },
+    getAllVersions(params) {
+      return repository.get(`${basePath}/versions`, { params })
+    },
     getObject(uid) {
       return repository.get(`${basePath}/${uid}`)
     },

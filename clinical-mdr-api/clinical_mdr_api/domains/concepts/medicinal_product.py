@@ -4,6 +4,7 @@ from typing import Callable, Self
 from deepdiff import DeepDiff
 
 from clinical_mdr_api.domains.concepts.concept_base import ConceptARBase, ConceptVO
+from clinical_mdr_api.domains.controlled_terminologies.utils import CtTermInfo
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemMetadataVO,
     LibraryVO,
@@ -17,13 +18,38 @@ class MedicinalProductVO(ConceptVO):
     The MedicinalProductVO acts as the single value object for MedicinalProductAR aggregate.
     """
 
+    class CompoundInfo:
+        def __init__(self, uid: str, name: str | None):
+            self.uid = uid
+            self.name = name
+
+    class PharmaceuticalProductInfo:
+        def __init__(self, uid: str, external_id: str | None):
+            self.uid = uid
+            self.external_id = external_id
+
+    class DoseValueInfo:
+        def __init__(
+            self, uid: str, value: float, unit_definition_uid: str, unit_label: str
+        ):
+            self.uid = uid
+            self.value = value
+            self.unit_definition_uid = unit_definition_uid
+            self.unit_label = unit_label
+
     compound_uid: str
     external_id: str | None
     pharmaceutical_product_uids: list[str] | None = None
+    pharmaceutical_products: list[PharmaceuticalProductInfo] | None = None
     delivery_device_uid: str | None = None
+    delivery_device: CtTermInfo | None = None
     dispenser_uid: str | None = None
+    dispenser: CtTermInfo | None = None
     dose_value_uids: list[str] | None = None
+    dose_values: list[DoseValueInfo] | None = None
     dose_frequency_uid: str | None = None
+    dose_frequency: CtTermInfo | None = None
+    compound: CompoundInfo | None = None
 
     @classmethod
     def from_repository_values(
@@ -37,7 +63,18 @@ class MedicinalProductVO(ConceptVO):
         dispenser_uid: str | None,
         dose_value_uids: list[str] | None,
         dose_frequency_uid: str | None,
+        pharmaceutical_products: list[PharmaceuticalProductInfo] | None = None,
+        delivery_device: CtTermInfo | None = None,
+        dispenser: CtTermInfo | None = None,
+        dose_values: list[DoseValueInfo] | None = None,
+        dose_frequency: CtTermInfo | None = None,
+        compound: CompoundInfo | None = None,
     ) -> Self:
+        if not pharmaceutical_products:
+            pharmaceutical_products = []
+        if not dose_values:
+            dose_values = []
+
         medicinal_product_vo = cls(
             external_id=external_id,
             compound_uid=compound_uid,
@@ -51,6 +88,12 @@ class MedicinalProductVO(ConceptVO):
             definition=None,
             abbreviation=None,
             is_template_parameter=False,
+            pharmaceutical_products=pharmaceutical_products,
+            delivery_device=delivery_device,
+            dispenser=dispenser,
+            dose_values=dose_values,
+            dose_frequency=dose_frequency,
+            compound=compound,
         )
 
         return medicinal_product_vo
@@ -189,7 +232,18 @@ class MedicinalProductAR(ConceptARBase):
             pharmaceutical_product_exists_callback=pharmaceutical_product_exists_callback,
         )
 
-        if DeepDiff(self._concept_vo, concept_vo, ignore_order=True):
+        exclude_paths = [
+            "root.dose_values",
+            "root.pharmaceutical_products",
+            "root.delivery_device",
+            "root.dispenser",
+            "root.dose_frequency",
+            "root.compound",
+        ]
+
+        if DeepDiff(
+            self._concept_vo, concept_vo, ignore_order=True, exclude_paths=exclude_paths
+        ):
             super()._edit_draft(
                 change_description=change_description, author_id=author_id
             )

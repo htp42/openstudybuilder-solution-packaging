@@ -348,7 +348,7 @@ class CTCodelistAggregatedRepository:
 
             match_clause += f"""
                 MATCH (package:CTPackage)-[:EXTENDS_PACKAGE]->(parent_package:CTPackage)
-                WITH package, parent_package, datetime(package.effective_date + "T23:59:59") AS exact_datetime
+                WITH package, parent_package, datetime(toString(date(package.effective_date)) + 'T23:59:59') AS exact_datetime
                 {"WHERE package.name=$package_name" if package else ""}
                 """
 

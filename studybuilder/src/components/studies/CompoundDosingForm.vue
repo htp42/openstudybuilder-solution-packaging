@@ -9,11 +9,12 @@
     "
     :help-items="helpItems"
     :edit-data="form"
+    :debug="false"
     @close="close"
     @save="submit"
   >
-    <template #[`step.element`]="{ step }">
-      <v-form :ref="`observer_${step}`">
+    <template #[`step.element`]>
+      <v-form ref="elementForm">
         <v-row>
           <v-col cols="12">
             <v-autocomplete
@@ -46,7 +47,7 @@
           <v-row>
             <v-col cols="6">
               <v-text-field
-                v-model="elementType"
+                v-model="form.study_element.element_type.term_name"
                 :label="$t('StudyCompoundDosingForm.element_type')"
                 row
                 disabled
@@ -55,9 +56,7 @@
             </v-col>
             <v-col cols="6">
               <v-text-field
-                v-model="
-                  form.study_element.element_subtype.sponsor_preferred_name
-                "
+                v-model="form.study_element.element_subtype.term_name"
                 :label="$t('StudyCompoundDosingForm.element_subtype')"
                 row
                 disabled
@@ -99,21 +98,33 @@
         </template>
       </v-form>
     </template>
-    <template #[`step.compound`]="{ step }">
-      <v-form :ref="`observer_${step}`">
+    <template #[`step.compound`]>
+      <v-form ref="compoundForm">
         <v-row>
           <v-col cols="12">
             <v-autocomplete
               v-model="form.study_compound"
               :label="$t('StudyCompoundDosingForm.compound')"
               :items="studiesCompoundsStore.studyCompounds"
-              item-title="compound_alias.name"
+              :item-title="
+                (item) => `#${item.order} ${item.compound_alias.name}`
+              "
+              item-value="study_compound_uid"
               return-object
               :rules="[formRules.required]"
               density="compact"
               clearable
               class="required"
-            />
+            >
+              <template #item="{ item, props }">
+                <v-list-item v-bind="props">
+                  <v-list-item-subtitle>{{
+                    item.raw.medicinal_product?.name ||
+                    $t('StudyCompoundDosingForm.no_product_name')
+                  }}</v-list-item-subtitle>
+                </v-list-item>
+              </template>
+            </v-autocomplete>
           </v-col>
         </v-row>
       </v-form>
@@ -130,7 +141,7 @@
           </v-col>
           <v-col cols="6">
             <v-text-field
-              v-model="form.study_compound.type_of_treatment.name"
+              v-model="form.study_compound.type_of_treatment.term_name"
               :label="$t('StudyCompoundDosingForm.type_of_treatment')"
               row
               disabled
@@ -159,6 +170,7 @@
           </v-col>
         </v-row>
         <v-row>
+          <v-col cols="6"></v-col>
           <v-col cols="6">
             <YesNoField
               v-model="form.study_compound.compound_alias.is_preferred_synonym"
@@ -169,58 +181,103 @@
             />
           </v-col>
         </v-row>
-        <v-row>
-          <v-col cols="12">
-            <v-text-field
-              :value="substances"
-              :label="$t('CompoundAliasForm.substance')"
-              dense
-              disabled
-              variant="filled"
-              hide-details
-            />
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col cols="12">
-            <v-text-field
-              :value="pharmacologicalClass"
-              :label="$t('CompoundAliasForm.pharmacological_class')"
-              dense
-              disabled
-              variant="filled"
-              hide-details
-            />
-          </v-col>
-        </v-row>
+
+        <v-card
+          v-for="activeSubstance in activeSubstances"
+          :key="activeSubstance.uid"
+          class="mt-8 mb-2 py-4 px-2"
+        >
+          <v-card-subtitle class="mb-2">Active Substance</v-card-subtitle>
+          <v-card-text>
+            <v-row>
+              <v-col cols="3">
+                <v-text-field
+                  :model-value="activeSubstance.inn"
+                  :label="$t('CompoundForm.inn')"
+                  density="compact"
+                  readonly
+                  variant="filled"
+                  hide-details
+                />
+              </v-col>
+              <v-col cols="3">
+                <v-text-field
+                  :model-value="activeSubstance.analyte_number"
+                  :label="$t('CompoundForm.analyte_number')"
+                  density="compact"
+                  readonly
+                  variant="filled"
+                  hide-details
+                />
+              </v-col>
+              <v-col cols="3">
+                <v-text-field
+                  :model-value="activeSubstance.long_number"
+                  :label="$t('CompoundForm.long_number')"
+                  density="compact"
+                  readonly
+                  variant="filled"
+                  hide-details
+                />
+              </v-col>
+              <v-col cols="3">
+                <v-text-field
+                  :model-value="activeSubstance.short_number"
+                  :label="$t('CompoundForm.short_number')"
+                  density="compact"
+                  readonly
+                  variant="filled"
+                  hide-details
+                />
+              </v-col>
+            </v-row>
+
+            <v-row>
+              <v-col cols="6">
+                <v-text-field
+                  :model-value="
+                    activeSubstance.unii.substance_unii
+                      ? activeSubstance.unii.substance_unii
+                      : '-'
+                  "
+                  :label="$t('CompoundAliasForm.substance')"
+                  density="compact"
+                  readonly
+                  variant="filled"
+                  hide-details
+                />
+              </v-col>
+              <v-col cols="6">
+                <v-text-field
+                  :model-value="
+                    activeSubstance.unii.pclass_name
+                      ? activeSubstance.unii.pclass_name
+                      : '-'
+                  "
+                  :label="$t('CompoundAliasForm.pharmacological_class')"
+                  density="compact"
+                  readonly
+                  variant="filled"
+                  hide-details
+                />
+              </v-col>
+            </v-row>
+          </v-card-text>
+        </v-card>
       </template>
     </template>
-    <template #[`step.compound_dosing`]="{ step }">
-      <v-form :ref="`observer_${step}`">
+
+    <template #[`step.compound_dosing`]>
+      <v-form ref="compoundDosingForm">
         <v-row>
           <v-col>
             <v-autocomplete
               v-if="form.study_compound"
               v-model="form.dose_value_uid"
               :label="$t('StudyCompoundDosingForm.dose_value')"
-              :items="form.study_compound.compound.dose_values"
+              :items="form.study_compound.medicinal_product.dose_values"
               :item-title="(item) => `${item.value} ${item.unit_label}`"
               item-value="uid"
-              density="compact"
-              clearable
-            />
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col>
-            <v-autocomplete
-              v-if="form.study_compound"
-              v-model="form.dose_frequency_uid"
-              :data-cy="$t('StudyCompoundDosingForm.dose_frequency')"
-              :label="$t('StudyCompoundDosingForm.dose_frequency')"
-              :items="form.study_compound.compound.dose_frequencies"
-              item-title="name"
-              item-value="term_uid"
               density="compact"
               clearable
             />
@@ -231,191 +288,193 @@
   </HorizontalStepperForm>
 </template>
 
-<script>
+<script setup>
+import { computed, inject, ref, onMounted, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import arms from '@/api/arms'
 import terms from '@/api/controlledTerminology/terms'
 import HorizontalStepperForm from '@/components/tools/HorizontalStepperForm.vue'
 import YesNoField from '@/components/tools/YesNoField.vue'
 import { useStudiesCompoundsStore } from '@/stores/studies-compounds'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
+import pharmaceuticalProducts from '@/api/concepts/pharmaceuticalProducts'
+import compoundAliases from '@/api/concepts/compoundAliases'
 
-export default {
-  components: {
-    HorizontalStepperForm,
-    YesNoField,
+const { t } = useI18n()
+const eventBusEmit = inject('eventBusEmit')
+const formRules = inject('formRules')
+const props = defineProps({
+  studyCompoundDosingUid: {
+    type: String,
+    default: undefined,
   },
-  inject: ['eventBusEmit', 'formRules'],
-  props: {
-    studyCompoundDosing: {
-      type: Object,
-      default: undefined,
-    },
-  },
-  emits: ['close'],
-  setup() {
-    const studiesCompoundsStore = useStudiesCompoundsStore()
-    const studiesGeneralStore = useStudiesGeneralStore()
+})
+const emit = defineEmits(['close'])
+const studiesCompoundsStore = useStudiesCompoundsStore()
+const studiesGeneralStore = useStudiesGeneralStore()
 
-    return {
-      studiesCompoundsStore,
-      studiesGeneralStore,
-    }
-  },
-  data() {
-    return {
-      helpItems: [
-        'StudyCompoundDosingForm.element',
-        'StudyCompoundDosingForm.compound',
-        'StudyCompoundDosingForm.dose_value',
-        'StudyCompoundDosingForm.dose_frequency',
-      ],
-      form: {},
-      steps: this.getInitialSteps(),
-      studyElements: [],
-      studyElementTypes: [],
-    }
-  },
-  computed: {
-    title() {
-      if (
-        this.studyCompoundDosing !== undefined &&
-        this.studyCompoundDosing !== null
-      ) {
-        return this.$t('StudyCompoundDosingForm.edit_title')
-      }
-      return this.$t('StudyCompoundDosingForm.add_title')
-    },
-    substances() {
-      if (!this.form.study_compound) {
-        return ''
-      }
-      const compound = this.form.study_compound.compound
-      if (compound && compound.substances && compound.substances.length) {
-        return compound.substances
-          .map((item) => `${item.substance_name} (${item.substance_unii})`)
-          .join(', ')
-      }
-      return ''
-    },
-    pharmacologicalClass() {
-      if (!this.form.study_compound) {
-        return ''
-      }
-      const compound = this.form.study_compound.compound
-      if (compound && compound.substances && compound.substances.length) {
-        return compound.substances
-          .map((item) => item.pclass_name)
-          .filter((pclass) => pclass !== undefined && pclass !== null)
-          .join(', ')
-      }
-      return ''
-    },
-    elementType() {
-      if (!this.form.study_element) {
-        return ''
-      }
-      return this.getElementType(this.form.study_element)
-    },
-  },
-  watch: {
-    studyCompoundDosing: {
-      handler: function (value) {
-        if (value) {
-          this.form = { ...value }
-          if (value.dose_value) {
-            this.form.dose_value_uid = value.dose_value.uid
-          }
-          if (value.dose_frequency) {
-            this.form.dose_frequency_uid = value.dose_frequency.term_uid
-          }
-        }
-      },
-      immediate: true,
-    },
-  },
-  mounted() {
-    this.studiesCompoundsStore.fetchStudyCompounds({
-      studyUid: this.studiesGeneralStore.selectedStudy.uid,
-      page_size: 0,
-    })
-    const params = {
-      page_size: 0,
-    }
-    arms
-      .getStudyElements(this.studiesGeneralStore.selectedStudy.uid, { params })
-      .then((resp) => {
-        this.studyElements = resp.data.items
-      })
-    terms.getTermsByCodelist('elementTypes').then((resp) => {
-      this.studyElementTypes = resp.data.items
-    })
-  },
-  methods: {
-    close() {
-      this.$emit('close')
-      this.form = {}
-      this.$refs.stepper.reset()
-    },
-    getInitialSteps() {
-      return [
-        {
-          name: 'element',
-          title: this.$t('StudyCompoundDosingForm.step1_title'),
-        },
-        {
-          name: 'compound',
-          title: this.$t('StudyCompoundDosingForm.step2_title'),
-        },
-        {
-          name: 'compound_dosing',
-          title: this.$t('StudyCompoundDosingForm.step3_title'),
-        },
-      ]
-    },
-    getObserver(step) {
-      return this.$refs[`observer_${step}`]
-    },
-    getElementType(item) {
-      const type = this.studyElementTypes.filter(
-        (el) => el.term_uid === item.code
-      )[0]
-      if (item.code && type) {
-        return type.sponsor_preferred_name
-      }
-    },
-    async submit() {
-      const data = { ...this.form }
-      data.study_element_uid = data.study_element.element_uid
-      delete data.study_element
-      data.study_compound_uid = data.study_compound.study_compound_uid
+const helpItems = [
+  'StudyCompoundDosingForm.element',
+  'StudyCompoundDosingForm.compound',
+  'StudyCompoundDosingForm.dose_value',
+  'StudyCompoundDosingForm.dose_frequency',
+]
 
-      let action = null
-      let notification = null
-      let args = null
-      if (!this.studyCompoundDosing) {
-        action = 'addStudyCompoundDosing'
-        notification = 'add_success'
-        args = { studyUid: this.studiesGeneralStore.selectedStudy.uid, data }
-      } else {
-        action = 'updateStudyCompoundDosing'
-        notification = 'update_success'
-        args = {
-          studyUid: this.selectedStudy.uid,
-          studyCompoundDosingUid:
-            this.studyCompoundDosing.study_compound_dosing_uid,
-          data,
-        }
+const form = ref({})
+const steps = ref(getInitialSteps())
+const studyElements = ref([])
+const studyElementTypes = ref([])
+const activeSubstances = ref([])
+const compoundAlias = ref({})
+const studyCompoundDosing = ref({})
+const stepper = ref()
+const elementForm = ref()
+const compoundForm = ref()
+const compoundDosingForm = ref()
+
+const title = computed(() => {
+  if (
+    studyCompoundDosing.value !== undefined &&
+    studyCompoundDosing.value !== null
+  ) {
+    return t('StudyCompoundDosingForm.edit_title')
+  }
+  return t('StudyCompoundDosingForm.add_title')
+})
+
+watch(
+  () => props.studyCompoundDosingUid,
+  (value) => {
+    if (value) {
+      const selectedItem =
+        studiesCompoundsStore.getStudyCompoundDosingsByStudyCompoundDosingUid(
+          value.study_compound_dosing_uid
+        )
+      studyCompoundDosing.value = selectedItem
+    }
+  }
+)
+
+watch(
+  studyCompoundDosing,
+  (value) => {
+    if (value) {
+      form.value = { ...value }
+      if (value.dose_value) {
+        form.value.dose_value_uid = value.dose_value.uid
       }
-      try {
-        await this.studiesCompoundsStore[action](args)
-        this.eventBusEmit('notification', {
-          msg: this.$t(`StudyCompoundDosingForm.${notification}`),
+      if (value.dose_frequency) {
+        form.value.dose_frequency_uid = value.dose_frequency.term_uid
+      }
+      compoundAliases
+        .getObject(value.study_compound.compound_alias.uid)
+        .then((resp) => {
+          compoundAlias.value = resp.data
         })
-        this.close()
-      } finally {
-        this.$refs.stepper.loading = false
-      }
-    },
+      // Get active substances from medicinal product
+      form.value.study_compound.medicinal_product.pharmaceutical_products.forEach(
+        (item) =>
+          pharmaceuticalProducts.pharmaceuticalProducts
+            .getObject(item.uid)
+            .then((resp) => {
+              const ingredients = resp.data.formulations
+                .map((formulation) => formulation.ingredients)
+                .flat()
+                .map((ingredient) => ingredient.active_substance)
+                .flat()
+              activeSubstances.value =
+                activeSubstances.value.concat(ingredients)
+            })
+      )
+    }
   },
+  { immediate: true }
+)
+
+onMounted(() => {
+  studiesCompoundsStore.fetchStudyCompounds({
+    studyUid: studiesGeneralStore.selectedStudy.uid,
+    page_size: 0,
+  })
+  const params = {
+    page_size: 0,
+  }
+  arms
+    .getStudyElements(studiesGeneralStore.selectedStudy.uid, params)
+    .then((resp) => {
+      studyElements.value = resp.data.items
+      const selectedItem =
+        studiesCompoundsStore.getStudyCompoundDosingsByStudyCompoundDosingUid(
+          props.studyCompoundDosingUid
+        )
+      studyCompoundDosing.value = selectedItem
+    })
+  terms.getTermsByCodelist('elementTypes').then((resp) => {
+    studyElementTypes.value = resp.data.items
+  })
+})
+
+function close() {
+  emit('close')
+  form.value = {}
+  stepper.value.reset()
+}
+function getInitialSteps() {
+  return [
+    {
+      name: 'element',
+      title: t('StudyCompoundDosingForm.step1_title'),
+    },
+    {
+      name: 'compound',
+      title: t('StudyCompoundDosingForm.step2_title'),
+    },
+    {
+      name: 'compound_dosing',
+      title: t('StudyCompoundDosingForm.step3_title'),
+    },
+  ]
+}
+function getObserver(step) {
+  if (step === 1) {
+    return elementForm.value
+  }
+  if (step === 2) {
+    return compoundForm.value
+  }
+  return compoundDosingForm.value
+}
+async function submit() {
+  const data = { ...form.value }
+  data.study_element_uid = data.study_element.element_uid
+  delete data.study_element
+  data.study_compound_uid = data.study_compound.study_compound_uid
+
+  let action = null
+  let notification = null
+  let args = null
+  if (!studyCompoundDosing.value) {
+    action = 'addStudyCompoundDosing'
+    notification = 'add_success'
+    args = { studyUid: studiesGeneralStore.selectedStudy.uid, data }
+  } else {
+    action = 'updateStudyCompoundDosing'
+    notification = 'update_success'
+    args = {
+      studyUid: studiesGeneralStore.selectedStudy.uid,
+      studyCompoundDosingUid: props.studyCompoundDosingUid,
+      data,
+    }
+  }
+
+  try {
+    await studiesCompoundsStore[action](args)
+    eventBusEmit('notification', {
+      msg: t(`StudyCompoundDosingForm.${notification}`),
+    })
+    close()
+  } finally {
+    stepper.value.loading = false
+  }
 }
 </script>

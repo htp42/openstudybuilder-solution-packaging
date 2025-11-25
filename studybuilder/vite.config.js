@@ -20,9 +20,9 @@ export default defineConfig({
       name: 'spa-fallback-for-dots',
       configureServer(server) {
         server.middlewares.use((req, _res, next) => {
-          // Handle routes with version numbers (e.g., /overview/4.1)
+          // Handle routes with version numbers (e.g., /overview/4.1, /parent-class-overview/1.0)
           // Vite treats dots as file extensions, so we need to handle these specially
-          if (req.url.includes('/overview/') && req.url.match(/\/\d+\.\d+$/)) {
+          if (req.url.match(/\/\d+\.\d+$/)) {
             req.url = '/'
           }
           next()

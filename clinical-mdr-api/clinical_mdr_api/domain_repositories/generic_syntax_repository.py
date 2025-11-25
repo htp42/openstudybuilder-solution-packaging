@@ -244,16 +244,15 @@ class GenericSyntaxRepository(
                 "template": param["template"],
                 "parameter_uids": [],
                 "conjunction": next(
-                    filter(
-                        lambda x, y=param: x[0] == y["position"]  # type: ignore[arg-type,misc]
-                        and (
-                            len(x[2]) == 0
-                            or (
-                                "set_number" in x[2][0]
-                                and x[2][0]["set_number"] == y["set_number"]
-                            )
-                        ),
-                        instance_parameters,
+                    x
+                    for x in instance_parameters
+                    if x[0] == param["position"]  # type: ignore[arg-type,misc]
+                    and (
+                        len(x[2]) == 0
+                        or (
+                            "set_number" in x[2][0]
+                            and x[2][0]["set_number"] == param["set_number"]
+                        )
                     )
                 )[3],
                 "labels": param["labels"],

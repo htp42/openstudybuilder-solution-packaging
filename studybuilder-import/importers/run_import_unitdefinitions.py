@@ -1,6 +1,5 @@
 import asyncio
 import csv
-import json
 
 import aiohttp
 
@@ -17,7 +16,7 @@ from .utils.api_bindings import (
     UNIT_SUBSET_STUDY_TIME,
     UNIT_SUBSET_TIME,
 )
-from .utils.importer import BaseImporter, open_file, open_file_async
+from .utils.importer import BaseImporter, open_file_async
 from .utils.metrics import Metrics
 
 logger = create_logger("legacy_mdr_migrations")
@@ -35,6 +34,7 @@ API_BASE_URL = load_env("API_BASE_URL")
 
 # SPONSOR DEFINED CODELISTS
 MDR_MIGRATION_UNIT_DIF = load_env("MDR_MIGRATION_UNIT_DIF")
+
 
 # Finishing touches for standard codelists in sponsor library
 class Units(BaseImporter):
@@ -93,9 +93,7 @@ class Units(BaseImporter):
             )
 
         all_unit_dimension_terms = self.api.get_all_identifiers(
-            self.api.get_all_from_api(
-                f"/ct/codelists/{unit_dim_codelist_uid}/terms"
-            ),
+            self.api.get_all_from_api(f"/ct/codelists/{unit_dim_codelist_uid}/terms"),
             identifier="submission_value",
             value="term_uid",
         )
@@ -147,7 +145,9 @@ class Units(BaseImporter):
             # Link to sponsor defined units
             if row[headers.index("SPDEF_SUBMVAL")] != "":
                 submval = row[headers.index("SPDEF_SUBMVAL")]
-                unit_term =  self.api.find_term_by_submission_value(unit_codelist_uid, submval)
+                unit_term = self.api.find_term_by_submission_value(
+                    unit_codelist_uid, submval
+                )
                 if unit_term is not None:
                     self.log.info(
                         f"Linking submission value '{submval}' to term uid '{unit_term['term_uid']}'"

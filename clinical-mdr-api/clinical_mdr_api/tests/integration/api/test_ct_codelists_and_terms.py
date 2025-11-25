@@ -247,3 +247,44 @@ def test_retire_unused_term(api_client):
     res = response.json()
     assert_response_status_code(response, 200)
     assert len(res["items"]) == 1
+
+
+@pytest.mark.parametrize(
+    "field_name, search_string",
+    [
+        ("library_name", "Sponsor"),
+        ("name.start_date", "20"),
+        ("name.version", "1.0"),
+        ("name.status", "Final"),
+        ("name.author_username", "unknown-user"),
+        ("attributes.start_date", "20"),
+        ("attributes.version", "1.0"),
+        ("attributes.status", "Final"),
+        ("attributes.author_username", "unknown-user"),
+        ("attributes.concept_id", "CID"),
+        ("attributes.nci_preferred_name", "nci"),
+        ("attributes.definition", ""),
+        ("codelists.codelist_name", ""),
+        ("codelists.codelist_submission_value", ""),
+        ("codelists.submission_value", "a"),
+    ],
+)
+def test_get_ct_terms_headers(api_client, field_name, search_string):
+    responses = {}
+
+    for lite in [True, False]:
+        query_params = {
+            "field_name": field_name,
+            "search_string": search_string,
+            "lite": lite,
+        }
+        response = api_client.get("/ct/terms/headers", params=query_params)
+        assert_response_status_code(response, 200)
+        assert len(response.json()) >= 1
+        for res in response.json():
+            assert str(search_string).lower() in str(res).lower()
+
+        responses[lite] = response.json()
+
+    # Assert that `?lite=true` returns the same data as `?lite=false`
+    assert responses[True] == responses[False]

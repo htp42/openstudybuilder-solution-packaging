@@ -12,8 +12,7 @@
     <html>
       <head>
         <meta charset="UTF-8" />
-        <link rel="stylesheet"
-          href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" />
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous" />
         <title>
           <xsl:value-of select="/ODM/Study/@OID" />
         </title>
@@ -30,6 +29,23 @@
           padding: 5px;
           }
 
+          .btn {
+          background-color: #1a3172 !important;
+          border-color: #1a3172 !important;
+          }
+
+          .btn-clicked {
+          background-color: #BDD6EE !important; /* Example: a blue color */
+          border-color: #BDD6EE !important;
+          color: #fff !important;
+          }
+
+          .oidinfo {
+          color: red !important;
+          font-style: normal;
+          font-size: 12px;
+          }
+
           .badge {
           display: inline-block;
           margin: 0.2em;
@@ -42,8 +58,7 @@
           white-space: normal;
           vertical-align: baseline;
           border-radius: 0px;
-          transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s
-    ease-in-out,box-shadow .15s ease-in-out;
+          transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
           }
 
           .badge-ig {
@@ -58,8 +73,7 @@
           white-space: normal;
           vertical-align: baseline;
           border-radius: 0px;
-          transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s
-    ease-in-out,box-shadow .15s ease-in-out;
+          transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
           }
 
           @media print {
@@ -72,8 +86,8 @@
           .repeat-on-each-page { display: table-row-group; }
           }
 
-          @page Section1 {size:841.7pt 595.45pt;mso-page-orientation:landscape;margin:1.25in 1.0in
-    1.25in 1.0in;mso-header-margin:.5in;mso-footer-margin:.5in;mso-paper-source:0;}
+          @page Section1 {size:841.7pt 595.45pt;mso-page-orientation:landscape;margin:1.25in 1.0in 1.25in 1.0in;mso-header-margin:.5in;mso-footer-margin:.5in;mso-paper-source:0;}
+
           div.Section2 {page:Section2;}
         </style>
       </head>
@@ -81,27 +95,26 @@
         <div class="Section1">
           <table style="border-collapse: collapse; width: 100%; margin: 0 auto; background: #fff;">
             <tbody>
-              <div class="d-print-none">
-                <button type="button" class="btn btn-primary btn-sm" data-toggle="collapse"
-                  data-target=".Cdash">Cdash</button>&#160; <button type="button"
-                  class="btn btn-primary btn-sm" data-toggle="collapse" data-target=".Sdtm">SDTM</button>
-    &#160; <button type="button" class="btn btn-primary btn-sm"
-                  data-toggle="collapse" data-target=".TopicCode">TopicCode</button>&#160; <button
-                  type="button" class="btn btn-primary btn-sm" data-toggle="collapse"
-                  data-target=".AdamCode">AdamCode</button>
+              <div class="d-print-none" align="right">
+                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="collapse" data-bs-target=".Cdash" onclick="toggleButtonColor(this)">Cdash</button>&#160;
+                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="collapse" data-bs-target=".Sdtm" onclick="toggleButtonColor(this)">SDTM</button>&#160;
+                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="collapse" data-bs-target=".TopicCode" onclick="toggleButtonColor(this)">TopicCode</button>&#160;
+                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="collapse" data-bs-target=".AdamCode" onclick="toggleButtonColor(this)">AdamCode</button>&#160;
+                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="collapse" data-bs-target=".oid" onclick="toggleButtonColor(this)">Keys</button>
               </div>
               <xsl:apply-templates select="/ODM/Study/MetaDataVersion/FormDef" />
             </tbody>
           </table>
         </div>
       </body>
-      <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
-        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
-        crossorigin="anonymous"></script>
-      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
-        crossorigin="anonymous"></script>
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+      <script src="https://code.jquery.com/jquery-3.7.1.slim.min.js" integrity="sha256-kmHvs0B+OpCW5GVHUNjv9rOmY0IvSIRcf7zGUDTDQM8=" crossorigin="anonymous"></script>
       <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+      <script>
+        function toggleButtonColor(button) {
+        button.classList.toggle('btn-clicked');
+        }
+      </script>
     </html>
   </xsl:template>
 
@@ -119,8 +132,7 @@
       </xsl:choose>
     </xsl:variable>
 
-    <tr
-      style="{$trBckg}">
+    <tr style="{$trBckg}">
       <xsl:choose>
         <xsl:when test="./@DataType = 'comment'">
           <td colspan="5" style="border: 1px solid #fff; padding: 5px; width:100%;">
@@ -135,8 +147,7 @@
               <em>&#160;*&#160;</em>
             </xsl:if>
           </td>
-          <td
-            style="border: 1px solid #fff; padding: 6px 12px; width:30%;">
+          <td style="border: 1px solid #fff; padding: 6px 12px; width:30%;">
             <xsl:value-of select="@Name" />
             <xsl:for-each select="./Alias[@Context = 'TopicCode']">
               <xsl:call-template name="Alias">
@@ -152,30 +163,36 @@
                 <xsl:with-param name="aliasBgcolor" select="'#2f2f2f'" />
               </xsl:call-template>
             </xsl:for-each>
+            <div class="oidinfo oid collapse">[OID=<xsl:value-of select="@OID" />, Version=<xsl:value-of select="@osb:version" />]</div>
           </td>
-          <td
-            style="border: 1px solid #fff; padding: 6px 12px; width:30%;">
+          <td style="border: 1px solid #fff; padding: 6px 12px; width:30%;">
             <!-- A CodeList -->
             <xsl:for-each select="CodeListRef">
               <xsl:for-each select="//CodeList[@OID = current()/@CodeListOID]/CodeListItem">
                 <xsl:sort select="@OrderNumber" data-type="number" order="ascending" />
-                <div><span
-                    style='font-size:30px;'>&#9675;</span>&#160;<xsl:value-of select="@osb:name" />
-    &#160;</div>
+                <div>
+                  <span style='font-size:30px;'>&#9675;</span>&#160;<xsl:value-of select="@osb:name" />&#160;
+                </div>
+                <span class="oidinfo oid collapse">
+                  [OID=<xsl:value-of select="@osb:OID" />, Version=<xsl:value-of select="@osb:version" />
+                </span>
               </xsl:for-each>
-              <xsl:for-each
-                select="//CodeList[@OID = current()/@CodeListOID]/EnumeratedItem">
+              <xsl:for-each select="//CodeList[@OID = current()/@CodeListOID]/EnumeratedItem">
                 <xsl:sort select="@OrderNumber" data-type="number" order="ascending" />
-                <div><span
-                    style='font-size:30px;'>&#9675;</span>&#160;<xsl:value-of select="@osb:name" />
-    &#160;</div>
+                <div>
+                  <span style='font-size:30px;'>&#9675;</span>&#160;<xsl:value-of select="@osb:name" />&#160;
+                </div>
+                <span class="oidinfo oid collapse">
+                  [OID=<xsl:value-of select="@osb:OID" />, Version=<xsl:value-of select="@osb:version" />
+                </span>
               </xsl:for-each>
+              <span class="oidinfo oid collapse">[OID=<xsl:value-of select="@CodeListOID" />, Version=<xsl:value-of select="//CodeList[@OID = current()/@CodeListOID]/@osb:version" />]</span>
             </xsl:for-each>
             <xsl:for-each select="./Alias[@Context = 'wordFormat']">
-              <xsl:value-of disable-output-escaping="yes" select="@Name" />&#160; </xsl:for-each>
+              <xsl:value-of disable-output-escaping="yes" select="@Name" />&#160;
+            </xsl:for-each>
           </td>
-          <td
-            style="border: 1px solid #fff; padding: 6px 12px; width:30%;">
+          <td style="border: 1px solid #fff; padding: 6px 12px; width:30%;">
             <h5>
               <xsl:call-template name="splitter">
                 <xsl:with-param name="aliasContext" select="'Sdtm'" />
@@ -201,11 +218,13 @@
               </xsl:for-each>
             </h5>
           </td>
-          <td
-            style="border: 1px solid #fff; padding: 6px 12px; width:10%;">
+          <td style="border: 1px solid #fff; padding: 6px 12px; width:10%;">
             <xsl:for-each select="./Alias[@Context = 'ctdmIntegration']">
               <xsl:value-of disable-output-escaping="yes" select="@Name" />
             </xsl:for-each>
+            <xsl:if test="@Length">
+              <span><br /><xsl:value-of select="@Length" /> digit(s)</span>
+            </xsl:if>
           </td>
         </xsl:otherwise>
       </xsl:choose>
@@ -213,10 +232,8 @@
   </xsl:template>
 
   <xsl:template match="ItemGroupDef">
-    <xsl:variable name="domainLevel"
-      select="../FormDef/ItemGroupRef[@ItemGroupOID = current()/@OID]/@OrderNumber+1" />
-    <xsl:variable
-      name="domainBg">
+    <xsl:variable name="domainLevel" select="../FormDef/ItemGroupRef[@ItemGroupOID = current()/@OID]/@OrderNumber+1" />
+    <xsl:variable name="domainBg">
       <xsl:choose>
         <xsl:when test="./@Domain">
           <xsl:for-each select="./osb:DomainColor">
@@ -228,46 +245,38 @@
             <xsl:choose>
               <xsl:when test="contains(./@Name, 'Note')">
                 <xsl:value-of select="substring-after('Note:',@Name)" />
-                <xsl:value-of
-                  select="':#ffffff !important;'" />
+                <xsl:value-of select="':#ffffff !important;'" />
               </xsl:when>
               <xsl:when test="position() = 5">
-                <xsl:value-of select="substring(@Name,1,2)" />
-                <xsl:value-of
-                  select="':#0053ad !important;'" />
+                <xsl:value-of select="substring-before(@Name,':')" />
+                <xsl:value-of select="':#0053ad !important;'" />
               </xsl:when>
               <xsl:when test="position() = 4">
-                <xsl:value-of select="substring(@Name,1,2)" />
-                <xsl:value-of
-                  select="':#ffbf9c !important;'" />
+                <xsl:value-of select="substring-before(@Name,':')" />
+                <xsl:value-of select="':#ffbf9c !important;'" />
               </xsl:when>
               <xsl:when test="position() = 3">
-                <xsl:value-of select="substring(@Name,1,2)" />
-                <xsl:value-of
-                  select="':#96ff96 !important;'" />
+                <xsl:value-of select="substring-before(@Name,':')" />
+                <xsl:value-of select="':#96ff96 !important;'" />
               </xsl:when>
               <xsl:when test="position() = 2">
-                <xsl:value-of select="substring(@Name,1,2)" />
-                <xsl:value-of
-                  select="':#ffff96 !important;'" />
+                <xsl:value-of select="substring-before(@Name,':')" />
+                <xsl:value-of select="':#ffff96 !important;'" />
               </xsl:when>
               <xsl:when test="position() = 1">
-                <xsl:value-of select="substring(@Name,1,2)" />
-                <xsl:value-of
-                  select="':#bfffff !important;'" />
+                <xsl:value-of select="substring-before(@Name,':')" />
+                <xsl:value-of select="':#bfffff !important;'" />
               </xsl:when>
               <xsl:otherwise>
-                <xsl:value-of select="substring(@Name,1,2)" />
-                <xsl:value-of
-                  select="':#96ff96 !important;'" />
+                <xsl:value-of select="substring-before(@Name,':')" />
+                <xsl:value-of select="':#96ff96 !important;'" />
               </xsl:otherwise>
             </xsl:choose>
           </xsl:for-each>
         </xsl:when>
       </xsl:choose>
     </xsl:variable>
-    <tr
-      style="background: #1a3172; color: #ffffff;">
+    <tr style="background: #1a3172; color: #ffffff;">
       <th colspan="3" style="text-align: left;"><!-- Name of the ItemGroup -->
         <h4>
           <xsl:value-of disable-output-escaping="yes" select="@Name" />
@@ -275,6 +284,9 @@
             <em>&#160;*&#160;</em>
           </xsl:if>
         </h4>
+        <div class="oidinfo oid collapse">
+          [OID=<xsl:value-of select="@OID" />, Version=<xsl:value-of select="@osb:version" />]
+        </div>
       </th>
       <th colspan="2" style="text-align: right;">
         <xsl:for-each select="./Alias[@Context = 'IgType']">
@@ -289,6 +301,18 @@
               <xsl:with-param name="domainbgcolor" select="$domainBg" />
             </xsl:call-template>
           </h4>
+        </xsl:if>
+        <xsl:if test="./Alias/@Context = 'Sdtm'">
+          <h5>
+            <xsl:for-each select="./Alias[@Context = 'Sdtm']">
+              <xsl:call-template name="splitter">
+                <xsl:with-param name="aliasContext" select="'Sdtm'" />
+                <xsl:with-param name="remaining-string" select="./@Name" />
+                <xsl:with-param name="pattern" select="'|'" />
+                <xsl:with-param name="domainbgcolor" select="$domainBg" />
+              </xsl:call-template>
+            </xsl:for-each>
+          </h5>
         </xsl:if>
       </th>
     </tr>
@@ -318,10 +342,11 @@
           <h2>
             <xsl:value-of select="@Name" /><!-- Name of the Form -->
           </h2>
+          <span class="oidinfo oid collapse">[OID=<xsl:value-of select="@OID" />, Version=<xsl:value-of select="@osb:version" />]</span>
         </td>
       </tr>
     </thead>
-      <xsl:choose>
+    <xsl:choose>
       <xsl:when test="./@osb:sponsorInstruction != 'None'">
         <tr>
           <td colspan="5" style="border: 1px solid #ccc; background: #BDD6EE; color: #000000;">
@@ -330,15 +355,14 @@
             </h4>
           </td>
         </tr>
-          <tr>
+        <tr>
           <td colspan="5" style="border: 1px solid #ccc; padding: 4px 4px; background: #ffffff;">
             <xsl:value-of disable-output-escaping="yes" select="@osb:sponsorInstruction" />
           </td>
         </tr>
       </xsl:when>
     </xsl:choose>
-      <tr
-      style="background-color:#ECECEC;">
+    <tr style="background-color:#ECECEC;">
       <td colspan="4" style="border: 1px solid #fff; padding: 6px 12px;">
         Study ID: NNXXXX-XXXX
       </td>
@@ -347,222 +371,199 @@
       </td>
     </tr>
     <!-- For each ItemGroup in the Form -->
-      <xsl:for-each select="ItemGroupRef">
+    <xsl:for-each select="ItemGroupRef">
       <xsl:sort select="current()/@OrderNumber" data-type="number" />
-        <xsl:apply-templates
+      <xsl:apply-templates
         select="//ItemGroupDef[@OID = current()/@ItemGroupOID]" />
-    </xsl:for-each>
-        <tr
-      style="background-color:#ffffff;">
-      <td colspan="5" style="border: 1px solid #fff; padding: 6px 12px;">
-        <xsl:for-each select="./Alias[@Context = 'Oracle']">
-          <xsl:value-of disable-output-escaping="yes" select="@Name" />
-        </xsl:for-each>
-      </td>
-    </tr>
-  </xsl:template>
+      </xsl:for-each>
+      <tr style="background-color:#ffffff;">
+        <td colspan="5" style="border: 1px solid #fff; padding: 6px 12px;">
+          <xsl:for-each select="./Alias[@Context = 'Oracle']">
+            <xsl:value-of disable-output-escaping="yes" select="@Name" />
+          </xsl:for-each>
+        </td>
+      </tr>
+    </xsl:template>
 
-  <!-- TEMPLATES -->
+    <!-- TEMPLATES -->
 
-  <xsl:template match="Question">
-    <xsl:param name="lockItem" />
-        <xsl:param name="sdvItem" />
-        <xsl:param name="mandatoryItem" />
-        <xsl:value-of
-      select="TranslatedText" />&#160; <xsl:choose>
-      <xsl:when test="($lockItem = 'Yes') and ($sdvItem = 'Yes')">
-        <span class="material-symbols-outlined">lock</span>&#160;<span
+    <xsl:template match="Question">
+      <xsl:param name="lockItem" />
+      <xsl:param name="sdvItem" />
+      <xsl:param name="mandatoryItem" />
+      <xsl:value-of
+        select="TranslatedText" />&#160; <xsl:choose>
+        <xsl:when test="($lockItem = 'Yes') and ($sdvItem = 'Yes')">
+          <span class="material-symbols-outlined">lock</span>&#160;<span
           class="material-symbols-outlined">account_tree</span>
-      </xsl:when>
-      <xsl:when test="$lockItem = 'Yes'">
-        <span class="material-symbols-outlined">lock</span>
-      </xsl:when>
-      <xsl:when test="$sdvItem = 'Yes'">
-        <span class="material-symbols-outlined">account_tree</span>
-      </xsl:when>
-      <xsl:otherwise> </xsl:otherwise>
-    </xsl:choose>
-  </xsl:template>
+        </xsl:when>
+        <xsl:when test="$lockItem = 'Yes'">
+          <span class="material-symbols-outlined">lock</span>
+        </xsl:when>
+        <xsl:when test="$sdvItem = 'Yes'">
+          <span class="material-symbols-outlined">account_tree</span>
+        </xsl:when>
+        <xsl:otherwise> </xsl:otherwise>
+      </xsl:choose>
+    </xsl:template>
 
-  <xsl:template match="Decode">
-    <xsl:value-of select="TranslatedText" />
-  </xsl:template>
+    <xsl:template match="Decode">
+      <xsl:value-of select="TranslatedText" />
+    </xsl:template>
 
-  <xsl:template name="Alias">
-    <xsl:param name="aliasContext" />
-        <xsl:param name="aliasName" />
-        <xsl:param name="aliasBgcolor" />
-        <div
-      class="{$aliasContext} collapse">
-      <div class="badge"
-        style="background-color:{$aliasBgcolor} !important; border: 1px solid #000; color: white !important;">
-        <xsl:value-of disable-output-escaping="yes" select="$aliasName" />
+    <xsl:template name="Alias">
+      <xsl:param name="aliasContext" />
+      <xsl:param name="aliasName" />
+      <xsl:param name="aliasBgcolor" />
+      <div class="{$aliasContext} collapse">
+        <div class="badge" style="background-color:{$aliasBgcolor} !important; border: 1px solid #000; color: white !important;">
+          <xsl:value-of disable-output-escaping="yes" select="$aliasName" />
+        </div>
       </div>
-    </div>
-  </xsl:template>
+    </xsl:template>
 
-  <xsl:template name="IGsplitter">
-    <xsl:param name="aliasContext" />
-        <xsl:param name="remaining-string" />
-        <xsl:param name="pattern" />
-        <xsl:param
-      name="domainbgcolor" />
-        <xsl:variable name="itemBg">
-      <xsl:choose>
-        <xsl:when test="contains($domainbgcolor, substring($remaining-string,1,2))">
-          <xsl:value-of select="substring-after($domainbgcolor,substring($remaining-string,1,3))" />
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:value-of select="'#bfffff !important;'" />
-        </xsl:otherwise>
-      </xsl:choose>
-    </xsl:variable>
-        <div
-      class="{$aliasContext} collapse">
-      <xsl:choose>
-        <xsl:when test="contains($remaining-string,$pattern)">
-          <split-item>
-            <xsl:choose>
-              <xsl:when test="contains($remaining-string,'Note:')">
-                <span class="badge-ig"
-                  style="border: 1px dotted #000; color:black; background-color:#ffffff !important;">
-                  <xsl:value-of select="normalize-space($remaining-string,$pattern)" />
-                </span>
-              </xsl:when>
-              <xsl:otherwise>
-                <span class="badge-ig"
-                  style="border: 1px solid #000; color:black; background-color:{$itemBg} !important!">
-                  <xsl:value-of
-                    select="normalize-space(concat(substring-before(substring-before($remaining-string,$pattern),':'),' (', substring-after(substring-before($remaining-string,$pattern),':'),')'))" />
-                </span>
-              </xsl:otherwise>
-            </xsl:choose>
-          </split-item>
-              <xsl:call-template
-            name="IGsplitter">
-            <xsl:with-param name="aliasContext" select="$aliasContext" />
-            <xsl:with-param name="remaining-string"
-              select="substring-after($remaining-string,$pattern)" />
-            <xsl:with-param name="pattern" select="$pattern" />
-            <xsl:with-param name="domainbgcolor" select="$itemBg" />
-          </xsl:call-template>
-        </xsl:when>
-        <xsl:otherwise>
-          <split-item>
-            <xsl:choose>
-              <xsl:when test="contains($remaining-string,'Note:')">
-                <span class="badge-ig"
-                  style="border: 1px dotted #000; color:black; background-color:#ffffff !important;">
-                  <xsl:value-of select="normalize-space($remaining-string)" />
-                </span>
-              </xsl:when>
-              <xsl:when test="contains($remaining-string,'NOT SUBMITTED')">
-                <span class="badge-ig"
-                  style="border: 1px dotted #000; color:black; background-color:#ffffff !important;">
-                  <xsl:value-of select="normalize-space($remaining-string)" />
-                </span>
-              </xsl:when>
-              <xsl:when test="$remaining-string != ''">
-                <span class="badge-ig"
-                  style="border: 1px solid #000; color:black; background-color:{$itemBg} !important;">
-                  <xsl:value-of
-                    select="normalize-space(concat(substring-before($remaining-string,':'),' (', substring-after($remaining-string,':'),')'))" />
-                </span>
-              </xsl:when>
-              <xsl:otherwise> </xsl:otherwise>
-            </xsl:choose>
-          </split-item>
-        </xsl:otherwise>
-      </xsl:choose>
-    </div>
-  </xsl:template>
+    <xsl:template name="IGsplitter">
+      <xsl:param name="aliasContext" />
+      <xsl:param name="remaining-string" />
+      <xsl:param name="pattern" />
+      <xsl:param name="domainbgcolor" />
+      <xsl:variable name="itemBg">
+        <xsl:choose>
+          <xsl:when test="contains($domainbgcolor, substring($remaining-string,1,2))">
+            <xsl:value-of select="substring-after($domainbgcolor,':')" />
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:value-of select="'#bfffff !important;'" />
+          </xsl:otherwise>
+        </xsl:choose>
+      </xsl:variable>
+      <div class="{$aliasContext} collapse">
+        <xsl:choose>
+          <xsl:when test="contains($remaining-string,$pattern)">
+            <split-item>
+              <xsl:choose>
+                <xsl:when test="contains($remaining-string,'Note:')">
+                  <span class="badge-ig" style="border: 1px dotted #000; color:black; background-color:#ffffff !important;">
+                    <xsl:value-of select="normalize-space($remaining-string,$pattern)" />
+                  </span>
+                </xsl:when>
+                <xsl:otherwise>
+                  <span class="badge-ig" style="border: 1px solid #000; color:black; background-color:{$itemBg} !important!">
+                    <xsl:value-of select="normalize-space(concat(substring-before(substring-before($remaining-string,$pattern),':'),' (', substring-after(substring-before($remaining-string,$pattern),':'),')'))" />
+                  </span>
+                </xsl:otherwise>
+              </xsl:choose>
+            </split-item>
+            <xsl:call-template name="IGsplitter">
+              <xsl:with-param name="aliasContext" select="$aliasContext" />
+              <xsl:with-param name="remaining-string" select="substring-after($remaining-string,$pattern)" />
+              <xsl:with-param name="pattern" select="$pattern" />
+              <xsl:with-param name="domainbgcolor" select="$itemBg" />
+            </xsl:call-template>
+          </xsl:when>
+          <xsl:otherwise>
+            <split-item>
+              <xsl:choose>
+                <xsl:when test="contains($remaining-string,'Note:')">
+                  <span class="badge-ig" style="border: 1px dotted #000; color:black; background-color:#ffffff !important;">
+                    <xsl:value-of select="normalize-space($remaining-string)" />
+                  </span>
+                </xsl:when>
+                <xsl:when test="contains($remaining-string,'NOT SUBMITTED')">
+                  <span class="badge-ig" style="border: 1px dotted #000; color:black; background-color:#ffffff !important;">
+                    <xsl:value-of select="normalize-space($remaining-string)" />
+                  </span>
+                </xsl:when>
+                <xsl:when test="$remaining-string != ''">
+                  <span class="badge-ig" style="border: 1px solid #000; color:black; background-color:{$itemBg} !important;">
+                    <xsl:value-of select="normalize-space(concat(substring-before($remaining-string,':'),' (', substring-after($remaining-string,':'),')'))" />
+                  </span>
+                </xsl:when>
+                <xsl:otherwise> </xsl:otherwise>
+              </xsl:choose>
+            </split-item>
+          </xsl:otherwise>
+        </xsl:choose>
+      </div>
+    </xsl:template>
 
-  <xsl:template name="splitter">
-    <xsl:param name="aliasContext" />
-        <xsl:param name="remaining-string" />
-        <xsl:param name="pattern" />
-        <xsl:param
-      name="domainbgcolor" />
-        <xsl:variable name="itemBg">
-      <xsl:choose>
-        <xsl:when test="contains($remaining-string,'Note')">
-          <xsl:value-of select="'#ffffff !important;'" />
-        </xsl:when>
-        <xsl:when test="contains($domainbgcolor, substring($remaining-string,1,2))">
-          <xsl:value-of
-            select="substring(substring-after($domainbgcolor,substring($remaining-string,1,2)),2,8)" />
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:value-of select="'#ffbfaa !important;'" />
-        </xsl:otherwise>
-      </xsl:choose>
-    </xsl:variable>
-        <xsl:variable
-      name="remainingstrg">
-      <xsl:choose>
-        <xsl:when test="contains($remaining-string,':')">
-          <xsl:value-of select="substring-after($remaining-string,':')" />
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:value-of select="$remaining-string" />
-        </xsl:otherwise>
-      </xsl:choose>
-    </xsl:variable>
-        <div
-      class="{$aliasContext} collapse text-left">
-      <xsl:choose>
-        <xsl:when test="contains($remainingstrg,$pattern)">
-          <split-item>
-            <xsl:choose>
-              <xsl:when test="contains($remaining-string,'Note')">
-                <span class="badge"
-                  style="border: 1px dotted #000; color:black; background-color:{$itemBg} !important;">
-                  <xsl:value-of select="normalize-space(substring-before($remainingstrg,$pattern))" />
-                </span>
-              </xsl:when>
-              <xsl:otherwise>
-                <span class="badge"
-                  style="border: 1px solid #000; color:black; background-color:{$itemBg}! important;">
-                  <xsl:value-of select="normalize-space(substring-before($remainingstrg,$pattern))" />
-                </span>
-              </xsl:otherwise>
-            </xsl:choose>
-          </split-item>
-              <xsl:call-template
-            name="splitter">
-            <xsl:with-param name="aliasContext" select="$aliasContext" />
-            <xsl:with-param name="remaining-string"
-              select="substring-after($remainingstrg,$pattern)" />
-            <xsl:with-param name="pattern" select="$pattern" />
-            <xsl:with-param name="domainbgcolor" select="$domainbgcolor" />
-          </xsl:call-template>
-        </xsl:when>
-        <xsl:otherwise>
-          <split-item>
-            <xsl:choose>
-              <xsl:when test="contains($remaining-string,'Note')">
-                <span class="badge"
-                  style="border: 1px dotted #000; color:black; background-color:{$itemBg} !important;">
-                  <xsl:value-of select="normalize-space($remainingstrg)" />
-                </span>
-              </xsl:when>
-              <xsl:when test="contains($remaining-string,'NOT SUBMITTED')">
-                <span class="badge"
-                  style="border: 1px dotted #000; color:black; background-color:#ffffff !important;">
-                  <xsl:value-of select="normalize-space($remainingstrg)" />
-                </span>
-              </xsl:when>
-              <xsl:otherwise>
-                <span class="badge"
-                  style="border: 1px solid #000; color:black; background-color:{$itemBg} !important;">
-                  <xsl:value-of select="normalize-space($remainingstrg)" />
-                </span>
-              </xsl:otherwise>
-            </xsl:choose>
-          </split-item>
-        </xsl:otherwise>
-      </xsl:choose>
-    </div>
-  </xsl:template>
+    <xsl:template name="splitter">
+      <xsl:param name="aliasContext" />
+      <xsl:param name="remaining-string" />
+      <xsl:param name="pattern" />
+      <xsl:param name="domainbgcolor" />
+      <xsl:variable name="domain-prefix" select="substring-before(concat($remaining-string, ':'), ':')" />
+      <xsl:variable name="itemBg">
+        <xsl:choose>
+          <xsl:when test="contains($remaining-string,'Note')">
+            <xsl:value-of select="'#ffffff !important;'" />
+          </xsl:when>
+          <xsl:when test="contains($domainbgcolor, concat($domain-prefix, ':'))">
+            <xsl:variable name="domain-color-pair" select="substring-after(concat($domainbgcolor, '|'), concat($domain-prefix, ':'))" />
+            <xsl:value-of select="substring-before($domain-color-pair, ' !important;|')" />
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:value-of select="'#ffbfaa !important;'" />
+          </xsl:otherwise>
+        </xsl:choose>
+      </xsl:variable>
+      <xsl:variable name="remainingstrg">
+        <xsl:choose>
+          <xsl:when test="contains($remaining-string,':')">
+            <xsl:value-of select="substring-after($remaining-string,':')" />
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:value-of select="$remaining-string" />
+          </xsl:otherwise>
+        </xsl:choose>
+      </xsl:variable>
+      <div class="{$aliasContext} collapse text-left">
+        <xsl:choose>
+          <xsl:when test="contains($remainingstrg,$pattern)">
+            <split-item>
+              <xsl:choose>
+                <xsl:when test="contains($remaining-string,'Note')">
+                  <span class="badge" style="border: 1px dotted #000; color:black; background-color:{$itemBg} !important;">
+                    <xsl:value-of select="normalize-space(substring-before($remainingstrg,$pattern))" />
+                  </span>
+                </xsl:when>
+                <xsl:otherwise>
+                  <span class="badge" style="border: 1px solid #000; color:black; background-color:{$itemBg}! important;">
+                    <xsl:value-of select="normalize-space(substring-before($remainingstrg,$pattern))" />
+                  </span>
+                </xsl:otherwise>
+              </xsl:choose>
+            </split-item>
+            <xsl:call-template name="splitter">
+              <xsl:with-param name="aliasContext" select="$aliasContext" />
+              <xsl:with-param name="remaining-string" select="substring-after($remainingstrg,$pattern)" />
+              <xsl:with-param name="pattern" select="$pattern" />
+              <xsl:with-param name="domainbgcolor" select="$domainbgcolor" />
+            </xsl:call-template>
+          </xsl:when>
+          <xsl:otherwise>
+            <split-item>
+              <xsl:choose>
+                <xsl:when test="contains($remaining-string,'Note')">
+                  <span class="badge" style="border: 1px dotted #000; color:black; background-color:{$itemBg} !important;">
+                    <xsl:value-of select="normalize-space($remainingstrg)" />
+                  </span>
+                </xsl:when>
+                <xsl:when test="contains($remaining-string,'NOT SUBMITTED')">
+                  <span class="badge" style="border: 1px dotted #000; color:black; background-color:#ffffff !important;">
+                    <xsl:value-of select="normalize-space($remainingstrg)" />
+                  </span>
+                </xsl:when>
+                <xsl:otherwise>
+                  <span class="badge" style="border: 1px solid #000; color:black; background-color:{$itemBg} !important;">
+                    <xsl:value-of select="normalize-space($remainingstrg)" />
+                  </span>
+                </xsl:otherwise>
+              </xsl:choose>
+            </split-item>
+          </xsl:otherwise>
+        </xsl:choose>
+      </div>
+    </xsl:template>
 
-</xsl:stylesheet>
+  </xsl:stylesheet>

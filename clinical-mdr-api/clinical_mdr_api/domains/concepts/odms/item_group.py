@@ -10,6 +10,10 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemMetadataVO,
     LibraryVO,
 )
+from clinical_mdr_api.models.concepts.odms.odm_common_models import (
+    OdmAliasModel,
+    OdmDescriptionModel,
+)
 from common.exceptions import AlreadyExistsException, BusinessLogicException
 from common.utils import booltostr
 
@@ -23,10 +27,9 @@ class OdmItemGroupVO(ConceptVO):
     origin: str | None
     purpose: str | None
     comment: str | None
-    description_uids: list[str]
-    alias_uids: list[str]
+    descriptions: list[OdmDescriptionModel]
+    aliases: list[OdmAliasModel]
     sdtm_domain_uids: list[str]
-    activity_subgroup_uids: list[str]
     item_uids: list[str]
     vendor_attribute_uids: list[str]
     vendor_element_uids: list[str]
@@ -43,10 +46,9 @@ class OdmItemGroupVO(ConceptVO):
         origin: str | None,
         purpose: str | None,
         comment: str | None,
-        description_uids: list[str],
-        alias_uids: list[str],
+        descriptions: list[OdmDescriptionModel],
+        aliases: list[OdmAliasModel],
         sdtm_domain_uids: list[str],
-        activity_subgroup_uids: list[str],
         item_uids: list[str],
         vendor_element_uids: list[str],
         vendor_attribute_uids: list[str],
@@ -61,10 +63,9 @@ class OdmItemGroupVO(ConceptVO):
             origin=origin,
             purpose=purpose,
             comment=comment,
-            description_uids=description_uids,
-            alias_uids=alias_uids,
+            descriptions=descriptions,
+            aliases=aliases,
             sdtm_domain_uids=sdtm_domain_uids,
-            activity_subgroup_uids=activity_subgroup_uids,
             item_uids=item_uids,
             vendor_element_uids=vendor_element_uids,
             vendor_attribute_uids=vendor_attribute_uids,
@@ -78,16 +79,12 @@ class OdmItemGroupVO(ConceptVO):
     def validate(
         self,
         odm_object_exists_callback: Callable,
-        odm_description_exists_by_callback: Callable[[str, str, bool], bool],
-        get_odm_description_parent_uids_callback: Callable[[list[str]], dict],
-        odm_alias_exists_by_callback: Callable[[str, str, bool], bool],
         find_term_callback: Callable[[str], CTTermAttributesAR | None],
         odm_uid: str | None = None,
         library_name: str | None = None,
     ) -> None:
         data = {
             "library_name": library_name,
-            "alias_uids": self.alias_uids,
             "sdtm_domain_uids": self.sdtm_domain_uids,
             "name": self.name,
             "oid": self.oid,
@@ -104,33 +101,11 @@ class OdmItemGroupVO(ConceptVO):
                     msg=f"ODM Item Group already exists with UID ({uids[0]}) and data {data}"
                 )
 
-        self.check_concepts_exist(
-            [
-                (
-                    self.description_uids,
-                    "ODM Description",
-                    odm_description_exists_by_callback,
-                ),
-                (
-                    self.alias_uids,
-                    "ODM Alias",
-                    odm_alias_exists_by_callback,
-                ),
-            ],
-            "ODM Item Group",
-        )
-
         for sdtm_domain_uid in self.sdtm_domain_uids:
             BusinessLogicException.raise_if_not(
                 find_term_callback(sdtm_domain_uid),
                 msg=f"ODM Item Group tried to connect to non-existent SDTM Domain with UID '{sdtm_domain_uid}'.",
             )
-
-        if uids := get_odm_description_parent_uids_callback(self.description_uids):
-            if odm_uid not in uids:
-                raise BusinessLogicException(
-                    msg=f"ODM Descriptions are already used: {dict(uids)}."
-                )
 
 
 @dataclass
@@ -172,15 +147,6 @@ class OdmItemGroupAR(OdmARBase):
         library: LibraryVO,
         generate_uid_callback: Callable[[], str] = lambda: "",
         odm_object_exists_callback: Callable = lambda _: True,
-        odm_description_exists_by_callback: Callable[
-            [str, str, bool], bool
-        ] = lambda x, y, z: True,
-        get_odm_description_parent_uids_callback: Callable[
-            [list[str]], dict
-        ] = lambda _: {},
-        odm_alias_exists_by_callback: Callable[
-            [str, str, bool], bool
-        ] = lambda x, y, z: True,
         find_term_callback: Callable[[str], CTTermAttributesAR | None] = lambda _: None,
     ) -> Self:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(
@@ -189,9 +155,6 @@ class OdmItemGroupAR(OdmARBase):
 
         concept_vo.validate(
             odm_object_exists_callback=odm_object_exists_callback,
-            odm_description_exists_by_callback=odm_description_exists_by_callback,
-            get_odm_description_parent_uids_callback=get_odm_description_parent_uids_callback,
-            odm_alias_exists_by_callback=odm_alias_exists_by_callback,
             find_term_callback=find_term_callback,
             library_name=library.name,
         )
@@ -212,15 +175,6 @@ class OdmItemGroupAR(OdmARBase):
             [str, str, bool], bool
         ] = lambda x, y, z: True,
         odm_object_exists_callback: Callable = lambda _: True,
-        odm_description_exists_by_callback: Callable[
-            [str, str, bool], bool
-        ] = lambda x, y, z: True,
-        get_odm_description_parent_uids_callback: Callable[
-            [list[str]], dict
-        ] = lambda _: {},
-        odm_alias_exists_by_callback: Callable[
-            [str, str, bool], bool
-        ] = lambda x, y, z: True,
         find_term_callback: Callable[[str], CTTermAttributesAR | None] = lambda _: None,
     ) -> None:
         """
@@ -228,9 +182,6 @@ class OdmItemGroupAR(OdmARBase):
         """
         concept_vo.validate(
             odm_object_exists_callback=odm_object_exists_callback,
-            odm_description_exists_by_callback=odm_description_exists_by_callback,
-            get_odm_description_parent_uids_callback=get_odm_description_parent_uids_callback,
-            odm_alias_exists_by_callback=odm_alias_exists_by_callback,
             find_term_callback=find_term_callback,
             odm_uid=self.uid,
         )
@@ -247,6 +198,7 @@ class OdmItemGroupRefVO:
     uid: str
     oid: str
     name: str
+    version: str
     form_uid: str
     order_number: int
     mandatory: str
@@ -259,6 +211,7 @@ class OdmItemGroupRefVO:
         uid: str,
         oid: str,
         name: str,
+        version: str,
         form_uid: str,
         order_number: int,
         mandatory: bool,
@@ -269,6 +222,7 @@ class OdmItemGroupRefVO:
             uid=uid,
             oid=oid,
             name=name,
+            version=version,
             form_uid=form_uid,
             order_number=order_number,
             mandatory=booltostr(mandatory),

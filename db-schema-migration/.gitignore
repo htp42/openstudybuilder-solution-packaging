@@ -147,3 +147,6 @@ cython_debug/
 
 # Data corrections summary
 correction_change_logs
+
+# sbom build script symlinked/downloaded
+assbom.py

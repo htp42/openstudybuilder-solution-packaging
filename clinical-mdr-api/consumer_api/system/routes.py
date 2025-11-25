@@ -10,12 +10,18 @@ from common.config import settings
 from consumer_api.shared.common import get_api_version
 from consumer_api.system import service
 
-# Mounted under "/system" path as a sub-application, endpoints do not require authentication.
 router = APIRouter()
 
 
 @router.get("/", response_class=HTMLResponse)
 def root(request: Request):
+    root_path = os.environ.get("UVICORN_ROOT_PATH", "").strip("/")
+
+    if str(request.base_url).endswith("/" + root_path):
+        root_path = ""
+    else:
+        root_path = "/" + root_path
+
     return templating.templates.TemplateResponse(
         "pages/api-welcome.html",
         {
@@ -23,6 +29,7 @@ def root(request: Request):
             "data": {
                 "app_name": "StudyBuilder Consumer API",
                 "version": get_api_version(),
+                "root_path": root_path,
             },
         },
     )

@@ -25,6 +25,9 @@
             <template #[`item.RACT`]="{ item }">
               {{ $filters.itemList(item.RACT) }}
             </template>
+            <template #[`item.ENDPNT`]="{ item }">
+              <div v-html="sanitizeHTML(item.ENDPNT)" />
+            </template>
             <template #[`item.RACTSGRP`]="{ item }">
               {{ $filters.itemList(item.RACTSGRP) }}
             </template>
@@ -33,6 +36,9 @@
             </template>
             <template #[`item.RACTINST`]="{ item }">
               {{ $filters.itemList(item.RACTINST) }}
+            </template>
+            <template #[`item.TMFRM`]="{ item }">
+              <div v-html="sanitizeHTML(item.TMFRM)" />
             </template>
           </AnalysisMetadataTable>
         </v-window-item>

@@ -8,7 +8,7 @@ Feature: Studies - Define Study - Study Structure Wizard
     Background: User is logged in and study has been selected
         Given The user is logged in
 
-    Scenario: User must be able to create  arms using stepper wizard
+    Scenario: User must be able to create arms using stepper wizard
         Given The study for testing study structure is selected
         When The study 'arms' page is opened for that study
         And The user defines multiple arms for the study through Study with cohorts, branch arms and subpopulations section

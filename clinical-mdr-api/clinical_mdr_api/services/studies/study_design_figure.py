@@ -348,7 +348,7 @@ class StudyDesignFigureService:
             col_idx = column_by_epoch_uid.get(cell.study_epoch_uid)
             element = study_elements.get(cell.study_element_uid)
 
-            if not all((row_idx, col_idx, element)):
+            if not row_idx or not col_idx or not element:
                 log.debug(
                     "Skipping %s, missing %s, %s or %s not in results",
                     cell.design_cell_uid,
@@ -724,7 +724,7 @@ class StudyDesignFigureService:
         """Merges cells with identical Study Element horizontally"""
         # pylint: disable=unsubscriptable-object,unsupported-assignment-operation
         for row in table[1:]:
-            prev_cell: Mapping | None = None
+            prev_cell: MutableMapping | None = None
             for cell in row[1:]:
                 if not cell.get("id"):
                     prev_cell = None
@@ -748,7 +748,7 @@ class StudyDesignFigureService:
         # pylint: disable=unsubscriptable-object,unsupported-assignment-operation
         n_cols = len(table[0])
         for i in range(1, n_cols):
-            prev_cell: Mapping | None = None
+            prev_cell: MutableMapping | None = None
             for row in table[1:]:
                 cell = row[i]
                 if not cell.get("id"):

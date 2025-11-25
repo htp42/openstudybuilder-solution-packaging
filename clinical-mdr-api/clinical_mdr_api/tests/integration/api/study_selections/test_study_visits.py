@@ -2295,3 +2295,90 @@ def test_get_all_visits_invalid_study_uid_or_version(
 
     response = api_client.get(f"/studies/{study_uid}/study-visits", params=params)
     assert_response_status_code(response, 404)
+
+
+def test_assert_uvn_is_changed_when_group_of_visits_is_modified(api_client):
+    study = TestUtils.create_study(project_number=project.project_number)
+    study_epoch = create_study_epoch("EpochSubType_0001", study_uid=study.uid)
+
+    # Global Anchor Visit
+    inputs = {
+        "study_epoch_uid": study_epoch.uid,
+        "visit_type_uid": "VisitType_0002",
+        "time_reference_uid": "VisitSubType_0005",
+        "time_value": 0,
+        "time_unit_uid": DAYUID,
+        "visit_class": "SINGLE_VISIT",
+        "visit_subclass": "ANCHOR_VISIT_IN_GROUP_OF_SUBV",
+        "is_global_anchor_visit": True,
+    }
+    datadict = visits_basic_data
+    datadict.update(inputs)
+    response = api_client.post(
+        f"/studies/{study.uid}/study-visits",
+        json=datadict,
+    )
+    assert_response_status_code(response, 201)
+    anchor_visit = response.json()
+    anchor_visit_uid = anchor_visit["uid"]
+    assert anchor_visit["unique_visit_number"] == 100
+
+    inputs = {
+        "study_epoch_uid": study_epoch.uid,
+        "visit_type_uid": "VisitType_0003",
+        "time_reference_uid": "VisitSubType_0002",
+        "time_value": -10,
+        "time_unit_uid": DAYUID,
+        "visit_sublabel_reference": anchor_visit_uid,
+        "is_global_anchor_visit": False,
+        "visit_class": "SINGLE_VISIT",
+        "visit_subclass": "ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV",
+    }
+    datadict = visits_basic_data
+    datadict.update(inputs)
+
+    response = api_client.post(
+        f"/studies/{study.uid}/study-visits",
+        json=datadict,
+    )
+    assert_response_status_code(response, 201)
+    subvisit = response.json()
+    subvisit_uid = subvisit["uid"]
+    assert subvisit["unique_visit_number"] == 100
+
+    response = api_client.get(
+        f"/studies/{study.uid}/study-visits/{anchor_visit_uid}/audit-trail",
+    )
+    assert_response_status_code(response, 200)
+    audit_trail = response.json()
+    assert len(audit_trail) == 2
+    assert audit_trail[0]["unique_visit_number"] == 110
+    assert audit_trail[1]["unique_visit_number"] == 100
+
+    datadict.update({"time_value": 10, "uid": subvisit_uid})
+    response = api_client.patch(
+        f"/studies/{study.uid}/study-visits/{subvisit_uid}",
+        json=datadict,
+    )
+    assert_response_status_code(response, 200)
+    assert response.json()["unique_visit_number"] == 110
+
+    response = api_client.get(
+        f"/studies/{study.uid}/study-visits/{subvisit_uid}/audit-trail",
+    )
+    assert_response_status_code(response, 200)
+    audit_trail = response.json()
+    assert len(audit_trail) == 2
+    assert audit_trail[0]["unique_visit_number"] == 110
+    assert audit_trail[1]["unique_visit_number"] == 100
+
+    response = api_client.get(
+        f"/studies/{study.uid}/study-visits/{anchor_visit_uid}/audit-trail",
+    )
+    assert_response_status_code(response, 200)
+    audit_trail = response.json()
+    assert len(audit_trail) == 3
+    print(audit_trail[2]["unique_visit_number"])
+    assert audit_trail[0]["unique_visit_number"] == 100
+    assert audit_trail[1]["unique_visit_number"] == 110
+    assert audit_trail[2]["unique_visit_number"] == 100

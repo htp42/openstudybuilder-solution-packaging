@@ -214,6 +214,7 @@ class StudySoAGroupRepository(StudySelectionActivityBaseRepository[StudySoAGroup
             CTCodelistAttributesRepository().get_or_create_selected_term(
                 ct_term_root,
                 codelist_submission_value=settings.flowchart_group_cl_submval,
+                allow_removed_terms=True,
             )
         )
         study_soa_group_node.has_flowchart_group.connect(selected_term_node)

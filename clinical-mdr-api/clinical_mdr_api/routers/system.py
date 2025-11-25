@@ -16,11 +16,22 @@ router = APIRouter()
 
 @router.get("/", response_class=HTMLResponse)
 def root(request: Request):
+    root_path = os.environ.get("UVICORN_ROOT_PATH", "").strip("/")
+
+    if str(request.base_url).endswith("/" + root_path):
+        root_path = ""
+    else:
+        root_path = "/" + root_path
+
     return templating.templates.TemplateResponse(
         "pages/api-welcome.html",
         {
             "request": request,
-            "data": {"app_name": settings.app_name, "version": get_api_version()},
+            "data": {
+                "app_name": settings.app_name,
+                "version": get_api_version(),
+                "root_path": root_path,
+            },
         },
     )
 

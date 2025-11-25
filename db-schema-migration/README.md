@@ -38,12 +38,33 @@ This repo aims to provide means to:
    - The database will be cleared and then populated with all necessary data.
    - Note that the database is only cleared if it contains a small number of nodes. This is meant to prevent accidentally clearing a "real" database.
 
+- `pipenv run test_corrections`
+   - Tests a specific data correction script: inserts test data, runs the correction script, then verifies the corrected data.
+   - Requires a running SB API and database.
+   - The database will be cleared and then populated with the defined data on `tests/data/db_before_correct_NN.py`.
+   - Note that the database is only cleared if it contains a small number of nodes. This is meant to prevent accidentally clearing a "real" database.
+
+- `pipenv run verify_corrections`
+   - Verifies that database nodes/relations look and behave as expected after data corrections have been applied. No changes are made to the data.
+   - Requires a running SB API and database with corrections already applied.
+
+- `pipenv run apply_corrections`
+   - Performs data corrections on the database defined by `DATABASE_URL` and `DATABASE_NAME` environment params.
+   - Requires a running SB API, and a database with a complete dataset.
+   - After finishing, the result can be verified with the `verify_corrections` action.
+   - Creates change logs documenting all modifications made to the database.
+
+
 - `pipenv run format`
    - Formats code with black and isort.
 
 - `pipenv run lint`
    - Lints code with pylint.
 
+
+## Extracting overview from data-corrections description
+- There exists an extract_overview.py script that gets the description from the correction functions and automatically generates markdown file with given correction overview.
+- In order to use it please execute the following command `python -m data_corrections.extract_overview correction_id` where `id` stands for correction number.
 
 ## Environment Variables
 Migration and test/verify scripts are dependent on the following environment variables:
@@ -87,7 +108,7 @@ TODO move higher up!
 
 This repository also contains data corrections, that correct errors and mistakes in the StudyBuilder database.
 
-The code is structired similar to the migrations:
+The code is structured similar to the migrations:
 - `data_corrections/correction_NNN.py`: the code performing the corrections.
 - `verifications/correction_verification_NNN.py`: verification that the correction was applied sucessfully.
 - `tests/test_correction_NNN.py`: tests used for both testing and verification.

@@ -7,7 +7,11 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemMetadataVO,
     LibraryVO,
 )
-from common.exceptions import AlreadyExistsException, BusinessLogicException
+from clinical_mdr_api.models.concepts.odms.odm_common_models import (
+    OdmAliasModel,
+    OdmDescriptionModel,
+)
+from common.exceptions import AlreadyExistsException
 from common.utils import booltostr
 
 
@@ -16,9 +20,8 @@ class OdmFormVO(ConceptVO):
     oid: str | None
     repeating: str | int | None
     sdtm_version: str | None
-    description_uids: list[str]
-    alias_uids: list[str]
-    activity_group_uids: list[str]
+    descriptions: list[OdmDescriptionModel]
+    aliases: list[OdmAliasModel]
     item_group_uids: list[str]
     vendor_attribute_uids: list[str]
     vendor_element_uids: list[str]
@@ -31,9 +34,8 @@ class OdmFormVO(ConceptVO):
         name: str,
         sdtm_version: str | None,
         repeating: str | int | None,
-        description_uids: list[str],
-        alias_uids: list[str],
-        activity_group_uids: list[str],
+        descriptions: list[OdmDescriptionModel],
+        aliases: list[OdmAliasModel],
         item_group_uids: list[str],
         vendor_element_uids: list[str],
         vendor_attribute_uids: list[str],
@@ -44,9 +46,8 @@ class OdmFormVO(ConceptVO):
             name=name,
             sdtm_version=sdtm_version,
             repeating=repeating,
-            description_uids=description_uids,
-            alias_uids=alias_uids,
-            activity_group_uids=activity_group_uids,
+            descriptions=descriptions,
+            aliases=aliases,
             item_group_uids=item_group_uids,
             vendor_element_uids=vendor_element_uids,
             vendor_attribute_uids=vendor_attribute_uids,
@@ -60,15 +61,11 @@ class OdmFormVO(ConceptVO):
     def validate(
         self,
         odm_object_exists_callback: Callable,
-        odm_description_exists_by_callback: Callable[[str, str, bool], bool],
-        get_odm_description_parent_uids_callback: Callable[[list[str]], dict],
-        odm_alias_exists_by_callback: Callable[[str, str, bool], bool],
         odm_uid: str | None = None,
         library_name: str | None = None,
     ) -> None:
         data = {
             "library_name": library_name,
-            "alias_uids": self.alias_uids,
             "name": self.name,
             "oid": self.oid,
             "sdtm_version": self.sdtm_version,
@@ -78,28 +75,6 @@ class OdmFormVO(ConceptVO):
             if uids[0] != odm_uid:
                 raise AlreadyExistsException(
                     msg=f"ODM Form already exists with UID ({uids[0]}) and data {data}"
-                )
-
-        self.check_concepts_exist(
-            [
-                (
-                    self.description_uids,
-                    "ODM Description",
-                    odm_description_exists_by_callback,
-                ),
-                (
-                    self.alias_uids,
-                    "ODM Alias",
-                    odm_alias_exists_by_callback,
-                ),
-            ],
-            "ODM Form",
-        )
-
-        if uids := get_odm_description_parent_uids_callback(self.description_uids):
-            if odm_uid not in uids:
-                raise BusinessLogicException(
-                    msg=f"ODM Descriptions are already used: {dict(uids)}."
                 )
 
 
@@ -142,15 +117,6 @@ class OdmFormAR(OdmARBase):
         library: LibraryVO,
         generate_uid_callback: Callable[[], str] = lambda: "",
         odm_object_exists_callback: Callable = lambda _: True,
-        odm_description_exists_by_callback: Callable[
-            [str, str, bool], bool
-        ] = lambda x, y, z: True,
-        get_odm_description_parent_uids_callback: Callable[
-            [list[str]], dict
-        ] = lambda _: {},
-        odm_alias_exists_by_callback: Callable[
-            [str, str, bool], bool
-        ] = lambda x, y, z: True,
     ) -> Self:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(
             author_id=author_id
@@ -158,9 +124,6 @@ class OdmFormAR(OdmARBase):
 
         concept_vo.validate(
             odm_object_exists_callback=odm_object_exists_callback,
-            odm_description_exists_by_callback=odm_description_exists_by_callback,
-            get_odm_description_parent_uids_callback=get_odm_description_parent_uids_callback,
-            odm_alias_exists_by_callback=odm_alias_exists_by_callback,
             library_name=library.name,
         )
 
@@ -180,24 +143,12 @@ class OdmFormAR(OdmARBase):
             [str, str, bool], bool
         ] = lambda x, y, z: True,
         odm_object_exists_callback: Callable = lambda _: True,
-        odm_description_exists_by_callback: Callable[
-            [str, str, bool], bool
-        ] = lambda x, y, z: True,
-        get_odm_description_parent_uids_callback: Callable[
-            [list[str]], dict
-        ] = lambda _: {},
-        odm_alias_exists_by_callback: Callable[
-            [str, str, bool], bool
-        ] = lambda x, y, z: True,
     ) -> None:
         """
         Creates a new draft version for the object.
         """
         concept_vo.validate(
             odm_object_exists_callback=odm_object_exists_callback,
-            odm_description_exists_by_callback=odm_description_exists_by_callback,
-            get_odm_description_parent_uids_callback=get_odm_description_parent_uids_callback,
-            odm_alias_exists_by_callback=odm_alias_exists_by_callback,
             odm_uid=self.uid,
         )
 
@@ -212,6 +163,7 @@ class OdmFormAR(OdmARBase):
 class OdmFormRefVO:
     uid: str
     name: str
+    version: str
     study_event_uid: str
     order_number: int
     mandatory: str
@@ -223,6 +175,7 @@ class OdmFormRefVO:
         cls,
         uid: str,
         name: str,
+        version: str,
         study_event_uid: str,
         order_number: int,
         mandatory: bool,
@@ -232,6 +185,7 @@ class OdmFormRefVO:
         return cls(
             uid=uid,
             name=name,
+            version=version,
             study_event_uid=study_event_uid,
             order_number=order_number,
             mandatory=booltostr(mandatory),

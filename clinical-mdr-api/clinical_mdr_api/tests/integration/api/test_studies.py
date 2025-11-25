@@ -3048,3 +3048,11 @@ def test_get_studies_list(api_client):
         TestUtils.assert_response_shape_ok(
             item, STUDY_SIMPLE_FIELDS, STUDY_SIMPLE_FIELDS_NOT_NULL
         )
+
+
+def test_get_study_complexity_score(api_client):
+    response = api_client.get(f"/studies/{study.uid}/complexity-score")
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert isinstance(res, float)
+    assert res >= 0

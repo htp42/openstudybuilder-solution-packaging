@@ -30,11 +30,9 @@ When('A study with Study Arms has been selected', () => {
 
 When('The user defines multiple arms for the study through Study with cohorts, branch arms and subpopulations section', () => {
     cy.intercept('**/study-design-classes').as('designClass')
-    cy.wait('@designClass').then((req) => {
-        expect(req.response.statusCode).to.eq(200)
-    })
+    cy.wait('@designClass').then((req) => expect(req.response.statusCode).to.eq(200))
     cy.get('.mdi-plus').click()
-    cy.clickButton('full-design-study')
+    cy.get('[data-cy="full-design-study"] input').click()
     cy.clickButton('continue-stepper')
     cy.selectVSelect('arm-type', 'Placebo Arm')
     cy.fillInput('arm-name', 'Test Placebo Arm')
@@ -45,21 +43,20 @@ When('The user defines multiple arms for the study through Study with cohorts, b
     cy.clickButton('arm-push')
 
     cy.get('[data-cy="arm-type"]').eq(1).click()
-    cy.get('.v-list')
-        .filter(':visible')
-        .should('not.contain', 'No data available')
-        .within(() => cy.get('.v-list-item').first().click())
+    cy.get('.v-list').filter(':visible').should('not.contain', 'No data available').within(() => {
+        cy.contains('.v-list-item', 'Comparator Arm').click()
+    })
     cy.get('[data-cy="arm-name"]').eq(1).type('Test Arm Two')
     cy.get('[data-cy="arm-short-name"]').eq(1).type('CArm')
     cy.get('[data-cy="randomization-group"]').eq(1).type('RB')
     cy.get('[data-cy="arm-code"]').eq(1).type('B')
     cy.get('[data-cy="arm-description"]').eq(1).type('Test Arm B')
     cy.clickButton('arm-push')
+
     cy.get('[data-cy="arm-type"]').eq(2).click()
-    cy.get('.v-list')
-        .filter(':visible')
-        .should('not.contain', 'No data available')
-        .within(() => cy.get('.v-list-item').last().click())
+    cy.get('.v-list').filter(':visible').should('not.contain', 'No data available').within(() => {
+        cy.contains('.v-list-item', 'Investigational Arm').click()
+    })
     cy.get('[data-cy="arm-name"]').eq(2).type('Test Arm Three')
     cy.get('[data-cy="arm-short-name"]').eq(2).type('CArmX')
     cy.get('[data-cy="randomization-group"]').eq(2).type('RBX')
@@ -67,7 +64,6 @@ When('The user defines multiple arms for the study through Study with cohorts, b
     cy.get('[data-cy="arm-description"]').eq(2).type('Test Arm BX')
     cy.clickButton('save-close-stepper')
     cy.wait(2000)
-
 })
 
 Then('The multiple arms are created for the study', () => {

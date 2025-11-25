@@ -18,21 +18,14 @@ from clinical_mdr_api.models.concepts.odms.odm_common_models import (
     OdmVendorRelationPostInput,
     OdmVendorsPostInput,
 )
-from clinical_mdr_api.models.concepts.odms.odm_description import (
-    OdmDescriptionBatchPatchInput,
-)
 from clinical_mdr_api.models.concepts.odms.odm_item_group import (
     OdmItemGroup,
-    OdmItemGroupActivitySubGroupPostInput,
     OdmItemGroupItemPostInput,
     OdmItemGroupPatchInput,
     OdmItemGroupPostInput,
     OdmItemGroupVersion,
 )
 from clinical_mdr_api.services._utils import get_input_or_new_value
-from clinical_mdr_api.services.concepts.odms.odm_descriptions import (
-    OdmDescriptionService,
-)
 from clinical_mdr_api.services.concepts.odms.odm_generic_service import (
     OdmGenericService,
 )
@@ -51,9 +44,6 @@ class OdmItemGroupService(OdmGenericService[OdmItemGroupAR]):
     ) -> OdmItemGroup:
         return OdmItemGroup.from_odm_item_group_ar(
             odm_item_group_ar=item_ar,
-            find_odm_description_by_uid=self._repos.odm_description_repository.find_by_uid_2,
-            find_odm_alias_by_uid=self._repos.odm_alias_repository.find_by_uid_2,
-            find_activity_subgroup_by_uid=self._repos.activity_subgroup_repository.find_by_uid_2,
             find_odm_vendor_attribute_by_uid=self._repos.odm_vendor_attribute_repository.find_by_uid_2,
             find_odm_item_by_uid_with_item_group_relation=self._repos.odm_item_repository.find_by_uid_with_item_group_relation,
             find_odm_vendor_element_by_uid_with_odm_element_relation=(
@@ -70,7 +60,7 @@ class OdmItemGroupService(OdmGenericService[OdmItemGroupAR]):
         return OdmItemGroupAR.from_input_values(
             author_id=self.author_id,
             concept_vo=OdmItemGroupVO.from_repository_values(
-                oid=concept_input.oid,
+                oid=get_input_or_new_value(concept_input.oid, "G.", concept_input.name),
                 name=concept_input.name,
                 repeating=strtobool(concept_input.repeating),
                 is_reference_data=strtobool(concept_input.is_reference_data),
@@ -78,13 +68,9 @@ class OdmItemGroupService(OdmGenericService[OdmItemGroupAR]):
                 origin=concept_input.origin,
                 purpose=concept_input.purpose,
                 comment=concept_input.comment,
-                description_uids=[
-                    description if isinstance(description, str) else description.uid
-                    for description in concept_input.descriptions
-                ],
-                alias_uids=concept_input.alias_uids,
+                descriptions=concept_input.descriptions,
+                aliases=concept_input.aliases,
                 sdtm_domain_uids=concept_input.sdtm_domain_uids,
-                activity_subgroup_uids=[],
                 item_uids=[],
                 vendor_element_uids=[],
                 vendor_attribute_uids=[],
@@ -93,9 +79,6 @@ class OdmItemGroupService(OdmGenericService[OdmItemGroupAR]):
             library=library,
             generate_uid_callback=self.repository.generate_uid,
             odm_object_exists_callback=self._repos.odm_item_group_repository.odm_object_exists,
-            odm_description_exists_by_callback=self._repos.odm_description_repository.exists_by,
-            get_odm_description_parent_uids_callback=self._repos.odm_description_repository.get_parent_uids,
-            odm_alias_exists_by_callback=self._repos.odm_alias_repository.exists_by,
             find_term_callback=self._repos.ct_term_attributes_repository.find_by_uid,
         )
 
@@ -114,141 +97,18 @@ class OdmItemGroupService(OdmGenericService[OdmItemGroupAR]):
                 origin=concept_edit_input.origin,
                 purpose=concept_edit_input.purpose,
                 comment=concept_edit_input.comment,
-                description_uids=[
-                    description if isinstance(description, str) else description.uid
-                    for description in concept_edit_input.descriptions
-                ],
-                alias_uids=concept_edit_input.alias_uids,
+                descriptions=concept_edit_input.descriptions,
+                aliases=concept_edit_input.aliases,
                 sdtm_domain_uids=concept_edit_input.sdtm_domain_uids,
-                activity_subgroup_uids=[],
-                item_uids=[],
-                vendor_element_uids=[],
-                vendor_attribute_uids=[],
-                vendor_element_attribute_uids=[],
+                item_uids=item.concept_vo.item_uids,
+                vendor_element_uids=item.concept_vo.vendor_element_uids,
+                vendor_attribute_uids=item.concept_vo.vendor_attribute_uids,
+                vendor_element_attribute_uids=item.concept_vo.vendor_element_attribute_uids,
             ),
             odm_object_exists_callback=self._repos.odm_item_group_repository.odm_object_exists,
-            odm_description_exists_by_callback=self._repos.odm_description_repository.exists_by,
-            get_odm_description_parent_uids_callback=self._repos.odm_description_repository.get_parent_uids,
-            odm_alias_exists_by_callback=self._repos.odm_alias_repository.exists_by,
             find_term_callback=self._repos.ct_term_attributes_repository.find_by_uid,
         )
         return item
-
-    @db.transaction
-    def create_with_relations(
-        self, concept_input: OdmItemGroupPostInput
-    ) -> OdmItemGroup:
-        description_uids = [
-            (
-                description
-                if isinstance(description, str)
-                else OdmDescriptionService()
-                .non_transactional_create(concept_input=description)
-                .uid
-            )
-            for description in concept_input.descriptions
-        ]
-
-        item_group = self.non_transactional_create(
-            concept_input=OdmItemGroupPostInput(
-                library_name=concept_input.library_name,
-                oid=get_input_or_new_value(concept_input.oid, "G.", concept_input.name),
-                name=concept_input.name,
-                repeating=concept_input.repeating,
-                is_reference_data=concept_input.is_reference_data,
-                sas_dataset_name=concept_input.sas_dataset_name,
-                origin=concept_input.origin,
-                purpose=concept_input.purpose,
-                comment=concept_input.comment,
-                descriptions=description_uids,
-                alias_uids=concept_input.alias_uids,
-                sdtm_domain_uids=concept_input.sdtm_domain_uids,
-            )
-        )
-
-        return self._transform_aggregate_root_to_pydantic_model(
-            self._repos.odm_item_group_repository.find_by_uid_2(item_group.uid)
-        )
-
-    @db.transaction
-    def update_with_relations(
-        self, uid: str, concept_edit_input: OdmItemGroupPatchInput
-    ) -> OdmItemGroup:
-        description_uids = [
-            (
-                description
-                if isinstance(description, str)
-                else (
-                    OdmDescriptionService()
-                    .non_transactional_edit(
-                        uid=description.uid, concept_edit_input=description
-                    )
-                    .uid
-                    if isinstance(description, OdmDescriptionBatchPatchInput)
-                    else OdmDescriptionService()
-                    .non_transactional_create(concept_input=description)
-                    .uid
-                )
-            )
-            for description in concept_edit_input.descriptions
-        ]
-
-        item_group = self.non_transactional_edit(
-            uid=uid,
-            concept_edit_input=OdmItemGroupPatchInput(
-                change_description=concept_edit_input.change_description,
-                name=concept_edit_input.name,
-                oid=concept_edit_input.oid,
-                repeating=concept_edit_input.repeating,
-                is_reference_data=concept_edit_input.is_reference_data,
-                sas_dataset_name=concept_edit_input.sas_dataset_name,
-                origin=concept_edit_input.origin,
-                purpose=concept_edit_input.purpose,
-                comment=concept_edit_input.comment,
-                descriptions=description_uids,
-                alias_uids=concept_edit_input.alias_uids,
-                sdtm_domain_uids=concept_edit_input.sdtm_domain_uids,
-            ),
-        )
-
-        return self._transform_aggregate_root_to_pydantic_model(
-            self._repos.odm_item_group_repository.find_by_uid_2(item_group.uid)
-        )
-
-    @db.transaction
-    def add_activity_subgroups(
-        self,
-        uid: str,
-        odm_item_group_activity_subgroup_post_input: list[
-            OdmItemGroupActivitySubGroupPostInput
-        ],
-        override: bool = False,
-    ) -> OdmItemGroup:
-        odm_item_group_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
-
-        BusinessLogicException.raise_if(
-            odm_item_group_ar.item_metadata.status == LibraryItemStatus.RETIRED,
-            msg=self.OBJECT_IS_INACTIVE,
-        )
-
-        if override:
-            self._repos.odm_item_group_repository.remove_relation(
-                uid=uid,
-                relation_uid=None,
-                relationship_type=RelationType.ACTIVITY_SUB_GROUP,
-                disconnect_all=True,
-            )
-
-        for activity_subgroup in odm_item_group_activity_subgroup_post_input:
-            self._repos.odm_item_group_repository.add_relation(
-                uid=uid,
-                relation_uid=activity_subgroup.uid,
-                relationship_type=RelationType.ACTIVITY_SUB_GROUP,
-            )
-
-        odm_item_group_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
-
-        return self._transform_aggregate_root_to_pydantic_model(odm_item_group_ar)
 
     @db.transaction
     def add_items(
@@ -270,8 +130,8 @@ class OdmItemGroupService(OdmGenericService[OdmItemGroupAR]):
         odm_item_group_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 
         BusinessLogicException.raise_if(
-            odm_item_group_ar.item_metadata.status == LibraryItemStatus.RETIRED,
-            msg=self.OBJECT_IS_INACTIVE,
+            odm_item_group_ar.item_metadata.status != LibraryItemStatus.DRAFT,
+            msg=self.OBJECT_NOT_IN_DRAFT,
         )
 
         if override:
@@ -338,8 +198,8 @@ class OdmItemGroupService(OdmGenericService[OdmItemGroupAR]):
         odm_item_group_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 
         BusinessLogicException.raise_if(
-            odm_item_group_ar.item_metadata.status == LibraryItemStatus.RETIRED,
-            msg=self.OBJECT_IS_INACTIVE,
+            odm_item_group_ar.item_metadata.status != LibraryItemStatus.DRAFT,
+            msg=self.OBJECT_NOT_IN_DRAFT,
         )
 
         self.are_elements_vendor_compatible(
@@ -383,8 +243,8 @@ class OdmItemGroupService(OdmGenericService[OdmItemGroupAR]):
         odm_item_group_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 
         BusinessLogicException.raise_if(
-            odm_item_group_ar.item_metadata.status == LibraryItemStatus.RETIRED,
-            msg=self.OBJECT_IS_INACTIVE,
+            odm_item_group_ar.item_metadata.status != LibraryItemStatus.DRAFT,
+            msg=self.OBJECT_NOT_IN_DRAFT,
         )
 
         self.fail_if_these_attributes_cannot_be_added(
@@ -424,8 +284,8 @@ class OdmItemGroupService(OdmGenericService[OdmItemGroupAR]):
         odm_item_group_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 
         BusinessLogicException.raise_if(
-            odm_item_group_ar.item_metadata.status == LibraryItemStatus.RETIRED,
-            msg=self.OBJECT_IS_INACTIVE,
+            odm_item_group_ar.item_metadata.status != LibraryItemStatus.DRAFT,
+            msg=self.OBJECT_NOT_IN_DRAFT,
         )
 
         self.fail_if_these_attributes_cannot_be_added(

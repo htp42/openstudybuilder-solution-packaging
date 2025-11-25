@@ -109,6 +109,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  showSynonyms: {
+    type: Boolean,
+    default: true,
+  },
   activityGroupings: {
     type: Array,
     default: () => [],
@@ -180,14 +184,16 @@ const organizedRows = computed(() => {
   })
 
   // Synonyms
-  fields.push({
-    key: 'synonyms',
-    label: t('ActivityTable.synonyms'),
-    value:
-      props.activity.synonyms && props.activity.synonyms.length > 0
-        ? props.activity.synonyms.join(', ')
-        : '-',
-  })
+  if (props.showSynonyms) {
+    fields.push({
+      key: 'synonyms',
+      label: t('ActivityTable.synonyms'),
+      value:
+        props.activity.synonyms && props.activity.synonyms.length > 0
+          ? props.activity.synonyms.join(', ')
+          : '-',
+    })
+  }
 
   // Conditionally add other fields
   if (props.showAbbreviation) {
@@ -211,6 +217,14 @@ const organizedRows = computed(() => {
       key: 'nci_concept_id',
       label: t('ActivityForms.nci_concept_id') || 'NCI Concept ID',
       value: props.activity.nci_concept_id || '-',
+    })
+  }
+
+  if (props.showNciConceptId) {
+    fields.push({
+      key: 'nci_concept_name',
+      label: t('ActivityForms.nci_concept_name') || 'NCI Concept Name',
+      value: props.activity.nci_concept_name || '-',
     })
   }
 
@@ -298,6 +312,34 @@ const organizedRows = computed(() => {
       key: 'author',
       label: t('_global.author'),
       value: props.activity.author_username || '-',
+    })
+  }
+
+  // Domain specific field
+  if (props.activity.domain_specific !== undefined) {
+    fields.push({
+      key: 'domain_specific',
+      label:
+        t('ActivityInstanceClassOverview.domain_specific') || 'Domain specific',
+      value: props.activity.domain_specific || '-',
+    })
+  }
+
+  // Hierarchy field
+  if (props.activity.hierarchy_label !== undefined) {
+    fields.push({
+      key: 'hierarchy',
+      label: t('ActivityInstanceClassOverview.hierarchy') || 'Hierarchy',
+      value: props.activity.hierarchy_label || '-',
+    })
+  }
+
+  // Modified by field
+  if (props.activity.modified_by !== undefined) {
+    fields.push({
+      key: 'modified_by',
+      label: t('_global.modified_by') || 'Modified by',
+      value: props.activity.modified_by || '-',
     })
   }
 

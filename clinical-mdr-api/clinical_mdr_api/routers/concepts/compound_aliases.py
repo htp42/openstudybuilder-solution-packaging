@@ -17,6 +17,8 @@ from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.concepts.compound_alias_service import (
     CompoundAliasService,
 )
+from clinical_mdr_api.services.concepts.compound_service import CompoundService
+from common import exceptions
 from common.auth import rbac
 from common.auth.dependencies import security
 from common.config import settings
@@ -318,7 +320,7 @@ Possible errors:
     },
 )
 def get_versions(
-    compound_alias_uid: Annotated[str, CompoundAliasUID]
+    compound_alias_uid: Annotated[str, CompoundAliasUID],
 ) -> list[CompoundAlias]:
     service = CompoundAliasService()
     return service.get_version_history(uid=compound_alias_uid)
@@ -455,6 +457,18 @@ Possible errors:
 )
 def approve(compound_alias_uid: Annotated[str, CompoundAliasUID]) -> CompoundAlias:
     service = CompoundAliasService()
+    compound_alias = service.get_by_uid(uid=compound_alias_uid)
+
+    compound_versions = CompoundService().get_version_history(
+        uid=compound_alias.compound.uid
+    )
+
+    # Do not allow approving an alias unless the linked compound has at least one final version
+    if not any(version.status == "Final" for version in compound_versions):
+        raise exceptions.BusinessLogicException(
+            msg=f"The linked compound '{compound_alias.compound.name}' must have at least one approved version before alias can be approved.",
+        )
+
     return service.approve(uid=compound_alias_uid)
 
 
@@ -494,7 +508,7 @@ Possible errors:
     },
 )
 def create_new_version(
-    compound_alias_uid: Annotated[str, CompoundAliasUID]
+    compound_alias_uid: Annotated[str, CompoundAliasUID],
 ) -> CompoundAlias:
     service = CompoundAliasService()
     return service.create_new_version(uid=compound_alias_uid)

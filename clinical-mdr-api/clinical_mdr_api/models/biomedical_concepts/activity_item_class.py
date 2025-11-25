@@ -385,3 +385,40 @@ class ActivityItemClassCodelist(CTCodelistNameAndAttributes):
             paired_names_codelist_uid=cl_name_and_attrs.paired_names_codelist_uid,
             term_uids=term_uids,
         )
+
+
+class ActivityItemClassDetail(BaseModel):
+    """Detailed view of an Activity Item Class for the overview endpoint"""
+
+    uid: Annotated[str, Field()]
+    name: Annotated[str, Field()]
+    definition: Annotated[str | None, Field()] = None
+    nci_code: Annotated[str | None, Field()] = None
+    library_name: Annotated[str | None, Field()] = None
+    start_date: Annotated[str | None, Field()] = None
+    end_date: Annotated[str | None, Field()] = None
+    status: Annotated[str, Field()]
+    version: Annotated[str, Field()]
+    change_description: Annotated[str | None, Field()] = None
+    author_username: Annotated[str | None, Field()] = None
+    modified_date: Annotated[str | None, Field()] = None
+
+
+class SimpleActivityInstanceClassForItem(BaseModel):
+    """Simple representation of an Activity Instance Class that uses an Activity Item Class"""
+
+    uid: Annotated[str, Field()]
+    name: Annotated[str, Field()]
+    adam_param_specific_enabled: Annotated[bool, Field()] = False
+    mandatory: Annotated[bool, Field()] = False
+    modified_date: Annotated[str | None, Field()] = None
+    modified_by: Annotated[str | None, Field()] = None
+    version: Annotated[str | None, Field()] = None
+    status: Annotated[str | None, Field()] = None
+
+
+class ActivityItemClassOverview(BaseModel):
+    """Complete overview model for an Activity Item Class"""
+
+    activity_item_class: Annotated[ActivityItemClassDetail, Field()]
+    all_versions: Annotated[list[str], Field()]

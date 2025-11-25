@@ -14,6 +14,7 @@
           v-if="itemOverview && itemOverview.activity"
           :activity="itemOverview.activity"
           :all-versions="allVersions(itemOverview)"
+          :show-author="true"
           class="activity-summary"
           @version-change="(value) => manualChangeVersion(value)"
         />
@@ -339,6 +340,17 @@ onMounted(() => {
 /* Fix table wrapper to auto-height */
 :deep(.v-table__wrapper) {
   height: auto !important;
+}
+
+/* Round table corners */
+.activity-overview-container :deep(.v-data-table) {
+  border-radius: 8px !important;
+  overflow: visible;
+}
+
+.activity-overview-container :deep(.v-table__wrapper) {
+  border-radius: 8px !important;
+  overflow-x: auto;
 }
 
 /* Table styling overrides that penetrate component boundaries */

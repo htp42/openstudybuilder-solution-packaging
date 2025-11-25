@@ -1,3 +1,5 @@
+import { activityInstance_uid, activity_uid, group_uid, subgroup_uid} from "../../support/api_requests/library_activities";
+
 const { When, Then, Given } = require("@badeball/cypress-cucumber-preprocessor");
 
 let groupName, subgroupName, secondSubgroup, activityName, instanceName
@@ -10,13 +12,19 @@ When('Group, subgroup, activity and instance names created through API are found
     cy.getActivityInstanceNameByUid().then(text => instanceName = text)
 })
 
+When('{string} button is not available', (title) => cy.get(`button.v-btn[title="${title}"]`).should('not.exist'))
+
 When('I click {string} button', (title) => cy.get(`button.v-btn[title="${title}"]`).click())
+
+Then('{string} overview page can be opened by clicking the link in overview page', (name) => cy.get('.v-table__wrapper').contains('a', name).click())
 
 Then('The group overview page can be opened by clicking the group link in overview page', () => clickOnLinkedItem(groupName))
 
 Then('The subgroup overview page can be opened by clicking the subgroup link in overview page', () => clickOnLinkedItem(subgroupName))
 
 Then('The activity overview page can be opened by clicking the activity link in overview page', () => clickOnLinkedItem(activityName))
+
+Then('The activity instance overview page can be opened by clicking the activity link in overview page', () => clickOnLinkedItem(instanceName))
 
 When('Group created via API is searched for and found', () => cy.searchAndCheckPresence(groupName, true))
 
@@ -28,6 +36,16 @@ When('Activity created via API is searched for and found', () => cy.searchAndChe
 
 When('Activity instance created via API is searched for and found', () => cy.searchAndCheckPresence(instanceName, true))
 
+When('Overview page for activity instance created via API is opened', () => openOverviewPage('activity-instances', activityInstance_uid))
+
+When('Overview page for activity created via API is opened', () => openOverviewPage('activities', activity_uid))
+
+When('Overview page for group created via API is opened', () => openOverviewPage('activity-groups', group_uid))
+
+When('Overview page for subgroup created via API is opened', () => openOverviewPage('activity-sub-groups', subgroup_uid))
+
+When('User goes to activity instance class {string} overview page by clicking its name', (name) => cy.get('table tbody tr td').contains(name).click())
+
 When('User goes to group overview page by clicking its name', () => cy.get('table tbody tr td').contains(groupName).click())
 
 When('User goes to subgroup overview page by clicking its name', () => cy.get('table tbody tr td').contains(subgroupName).click())
@@ -35,6 +53,8 @@ When('User goes to subgroup overview page by clicking its name', () => cy.get('t
 When('User goes to activity overview page by clicking its name', () => cy.get('table tbody tr td').contains(activityName).click())
 
 When('User goes to instance overview page by clicking its name', () => cy.get('table tbody tr td').contains(instanceName).click())
+
+Given('{string} overview page is opened', (name) => cy.get('.d-flex.page-title').should('contain.text', name))
 
 Given('Group overview page is opened', () => verifyIfOverviewPageOpened(groupName))
 
@@ -106,6 +126,10 @@ When('I create a new subgroup and link it to the existing group', () => {
     cy.fillInput('groupform-definition-field', 'defsg2') 
 })
 
+Then('The Activity Instance Classes table is empty', () => verifyIfTableIsEmpty('Activity Instance Classes', 'No data available'))
+
+Then('The Activity Item Class table is empty', () => verifyIfTableIsEmpty('Activity Item Classes', 'No data available'))
+
 Then('The Activity groupings table is empty', () => verifyIfTableIsEmpty('Activity groupings', 'No data available'))
 
 Then('The Activity subgroups table is empty', () => verifyIfTableIsEmpty('Activity subgroup', 'No subgroups available.'))
@@ -165,6 +189,12 @@ Then('The correct End date should be displayed', () => {
     })
 })
 
+Then('{string} Activity Instance Class is displayed in the Hierarchy field', (value) => {
+    cy.contains('.summary-label', 'Hierarchy').parent().within(() => {
+        cy.get('.summary-value').invoke('text').then(text => cy.wrap(text.trim()).should('equal', value))
+    })
+})
+
 When('I click on the COSMoS YAML tab', () => cy.get('button.v-btn.v-tab[value="cosmos"]').click())
 
 Then('The COSMoS YAML page should be opened with Download button and Close button displayed', () => {
@@ -207,6 +237,18 @@ When('User searches for instance by using lowecased name in linked Instances tab
 When('User searches for instance by using partial name in linked Instances table', () => searchForInLinkedItemTable('Activity instances', 'API_ActivityInstance'))
 
 When('User searches for instance in linked Instances table', () => searchForInLinkedItemTable('Activity instances', instanceName))
+
+When('User searches for activity item class {string} in linked activity item class table', (name) => searchForInLinkedItemTable('Activity Item Classes', name))
+
+When('User searches for activity instance class {string} in linked activity instance class table', (name) => searchForInLinkedItemTable('Activity Instance Classes', name))
+
+When('Activity Item Class {string} is present in first row of the Activity Item Class table', (name) => {
+    cy.contains('.section-header', 'Activity Item Classes').parent().within(() => cy.get('table tbody tr').should('contain.text', name))
+})
+
+When('Activity Instance Class {string} is present in first row of the Activity Instance Class table', (name) => {
+    cy.contains('.section-header', 'Activity Instance Classes').parent().within(() => cy.get('table tbody tr').should('contain.text', name))
+})
 
 When('Group name is present in first row of the Activity Group table', () => {
     cy.contains('.section-header', 'Activity group').parent().within(() => cy.get('table tbody tr').should('contain.text', groupName))
@@ -287,6 +329,11 @@ When('[API] Fetch names of activity with two connected instances', () => {
     cy.getActivityNameByUid().then(text => activityName = text)
     cy.getActivityInstanceNameByUid().then(text => instanceName = text)
 })
+
+function openOverviewPage(name, uid) {
+    cy.visit(`/library/activities/${name}/${uid}/overview`)
+    cy.waitForPage()
+}
 
 function searchForInLinkedItemTable(tableName, searchFor) {
     cy.contains('.section-header', tableName).parent().within(() => cy.get('[data-cy="search-field"] input').clear().type(searchFor, { force: true }))

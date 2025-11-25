@@ -9,11 +9,6 @@ from neomodel import (
     ZeroOrMore,
 )
 
-from clinical_mdr_api.domain_repositories.models.activities import (
-    ActivityGroupRoot,
-    ActivityRoot,
-    ActivitySubGroupRoot,
-)
 from clinical_mdr_api.domain_repositories.models.concepts import (
     ConceptRoot,
     ConceptValue,
@@ -26,82 +21,73 @@ from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
 from clinical_mdr_api.domain_repositories.models.generic import (
     ClinicalMdrRel,
     VersionRelationship,
+    VersionValue,
 )
 
 
-class OdmDescriptionValue(ConceptValue):
+class OdmAlias(VersionValue):
+    name = StringProperty()
+    context = StringProperty()
+
+    has_condition = RelationshipFrom(
+        "OdmConditionValue", "HAS_ALIAS", model=ClinicalMdrRel
+    )
+    has_method = RelationshipFrom("OdmMethodValue", "HAS_ALIAS", model=ClinicalMdrRel)
+    has_form = RelationshipFrom("OdmFormValue", "HAS_ALIAS", model=ClinicalMdrRel)
+    has_item_group = RelationshipFrom(
+        "OdmItemGroupValue", "HAS_ALIAS", model=ClinicalMdrRel
+    )
+    has_item = RelationshipFrom("OdmItemValue", "HAS_ALIAS", model=ClinicalMdrRel)
+
+
+class OdmDescription(VersionValue):
+    name = StringProperty()
     language = StringProperty()
     description = StringProperty()
     instruction = StringProperty()
     sponsor_instruction = StringProperty()
 
-
-class OdmDescriptionRoot(ConceptRoot):
-    has_form = RelationshipFrom("OdmFormRoot", "HAS_DESCRIPTION", model=ClinicalMdrRel)
+    has_form = RelationshipFrom("OdmFormValue", "HAS_DESCRIPTION", model=ClinicalMdrRel)
     has_item_group = RelationshipFrom(
-        "OdmItemGroupRoot", "HAS_DESCRIPTION", model=ClinicalMdrRel
+        "OdmItemGroupValue", "HAS_DESCRIPTION", model=ClinicalMdrRel
     )
-    has_item = RelationshipFrom("OdmItemRoot", "HAS_DESCRIPTION", model=ClinicalMdrRel)
+    has_item = RelationshipFrom("OdmItemValue", "HAS_DESCRIPTION", model=ClinicalMdrRel)
     has_condition = RelationshipFrom(
-        "OdmConditionRoot", "HAS_DESCRIPTION", model=ClinicalMdrRel
+        "OdmConditionValue", "HAS_DESCRIPTION", model=ClinicalMdrRel
     )
     has_method = RelationshipFrom(
-        "OdmMethodRoot", "HAS_DESCRIPTION", model=ClinicalMdrRel
-    )
-    has_version = RelationshipTo(
-        OdmDescriptionValue, "HAS_VERSION", model=VersionRelationship
-    )
-    has_latest_value = RelationshipTo(
-        OdmDescriptionValue, "LATEST", model=ClinicalMdrRel
-    )
-    latest_draft = RelationshipTo(
-        OdmDescriptionValue, "LATEST_DRAFT", model=ClinicalMdrRel
-    )
-    latest_final = RelationshipTo(
-        OdmDescriptionValue, "LATEST_FINAL", model=ClinicalMdrRel
-    )
-    latest_retired = RelationshipTo(
-        OdmDescriptionValue, "LATEST_RETIRED", model=ClinicalMdrRel
+        "OdmMethodValue", "HAS_DESCRIPTION", model=ClinicalMdrRel
     )
 
 
-class OdmAliasValue(ConceptValue):
+class OdmFormalExpression(VersionValue):
     context = StringProperty()
+    expression = StringProperty()
 
-
-class OdmAliasRoot(ConceptRoot):
     has_condition = RelationshipFrom(
-        "OdmConditionRoot", "HAS_ALIAS", model=ClinicalMdrRel
+        "OdmConditionValue", "HAS_FORMAL_EXPRESSION", model=ClinicalMdrRel
     )
-    has_method = RelationshipFrom("OdmMethodRoot", "HAS_ALIAS", model=ClinicalMdrRel)
-    has_form = RelationshipFrom("OdmFormRoot", "HAS_ALIAS", model=ClinicalMdrRel)
-    has_item_group = RelationshipFrom(
-        "OdmItemGroupRoot", "HAS_ALIAS", model=ClinicalMdrRel
-    )
-    has_item = RelationshipFrom("OdmItemRoot", "HAS_ALIAS", model=ClinicalMdrRel)
-    has_version = RelationshipTo(
-        OdmAliasValue, "HAS_VERSION", model=VersionRelationship
-    )
-    has_latest_value = RelationshipTo(OdmAliasValue, "LATEST", model=ClinicalMdrRel)
-    latest_draft = RelationshipTo(OdmAliasValue, "LATEST_DRAFT", model=ClinicalMdrRel)
-    latest_final = RelationshipTo(OdmAliasValue, "LATEST_FINAL", model=ClinicalMdrRel)
-    latest_retired = RelationshipTo(
-        OdmAliasValue, "LATEST_RETIRED", model=ClinicalMdrRel
+    has_method = RelationshipFrom(
+        "OdmMethodValue", "HAS_FORMAL_EXPRESSION", model=ClinicalMdrRel
     )
 
 
 class OdmConditionValue(ConceptValue):
     oid = StringProperty()
+    has_description = RelationshipTo(
+        OdmDescription, "HAS_DESCRIPTION", model=ClinicalMdrRel
+    )
+    has_alias = RelationshipTo(OdmAlias, "HAS_ALIAS", model=ClinicalMdrRel)
+    has_formal_expression = RelationshipTo(
+        "OdmFormalExpression", "HAS_FORMAL_EXPRESSION", model=ClinicalMdrRel
+    )
+
+    has_root = RelationshipFrom(
+        "OdmConditionRoot", "HAS_VERSION", model=VersionRelationship
+    )
 
 
 class OdmConditionRoot(ConceptRoot):
-    has_formal_expression = RelationshipTo(
-        "OdmFormalExpressionRoot", "HAS_FORMAL_EXPRESSION", model=ClinicalMdrRel
-    )
-    has_description = RelationshipTo(
-        OdmDescriptionRoot, "HAS_DESCRIPTION", model=ClinicalMdrRel
-    )
-    has_alias = RelationshipTo(OdmAliasRoot, "HAS_ALIAS", model=ClinicalMdrRel)
     has_version = RelationshipTo(
         OdmConditionValue, "HAS_VERSION", model=VersionRelationship
     )
@@ -120,16 +106,20 @@ class OdmConditionRoot(ConceptRoot):
 class OdmMethodValue(ConceptValue):
     oid = StringProperty()
     method_type = StringProperty()
+    has_description = RelationshipTo(
+        OdmDescription, "HAS_DESCRIPTION", model=ClinicalMdrRel
+    )
+    has_alias = RelationshipTo(OdmAlias, "HAS_ALIAS", model=ClinicalMdrRel)
+    has_formal_expression = RelationshipTo(
+        "OdmFormalExpression", "HAS_FORMAL_EXPRESSION", model=ClinicalMdrRel
+    )
+
+    has_root = RelationshipFrom(
+        "OdmMethodRoot", "HAS_VERSION", model=VersionRelationship
+    )
 
 
 class OdmMethodRoot(ConceptRoot):
-    has_formal_expression = RelationshipTo(
-        "OdmFormalExpressionRoot", "HAS_FORMAL_EXPRESSION", model=ClinicalMdrRel
-    )
-    has_description = RelationshipTo(
-        OdmDescriptionRoot, "HAS_DESCRIPTION", model=ClinicalMdrRel
-    )
-    has_alias = RelationshipTo(OdmAliasRoot, "HAS_ALIAS", model=ClinicalMdrRel)
     has_version = RelationshipTo(
         OdmMethodValue, "HAS_VERSION", model=VersionRelationship
     )
@@ -141,36 +131,6 @@ class OdmMethodRoot(ConceptRoot):
     )
 
 
-class OdmFormalExpressionValue(ConceptValue):
-    context = StringProperty()
-    expression = StringProperty()
-
-
-class OdmFormalExpressionRoot(ConceptRoot):
-    has_condition = RelationshipFrom(
-        OdmConditionRoot, "HAS_FORMAL_EXPRESSION", model=ClinicalMdrRel
-    )
-    has_method = RelationshipFrom(
-        OdmMethodRoot, "HAS_FORMAL_EXPRESSION", model=ClinicalMdrRel
-    )
-    has_version = RelationshipTo(
-        OdmFormalExpressionValue, "HAS_VERSION", model=VersionRelationship
-    )
-    has_latest_value = RelationshipTo(
-        OdmFormalExpressionValue, "LATEST", model=ClinicalMdrRel
-    )
-    latest_draft = RelationshipTo(
-        OdmFormalExpressionValue, "LATEST_DRAFT", model=ClinicalMdrRel
-    )
-    latest_final = RelationshipTo(
-        OdmFormalExpressionValue, "LATEST_FINAL", model=ClinicalMdrRel
-    )
-    latest_retired = RelationshipTo(
-        OdmFormalExpressionValue, "LATEST_RETIRED", model=ClinicalMdrRel
-    )
-
-
-# pylint: disable=abstract-method
 class OdmItemGroupRefRelation(ClinicalMdrRel):
     order_number = IntegerProperty()
     mandatory = BooleanProperty()
@@ -182,14 +142,6 @@ class OdmVendorNamespaceRelation(ClinicalMdrRel):
     value = StringProperty()
 
 
-class OdmFormValue(ConceptValue):
-    oid = StringProperty()
-    repeating = BooleanProperty()
-    sdtm_version = StringProperty()
-
-    has_root = RelationshipFrom("OdmFormRoot", "HAS_VERSION", model=VersionRelationship)
-
-
 class OdmFormRefRelation(ClinicalMdrRel):
     order_number = IntegerProperty()
     mandatory = BooleanProperty()
@@ -197,34 +149,39 @@ class OdmFormRefRelation(ClinicalMdrRel):
     collection_exception_condition_oid = StringProperty()
 
 
-class OdmFormRoot(ConceptRoot):
-    form_ref = RelationshipFrom(
-        "OdmStudyEventRoot", "FORM_REF", model=OdmFormRefRelation
-    )
+class OdmFormValue(ConceptValue):
+    oid = StringProperty()
+    repeating = BooleanProperty()
+    sdtm_version = StringProperty()
     has_description = RelationshipTo(
-        OdmDescriptionRoot, "HAS_DESCRIPTION", model=ClinicalMdrRel
+        OdmDescription, "HAS_DESCRIPTION", model=ClinicalMdrRel
     )
-    has_alias = RelationshipTo(OdmAliasRoot, "HAS_ALIAS", model=ClinicalMdrRel)
-    has_activity_group = RelationshipTo(
-        ActivityGroupRoot, "HAS_ACTIVITY_GROUP", model=ClinicalMdrRel
+    has_alias = RelationshipTo(OdmAlias, "HAS_ALIAS", model=ClinicalMdrRel)
+
+    has_root = RelationshipFrom("OdmFormRoot", "HAS_VERSION", model=VersionRelationship)
+
+    form_ref = RelationshipFrom(
+        "OdmStudyEventValue", "FORM_REF", model=OdmFormRefRelation
     )
     item_group_ref = RelationshipTo(
-        "OdmItemGroupRoot", "ITEM_GROUP_REF", model=OdmItemGroupRefRelation
+        "OdmItemGroupValue", "ITEM_GROUP_REF", model=OdmItemGroupRefRelation
     )
     has_vendor_element = RelationshipTo(
-        "OdmVendorElementRoot", "HAS_VENDOR_ELEMENT", model=OdmVendorNamespaceRelation
+        "OdmVendorElementValue", "HAS_VENDOR_ELEMENT", model=OdmVendorNamespaceRelation
     )
     has_vendor_attribute = RelationshipTo(
-        "OdmVendorAttributeRoot",
+        "OdmVendorAttributeValue",
         "HAS_VENDOR_ATTRIBUTE",
         model=OdmVendorNamespaceRelation,
     )
     has_vendor_element_attribute = RelationshipTo(
-        "OdmVendorAttributeRoot",
+        "OdmVendorAttributeValue",
         "HAS_VENDOR_ELEMENT_ATTRIBUTE",
         model=OdmVendorNamespaceRelation,
     )
 
+
+class OdmFormRoot(ConceptRoot):
     has_version = RelationshipTo(OdmFormValue, "HAS_VERSION", model=VersionRelationship)
     has_latest_value = RelationshipTo(OdmFormValue, "LATEST", model=ClinicalMdrRel)
     latest_draft = RelationshipTo(OdmFormValue, "LATEST_DRAFT", model=ClinicalMdrRel)
@@ -254,41 +211,38 @@ class OdmItemGroupValue(ConceptValue):
     origin = StringProperty()
     purpose = StringProperty()
     comment = StringProperty()
+    has_description = RelationshipTo(
+        OdmDescription, "HAS_DESCRIPTION", model=ClinicalMdrRel
+    )
+    has_alias = RelationshipTo(OdmAlias, "HAS_ALIAS", model=ClinicalMdrRel)
 
     has_root = RelationshipFrom(
         "OdmItemGroupRoot", "HAS_VERSION", model=VersionRelationship
     )
 
-
-class OdmItemGroupRoot(ConceptRoot):
-    has_description = RelationshipTo(
-        OdmDescriptionRoot, "HAS_DESCRIPTION", model=ClinicalMdrRel
-    )
-    has_alias = RelationshipTo(OdmAliasRoot, "HAS_ALIAS", model=ClinicalMdrRel)
     has_sdtm_domain = RelationshipTo(
         CTTermContext, "HAS_SDTM_DOMAIN", cardinality=ZeroOrMore, model=ClinicalMdrRel
     )
-    has_activity_subgroup = RelationshipTo(
-        ActivitySubGroupRoot, "HAS_ACTIVITY_SUB_GROUP", model=ClinicalMdrRel
-    )
     item_group_ref = RelationshipFrom(
-        OdmFormRoot, "ITEM_GROUP_REF", model=OdmItemGroupRefRelation
+        OdmFormValue, "ITEM_GROUP_REF", model=OdmItemGroupRefRelation
     )
-    item_ref = RelationshipTo("OdmItemRoot", "ITEM_REF", model=OdmItemRefRelation)
+    item_ref = RelationshipTo("OdmItemValue", "ITEM_REF", model=OdmItemRefRelation)
     has_vendor_element = RelationshipTo(
-        "OdmVendorElementRoot", "HAS_VENDOR_ELEMENT", model=OdmVendorNamespaceRelation
+        "OdmVendorElementValue", "HAS_VENDOR_ELEMENT", model=OdmVendorNamespaceRelation
     )
     has_vendor_attribute = RelationshipTo(
-        "OdmVendorAttributeRoot",
+        "OdmVendorAttributeValue",
         "HAS_VENDOR_ATTRIBUTE",
         model=OdmVendorNamespaceRelation,
     )
     has_vendor_element_attribute = RelationshipTo(
-        "OdmVendorAttributeRoot",
+        "OdmVendorAttributeValue",
         "HAS_VENDOR_ELEMENT_ATTRIBUTE",
         model=OdmVendorNamespaceRelation,
     )
 
+
+class OdmItemGroupRoot(ConceptRoot):
     has_version = RelationshipTo(
         OdmItemGroupValue, "HAS_VERSION", model=VersionRelationship
     )
@@ -325,16 +279,13 @@ class OdmItemValue(ConceptValue):
     sds_var_name = StringProperty()
     origin = StringProperty()
     comment = StringProperty()
+    has_description = RelationshipTo(
+        OdmDescription, "HAS_DESCRIPTION", model=ClinicalMdrRel
+    )
+    has_alias = RelationshipTo(OdmAlias, "HAS_ALIAS", model=ClinicalMdrRel)
 
     has_root = RelationshipFrom("OdmItemRoot", "HAS_VERSION", model=VersionRelationship)
 
-
-class OdmItemRoot(ConceptRoot):
-    has_description = RelationshipTo(
-        OdmDescriptionRoot, "HAS_DESCRIPTION", model=ClinicalMdrRel
-    )
-    has_alias = RelationshipTo(OdmAliasRoot, "HAS_ALIAS", model=ClinicalMdrRel)
-    has_activity = RelationshipTo(ActivityRoot, "HAS_ACTIVITY", model=ClinicalMdrRel)
     has_unit_definition = RelationshipTo(
         UnitDefinitionRoot,
         "HAS_UNIT_DEFINITION",
@@ -347,21 +298,23 @@ class OdmItemRoot(ConceptRoot):
         cardinality=ZeroOrMore,
         model=OdmItemTermRelationship,
     )
-    item_ref = RelationshipFrom(OdmItemGroupRoot, "ITEM_REF", model=OdmItemRefRelation)
+    item_ref = RelationshipFrom(OdmItemGroupValue, "ITEM_REF", model=OdmItemRefRelation)
     has_vendor_element = RelationshipTo(
-        "OdmVendorElementRoot", "HAS_VENDOR_ELEMENT", model=OdmVendorNamespaceRelation
+        "OdmVendorElementValue", "HAS_VENDOR_ELEMENT", model=OdmVendorNamespaceRelation
     )
     has_vendor_attribute = RelationshipTo(
-        "OdmVendorAttributeRoot",
+        "OdmVendorAttributeValue",
         "HAS_VENDOR_ATTRIBUTE",
         model=OdmVendorNamespaceRelation,
     )
     has_vendor_element_attribute = RelationshipTo(
-        "OdmVendorAttributeRoot",
+        "OdmVendorAttributeValue",
         "HAS_VENDOR_ELEMENT_ATTRIBUTE",
         model=OdmVendorNamespaceRelation,
     )
 
+
+class OdmItemRoot(ConceptRoot):
     has_version = RelationshipTo(OdmItemValue, "HAS_VERSION", model=VersionRelationship)
     has_latest_value = RelationshipTo(OdmItemValue, "LATEST", model=ClinicalMdrRel)
     latest_draft = RelationshipTo(OdmItemValue, "LATEST_DRAFT", model=ClinicalMdrRel)
@@ -378,9 +331,14 @@ class OdmStudyEventValue(ConceptValue):
     description = StringProperty()
     display_in_tree = BooleanProperty()
 
+    has_root = RelationshipFrom(
+        "OdmStudyEventRoot", "HAS_VERSION", model=VersionRelationship
+    )
+
+    form_ref = RelationshipTo(OdmFormValue, "FORM_REF", model=OdmFormRefRelation)
+
 
 class OdmStudyEventRoot(ConceptRoot):
-    form_ref = RelationshipTo(OdmFormRoot, "FORM_REF", model=OdmFormRefRelation)
     has_version = RelationshipTo(
         OdmStudyEventValue, "HAS_VERSION", model=VersionRelationship
     )
@@ -403,15 +361,19 @@ class OdmVendorNamespaceValue(ConceptValue):
     prefix = StringProperty()
     url = StringProperty()
 
+    has_root = RelationshipFrom(
+        "OdmVendorNamespaceRoot", "HAS_VERSION", model=VersionRelationship
+    )
 
-class OdmVendorNamespaceRoot(ConceptRoot):
     has_vendor_element = RelationshipTo(
-        "OdmVendorElementRoot", "HAS_VENDOR_ELEMENT", model=ClinicalMdrRel
+        "OdmVendorElementValue", "HAS_VENDOR_ELEMENT", model=ClinicalMdrRel
     )
     has_vendor_attribute = RelationshipTo(
-        "OdmVendorAttributeRoot", "HAS_VENDOR_ATTRIBUTE", model=ClinicalMdrRel
+        "OdmVendorAttributeValue", "HAS_VENDOR_ATTRIBUTE", model=ClinicalMdrRel
     )
 
+
+class OdmVendorNamespaceRoot(ConceptRoot):
     has_version = RelationshipTo(
         OdmVendorNamespaceValue, "HAS_VERSION", model=VersionRelationship
     )
@@ -434,35 +396,39 @@ class OdmVendorAttributeValue(ConceptValue):
     data_type = StringProperty()
     value_regex = StringProperty()
 
+    has_root = RelationshipFrom(
+        "OdmVendorAttributeRoot", "HAS_VERSION", model=VersionRelationship
+    )
 
-class OdmVendorAttributeRoot(ConceptRoot):
     belongs_to_vendor_namespace = RelationshipFrom(
-        "OdmVendorNamespaceRoot", "HAS_VENDOR_ATTRIBUTE", model=ClinicalMdrRel
+        "OdmVendorNamespaceValue", "HAS_VENDOR_ATTRIBUTE", model=ClinicalMdrRel
     )
     belongs_to_vendor_element = RelationshipFrom(
-        "OdmVendorElementRoot", "HAS_VENDOR_ATTRIBUTE", model=ClinicalMdrRel
+        "OdmVendorElementValue", "HAS_VENDOR_ATTRIBUTE", model=ClinicalMdrRel
     )
     belongs_to_form = RelationshipFrom(
-        "OdmFormRoot", "HAS_VENDOR_ATTRIBUTE", model=OdmVendorNamespaceRelation
+        "OdmFormValue", "HAS_VENDOR_ATTRIBUTE", model=OdmVendorNamespaceRelation
     )
     belongs_to_item_group = RelationshipFrom(
-        "OdmItemGroupRoot", "HAS_VENDOR_ATTRIBUTE", model=OdmVendorNamespaceRelation
+        "OdmItemGroupValue", "HAS_VENDOR_ATTRIBUTE", model=OdmVendorNamespaceRelation
     )
     belongs_to_item = RelationshipFrom(
-        "OdmItemRoot", "HAS_VENDOR_ATTRIBUTE", model=OdmVendorNamespaceRelation
+        "OdmItemValue", "HAS_VENDOR_ATTRIBUTE", model=OdmVendorNamespaceRelation
     )
     belongs_to_element_form = RelationshipFrom(
-        "OdmFormRoot", "HAS_VENDOR_ELEMENT_ATTRIBUTE", model=OdmVendorNamespaceRelation
+        "OdmFormValue", "HAS_VENDOR_ELEMENT_ATTRIBUTE", model=OdmVendorNamespaceRelation
     )
     belongs_to_element_item_group = RelationshipFrom(
-        "OdmItemGroupRoot",
+        "OdmItemGroupValue",
         "HAS_VENDOR_ELEMENT_ATTRIBUTE",
         model=OdmVendorNamespaceRelation,
     )
     belongs_to_element_item = RelationshipFrom(
-        "OdmItemRoot", "HAS_VENDOR_ELEMENT_ATTRIBUTE", model=OdmVendorNamespaceRelation
+        "OdmItemValue", "HAS_VENDOR_ELEMENT_ATTRIBUTE", model=OdmVendorNamespaceRelation
     )
 
+
+class OdmVendorAttributeRoot(ConceptRoot):
     has_version = RelationshipTo(
         OdmVendorAttributeValue, "HAS_VERSION", model=VersionRelationship
     )
@@ -483,24 +449,28 @@ class OdmVendorAttributeRoot(ConceptRoot):
 class OdmVendorElementValue(ConceptValue):
     compatible_types = JSONProperty()
 
+    has_root = RelationshipFrom(
+        "OdmVendorElementRoot", "HAS_VERSION", model=VersionRelationship
+    )
 
-class OdmVendorElementRoot(ConceptRoot):
     belongs_to_vendor_namespace = RelationshipFrom(
-        "OdmVendorNamespaceRoot", "HAS_VENDOR_ELEMENT", model=ClinicalMdrRel
+        "OdmVendorNamespaceValue", "HAS_VENDOR_ELEMENT", model=ClinicalMdrRel
     )
     belongs_to_form = RelationshipFrom(
-        "OdmFormRoot", "HAS_VENDOR_ELEMENT", model=OdmVendorNamespaceRelation
+        "OdmFormValue", "HAS_VENDOR_ELEMENT", model=OdmVendorNamespaceRelation
     )
     belongs_to_item_group = RelationshipFrom(
-        "OdmItemGroupRoot", "HAS_VENDOR_ELEMENT", model=OdmVendorNamespaceRelation
+        "OdmItemGroupValue", "HAS_VENDOR_ELEMENT", model=OdmVendorNamespaceRelation
     )
     belongs_to_item = RelationshipFrom(
-        "OdmItemRoot", "HAS_VENDOR_ELEMENT", model=OdmVendorNamespaceRelation
+        "OdmItemValue", "HAS_VENDOR_ELEMENT", model=OdmVendorNamespaceRelation
     )
     has_vendor_attribute = RelationshipTo(
-        "OdmVendorAttributeRoot", "HAS_VENDOR_ATTRIBUTE", model=ClinicalMdrRel
+        "OdmVendorAttributeValue", "HAS_VENDOR_ATTRIBUTE", model=ClinicalMdrRel
     )
 
+
+class OdmVendorElementRoot(ConceptRoot):
     has_version = RelationshipTo(
         OdmVendorElementValue, "HAS_VERSION", model=VersionRelationship
     )

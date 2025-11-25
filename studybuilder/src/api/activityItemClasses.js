@@ -15,4 +15,16 @@ export default {
       }
     )
   },
+  getOverview(activityItemClassUid, version) {
+    const url = version
+      ? `${resource}/${activityItemClassUid}/overview?version=${version}`
+      : `${resource}/${activityItemClassUid}/overview`
+    return repository.get(url)
+  },
+  getActivityInstanceClasses(activityItemClassUid, params) {
+    return repository.get(
+      `${resource}/${activityItemClassUid}/activity-instance-classes`,
+      { params }
+    )
+  },
 }

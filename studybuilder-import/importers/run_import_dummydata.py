@@ -4,10 +4,8 @@
 
 import base64
 import json
-from datetime import datetime
 from functools import lru_cache
 from random import randint
-import time
 
 import requests
 
@@ -475,16 +473,16 @@ class DummyData(BaseImporter):
             "page_size": 1,
             "filters": json.dumps(filters),
         }
-        
+
         if codelist_name in CODELIST_NAME_MAP:
             codelist_uid = CODELIST_NAME_MAP[codelist_name]
-            self.log.info(
+            self.log.debug(
                 f"Looking up term with '{key}' == '{value}' in codelist '{codelist_name}': {codelist_uid}"
             )
             params["codelist_uid"] = codelist_uid
 
         else:
-            self.log.info(
+            self.log.debug(
                 f"Looking up term with '{key}' == '{value}' in codelist '{codelist_name}'"
             )
             params["codelist_name"] = codelist_name
@@ -512,7 +510,7 @@ class DummyData(BaseImporter):
 
     @lru_cache(maxsize=10000)
     def lookup_concept_uid(self, name, endpoint, subset=None):
-        self.log.info(f"Looking up concept {endpoint} with name '{name}'")
+        self.log.debug(f"Looking up concept {endpoint} with name '{name}'")
         filters = {"name": {"v": [name]}}
         path = f"/concepts/{endpoint}"
         params = {"filters": json.dumps(filters)}
@@ -1052,7 +1050,9 @@ class DummyData(BaseImporter):
             self.studies[study_uid]["elements"].append(uid)
 
     def create_study_epochs(self, study_uid, subtype_name, nbr):
-        epoch_subtype_uid = self.lookup_ct_term_uid("Epoch Sub Type", subtype_name, exact_match=False)
+        epoch_subtype_uid = self.lookup_ct_term_uid(
+            "Epoch Sub Type", subtype_name, exact_match=False
+        )
         epoch_uid = self.simple_post(
             {
                 "path": f"/studies/{study_uid}/study-epochs/preview",
@@ -1104,7 +1104,7 @@ class DummyData(BaseImporter):
                     "study_visit_uid": study_visit["uid"],
                 }
 
-                study_activity_schedule_uid = self.simple_post(
+                self.simple_post(
                     {
                         "path": f"/studies/{study_uid}/study-activity-schedules",
                         "body": payload,

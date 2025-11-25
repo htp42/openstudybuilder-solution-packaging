@@ -15,6 +15,8 @@ ISO 639-3: three-letter codes, the same as 639-2/T for languages, but with disti
 codes for each variety of an ISO 639 macrolanguage.
 """
 
+from typing import Sequence
+
 _NAMES = "names"
 _639_1 = "639-1"
 _639_2T = "639-2/T"
@@ -1470,7 +1472,10 @@ LANGUAGES_BY_639_3 = {
     key.casefold(): lang for lang in LANGUAGES for key in lang[_639_3]
 }
 
-LANGUAGES_INDEXED_BY = {
+LANGUAGES_INDEXED_BY: dict[
+    str,
+    dict[Sequence[str], dict[str, Sequence[str]]] | dict[str, dict[str, Sequence[str]]],
+] = {
     _NAMES: LANGUAGES_BY_NAMES,
     _639_1: LANGUAGES_BY_639_1,
     _639_2T: LANGUAGES_BY_639_2T,

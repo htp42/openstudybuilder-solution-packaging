@@ -14,6 +14,7 @@ from clinical_mdr_api.main import app
 from clinical_mdr_api.models.biomedical_concepts.activity_instance_class import (
     ActivityInstanceClass,
 )
+from clinical_mdr_api.models.controlled_terminologies.ct_term import CTTerm
 from clinical_mdr_api.models.standard_data_models.data_model import DataModel
 from clinical_mdr_api.models.standard_data_models.dataset_class import DatasetClass
 from clinical_mdr_api.tests.integration.utils.api import (
@@ -38,7 +39,8 @@ data_model: str
 data_model_catalogue: DataModel
 activity_instance_classes_all: list[ActivityInstanceClass]
 dataset_class: DatasetClass
-
+role_term: CTTerm
+data_type_term: CTTerm
 parent_uid: str
 
 
@@ -61,6 +63,8 @@ def test_data():
     global dataset_class
     global data_model
     global data_model_catalogue
+    global role_term
+    global data_type_term
 
     data_model = TestUtils.create_data_model()
     data_model_catalogue = TestUtils.create_data_model_catalogue(name="SDTMIG")
@@ -720,6 +724,7 @@ def test_get_activity_instance_class_datasets(api_client):
 
 
 def test_get_activity_item_classes_for_instance_class(api_client):
+    # First, test getting all activity item classes, dataset-independent
     response = api_client.get(
         f"/activity-instance-classes/{activity_instance_classes_all[0].uid}/activity-item-classes"
     )
@@ -745,3 +750,336 @@ def test_get_activity_item_classes_for_instance_class(api_client):
     )
     res = response.json()
     assert len(res) == 2
+
+    # Next, test with a dataset filter
+    # This should only return ActivityItemClass mapped to a VariableClass
+    # being implemented in the given dataset
+    # This requires creating some data
+    child_instance_class_uid = activity_instance_classes_all[5].uid
+    parent_instance_class_uid = parent_uid
+
+    # Create some necessary dataset variable classes and variables
+    data_model_ig = TestUtils.create_data_model_ig(
+        name="ICIG", implemented_data_model=data_model.uid
+    )
+    dataset = TestUtils.create_dataset(
+        data_model_ig_uid=data_model_ig.uid,
+        data_model_ig_version_number=data_model_ig.version_number,
+        implemented_dataset_class_name=dataset_class.uid,
+        data_model_catalogue_name=data_model_catalogue,
+        label="IC",
+    )
+    variable_class = TestUtils.create_variable_class(
+        dataset_class_uid=dataset_class.uid,
+        data_model_catalogue_name=data_model_catalogue,
+        data_model_name=data_model.uid,
+        data_model_version=data_model.version_number,
+        label="--VC",
+    )
+    variable_class_for_parent = TestUtils.create_variable_class(
+        dataset_class_uid=dataset_class.uid,
+        data_model_catalogue_name=data_model_catalogue,
+        data_model_name=data_model.uid,
+        data_model_version=data_model.version_number,
+        label="--PVC",
+    )
+    _ = TestUtils.create_dataset_variable(
+        dataset_uid=dataset.uid,
+        data_model_catalogue_name=data_model_catalogue,
+        data_model_ig_name=data_model_ig.uid,
+        data_model_ig_version=data_model_ig.version_number,
+        class_variable_uid=variable_class.uid,
+        label="ICVC",
+    )
+    _ = TestUtils.create_dataset_variable(
+        dataset_uid=dataset.uid,
+        data_model_catalogue_name=data_model_catalogue,
+        data_model_ig_name=data_model_ig.uid,
+        data_model_ig_version=data_model_ig.version_number,
+        class_variable_uid=variable_class_for_parent.uid,
+        label="ICPVC",
+    )
+    # Create some activity item classes
+    _ = TestUtils.create_activity_item_class(
+        name="unmapped",
+        definition="unmapped definition",
+        nci_concept_id="unmapped nci id",
+        order=3,
+        activity_instance_classes=[
+            {
+                "uid": child_instance_class_uid,
+                "mandatory": False,
+                "is_adam_param_specific_enabled": True,
+            },
+        ],
+        role_uid=role_term.term_uid,
+        data_type_uid=data_type_term.term_uid,
+    )
+    mapped_activity_item_class = TestUtils.create_activity_item_class(
+        name="mapped",
+        definition="mapped definition",
+        nci_concept_id="mapped nci id",
+        order=3,
+        activity_instance_classes=[
+            {
+                "uid": child_instance_class_uid,
+                "mandatory": False,
+                "is_adam_param_specific_enabled": True,
+            },
+        ],
+        role_uid=role_term.term_uid,
+        data_type_uid=data_type_term.term_uid,
+    )
+    parent_mapped_activity_item_class = TestUtils.create_activity_item_class(
+        name="parent mapped",
+        definition="parent mapped definition",
+        nci_concept_id="parent mapped nci id",
+        order=3,
+        activity_instance_classes=[
+            {
+                "uid": parent_instance_class_uid,
+                "mandatory": False,
+                "is_adam_param_specific_enabled": True,
+            },
+        ],
+        role_uid=role_term.term_uid,
+        data_type_uid=data_type_term.term_uid,
+    )
+    # Connect variable classes to activity item class
+    api_client.patch(
+        f"/activity-item-classes/{mapped_activity_item_class.uid}/model-mappings",
+        json={
+            "variable_class_uids": [variable_class.uid],
+        },
+    )
+    api_client.patch(
+        f"/activity-item-classes/{parent_mapped_activity_item_class.uid}/model-mappings",
+        json={
+            "variable_class_uids": [variable_class_for_parent.uid],
+        },
+    )
+
+    # List ActivityItemClasses without filtering on dataset
+    response = api_client.get(
+        f"/activity-instance-classes/{child_instance_class_uid}/activity-item-classes"
+    )
+    res = response.json()
+    assert len(res) == 3
+
+    # List ActivityItemClasses with dataset filter
+    response = api_client.get(
+        f"/activity-instance-classes/{child_instance_class_uid}/activity-item-classes?dataset_uid={dataset.uid}"
+    )
+    res = response.json()
+    assert len(res) == 2
+    returned_names = [el["name"] for el in res]
+    assert "mapped" in returned_names
+    assert "parent mapped" in returned_names
+
+
+def test_get_activity_instance_class_parent_overview(api_client: TestClient) -> None:
+    """Test GET /activity-instance-classes/{uid}/parent-class-overview endpoint"""
+    # Find a parent class (one with children) dynamically
+    parent_class_uid = None
+    for cls in activity_instance_classes_all:
+        # Try to get child classes - if any exist, it's a parent
+        response = api_client.get(f"/activity-instance-classes/{cls.uid}/child-classes")
+        if response.status_code == 200:
+            result = response.json()
+            if len(result.get("items", [])) > 0:
+                parent_class_uid = cls.uid
+                break
+
+    assert parent_class_uid is not None, "Could not find a parent class for testing"
+
+    response = api_client.get(
+        f"/activity-instance-classes/{parent_class_uid}/parent-class-overview"
+    )
+    assert_response_status_code(response, 200)
+
+    result = response.json()
+    assert "parent_activity_instance_class" in result
+    assert "all_versions" in result
+
+    parent_detail = result["parent_activity_instance_class"]
+    assert parent_detail["uid"] == parent_class_uid
+    assert "name" in parent_detail
+    assert "status" in parent_detail
+    assert "version" in parent_detail
+
+    # Test with version parameter
+    response = api_client.get(
+        f"/activity-instance-classes/{parent_class_uid}/parent-class-overview?version=0.1"
+    )
+    assert_response_status_code(response, 200)
+
+    result = response.json()
+    assert result["parent_activity_instance_class"]["version"] == "0.1"
+
+    # Test that a leaf class cannot use this endpoint
+    # Find a leaf class dynamically
+    leaf_class_uid = None
+    for cls in activity_instance_classes_all:
+        response = api_client.get(f"/activity-instance-classes/{cls.uid}/child-classes")
+        if response.status_code == 200:
+            result = response.json()
+            if len(result.get("items", [])) == 0:
+                leaf_class_uid = cls.uid
+                break
+
+    if leaf_class_uid:
+        response = api_client.get(
+            f"/activity-instance-classes/{leaf_class_uid}/parent-class-overview"
+        )
+        # Should get 404 error because leaf classes can't use parent-class-overview
+        assert_response_status_code(response, 404)
+
+    # Test with non-existent UID
+    response = api_client.get(
+        "/activity-instance-classes/INVALID_UID/parent-class-overview"
+    )
+    assert_response_status_code(response, 404)
+
+
+def test_get_activity_instance_class_overview(api_client: TestClient) -> None:
+    """Test GET /activity-instance-classes/{uid}/overview endpoint"""
+    # Find a leaf class (one without children) dynamically
+    leaf_class = None
+    for cls in activity_instance_classes_all:
+        # Try to get child classes - if none exist, it's a leaf
+        response = api_client.get(f"/activity-instance-classes/{cls.uid}/child-classes")
+        if response.status_code == 200:
+            result = response.json()
+            if len(result.get("items", [])) == 0:
+                leaf_class = cls
+                break
+
+    assert leaf_class is not None, "Could not find a leaf class for testing"
+
+    response = api_client.get(f"/activity-instance-classes/{leaf_class.uid}/overview")
+    assert_response_status_code(response, 200)
+
+    result = response.json()
+    assert "activity_instance_class" in result
+    assert "all_versions" in result
+
+    instance_detail = result["activity_instance_class"]
+    assert instance_detail["uid"] == leaf_class.uid
+    assert instance_detail["name"] == leaf_class.name
+    assert "status" in instance_detail
+    assert "version" in instance_detail
+
+    # Test with version parameter
+    response = api_client.get(
+        f"/activity-instance-classes/{leaf_class.uid}/overview?version=0.1"
+    )
+    assert_response_status_code(response, 200)
+
+    result = response.json()
+    assert result["activity_instance_class"]["version"] == "0.1"
+
+    # Parent classes can also use the overview endpoint - it just shows general information
+    # while parent-class-overview shows parent-specific information with children
+
+
+def test_get_child_instance_classes(api_client: TestClient) -> None:
+    """Test GET /activity-instance-classes/{uid}/child-classes endpoint"""
+    # Find a parent class dynamically
+    parent_class_uid = None
+    for cls in activity_instance_classes_all:
+        response = api_client.get(f"/activity-instance-classes/{cls.uid}/child-classes")
+        if response.status_code == 200:
+            result = response.json()
+            if len(result.get("items", [])) > 0:
+                parent_class_uid = cls.uid
+                break
+
+    assert parent_class_uid is not None, "Could not find a parent class for testing"
+
+    # Test with parent class
+    response = api_client.get(
+        f"/activity-instance-classes/{parent_class_uid}/child-classes"
+    )
+    assert_response_status_code(response, 200)
+
+    result = response.json()
+    assert "items" in result
+    assert "total" in result
+    assert len(result["items"]) > 0
+
+    # Check structure of first child
+    first_child = result["items"][0]
+    assert "uid" in first_child
+    assert "name" in first_child
+    assert "status" in first_child
+    assert "version" in first_child
+
+    # Test pagination
+    response = api_client.get(
+        f"/activity-instance-classes/{parent_class_uid}/child-classes?page_size=2&page_number=1&total_count=true"
+    )
+    assert_response_status_code(response, 200)
+
+    result = response.json()
+    assert len(result["items"]) <= 2
+    assert result["total"] >= 1
+
+    # Test with version parameter
+    response = api_client.get(
+        f"/activity-instance-classes/{parent_class_uid}/child-classes?version=0.1"
+    )
+    assert_response_status_code(response, 200)
+
+
+def test_get_item_classes_paginated(api_client: TestClient) -> None:
+    """Test GET /activity-instance-classes/{uid}/item-classes endpoint"""
+    # Find a class that has item classes
+    instance_class = None
+    for cls in activity_instance_classes_all[:5]:  # Check first 5 to speed up test
+        response = api_client.get(f"/activity-instance-classes/{cls.uid}/item-classes")
+        if response.status_code == 200:
+            result = response.json()
+            if len(result.get("items", [])) > 0:
+                instance_class = cls
+                break
+
+    # If none found in first 5, just use the first one (tests will adapt)
+    if instance_class is None:
+        instance_class = activity_instance_classes_all[0]
+
+    # Test basic request
+    response = api_client.get(
+        f"/activity-instance-classes/{instance_class.uid}/item-classes"
+    )
+    assert_response_status_code(response, 200)
+
+    result = response.json()
+    assert "items" in result
+    assert "total" in result
+
+    if len(result["items"]) > 0:
+        first_item = result["items"][0]
+        assert "uid" in first_item
+        assert "name" in first_item
+        assert "parent_name" in first_item
+        assert "parent_uid" in first_item
+        assert "definition" in first_item
+        assert "modified_date" in first_item
+        assert "modified_by" in first_item
+        assert "version" in first_item
+        assert "status" in first_item
+
+    # Test with pagination
+    response = api_client.get(
+        f"/activity-instance-classes/{instance_class.uid}/item-classes?page_size=5&page_number=1&total_count=true"
+    )
+    assert_response_status_code(response, 200)
+
+    result = response.json()
+    assert len(result["items"]) <= 5
+
+    # Test with version parameter
+    response = api_client.get(
+        f"/activity-instance-classes/{instance_class.uid}/item-classes?version=0.1"
+    )
+    assert_response_status_code(response, 200)

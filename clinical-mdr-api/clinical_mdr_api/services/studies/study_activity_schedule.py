@@ -3,6 +3,9 @@ import datetime
 from fastapi import status
 from neomodel import db
 
+from clinical_mdr_api.domain_repositories._utils.helpers import (
+    acquire_write_lock_study_value,
+)
 from clinical_mdr_api.domain_repositories.models._utils import ListDistinct
 from clinical_mdr_api.domain_repositories.models.study_selections import (
     StudyActivitySchedule as StudyActivityScheduleNeoModel,
@@ -102,6 +105,7 @@ class StudyActivityScheduleService(StudySelectionMixin):
     def create(
         self, study_uid: str, schedule_input: StudyActivityScheduleCreateInput
     ) -> StudyActivitySchedule:
+        acquire_write_lock_study_value(study_uid)
         schedule_vo = self._repos.study_activity_schedule_repository.save(
             self._from_input_values(study_uid, schedule_input), self.author
         )
@@ -110,6 +114,7 @@ class StudyActivityScheduleService(StudySelectionMixin):
     @ensure_transaction(db)
     def delete(self, study_uid: str, schedule_uid: str):
         try:
+            acquire_write_lock_study_value(study_uid)
             self._repos.study_activity_schedule_repository.delete(
                 study_uid, schedule_uid, self.author
             )

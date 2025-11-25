@@ -75,33 +75,48 @@ class VersionProperties(BaseModel):
         datetime | None,
         Field(
             description=_generic_descriptions.START_DATE,
-            json_schema_extra={"source": "latest_version|start_date", "nullable": True},
+            json_schema_extra={
+                "source": {"path": "latest_version|start_date", "injected": True},
+                "nullable": True,
+            },
         ),
     ] = None
     end_date: Annotated[
         datetime | None,
         Field(
             description=_generic_descriptions.END_DATE,
-            json_schema_extra={"source": "latest_version|end_date", "nullable": True},
+            json_schema_extra={
+                "source": {"path": "latest_version|end_date", "injected": True},
+                "nullable": True,
+            },
         ),
     ] = None
     status: Annotated[
         str | None,
         Field(
-            json_schema_extra={"source": "latest_version|status", "nullable": True},
+            json_schema_extra={
+                "source": {"path": "latest_version|status", "injected": True},
+                "nullable": True,
+            },
         ),
     ] = None
     version: Annotated[
         str | None,
         Field(
-            json_schema_extra={"source": "latest_version|version", "nullable": True},
+            json_schema_extra={
+                "source": {"path": "latest_version|version", "injected": True},
+                "nullable": True,
+            },
         ),
     ] = None
     change_description: Annotated[
         str | None,
         Field(
             json_schema_extra={
-                "source": "latest_version|change_description",
+                "source": {
+                    "path": "latest_version|change_description",
+                    "injected": True,
+                },
                 "nullable": True,
             },
         ),
@@ -110,7 +125,10 @@ class VersionProperties(BaseModel):
         str | None,
         Field(
             json_schema_extra={
-                "source": "latest_version|author_id",  # utils.model_validate() method will lookup author's username using `latest_version|author_id` value as User.user_id
+                "source": {
+                    "path": "latest_version|author_id",
+                    "injected": True,
+                },  # utils.model_validate() method will lookup author's username using `latest_version|author_id` value as User.user_id
                 "nullable": True,
             }
         ),
@@ -328,6 +346,15 @@ class SimpleNumericValueWithUnit(BaseModel):
                 )
 
         return concept
+
+    @classmethod
+    def from_input(cls, input_data) -> Self:
+        return cls(
+            uid=input_data.uid,
+            value=input_data.value,
+            unit_definition_uid=input_data.unit_definition_uid,
+            unit_label=input_data.unit_label,
+        )
 
 
 class LagTime(NumericValueWithUnit):

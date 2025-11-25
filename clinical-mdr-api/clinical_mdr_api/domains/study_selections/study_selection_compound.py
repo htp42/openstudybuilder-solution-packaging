@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Iterable, Self
 
 from clinical_mdr_api.domains.concepts.medicinal_product import MedicinalProductAR
+from clinical_mdr_api.domains.controlled_terminologies.utils import CtTermInfo
 from clinical_mdr_api.services.user_info import UserInfoService
 from clinical_mdr_api.utils import normalize_string
 from common import exceptions
@@ -26,8 +27,11 @@ class StudySelectionCompoundVO:
     type_of_treatment_uid: str | None
     reason_for_missing_value_uid: str | None
     dispenser_uid: str | None
+    dispenser: CtTermInfo | None
     dose_frequency_uid: str | None
+    dose_frequency: CtTermInfo | None
     delivery_device_uid: str | None
+    delivery_device: CtTermInfo | None
     other_info: str | None
     study_compound_dosing_count: int | None
     # Study selection Versioning
@@ -48,6 +52,9 @@ class StudySelectionCompoundVO:
         delivery_device_uid: str | None,
         other_info: str | None,
         author_id: str,
+        dose_frequency: CtTermInfo | None = None,
+        dispenser: CtTermInfo | None = None,
+        delivery_device: CtTermInfo | None = None,
         study_uid: str | None = None,
         study_selection_uid: str | None = None,
         study_compound_dosing_count: int | None = None,
@@ -90,8 +97,11 @@ class StudySelectionCompoundVO:
             type_of_treatment_uid=normalize_string(type_of_treatment_uid),
             reason_for_missing_value_uid=normalize_string(reason_for_missing_value_uid),
             dose_frequency_uid=normalize_string(dose_frequency_uid),
+            dose_frequency=dose_frequency,
             dispenser_uid=normalize_string(dispenser_uid),
+            dispenser=dispenser,
             delivery_device_uid=normalize_string(delivery_device_uid),
+            delivery_device=delivery_device,
             other_info=normalize_string(other_info),
             study_compound_dosing_count=study_compound_dosing_count,
             author_id=normalize_string(author_id),

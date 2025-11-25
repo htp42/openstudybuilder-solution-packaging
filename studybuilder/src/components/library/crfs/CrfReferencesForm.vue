@@ -21,7 +21,7 @@
                   <v-switch
                     v-model="form.mandatory"
                     color="primary"
-                    :label="$t('CrfReferencesForm.mandatory')"
+                    :label="$t('CRFReferencesForm.mandatory')"
                     true-value="Yes"
                     false-value="No"
                     :disabled="readOnly"
@@ -32,7 +32,7 @@
                     v-if="element.uid && element.uid.includes('OdmForm')"
                     v-model="form.locked"
                     color="primary"
-                    :label="$t('CrfReferencesForm.locked')"
+                    :label="$t('CRFReferencesForm.locked')"
                     true-value="Yes"
                     false-value="No"
                     :disabled="readOnly"
@@ -101,7 +101,7 @@ const type = ref('')
 const panels = ref([0])
 
 const title = computed(() => {
-  return t('CrfReferencesForm.title') + props.element.name
+  return t('CRFReferencesForm.title') + props.element.name
 })
 
 watch(
@@ -149,7 +149,7 @@ async function submit() {
     agreeLabel: t('_global.continue'),
   }
   if (form.value.uid.includes('OdmForm')) {
-    crfs.addFormsToTemplate([form.value], props.parent.uid, false).then(
+    crfs.addFormsToCollection([form.value], props.parent.uid, false).then(
       () => {
         emit('close')
       },
@@ -166,9 +166,9 @@ async function submit() {
     if (
       parentForm.parent_uids.length > 1 &&
       !(await confirm.value.open(
-        t('CrfReferencesForm.warning_1') +
+        t('CRFReferencesForm.warning_1') +
           (parentForm.parent_uids.length - 1) +
-          t('CrfReferencesForm.warning_templ'),
+          t('CRFReferencesForm.warning_templ'),
         options
       ))
     ) {
@@ -189,16 +189,16 @@ async function submit() {
       group = resp.data.find((el) => el.uid === props.parent.uid)
     })
     if (group.parent_uids.length === 1) {
-      let numberOfParentTemplates = 0
+      let numberOfParentCollections = 0
       await crfs
         .getRelationships(group.parent_uids[0], 'forms')
         .then(async (resp) => {
-          numberOfParentTemplates = resp.data.OdmStudyEvent.length
+          numberOfParentCollections = resp.data.OdmStudyEvent.length
         })
       if (
-        numberOfParentTemplates > 1 &&
+        numberOfParentCollections > 1 &&
         !(await confirm.value.open(
-          t('CrfReferencesForm.templates_warning'),
+          t('CRFReferencesForm.collection_warning'),
           options
         ))
       ) {
@@ -209,9 +209,9 @@ async function submit() {
     if (
       group.parent_uids.length > 1 &&
       !(await confirm.value.open(
-        t('CrfReferencesForm.warning_1') +
+        t('CRFReferencesForm.warning_1') +
           (group.parent_uids.length - 1) +
-          t('CrfReferencesForm.warning_forms'),
+          t('CRFReferencesForm.warning_forms'),
         options
       ))
     ) {

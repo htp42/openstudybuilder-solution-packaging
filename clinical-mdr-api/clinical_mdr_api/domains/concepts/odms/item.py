@@ -11,6 +11,10 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemMetadataVO,
     LibraryVO,
 )
+from clinical_mdr_api.models.concepts.odms.odm_common_models import (
+    OdmAliasModel,
+    OdmDescriptionModel,
+)
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from common.exceptions import AlreadyExistsException, BusinessLogicException
 from common.utils import booltostr
@@ -27,12 +31,11 @@ class OdmItemVO(ConceptVO):
     sds_var_name: str | None
     origin: str | None
     comment: str | None
-    description_uids: list[str]
-    alias_uids: list[str]
+    descriptions: list[OdmDescriptionModel]
+    aliases: list[OdmAliasModel]
     unit_definition_uids: list[str]
     codelist_uid: str | None
     term_uids: list[str]
-    activity_uid: str | None
     vendor_attribute_uids: list[str]
     vendor_element_uids: list[str]
     vendor_element_attribute_uids: list[str]
@@ -50,12 +53,11 @@ class OdmItemVO(ConceptVO):
         sds_var_name: str | None,
         origin: str | None,
         comment: str | None,
-        description_uids: list[str],
-        alias_uids: list[str],
+        descriptions: list[OdmDescriptionModel],
+        aliases: list[OdmAliasModel],
         unit_definition_uids: list[str],
         codelist_uid: str | None,
         term_uids: list[str],
-        activity_uid: str | None,
         vendor_element_uids: list[str],
         vendor_attribute_uids: list[str],
         vendor_element_attribute_uids: list[str],
@@ -71,12 +73,11 @@ class OdmItemVO(ConceptVO):
             sds_var_name=sds_var_name,
             origin=origin,
             comment=comment,
-            description_uids=description_uids,
-            alias_uids=alias_uids,
+            descriptions=descriptions,
+            aliases=aliases,
             unit_definition_uids=unit_definition_uids,
             codelist_uid=codelist_uid,
             term_uids=term_uids,
-            activity_uid=activity_uid,
             vendor_element_uids=vendor_element_uids,
             vendor_attribute_uids=vendor_attribute_uids,
             vendor_element_attribute_uids=vendor_element_attribute_uids,
@@ -89,9 +90,6 @@ class OdmItemVO(ConceptVO):
     def validate(
         self,
         odm_object_exists_callback: Callable,
-        odm_description_exists_by_callback: Callable[[str, str, bool], bool],
-        get_odm_description_parent_uids_callback: Callable[[list[str]], dict],
-        odm_alias_exists_by_callback: Callable[[str, str, bool], bool],
         unit_definition_exists_by_callback: Callable[[str, str, bool], bool],
         find_codelist_attribute_callback: Callable[
             [str], CTCodelistAttributesAR | None
@@ -104,7 +102,6 @@ class OdmItemVO(ConceptVO):
     ) -> None:
         data = {
             "library_name": library_name,
-            "alias_uids": self.alias_uids,
             "unit_definition_uids": self.unit_definition_uids,
             "codelist_uid": self.codelist_uid,
             "term_uids": self.term_uids,
@@ -127,16 +124,6 @@ class OdmItemVO(ConceptVO):
 
         self.check_concepts_exist(
             [
-                (
-                    self.description_uids,
-                    "ODM Description",
-                    odm_description_exists_by_callback,
-                ),
-                (
-                    self.alias_uids,
-                    "ODM Alias",
-                    odm_alias_exists_by_callback,
-                ),
                 (
                     self.unit_definition_uids,
                     "Unit Definition",
@@ -167,12 +154,6 @@ class OdmItemVO(ConceptVO):
                 BusinessLogicException.raise_if(
                     term_uid not in codelist_term_uids,
                     msg=f"Term with UID '{term_uid}' doesn't belong to the specified Codelist with UID '{self.codelist_uid}'.",
-                )
-
-        if uids := get_odm_description_parent_uids_callback(self.description_uids):
-            if odm_uid not in uids:
-                raise BusinessLogicException(
-                    msg=f"ODM Descriptions are already used: {dict(uids)}."
                 )
 
 
@@ -215,15 +196,6 @@ class OdmItemAR(OdmARBase):
         library: LibraryVO,
         generate_uid_callback: Callable[[], str] = lambda: "",
         odm_object_exists_callback: Callable = lambda _: True,
-        odm_description_exists_by_callback: Callable[
-            [str, str, bool], bool
-        ] = lambda x, y, z: True,
-        get_odm_description_parent_uids_callback: Callable[
-            [list[str]], dict
-        ] = lambda _: {},
-        odm_alias_exists_by_callback: Callable[
-            [str, str, bool], bool
-        ] = lambda x, y, z: True,
         unit_definition_exists_by_callback: Callable[
             [str, str, bool], bool
         ] = lambda x, y, z: True,
@@ -240,9 +212,6 @@ class OdmItemAR(OdmARBase):
 
         concept_vo.validate(
             odm_object_exists_callback=odm_object_exists_callback,
-            odm_description_exists_by_callback=odm_description_exists_by_callback,
-            get_odm_description_parent_uids_callback=get_odm_description_parent_uids_callback,
-            odm_alias_exists_by_callback=odm_alias_exists_by_callback,
             unit_definition_exists_by_callback=unit_definition_exists_by_callback,
             find_codelist_attribute_callback=find_codelist_attribute_callback,
             find_all_terms_callback=find_all_terms_callback,
@@ -265,15 +234,6 @@ class OdmItemAR(OdmARBase):
             [str, str, bool], bool
         ] = lambda x, y, z: True,
         odm_object_exists_callback: Callable = lambda _: True,
-        odm_description_exists_by_callback: Callable[
-            [str, str, bool], bool
-        ] = lambda x, y, z: True,
-        get_odm_description_parent_uids_callback: Callable[
-            [list[str]], dict
-        ] = lambda _: {},
-        odm_alias_exists_by_callback: Callable[
-            [str, str, bool], bool
-        ] = lambda x, y, z: True,
         unit_definition_exists_by_callback: Callable[
             [str, str, bool], bool
         ] = lambda x, y, z: True,
@@ -289,9 +249,6 @@ class OdmItemAR(OdmARBase):
         """
         concept_vo.validate(
             odm_object_exists_callback=odm_object_exists_callback,
-            odm_description_exists_by_callback=odm_description_exists_by_callback,
-            get_odm_description_parent_uids_callback=get_odm_description_parent_uids_callback,
-            odm_alias_exists_by_callback=odm_alias_exists_by_callback,
             unit_definition_exists_by_callback=unit_definition_exists_by_callback,
             find_codelist_attribute_callback=find_codelist_attribute_callback,
             find_all_terms_callback=find_all_terms_callback,
@@ -310,6 +267,7 @@ class OdmItemRefVO:
     uid: str
     oid: str
     name: str
+    version: str
     item_group_uid: str
     order_number: int
     mandatory: str
@@ -327,6 +285,7 @@ class OdmItemRefVO:
         uid: str,
         oid: str,
         name: str,
+        version: str,
         item_group_uid: str,
         order_number: int,
         mandatory: bool,
@@ -342,6 +301,7 @@ class OdmItemRefVO:
             uid=uid,
             oid=oid,
             name=name,
+            version=version,
             item_group_uid=item_group_uid,
             order_number=order_number,
             mandatory=booltostr(mandatory),

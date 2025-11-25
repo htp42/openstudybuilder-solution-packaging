@@ -1,11 +1,19 @@
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Query
+from fastapi.requests import Request
 
 from clinical_mdr_api.domain_repositories.user_repository import UserRepository
+from clinical_mdr_api.models.complexity_score import (
+    ActivityBurden,
+    Burden,
+    BurdenIdInput,
+    BurdenInput,
+)
 from clinical_mdr_api.models.user import UserInfo, UserInfoPatchInput
-from clinical_mdr_api.routers import _generic_descriptions
+from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services._meta_repository import MetaRepository
+from clinical_mdr_api.services.studies.complexity_score import ComplexityScoreService
 from common import exceptions
 from common.auth import rbac
 from common.auth.dependencies import security
@@ -137,3 +145,99 @@ def _get_cache_item_info(items):
             }
         )
     return ret
+
+
+@router.get(
+    "/complexity-scores/activity-burdens",
+    dependencies=[security, rbac.ADMIN_READ],
+    summary="Returns activity groups and their corresponding site/patient burdens used for complexity score calculations",
+    status_code=200,
+)
+@decorators.allow_exports(
+    {
+        "defaults": [
+            "activity_subgroup_uid",
+            "activity_subgroup_name",
+            "burden_id",
+            "site_burden",
+            "patient_burden",
+            "median_cost_usd",
+        ],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+# pylint: disable=unused-argument
+def get_complexity_activity_burdens(
+    request: Request,  # request is actually required by the allow_exports decorator
+) -> list[ActivityBurden]:
+    service = ComplexityScoreService()
+    return service.get_activity_burdens(lite=False)
+
+
+@router.get(
+    "/complexity-scores/burdens",
+    dependencies=[security, rbac.ADMIN_READ],
+    summary="Returns site/patient burdens used for complexity score calculations",
+    status_code=200,
+)
+@decorators.allow_exports(
+    {
+        "defaults": [
+            "burden_id",
+            "name",
+            "description",
+            "site_burden",
+            "patient_burden",
+            "median_cost_usd",
+        ],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+# pylint: disable=unused-argument
+def get_complexity_burdens(
+    request: Request,  # request is actually required by the allow_exports decorator
+) -> list[Burden]:
+    service = ComplexityScoreService()
+    return service.get_burdens()
+
+
+@router.post(
+    "/complexity-scores/burdens",
+    dependencies=[security, rbac.ADMIN_WRITE],
+    summary="Creates a new or updates and existing site/patient burden used for complexity score calculations",
+    status_code=201,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        404: _generic_descriptions.ERROR_404,
+    },
+)
+def create_complexity_burden(payload: BurdenInput) -> Burden:
+    service = ComplexityScoreService()
+    return service.create_burden(payload)
+
+
+@router.put(
+    "/complexity-scores/burdens/activity-burdens/{activity_subgroup_id}",
+    dependencies=[security, rbac.ADMIN_WRITE],
+    summary="Sets or updates a mapping between an activity subgroup and a site/patient burden used for complexity score calculations",
+    status_code=200,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        404: _generic_descriptions.ERROR_404,
+    },
+)
+def update_complexity_activity_burden(
+    activity_subgroup_id: str, burden: BurdenIdInput
+) -> ActivityBurden:
+    service = ComplexityScoreService()
+    return service.update_activity_burden(activity_subgroup_id, burden)

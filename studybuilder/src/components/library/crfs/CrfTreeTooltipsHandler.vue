@@ -44,19 +44,19 @@ export default {
       if (this.valueExist()) {
         switch (this.value) {
           case 'repeating':
-            return this.$t('CrfTree.repeating')
+            return this.$t('CRFTree.repeating')
           case 'locked':
-            return this.$t('CrfTree.locked')
+            return this.$t('CRFTree.locked')
           case 'mandatory':
-            return this.$t('CrfTree.mandatory')
+            return this.$t('CRFTree.mandatory')
           case 'is_reference_data':
-            return this.$t('CrfTree.ref_data')
+            return this.$t('CRFTree.ref_data')
           case 'refAttrs':
-            return this.$t('CrfTree.ref_vendor_extension_applied')
+            return this.$t('CRFTree.ref_vendor_extension_applied')
           case 'dataType':
-            return this.item.datatype + this.$t('CrfTree.data_type')
+            return this.item.datatype + this.$t('CRFTree.data_type')
           case 'vendor':
-            return this.$t('CrfTree.vendor_extension_applied')
+            return this.$t('CRFTree.vendor_extension_applied')
         }
       }
     },

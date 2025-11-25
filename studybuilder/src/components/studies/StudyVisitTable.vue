@@ -68,6 +68,7 @@
       fixed-header
       :history-data-fetcher="fetchVisitsHistory"
       :history-title="$t('StudyVisitTable.global_history_title')"
+      :loading="tableLoading"
       @filter="fetchStudyVisits"
     >
       <template #headerCenter>
@@ -848,6 +849,7 @@ const visitHistoryItems = ref([])
 const fetchedStudyEpochs = ref([])
 const timeLineVisits = ref([])
 const frequencies = ref([])
+const tableLoading = ref(false)
 const visitClasses = [
   {
     label: t('StudyVisitForm.scheduled_visit'),
@@ -1001,6 +1003,7 @@ function transformItems(items) {
       newItem.is_global_anchor_visit
     )
     newItem.show_visit = dataFormating.yesno(newItem.show_visit)
+    newItem.visit_window = `${item.min_visit_window_value} / ${item.max_visit_window_value} ${getUnitName(item.visit_window_unit_uid)}`
     result.push(newItem)
   }
   return result
@@ -1124,10 +1127,12 @@ function closeForm() {
 }
 
 async function deleteVisit(item) {
+  tableLoading.value = true
   await epochsStore.deleteStudyVisit({
     studyUid: studiesGeneralStore.selectedStudy.uid,
     studyVisitUid: item.uid,
   })
+  tableLoading.value = false
   eventBusEmit('notification', { msg: t('StudyVisitTable.delete_success') })
   tableRef.value.filterTable()
 }

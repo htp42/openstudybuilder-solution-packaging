@@ -569,7 +569,7 @@ class StudyEpochService(StudySelectionMixin):
                 epoch = SimpleCTTermNameWithConflictFlag.from_ct_term_ar(epoch_ar)
             else:
                 epoch = self._get_epoch_object(
-                    epochs_in_subtype=epochs_in_subtype, subtype=subtype
+                    epochs_in_subtype=epochs_in_subtype, subtype=subtype  # type: ignore[arg-type]
                 )
             # if epoch subtype was modified we have to synchronize the old epoch subtype group
             self._synchronize_epoch_orders(

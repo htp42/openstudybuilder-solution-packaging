@@ -18,7 +18,7 @@ metrics = Metrics()
 
 def load_env(key: str, default: Optional[str] = None):
     value = environ.get(key)
-    logger.info("%s=%s", key, value)
+    logger.debug("%s=%s", key, value)
     if value is None and default is None:
         logger.error("%s is not set and no default was provided", key)
         raise EnvironmentError("Failed because {} is not set.".format(key))

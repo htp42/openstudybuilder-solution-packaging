@@ -85,26 +85,36 @@ function getIdentifierNullValueKey(identifier) {
 }
 
 function clear(identifier) {
-  const nullValueKey = getIdentifierNullValueKey(identifier)
-  form.value[identifier] = null
-  if (form.value[nullValueKey]) {
-    form.value[nullValueKey] = null
-  } else {
-    const termUid = this.studiesGeneralStore.nullValues.find(
-      (el) => el.submission_value === studyConstants.TERM_NOT_APPLICABLE_SUBMVAL
-    ).term_uid
-    form.value[nullValueKey] = {
-      term_uid: termUid,
-      name: i18n.t('_global.not_applicable_full_name'),
+  try {
+    const nullValueKey = getIdentifierNullValueKey(identifier)
+    form.value[identifier] = null
+    if (form.value[nullValueKey]) {
+      form.value[nullValueKey] = null
+    } else {
+      const termUid = studiesGeneralStore.nullValues.find(
+        (el) =>
+          el.submission_value === studyConstants.TERM_NOT_APPLICABLE_SUBMVAL
+      ).term_uid
+      form.value[nullValueKey] = {
+        term_uid: termUid,
+        name: i18n.t('_global.not_applicable_full_name'),
+      }
     }
+  } catch (error) {
+    console.error(error)
   }
 }
 
 function nullValueSet(identifier) {
-  const nullValueKey = getIdentifierNullValueKey(identifier)
-  return (
-    form.value[nullValueKey] !== undefined && form.value[nullValueKey] !== null
-  )
+  try {
+    const nullValueKey = getIdentifierNullValueKey(identifier)
+    return (
+      form.value[nullValueKey] !== undefined &&
+      form.value[nullValueKey] !== null
+    )
+  } catch (error) {
+    console.error(error)
+  }
 }
 
 function close() {

@@ -22,7 +22,7 @@
           <v-col cols="6">
             <v-text-field
               v-model="form.prefix"
-              :label="$t('CrfExtensions.prefix')"
+              :label="$t('CRFExtensions.prefix')"
               density="compact"
               clearable
               :rules="[formRules.required]"
@@ -33,7 +33,7 @@
           <v-col>
             <v-text-field
               v-model="form.url"
-              :label="$t('CrfExtensions.url')"
+              :label="$t('CRFExtensions.url')"
               density="compact"
               clearable
               :rules="[formRules.required]"
@@ -71,8 +71,8 @@ export default {
   computed: {
     title() {
       return this.editItem.uid
-        ? this.$t('CrfExtensions.edit_namespace')
-        : this.$t('CrfExtensions.new_namespace')
+        ? this.$t('CRFExtensions.edit_namespace')
+        : this.$t('CRFExtensions.new_namespace')
     },
   },
   watch: {

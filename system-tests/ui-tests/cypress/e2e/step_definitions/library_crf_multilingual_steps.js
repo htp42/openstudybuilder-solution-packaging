@@ -70,7 +70,7 @@ function proceedAndSave() {
 
 function checkIfSystemDisplayesTranslations(section, button, shouldBeDisplayed = true) {
     let condition = shouldBeDisplayed ? 'contain' : 'not.contain'
-    cy.visit(`library/crfbuilder/${section}`)
+    cy.visit(`library/crf-builder/${section}`)
     cy.clickButton(`add-crf-${button}`)
     cy.get('.v-stepper-item__title').should(condition, 'Translations')
 }

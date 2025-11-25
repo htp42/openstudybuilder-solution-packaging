@@ -1,7 +1,7 @@
 <template>
   <div class="px-4">
     <div class="d-flex page-title">
-      {{ $t('CrfsView.title') }}
+      {{ $t('CRFViewer.title') }}
     </div>
     <NavigationTabs :tabs="tabs" :breadcrumbs-level="2">
       <template #default>
@@ -20,5 +20,5 @@ import NavigationTabs from '@/components/tools/NavigationTabs.vue'
 
 const { t } = useI18n()
 
-const tabs = [{ tab: 'odm-viewer', name: t('CrfsView.tab6_title') }]
+const tabs = [{ tab: 'odm-viewer', name: t('CRFViewer.tab1_title') }]
 </script>

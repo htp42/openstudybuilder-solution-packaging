@@ -1,6 +1,6 @@
 <template>
   <div>
-    <v-card :elevation="elevation" class="rounded-0">
+    <v-card :elevation="elevation" class="rounded-0 pt-6">
       <v-card-title
         v-if="!noTitle"
         style="z-index: 3; position: relative"
@@ -357,7 +357,6 @@
 import { computed, onMounted, onUpdated, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
-import { useFilteringParamsStore } from '@/stores/filtering-params'
 import { useTablesLayoutStore } from '@/stores/library-tableslayout'
 import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
 import DataTableExportButton from '@/components/tools/DataTableExportButton.vue'
@@ -376,10 +375,6 @@ const props = defineProps({
   defaultHeaders: {
     type: Array,
     default: () => [],
-  },
-  useCachedFiltering: {
-    type: Boolean,
-    default: true,
   },
   items: {
     type: Array,
@@ -595,7 +590,6 @@ const emit = defineEmits(['filter', 'customSort'])
 
 const { t } = useI18n()
 const appStore = useAppStore()
-const filteringParamsStore = useFilteringParamsStore()
 const tablesLayoutStore = useTablesLayoutStore()
 const route = useRoute()
 
@@ -645,7 +639,6 @@ let timeout
 let savedOptions
 let savedFilters = '{}'
 
-const filteringParams = computed(() => filteringParamsStore.filteringParams)
 const computedItemsPerPage = computed(() => {
   return props.itemsPerPage ? props.itemsPerPage : appStore.userData.rows
 })
@@ -720,7 +713,6 @@ watch(itemsToFilter, () => {
 onMounted(() => {
   showSelectBoxes.value = props.showSelect
   tablesLayoutStore.initiateColumns()
-  filteringParamsStore.initiateFilteringParams()
   updateColumns()
   if (props.showFilterBarByDefault) {
     itemsToFilter.value = props.headers.filter(
@@ -739,30 +731,6 @@ onMounted(() => {
   }
   if (props.items && props.items.length) {
     loading.value = false
-  }
-  // For now we will implement saving of latest filtering only for Library and Studies Activities, it might change in the future
-  if (
-    props.useCachedFiltering &&
-    filteringParams.value.tableName === window.location.pathname &&
-    (window.location.pathname.indexOf('library/activities') > 0 ||
-      window.location.pathname.indexOf('activities/list'))
-  ) {
-    const map = JSON.parse(filteringParams.value.apiParams)
-    for (const key in map) {
-      if (key !== '*') {
-        const newItem = shownColumns.value.find(
-          (column) => column.value === key
-        )
-        if (
-          newItem !== undefined &&
-          !itemsToFilter.value.find((item) => item.text === newItem.text)
-        ) {
-          itemsToFilter.value.push(newItem)
-        }
-        apiParams.set(key, map[key])
-      }
-    }
-    selectedColumnData.value = map
   }
   if (props.initialFilters !== undefined) {
     selectedColumnData.value = props.initialFilters
@@ -949,18 +917,6 @@ function filterTable(options) {
         getDatesOperator() +
         savedFilters.substring(bracketIndex)
     }
-    // For now we will implement saving of latest filtering only for Library and Studies Activities, it might change in the future
-    if (
-      (props.useCachedFiltering &&
-        window.location.pathname.indexOf('library/activities') >= 0) ||
-      window.location.pathname.indexOf('activities/list')
-    ) {
-      filteringParamsStore.setFilteringParams({
-        filters: savedFilters,
-        tableName: window.location.pathname,
-        apiParams: JSON.stringify(Object.fromEntries(apiParams)),
-      })
-    }
     emit('filter', savedFilters, options, filtersUpdated)
   }, 500)
 }
@@ -1006,6 +962,7 @@ function customSort(data) {
 
 defineExpose({
   filterTable,
+  search,
   selectedColumns,
 })
 </script>

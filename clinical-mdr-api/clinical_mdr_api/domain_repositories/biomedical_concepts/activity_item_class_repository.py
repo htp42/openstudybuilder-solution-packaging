@@ -1,4 +1,5 @@
 import json
+from typing import Any
 
 from neomodel import NodeSet, db
 from neomodel.sync_.match import (
@@ -105,18 +106,43 @@ class ActivityItemClassRepository(  # type: ignore[misc]
             )
         )
 
+    def extend_distinct_headers_query(self, nodeset: NodeSet) -> NodeSet:
+        return nodeset.subquery(
+            self.root_class.nodes.fetch_relations("has_version")
+            .intermediate_transform(
+                {"rel": {"source": RelationNameResolver("has_version")}},
+                ordering=[
+                    RawCypher("toInteger(split(rel.version, '.')[0])"),
+                    RawCypher("toInteger(split(rel.version, '.')[1])"),
+                    "rel.end_date",
+                    "rel.start_date",
+                ],
+            )
+            .annotate(latest_version=Last(Collect("rel"))),
+            ["latest_version"],
+            initial_context=[NodeNameResolver("self")],
+        )
+
     def get_all_for_activity_instance_class(
-        self, activity_instance_class_uid: str
+        self, activity_instance_class_uid: str, dataset_uid: str | None = None
     ) -> set[ActivityItemClassRoot]:
         """
         Return all Activity Item Class nodes linked to given Activity Instance Class
         and its parents.
         """
+        filter_kwargs: dict[str, str] = {
+            "has_activity_instance_class__uid": activity_instance_class_uid,
+        }
+        if dataset_uid:
+            filter_kwargs[
+                "maps_variable_class__has_instance__implemented_by_variable__has_dataset_variable__is_instance_of__uid"
+            ] = dataset_uid
+
         nodes = (
             ActivityItemClassRoot.nodes.traverse(
                 Path("has_latest_value", include_rels_in_return=False)
             )
-            .filter(has_activity_instance_class__uid=activity_instance_class_uid)
+            .filter(**filter_kwargs)
             .resolve_subgraph()
         )
 
@@ -127,17 +153,24 @@ OPTIONAL MATCH (n)-[:PARENT_CLASS]->{1,3}(m:ActivityInstanceClassRoot)
 RETURN collect(DISTINCT m.uid)
         """
         results, _ = db.cypher_query(query, {"uid": activity_instance_class_uid})
-        parent_uids = []
+        parent_uids: list[str] = []
         if results and results[0][0]:
             parent_uids += results[0][0]
 
         # Finally, get activity item classes linked to parents
+        parent_filter_kwargs: dict[str, str | list[str]] = {
+            "has_activity_instance_class__uid__in": parent_uids,
+        }
+        if dataset_uid:
+            parent_filter_kwargs[
+                "maps_variable_class__has_instance__implemented_by_variable__has_dataset_variable__is_instance_of__uid"
+            ] = dataset_uid
         parent_nodes = (
             ActivityItemClassRoot.nodes.traverse(
                 Path("has_latest_value", include_rels_in_return=False)
             )
             .exclude(uid__in=[node.uid for node in nodes])
-            .filter(has_activity_instance_class__uid__in=parent_uids)
+            .filter(**parent_filter_kwargs)
             .resolve_subgraph()
         )
         return set(nodes).union(set(parent_nodes))
@@ -201,11 +234,16 @@ RETURN collect(DISTINCT m.uid)
         )
 
     def _get_or_create_value(
-        self, root: ActivityItemClassRoot, ar: ActivityItemClassAR
+        self,
+        root: ActivityItemClassRoot,
+        ar: ActivityItemClassAR,
+        force_new_value_node: bool = False,
     ) -> ActivityItemClassValue:
-        for itm in root.has_version.all():
-            if not self._has_data_changed(ar, itm):
-                return itm
+        if not force_new_value_node:
+            for itm in root.has_version.all():
+                if not self._has_data_changed(ar, itm):
+                    return itm
+
         new_value = ActivityItemClassValue(
             name=ar.activity_item_class_vo.name,
             order=ar.activity_item_class_vo.order,
@@ -442,3 +480,101 @@ RETURN collect(DISTINCT m.uid)
             else:
                 codelists_and_terms[cl_uid] = term_uids
         return codelists_and_terms
+
+    def get_activity_instance_classes_using_item(
+        self,
+        activity_item_class_uid: str,
+        version: str | None = None,
+        page_number: int = 1,
+        page_size: int = 10,
+        total_count: bool = False,
+    ) -> tuple[list[dict[str, Any]], int]:
+        """Get paginated Activity Instance Classes that use this Activity Item Class."""
+        if version:
+            # Get version-specific Activity Instance Classes
+            query = """
+                // First get the activity item class at the specific version
+                MATCH (aitc:ActivityItemClassRoot {uid: $uid})
+                MATCH (aitc)-[av:HAS_VERSION {version: $version}]->(aitcValue:ActivityItemClassValue)
+
+                // Get all Activity Instance Classes that have this item class
+                MATCH (aic:ActivityInstanceClassRoot)-[rel:HAS_ITEM_CLASS]->(aitc)
+
+                // For each instance class, get the version that was active at the item class's version date
+                MATCH (aic)-[iv:HAS_VERSION]->(aicValue:ActivityInstanceClassValue)
+                WHERE iv.start_date <= av.start_date AND (iv.end_date IS NULL OR iv.end_date > av.start_date)
+
+                // Get the most recent valid version for each instance class
+                WITH aic, aicValue, iv, rel
+                ORDER BY
+                    toInteger(split(iv.version, '.')[0]) DESC,
+                    toInteger(split(iv.version, '.')[1]) DESC,
+                    iv.start_date DESC
+                WITH aic, collect({value: aicValue, ver: iv, rel: rel})[0] as instanceData
+
+                WITH aic.uid as uid,
+                       instanceData.value.name as name,
+                       instanceData.rel.is_adam_param_specific_enabled as adam_param_specific_enabled,
+                       instanceData.rel.mandatory as mandatory,
+                       instanceData.ver.status as status,
+                       instanceData.ver.version as version,
+                       instanceData.ver.start_date as modified_date,
+                       instanceData.ver.author_username as modified_by
+                ORDER BY name
+            """
+        else:
+            # Get latest version of Activity Instance Classes
+            query = """
+                MATCH (aitc:ActivityItemClassRoot {uid: $uid})
+                MATCH (aic:ActivityInstanceClassRoot)-[rel:HAS_ITEM_CLASS]->(aitc)
+                MATCH (aic)-[:LATEST]->(aicValue:ActivityInstanceClassValue)
+                // Get version info from HAS_VERSION relationship
+                OPTIONAL MATCH (aic)-[ver:HAS_VERSION]->(aicValue)
+                WITH aic, aicValue, ver, rel
+                ORDER BY ver.start_date DESC
+                WITH aic, aicValue, COLLECT(ver)[0] as latest_ver, rel
+                WITH aic.uid as uid,
+                       aicValue.name as name,
+                       rel.is_adam_param_specific_enabled as adam_param_specific_enabled,
+                       rel.mandatory as mandatory,
+                       latest_ver.status as status,
+                       latest_ver.version as version,
+                       latest_ver.start_date as modified_date,
+                       latest_ver.author_username as modified_by
+                ORDER BY name
+            """
+
+        # Get total count if requested
+        if total_count:
+            count_query = query + " RETURN COUNT(*) as total"
+            count_params = {"uid": activity_item_class_uid}
+            if version:
+                count_params["version"] = version
+            count_results, _ = db.cypher_query(count_query, params=count_params)
+            total = count_results[0][0] if count_results else 0
+        else:
+            total = 0
+
+        # Add pagination to main query
+        if page_size > 0:
+            query += "\n                SKIP $skip LIMIT $limit"
+
+        # Build final query
+        final_query = (
+            query
+            + """
+                RETURN uid, name, adam_param_specific_enabled, mandatory,
+                       status, version, modified_date, modified_by
+            """
+        )
+
+        params: dict[str, Any] = {"uid": activity_item_class_uid}
+        if version:
+            params["version"] = version
+        if page_size > 0:
+            params["skip"] = (page_number - 1) * page_size
+            params["limit"] = page_size
+
+        results, meta = db.cypher_query(final_query, params=params)
+
+        return [dict(zip(meta, row)) for row in results], total

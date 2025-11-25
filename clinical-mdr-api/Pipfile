@@ -28,14 +28,14 @@ pyyaml = "~=6.0.2"
 xsdata = "==24.11"
 weasyprint = "~=63.0"
 cffi = "~=1.17.1"
-deepdiff = "~=8.6.1"
 asyncache = "~=0.3.1"
 cachetools = "~=5.5.0"
 usdm = "==0.59.0"
 annotated-types = "~=0.6.0"
 jinja2 = "*"
 nh3 = "~=0.2.21"
-neomodel = "==5.5.0"
+neomodel = "==5.5.3"
+deepdiff = "~=8.6.1"
 
 [dev-packages]
 pytest = "~=8.4.1"
@@ -63,7 +63,7 @@ uvicorn = {extras = ["standard"], version = "*"}
 markdown = "~=3.0.0"
 
 [requires]
-python_version = "3.13.0"
+python_version = "3.13"
 
 [scripts]
 dev = "uvicorn --host=0.0.0.0 --port=8000 clinical_mdr_api.main:app --reload"
@@ -103,7 +103,6 @@ schemathesis = """
         --show-trace
         openapi.json
 """
-build-sbom = "python pipelines/scripts/generate_sbom.py"
 schemathesis-help = "schemathesis run --help"
 consumer-api-dev = "uvicorn --host=0.0.0.0 --port=8008 consumer_api.consumer_api:app --reload"
 consumer-api-lint = "pylint consumer_api common"

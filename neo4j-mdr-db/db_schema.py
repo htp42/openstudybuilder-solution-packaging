@@ -32,6 +32,8 @@ INDEXES = [
     ("TemplateParameterTermValue", "name"),
     ("CTCodelistAttributesValue", "name"),
     ("CTCodelistAttributesValue", "submission_value"),
+    ("CTCodelistAttributesValue", "concept_id"),
+    ("CTCodelistAttributesValue", "code_submission_value"),
     ("CTCodelistNameValue", "name"),
     ("CTTermNameValue", "name"),
     ("CTCodelistTerm", "submission_value"),
@@ -174,11 +176,9 @@ CONSTRAINTS = [
     ("PharmaceuticalProductRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
     ("MedicinalProductRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
     ("OdmTemplateRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
-    ("OdmDescriptionRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
     ("OdmFormRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
     ("OdmItemGroupRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
     ("OdmItemRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
-    ("OdmAliasRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
     ("StudyRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
     ("ObjectiveTemplateRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
     ("ObjectiveRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
@@ -230,6 +230,7 @@ CONSTRAINTS = [
     ("WeekInStudyRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
     ("FootnotePreInstanceRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
     ("OdmVendorElementRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
+    ("ComplexityBurden", "burden_id", CONSTRAINT_TYPE_UNIQUE),
 ]
 
 

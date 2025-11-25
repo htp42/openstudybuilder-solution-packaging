@@ -13,7 +13,6 @@ from clinical_mdr_api.domain_repositories.models.odm import (
     OdmStudyEventRoot,
     OdmStudyEventValue,
 )
-from clinical_mdr_api.domains._utils import ObjectStatus
 from clinical_mdr_api.domains.concepts.odms.study_event import (
     OdmStudyEventAR,
     OdmStudyEventVO,
@@ -49,7 +48,11 @@ class StudyEventRepository(OdmGenericRepository[OdmStudyEventAR]):
                 retired_date=value.retired_date,
                 description=value.description,
                 display_in_tree=value.display_in_tree,
-                form_uids=[form.uid for form in root.form_ref.all()],
+                form_uids=[
+                    form_root.uid
+                    for form_value in value.form_ref.all()
+                    if (form_root := form_value.has_root.single())
+                ],
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=library.name,
@@ -93,10 +96,8 @@ class StudyEventRepository(OdmGenericRepository[OdmStudyEventAR]):
 
         return odm_form_ar
 
-    def specific_alias_clause(
-        self, only_specific_status: str = ObjectStatus.LATEST.name, **kwargs
-    ) -> str:
-        return f"""
+    def specific_alias_clause(self, **kwargs) -> str:
+        return """
 WITH *,
 concept_value.oid AS oid,
 concept_value.effective_date AS effective_date,
@@ -104,12 +105,45 @@ concept_value.retired_date AS retired_date,
 concept_value.description AS description,
 concept_value.display_in_tree AS display_in_tree,
 
-[(concept_value)<-[:{only_specific_status}]-(:OdmStudyEventRoot)-[fref:FORM_REF]->(fr:OdmFormRoot)-[:LATEST]->(fv:OdmFormValue) |
-{{uid: fr.uid, name: fv.name, order: fref.order, mandatory: fref.mandatory, collection_exception_condition_oid: fref.collection_exception_condition_oid}}] AS forms
+[(concept_value)-[fref:FORM_REF]->(fv:OdmFormValue)<-[:HAS_VERSION]-(fr:OdmFormRoot) |
+{uid: fr.uid, name: fv.name, order: fref.order, mandatory: fref.mandatory, collection_exception_condition_oid: fref.collection_exception_condition_oid}] AS forms
 
 WITH *,
 apoc.coll.toSet([form in forms | form.uid]) AS form_uids
 """
+
+    def _get_or_create_value(
+        self, root: VersionRoot, ar: OdmStudyEventAR, force_new_value_node: bool = False
+    ) -> VersionValue:
+        current_latest = root.has_latest_value.single()
+        old_form_ref_nodes = current_latest.form_ref.all() if current_latest else []
+        new_form_ref_nodes = [
+            old_form_root.has_latest_value.single()
+            for old_form_ref_node in old_form_ref_nodes
+            if (old_form_root := old_form_ref_node.has_root.single())
+        ]
+
+        new_value = super()._get_or_create_value(root, ar, force_new_value_node)
+
+        for old_form_ref_node, new_form_ref_node in zip(
+            old_form_ref_nodes, new_form_ref_nodes
+        ):
+            params = current_latest.form_ref.relationship(old_form_ref_node)
+            new_value.form_ref.connect(
+                new_form_ref_node,
+                {
+                    "order_number": params.order_number,
+                    "mandatory": params.mandatory,
+                    "locked": params.locked,
+                    "collection_exception_condition_oid": params.collection_exception_condition_oid,
+                },
+            )
+
+        if ar.should_disconnect_relationships:
+            for old_form_ref_node in old_form_ref_nodes:
+                current_latest.form_ref.disconnect(old_form_ref_node)
+
+        return new_value
 
     def _create_new_value_node(self, ar: OdmStudyEventAR) -> OdmStudyEventValue:
         value_node = super()._create_new_value_node(ar=ar)
@@ -129,7 +163,6 @@ apoc.coll.toSet([form in forms | form.uid]) AS form_uids
 
         return (
             are_concept_properties_changed
-            or ar.concept_vo.oid != value.oid
             or ar.concept_vo.oid != value.oid
             or ar.concept_vo.effective_date != value.effective_date
             or ar.concept_vo.retired_date != value.retired_date

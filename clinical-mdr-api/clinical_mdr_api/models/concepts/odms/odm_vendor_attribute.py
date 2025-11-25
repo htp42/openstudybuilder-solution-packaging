@@ -87,9 +87,10 @@ class OdmVendorAttributeRelationModel(BaseModel):
         cls,
         uid: str,
         odm_element_uid: str,
+        odm_element_version: str,
         odm_element_type: RelationType,
         find_by_uid_with_odm_element_relation: Callable[
-            [str, str, RelationType, bool], OdmVendorAttributeRelationVO | None
+            [str, str, str, RelationType, bool], OdmVendorAttributeRelationVO
         ],
         vendor_element_attribute: bool = True,
     ) -> Self: ...
@@ -99,9 +100,10 @@ class OdmVendorAttributeRelationModel(BaseModel):
         cls,
         uid: None,
         odm_element_uid: str,
+        odm_element_version: str,
         odm_element_type: RelationType,
         find_by_uid_with_odm_element_relation: Callable[
-            [str, str, RelationType, bool], OdmVendorAttributeRelationVO | None
+            [str, str, str, RelationType, bool], OdmVendorAttributeRelationVO
         ],
         vendor_element_attribute: bool = True,
     ) -> None: ...
@@ -110,9 +112,10 @@ class OdmVendorAttributeRelationModel(BaseModel):
         cls,
         uid: str | None,
         odm_element_uid: str,
+        odm_element_version: str,
         odm_element_type: RelationType,
         find_by_uid_with_odm_element_relation: Callable[
-            [str, str, RelationType, bool], OdmVendorAttributeRelationVO | None
+            [str, str, str, RelationType, bool], OdmVendorAttributeRelationVO
         ],
         vendor_element_attribute: bool = True,
     ) -> Self | None:
@@ -120,7 +123,11 @@ class OdmVendorAttributeRelationModel(BaseModel):
 
         if uid is not None:
             odm_vendor_attribute_ref_vo = find_by_uid_with_odm_element_relation(
-                uid, odm_element_uid, odm_element_type, vendor_element_attribute
+                uid,
+                odm_element_uid,
+                odm_element_version,
+                odm_element_type,
+                vendor_element_attribute,
             )
             if odm_vendor_attribute_ref_vo is not None:
                 odm_vendor_element_ref_model = cls(
@@ -161,10 +168,11 @@ class OdmVendorElementAttributeRelationModel(BaseModel):
         cls,
         uid: str,
         odm_element_uid: str,
+        odm_element_version: str,
         odm_element_type: RelationType,
         find_by_uid_with_odm_element_relation: Callable[
-            [str, str, RelationType, bool],
-            OdmVendorElementAttributeRelationVO | None,
+            [str, str, str, RelationType, bool],
+            OdmVendorElementAttributeRelationVO,
         ],
         vendor_element_attribute: bool = True,
     ) -> Self: ...
@@ -174,10 +182,11 @@ class OdmVendorElementAttributeRelationModel(BaseModel):
         cls,
         uid: None,
         odm_element_uid: str,
+        odm_element_version: str,
         odm_element_type: RelationType,
         find_by_uid_with_odm_element_relation: Callable[
-            [str, str, RelationType, bool],
-            OdmVendorElementAttributeRelationVO | None,
+            [str, str, str, RelationType, bool],
+            OdmVendorElementAttributeRelationVO,
         ],
         vendor_element_attribute: bool = True,
     ) -> None: ...
@@ -186,10 +195,11 @@ class OdmVendorElementAttributeRelationModel(BaseModel):
         cls,
         uid: str | None,
         odm_element_uid: str,
+        odm_element_version: str,
         odm_element_type: RelationType,
         find_by_uid_with_odm_element_relation: Callable[
-            [str, str, RelationType, bool],
-            OdmVendorElementAttributeRelationVO | None,
+            [str, str, str, RelationType, bool],
+            OdmVendorElementAttributeRelationVO,
         ],
         vendor_element_attribute: bool = True,
     ) -> Self | None:
@@ -197,7 +207,11 @@ class OdmVendorElementAttributeRelationModel(BaseModel):
 
         if uid is not None:
             odm_vendor_element_attribute_ref_vo = find_by_uid_with_odm_element_relation(
-                uid, odm_element_uid, odm_element_type, vendor_element_attribute
+                uid,
+                odm_element_uid,
+                odm_element_version,
+                odm_element_type,
+                vendor_element_attribute,
             )
             if odm_vendor_element_attribute_ref_vo is not None:
                 odm_vendor_element_ref_model = cls(

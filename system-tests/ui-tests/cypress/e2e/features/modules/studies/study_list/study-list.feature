@@ -24,9 +24,9 @@ Feature: Studies - Study List - Study List
             | Study acronym           |
             | Study subpart acronym   |
             | Study title             |
+            | Latest version          |
             | Latest locked version   |
             | Latest released version |
-            | Version                 |
             | Status                  |
             | Modified                |
             | Modified by             |
@@ -38,8 +38,7 @@ Feature: Studies - Study List - Study List
 
     Scenario Outline: [Table][Filtering] User must be able to filter the table by text fields
         Given The '/studies/select_or_add_study/active' page is opened
-        When The user filters field '<name>'
-        Then The table is filtered correctly
+        When The user filters study list by field '<name>'
 
         Examples:
             | name                  |

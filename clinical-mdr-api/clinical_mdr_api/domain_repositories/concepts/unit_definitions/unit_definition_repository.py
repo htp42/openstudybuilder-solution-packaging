@@ -25,7 +25,6 @@ from clinical_mdr_api.domain_repositories.models.generic import (
 from clinical_mdr_api.domain_repositories.models.template_parameter import (
     TemplateParameterTermRoot,
 )
-from clinical_mdr_api.domains._utils import ObjectStatus
 from clinical_mdr_api.domains.concepts.unit_definitions.unit_definition import (
     CTTerm,
     UnitDefinitionAR,
@@ -49,9 +48,7 @@ class UnitDefinitionRepository(ConceptGenericRepository[UnitDefinitionAR]):
     user: str
     return_model = UnitDefinitionModel
 
-    def specific_alias_clause(
-        self, only_specific_status: str = ObjectStatus.LATEST.name, **kwargs
-    ) -> str:
+    def specific_alias_clause(self, **kwargs) -> str:
         return """
         WITH *,
             concept_value.si_unit as si_unit,
@@ -479,7 +476,7 @@ class UnitDefinitionRepository(ConceptGenericRepository[UnitDefinitionAR]):
         cypher_query = """
 MATCH (udr:UnitDefinitionRoot)-[:LATEST]->(udv:UnitDefinitionValue)
 WHERE udr.uid IN $unit_definition_uids
-MATCH (udv)-[:HAS_CT_DIMENSION]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(CTTermNameRoot)-[:LATEST]->(ctnv:CTTermNameValue)
+MATCH (udv)-[:HAS_CT_DIMENSION]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(ctnv:CTTermNameValue)
 RETURN ctnv.name
 """
 

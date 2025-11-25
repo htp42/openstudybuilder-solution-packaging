@@ -130,6 +130,27 @@ Feature: Studies - Define Study - Study Structure - Study Visits
         And Anchor visit checkbox is checked
         Then It is not possible to edit Time Reference for anchor visit
 
+    Scenario: [Create][First visit][Visit window warning] User must be presented with waring regarding visit window selection
+        Given The study with uid 'Study_000003' is selected
+        And [API] The epoch with type 'Pre Treatment' and subtype 'Run-in' exists in selected study
+        And The '/studies/Study_000003/study_structure/visits' page is opened
+        And User waits for epochs to load
+        And User waits for 3 seconds
+        When Add visit button is clicked
+        And Form continue button is clicked
+        And Epoch 'Run-in' is selected for the visit
+        And Form continue button is clicked
+        Then Warning about visit window unit selection is displayed
+
+    Scenario: [Create][Not first visit][Visit window warning] User must be presented with waring regarding visit window selection
+        And The '/studies/Study_000001/study_structure/visits' page is opened
+        And User waits for epochs to load
+        When Add visit button is clicked
+        And Form continue button is clicked
+        And First available epoch is selected
+        And Form continue button is clicked
+        Then Warning about visit window unit selection is displayed
+
     @smoke_test
     Scenario: [Create][Anchor visit][Positive case] User must be able to create an anchor visit
         Given The study with uid 'Study_000003' is selected
@@ -146,7 +167,7 @@ Feature: Studies - Define Study - Study Structure - Study Visits
         Then The new Anchor Visit is visible within the Study Visits table
 
     @manual_test
-    Scenario: User must be able to create an information visit with visit 0
+    Scenario: [Create] User must be able to create an information visit with visit 0
         Given The study with uid 'Study_000001' is selected
         And [API] The epoch with type 'Pre Treatment' and subtype 'Run-in' exists in selected study
         When The '/studies/Study_000001/study_structure/visits' page is opened

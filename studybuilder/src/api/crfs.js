@@ -15,8 +15,12 @@ export default {
   inactivate(source, uid) {
     return repository.delete(`${resource}/${source}/${uid}/activations`)
   },
-  newVersion(source, uid) {
-    return repository.post(`${resource}/${source}/${uid}/versions`)
+  newVersion(source, uid, params) {
+    return repository.post(
+      `${resource}/${source}/${uid}/versions`,
+      null,
+      params
+    )
   },
   approve(source, uid) {
     return repository.post(`${resource}/${source}/${uid}/approvals`)
@@ -30,12 +34,6 @@ export default {
   updateForm(data, uid) {
     return repository.patch(`${resource}/forms/${uid}`, data)
   },
-  batchCreateDescription(data) {
-    return repository.post(`${resource}/descriptions/batch`, data)
-  },
-  createAlias(data) {
-    return repository.post(`${resource}/aliases`, data)
-  },
   getForm(uid) {
     return repository.get(`${resource}/forms/${uid}`)
   },
@@ -48,7 +46,7 @@ export default {
   getItemGroup(uid) {
     return repository.get(`${resource}/item-groups/${uid}`)
   },
-  getTemplateAuditTrail(uid) {
+  getCollectionAuditTrail(uid) {
     return repository.get(`${resource}/study-events/${uid}/versions`)
   },
   getFormAuditTrail(uid) {
@@ -56,6 +54,9 @@ export default {
   },
   getGroupAuditTrail(uid) {
     return repository.get(`${resource}/item-groups/${uid}/versions`)
+  },
+  getItemAuditTrail(uid) {
+    return repository.get(`${resource}/items/${uid}/versions`)
   },
   createItem(data) {
     return repository.post(`${resource}/items`, data)
@@ -66,19 +67,16 @@ export default {
   getItem(uid) {
     return repository.get(`${resource}/items/${uid}`)
   },
-  getItemAuditTrail(uid) {
-    return repository.get(`${resource}/items/${uid}/versions`)
-  },
-  getTemplate(uid) {
+  getCollection(uid) {
     return repository.get(`${resource}/study-events/${uid}`)
   },
-  createTemplate(data) {
+  createCollection(data) {
     return repository.post(`${resource}/study-events`, data)
   },
-  updateTemplate(data, uid) {
+  updateCollection(data, uid) {
     return repository.patch(`${resource}/study-events/${uid}`, data)
   },
-  addFormsToTemplate(data, uid, sync) {
+  addFormsToCollection(data, uid, sync) {
     return repository.post(
       `${resource}/study-events/${uid}/forms?override=${sync}`,
       data
@@ -96,7 +94,7 @@ export default {
       data
     )
   },
-  overwriteFormsInTemplate(data, uid) {
+  overwriteFormsInCollection(data, uid) {
     return repository.post(`${resource}/study-events/${uid}/forms`, data)
   },
   overwriteItemGroupsInForm(data, uid) {
@@ -125,12 +123,12 @@ export default {
   },
   getXml(params) {
     return repository.post(
-      `${resource}/metadata/xmls/export?${params.target_uids}target_type=${params.target_type}&export_to=${params.export_to}&stylesheet=${params.selectedStylesheet}&status=${params.status}${params.allowed_namespaces}`
+      `${resource}/metadata/xmls/export?${params.target_uids}target_type=${params.target_type}&export_to=${params.export_to}&stylesheet=${params.selectedStylesheet}&version=${params.version || ''}${params.allowed_namespaces}`
     )
   },
   getPdf(params) {
     return repository.post(
-      `${resource}/metadata/xmls/export?${params.target_uids}&target_type=${params.target_type}&export_to=${params.export_to}&stylesheet=${params.selectedStylesheet}&pdf=true&status=${params.status}${params.allowed_namespaces}`,
+      `${resource}/metadata/xmls/export?${params.target_uids}&target_type=${params.target_type}&export_to=${params.export_to}&stylesheet=${params.selectedStylesheet}&pdf=true&version=${params.version || ''}${params.allowed_namespaces}`,
       {},
       {
         responseType: 'arraybuffer',
@@ -143,32 +141,14 @@ export default {
   getXsl(type) {
     return repository.get(`${resource}/metadata/xmls/stylesheets/${type}`)
   },
-  getAllAliases(params) {
-    return repository.get(`${resource}/aliases`, { params })
+  getAliases(params) {
+    return repository.get(`${resource}/metadata/aliases`, { params })
   },
-  deleteAlias(uid) {
-    return repository.delete(`${resource}/aliases/${uid}`)
+  getDescriptions(params) {
+    return repository.get(`${resource}/metadata/descriptions`, { params })
   },
-  addAlias(data) {
-    return repository.post(`${resource}/aliases`, data)
-  },
-  editAlias(uid, data) {
-    return repository.patch(`${resource}/aliases/${uid}`, data)
-  },
-  getDescriptions() {
-    return repository.get(`${resource}/descriptions`)
-  },
-  getExpressions() {
-    return repository.get(`${resource}/formal-expressions`)
-  },
-  createExpression(data) {
-    return repository.post(`${resource}/formal-expressions`, data)
-  },
-  editExpression(uid, data) {
-    return repository.patch(`${resource}/formal-expressions/${uid}`, data)
-  },
-  deleteExpression(uid) {
-    return repository.delete(`${resource}/formal-expressions/${uid}`)
+  getExpressions(params) {
+    return repository.get(`${resource}/metadata/formal-expressions`, { params })
   },
   getConditionByOid(params) {
     return repository.get(`${resource}/conditions`, { params })

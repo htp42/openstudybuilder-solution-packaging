@@ -130,7 +130,9 @@ class CTConfigRepository(LibraryItemRepositoryImplBase):
         # method required by interface, does nothing #
         pass
 
-    def _get_or_create_value(self, root: VersionRoot, ar: CTConfigAR) -> VersionValue:
+    def _get_or_create_value(
+        self, root: VersionRoot, ar: CTConfigAR, force_new_value_node: bool = False
+    ) -> VersionValue:
         value = CTConfigValue(
             study_field_name=ar.value.study_field_name,
             study_field_data_type=ar.value.study_field_data_type,

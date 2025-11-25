@@ -1,5 +1,4 @@
 import asyncio
-from collections import defaultdict
 import csv
 import json
 from functools import lru_cache
@@ -66,6 +65,7 @@ ACTIVITY_INSTANCE_CLASSES = "ActivityInstanceClasses"
 class ConflictingItemError(ValueError):
     pass
 
+
 # TODO delete! Queries to clear groups and subgroups
 """
 MATCH (root:ActivityGroupRoot)-[]->(value:ActivityGroupValue) DETACH DELETE root, value;
@@ -74,6 +74,7 @@ MATCH (n:ActivityGroupCounter) DETACH DELETE n;
 MATCH (n:ActivitySubGroupCounter) DETACH DELETE n;
 MATCH (n:ActivityValidGroupCounter) DETACH DELETE n;
 """
+
 
 # Activities with instances, groups and subgroups in sponsor library
 class Activities(BaseImporter):
@@ -90,7 +91,6 @@ class Activities(BaseImporter):
             self.log.info("Importing all activity content")
         self._limit_import_to = limit
 
-
     # Get a dictionary with key = submission value and value = uid
     def _get_codelists_uid_and_submval(self):
         all_codelist_attributes = self.api.get_all_from_api("/ct/codelists/attributes")
@@ -103,7 +103,7 @@ class Activities(BaseImporter):
             )
         )
         return all_codelist_uids
-    
+
     @lru_cache(maxsize=10000)
     def _get_codelist_submval(self, cl_uid):
         cl = self.api.get_all_from_api(f"/ct/codelists/{cl_uid}/attributes")
@@ -134,7 +134,9 @@ class Activities(BaseImporter):
         return submvals
 
     @lru_cache(maxsize=10000)
-    def _get_codelists_and_terms_for_item_class_and_domain(self, item_class_uid, domain_uid):
+    def _get_codelists_and_terms_for_item_class_and_domain(
+        self, item_class_uid, domain_uid
+    ):
         # Get the terms for a specific item class and domain
         self.log.debug(
             "Get terms for item class: %s, domain: %s",
@@ -151,7 +153,6 @@ class Activities(BaseImporter):
             cl_submval = self._get_codelist_submval(cl["uid"])
             terms[cl_submval] = self.fetch_codelist_terms(cl["uid"])
         return terms
-
 
     # Get a dictionary of terms for the most common SDTM variable codelists
     def _get_terms_for_codelist_submvals(self):
@@ -1072,7 +1073,9 @@ class Activities(BaseImporter):
             value="uid",
         )
 
-        self.all_activity_item_classes = self.api.get_all_from_api(ACTIVITY_ITEM_CLASSES_PATH)
+        self.all_activity_item_classes = self.api.get_all_from_api(
+            ACTIVITY_ITEM_CLASSES_PATH
+        )
         self.all_activity_item_classes_by_name = self.api.get_all_identifiers(
             self.all_activity_item_classes,
             identifier="name",
@@ -1198,7 +1201,6 @@ class Activities(BaseImporter):
                     self._append_item_terms_or_units(existing_for_class, data)
                 else:
                     item_data.append(data)
-
 
             # WIP, column names in data file are preliminary:
             # - nci_concept_id
@@ -1348,13 +1350,18 @@ class Activities(BaseImporter):
             return "standard_unit"
 
     # Helper to create a single activity item
-    def _create_activity_item(
-        self, items, column, domain, sdtm_codelist, sdtm_domain
-    ):
+    def _create_activity_item(self, items, column, domain, sdtm_codelist, sdtm_domain):
         item_class = self._get_item_class(column, domain)
         if not item_class:
             return
-        item_class_def = next((class_def for class_def in self.all_activity_item_classes if class_def["name"] == item_class), None)
+        item_class_def = next(
+            (
+                class_def
+                for class_def in self.all_activity_item_classes
+                if class_def["name"] == item_class
+            ),
+            None,
+        )
         if item_class_def is not None:
             self.log.debug(f"Activity item class '{item_class}' found in definitions")
         else:
@@ -1378,8 +1385,10 @@ class Activities(BaseImporter):
                     )
             else:
                 # This item links to a CT term
-                codelists_with_terms = self._get_codelists_and_terms_for_item_class_and_domain(
-                    item_class, sdtm_domain
+                codelists_with_terms = (
+                    self._get_codelists_and_terms_for_item_class_and_domain(
+                        item_class, sdtm_domain
+                    )
                 )
 
                 if column in ["sdtm_variable", "sdtm_variable_name"]:
@@ -1391,14 +1400,19 @@ class Activities(BaseImporter):
                         )
                         continue
 
-                    term = next((term for term in codelist if term["submission_value"] == item), None)
+                    term = next(
+                        (term for term in codelist if term["submission_value"] == item),
+                        None,
+                    )
                     if term:
                         term_uid = term["term_uid"]
                         codelist_uid = codelist["uid"]
                         self.log.info(
                             f"Activity item '{item}' found underlying ct term with uid '{term_uid}' for item class '{item_class}'"
                         )
-                        terms.append({"term_uid": term_uid, "codelist_uid": codelist_uid})
+                        terms.append(
+                            {"term_uid": term_uid, "codelist_uid": codelist_uid}
+                        )
                     else:
                         self.log.warning(
                             f"Activity item '{item}' can't find term in codelist '{sdtm_codelist}' for item class '{item_class}'"
@@ -1407,7 +1421,8 @@ class Activities(BaseImporter):
                 elif item_class_def is not None and len(codelists_with_terms) > 0:
                     # All remaining cases, look for the term in the codelists linked to the item class
                     self.log.debug(
-                        f"Activity item class '{item_class}' looking for underlying ct term for item '{item}'")
+                        f"Activity item class '{item_class}' looking for underlying ct term for item '{item}'"
+                    )
                     term_uid = None
                     codelist_uid = None
                     for cl_submval, codelist in codelists_with_terms.items():
@@ -1416,14 +1431,23 @@ class Activities(BaseImporter):
                         if column in ("sdtm_cat", "sdtm_sub_cat"):
                             if not cl_submval.startswith(sdtm_domain):
                                 continue
-                        term = next((term for term in codelist if term["submission_value"] == item), None)
+                        term = next(
+                            (
+                                term
+                                for term in codelist
+                                if term["submission_value"] == item
+                            ),
+                            None,
+                        )
                         if term:
                             term_uid = term["term_uid"]
                             codelist_uid = codelist["uid"]
                             self.log.info(
                                 f"Activity item '{item}' found underlying ct term with uid '{term_uid}' for item class '{item_class}'"
                             )
-                            terms.append({"term_uid": term_uid, "codelist_uid": codelist_uid})
+                            terms.append(
+                                {"term_uid": term_uid, "codelist_uid": codelist_uid}
+                            )
                             break
                     if not term_uid:
                         self.log.warning(
@@ -1434,13 +1458,15 @@ class Activities(BaseImporter):
                         f"Activity item '{item}' from column '{column}' can't find underlying ct term for item class '{item_class}'"
                     )
         item_data = {
-            "activity_item_class_uid": self.all_activity_item_classes_by_name.get(item_class),
+            "activity_item_class_uid": self.all_activity_item_classes_by_name.get(
+                item_class
+            ),
             "ct_terms": [],
             "unit_definition_uids": set(),
             "is_adam_param_specific": False,
-            "odm_form_uids": [],
-            "odm_item_group_uids": [],
-            "odm_item_uids": [],
+            "odm_form_uid": None,
+            "odm_item_group_uid": None,
+            "odm_item_uid": None,
         }
         if len(unit_uids) > 0 and len(terms) > 0:
             self.log.warning(
@@ -1462,12 +1488,18 @@ class Activities(BaseImporter):
         return item_data
 
     def _are_items_equal(self, new, existing):
-        existing_terms = set((term["term_uid"], term["codelist_uid"]) for term in existing.get("ct_terms"))
-        new_terms = set((term["term_uid"], term["codelist_uid"]) for term in new.get("ct_terms"))
+        existing_terms = set(
+            (term["term_uid"], term["codelist_uid"])
+            for term in existing.get("ct_terms")
+        )
+        new_terms = set(
+            (term["term_uid"], term["codelist_uid"]) for term in new.get("ct_terms")
+        )
         result = (
             existing.get("activity_item_class_uid")
             == new.get("activity_item_class_uid")
-            and set(existing.get("unit_definition_uids", [])) == set(new.get("unit_definition_uids", []))
+            and set(existing.get("unit_definition_uids", []))
+            == set(new.get("unit_definition_uids", []))
             and existing_terms == new_terms
         )
         return result
@@ -1485,8 +1517,14 @@ class Activities(BaseImporter):
         existing["unit_definition_uids"] = (
             existing["unit_definition_uids"] | additional["unit_definition_uids"]
         )
-        existing_terms = set((term["term_uid"], term["codelist_uid"]) for term in existing.get("ct_terms"))
-        new_terms = set((term["term_uid"], term["codelist_uid"]) for term in additional.get("ct_terms"))
+        existing_terms = set(
+            (term["term_uid"], term["codelist_uid"])
+            for term in existing.get("ct_terms")
+        )
+        new_terms = set(
+            (term["term_uid"], term["codelist_uid"])
+            for term in additional.get("ct_terms")
+        )
         joined_terms = existing_terms | new_terms
         existing["ct_terms"] = [
             {"term_uid": term[0], "codelist_uid": term[1]} for term in joined_terms

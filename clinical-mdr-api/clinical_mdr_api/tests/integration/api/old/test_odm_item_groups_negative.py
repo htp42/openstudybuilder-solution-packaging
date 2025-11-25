@@ -11,8 +11,6 @@ from clinical_mdr_api.main import app
 from clinical_mdr_api.tests.integration.utils.api import drop_db, inject_and_clear_db
 from clinical_mdr_api.tests.integration.utils.data_library import (
     STARTUP_CT_TERM,
-    STARTUP_ODM_ALIASES,
-    STARTUP_ODM_DESCRIPTIONS,
     STARTUP_ODM_ITEMS,
     STARTUP_ODM_VENDOR_ATTRIBUTES,
     STARTUP_ODM_VENDOR_ELEMENTS,
@@ -33,8 +31,6 @@ def api_client(test_data):
 @pytest.fixture(scope="module")
 def test_data():
     inject_and_clear_db("old.json.test.odm.item.groups.negative")
-    db.cypher_query(STARTUP_ODM_DESCRIPTIONS)
-    db.cypher_query(STARTUP_ODM_ALIASES)
     db.cypher_query(STARTUP_ODM_ITEMS)
     db.cypher_query(STARTUP_CT_TERM)
     db.cypher_query(STARTUP_ODM_VENDOR_NAMESPACES)
@@ -78,8 +74,23 @@ def test_create_a_new_odm_item_group(api_client):
         "origin": "origin1",
         "purpose": "purpose1",
         "comment": "comment1",
-        "descriptions": ["odm_description2", "odm_description3"],
-        "alias_uids": ["odm_alias1"],
+        "descriptions": [
+            {
+                "name": "name2",
+                "language": "eng",
+                "description": "description2",
+                "instruction": "instruction2",
+                "sponsor_instruction": "sponsor_instruction2",
+            },
+            {
+                "name": "name3",
+                "language": "eng",
+                "description": "description3",
+                "instruction": "instruction3",
+                "sponsor_instruction": "sponsor_instruction3",
+            },
+        ],
+        "aliases": [{"context": "context1", "name": "name1"}],
         "sdtm_domain_uids": ["domain001"],
     }
     response = api_client.post("concepts/odms/item-groups", json=data)
@@ -105,27 +116,21 @@ def test_create_a_new_odm_item_group(api_client):
     assert res["author_username"] == "unknown-user@example.com"
     assert res["descriptions"] == [
         {
-            "uid": "odm_description2",
             "name": "name2",
-            "language": "language2",
+            "language": "eng",
             "description": "description2",
             "instruction": "instruction2",
             "sponsor_instruction": "sponsor_instruction2",
-            "version": "0.1",
         },
         {
-            "uid": "odm_description3",
             "name": "name3",
-            "language": "ENG",
+            "language": "eng",
             "description": "description3",
             "instruction": "instruction3",
             "sponsor_instruction": "sponsor_instruction3",
-            "version": "0.1",
         },
     ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res["sdtm_domains"] == [
         {
             "codelist_name": "SDTM Domain Abbreviation",
@@ -140,7 +145,6 @@ def test_create_a_new_odm_item_group(api_client):
             "term_uid": "domain001",
         }
     ]
-    assert res["activity_subgroups"] == []
     assert res["items"] == []
     assert res["vendor_elements"] == []
     assert res["vendor_attributes"] == []
@@ -294,27 +298,21 @@ def test_add_odm_vendor_element_to_an_odm_item_group(api_client):
     assert res["author_username"] == "unknown-user@example.com"
     assert res["descriptions"] == [
         {
-            "uid": "odm_description2",
             "name": "name2",
-            "language": "language2",
+            "language": "eng",
             "description": "description2",
             "instruction": "instruction2",
             "sponsor_instruction": "sponsor_instruction2",
-            "version": "0.1",
         },
         {
-            "uid": "odm_description3",
             "name": "name3",
-            "language": "ENG",
+            "language": "eng",
             "description": "description3",
             "instruction": "instruction3",
             "sponsor_instruction": "sponsor_instruction3",
-            "version": "0.1",
         },
     ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res["sdtm_domains"] == [
         {
             "codelist_name": "SDTM Domain Abbreviation",
@@ -329,7 +327,6 @@ def test_add_odm_vendor_element_to_an_odm_item_group(api_client):
             "term_uid": "domain001",
         }
     ]
-    assert res["activity_subgroups"] == []
     assert res["items"] == []
     assert res["vendor_elements"] == [
         {"uid": "odm_vendor_element1", "name": "nameOne", "value": "value1"}
@@ -367,27 +364,21 @@ def test_add_odm_vendor_element_attribute_to_an_odm_item_group(api_client):
     assert res["author_username"] == "unknown-user@example.com"
     assert res["descriptions"] == [
         {
-            "uid": "odm_description2",
             "name": "name2",
-            "language": "language2",
+            "language": "eng",
             "description": "description2",
             "instruction": "instruction2",
             "sponsor_instruction": "sponsor_instruction2",
-            "version": "0.1",
         },
         {
-            "uid": "odm_description3",
             "name": "name3",
-            "language": "ENG",
+            "language": "eng",
             "description": "description3",
             "instruction": "instruction3",
             "sponsor_instruction": "sponsor_instruction3",
-            "version": "0.1",
         },
     ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res["sdtm_domains"] == [
         {
             "codelist_name": "SDTM Domain Abbreviation",
@@ -402,7 +393,6 @@ def test_add_odm_vendor_element_attribute_to_an_odm_item_group(api_client):
             "term_uid": "domain001",
         }
     ]
-    assert res["activity_subgroups"] == []
     assert res["items"] == []
     assert res["vendor_elements"] == [
         {"uid": "odm_vendor_element1", "name": "nameOne", "value": "value1"}
@@ -432,8 +422,23 @@ def test_cannot_create_a_new_odm_item_group_with_same_properties(api_client):
         "origin": "origin1",
         "purpose": "purpose1",
         "comment": "comment1",
-        "descriptions": ["odm_description2", "odm_description3"],
-        "alias_uids": ["odm_alias1"],
+        "descriptions": [
+            {
+                "name": "name2",
+                "language": "eng",
+                "description": "description2",
+                "instruction": "instruction2",
+                "sponsor_instruction": "sponsor_instruction2",
+            },
+            {
+                "name": "name3",
+                "language": "eng",
+                "description": "description3",
+                "instruction": "instruction3",
+                "sponsor_instruction": "sponsor_instruction3",
+            },
+        ],
+        "aliases": [{"context": "context1", "name": "name1"}],
         "sdtm_domain_uids": ["domain001"],
     }
     response = api_client.post("concepts/odms/item-groups", json=data)
@@ -445,35 +450,7 @@ def test_cannot_create_a_new_odm_item_group_with_same_properties(api_client):
     assert res["type"] == "AlreadyExistsException"
     assert (
         res["message"]
-        == "ODM Item Group already exists with UID (OdmItemGroup_000001) and data {'library_name': 'Sponsor', 'alias_uids': ['odm_alias1'], 'sdtm_domain_uids': ['domain001'], 'name': 'name1', 'oid': 'oid1', 'repeating': False, 'is_reference_data': False, 'sas_dataset_name': 'sas_dataset_name1', 'origin': 'origin1', 'purpose': 'purpose1', 'comment': 'comment1'}"
-    )
-
-
-def test_cannot_create_an_odm_item_group_connected_to_non_existent_concepts(api_client):
-    data = {
-        "library_name": "Sponsor",
-        "name": "new name",
-        "oid": "new oid",
-        "repeating": "No",
-        "is_reference_data": "No",
-        "sas_dataset_name": "sas_dataset_name1",
-        "origin": "origin1",
-        "purpose": "purpose1",
-        "comment": "comment1",
-        "descriptions": ["wrong_uid"],
-        "alias_uids": ["wrong_uid"],
-        "sdtm_domain_uids": [],
-    }
-    response = api_client.post("concepts/odms/item-groups", json=data)
-
-    assert_response_status_code(response, 400)
-
-    res = response.json()
-
-    assert res["type"] == "BusinessLogicException"
-    assert (
-        res["message"]
-        == """ODM Item Group tried to connect to non-existent concepts [('Concept Name: ODM Description', "uids: {'wrong_uid'}"), ('Concept Name: ODM Alias', "uids: {'wrong_uid'}")]."""
+        == "ODM Item Group already exists with UID (OdmItemGroup_000001) and data {'library_name': 'Sponsor', 'sdtm_domain_uids': ['domain001'], 'name': 'name1', 'oid': 'oid1', 'repeating': False, 'is_reference_data': False, 'sas_dataset_name': 'sas_dataset_name1', 'origin': 'origin1', 'purpose': 'purpose1', 'comment': 'comment1'}"
     )
 
 
@@ -491,7 +468,7 @@ def test_cannot_create_an_odm_item_group_connected_to_non_existent_sdtm_domain(
         "purpose": "purpose1",
         "comment": "comment1",
         "descriptions": [],
-        "alias_uids": [],
+        "aliases": [],
         "sdtm_domain_uids": ["wrong_uid"],
     }
     response = api_client.post("concepts/odms/item-groups", json=data)
@@ -504,6 +481,41 @@ def test_cannot_create_an_odm_item_group_connected_to_non_existent_sdtm_domain(
     assert (
         res["message"]
         == "ODM Item Group tried to connect to non-existent SDTM Domain with UID 'wrong_uid'."
+    )
+
+
+def test_cannot_create_a_new_odm_item_group_without_an_english_description(api_client):
+    data = {
+        "library_name": "Sponsor",
+        "name": "name1",
+        "oid": "oid1",
+        "repeating": "No",
+        "is_reference_data": "No",
+        "sas_dataset_name": "sas_dataset_name1",
+        "origin": "origin1",
+        "purpose": "purpose1",
+        "comment": "comment1",
+        "descriptions": [
+            {
+                "name": "name - non-eng",
+                "language": "DAN",
+                "description": "description - non-eng",
+                "instruction": "instruction - non-eng",
+                "sponsor_instruction": "sponsor_instruction - non-eng",
+            }
+        ],
+        "aliases": [],
+        "sdtm_domain_uids": [],
+    }
+    response = api_client.post("concepts/odms/item-groups", json=data)
+
+    assert_response_status_code(response, 422)
+
+    res = response.json()
+
+    assert res["type"] == "ValidationException"
+    assert (
+        res["message"] == "At least one description must be in English ('eng' or 'en')."
     )
 
 
@@ -606,86 +618,6 @@ def test_cannot_add_odm_vendor_attribute_to_an_odm_item_group_as_an_odm_vendor_e
     )
 
 
-def test_approve_odm_item_group(api_client):
-    response = api_client.post(
-        "concepts/odms/item-groups/OdmItemGroup_000001/approvals"
-    )
-
-    assert_response_status_code(response, 201)
-
-    res = response.json()
-
-    assert res["uid"] == "OdmItemGroup_000001"
-    assert res["library_name"] == "Sponsor"
-    assert res["name"] == "name1"
-    assert res["oid"] == "oid1"
-    assert res["repeating"] == "No"
-    assert res["is_reference_data"] == "No"
-    assert res["sas_dataset_name"] == "sas_dataset_name1"
-    assert res["origin"] == "origin1"
-    assert res["purpose"] == "purpose1"
-    assert res["comment"] == "comment1"
-    assert res["end_date"] is None
-    assert res["status"] == "Final"
-    assert res["version"] == "1.0"
-    assert res["change_description"] == "Approved version"
-    assert res["author_username"] == "unknown-user@example.com"
-    assert res["descriptions"] == [
-        {
-            "uid": "odm_description2",
-            "name": "name2",
-            "language": "language2",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
-            "version": "1.0",
-        },
-        {
-            "uid": "odm_description3",
-            "name": "name3",
-            "language": "ENG",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
-            "version": "1.0",
-        },
-    ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
-    assert res["sdtm_domains"] == [
-        {
-            "codelist_name": "SDTM Domain Abbreviation",
-            "codelist_submission_value": "DOMAIN",
-            "codelist_uid": "C66734",
-            "date_conflict": False,
-            "order": 1,
-            "queried_effective_date": None,
-            "submission_value": "XX",
-            "preferred_term": "test",
-            "term_name": "domain",
-            "term_uid": "domain001",
-        }
-    ]
-    assert res["activity_subgroups"] == []
-    assert res["items"] == []
-    assert res["vendor_elements"] == [
-        {"uid": "odm_vendor_element1", "name": "nameOne", "value": "value1"}
-    ]
-    assert res["vendor_attributes"] == []
-    assert res["vendor_element_attributes"] == [
-        {
-            "uid": "odm_vendor_attribute1",
-            "name": "nameOne",
-            "data_type": "string",
-            "value_regex": "^[a-zA-Z]+$",
-            "value": "valueOne",
-            "vendor_element_uid": "odm_vendor_element1",
-        }
-    ]
-    assert res["possible_actions"] == ["inactivate", "new_version"]
-
-
 def test_cannot_add_odm_items_with_an_invalid_value_to_to_an_odm_item_group(api_client):
     data = [
         {
@@ -723,6 +655,79 @@ def test_cannot_add_odm_items_with_an_invalid_value_to_to_an_odm_item_group(api_
     )
 
 
+def test_approve_odm_item_group(api_client):
+    response = api_client.post(
+        "concepts/odms/item-groups/OdmItemGroup_000001/approvals"
+    )
+
+    assert_response_status_code(response, 201)
+
+    res = response.json()
+
+    assert res["uid"] == "OdmItemGroup_000001"
+    assert res["library_name"] == "Sponsor"
+    assert res["name"] == "name1"
+    assert res["oid"] == "oid1"
+    assert res["repeating"] == "No"
+    assert res["is_reference_data"] == "No"
+    assert res["sas_dataset_name"] == "sas_dataset_name1"
+    assert res["origin"] == "origin1"
+    assert res["purpose"] == "purpose1"
+    assert res["comment"] == "comment1"
+    assert res["end_date"] is None
+    assert res["status"] == "Final"
+    assert res["version"] == "1.0"
+    assert res["change_description"] == "Approved version"
+    assert res["author_username"] == "unknown-user@example.com"
+    assert res["descriptions"] == [
+        {
+            "name": "name2",
+            "language": "eng",
+            "description": "description2",
+            "instruction": "instruction2",
+            "sponsor_instruction": "sponsor_instruction2",
+        },
+        {
+            "name": "name3",
+            "language": "eng",
+            "description": "description3",
+            "instruction": "instruction3",
+            "sponsor_instruction": "sponsor_instruction3",
+        },
+    ]
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
+    assert res["sdtm_domains"] == [
+        {
+            "codelist_name": "SDTM Domain Abbreviation",
+            "codelist_submission_value": "DOMAIN",
+            "codelist_uid": "C66734",
+            "date_conflict": False,
+            "order": 1,
+            "queried_effective_date": None,
+            "submission_value": "XX",
+            "preferred_term": "test",
+            "term_name": "domain",
+            "term_uid": "domain001",
+        }
+    ]
+    assert res["items"] == []
+    assert res["vendor_elements"] == [
+        {"uid": "odm_vendor_element1", "name": "nameOne", "value": "value1"}
+    ]
+    assert res["vendor_attributes"] == []
+    assert res["vendor_element_attributes"] == [
+        {
+            "uid": "odm_vendor_attribute1",
+            "name": "nameOne",
+            "data_type": "string",
+            "value_regex": "^[a-zA-Z]+$",
+            "value": "valueOne",
+            "vendor_element_uid": "odm_vendor_element1",
+        }
+    ]
+    assert res["possible_actions"] == ["inactivate", "new_version"]
+
+
 def test_inactivate_odm_item_group(api_client):
     response = api_client.delete(
         "concepts/odms/item-groups/OdmItemGroup_000001/activations"
@@ -749,27 +754,21 @@ def test_inactivate_odm_item_group(api_client):
     assert res["author_username"] == "unknown-user@example.com"
     assert res["descriptions"] == [
         {
-            "uid": "odm_description2",
             "name": "name2",
-            "language": "language2",
+            "language": "eng",
             "description": "description2",
             "instruction": "instruction2",
             "sponsor_instruction": "sponsor_instruction2",
-            "version": "1.0",
         },
         {
-            "uid": "odm_description3",
             "name": "name3",
-            "language": "ENG",
+            "language": "eng",
             "description": "description3",
             "instruction": "instruction3",
             "sponsor_instruction": "sponsor_instruction3",
-            "version": "1.0",
         },
     ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res["sdtm_domains"] == [
         {
             "codelist_name": "SDTM Domain Abbreviation",
@@ -784,7 +783,6 @@ def test_inactivate_odm_item_group(api_client):
             "term_uid": "domain001",
         }
     ]
-    assert res["activity_subgroups"] == []
     assert res["items"] == []
     assert res["vendor_elements"] == [
         {"uid": "odm_vendor_element1", "name": "nameOne", "value": "value1"}
@@ -832,23 +830,7 @@ def test_cannot_add_odm_items_to_an_odm_item_group_that_is_in_retired_status(
     res = response.json()
 
     assert res["type"] == "BusinessLogicException"
-    assert res["message"] == "The object is inactive"
-
-
-def test_cannot_add_odm_activity_sub_groups_to_an_odm_item_group_that_is_in_retired_status(
-    api_client,
-):
-    data = [{"uid": "activity_subgroup_root1"}]
-    response = api_client.post(
-        "concepts/odms/item-groups/OdmItemGroup_000001/activity-sub-groups", json=data
-    )
-
-    assert_response_status_code(response, 400)
-
-    res = response.json()
-
-    assert res["type"] == "BusinessLogicException"
-    assert res["message"] == "The object is inactive"
+    assert res["message"] == "ODM element is not in Draft."
 
 
 def test_cannot_add_odm_vendor_element_to_an_odm_item_group_that_is_in_retired_status(
@@ -864,7 +846,7 @@ def test_cannot_add_odm_vendor_element_to_an_odm_item_group_that_is_in_retired_s
     res = response.json()
 
     assert res["type"] == "BusinessLogicException"
-    assert res["message"] == "The object is inactive"
+    assert res["message"] == "ODM element is not in Draft."
 
 
 def test_cannot_add_odm_vendor_attribute_to_an_odm_item_group_that_is_in_retired_status(
@@ -880,7 +862,7 @@ def test_cannot_add_odm_vendor_attribute_to_an_odm_item_group_that_is_in_retired
     res = response.json()
 
     assert res["type"] == "BusinessLogicException"
-    assert res["message"] == "The object is inactive"
+    assert res["message"] == "ODM element is not in Draft."
 
 
 def test_cannot_add_odm_vendor_element_attribute_to_an_odm_item_group_that_is_in_retired_status(
@@ -897,4 +879,4 @@ def test_cannot_add_odm_vendor_element_attribute_to_an_odm_item_group_that_is_in
     res = response.json()
 
     assert res["type"] == "BusinessLogicException"
-    assert res["message"] == "The object is inactive"
+    assert res["message"] == "ODM element is not in Draft."

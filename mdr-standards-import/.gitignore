@@ -4,7 +4,7 @@
 __pycache__
 loaded_packages.txt
 json_data/**
-cdisc_data/packages/**
+cdisc_data/packages/cdisc_data_models/NN-VEEVA-EDC/**
 **/.DS_Store
 
 # Unit test / coverage reports

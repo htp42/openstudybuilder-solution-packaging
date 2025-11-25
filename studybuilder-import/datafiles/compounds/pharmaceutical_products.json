@@ -45,7 +45,7 @@
         "external_id": "NPH INSULIN",
         "dosage_forms": [
             {
-                "name": "Injectable"
+                "name": "Injectable Solution"
             }
         ],
         "routes_of_administration": [
@@ -87,7 +87,7 @@
         "external_id": "cagrilintide semaglutide",
         "dosage_forms": [
             {
-                "name": "Injectable"
+                "name": "Injectable Solution"
             }
         ],
         "routes_of_administration": [

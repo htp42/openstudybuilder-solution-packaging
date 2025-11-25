@@ -7,6 +7,14 @@
         :items="helpItems"
       />
     </div>
+    <v-alert
+      v-if="selectedStudy.study_parent_part"
+      color="nnLightBlue200"
+      icon="mdi-information-outline"
+      class="text-nnTrueBlue mx-4 my-2"
+    >
+      {{ $t('_global.sub_study_edit_warning') }}
+    </v-alert>
     <div class="d-flex">
       <v-spacer />
       <v-btn

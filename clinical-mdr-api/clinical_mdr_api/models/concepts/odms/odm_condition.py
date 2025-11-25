@@ -1,49 +1,31 @@
-from typing import Annotated, Callable, Self
+from typing import Annotated, Self
 
-from pydantic import Field
+from pydantic import Field, field_validator
 
 from clinical_mdr_api.descriptions.general import CHANGES_FIELD_DESC
-from clinical_mdr_api.domains.concepts.odms.alias import OdmAliasAR
 from clinical_mdr_api.domains.concepts.odms.condition import OdmConditionAR
-from clinical_mdr_api.domains.concepts.odms.description import OdmDescriptionAR
-from clinical_mdr_api.domains.concepts.odms.formal_expression import (
-    OdmFormalExpressionAR,
-)
 from clinical_mdr_api.models.concepts.concept import (
     ConceptModel,
     ConceptPatchInput,
     ConceptPostInput,
 )
-from clinical_mdr_api.models.concepts.odms.odm_alias import OdmAliasSimpleModel
-from clinical_mdr_api.models.concepts.odms.odm_description import (
-    OdmDescriptionBatchPatchInput,
-    OdmDescriptionPostInput,
-    OdmDescriptionSimpleModel,
+from clinical_mdr_api.models.concepts.odms.odm_common_models import (
+    OdmAliasModel,
+    OdmDescriptionModel,
+    OdmFormalExpressionModel,
 )
-from clinical_mdr_api.models.concepts.odms.odm_formal_expression import (
-    OdmFormalExpressionBatchPatchInput,
-    OdmFormalExpressionPostInput,
-    OdmFormalExpressionSimpleModel,
-)
+from clinical_mdr_api.models.validators import has_english_description
 
 
 class OdmCondition(ConceptModel):
     oid: Annotated[str | None, Field()]
-    formal_expressions: Annotated[list[OdmFormalExpressionSimpleModel], Field()]
-    descriptions: Annotated[list[OdmDescriptionSimpleModel], Field()]
-    aliases: Annotated[list[OdmAliasSimpleModel], Field()]
+    formal_expressions: Annotated[list[OdmFormalExpressionModel], Field()]
+    descriptions: Annotated[list[OdmDescriptionModel], Field()]
+    aliases: Annotated[list[OdmAliasModel], Field()]
     possible_actions: Annotated[list[str], Field()]
 
     @classmethod
-    def from_odm_condition_ar(
-        cls,
-        odm_condition_ar: OdmConditionAR,
-        find_odm_formal_expression_by_uid: Callable[
-            [str], OdmFormalExpressionAR | None
-        ],
-        find_odm_description_by_uid: Callable[[str], OdmDescriptionAR | None],
-        find_odm_alias_by_uid: Callable[[str], OdmAliasAR | None],
-    ) -> Self:
+    def from_odm_condition_ar(cls, odm_condition_ar: OdmConditionAR) -> Self:
         return cls(
             uid=odm_condition_ar._uid,
             oid=odm_condition_ar.concept_vo.oid,
@@ -56,34 +38,14 @@ class OdmCondition(ConceptModel):
             change_description=odm_condition_ar.item_metadata.change_description,
             author_username=odm_condition_ar.item_metadata.author_username,
             formal_expressions=sorted(
-                [
-                    OdmFormalExpressionSimpleModel.from_odm_formal_expression_uid(
-                        uid=formal_expression_uid,
-                        find_odm_formal_expression_by_uid=find_odm_formal_expression_by_uid,
-                    )
-                    for formal_expression_uid in odm_condition_ar.concept_vo.formal_expression_uids
-                ],
-                key=lambda item: item.expression or "",
+                odm_condition_ar.concept_vo.formal_expressions,
+                key=lambda item: item.context,
             ),
             descriptions=sorted(
-                [
-                    OdmDescriptionSimpleModel.from_odm_description_uid(
-                        uid=description_uid,
-                        find_odm_description_by_uid=find_odm_description_by_uid,
-                    )
-                    for description_uid in odm_condition_ar.concept_vo.description_uids
-                ],
-                key=lambda item: item.name or "",
+                odm_condition_ar.concept_vo.descriptions, key=lambda item: item.name
             ),
             aliases=sorted(
-                [
-                    OdmAliasSimpleModel.from_odm_alias_uid(
-                        uid=alias_uid,
-                        find_odm_alias_by_uid=find_odm_alias_by_uid,
-                    )
-                    for alias_uid in odm_condition_ar.concept_vo.alias_uids
-                ],
-                key=lambda item: item.name or "",
+                odm_condition_ar.concept_vo.aliases, key=lambda item: item.name
             ),
             possible_actions=sorted(
                 [_.value for _ in odm_condition_ar.get_possible_actions()]
@@ -93,22 +55,25 @@ class OdmCondition(ConceptModel):
 
 class OdmConditionPostInput(ConceptPostInput):
     oid: Annotated[str | None, Field(min_length=1)] = None
-    formal_expressions: Annotated[list[OdmFormalExpressionPostInput | str], Field()]
-    descriptions: Annotated[list[OdmDescriptionPostInput | str], Field()]
-    alias_uids: Annotated[list[str], Field()]
+    formal_expressions: Annotated[list[OdmFormalExpressionModel], Field()]
+    descriptions: Annotated[list[OdmDescriptionModel], Field()]
+    aliases: Annotated[list[OdmAliasModel], Field()]
+
+    _english_description_validator = field_validator("descriptions")(
+        has_english_description
+    )
 
 
 class OdmConditionPatchInput(ConceptPatchInput):
     name: Annotated[str, Field(min_length=1)]
     oid: Annotated[str | None, Field(min_length=1)]
-    formal_expressions: Annotated[
-        list[OdmFormalExpressionBatchPatchInput | OdmFormalExpressionPostInput | str],
-        Field(),
-    ]
-    descriptions: Annotated[
-        list[OdmDescriptionBatchPatchInput | OdmDescriptionPostInput | str], Field()
-    ]
-    alias_uids: Annotated[list[str], Field()]
+    formal_expressions: Annotated[list[OdmFormalExpressionModel], Field()]
+    descriptions: Annotated[list[OdmDescriptionModel], Field()]
+    aliases: Annotated[list[OdmAliasModel], Field()]
+
+    _english_description_validator = field_validator("descriptions")(
+        has_english_description
+    )
 
 
 class OdmConditionVersion(OdmCondition):

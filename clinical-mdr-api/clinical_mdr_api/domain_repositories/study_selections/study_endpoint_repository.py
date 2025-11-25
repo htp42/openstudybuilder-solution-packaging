@@ -232,7 +232,7 @@ class StudySelectionEndpointRepository:
             if selection.study_uid in selection_aggregate_dict:
                 selection_aggregate_dict[selection.study_uid].append(selection)
             else:
-                selection_aggregate_dict[selection.study_uid] = [selection]
+                selection_aggregate_dict[selection.study_uid] = [selection]  # type: ignore[index]
         # Then, create the list of VO from the dictionary
         for study_uid, selections in selection_aggregate_dict.items():
             selection_aggregates.append(

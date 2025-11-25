@@ -1,4 +1,5 @@
 from importers.run_import_activities import Activities
+from importers.run_import_complexity_burdens import ComplexityBurdens
 from importers.run_import_compounds import Compounds
 from importers.run_import_config import Configuration
 from importers.run_import_crfs import Crfs
@@ -28,17 +29,20 @@ def main():
     # Import standard codelist terms, part 1
     standardterms1 = StandardCodelistTerms1(metrics_inst=metr)
     standardterms1.run()
-    #raise RuntimeError("stop here")
+    # raise RuntimeError("stop here")
     # Import standard codelist terms, part 2
     standardterms2 = StandardCodelistTerms2(metrics_inst=metr)
     standardterms2.run()
-    #raise RuntimeError("stop here")
+    # raise RuntimeError("stop here")
     # Import unit definitions
     units = Units(metrics_inst=metr)
     units.run()
 
     activities = Activities(metrics_inst=metr)
     activities.run()
+
+    complexity_burdens = ComplexityBurdens(metrics_inst=metr)
+    complexity_burdens.run()
 
     # Import sponsor models
     sponsor_models = SponsorModels(metrics_inst=metr)

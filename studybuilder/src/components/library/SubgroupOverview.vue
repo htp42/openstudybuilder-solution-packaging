@@ -115,6 +115,7 @@
             </h3>
           </div>
           <NNTable
+            ref="activitiesTableRef"
             :headers="activitiesHeaders"
             :items="activitiesList"
             :items-length="activitiesTotal"
@@ -134,6 +135,7 @@
             :initial-sort="initialSort"
             :disable-sort="false"
             :loading="false"
+            :use-cached-filtering="false"
             @filter="
               (filters, options) => handleFilter(filters, options, 'activities')
             "
@@ -225,10 +227,12 @@ const route = useRoute()
 const appStore = useAppStore()
 const overview = ref()
 const groupFormRef = ref()
+const activitiesTableRef = ref()
 
 // Table data and loading states
 const groups = ref([])
-const activitiesList = ref([])
+const allActivities = ref([]) // Store all activities from API
+const activitiesList = ref([]) // Filtered activities for display
 const groupsTotal = ref(0)
 const activitiesTotal = ref(0)
 const isLoadingGroups = ref(true)
@@ -248,9 +252,6 @@ const activitiesPagination = ref({
   page: 1,
   itemsPerPage: 10,
 })
-
-// Track search term for activities
-let lastActivitiesSearchTerm = ''
 
 // Initial sort order for tables
 const initialSort = ref([{ key: 'name', order: 'asc' }])
@@ -341,18 +342,18 @@ function handleFilter(filters, options, targetTable) {
         props.itemOverview.activity_subgroup.activity_groups.length
     }
   } else if (targetTable === 'activities') {
-    // Skip if search hasn't changed
-    if (searchTerm === lastActivitiesSearchTerm) {
-      return
+    // Client-side filtering like ActivityInstancesTable
+    if (searchTerm) {
+      const filteredActivities = allActivities.value.filter((activity) => {
+        return itemMatchesSearch(activity, searchTerm)
+      })
+      activitiesList.value = filteredActivities
+      activitiesTotal.value = filteredActivities.length
+    } else {
+      // Show all activities when search is cleared
+      activitiesList.value = [...allActivities.value]
+      activitiesTotal.value = allActivities.value.length
     }
-
-    lastActivitiesSearchTerm = searchTerm
-
-    // Reset to page 1 when search changes
-    activitiesPagination.value.page = 1
-
-    // Fetch with new search term
-    fetchActivities()
   }
 }
 
@@ -374,19 +375,11 @@ function updateTableOptions(options) {
 function updateActivitiesOptions(options) {
   if (!options) return
 
-  // Only handle pagination changes
-  if (
-    options.page !== activitiesPagination.value.page ||
-    options.itemsPerPage !== activitiesPagination.value.itemsPerPage
-  ) {
-    activitiesPagination.value.page = options.page
-    activitiesPagination.value.itemsPerPage = options.itemsPerPage
+  // Just update pagination values for display
+  activitiesPagination.value.page = options.page
+  activitiesPagination.value.itemsPerPage = options.itemsPerPage
 
-    // Fetch with new pagination
-    if (props.itemUid) {
-      fetchActivities()
-    }
-  }
+  // No need to fetch since all data is already loaded
 }
 
 async function fetchActivities() {
@@ -404,13 +397,8 @@ async function fetchActivities() {
     const options = {
       version: props.itemOverview?.activity_subgroup?.version,
       total_count: true,
-      page_number: activitiesPagination.value.page,
-      page_size: activitiesPagination.value.itemsPerPage,
-    }
-
-    // Add search parameter if there's a search term
-    if (lastActivitiesSearchTerm) {
-      options.search_string = lastActivitiesSearchTerm
+      // Fetch all activities at once for client-side filtering
+      page_size: 1000, // Get all activities
     }
 
     const response = await activitiesApi.getSubgroupActivities(
@@ -419,32 +407,30 @@ async function fetchActivities() {
     )
 
     if (response && response.data) {
-      // Check if response has new paginated structure
-      if (response.data.items) {
-        // Check if this is still the latest request
-        if (currentRequestId !== fetchRequestId) {
-          return
-        }
+      // Check if this is still the latest request
+      if (currentRequestId !== fetchRequestId) {
+        return
+      }
 
-        // Use server-paginated results directly
-        // Use server response directly
-        activitiesList.value = response.data.items
+      // Store all activities for filtering
+      if (response.data.items) {
+        allActivities.value = response.data.items
+        activitiesList.value = [...response.data.items]
         activitiesTotal.value =
           response.data.total || response.data.items.length
       } else {
         // Handle legacy non-paginated response
-        if (currentRequestId !== fetchRequestId) {
-          return
-        }
-        // Use server response directly
-        activitiesList.value = response.data
+        allActivities.value = response.data
+        activitiesList.value = [...response.data]
         activitiesTotal.value = response.data.length
       }
     } else {
+      allActivities.value = []
       activitiesList.value = []
       activitiesTotal.value = 0
     }
   } catch (error) {
+    allActivities.value = []
     activitiesList.value = []
     activitiesTotal.value = 0
   } finally {
@@ -610,6 +596,17 @@ onMounted(() => {
 .activities-table :deep(.v-data-table-footer) {
   border-top: 1px solid #e0e0e0;
   background-color: transparent !important;
+}
+
+/* Round table corners */
+.subgroup-overview-container :deep(.v-data-table) {
+  border-radius: 8px !important;
+  overflow: visible;
+}
+
+.subgroup-overview-container :deep(.v-table__wrapper) {
+  border-radius: 8px !important;
+  overflow-x: auto;
 }
 
 .subgroup-overview-container :deep(.v-table),

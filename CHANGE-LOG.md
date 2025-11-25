@@ -1,5 +1,97 @@
 # OpenStudyBuilder (OSB) Commits changelog
 
+## V 2.1
+
+New Features and Enhancements
+============
+
+### Fixes and Enhancements
+
+- The current implementation of the CRF library definitions of forms, item groups and item was individually versioned, and the aggregated definition of forms and collection of forms was based on root relationship, i.e. not versioned relationships. This has been changed so all aggregate definition of CRF collections, forms, item groups and items now is based on versioned relationships when these are in final state. When editing these in draft state the reference will always be to the latest draft version. Be aware that when you want to use a new version of an element, then you need also to modify the parent.
+- Enhancements to the wizard stepper now allow the linking of activity instances with sponsor values, including codelists like LBTEST/LBTESTCD.
+- The selection of the --TEST/TESTCD codelist is now possible for instance classes that represent categorical and textual findings.
+- The option to add and edit a requested activity from the 'Requested Activities' page in the Library has been removed
+- The link to the 'Operation SoA' has been removed from the Detailed SoA page under the Study Activities menu
+- The 'Visit window unit' warning text has been updated to make it more clear that the unit selected for the FIRST visit will be used for ALL visits in the study
+
+### New Feature
+
+- The Activities tab of the Library presents the Activity Instance Classes, including various hierarchical levels of instance classes, along with the Activity Item classes linked to different instance classes, all arranged in a tabular layout.
+- The Library's Activities tab now displays the overview of Activity Instance Classes and Activity Item classes.
+- The CRF is able to display layers of  Completion instructions, Design Notes, CDASH, SDTM, Topic Codes, ADaM, and internal keys using floating buttons to switch them on an off independently, provided that the information exists.
+- New version or NeoDash report called "External Data File Specifications" released to PRD.
+
+### End-to-End Automated test enhancements
+- Various code improvements to ensure easier maintenance and overall tests stability.
+- Library > Admin Definitions > Data Suppliers: Added Gherkin specifications and partial tests implementation.
+- Library > Data Collection Standards > CRFs: Adjustments connected to the split into CRF Viewer and CRF Builder.
+- Library > Data Collection Standards > CRF Viewer > CRF Viewer: Added Falcon download Gherkin specifications.
+- Library > Data Collection Standards > CRF Builder > CRF Tree: Added CRF tree Gherkin specifications.
+- Library > Data Collection Standards > CRF Builder > CRF Versioning: Add CRF versioning automation test implementation.
+- Library > Concepts > Activities > Activity Group: Added Gherkin specification for group linking verification.
+- Library > Concepts > Activities > Activity Subgroup: Added Gherkin specification for subgroup linking verification.
+- Library > Concepts > Activities > Activity Instance Classes: Added Gherkin specification and tests implementation for Activity Instance Classes table.
+- Library > Concepts > Activities > Activity Item Classes: Added Gherkin specification and tests implementation for Activity Item Classes table.
+- Library > Concepts > Activities > Activity Instance Classes > Overview Page: Added Gherkin specification and tests implementation for Activity Instance Classes Overview Page.
+- Library > Concepts > Activities > Activity Item Classes > Overview Page: Added Gherkin specification and tests implementation for Activity Item Classes Overview Page.
+- Library > Concepts > Activities > Requested Activities: Updated tests implementation to reflect removal of create option from Library level.
+- Studies > Define Studies > Study Activities > SoA: Updated tests implementation to reflect removal of Operational SoA view.
+
+Solved Bugs
+============
+
+### Library
+
+ **Code lists -> Terms** 
+
+- Removed terms are being added to the table
+
+ **Codelists -> Sponsor CT Packages** 
+
+- Cypher query error on sponsor CT package table
+
+ **Concepts -> Activities -> Activities** 
+
+- Cached filtering in NNTable.vue and ActivitiesTable.vue
+- Filter drop-down on Activities table do not take status selection into account
+- Instances shown in different groupings depending on the view
+
+ **Concepts -> Activities -> Activity Instances** 
+
+- Link to NCI changed
+- Missing Author ID in overview pages and NCI details in activity instance overview
+
+ **Concepts -> Activities ->Activity Subgroups** 
+
+- Issue with searching activity on activity subgroup page
+
+ **Concepts -> CRF Builder -> CRF viewer** 
+
+- Encountered an error message for ODM element type 'Template'
+
+ **Concepts -> CRF Builder -> Items** 
+
+- Vendor extension value are not recorded for an Odm Element
+
+### Studies
+
+ **Define Study -> Study Activities -> Schedule of Activities** 
+
+- Detailed SOA in some Study: Study Activity Schedule creation & deletion must acquire Study write lock
+
+ **Define Study -> Study Properties -> Study Type** 
+
+- Study Properties are locked for a substudy
+
+ **Define Study -> Study Strucutre -> Study Visits** 
+
+- api sometimes gives visits the wrong unique visit number
+
+ **Manage Study -> Study -> Study Status** 
+
+- Encountered an error when unlocking a study
+- Problem in locked vs Draft status
+
 ## V 2.0
 
 New Features and Enhancements
@@ -60,9 +152,10 @@ New Features and Enhancements
  
 - Various code improvements to ensure easier maintenance and overall tests stability.
 - Library > Admin Definitions > Data Suppliers: Added Gherkin specifications and partial tests implementation.
-- Library > Concepts > CRFs: Adjustments connected to the split into CRF Viewer and CRF Builder.
-- Library > Concepts > CRFs > CRF Builder: Added Veeva EDC data tests implementation.
-- Library > Concepts > CRFs > CRF Viewer: Added Falcon download Gherkin specifications.
+- Library > Data Collection Standards > CRFs: Adjustments connected to the split into CRF Viewer and CRF Builder.
+- Library > Data Collection Standards > CRF Viewer > CRF Viewer: Added Falcon download Gherkin specifications.
+- Library > Data Collection Standards > CRF Builder > CRF Tree: Added CRF tree Gherkin specifications.
+- Library > Data Collection Standards > CRF Builder > CRF Versioning: Add CRF versioning automation test implementation.
 
 Solved Bugs
 ============

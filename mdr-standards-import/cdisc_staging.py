@@ -62,7 +62,13 @@ LOGGER = get_logger()
 def get_neo4j_driver(database=None):
     uri = "{}://{}:{}".format(NEO4J_PROTOCOL, NEO4J_HOST, NEO4J_BOLT_PORT)
     return GraphDatabase.driver(
-        uri, auth=(NEO4J_AUTH_USER, NEO4J_AUTH_PASSWORD), database=database
+        uri,
+        auth=(NEO4J_AUTH_USER, NEO4J_AUTH_PASSWORD),
+        database=database,
+        max_connection_lifetime=1800,
+        keep_alive=True,
+        connection_acquisition_timeout=60.0,
+        liveness_check_timeout=30.0,
     )
 
 
@@ -574,7 +580,7 @@ def merge_term_properties(session, package_date):
         MERGE (gt)-[:HAS_INCONSISTENCY]->(ip:InconsistentTermProperties {property: props.property, inconsistency: props.details.inconsistency})
         SET ip += props.details RETURN ip
         """
-
+    
     start = 0
     while True:
         terms_with_props = get_term_properties(session, package_date, start, TERM_BATCH_SIZE)
@@ -618,7 +624,6 @@ def merge_term_properties(session, package_date):
                     if val.startswith('"') and val.endswith('"'):
                         LOGGER.info(f"Unwanted quotes in {prop}")
                         correct = False
-
 
             if consistent and correct:
                 LOGGER.debug(

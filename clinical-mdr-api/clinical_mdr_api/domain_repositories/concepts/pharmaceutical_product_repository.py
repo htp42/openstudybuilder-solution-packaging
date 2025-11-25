@@ -30,7 +30,6 @@ from clinical_mdr_api.domain_repositories.models.pharmaceutical_product import (
     PharmaceuticalProductRoot,
     PharmaceuticalProductValue,
 )
-from clinical_mdr_api.domains._utils import ObjectStatus
 from clinical_mdr_api.domains.concepts.concept_base import _AggregateRootType
 from clinical_mdr_api.domains.concepts.pharmaceutical_product import (
     FormulationVO,
@@ -344,13 +343,11 @@ class PharmaceuticalProductRepository(ConceptGenericRepository):
         )
         return ar
 
-    def specific_alias_clause(
-        self, only_specific_status: str = ObjectStatus.LATEST.name, **kwargs
-    ) -> str:
+    def specific_alias_clause(self, **kwargs) -> str:
         return """
             WITH *,
-                [(concept_value)-[:HAS_DOSAGE_FORM]->(dosage_form:CTTermRoot) | dosage_form] AS dosage_forms,
-                [(concept_value)-[:HAS_ROUTE_OF_ADMINISTRATION]->(route_of_administration:CTTermRoot) | route_of_administration] AS routes_of_administration,
+                [(concept_value)-[:HAS_DOSAGE_FORM]->(df_ctx:CTTermContext)-[:HAS_SELECTED_TERM]->(dosage_form:CTTermRoot) | dosage_form] AS dosage_forms,
+                [(concept_value)-[:HAS_ROUTE_OF_ADMINISTRATION]->(roa_ctx:CTTermContext)-[:HAS_SELECTED_TERM]->(route_of_administration:CTTermRoot) | route_of_administration] AS routes_of_administration,
                 [(concept_value)-[:HAS_FORMULATION]->(formulation:IngredientFormulation) | formulation] as formulations,
                 [(concept_value)-[:HAS_FORMULATION]->(formulation:IngredientFormulation)-[fi_rel:HAS_INGREDIENT]->(ingredient:Ingredient) | {ingredient:ingredient, fi_rel:fi_rel}] as formulation_ingredients,
                 [(concept_value)-[:HAS_FORMULATION]->(formulation:IngredientFormulation)-[:HAS_INGREDIENT]->(ingredient:Ingredient)-[ingr_substance_rel:HAS_SUBSTANCE]->(active_substance:ActiveSubstanceRoot) | {active_substance:active_substance, ingr_substance_rel:ingr_substance_rel}] as ingredient_substances,

@@ -63,20 +63,8 @@ def remove_odm_data(db_driver, log):
         _, summary = run_cypher_query(
             db_driver,
             f"""
-            MATCH (r:{entity}Root|Deleted{entity}Root)--(v:{entity}Value)
+            MATCH (r:{entity}Root)--(v:{entity}Value)
             DETACH DELETE r, v
-            """,
-        )
-        print_counters_table(summary.counters)
-        contains_updates = contains_updates or summary.counters.contains_updates
-        log.info(
-            f"Cleaning up the database - Removing {entity}Counter nodes"
-        )
-        _, summary = run_cypher_query(
-            db_driver,
-            f"""
-            MATCH (r:{entity}Counter)
-            DETACH DELETE r
             """,
         )
         print_counters_table(summary.counters)
@@ -182,9 +170,11 @@ def migrate_ct(db_driver, log) -> bool:
     migrate_had_term_only_terms(db_driver, log)
 
     # Get test_name/test_code mapping before migrating anything else
-    test_code_mapping, test_name_mapping, manual_mapping_necessary = (
-        get_test_name_code_mapping(db_driver, log)
-    )
+    (
+        test_code_mapping,
+        test_name_mapping,
+        manual_mapping_necessary,
+    ) = get_test_name_code_mapping(db_driver, log)
 
     # Migrate terms
     # CDISC terms
@@ -998,6 +988,7 @@ def migrate_term_to_term_relationships(db_driver, log):
 
     return contains_updates
 
+
 def migrate_uses_value(db_driver, log):
     """
     Migrate the USES_VALUE relationships between syntax instances and CTTermNameRoot nodes.
@@ -1021,6 +1012,7 @@ def migrate_uses_value(db_driver, log):
     print_counters_table(summary.counters)
     contains_updates = summary.counters.contains_updates
     return contains_updates
+
 
 def mark_cdisc_template_parameter_terms(db_driver, log):
     """
@@ -1052,6 +1044,7 @@ def mark_cdisc_template_parameter_terms(db_driver, log):
     contains_updates = summary.counters.contains_updates
 
     return contains_updates
+
 
 def mark_cdisc_template_parameter_codelists(db_driver, log):
     """
@@ -1101,6 +1094,7 @@ def mark_cdisc_template_parameter_codelists(db_driver, log):
     contains_updates = summary.counters.contains_updates
 
     return contains_updates
+
 
 def migrate_sponsor_ct_packages(db_driver, log):
     """

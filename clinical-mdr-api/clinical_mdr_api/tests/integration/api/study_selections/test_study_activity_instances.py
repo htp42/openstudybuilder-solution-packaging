@@ -77,6 +77,9 @@ activity_instruction: str
 general_activity_group: ActivityGroup
 randomisation_activity_subgroup: ActivitySubGroup
 randomized_activity: Activity
+randomized_activity_instance: ActivityInstance
+second_randomized_activity_instance: ActivityInstance
+randomized_activity_instance_class: ActivityInstanceClass
 body_mes_activity: Activity
 body_measurements_activity_subgroup: ActivitySubGroup
 weight_activity: Activity
@@ -194,6 +197,33 @@ def test_data():
         activity_groups=[general_activity_group.uid],
         library_name="Sponsor",
         is_data_collected=True,
+    )
+    global randomized_activity_instance_class
+    randomized_activity_instance_class = TestUtils.create_activity_instance_class(
+        name="Randomized activity instance class"
+    )
+    global randomized_activity_instance
+    randomized_activity_instance = TestUtils.create_activity_instance(
+        name="Randomized activity instance",
+        activity_instance_class_uid=randomized_activity_instance_class.uid,
+        name_sentence_case="randomized activity instance",
+        topic_code="randomized activity instance topic code",
+        is_required_for_activity=True,
+        activities=[randomized_activity.uid],
+        activity_subgroups=[randomisation_activity_subgroup.uid],
+        activity_groups=[general_activity_group.uid],
+        activity_items=[],
+    )
+    global second_randomized_activity_instance
+    second_randomized_activity_instance = TestUtils.create_activity_instance(
+        name="Second Randomized activity instance",
+        activity_instance_class_uid=randomized_activity_instance_class.uid,
+        name_sentence_case="second randomized activity instance",
+        topic_code="second randomized activity instance topic code",
+        activities=[randomized_activity.uid],
+        activity_subgroups=[randomisation_activity_subgroup.uid],
+        activity_groups=[general_activity_group.uid],
+        activity_items=[],
     )
     body_mes_activity = TestUtils.create_activity(
         name="Body Measurement activity",
@@ -386,30 +416,63 @@ def test_delete_study_activity_instance(api_client):
         },
     )
     assert_response_status_code(response, 201)
+    study_activity_uid = response.json()["study_activity_uid"]
+
+    # Create the second activity instances pointed to the same Activity - Randomized
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activity-instances/batch",
+        json=[
+            {
+                "method": "POST",
+                "content": {
+                    "activity_instance_uid": second_randomized_activity_instance.uid,
+                    "study_activity_uid": study_activity_uid,
+                },
+            }
+        ],
+    )
+    assert_response_status_code(response, 207)
+
     response = api_client.get(
         f"/studies/{test_study.uid}/study-activity-instances",
     )
     assert_response_status_code(response, 200)
     res = response.json()["items"]
-    study_activity_instance_uid = res[0]["study_activity_instance_uid"]
+    assert len(res) == 2
+    required_study_activity_instance_uid = res[0]["study_activity_instance_uid"]
+    second_randonmized_activity_instance_uid = res[1]["study_activity_instance_uid"]
 
+    # Delete one StudyActivityInstance pointing to the Randomized Activity, the whole StudyActivityInstance object should be removed
+    # as there exists another StudyActivityInstance pointing to the same Activity
+    response = api_client.delete(
+        f"/studies/{test_study.uid}/study-activity-instances/{second_randonmized_activity_instance_uid}",
+    )
+    assert_response_status_code(response, 204)
     response = api_client.get(
-        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
+        f"/studies/{test_study.uid}/study-activity-instances/{second_randonmized_activity_instance_uid}",
+    )
+    assert_response_status_code(response, 404)
+
+    # Delete the second one StudyActivityInstance pointing to the Randomized Activity, the whole StudyActivityInstance object should NOT be removed
+    # as there does not exist another StudyActivityInstance pointing to the same Activity, the ActivityInstance field should be cleared
+    response = api_client.delete(
+        f"/studies/{test_study.uid}/study-activity-instances/{required_study_activity_instance_uid}",
+    )
+    assert_response_status_code(response, 204)
+    response = api_client.get(
+        f"/studies/{test_study.uid}/study-activity-instances/{required_study_activity_instance_uid}",
     )
     assert_response_status_code(response, 200)
     res = response.json()
-    assert res["study_activity_instance_uid"] == study_activity_instance_uid
-    assert res["state"] == StudyActivityInstanceState.MISSING_SELECTION.value
-
-    response = api_client.delete(
-        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
-    )
-    assert_response_status_code(response, 204)
+    assert res["study_activity_instance_uid"] == required_study_activity_instance_uid
+    assert res["activity_instance"] is None
 
     response = api_client.get(
-        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
+        f"/studies/{test_study.uid}/study-activity-instances",
     )
-    assert_response_status_code(response, 404)
+    assert_response_status_code(response, 200)
+    res = response.json()["items"]
+    assert len(res) == 1
     TestUtils.delete_study(test_study.uid)
 
 
@@ -556,38 +619,6 @@ def test_edit_study_activity_instance(api_client):
     res = response.json()["items"]
     assert len(res) == 1
     study_activity_instance_uid = res[0]["study_activity_instance_uid"]
-    response = api_client.get(
-        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
-    )
-    assert_response_status_code(response, 200)
-    res = response.json()
-    assert res["activity_instance"] is None
-    assert res["state"] == StudyActivityInstanceState.MISSING_SELECTION.value
-
-    randomized_activity_instance_class = TestUtils.create_activity_instance_class(
-        name="Randomized activity instance class"
-    )
-    randomized_activity_instance = TestUtils.create_activity_instance(
-        name="Randomized activity instance",
-        activity_instance_class_uid=randomized_activity_instance_class.uid,
-        name_sentence_case="randomized activity instance",
-        topic_code="randomized activity instance topic code",
-        is_required_for_activity=True,
-        activities=[randomized_activity.uid],
-        activity_subgroups=[randomisation_activity_subgroup.uid],
-        activity_groups=[general_activity_group.uid],
-        activity_items=[],
-    )
-
-    response = api_client.patch(
-        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
-        json={
-            "activity_instance_uid": randomized_activity_instance.uid,
-        },
-    )
-    assert_response_status_code(response, 200)
-    res = response.json()
-    assert res["activity_instance"]["uid"] == randomized_activity_instance.uid
 
     response = api_client.get(
         f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
@@ -596,6 +627,25 @@ def test_edit_study_activity_instance(api_client):
     res = response.json()
     assert res["activity_instance"]["uid"] == randomized_activity_instance.uid
     assert res["state"] == StudyActivityInstanceState.REQUIRED.value
+
+    response = api_client.patch(
+        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
+        json={
+            "activity_instance_uid": None,
+        },
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert res["activity_instance"] is None
+
+    response = api_client.get(
+        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert res["activity_instance"] is None
+    assert res["state"] == StudyActivityInstanceState.MISSING_SELECTION.value
+
     TestUtils.delete_study(test_study.uid)
 
 
@@ -1156,15 +1206,19 @@ def test_study_activity_instances_batch_create(api_client):
     req_activity_instance_uids.append(first_required_activity_instance.uid)
 
     response = api_client.post(
-        f"/studies/{test_study.uid}/study-activity-instances/batch-select",
-        json={
-            "study_activity_uid": study_activity_uid,
-            "activity_instance_uids": req_activity_instance_uids,
-        },
+        f"/studies/{test_study.uid}/study-activity-instances/batch",
+        json=[
+            {
+                "method": "POST",
+                "content": {
+                    "activity_instance_uid": activity_instance_uid,
+                    "study_activity_uid": study_activity_uid,
+                },
+            }
+            for activity_instance_uid in req_activity_instance_uids
+        ],
     )
-    res = response.json()
-
-    assert_response_status_code(response, 201)
+    assert_response_status_code(response, 207)
 
     response = api_client.get(
         f"/studies/{test_study.uid}/study-activity-instances",
@@ -1229,3 +1283,62 @@ def test_study_activity_instances_return_proper_activity_instance_versionsing_da
     assert len(study_activity_instances) == 1
 
     assert study_activity_instances[0]["activity_instance"]["version"] == "2.0"
+
+
+def test_batch_operations(api_client):
+    test_study = TestUtils.create_study(project_number=project.project_number)
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activities",
+        json={
+            "activity_uid": randomized_activity.uid,
+            "activity_subgroup_uid": randomisation_activity_subgroup.uid,
+            "activity_group_uid": general_activity_group.uid,
+            "soa_group_term_uid": term_efficacy_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
+    study_activity_uid = response.json()["study_activity_uid"]
+
+    response = api_client.get(f"/studies/{test_study.uid}/study-activity-instances")
+    assert_response_status_code(response, 200)
+    study_activity_instances = response.json()["items"]
+    assert len(study_activity_instances) == 1
+    study_activity_instance_uid = study_activity_instances[0][
+        "study_activity_instance_uid"
+    ]
+
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activity-instances/batch",
+        json=[
+            {
+                "method": "PATCH",
+                "content": {
+                    "study_activity_uid": study_activity_uid,
+                    "study_activity_instance_uid": study_activity_instance_uid,
+                    "activity_instance_uid": None,
+                },
+            },
+            {
+                "method": "POST",
+                "content": {
+                    "study_activity_uid": study_activity_uid,
+                    "activity_instance_uid": second_randomized_activity_instance.uid,
+                },
+            },
+        ],
+    )
+    assert_response_status_code(response, 207)
+
+    response = api_client.get(f"/studies/{test_study.uid}/study-activity-instances")
+    assert_response_status_code(response, 200)
+    study_activity_instances = response.json()["items"]
+    assert len(study_activity_instances) == 2
+    assert study_activity_instances[0]["activity_instance"] is None
+    assert (
+        study_activity_instances[0]["study_activity_instance_uid"]
+        == study_activity_instance_uid
+    )
+    assert (
+        study_activity_instances[1]["activity_instance"]["uid"]
+        == second_randomized_activity_instance.uid
+    )

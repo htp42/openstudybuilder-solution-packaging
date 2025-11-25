@@ -69,20 +69,8 @@ def odm_template(data):
     }
 
 
-# library,uid,context,name
-def odm_alias(data):
-    return {
-        "path": "/concepts/odms/aliases",
-        "body": {
-            "name": data["name"],
-            "library_name": data["library"],
-            "context": data["context"],
-        },
-    }
-
-
 # library,oid,name,prompt,repeating,language,description,instruction
-def odm_form(data, alias_uids):
+def odm_form(data):
     return {
         "path": "/concepts/odms/forms",
         "body": {
@@ -93,20 +81,25 @@ def odm_form(data, alias_uids):
             "descriptions": [
                 {
                     "name": data["name"],
-                    "library_name": data["library"],
                     "language": data["language"],
                     "description": data["description"] or None,
                     "instruction": data["instruction"] or None,
                     "sponsor_instruction": None,
                 }
             ],
-            "alias_uids": alias_uids,
+            "aliases": [
+                {
+                    "name": alias["name"],
+                    "context": alias["context"],
+                }
+                for alias in data.get("aliases", [])
+            ],
         },
     }
 
 
 # library,oid,name,prompt,repeating,isreferencedata,sasdatasetname,domain,origin,purpose,comment,language,description,instruction
-def odm_itemgroup(data, alias_uids, domain_uids):
+def odm_itemgroup(data, domain_uids):
     return {
         "path": "/concepts/odms/item-groups",
         "body": {
@@ -125,21 +118,26 @@ def odm_itemgroup(data, alias_uids, domain_uids):
             "descriptions": [
                 {
                     "name": data["name"],
-                    "library_name": data["library"],
                     "language": data["language"],
                     "description": data["description"] or None,
                     "instruction": data["instruction"] or None,
                     "sponsor_instruction": None,
                 },
             ],
-            "alias_uids": alias_uids,
+            "aliases": [
+                {
+                    "name": alias["name"],
+                    "context": alias["context"],
+                }
+                for alias in data.get("aliases", [])
+            ],
             "sdtm_domain_uids": domain_uids,
         },
     }
 
 
 # library,oid,name,prompt,datatype,length,significantdigits,codelist,term,unit,sasfieldname,sdsvarname,origin,comment,language,description,instruction
-def odm_item(data, alias_uids, units, terms):
+def odm_item(data, units, terms):
     try:
         length = int(data["length"])
     except ValueError:
@@ -170,7 +168,13 @@ def odm_item(data, alias_uids, units, terms):
                     "sponsor_instruction": None,
                 },
             ],
-            "alias_uids": alias_uids,
+            "aliases": [
+                {
+                    "name": alias["name"],
+                    "context": alias["context"],
+                }
+                for alias in data.get("aliases", [])
+            ],
             "codelist_uid": data["codelist"] if data["codelist"] != "" else None,
             "unit_definitions": units,
             "terms": terms,
@@ -246,9 +250,7 @@ class Crfs(BaseImporter):
     def _fetch_codelist_terms(self, codelists, codelist):
         if codelist not in codelists:
             new_codelist = {}
-            terms = self.api.get_all_from_api(
-                f"/ct/codelists/{codelist}/terms"
-            )
+            terms = self.api.get_all_from_api(f"/ct/codelists/{codelist}/terms")
             for term in terms:
                 new_codelist[term["concept_id"]] = term["term_uid"]
                 codelists[codelist] = new_codelist
@@ -280,7 +282,7 @@ class Crfs(BaseImporter):
 
             # Create vendor attribute, and leave in draft state (no approve)
             # TODO check if it exists before posting?
-            res = self.api.post_to_api(data)
+            self.api.post_to_api(data)
 
     @open_file()
     def handle_odm_templates(self, csvfile):
@@ -294,7 +296,7 @@ class Crfs(BaseImporter):
 
             # Create template, and leave in draft state (no approve)
             # TODO check if it exists before posting?
-            res = self.api.post_to_api(data)
+            self.api.post_to_api(data)
 
     @open_file()
     def handle_odm_forms(self, csvfile):
@@ -304,7 +306,7 @@ class Crfs(BaseImporter):
             if len(row) == 0:
                 continue
             self.log.info(f'Adding odm form {row["name"]}')
-            data = odm_form(row, [])
+            data = odm_form(row)
 
             # Create template, and leave in draft state (no approve)
             # TODO check if it exists before posting?
@@ -313,8 +315,16 @@ class Crfs(BaseImporter):
     @open_file()
     def handle_odm_itemgroups(self, csvfile):
         csvdata = csv.DictReader(csvfile)
-        params = {"filters": json.dumps({"name": {"v": ["SDTM Domain Abbreviation"], "op": "eq"}}), "page_number": 1, "page_size": 0}
-        domain_cl_uid = self.api.get_all_from_api("/ct/codelists/attributes", params=params)
+        params = {
+            "filters": json.dumps(
+                {"name": {"v": ["SDTM Domain Abbreviation"], "op": "eq"}}
+            ),
+            "page_number": 1,
+            "page_size": 0,
+        }
+        domain_cl_uid = self.api.get_all_from_api(
+            "/ct/codelists/attributes", params=params
+        )
         if len(domain_cl_uid) == 0:
             self.log.warning("Unable to find codelist for SDTM domain abbreviation")
             return
@@ -345,7 +355,7 @@ class Crfs(BaseImporter):
                 else:
                     self.log.warning(f"Unable to find domain '{domain}'")
 
-            data = odm_itemgroup(row, [], domains)
+            data = odm_itemgroup(row, domains)
 
             # Create template, and leave in draft state (no approve)
             # TODO check if it exists before posting?
@@ -398,25 +408,11 @@ class Crfs(BaseImporter):
                 else:
                     self.log.warning(f"Unable to find unit {unit}")
 
-            data = odm_item(row, [], units, term_dicts)
+            data = odm_item(row, units, term_dicts)
 
             # Create template, and leave in draft state (no approve)
             # TODO check if it exists before posting?
             self.api.post_to_api(data)
-
-    @open_file()
-    def handle_odm_aliases(self, csvfile):
-        csvdata = csv.DictReader(csvfile)
-
-        for row in csvdata:
-            if len(row) == 0:
-                continue
-            self.log.info(f'Adding odm alias {row["name"]}')
-            data = odm_alias(row)
-
-            # Create alias, and leave in draft state (no approve)
-            # TODO check if it exists before posting?
-            res = self.api.post_to_api(data)
 
     @open_file()
     def handle_odm_template_to_form_relationship(self, csvfile):
@@ -548,7 +544,6 @@ class Crfs(BaseImporter):
         self.handle_odm_forms(MDR_MIGRATION_ODM_FORMS)
         self.handle_odm_itemgroups(MDR_MIGRATION_ODM_ITEMGROUPS)
         self.handle_odm_items(MDR_MIGRATION_ODM_ITEMS)
-        self.handle_odm_aliases(MDR_MIGRATION_ODM_ALIAS)
         self.handle_odm_template_to_form_relationship(
             MDR_MIGRATION_ODM_TEMPLATE_TO_FORM_RELATIONSHIP
         )

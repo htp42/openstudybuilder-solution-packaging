@@ -1,3 +1,4 @@
+import dataclasses
 from collections import defaultdict
 from datetime import datetime
 from typing import Callable, Iterable
@@ -26,7 +27,7 @@ from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatu
 from clinical_mdr_api.models.error import BatchErrorResponse
 from clinical_mdr_api.models.study_selections.study_selection import (
     StudySelectionActivityInstance,
-    StudySelectionActivityInstanceBatchCreate,
+    StudySelectionActivityInstanceBatchInput,
     StudySelectionActivityInstanceBatchOutput,
     StudySelectionActivityInstanceCreateInput,
     StudySelectionActivityInstanceEditInput,
@@ -249,17 +250,9 @@ class StudyActivityInstanceSelectionService(
         )
         return new_selection
 
-    @db.transaction
-    def make_selection(
-        self,
-        study_uid: str,
-        selection_create_input: StudySelectionActivityInstanceCreateInput,
-    ) -> StudySelectionActivityInstance:
-        return self.non_transactional_make_selection(
-            study_uid=study_uid, selection_create_input=selection_create_input
-        )
+    ensure_transaction(db)
 
-    def non_transactional_make_selection(
+    def make_selection(
         self,
         study_uid: str,
         selection_create_input: StudySelectionActivityInstanceCreateInput,
@@ -308,18 +301,40 @@ class StudyActivityInstanceSelectionService(
     def delete_selection(self, study_uid: str, study_selection_uid: str):
         repos = self._repos
         try:
-            # Load aggregate
             selection_aggregate = (
                 repos.study_activity_instance_repository.find_by_study(
                     study_uid=study_uid, for_update=True
                 )
             )
 
-            # remove the connection
-            assert selection_aggregate is not None
-            selection_aggregate.remove_object_selection(study_selection_uid)
+            selection_to_delete, _ = selection_aggregate.get_specific_object_selection(
+                study_selection_uid=study_selection_uid
+            )
+            other_selections_referencing_same_activity = [
+                selection
+                for selection in selection_aggregate.study_objects_selection
+                if selection.activity_uid == selection_to_delete.activity_uid
+                and selection.study_selection_uid != study_selection_uid
+            ]
 
-            # sync with DB and save the update
+            if other_selections_referencing_same_activity:
+                selection_aggregate.remove_object_selection(study_selection_uid)
+            elif (
+                not other_selections_referencing_same_activity
+                and selection_to_delete.activity_instance_uid
+            ):
+                selection_aggregate.update_selection(
+                    updated_study_object_selection=dataclasses.replace(
+                        selection_to_delete, activity_instance_uid=None
+                    ),
+                    object_exist_callback=self._get_selected_object_exist_check(),
+                    ct_term_level_exist_callback=self._repos.ct_term_name_repository.term_specific_exists_by_uid,
+                )
+            else:
+                exceptions.BusinessLogicException.raise_if(
+                    True, msg="Activity cannot be deleted"
+                )
+            selection_aggregate.validate()
             repos.study_activity_instance_repository.save(
                 selection_aggregate, self.author
             )
@@ -440,46 +455,40 @@ class StudyActivityInstanceSelectionService(
         )
 
     @ensure_transaction(db)
-    def batch_create(
+    def handle_batch_operations(
         self,
         study_uid: str,
-        create_payload: StudySelectionActivityInstanceBatchCreate,
+        operations: list[StudySelectionActivityInstanceBatchInput],
     ) -> list[StudySelectionActivityInstanceBatchOutput]:
         results = []
-        study_activity_instance_aggregate = self.repository.find_by_study(
-            study_uid=study_uid, for_update=True
-        )
-        selected_instances = {
-            study_activity_instance.activity_instance_uid: study_activity_instance.study_selection_uid
-            for study_activity_instance in study_activity_instance_aggregate.study_objects_selection
-        }
-
-        for activity_instance_uid in create_payload.activity_instance_uids:
+        for operation in operations:
+            item = None
             try:
-                if activity_instance_uid not in selected_instances:
-                    if create_payload.study_activity_uid is None:
-                        raise exceptions.BusinessLogicException(
-                            msg="Study Activity UID must be provided for new selections."
-                        )
-
-                    item = self.non_transactional_make_selection(
+                if operation.method == "PATCH":
+                    item = self.patch_selection(
+                        study_uid=study_uid,
+                        study_selection_uid=operation.content.study_activity_instance_uid,
+                        selection_update_input=StudySelectionActivityInstanceEditInput(
+                            activity_instance_uid=operation.content.activity_instance_uid,
+                            study_activity_uid=operation.content.study_activity_uid,
+                        ),
+                    )
+                    response_code = status.HTTP_200_OK
+                elif operation.method == "POST":
+                    item = self.make_selection(
                         study_uid=study_uid,
                         selection_create_input=StudySelectionActivityInstanceCreateInput(
-                            activity_instance_uid=activity_instance_uid,
-                            study_activity_uid=create_payload.study_activity_uid,
+                            activity_instance_uid=operation.content.activity_instance_uid,
+                            study_activity_uid=operation.content.study_activity_uid,
                         ),
                     )
                     response_code = status.HTTP_201_CREATED
                 else:
-                    item = self.get_specific_selection(
-                        study_uid=study_uid,
-                        study_selection_uid=selected_instances[activity_instance_uid],
-                    )
-                    response_code = status.HTTP_200_OK
+                    raise exceptions.MethodNotAllowedException(method=operation.method)
                 results.append(
                     StudySelectionActivityInstanceBatchOutput(
                         response_code=response_code,
-                        content=item if item else None,
+                        content=item,
                     )
                 )
             except exceptions.MDRApiBaseException as error:

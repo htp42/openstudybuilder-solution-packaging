@@ -84,11 +84,19 @@ from clinical_mdr_api.models.concepts.medicinal_product import (
     MedicinalProduct,
     MedicinalProductCreateInput,
 )
+from clinical_mdr_api.models.concepts.odms.odm_common_models import (
+    OdmAliasModel,
+    OdmDescriptionModel,
+)
 from clinical_mdr_api.models.concepts.odms.odm_form import OdmForm, OdmFormPostInput
 from clinical_mdr_api.models.concepts.odms.odm_item import OdmItem, OdmItemPostInput
 from clinical_mdr_api.models.concepts.odms.odm_item_group import (
     OdmItemGroup,
     OdmItemGroupPostInput,
+)
+from clinical_mdr_api.models.concepts.odms.odm_study_event import (
+    OdmStudyEvent,
+    OdmStudyEventPostInput,
 )
 from clinical_mdr_api.models.concepts.pharmaceutical_product import (
     PharmaceuticalProduct,
@@ -200,7 +208,8 @@ from clinical_mdr_api.models.study_selections.study_selection import (
     StudySelectionActivity,
     StudySelectionActivityCreateInput,
     StudySelectionActivityInput,
-    StudySelectionActivityInstanceBatchCreate,
+    StudySelectionActivityInstanceBatchInput,
+    StudySelectionActivityInstanceCreateInput,
     StudySelectionActivityInstanceEditInput,
     StudySelectionArm,
     StudySelectionArmCreateInput,
@@ -342,6 +351,9 @@ from clinical_mdr_api.services.concepts.medicinal_products_service import (
 from clinical_mdr_api.services.concepts.odms.odm_forms import OdmFormService
 from clinical_mdr_api.services.concepts.odms.odm_item_groups import OdmItemGroupService
 from clinical_mdr_api.services.concepts.odms.odm_items import OdmItemService
+from clinical_mdr_api.services.concepts.odms.odm_study_events import (
+    OdmStudyEventService,
+)
 from clinical_mdr_api.services.concepts.pharmaceutical_products_service import (
     PharmaceuticalProductService,
 )
@@ -1673,7 +1685,7 @@ class TestUtils:
                 library_name=library_name,
             )
         )
-        result: ActivityInstance = service.create(
+        result: ActivityInstance = service.create(  # type: ignore[assignment]
             concept_input=activity_instance_input, preview=preview
         )
         if approve and not preview:
@@ -1902,12 +1914,18 @@ class TestUtils:
         study_activity_uid: str,
         activity_instance_uids: list[str],
     ):
-        return StudyActivityInstanceSelectionService().batch_create(
+        return StudyActivityInstanceSelectionService().handle_batch_operations(
             study_uid=study_uid,
-            create_payload=StudySelectionActivityInstanceBatchCreate(
-                study_activity_uid=study_activity_uid,
-                activity_instance_uids=activity_instance_uids,
-            ),
+            operations=[
+                StudySelectionActivityInstanceBatchInput(
+                    method="POST",
+                    content=StudySelectionActivityInstanceCreateInput(
+                        study_activity_uid=study_activity_uid,
+                        activity_instance_uid=activity_instance_uid,
+                    ),
+                )
+                for activity_instance_uid in activity_instance_uids
+            ],
         )
 
     @classmethod
@@ -2268,6 +2286,36 @@ class TestUtils:
         return result
 
     @classmethod
+    def create_odm_study_event(
+        cls,
+        name=None,
+        library_name=LIBRARY_NAME,
+        oid: str | None = None,
+        effective_date: date | None = None,
+        retired_date: date | None = None,
+        description: str | None = None,
+        display_in_tree: bool = True,
+        approve: bool = True,
+    ) -> OdmStudyEvent:
+
+        service: OdmStudyEventService = OdmStudyEventService()
+
+        payload: OdmStudyEventPostInput = OdmStudyEventPostInput(
+            library_name=library_name,
+            name=cls.random_if_none(name),
+            oid=cls.random_if_none(oid),
+            effective_date=effective_date,
+            retired_date=retired_date,
+            description=description,
+            display_in_tree=display_in_tree,
+        )
+
+        result: OdmStudyEvent = service.create(concept_input=payload)  # type: ignore[assignment]
+        if approve:
+            service.approve(result.uid)
+        return result
+
+    @classmethod
     def create_odm_form(
         cls,
         name=None,
@@ -2275,14 +2323,14 @@ class TestUtils:
         oid=None,
         repeating="Yes",
         sdtm_version=None,
-        descriptions=None,
-        alias_uids=None,
+        descriptions: list[OdmDescriptionModel] | None = None,
+        aliases: list[OdmAliasModel] | None = None,
         approve: bool = True,
-    ) -> UnitDefinitionModel:
+    ) -> OdmForm:
         if not descriptions:
             descriptions = []
-        if not alias_uids:
-            alias_uids = []
+        if not aliases:
+            aliases = []
 
         service: OdmFormService = OdmFormService()
 
@@ -2293,10 +2341,10 @@ class TestUtils:
             repeating=repeating,
             sdtm_version=cls.random_if_none(sdtm_version),
             descriptions=descriptions,
-            alias_uids=alias_uids,
+            aliases=aliases,
         )
 
-        result: OdmForm = service.create_with_relations(concept_input=payload)
+        result: OdmForm = service.create(concept_input=payload)  # type: ignore[assignment]
         if approve:
             service.approve(result.uid)
         return result
@@ -2313,15 +2361,15 @@ class TestUtils:
         origin=None,
         purpose=None,
         comment=None,
-        descriptions=None,
-        alias_uids=None,
+        descriptions: list[OdmDescriptionModel] | None = None,
+        aliases: list[OdmAliasModel] | None = None,
         sdtm_domain_uids=None,
         approve: bool = True,
-    ) -> UnitDefinitionModel:
+    ) -> OdmItemGroup:
         if not descriptions:
             descriptions = []
-        if not alias_uids:
-            alias_uids = []
+        if not aliases:
+            aliases = []
         if not sdtm_domain_uids:
             sdtm_domain_uids = []
 
@@ -2338,11 +2386,11 @@ class TestUtils:
             purpose=cls.random_if_none(purpose),
             comment=cls.random_if_none(comment),
             descriptions=descriptions,
-            alias_uids=alias_uids,
+            aliases=aliases,
             sdtm_domain_uids=sdtm_domain_uids,
         )
 
-        result: OdmItemGroup = service.create_with_relations(concept_input=payload)
+        result: OdmItemGroup = service.create(concept_input=payload)  # type: ignore[assignment]
         if approve:
             service.approve(result.uid)
         return result
@@ -2361,21 +2409,21 @@ class TestUtils:
         sds_var_name=None,
         origin=None,
         comment=None,
-        descriptions=None,
-        alias_uids=None,
+        descriptions: list[OdmDescriptionModel] | None = None,
+        aliases: list[OdmAliasModel] | None = None,
         codelist_uid=None,
         unit_definitions=None,
         terms=None,
         approve: bool = True,
-    ) -> UnitDefinitionModel:
+    ) -> OdmItem:
         if not terms:
             terms = []
         if not descriptions:
             descriptions = []
         if not unit_definitions:
             unit_definitions = []
-        if not alias_uids:
-            alias_uids = []
+        if not aliases:
+            aliases = []
 
         service: OdmItemService = OdmItemService()
 
@@ -2392,13 +2440,13 @@ class TestUtils:
             origin=cls.random_if_none(origin),
             comment=cls.random_if_none(comment),
             descriptions=descriptions,
-            alias_uids=alias_uids,
+            aliases=aliases,
             codelist_uid=codelist_uid,
             unit_definitions=unit_definitions,
             terms=terms,
         )
 
-        result: OdmItem = service.create_with_relations(concept_input=payload)
+        result: OdmItem = service.create(concept_input=payload)
         if approve:
             service.approve(result.uid)
         return result
@@ -2496,6 +2544,7 @@ class TestUtils:
         approve: bool = True,
         effective_date: datetime | None = None,
         term_uid: str | None = None,
+        concept_id: str | None = None,
     ) -> CTTerm:
         service: CTTermService = CTTermService()
         if submission_value is None:
@@ -2521,6 +2570,7 @@ class TestUtils:
                 sponsor_preferred_name_sentence_case,
                 prefix="name_sent_case-",
             ),
+            concept_id=cls.random_if_none(concept_id, prefix="CID-"),
             library_name=library_name,
         )
         ct_term: CTTerm = service.create(payload, start_date=effective_date)

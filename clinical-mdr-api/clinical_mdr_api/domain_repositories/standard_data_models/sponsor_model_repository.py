@@ -137,11 +137,15 @@ class SponsorModelRepository(  # type: ignore[misc]
         )
 
     def _get_or_create_value(
-        self, root: DataModelIGRoot, ar: SponsorModelAR
+        self,
+        root: DataModelIGRoot,
+        ar: SponsorModelAR,
+        force_new_value_node: bool = False,
     ) -> SponsorModelValue:
-        for itm in root.has_sponsor_model_version.all():
-            if not self._has_data_changed(ar, itm):
-                return itm
+        if not force_new_value_node:
+            for itm in root.has_sponsor_model_version.all():
+                if not self._has_data_changed(ar, itm):
+                    return itm
 
         new_value = SponsorModelValue(
             name=ar.sponsor_model_vo.name,

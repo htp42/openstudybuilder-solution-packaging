@@ -3,10 +3,10 @@ import _isEqual from 'lodash/isEqual'
 
 export const useFormStore = defineStore('form', {
   state: () => ({
-    form: '',
+    form: null,
   }),
   getters: {
-    isEmpty: (state) => state.form === '',
+    isEmpty: (state) => state.form === null,
   },
   actions: {
     save(form) {

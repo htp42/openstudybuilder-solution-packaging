@@ -3,3 +3,4 @@ studies_view_listings_analysis_study_metadata_new,1,"This flag toggles on/off th
 new_activity_instance_wizard_stepper,1,"This flag toggles on/off the new wizard stepper to create/edit Activity Instances (Library/Concepts/Activities/Activity Instances)"
 compounds_library,0,"This flag toggles on/off the whole subpage found at Library/Concepts/Compounds"
 compounds_studies,0,"This flag toggles on/off the whole subpage found at Studies/Define Study/Study Interventions"
+complexity_score_calculation,0,"Enables complexity score calculation on the Detailed SoA page"

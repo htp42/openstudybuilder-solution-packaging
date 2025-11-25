@@ -984,6 +984,8 @@ def test_operational_soa_xlsx(
     worksheet = workbook.worksheets[0]
     rows = list(worksheet.rows)
 
+    assert worksheet.title == "Operational SoA"
+
     # check dimensions
     num_cols = sum(1 for _ in worksheet.columns)
     assert num_cols >= num_header_cols, "worksheet 0 has too few columns"
@@ -1012,3 +1014,60 @@ def test_operational_soa_xlsx(
         for cell in row[num_header_cols:]
     )
     assert num_checkmarks == soa_test_data.NUM_OPERATIONAL_SOA_CHECKMARKS
+
+
+def test_detailed_soa_xlsx(
+    soa_test_data: SoATestData,
+    api_client: TestClient,
+):
+    """Tests XLS export of Detailed SoA"""
+
+    num_header_rows = 1
+    num_header_cols = 5
+    expected_column_headers = [
+        "SoA group",
+        "Group",
+        "Subgroup",
+        "Activity",
+        "Visibility",
+    ]
+
+    # get payload
+    response = api_client.get(
+        f"/studies/{soa_test_data.study.uid}/detailed-soa.xlsx",
+        params={"study_value_version": "1"},
+    )
+    assert_response_status_code(response, 200)
+    assert_response_content_type(response=response, content_type=XLSX_CONTENT_TYPE)
+
+    # parse XLSX
+    workbook = openpyxl.load_workbook(BytesIO(response.content))
+    assert len(workbook.worksheets), "XLSX has no worksheets"
+    worksheet = workbook.worksheets[0]
+    rows = list(worksheet.rows)
+
+    assert worksheet.title == "Detailed SoA"
+
+    # check dimensions
+    num_cols = sum(1 for _ in worksheet.columns)
+    assert num_cols >= num_header_cols, "worksheet 0 has too few columns"
+    assert num_cols == num_header_cols + len(
+        soa_test_data.VISITS
+    ), "number of columns mismatch visits"
+    num_rows = len(rows)
+    assert num_rows > num_header_rows, "worksheet 0 too few rows"
+    assert num_rows == num_header_rows + len(
+        soa_test_data.study_activities
+    ), "number of rows mismatch study-activity-instances"
+
+    # check headers
+    column_headers = [cell.value for row in worksheet["A1:E1"] for cell in row]
+    assert column_headers == expected_column_headers, "Column headers mismatch"
+
+    # verify the number of checkmarks
+    num_checkmarks = sum(
+        cell.value == SOA_CHECK_MARK
+        for row in rows[num_header_rows:]
+        for cell in row[num_header_cols:]
+    )
+    assert num_checkmarks == len(soa_test_data.study_activity_schedules)

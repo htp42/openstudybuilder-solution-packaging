@@ -98,6 +98,14 @@ const knownCodelists = {
     attribute: 'codelist_submission_value',
     value: 'DATA_SUPPLIER_TYPE',
   },
+  findingCategoryDefinition: {
+    attribute: 'codelist_submission_value',
+    value: 'FINDCAT',
+  },
+  findingSubCategoryDefinition: {
+    attribute: 'codelist_submission_value',
+    value: 'FINDSCAT',
+  },
 }
 
 export default {
@@ -107,25 +115,12 @@ export default {
   getAll(params) {
     return repository.get(resource, { params })
   },
-  getByCodelist(name, options, filters) {
-    const codelist = knownCodelists[name]
-    if (codelist !== undefined) {
-      const params = { page_size: options?.all ? 0 : 100 }
-      if (!options?.unSorted) {
-        params.sort_by = JSON.stringify({ 'name.sponsor_preferred_name': true })
-      }
-      params[codelist.attribute] = codelist.value
-      if (filters) {
-        params.filters = filters
-      }
-      return repository.get(`${resource}`, { params })
-    }
-    throw new Error(`Provided codelist (${name}) is unknown`)
-  },
   getTermsByCodelist(name, params) {
     const codelist = knownCodelists[name]
     if (codelist !== undefined) {
-      const query_params = { page_size: 100, ...params }
+      const query_params = { page_size: params?.all ? 0 : 100, ...params }
+      delete query_params.all
+      query_params['sort_by'] = JSON.stringify({ sponsor_preferred_name: true })
       query_params[codelist.attribute] = codelist.value
       return repository.get(`/ct/codelists/terms`, {
         params: query_params,

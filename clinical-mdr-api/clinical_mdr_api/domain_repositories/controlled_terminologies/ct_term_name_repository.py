@@ -149,21 +149,24 @@ class CTTermNameRepository(  # type: ignore[misc]
         return self._has_data_changed(ar, value)
 
     def _get_or_create_value(
-        self, root: CTTermNameRoot, ar: CTTermNameAR
+        self, root: CTTermNameRoot, ar: CTTermNameAR, force_new_value_node: bool = False
     ) -> CTTermNameValue:
-        for itm in root.has_version.filter(
-            name=ar.ct_term_vo.name, name_sentence_case=ar.ct_term_vo.name_sentence_case
-        ):
-            return itm
-        latest_draft = root.latest_draft.get_or_none()
-        if latest_draft and not self._has_data_changed(ar, latest_draft):
-            return latest_draft
-        latest_final = root.latest_final.get_or_none()
-        if latest_final and not self._has_data_changed(ar, latest_final):
-            return latest_final
-        latest_retired = root.latest_retired.get_or_none()
-        if latest_retired and not self._has_data_changed(ar, latest_retired):
-            return latest_retired
+        if not force_new_value_node:
+            for itm in root.has_version.filter(
+                name=ar.ct_term_vo.name,
+                name_sentence_case=ar.ct_term_vo.name_sentence_case,
+            ):
+                return itm
+            latest_draft = root.latest_draft.get_or_none()
+            if latest_draft and not self._has_data_changed(ar, latest_draft):
+                return latest_draft
+            latest_final = root.latest_final.get_or_none()
+            if latest_final and not self._has_data_changed(ar, latest_final):
+                return latest_final
+            latest_retired = root.latest_retired.get_or_none()
+            if latest_retired and not self._has_data_changed(ar, latest_retired):
+                return latest_retired
+
         new_value = self.value_class(
             name=ar.ct_term_vo.name, name_sentence_case=ar.ct_term_vo.name_sentence_case
         )

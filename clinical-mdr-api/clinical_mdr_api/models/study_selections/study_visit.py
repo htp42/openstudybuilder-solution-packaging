@@ -92,7 +92,7 @@ class StudyVisitEditInput(PatchInputModel):
             gt=-settings.max_int_neo4j,
             lt=settings.max_int_neo4j,
         ),
-    ]
+    ] = None
     time_unit_uid: Annotated[str | None, Field()] = None
     visit_sublabel_reference: Annotated[str | None, Field()] = None
     show_visit: Annotated[bool, Field()]

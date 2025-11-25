@@ -132,9 +132,6 @@ class ActivityInstance(ActivityBase):
         for activity_item in activity_ar.concept_vo.activity_items:
             ct_terms = []
             unit_definitions = []
-            odm_forms = []
-            odm_item_groups = []
-            odm_items = []
             for unit in activity_item.unit_definitions:
                 unit_definitions.append(
                     CompactUnitDefinition(
@@ -149,29 +146,33 @@ class ActivityInstance(ActivityBase):
                     )
                 )
             ct_terms.sort(key=lambda x: x.uid or "")
-            for odm_form in activity_item.odm_forms:
-                odm_forms.append(
-                    CompactOdmForm(
-                        uid=odm_form.uid, oid=odm_form.oid, name=odm_form.name
-                    )
+            odm_form = (
+                CompactOdmForm(
+                    uid=activity_item.odm_form.uid,
+                    oid=activity_item.odm_form.oid,
+                    name=activity_item.odm_form.name,
                 )
-            odm_forms.sort(key=lambda x: x.uid or "")
-            for odm_item_group in activity_item.odm_item_groups:
-                odm_item_groups.append(
-                    CompactOdmItemGroup(
-                        uid=odm_item_group.uid,
-                        oid=odm_item_group.oid,
-                        name=odm_item_group.name,
-                    )
+                if activity_item.odm_form
+                else None
+            )
+            odm_item_group = (
+                CompactOdmItemGroup(
+                    uid=activity_item.odm_item_group.uid,
+                    oid=activity_item.odm_item_group.oid,
+                    name=activity_item.odm_item_group.name,
                 )
-            odm_item_groups.sort(key=lambda x: x.uid or "")
-            for odm_item in activity_item.odm_items:
-                odm_items.append(
-                    CompactOdmItem(
-                        uid=odm_item.uid, oid=odm_item.oid, name=odm_item.name
-                    )
+                if activity_item.odm_item_group
+                else None
+            )
+            odm_item = (
+                CompactOdmItem(
+                    uid=activity_item.odm_item.uid,
+                    oid=activity_item.odm_item.oid,
+                    name=activity_item.odm_item.name,
                 )
-            odm_items.sort(key=lambda x: x.uid or "")
+                if activity_item.odm_item
+                else None
+            )
 
             activity_items.append(
                 ActivityItem(
@@ -182,9 +183,9 @@ class ActivityInstance(ActivityBase):
                     ct_terms=ct_terms,
                     unit_definitions=unit_definitions,
                     is_adam_param_specific=activity_item.is_adam_param_specific,
-                    odm_forms=odm_forms,
-                    odm_item_groups=odm_item_groups,
-                    odm_items=odm_items,
+                    odm_form=odm_form,
+                    odm_item_group=odm_item_group,
+                    odm_item=odm_item,
                 )
             )
 
@@ -285,38 +286,6 @@ class ActivityInstance(ActivityBase):
                 key=lambda x: x.uid or "",
             )
 
-            odm_forms = sorted(
-                [
-                    CompactOdmForm(
-                        uid=odm_form.uid, oid=odm_form.oid, name=odm_form.name
-                    )
-                    for odm_form in activity_item.odm_forms
-                ],
-                key=lambda x: x.uid or "",
-            )
-
-            odm_item_groups = sorted(
-                [
-                    CompactOdmItemGroup(
-                        uid=odm_item_group.uid,
-                        oid=odm_item_group.oid,
-                        name=odm_item_group.name,
-                    )
-                    for odm_item_group in activity_item.odm_item_groups
-                ],
-                key=lambda x: x.uid or "",
-            )
-
-            odm_items = sorted(
-                [
-                    CompactOdmItem(
-                        uid=odm_item.uid, oid=odm_item.oid, name=odm_item.name
-                    )
-                    for odm_item in activity_item.odm_items
-                ],
-                key=lambda x: x.uid or "",
-            )
-
             activity_items.append(
                 ActivityItem(
                     activity_item_class=CompactActivityItemClass(
@@ -326,9 +295,33 @@ class ActivityInstance(ActivityBase):
                     ct_terms=ct_terms,
                     unit_definitions=unit_definitions,
                     is_adam_param_specific=activity_item.is_adam_param_specific,
-                    odm_forms=odm_forms,
-                    odm_item_groups=odm_item_groups,
-                    odm_items=odm_items,
+                    odm_form=(
+                        CompactOdmForm(
+                            uid=activity_item.odm_form.uid,
+                            oid=activity_item.odm_form.oid,
+                            name=activity_item.odm_form.name,
+                        )
+                        if activity_item.odm_form
+                        else None
+                    ),
+                    odm_item_group=(
+                        CompactOdmItemGroup(
+                            uid=activity_item.odm_item_group.uid,
+                            oid=activity_item.odm_item_group.oid,
+                            name=activity_item.odm_item_group.name,
+                        )
+                        if activity_item.odm_item_group
+                        else None
+                    ),
+                    odm_item=(
+                        CompactOdmItem(
+                            uid=activity_item.odm_item.uid,
+                            oid=activity_item.odm_item.oid,
+                            name=activity_item.odm_item.name,
+                        )
+                        if activity_item.odm_item
+                        else None
+                    ),
                 )
             )
 
@@ -499,9 +492,9 @@ class SimplifiedActivityItem(BaseModel):
     unit_definitions: list[CompactUnitDefinition] = Field(default_factory=list)
     activity_item_class: Annotated[SimpleActivityItemClass, Field()]
     is_adam_param_specific: Annotated[bool, Field()]
-    odm_forms: list[CompactOdmForm] = Field(default_factory=list)
-    odm_item_groups: list[CompactOdmItemGroup] = Field(default_factory=list)
-    odm_items: list[CompactOdmItem] = Field(default_factory=list)
+    odm_form: Annotated[CompactOdmForm | None, Field()] = None
+    odm_item_group: Annotated[CompactOdmItemGroup | None, Field()] = None
+    odm_item: Annotated[CompactOdmItem | None, Field()] = None
 
 
 class SimpleActivityInstanceGrouping(SimpleActivityGrouping):
@@ -540,38 +533,32 @@ class ActivityInstanceOverview(BaseModel):
                 ],
                 key=lambda x: x.uid or "",
             )
-            odm_forms = sorted(
-                [
-                    CompactOdmForm(
-                        uid=odm_form.get("uid"),
-                        oid=odm_form.get("oid"),
-                        name=odm_form.get("name"),
-                    )
-                    for odm_form in activity_item.get("odm_forms", [])
-                ],
-                key=lambda x: x.uid or "",
+            odm_form = (
+                CompactOdmForm(
+                    uid=activity_item["odm_form"]["uid"],
+                    oid=activity_item["odm_form"]["oid"],
+                    name=activity_item["odm_form"]["name"],
+                )
+                if activity_item.get("odm_form", None)
+                else None
             )
-            odm_item_groups = sorted(
-                [
-                    CompactOdmItemGroup(
-                        uid=odm_item_group.get("uid"),
-                        oid=odm_item_group.get("oid"),
-                        name=odm_item_group.get("name"),
-                    )
-                    for odm_item_group in activity_item.get("odm_item_groups", [])
-                ],
-                key=lambda x: x.uid or "",
+            odm_item_group = (
+                CompactOdmItemGroup(
+                    uid=activity_item["odm_item_group"]["uid"],
+                    oid=activity_item["odm_item_group"]["oid"],
+                    name=activity_item["odm_item_group"]["name"],
+                )
+                if activity_item.get("odm_item_group", None)
+                else None
             )
-            odm_items = sorted(
-                [
-                    CompactOdmItem(
-                        uid=odm_item.get("uid"),
-                        oid=odm_item.get("oid"),
-                        name=odm_item.get("name"),
-                    )
-                    for odm_item in activity_item.get("odm_items", [])
-                ],
-                key=lambda x: x.uid or "",
+            odm_item = (
+                CompactOdmItem(
+                    uid=activity_item["odm_item"]["uid"],
+                    oid=activity_item["odm_item"]["oid"],
+                    name=activity_item["odm_item"]["name"],
+                )
+                if activity_item.get("odm_item", None)
+                else None
             )
             # Extract activity_item_class handling Neo4j node format
             aic = activity_item.get("activity_item_class", {})
@@ -588,9 +575,9 @@ class ActivityInstanceOverview(BaseModel):
                 SimplifiedActivityItem(
                     ct_terms=terms,
                     unit_definitions=units,
-                    odm_forms=odm_forms,
-                    odm_item_groups=odm_item_groups,
-                    odm_items=odm_items,
+                    odm_form=odm_form,
+                    odm_item_group=odm_item_group,
+                    odm_item=odm_item,
                     activity_item_class=SimpleActivityItemClass(
                         name=aic_name,
                         order=aic_order,

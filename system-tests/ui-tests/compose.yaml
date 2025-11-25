@@ -10,6 +10,7 @@ services:
       dockerfile: cypress.Dockerfile
     environment:
       CYPRESS_BASE_URL: "${CYPRESS_BASE_URL:-}"
+      CYPRESS_TAGS: "${CYPRESS_TAGS:-}"
       CYPRESS_API: "${CYPRESS_API:-}"
       CYPRESS_CLIENT_ID: "${CYPRESS_CLIENT_ID:-}"
       CYPRESS_CLIENT_SECRET: "${CYPRESS_CLIENT_SECRET:-}"

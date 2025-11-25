@@ -274,6 +274,30 @@ class StudyActivitySelectionService(
             selection_aggregate.add_selection_to_closure_from_other_ar(
                 updated_selection
             )
+            # The SoAGroup of previous StudyActivity should be updated if currently there is none StudyActivities in that SoAGroup
+            study_soa_group_aggregate = (
+                self._repos.study_soa_group_repository.find_by_study(
+                    study_uid=previous_selection.study_uid,
+                    for_update=True,
+                )
+            )
+            for new_order, study_soa_group_selection in enumerate(
+                study_soa_group_aggregate.study_objects_selection, start=1
+            ):
+                reordered_study_soa_group_selection = dataclasses.replace(
+                    study_soa_group_selection, order=new_order
+                )
+                study_soa_group_aggregate.update_selection(
+                    updated_study_object_selection=reordered_study_soa_group_selection,
+                    object_exist_callback=self._repos.activity_subgroup_repository.final_concept_exists,
+                    ct_term_level_exist_callback=self._repos.ct_term_name_repository.term_specific_exists_by_uid,
+                )
+
+            study_soa_group_aggregate.validate()
+            # sync with DB and save the update
+            self._repos.study_soa_group_repository.save(
+                study_soa_group_aggregate, self.author
+            )
             # If previous StudyActivity was assigned with some StudyActivitySubGroup
             # The past StudyActivitySubGroup orders should be updated
             if previous_selection.study_activity_subgroup_uid:
@@ -545,6 +569,7 @@ class StudyActivitySelectionService(
         activity_subgroup_uid: str,
         perform_subgroup_validation: bool = True,
         activity_subgroup_version: str | None = None,
+        current_object: StudySelectionActivityVO | None = None,
     ):
         activity_subgroup_ar = self._validate_activity_subgroup(
             activity_subgroup_uid=activity_subgroup_uid,
@@ -560,6 +585,11 @@ class StudyActivitySelectionService(
             activity_subgroup_name=activity_subgroup_ar.concept_vo.name,
             activity_subgroup_version=activity_subgroup_ar.item_metadata.version,
             generate_uid_callback=self._repos.study_activity_subgroup_repository.generate_uid,
+            show_activity_subgroup_in_protocol_flowchart=(
+                current_object.show_activity_subgroup_in_protocol_flowchart
+                if current_object
+                else True
+            ),
         )
         return new_selection
 
@@ -590,51 +620,6 @@ class StudyActivitySelectionService(
             " Contact StudyBuilder library responsible for updates.",
         )
         return activity_subgroup_ar
-
-    def _patch_study_activity_subgroup_selection_value_object(
-        self,
-        study_uid: str,
-        current_study_activity: StudySelectionActivityVO,
-        selection_create_input: (
-            StudySelectionActivityInput
-            | StudySelectionActivityRequestEditInput
-            | UpdateActivityPlaceholderToSponsorActivity
-            | StudyActivitySyncLatestVersionInput
-        ),
-        study_activity_group_uid: str | None,
-    ):
-        activity_subgroup_uid = selection_create_input.activity_subgroup_uid
-        activity_group_uid = selection_create_input.activity_group_uid
-        soa_group_term_uid = (
-            selection_create_input.soa_group_term_uid
-            if not isinstance(
-                selection_create_input, StudyActivitySyncLatestVersionInput
-            )
-            else current_study_activity.soa_group_term_uid
-        )
-
-        if current_study_activity.study_activity_subgroup_uid is None:
-            new_selection = self._get_or_create_study_activity_subgroup(
-                study_uid=study_uid,
-                activity_subgroup_uid=activity_subgroup_uid,
-                activity_group_uid=activity_group_uid,
-                soa_group_term_uid=soa_group_term_uid,
-                study_activity_group_uid=study_activity_group_uid,
-            )
-        else:
-            self._validate_activity_subgroup(
-                activity_subgroup_uid=activity_subgroup_uid
-            )
-            # create new VO to add
-            new_selection = self._get_or_create_study_activity_subgroup(
-                study_uid=study_uid,
-                activity_subgroup_uid=activity_subgroup_uid,
-                activity_group_uid=activity_group_uid,
-                soa_group_term_uid=soa_group_term_uid,
-                study_activity_group_uid=study_activity_group_uid,
-            )
-
-        return new_selection
 
     @classmethod
     def _validate_activity_group(
@@ -671,6 +656,7 @@ class StudyActivitySelectionService(
         activity_group_uid: str,
         perform_group_validation: bool = True,
         activity_group_version: str | None = None,
+        current_object: StudySelectionActivityVO | None = None,
     ):
         activity_group_ar = self._validate_activity_group(
             activity_group_uid=activity_group_uid,
@@ -685,50 +671,12 @@ class StudyActivitySelectionService(
             activity_group_name=activity_group_ar.concept_vo.name,
             activity_group_version=activity_group_ar.item_metadata.version,
             generate_uid_callback=self._repos.study_activity_group_repository.generate_uid,
+            show_activity_group_in_protocol_flowchart=(
+                current_object.show_activity_group_in_protocol_flowchart
+                if current_object
+                else True
+            ),
         )
-        return new_selection
-
-    def _patch_study_activity_group_selection_value_object(
-        self,
-        study_uid: str,
-        current_study_activity: StudySelectionActivityVO,
-        selection_create_input: (
-            StudySelectionActivityInput
-            | StudySelectionActivityRequestEditInput
-            | UpdateActivityPlaceholderToSponsorActivity
-            | StudyActivitySyncLatestVersionInput
-        ),
-        study_soa_group_uid: str,
-    ):
-        activity_subgroup_uid = selection_create_input.activity_subgroup_uid
-        activity_group_uid = selection_create_input.activity_group_uid
-        soa_group_term_uid = (
-            selection_create_input.soa_group_term_uid
-            if not isinstance(
-                selection_create_input, StudyActivitySyncLatestVersionInput
-            )
-            else current_study_activity.soa_group_term_uid
-        )
-
-        if current_study_activity.study_activity_group_uid is None:
-            new_selection = self._get_or_create_study_activity_group(
-                study_uid=study_uid,
-                activity_subgroup_uid=activity_subgroup_uid,
-                activity_group_uid=activity_group_uid,
-                soa_group_term_uid=soa_group_term_uid,
-                study_soa_group_uid=study_soa_group_uid,
-            )
-        else:
-            self._validate_activity_group(activity_group_uid=activity_group_uid)
-            # create new VO to add
-            new_selection = self._get_or_create_study_activity_group(
-                study_uid=study_uid,
-                activity_subgroup_uid=activity_subgroup_uid,
-                activity_group_uid=activity_group_uid,
-                soa_group_term_uid=soa_group_term_uid,
-                study_soa_group_uid=study_soa_group_uid,
-            )
-
         return new_selection
 
     def _patch_selected_activity(
@@ -940,6 +888,8 @@ class StudyActivitySelectionService(
         soa_group_term_uid: str | None,
         perform_subgroup_validation: bool = True,
         activity_subgroup_version: str | None = None,
+        sync_latest_version: bool = False,
+        current_object: StudySelectionActivityVO | None = None,
     ) -> StudySelectionActivitySubGroupVO:
         study_activity_subgroup_selection: StudySelectionActivitySubGroupVO | None = (
             None
@@ -951,6 +901,7 @@ class StudyActivitySelectionService(
                 activity_subgroup_uid=activity_subgroup_uid,
                 activity_group_uid=activity_group_uid,
                 soa_group_term_uid=soa_group_term_uid,
+                sync_latest_version=sync_latest_version,
             )
             if study_activity_subgroup_node:
                 (
@@ -969,6 +920,7 @@ class StudyActivitySelectionService(
                         activity_subgroup_uid=activity_subgroup_uid,
                         perform_subgroup_validation=perform_subgroup_validation,
                         activity_subgroup_version=activity_subgroup_version,
+                        current_object=current_object,
                     )
                 )
                 # add VO to aggregate
@@ -999,9 +951,10 @@ class StudyActivitySelectionService(
         study_soa_group_uid: str | None,
         perform_group_validation: bool = True,
         activity_group_version: str | None = None,
+        sync_latest_version: bool = False,
+        current_object: StudySelectionActivityVO | None = None,
     ) -> StudySelectionActivityGroupVO:
         study_activity_group_selection: StudySelectionActivityGroupVO | None = None
-
         if (
             activity_subgroup_uid
             and activity_group_uid
@@ -1012,6 +965,7 @@ class StudyActivitySelectionService(
                 study_uid=study_uid,
                 activity_group_uid=activity_group_uid,
                 soa_group_term_uid=soa_group_term_uid,
+                sync_latest_version=sync_latest_version,
             )
             if study_activity_group_node:
                 (
@@ -1030,6 +984,7 @@ class StudyActivitySelectionService(
                         activity_group_uid=activity_group_uid,
                         perform_group_validation=perform_group_validation,
                         activity_group_version=activity_group_version,
+                        current_object=current_object,
                     )
                 )
                 # add VO to aggregate
@@ -1127,6 +1082,21 @@ class StudyActivitySelectionService(
             study_uid=study_uid, study_activity_selection=study_activity_selection
         )
 
+    def _get_activity_group_subgroup_version_from_activity_ar(
+        self,
+        activity_ar: ActivityAR,
+        activity_group_uid: str | None,
+        activity_subgroup_uid: str | None,
+    ) -> tuple[str | None, str | None]:
+        activity_group_version: str | None = None
+        activity_subgroup_version: str | None = None
+        for activity_grouping in activity_ar.concept_vo.activity_groupings:
+            if activity_grouping.activity_group_uid == activity_group_uid:
+                activity_group_version = activity_grouping.activity_group_version
+            if activity_grouping.activity_subgroup_uid == activity_subgroup_uid:
+                activity_subgroup_version = activity_grouping.activity_subgroup_version
+        return activity_group_version, activity_subgroup_version
+
     @ensure_transaction(db)
     def make_selection(
         self,
@@ -1145,13 +1115,13 @@ class StudyActivitySelectionService(
             activity_ar: ActivityAR = activity_service.repository.find_by_uid_2(
                 activity_uid, for_update=True
             )
-            activity_group_version: str | None = None
-            for activity_grouping in activity_ar.concept_vo.activity_groupings:
-                if (
-                    activity_grouping.activity_group_uid
-                    == selection_create_input.activity_group_uid
-                ):
-                    activity_group_version = activity_grouping.activity_group_version
+            activity_group_version, activity_subgroup_version = (
+                self._get_activity_group_subgroup_version_from_activity_ar(
+                    activity_ar=activity_ar,
+                    activity_group_uid=selection_create_input.activity_group_uid,
+                    activity_subgroup_uid=selection_create_input.activity_subgroup_uid,
+                )
+            )
 
             study_activity_group_selection = self._get_or_create_study_activity_group(
                 study_uid=study_uid,
@@ -1166,15 +1136,7 @@ class StudyActivitySelectionService(
                 if study_activity_group_selection
                 else None
             )
-            activity_subgroup_version: str | None = None
-            for activity_grouping in activity_ar.concept_vo.activity_groupings:
-                if (
-                    activity_grouping.activity_subgroup_uid
-                    == selection_create_input.activity_subgroup_uid
-                ):
-                    activity_subgroup_version = (
-                        activity_grouping.activity_subgroup_version
-                    )
+
             study_activity_subgroup_selection = (
                 self._get_or_create_study_activity_subgroup(
                     study_uid=study_uid,
@@ -1474,23 +1436,29 @@ class StudyActivitySelectionService(
         current_object: StudySelectionActivityVO,
         is_soa_group_changed: bool,
         study_soa_group_uid: str,
+        sync_latest_version: bool = False,
     ):
-
         activity_group_uid = current_object.activity_group_uid
         activity_group_name = current_object.activity_group_name
         study_activity_group_uid = current_object.study_activity_group_uid
+        soa_group_term_uid = (
+            request_object.soa_group_term_uid
+            if not isinstance(request_object, StudyActivitySyncLatestVersionInput)
+            else current_object.soa_group_term_uid
+        )
         if (
             request_object.activity_group_uid
             and current_object.activity_group_uid != request_object.activity_group_uid
-        ):
+        ) or sync_latest_version:
             activity_group_uid = request_object.activity_group_uid
-            study_activity_group = (
-                self._patch_study_activity_group_selection_value_object(
-                    study_uid=current_object.study_uid,
-                    current_study_activity=current_object,
-                    selection_create_input=request_object,
-                    study_soa_group_uid=study_soa_group_uid,
-                )
+            study_activity_group = self._get_or_create_study_activity_group(
+                study_uid=current_object.study_uid,
+                activity_subgroup_uid=request_object.activity_subgroup_uid,
+                activity_group_uid=request_object.activity_group_uid,
+                soa_group_term_uid=soa_group_term_uid,
+                study_soa_group_uid=study_soa_group_uid,
+                sync_latest_version=sync_latest_version,
+                current_object=current_object,
             )
             study_activity_group_uid = study_activity_group.study_selection_uid
             activity_group_name = study_activity_group.activity_group_name
@@ -1500,9 +1468,11 @@ class StudyActivitySelectionService(
                 study_uid=current_object.study_uid,
                 activity_subgroup_uid=current_object.activity_subgroup_uid,
                 activity_group_uid=activity_group_uid,
-                soa_group_term_uid=request_object.soa_group_term_uid,
+                soa_group_term_uid=soa_group_term_uid,
                 study_soa_group_uid=study_soa_group_uid,
                 perform_group_validation=False,
+                sync_latest_version=sync_latest_version,
+                current_object=current_object,
             )
             (
                 activity_group_uid,
@@ -1528,23 +1498,31 @@ class StudyActivitySelectionService(
         is_soa_group_changed: bool,
         is_study_activity_group_changed: bool,
         study_activity_group_uid: str | None,
+        sync_latest_version: bool = False,
     ):
         activity_subgroup_uid = current_object.activity_subgroup_uid
         activity_subgroup_name = current_object.activity_subgroup_name
         study_activity_subgroup_uid = current_object.study_activity_subgroup_uid
+        soa_group_term_uid = (
+            request_object.soa_group_term_uid
+            if not isinstance(request_object, StudyActivitySyncLatestVersionInput)
+            else current_object.soa_group_term_uid
+        )
         if (
             request_object.activity_subgroup_uid
             and current_object.activity_subgroup_uid
             != request_object.activity_subgroup_uid
-        ):
+        ) or sync_latest_version:
             activity_subgroup_uid = request_object.activity_subgroup_uid
-            study_activity_subgroup = (
-                self._patch_study_activity_subgroup_selection_value_object(
-                    study_uid=current_object.study_uid,
-                    current_study_activity=current_object,
-                    selection_create_input=request_object,
-                    study_activity_group_uid=study_activity_group_uid,
-                )
+
+            study_activity_subgroup = self._get_or_create_study_activity_subgroup(
+                study_uid=current_object.study_uid,
+                activity_subgroup_uid=request_object.activity_subgroup_uid,
+                activity_group_uid=request_object.activity_group_uid,
+                soa_group_term_uid=soa_group_term_uid,
+                study_activity_group_uid=study_activity_group_uid,
+                sync_latest_version=sync_latest_version,
+                current_object=current_object,
             )
             study_activity_subgroup_uid = study_activity_subgroup.study_selection_uid
             activity_subgroup_name = study_activity_subgroup.activity_subgroup_name
@@ -1556,9 +1534,11 @@ class StudyActivitySelectionService(
                 study_uid=current_object.study_uid,
                 activity_subgroup_uid=activity_subgroup_uid,
                 activity_group_uid=current_object.activity_group_uid,
-                soa_group_term_uid=request_object.soa_group_term_uid,
+                soa_group_term_uid=soa_group_term_uid,
                 perform_subgroup_validation=False,
                 study_activity_group_uid=study_activity_group_uid,
+                sync_latest_version=sync_latest_version,
+                current_object=current_object,
             )
             (
                 activity_subgroup_uid,
@@ -1886,10 +1866,17 @@ class StudyActivitySelectionService(
 
         # update StudyActivityGroup
         study_activity_group_uid = selection.study_activity_group_uid
-        if sync_latest_version_input and (
-            new_activity_group_uid := sync_latest_version_input.activity_group_uid
-        ):
-            self._validate_activity_group(activity_group_uid=new_activity_group_uid)
+        is_study_activity_group_changed: bool = False
+        sync_activity_group_version: bool = False
+        if sync_latest_version_input.activity_group_uid:
+            latest_activity_group_name = (
+                self._repos.activity_group_repository.get_latest_concept_name(
+                    uid=sync_latest_version_input.activity_group_uid
+                )
+            )
+            if latest_activity_group_name != current_selection.activity_group_name:
+                sync_activity_group_version = True
+        if sync_latest_version_input and sync_latest_version_input.activity_group_uid:
             (
                 activity_group_uid,
                 _,
@@ -1899,6 +1886,10 @@ class StudyActivitySelectionService(
                 current_object=selection,
                 is_soa_group_changed=False,
                 study_soa_group_uid=selection.study_soa_group_uid,
+                sync_latest_version=sync_activity_group_version,
+            )
+            is_study_activity_group_changed = (
+                selection.study_activity_group_uid != study_activity_group_uid
             )
 
             if study_activity_group_uid is None:
@@ -1911,16 +1902,23 @@ class StudyActivitySelectionService(
                 study_activity_group_uid=study_activity_group_uid,
             )
 
+        sync_activity_subgroup_version: bool = False
+        if sync_latest_version_input.activity_subgroup_uid:
+            latest_activity_subgroup_name = (
+                self._repos.activity_subgroup_repository.get_latest_concept_name(
+                    uid=sync_latest_version_input.activity_subgroup_uid
+                )
+            )
+            if (
+                latest_activity_subgroup_name
+                != current_selection.activity_subgroup_name
+            ):
+                sync_activity_subgroup_version = True
         # update StudyActivitySubGroup
-        if sync_latest_version_input and (
-            new_activity_subgroup_uid := sync_latest_version_input.activity_subgroup_uid
-        ):
-            self._validate_activity_subgroup(
-                activity_subgroup_uid=new_activity_subgroup_uid
-            )
-            is_study_activity_group_changed = (
-                study_activity_group_uid != selection.study_activity_group_uid
-            )
+        if (
+            sync_latest_version_input
+            and sync_latest_version_input.activity_subgroup_uid
+        ) or is_study_activity_group_changed:
             (
                 activity_subgroup_uid,
                 _,
@@ -1931,6 +1929,8 @@ class StudyActivitySelectionService(
                 is_soa_group_changed=False,
                 is_study_activity_group_changed=is_study_activity_group_changed,
                 study_activity_group_uid=study_activity_group_uid,
+                sync_latest_version=sync_activity_subgroup_version
+                or is_study_activity_group_changed,
             )
             selection = selection.update_activity_subgroup(
                 activity_subgroup_uid=activity_subgroup_uid,

@@ -431,6 +431,13 @@ class SimpleTermModel(BaseModel):
 
         return simple_term_model
 
+    @classmethod
+    def from_input(cls, input_data) -> Self:
+        return cls(
+            term_uid=input_data.term_uid,
+            name=input_data.name,
+        )
+
 
 # Similar to SimpleTermModel, but includes codelist data
 class SimpleCodelistTermModel(BaseModel):

@@ -85,7 +85,7 @@ class CompoundAliasVO(ConceptVO):
             )
             AlreadyExistsException.raise_if(
                 existing_preferred_synonyms and existing_preferred_synonyms != [uid],
-                msg=f"Preferred synonym(s) already defined for Compound with UID '{self.compound_uid}'.",
+                msg="Another preferred synonym for compound is already defined.",
             )
 
 

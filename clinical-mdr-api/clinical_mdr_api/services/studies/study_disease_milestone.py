@@ -237,7 +237,8 @@ class StudyDiseaseMilestoneService:
     ):
         dm_type: DiseaseMilestoneTypeNamedTuple | None = None
         if (
-            study_disease_milestone_to_edit.disease_milestone_type
+            study_disease_milestone_edit_input.disease_milestone_type
+            and study_disease_milestone_to_edit.disease_milestone_type
             != study_disease_milestone_edit_input.disease_milestone_type
         ):
             dm_type = StudyDiseaseMilestoneType[

@@ -39,8 +39,8 @@
                   <div class="mt-3">
                     {{
                       item.type
-                        ? $t('CrfExtensions.attribute')
-                        : $t('CrfExtensions.element')
+                        ? $t('CRFExtensions.attribute')
+                        : $t('CRFExtensions.element')
                     }}
                   </div>
                 </v-row>
@@ -96,7 +96,7 @@
                       <v-row>
                         <v-btn icon variant="text" class="hide" />
                         <div class="mt-3">
-                          {{ $t('CrfExtensions.attribute') }}
+                          {{ $t('CRFExtensions.attribute') }}
                         </div>
                       </v-row>
                     </td>
@@ -166,8 +166,8 @@
                   <div class="mt-3">
                     {{
                       item.type
-                        ? $t('CrfExtensions.attribute')
-                        : $t('CrfExtensions.element')
+                        ? $t('CRFExtensions.attribute')
+                        : $t('CRFExtensions.element')
                     }}
                   </div>
                 </v-row>
@@ -213,7 +213,7 @@
                       <v-row>
                         <v-btn icon variant="text" class="hide" />
                         <div class="mt-3">
-                          {{ $t('CrfExtensions.attribute') }}
+                          {{ $t('CRFExtensions.attribute') }}
                         </div>
                       </v-row>
                     </td>
@@ -268,15 +268,15 @@ const selectedExtensions = ref([])
 const extensionsHeaders = [
   { title: t('_global.type'), key: 'type' },
   { title: t('_global.name'), key: 'name' },
-  { title: t('CrfExtensions.namespace'), key: 'vendor_namespace.name' },
-  { title: t('CrfExtensions.data_type'), key: 'data_type' },
+  { title: t('CRFExtensions.namespace'), key: 'vendor_namespace.name' },
+  { title: t('CRFExtensions.data_type'), key: 'data_type' },
   { title: '', key: 'add' },
 ]
 const selectedExtensionsHeaders = [
   { title: t('_global.type'), key: 'type' },
   { title: t('_global.name'), key: 'name' },
-  { title: t('CrfExtensions.namespace'), key: 'vendor_namespace.name' },
-  { title: t('CrfExtensions.data_type'), key: 'data_type' },
+  { title: t('CRFExtensions.namespace'), key: 'vendor_namespace.name' },
+  { title: t('CRFExtensions.data_type'), key: 'data_type' },
   { title: t('_global.value'), key: 'value' },
   { title: '', key: 'delete' },
 ]

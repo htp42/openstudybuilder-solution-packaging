@@ -23,6 +23,7 @@
 
     <NNTable
       ref="tableRef"
+      :key="`activities-table-${selectedStatusTab}-${source}`"
       :headers="currentHeaders"
       :items="activities"
       export-object-label="Activities"
@@ -463,7 +464,7 @@
       <template #actions="">
         <slot name="extraActions" />
         <v-btn
-          v-if="source !== 'activities-by-grouping'"
+          v-if="source !== 'activities-by-grouping' && !requested"
           class="ml-2"
           size="small"
           variant="outlined"
@@ -625,7 +626,8 @@ const actions = [
     icon: 'mdi-pencil-outline',
     iconColor: 'primary',
     condition: (item) =>
-      item.possible_actions.find((action) => action === 'edit'),
+      item.possible_actions.find((action) => action === 'edit') &&
+      !props.requested,
     accessRole: roles.LIBRARY_WRITE,
     click: editItem,
   },
@@ -1333,6 +1335,23 @@ function modifyFilters(jsonFilter, params) {
     })
     delete jsonFilter.specimen
   }
+
+  // Apply status filtering based on selected tab for filter dropdowns
+  if (!props.requested && showStatusTabs.value) {
+    if (selectedStatusTab.value === 'final') {
+      // Show only Sponsored and Final status
+      jsonFilter.status = { v: ['Sponsored', statuses.FINAL] }
+    } else if (selectedStatusTab.value === 'retired') {
+      jsonFilter.status = { v: [statuses.RETIRED] }
+    } else if (selectedStatusTab.value === 'draft') {
+      jsonFilter.status = { v: [statuses.DRAFT] }
+    }
+    // 'all' tab doesn't apply any status filter, so we remove it if it exists
+    else if (selectedStatusTab.value === 'all' && jsonFilter.status) {
+      delete jsonFilter.status
+    }
+  }
+
   return {
     jsonFilter: jsonFilter,
     params: params,

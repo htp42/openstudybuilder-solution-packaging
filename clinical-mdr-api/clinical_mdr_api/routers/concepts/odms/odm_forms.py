@@ -12,7 +12,6 @@ from clinical_mdr_api.models.concepts.odms.odm_common_models import (
 )
 from clinical_mdr_api.models.concepts.odms.odm_form import (
     OdmForm,
-    OdmFormActivityGroupPostInput,
     OdmFormItemGroupPostInput,
     OdmFormPatchInput,
     OdmFormPostInput,
@@ -64,7 +63,6 @@ OdmFormUID = Path(description="The unique id of the ODM Form.")
             "end_date",
             "item_groups",
             "aliases",
-            "activity_groups",
             "status",
             "version",
             "repeating",
@@ -87,7 +85,6 @@ OdmFormUID = Path(description="The unique id of the ODM Form.")
             "end_date",
             "item_groups",
             "aliases",
-            "activity_groups",
             "status",
             "version",
             "repeating",
@@ -135,6 +132,9 @@ def get_all_odm_forms(
     total_count: Annotated[
         bool, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
+    version: Annotated[
+        str | None, Query(description="Get a specific version of the ODM element")
+    ] = None,
 ) -> CustomPage[OdmForm]:
     odm_form_service = OdmFormService()
     results = odm_form_service.get_all_concepts(
@@ -145,6 +145,7 @@ def get_all_odm_forms(
         total_count=total_count,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
+        version=version or None,
     )
     return CustomPage(
         items=results.items, total=results.total, page=page_number, size=page_size
@@ -253,9 +254,14 @@ def get_odm_form_that_belongs_to_study_event(
         404: _generic_descriptions.ERROR_404,
     },
 )
-def get_odm_form(odm_form_uid: Annotated[str, OdmFormUID]) -> OdmForm:
+def get_odm_form(
+    odm_form_uid: Annotated[str, OdmFormUID],
+    version: Annotated[
+        str | None, Query(description="Get a specific version of the ODM element")
+    ] = None,
+) -> OdmForm:
     odm_form_service = OdmFormService()
-    return odm_form_service.get_by_uid(uid=odm_form_uid)
+    return odm_form_service.get_by_uid(uid=odm_form_uid, version=version or None)
 
 
 @router.get(
@@ -329,7 +335,7 @@ def create_odm_form(
 ) -> OdmForm:
     odm_form_service = OdmFormService()
 
-    return odm_form_service.create_with_relations(concept_input=odm_form_create_input)
+    return odm_form_service.create(concept_input=odm_form_create_input)
 
 
 @router.patch(
@@ -358,7 +364,7 @@ def edit_odm_form(
     odm_form_edit_input: Annotated[OdmFormPatchInput, Body()],
 ) -> OdmForm:
     odm_form_service = OdmFormService()
-    return odm_form_service.update_with_relations(
+    return odm_form_service.edit_draft(
         uid=odm_form_uid, concept_edit_input=odm_form_edit_input
     )
 
@@ -398,10 +404,18 @@ Possible errors:
         },
     },
 )
-def create_odm_form_version(odm_form_uid: Annotated[str, OdmFormUID]) -> OdmForm:
+def create_odm_form_version(
+    odm_form_uid: Annotated[str, OdmFormUID],
+    cascade_new_version: Annotated[
+        bool,
+        Query(description="If true, all child elements will also get a new version."),
+    ] = False,
+) -> OdmForm:
     odm_form_service = OdmFormService()
     return odm_form_service.create_new_version(
-        uid=odm_form_uid, cascade_new_version=True
+        uid=odm_form_uid,
+        cascade_new_version=cascade_new_version,
+        force_new_value_node=True,
     )
 
 
@@ -451,7 +465,9 @@ def approve_odm_form(odm_form_uid: Annotated[str, OdmFormUID]) -> OdmForm:
 )
 def inactivate_odm_form(odm_form_uid: Annotated[str, OdmFormUID]) -> OdmForm:
     odm_form_service = OdmFormService()
-    return odm_form_service.inactivate_final(uid=odm_form_uid, cascade_inactivate=True)
+    return odm_form_service.inactivate_final(
+        uid=odm_form_uid, cascade_inactivate=True, force_new_value_node=True
+    )
 
 
 @router.post(
@@ -476,47 +492,7 @@ def inactivate_odm_form(odm_form_uid: Annotated[str, OdmFormUID]) -> OdmForm:
 def reactivate_odm_form(odm_form_uid: Annotated[str, OdmFormUID]) -> OdmForm:
     odm_form_service = OdmFormService()
     return odm_form_service.reactivate_retired(
-        uid=odm_form_uid, cascade_reactivate=True
-    )
-
-
-@router.post(
-    "/{odm_form_uid}/activity-groups",
-    dependencies=[security, rbac.LIBRARY_WRITE],
-    summary="Adds activity groups to the ODM Form.",
-    status_code=201,
-    responses={
-        403: _generic_descriptions.ERROR_403,
-        201: {
-            "description": "Created - The activity groups were successfully added to the ODM Form."
-        },
-        400: {
-            "model": ErrorResponse,
-            "description": "Forbidden - Reasons include e.g.: \n",
-        },
-        404: {
-            "model": ErrorResponse,
-            "description": "Not Found - The activity groups with the specified 'odm_form_uid' wasn't found.",
-        },
-    },
-)
-def add_activity_groups_to_odm_form(
-    odm_form_activity_group_post_input: Annotated[
-        list[OdmFormActivityGroupPostInput], Body()
-    ],
-    odm_form_uid: Annotated[str, OdmFormUID],
-    override: Annotated[
-        bool,
-        Query(
-            description="If true, all existing activity group relationships will be replaced with the provided activity group relationships.",
-        ),
-    ] = False,
-) -> OdmForm:
-    odm_form_service = OdmFormService()
-    return odm_form_service.add_activity_groups(
-        uid=odm_form_uid,
-        odm_form_activity_group_post_input=odm_form_activity_group_post_input,
-        override=override,
+        uid=odm_form_uid, cascade_reactivate=True, force_new_value_node=True
     )
 
 

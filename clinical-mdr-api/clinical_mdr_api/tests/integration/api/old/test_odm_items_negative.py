@@ -11,8 +11,6 @@ from clinical_mdr_api.main import app
 from clinical_mdr_api.tests.integration.utils.api import drop_db, inject_and_clear_db
 from clinical_mdr_api.tests.integration.utils.data_library import (
     STARTUP_CT_TERM_ATTRIBUTES_CYPHER,
-    STARTUP_ODM_ALIASES,
-    STARTUP_ODM_DESCRIPTIONS,
     STARTUP_ODM_VENDOR_ATTRIBUTES,
     STARTUP_ODM_VENDOR_ELEMENTS,
     STARTUP_ODM_VENDOR_NAMESPACES,
@@ -31,8 +29,6 @@ def test_data():
     inject_and_clear_db("old.json.test.odm.items.negative")
     db.cypher_query(STARTUP_CT_TERM_ATTRIBUTES_CYPHER)
     db.cypher_query(STARTUP_UNIT_DEFINITIONS)
-    db.cypher_query(STARTUP_ODM_DESCRIPTIONS)
-    db.cypher_query(STARTUP_ODM_ALIASES)
     db.cypher_query(STARTUP_ODM_VENDOR_NAMESPACES)
     db.cypher_query(STARTUP_ODM_VENDOR_ELEMENTS)
     db.cypher_query(STARTUP_ODM_VENDOR_ATTRIBUTES)
@@ -55,8 +51,23 @@ def test_create_a_new_odm_item(api_client):
         "sds_var_name": "sds_var_name1",
         "origin": "origin1",
         "comment": "comment1",
-        "descriptions": ["odm_description2", "odm_description3"],
-        "alias_uids": ["odm_alias1"],
+        "descriptions": [
+            {
+                "name": "name2",
+                "language": "eng",
+                "description": "description2",
+                "instruction": "instruction2",
+                "sponsor_instruction": "sponsor_instruction2",
+            },
+            {
+                "name": "name3",
+                "language": "eng",
+                "description": "description3",
+                "instruction": "instruction3",
+                "sponsor_instruction": "sponsor_instruction3",
+            },
+        ],
+        "aliases": [{"context": "context1", "name": "name1"}],
         "unit_definitions": [
             {"uid": "unit_definition_root1", "mandatory": False, "order": 1}
         ],
@@ -96,27 +107,21 @@ def test_create_a_new_odm_item(api_client):
     assert res["author_username"] == "unknown-user@example.com"
     assert res["descriptions"] == [
         {
-            "uid": "odm_description2",
             "name": "name2",
-            "language": "language2",
+            "language": "eng",
             "description": "description2",
             "instruction": "instruction2",
             "sponsor_instruction": "sponsor_instruction2",
-            "version": "0.1",
         },
         {
-            "uid": "odm_description3",
             "name": "name3",
-            "language": "ENG",
+            "language": "eng",
             "description": "description3",
             "instruction": "instruction3",
             "sponsor_instruction": "sponsor_instruction3",
-            "version": "0.1",
         },
     ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res["unit_definitions"] == [
         {
             "uid": "unit_definition_root1",
@@ -148,7 +153,6 @@ def test_create_a_new_odm_item(api_client):
             "version": "1.0",
         }
     ]
-    assert res["activity"] is None
     assert res["vendor_elements"] == []
     assert res["vendor_attributes"] == []
     assert res["vendor_element_attributes"] == []
@@ -264,27 +268,21 @@ def test_add_odm_vendor_element_to_an_odm_item(api_client):
     assert res["author_username"] == "unknown-user@example.com"
     assert res["descriptions"] == [
         {
-            "uid": "odm_description2",
             "name": "name2",
-            "language": "language2",
+            "language": "eng",
             "description": "description2",
             "instruction": "instruction2",
             "sponsor_instruction": "sponsor_instruction2",
-            "version": "0.1",
         },
         {
-            "uid": "odm_description3",
             "name": "name3",
-            "language": "ENG",
+            "language": "eng",
             "description": "description3",
             "instruction": "instruction3",
             "sponsor_instruction": "sponsor_instruction3",
-            "version": "0.1",
         },
     ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res["unit_definitions"] == [
         {
             "uid": "unit_definition_root1",
@@ -316,7 +314,6 @@ def test_add_odm_vendor_element_to_an_odm_item(api_client):
             "version": "1.0",
         }
     ]
-    assert res["activity"] is None
     assert res["vendor_elements"] == [
         {"uid": "odm_vendor_element1", "name": "nameOne", "value": "value1"}
     ]
@@ -354,27 +351,21 @@ def test_add_odm_vendor_element_attribute_to_an_odm_item(api_client):
     assert res["author_username"] == "unknown-user@example.com"
     assert res["descriptions"] == [
         {
-            "uid": "odm_description2",
             "name": "name2",
-            "language": "language2",
+            "language": "eng",
             "description": "description2",
             "instruction": "instruction2",
             "sponsor_instruction": "sponsor_instruction2",
-            "version": "0.1",
         },
         {
-            "uid": "odm_description3",
             "name": "name3",
-            "language": "ENG",
+            "language": "eng",
             "description": "description3",
             "instruction": "instruction3",
             "sponsor_instruction": "sponsor_instruction3",
-            "version": "0.1",
         },
     ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res["unit_definitions"] == [
         {
             "uid": "unit_definition_root1",
@@ -406,7 +397,6 @@ def test_add_odm_vendor_element_attribute_to_an_odm_item(api_client):
             "version": "1.0",
         }
     ]
-    assert res["activity"] is None
     assert res["vendor_elements"] == [
         {"uid": "odm_vendor_element1", "name": "nameOne", "value": "value1"}
     ]
@@ -437,8 +427,23 @@ def test_cannot_create_a_new_odm_item_with_same_properties(api_client):
         "sds_var_name": "sds_var_name1",
         "origin": "origin1",
         "comment": "comment1",
-        "descriptions": ["odm_description2", "odm_description3"],
-        "alias_uids": ["odm_alias1"],
+        "descriptions": [
+            {
+                "name": "name2",
+                "language": "eng",
+                "description": "description2",
+                "instruction": "instruction2",
+                "sponsor_instruction": "sponsor_instruction2",
+            },
+            {
+                "name": "name3",
+                "language": "eng",
+                "description": "description3",
+                "instruction": "instruction3",
+                "sponsor_instruction": "sponsor_instruction3",
+            },
+        ],
+        "aliases": [{"context": "context1", "name": "name1"}],
         "unit_definitions": [
             {"uid": "unit_definition_root1", "mandatory": False, "order": 1}
         ],
@@ -462,7 +467,7 @@ def test_cannot_create_a_new_odm_item_with_same_properties(api_client):
     assert res["type"] == "AlreadyExistsException"
     assert (
         res["message"]
-        == "ODM Item already exists with UID (OdmItem_000001) and data {'library_name': 'Sponsor', 'alias_uids': ['odm_alias1'], 'unit_definition_uids': ['unit_definition_root1'], 'codelist_uid': 'editable_cr', 'term_uids': ['term_root_final'], 'name': 'name1', 'oid': 'oid1', 'datatype': 'string', 'prompt': 'prompt1', 'length': 11, 'significant_digits': 11, 'sas_field_name': 'sas_field_name1', 'sds_var_name': 'sds_var_name1', 'origin': 'origin1', 'comment': 'comment1'}"
+        == "ODM Item already exists with UID (OdmItem_000001) and data {'library_name': 'Sponsor', 'unit_definition_uids': ['unit_definition_root1'], 'codelist_uid': 'editable_cr', 'term_uids': ['term_root_final'], 'name': 'name1', 'oid': 'oid1', 'datatype': 'string', 'prompt': 'prompt1', 'length': 11, 'significant_digits': 11, 'sas_field_name': 'sas_field_name1', 'sds_var_name': 'sds_var_name1', 'origin': 'origin1', 'comment': 'comment1'}"
     )
 
 
@@ -479,8 +484,8 @@ def test_cannot_create_an_odm_item_connected_to_non_existent_concepts(api_client
         "sds_var_name": "sds_var_name1",
         "origin": "origin1",
         "comment": "comment1",
-        "descriptions": ["wrong_uid"],
-        "alias_uids": ["wrong_uid"],
+        "descriptions": [],
+        "aliases": [],
         "unit_definitions": [{"uid": "wrong_uid"}],
         "codelist_uid": None,
         "terms": [],
@@ -494,7 +499,7 @@ def test_cannot_create_an_odm_item_connected_to_non_existent_concepts(api_client
     assert res["type"] == "BusinessLogicException"
     assert (
         res["message"]
-        == """ODM Item tried to connect to non-existent concepts [('Concept Name: ODM Description', "uids: {'wrong_uid'}"), ('Concept Name: ODM Alias', "uids: {'wrong_uid'}"), ('Concept Name: Unit Definition', "uids: {'wrong_uid'}")]."""
+        == """ODM Item tried to connect to non-existent concepts [('Concept Name: Unit Definition', "uids: {'wrong_uid'}")]."""
     )
 
 
@@ -512,7 +517,7 @@ def test_cannot_create_an_odm_item_connected_to_non_existent_codelist(api_client
         "origin": "origin1",
         "comment": "comment1",
         "descriptions": [],
-        "alias_uids": [],
+        "aliases": [],
         "unit_definitions": [],
         "codelist_uid": "wrong_uid",
         "terms": [],
@@ -546,7 +551,7 @@ def test_cannot_create_an_odm_item_connected_to_ct_terms_without_providing_a_cod
         "origin": "origin1",
         "comment": "comment1",
         "descriptions": [],
-        "alias_uids": [],
+        "aliases": [],
         "unit_definitions": [],
         "codelist_uid": None,
         "terms": [{"uid": "term_root_final"}],
@@ -577,7 +582,7 @@ def test_cannot_create_an_odm_item_connected_to_ct_terms_belonging_to_a_codelist
         "origin": "origin1",
         "comment": "comment1",
         "descriptions": [],
-        "alias_uids": [],
+        "aliases": [],
         "unit_definitions": [],
         "codelist_uid": "editable_cr",
         "terms": [{"uid": "wrong_uid"}],
@@ -592,6 +597,45 @@ def test_cannot_create_an_odm_item_connected_to_ct_terms_belonging_to_a_codelist
     assert (
         res["message"]
         == "Term with UID 'wrong_uid' doesn't belong to the specified Codelist with UID 'editable_cr'."
+    )
+
+
+def test_cannot_create_a_new_odm_item_without_an_english_description(api_client):
+    data = {
+        "library_name": "Sponsor",
+        "name": "new name",
+        "oid": "new oid",
+        "prompt": "prompt1",
+        "datatype": "string",
+        "length": 11,
+        "significant_digits": 11,
+        "sas_field_name": "sas_field_name1",
+        "sds_var_name": "sds_var_name1",
+        "origin": "origin1",
+        "comment": "comment1",
+        "descriptions": [
+            {
+                "name": "name - non-eng",
+                "language": "DAN",
+                "description": "description - non-eng",
+                "instruction": "instruction - non-eng",
+                "sponsor_instruction": "sponsor_instruction - non-eng",
+            }
+        ],
+        "aliases": [],
+        "unit_definitions": [],
+        "codelist_uid": None,
+        "terms": [],
+    }
+    response = api_client.post("concepts/odms/items", json=data)
+
+    assert_response_status_code(response, 422)
+
+    res = response.json()
+
+    assert res["type"] == "ValidationException"
+    assert (
+        res["message"] == "At least one description must be in English ('eng' or 'en')."
     )
 
 
@@ -714,27 +758,21 @@ def test_approve_odm_item(api_client):
     assert res["author_username"] == "unknown-user@example.com"
     assert res["descriptions"] == [
         {
-            "uid": "odm_description2",
             "name": "name2",
-            "language": "language2",
+            "language": "eng",
             "description": "description2",
             "instruction": "instruction2",
             "sponsor_instruction": "sponsor_instruction2",
-            "version": "1.0",
         },
         {
-            "uid": "odm_description3",
             "name": "name3",
-            "language": "ENG",
+            "language": "eng",
             "description": "description3",
             "instruction": "instruction3",
             "sponsor_instruction": "sponsor_instruction3",
-            "version": "1.0",
         },
     ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res["unit_definitions"] == [
         {
             "uid": "unit_definition_root1",
@@ -766,7 +804,6 @@ def test_approve_odm_item(api_client):
             "version": "1.0",
         }
     ]
-    assert res["activity"] is None
     assert res["vendor_elements"] == [
         {"uid": "odm_vendor_element1", "name": "nameOne", "value": "value1"}
     ]
@@ -810,27 +847,21 @@ def test_inactivate_odm_item(api_client):
     assert res["author_username"] == "unknown-user@example.com"
     assert res["descriptions"] == [
         {
-            "uid": "odm_description2",
             "name": "name2",
-            "language": "language2",
+            "language": "eng",
             "description": "description2",
             "instruction": "instruction2",
             "sponsor_instruction": "sponsor_instruction2",
-            "version": "1.0",
         },
         {
-            "uid": "odm_description3",
             "name": "name3",
-            "language": "ENG",
+            "language": "eng",
             "description": "description3",
             "instruction": "instruction3",
             "sponsor_instruction": "sponsor_instruction3",
-            "version": "1.0",
         },
     ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res["unit_definitions"] == [
         {
             "uid": "unit_definition_root1",
@@ -862,7 +893,6 @@ def test_inactivate_odm_item(api_client):
             "version": "1.0",
         }
     ]
-    assert res["activity"] is None
     assert res["vendor_elements"] == [
         {"uid": "odm_vendor_element1", "name": "nameOne", "value": "value1"}
     ]
@@ -880,20 +910,6 @@ def test_inactivate_odm_item(api_client):
     assert res["possible_actions"] == ["delete", "reactivate"]
 
 
-def test_cannot_add_odm_activities_to_an_odm_item_that_is_in_retired_status(api_client):
-    data = {"uid": "activity_root1"}
-    response = api_client.post(
-        "concepts/odms/items/OdmItem_000001/activities", json=data
-    )
-
-    assert_response_status_code(response, 400)
-
-    res = response.json()
-
-    assert res["type"] == "BusinessLogicException"
-    assert res["message"] == "The object is inactive"
-
-
 def test_cannot_add_odm_vendor_element_to_an_odm_item_that_is_in_retired_status(
     api_client,
 ):
@@ -907,7 +923,7 @@ def test_cannot_add_odm_vendor_element_to_an_odm_item_that_is_in_retired_status(
     res = response.json()
 
     assert res["type"] == "BusinessLogicException"
-    assert res["message"] == "The object is inactive"
+    assert res["message"] == "ODM element is not in Draft."
 
 
 def test_cannot_add_odm_vendor_attribute_to_an_odm_item_that_is_in_retired_status(
@@ -923,7 +939,7 @@ def test_cannot_add_odm_vendor_attribute_to_an_odm_item_that_is_in_retired_statu
     res = response.json()
 
     assert res["type"] == "BusinessLogicException"
-    assert res["message"] == "The object is inactive"
+    assert res["message"] == "ODM element is not in Draft."
 
 
 def test_cannot_add_odm_vendor_element_attribute_to_an_odm_item_that_is_in_retired_status(
@@ -939,7 +955,7 @@ def test_cannot_add_odm_vendor_element_attribute_to_an_odm_item_that_is_in_retir
     res = response.json()
 
     assert res["type"] == "BusinessLogicException"
-    assert res["message"] == "The object is inactive"
+    assert res["message"] == "ODM element is not in Draft."
 
 
 def test_cannot_provide_non_null_length_when_datatype_is_not_string_text_integer_or_float(

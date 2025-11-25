@@ -242,9 +242,9 @@ def test_data():
             ],
             "unit_definition_uids": [],
             "is_adam_param_specific": False,
-            "odm_form_uids": [],
-            "odm_item_group_uids": [],
-            "odm_item_uids": [],
+            "odm_form_uid": None,
+            "odm_item_group_uid": None,
+            "odm_item_uid": None,
         },
         {
             "activity_item_class_uid": activity_item_classes[1].uid,
@@ -256,9 +256,9 @@ def test_data():
             ],
             "unit_definition_uids": [],
             "is_adam_param_specific": False,
-            "odm_form_uids": [],
-            "odm_item_group_uids": [],
-            "odm_item_uids": [],
+            "odm_form_uid": None,
+            "odm_item_group_uid": None,
+            "odm_item_uid": None,
         },
         {
             "activity_item_class_uid": activity_item_classes[2].uid,
@@ -274,9 +274,9 @@ def test_data():
             ],
             "unit_definition_uids": [],
             "is_adam_param_specific": False,
-            "odm_form_uids": [],
-            "odm_item_group_uids": [],
-            "odm_item_uids": [],
+            "odm_form_uid": None,
+            "odm_item_group_uid": None,
+            "odm_item_uid": None,
         },
     ]
     global activity_instances_all

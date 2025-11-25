@@ -369,6 +369,15 @@ MEDICINAL_PRODUCT_FIELDS_NOT_NULL = [
     "name_sentence_case",
 ]
 
+PHARMACEUTICAL_PRODUCT_FIELDS_ALL = [
+    "uid",
+    "external_id",
+]
+
+PHARMACEUTICAL_PRODUCT_FIELDS_NOT_NULL = [
+    "uid",
+]
+
 
 def test_get_medicinal_product(api_client):
     response = api_client.get(f"{BASE_URL}/{medicinal_products_all[0].uid}")
@@ -380,6 +389,11 @@ def test_get_medicinal_product(api_client):
     assert set(res.keys()) == set(MEDICINAL_PRODUCT_FIELDS_ALL)
     for key in MEDICINAL_PRODUCT_FIELDS_NOT_NULL:
         assert res[key] is not None
+
+    for item in res["pharmaceutical_products"]:
+        assert set(item.keys()) == set(PHARMACEUTICAL_PRODUCT_FIELDS_ALL)
+        for key_pp in PHARMACEUTICAL_PRODUCT_FIELDS_NOT_NULL:
+            assert item[key_pp] is not None
 
     assert res["uid"] == medicinal_products_all[0].uid
     assert res["external_id"] == f"external_id_a-{rand}"
@@ -443,6 +457,12 @@ def test_get_medicinal_products_versions(api_client):
         assert set(list(item.keys())) == set(MEDICINAL_PRODUCT_FIELDS_ALL)
         for key in MEDICINAL_PRODUCT_FIELDS_NOT_NULL:
             assert item[key] is not None
+
+        for pp in item["pharmaceutical_products"]:
+            assert set(pp.keys()) == set(PHARMACEUTICAL_PRODUCT_FIELDS_ALL)
+            for key_pp in PHARMACEUTICAL_PRODUCT_FIELDS_NOT_NULL:
+                assert pp[key_pp] is not None
+
         TestUtils.assert_timestamp_is_in_utc_zone(item["start_date"])
         TestUtils.assert_timestamp_is_newer_than(item["start_date"], 60)
 
@@ -822,6 +842,12 @@ def test_get_medicinal_products(
         assert set(list(item.keys())) == set(MEDICINAL_PRODUCT_FIELDS_ALL)
         for key in MEDICINAL_PRODUCT_FIELDS_NOT_NULL:
             assert item[key] is not None
+
+        for pp in item["pharmaceutical_products"]:
+            assert set(pp.keys()) == set(PHARMACEUTICAL_PRODUCT_FIELDS_ALL)
+            for key_pp in PHARMACEUTICAL_PRODUCT_FIELDS_NOT_NULL:
+                assert pp[key_pp] is not None
+
         TestUtils.assert_timestamp_is_in_utc_zone(item["start_date"])
         TestUtils.assert_timestamp_is_newer_than(item["start_date"], 60)
 
