@@ -21,9 +21,7 @@ from clinical_mdr_api.tests.data.odm_xml import (
 from clinical_mdr_api.tests.integration.utils.api import drop_db, inject_and_clear_db
 from clinical_mdr_api.tests.integration.utils.data_library import (
     STARTUP_CT_TERM,
-    STARTUP_ODM_ALIASES,
     STARTUP_ODM_CONDITIONS,
-    STARTUP_ODM_FORMAL_EXPRESSIONS,
     STARTUP_ODM_FORMS,
     STARTUP_ODM_ITEM_GROUPS,
     STARTUP_ODM_ITEMS,
@@ -49,10 +47,8 @@ def api_client(test_data):
 @pytest.fixture(scope="module")
 def test_data():
     inject_and_clear_db("old.json.test.odm.xml.exporter")
-    db.cypher_query(STARTUP_ODM_FORMAL_EXPRESSIONS)
     db.cypher_query(STARTUP_ODM_CONDITIONS)
     db.cypher_query(STARTUP_ODM_METHODS)
-    db.cypher_query(STARTUP_ODM_ALIASES)
     db.cypher_query(STARTUP_CT_TERM)
     db.cypher_query(STARTUP_UNIT_DEFINITIONS)
     db.cypher_query(STARTUP_ODM_ITEMS)
@@ -100,8 +96,6 @@ def test_get_odm_xml_forms(api_client):
     assert '<?xml-stylesheet type="text/xsl" href="file.xsl"?>' in response.text
     assert_response_status_code(response, 200)
     assert response.headers.get("content-type") == CONTENT_TYPE
-
-    # breakpoint()
 
     xml_diff(expected_xml, actual_xml)
 

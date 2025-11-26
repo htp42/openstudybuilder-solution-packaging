@@ -239,6 +239,10 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = settings.default_header_page_size,
+    lite: Annotated[
+        bool,
+        Query(description=_generic_descriptions.HEADERS_QUERY_LITE),
+    ] = False,
 ) -> list[Any]:
     ct_term_service = CTTermService()
     return ct_term_service.get_distinct_values_for_header(
@@ -251,6 +255,7 @@ def get_distinct_values_for_header(
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
         page_size=page_size,
+        lite=lite,
     )
 
 

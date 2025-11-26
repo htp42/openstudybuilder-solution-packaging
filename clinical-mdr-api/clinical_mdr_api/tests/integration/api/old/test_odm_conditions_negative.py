@@ -9,11 +9,6 @@ from neomodel import db
 
 from clinical_mdr_api.main import app
 from clinical_mdr_api.tests.integration.utils.api import drop_db, inject_and_clear_db
-from clinical_mdr_api.tests.integration.utils.data_library import (
-    STARTUP_ODM_ALIASES,
-    STARTUP_ODM_DESCRIPTIONS,
-    STARTUP_ODM_FORMAL_EXPRESSIONS,
-)
 from clinical_mdr_api.tests.utils.checks import assert_response_status_code
 
 
@@ -25,9 +20,8 @@ def api_client(test_data):
 @pytest.fixture(scope="module")
 def test_data():
     inject_and_clear_db("old.json.test.odm.conditions.negative")
-    db.cypher_query(STARTUP_ODM_FORMAL_EXPRESSIONS)
-    db.cypher_query(STARTUP_ODM_DESCRIPTIONS)
-    db.cypher_query(STARTUP_ODM_ALIASES)
+
+    db.cypher_query("""CREATE (library:Library {name:"Sponsor", is_editable:true})""")
 
     yield
 
@@ -39,9 +33,24 @@ def test_create_a_new_odm_condition(api_client):
         "library_name": "Sponsor",
         "name": "name1",
         "oid": "oid1",
-        "formal_expressions": ["odm_formal_expression1"],
-        "descriptions": ["odm_description2", "odm_description3"],
-        "alias_uids": ["odm_alias1"],
+        "formal_expressions": [{"context": "context1", "expression": "expression1"}],
+        "descriptions": [
+            {
+                "name": "name2",
+                "language": "eng",
+                "description": "description2",
+                "instruction": "instruction2",
+                "sponsor_instruction": "sponsor_instruction2",
+            },
+            {
+                "name": "name3",
+                "language": "eng",
+                "description": "description3",
+                "instruction": "instruction3",
+                "sponsor_instruction": "sponsor_instruction3",
+            },
+        ],
+        "aliases": [{"context": "context1", "name": "name1"}],
     }
     response = api_client.post("concepts/odms/conditions", json=data)
 
@@ -59,87 +68,26 @@ def test_create_a_new_odm_condition(api_client):
     assert res["change_description"] == "Initial version"
     assert res["author_username"] == "unknown-user@example.com"
     assert res["formal_expressions"] == [
-        {
-            "uid": "odm_formal_expression1",
-            "context": "context1",
-            "expression": "expression1",
-            "version": "0.1",
-        }
+        {"context": "context1", "expression": "expression1"}
     ]
     assert res["descriptions"] == [
         {
-            "uid": "odm_description2",
             "name": "name2",
-            "language": "language2",
+            "language": "eng",
             "description": "description2",
             "instruction": "instruction2",
             "sponsor_instruction": "sponsor_instruction2",
-            "version": "0.1",
         },
         {
-            "uid": "odm_description3",
             "name": "name3",
-            "language": "ENG",
+            "language": "eng",
             "description": "description3",
             "instruction": "instruction3",
             "sponsor_instruction": "sponsor_instruction3",
-            "version": "0.1",
         },
     ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res["possible_actions"] == ["approve", "delete", "edit"]
-
-
-def test_cannot_create_a_new_odm_condition_with_odm_formal_expressions_with_same_context(
-    api_client,
-):
-    data = {
-        "library_name": "Sponsor",
-        "name": "a name",
-        "oid": "aoid",
-        "formal_expressions": ["odm_formal_expression1", "odm_formal_expression3"],
-        "descriptions": ["odm_description3"],
-        "alias_uids": [],
-    }
-    response = api_client.post("concepts/odms/conditions", json=data)
-
-    assert_response_status_code(response, 400)
-
-    res = response.json()
-
-    assert res["type"] == "BusinessLogicException"
-    assert (
-        res["message"]
-        == "ODM Condition tried to connect to ODM Formal Expressions with same Context 'context1'."
-    )
-
-
-def test_cannot_update_an_odm_condition_with_odm_formal_expressions_with_same_context(
-    api_client,
-):
-    data = {
-        "change_description": "formal expressions changed",
-        "name": "name1",
-        "oid": "oid1",
-        "formal_expressions": ["odm_formal_expression3"],
-        "descriptions": ["odm_description3"],
-        "alias_uids": [],
-    }
-    response = api_client.patch(
-        "concepts/odms/conditions/OdmCondition_000001", json=data
-    )
-
-    assert_response_status_code(response, 400)
-
-    res = response.json()
-
-    assert res["type"] == "BusinessLogicException"
-    assert (
-        res["message"]
-        == "ODM Condition tried to connect to ODM Formal Expressions with same Context 'context1'."
-    )
 
 
 def test_cannot_create_a_new_odm_condition_with_same_properties(api_client):
@@ -147,9 +95,24 @@ def test_cannot_create_a_new_odm_condition_with_same_properties(api_client):
         "library_name": "Sponsor",
         "name": "name1",
         "oid": "oid1",
-        "formal_expressions": ["odm_formal_expression1"],
-        "descriptions": ["odm_description2", "odm_description3"],
-        "alias_uids": ["odm_alias1"],
+        "formal_expressions": [{"context": "context1", "expression": "expression1"}],
+        "descriptions": [
+            {
+                "name": "name2",
+                "language": "eng",
+                "description": "description2",
+                "instruction": "instruction2",
+                "sponsor_instruction": "sponsor_instruction2",
+            },
+            {
+                "name": "name3",
+                "language": "eng",
+                "description": "description3",
+                "instruction": "instruction3",
+                "sponsor_instruction": "sponsor_instruction3",
+            },
+        ],
+        "aliases": [{"context": "context1", "name": "name1"}],
     }
     response = api_client.post("concepts/odms/conditions", json=data)
 
@@ -160,77 +123,7 @@ def test_cannot_create_a_new_odm_condition_with_same_properties(api_client):
     assert res["type"] == "AlreadyExistsException"
     assert (
         res["message"]
-        == "ODM Condition already exists with UID (OdmCondition_000001) and data {'library_name': 'Sponsor', 'alias_uids': ['odm_alias1'], 'formal_expression_uids': ['odm_formal_expression1'], 'name': 'name1', 'oid': 'oid1'}"
-    )
-
-
-def test_cannot_create_an_odm_condition_connected_to_non_existent_odm_formal_expression(
-    api_client,
-):
-    data = {
-        "library_name": "Sponsor",
-        "name": "new name",
-        "oid": "new oid",
-        "formal_expressions": ["wrong_uid"],
-        "descriptions": [],
-        "alias_uids": [],
-    }
-    response = api_client.post("concepts/odms/conditions", json=data)
-
-    assert_response_status_code(response, 400)
-
-    res = response.json()
-
-    assert res["type"] == "BusinessLogicException"
-    assert (
-        res["message"]
-        == """ODM Condition tried to connect to non-existent concepts [('Concept Name: ODM Formal Expression', "uids: {'wrong_uid'}")]."""
-    )
-
-
-def test_cannot_create_an_odm_condition_connected_to_non_existent_odm_description(
-    api_client,
-):
-    data = {
-        "library_name": "Sponsor",
-        "name": "new name",
-        "oid": "new oid",
-        "formal_expressions": [],
-        "descriptions": ["wrong_uid"],
-        "alias_uids": [],
-    }
-    response = api_client.post("concepts/odms/conditions", json=data)
-
-    assert_response_status_code(response, 400)
-
-    res = response.json()
-
-    assert res["type"] == "BusinessLogicException"
-    assert (
-        res["message"]
-        == """ODM Condition tried to connect to non-existent concepts [('Concept Name: ODM Description', "uids: {'wrong_uid'}")]."""
-    )
-
-
-def test_cannot_create_an_odm_condition_connected_to_non_existent_odm_alias(api_client):
-    data = {
-        "library_name": "Sponsor",
-        "name": "new name",
-        "oid": "new oid",
-        "formal_expressions": [],
-        "descriptions": ["odm_description3"],
-        "alias_uids": ["wrong_uid"],
-    }
-    response = api_client.post("concepts/odms/conditions", json=data)
-
-    assert_response_status_code(response, 400)
-
-    res = response.json()
-
-    assert res["type"] == "BusinessLogicException"
-    assert (
-        res["message"]
-        == """ODM Condition tried to connect to non-existent concepts [('Concept Name: ODM Alias', "uids: {'wrong_uid'}")]."""
+        == "ODM Condition already exists with UID (OdmCondition_000001) and data {'library_name': 'Sponsor', 'name': 'name1', 'oid': 'oid1'}"
     )
 
 
@@ -249,16 +142,18 @@ def test_cannot_create_a_new_odm_condition_without_an_english_description(api_cl
                 "sponsor_instruction": "sponsor_instruction - non-eng",
             }
         ],
-        "alias_uids": [],
+        "aliases": [],
     }
     response = api_client.post("concepts/odms/conditions", json=data)
 
-    assert_response_status_code(response, 400)
+    assert_response_status_code(response, 422)
 
     res = response.json()
 
-    assert res["type"] == "BusinessLogicException"
-    assert res["message"] == "An English ODM Description must be provided."
+    assert res["type"] == "ValidationException"
+    assert (
+        res["message"] == "At least one description must be in English ('eng' or 'en')."
+    )
 
 
 def test_getting_error_for_retrieving_non_existent_odm_condition(api_client):

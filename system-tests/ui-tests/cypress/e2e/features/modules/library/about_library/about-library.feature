@@ -92,8 +92,8 @@ Feature: Library - About Library
             | Dictionaries            | UCUM                  | /library/ucum                                  |
             | Concepts                | Activities            | /library/activities/activities                 |
             | Concepts                | Units                 | /library/units                                 |
-            | Concepts                | CRF viewer            | /library/crfviewer/odm-viewer                  |
-            | Concepts                | CRF builder           | /library/crfbuilder                            |
+            | Data Collection Standards | CRF Viewer            | /library/crf-viewer/odm-viewer              |
+            | Data Collection Standards | CRF Builder           | /library/crf-builder/collections              |
             | Syntax Templates        | Objectives            | /library/objective_templates                   |
             | Syntax Templates        | Endpoints             | /library/endpoint_templates                    |
             | Syntax Templates        | Time Frames           | /library/timeframe_templates                   |

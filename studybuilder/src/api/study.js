@@ -315,9 +315,10 @@ export default {
       `studies/${studyUid}/study-compounds/${studyCompoundUid}`
     )
   },
-  getStudyCompoundDosings(studyUid) {
+  getStudyCompoundDosings(studyUid, options) {
     const params = {
       page_size: 0,
+      ...options,
     }
     return repository.get(`studies/${studyUid}/study-compound-dosings`, {
       params,
@@ -379,8 +380,13 @@ export default {
   },
   batchSelectStudyActivityInstances(studyUid, data) {
     return repository.post(
-      `studies/${studyUid}/study-activity-instances/batch-select`,
+      `studies/${studyUid}/study-activity-instances/batch`,
       data
+    )
+  },
+  deleteStudyActivityInstance(studyUid, instanceUid) {
+    return repository.delete(
+      `studies/${studyUid}/study-activity-instances/${instanceUid}`
     )
   },
   getStudyActivityInstancesAuditTrail(studyUid) {
@@ -686,7 +692,7 @@ export default {
       Accept:
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     }
-    return repository.get(`${resource}/${studyUid}/detailed-soa-exports`, {
+    return repository.get(`${resource}/${studyUid}/detailed-soa.xlsx`, {
       headers,
       responseType: 'blob',
     })
@@ -923,5 +929,8 @@ export default {
   },
   getStructureStatistics(studyUid) {
     return repository.get(`${resource}/${studyUid}/structure-statistics`)
+  },
+  getComplexityScore(studyUid) {
+    return repository.get(`${resource}/${studyUid}/complexity-score`)
   },
 }

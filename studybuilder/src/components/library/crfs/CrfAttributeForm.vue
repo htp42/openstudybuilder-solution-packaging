@@ -13,7 +13,7 @@
           <v-col cols="6">
             <v-text-field
               v-model="form.name"
-              :label="$t('CrfExtensions.attr_name')"
+              :label="$t('CRFExtensions.attr_name')"
               density="compact"
               clearable
               :rules="[formRules.required]"
@@ -22,7 +22,7 @@
           <v-col cols="6">
             <v-select
               v-model="form.data_type"
-              :label="$t('CrfExtensions.data_type')"
+              :label="$t('CRFExtensions.data_type')"
               :items="dataTypes"
               item-title="submission_value"
               item-value="submission_value"
@@ -36,7 +36,7 @@
           <v-col v-if="parentType === crfTypes.NAMESPACE" cols="6">
             <v-select
               v-model="form.compatible_types"
-              :label="$t('CrfExtensions.compatible_types')"
+              :label="$t('CRFExtensions.compatible_types')"
               :items="compatibleTypes"
               :rules="[formRules.required]"
               density="compact"
@@ -47,7 +47,7 @@
           <v-col cols="6">
             <v-text-field
               v-model="form.value_regex"
-              :label="$t('CrfExtensions.regex_expression')"
+              :label="$t('CRFExtensions.regex_expression')"
               density="compact"
               clearable
             />
@@ -102,8 +102,8 @@ export default {
   computed: {
     title() {
       return this.editItem.uid
-        ? this.$t('CrfExtensions.edit_attr')
-        : this.$t('CrfExtensions.new_attr')
+        ? this.$t('CRFExtensions.edit_attr')
+        : this.$t('CRFExtensions.new_attr')
     },
   },
   watch: {

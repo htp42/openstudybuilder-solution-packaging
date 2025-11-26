@@ -4,6 +4,7 @@ from clinical_mdr_api.models.concepts.odms.odm_form import OdmForm
 from clinical_mdr_api.models.concepts.odms.odm_item import OdmItem
 from clinical_mdr_api.models.concepts.odms.odm_item_group import OdmItemGroup
 from clinical_mdr_api.models.concepts.odms.odm_method import OdmMethod
+from clinical_mdr_api.models.concepts.odms.odm_study_event import OdmStudyEvent
 from clinical_mdr_api.models.concepts.unit_definitions.unit_definition import (
     UnitDefinitionModel,
 )
@@ -42,10 +43,10 @@ from common.exceptions import BusinessLogicException, NotFoundException
 class OdmDataExtractor:
     target_uids: list[str]
     target_name: str
-    status: str
 
-    odm_vendor_namespaces: dict[str, dict[str, dict[str, str]]]
+    odm_vendor_namespaces: dict[str, dict[str, str]]
     odm_vendor_elements: dict[str, dict[str, dict[str, str]]]
+    odm_study_event: list[OdmStudyEvent]
     odm_forms: list[OdmForm]
     odm_item_groups: list[OdmItemGroup]
     odm_items: list[OdmItem]
@@ -72,7 +73,7 @@ class OdmDataExtractor:
         self,
         target_uids: list[str],
         target_type: TargetType,
-        status: str,
+        version: str | None = None,
     ):
         self.unit_definition_service = UnitDefinitionService()
         self.vendor_namespace_service = OdmVendorNamespaceService()
@@ -99,11 +100,23 @@ class OdmDataExtractor:
         self.ct_terms = []
         self.unit_definitions = []
 
-        self.status = status
+        self.target_uids = target_uids
 
-        if target_type == TargetType.FORM:
+        if target_type == TargetType.STUDY_EVENT:
+            self.odm_study_event = self.study_event_service.get_all_concepts(
+                filter_by={"uid": {"v": target_uids, "op": "eq"}}, version=version
+            ).items
+
+            if not self.odm_study_event:
+                raise NotFoundException(
+                    msg=f"No ODM Study Event found for the given target UID(s): {target_uids}."
+                )
+
+            self.target_name = self.odm_study_event[0].name
+            self.set_forms_of_study_event(self.odm_study_event)
+        elif target_type == TargetType.FORM:
             self.odm_forms = self.form_service.get_all_concepts(
-                filter_by={"uid": {"v": target_uids, "op": "eq"}}
+                filter_by={"uid": {"v": target_uids, "op": "eq"}}, version=version
             ).items
 
             if not self.odm_forms:
@@ -115,7 +128,7 @@ class OdmDataExtractor:
             self.set_item_groups_of_forms(self.odm_forms)
         elif target_type == TargetType.ITEM_GROUP:
             self.odm_item_groups = self.item_group_service.get_all_concepts(
-                filter_by={"uid": {"v": target_uids, "op": "eq"}}
+                filter_by={"uid": {"v": target_uids, "op": "eq"}}, version=version
             ).items
 
             if not self.odm_item_groups:
@@ -127,7 +140,7 @@ class OdmDataExtractor:
             self.set_items_of_item_groups(self.odm_item_groups)
         elif target_type == TargetType.ITEM:
             self.odm_items = self.item_service.get_all_concepts(
-                filter_by={"uid": {"v": target_uids, "op": "eq"}}
+                filter_by={"uid": {"v": target_uids, "op": "eq"}}, version=version
             ).items
 
             if not self.odm_items:
@@ -140,8 +153,6 @@ class OdmDataExtractor:
             self.set_codelists_of_items(self.odm_items)
         else:
             raise BusinessLogicException(msg="Requested target type not supported.")
-
-        self.target_uids = target_uids
 
         self.set_conditions(self.odm_forms, self.odm_item_groups)
         self.set_methods(self.odm_item_groups)
@@ -172,7 +183,6 @@ class OdmDataExtractor:
                     "op": "eq",
                 }
             },
-            only_specific_status=self.status,
         ).items
 
         self.ref_odm_vendor_attributes = {
@@ -208,7 +218,6 @@ class OdmDataExtractor:
                     "op": "eq",
                 }
             },
-            only_specific_status=self.status,
         ).items
 
         self.odm_vendor_elements = {
@@ -220,9 +229,7 @@ class OdmDataExtractor:
         }
 
     def set_vendor_namespaces(self):
-        vendor_namespaces = self.vendor_namespace_service.get_all_concepts(
-            only_specific_status=self.status
-        ).items
+        vendor_namespaces = self.vendor_namespace_service.get_all_concepts().items
 
         self.odm_vendor_namespaces = {
             vendor_namespace.uid: {
@@ -232,6 +239,25 @@ class OdmDataExtractor:
             }
             for vendor_namespace in vendor_namespaces
         }
+
+    def set_forms_of_study_event(self, study_events: list[OdmStudyEvent]):
+        self.odm_forms = sorted(
+            self.form_service.get_all_concepts(
+                filter_by={
+                    "uid": {
+                        "v": [
+                            form.uid
+                            for study_event in study_events
+                            for form in study_event.forms
+                        ],
+                        "op": "eq",
+                    }
+                },
+            ).items,
+            key=lambda elm: elm.name,
+        )
+
+        self.set_item_groups_of_forms(self.odm_forms)
 
     def set_item_groups_of_forms(self, forms: list[OdmForm]):
         self.odm_item_groups = sorted(
@@ -246,7 +272,6 @@ class OdmDataExtractor:
                         "op": "eq",
                     }
                 },
-                only_specific_status=self.status,
             ).items,
             key=lambda elm: elm.name,
         )
@@ -266,7 +291,6 @@ class OdmDataExtractor:
                         "op": "eq",
                     }
                 },
-                only_specific_status=self.status,
             ).items,
             key=lambda elm: elm.name,
         )
@@ -290,7 +314,6 @@ class OdmDataExtractor:
             self.odm_conditions = sorted(
                 self.condition_service.get_all_concepts(
                     filter_by={"oid": {"v": oids, "op": "eq"}},
-                    only_specific_status=self.status,
                 ).items,
                 key=lambda elm: elm.name,
             )
@@ -304,7 +327,6 @@ class OdmDataExtractor:
             self.odm_methods = sorted(
                 self.method_service.get_all_concepts(
                     filter_by={"oid": {"v": oids, "op": "eq"}},
-                    only_specific_status=self.status,
                 ).items,
                 key=lambda elm: elm.name,
             )

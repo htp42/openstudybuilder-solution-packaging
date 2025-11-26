@@ -107,7 +107,7 @@
     "dispensers": [],
     "dosage_forms": [
       {
-        "name": "Injectable",
+        "name": "Injectable Solution",
         "term_uid": "C42946_INJECTION"
       }
     ],

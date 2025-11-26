@@ -15,6 +15,7 @@ COPY style.css public/
 COPY open_study_builder_logo.png public/
 COPY ApplicationConfig.ts src/config/
 COPY DashboardHeaderLogo.tsx src/dashboard/header/
+COPY webpack.config.js /.
 
 RUN yarn install
 

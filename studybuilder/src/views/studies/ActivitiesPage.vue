@@ -24,6 +24,7 @@
         </v-window-item>
         <v-window-item value="list">
           <StudyActivityTable
+            ref="activitiesTable"
             :key="`activities-${tabKeys.activities}`"
             :update="updateActivitiesTable"
           />
@@ -79,6 +80,7 @@ const helpItems = [
 ]
 const showSoaSettings = ref(false)
 const updateActivitiesTable = ref(0)
+const activitiesTable = ref()
 
 const lockSettings = computed(() => {
   if (
@@ -95,6 +97,10 @@ const onTabChanged = () => {
     updateActivitiesTable.value++
   }
   studiesGeneralStore.getSoaPreferences()
+  if (localStorage.getItem('refresh-activities')) {
+    activitiesTable.value.onStudyActivitiesUpdated()
+    localStorage.removeItem('refresh-activities')
+  }
 }
 
 function openSoaSettings() {

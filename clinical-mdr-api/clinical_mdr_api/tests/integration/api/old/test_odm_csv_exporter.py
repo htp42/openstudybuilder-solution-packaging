@@ -10,9 +10,7 @@ from clinical_mdr_api.main import app
 from clinical_mdr_api.tests.integration.utils.api import drop_db, inject_and_clear_db
 from clinical_mdr_api.tests.integration.utils.data_library import (
     STARTUP_CT_TERM,
-    STARTUP_ODM_ALIASES,
     STARTUP_ODM_CONDITIONS,
-    STARTUP_ODM_FORMAL_EXPRESSIONS,
     STARTUP_ODM_FORMS,
     STARTUP_ODM_ITEM_GROUPS,
     STARTUP_ODM_ITEMS,
@@ -36,10 +34,8 @@ def api_client(test_data):
 @pytest.fixture(scope="module")
 def test_data():
     inject_and_clear_db("old.json.test.odm.csv.exporter")
-    db.cypher_query(STARTUP_ODM_FORMAL_EXPRESSIONS)
     db.cypher_query(STARTUP_ODM_CONDITIONS)
     db.cypher_query(STARTUP_ODM_METHODS)
-    db.cypher_query(STARTUP_ODM_ALIASES)
     db.cypher_query(STARTUP_CT_TERM)
     db.cypher_query(STARTUP_UNIT_DEFINITIONS)
     db.cypher_query(STARTUP_ODM_ITEMS)

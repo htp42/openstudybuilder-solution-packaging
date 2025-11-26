@@ -393,26 +393,30 @@ class DictionaryTermGenericRepository(
         return item
 
     def _get_or_create_value(
-        self, root: DictionaryTermRoot, ar: DictionaryTermAR
+        self,
+        root: DictionaryTermRoot,
+        ar: DictionaryTermAR,
+        force_new_value_node: bool = False,
     ) -> DictionaryTermValue:
-        items = root.has_version.filter(
-            name=ar.name,
-            dictionary_id=ar.dictionary_term_vo.dictionary_id,
-            name_sentence_case=ar.dictionary_term_vo.name_sentence_case,
-            abbreviation=ar.dictionary_term_vo.abbreviation,
-            definition=ar.dictionary_term_vo.definition,
-        )
-        for itm in items:
-            return itm
-        latest_draft = root.latest_draft.get_or_none()
-        if latest_draft and not self._has_data_changed(ar, latest_draft):
-            return latest_draft
-        latest_final = root.latest_final.get_or_none()
-        if latest_final and not self._has_data_changed(ar, latest_final):
-            return latest_final
-        latest_retired = root.latest_retired.get_or_none()
-        if latest_retired and not self._has_data_changed(ar, latest_retired):
-            return latest_retired
+        if not force_new_value_node:
+            items = root.has_version.filter(
+                name=ar.name,
+                dictionary_id=ar.dictionary_term_vo.dictionary_id,
+                name_sentence_case=ar.dictionary_term_vo.name_sentence_case,
+                abbreviation=ar.dictionary_term_vo.abbreviation,
+                definition=ar.dictionary_term_vo.definition,
+            )
+            for itm in items:
+                return itm
+            latest_draft = root.latest_draft.get_or_none()
+            if latest_draft and not self._has_data_changed(ar, latest_draft):
+                return latest_draft
+            latest_final = root.latest_final.get_or_none()
+            if latest_final and not self._has_data_changed(ar, latest_final):
+                return latest_final
+            latest_retired = root.latest_retired.get_or_none()
+            if latest_retired and not self._has_data_changed(ar, latest_retired):
+                return latest_retired
 
         library = root.has_library.get_or_none()
         library_name = library.name.lower()

@@ -106,6 +106,8 @@ Then('The study epoch field is enabled for editing', () => cy.get('[data-cy="stu
 
 When('The user tries to update last treatment visit epoch to Screening without updating the timing', () => cy.log('pending implementation'))
 
+Then('Warning about visit window unit selection is displayed', () => cy.get('.v-alert').should('contain.text', "The  visit window unit   (days/weeks) you choose for the  first visit  will apply to all subsequent visits and  can't  be changed later without  deleting all visits.  This means that if you want to change the unit, you'll need to  remove all the subsequent visits  while keeping the first one, update the unit, and then  set up the remaining visits again."))
+
 When('[API] Study vists uids are fetched for study {string}', (study_uid) => cy.getExistingStudyVisits(study_uid).then(uids => studyVisits_uid = uids))
 
 When('[API] Study vists uids are fetched for current study', () => cy.getExistingStudyVisits(`${Cypress.env('TEST_STUDY_UID')}`).then(uids => studyVisits_uid = uids))

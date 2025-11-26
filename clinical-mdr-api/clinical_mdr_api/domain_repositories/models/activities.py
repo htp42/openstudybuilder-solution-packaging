@@ -194,16 +194,16 @@ class ActivityItem(ClinicalMdrNode):
     )
 
     has_odm_form = RelationshipTo(
-        OdmFormValue, "HAS_ODM_FORM", model=ClinicalMdrRel, cardinality=ZeroOrMore
+        OdmFormValue, "HAS_ODM_FORM", model=ClinicalMdrRel, cardinality=ZeroOrOne
     )
     has_odm_item_group = RelationshipTo(
         OdmItemGroupValue,
         "HAS_ODM_ITEM_GROUP",
         model=ClinicalMdrRel,
-        cardinality=ZeroOrMore,
+        cardinality=ZeroOrOne,
     )
     has_odm_item = RelationshipTo(
-        OdmItemValue, "HAS_ODM_ITEM", model=ClinicalMdrRel, cardinality=ZeroOrMore
+        OdmItemValue, "HAS_ODM_ITEM", model=ClinicalMdrRel, cardinality=ZeroOrOne
     )
 
 

@@ -326,6 +326,16 @@ def format_term_filter_sort_keys(key: str, prefix: str | None = None) -> str:
     return key
 
 
+def format_term_filter_sort_keys_for_headers_lite(key: str) -> str:
+    """
+    Maps a fieldname as provided by the API query (equal to output model) to the corresponding fieldname as defined in the database and/or Cypher query
+
+    :param key: Fieldname to map
+    :return str:
+    """
+    return key.replace(".", "_")
+
+
 def _parse_target_model_items(
     is_aggregated: bool, target_model: type[BaseModel]
 ) -> list[str]:

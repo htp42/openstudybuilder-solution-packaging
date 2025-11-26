@@ -63,6 +63,9 @@ def get_all_odm_methods(
     total_count: Annotated[
         bool, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
+    version: Annotated[
+        str | None, Query(description="Get a specific version of the ODM element")
+    ] = None,
 ) -> CustomPage[OdmMethod]:
     odm_method_service = OdmMethodService()
     results = odm_method_service.get_all_concepts(
@@ -73,6 +76,7 @@ def get_all_odm_methods(
         total_count=total_count,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
+        version=version or None,
     )
     return CustomPage(
         items=results.items, total=results.total, page=page_number, size=page_size
@@ -137,9 +141,14 @@ def get_distinct_values_for_header(
         404: _generic_descriptions.ERROR_404,
     },
 )
-def get_odm_method(odm_method_uid: Annotated[str, OdmMethodUID]) -> OdmMethod:
+def get_odm_method(
+    odm_method_uid: Annotated[str, OdmMethodUID],
+    version: Annotated[
+        str | None, Query(description="Get a specific version of the ODM element")
+    ] = None,
+) -> OdmMethod:
     odm_method_service = OdmMethodService()
-    return odm_method_service.get_by_uid(uid=odm_method_uid)
+    return odm_method_service.get_by_uid(uid=odm_method_uid, version=version or None)
 
 
 @router.get(
@@ -153,7 +162,7 @@ def get_odm_method(odm_method_uid: Annotated[str, OdmMethodUID]) -> OdmMethod:
     },
 )
 def get_active_relationships(
-    odm_method_uid: Annotated[str, OdmMethodUID]
+    odm_method_uid: Annotated[str, OdmMethodUID],
 ) -> dict[str, list[str]]:
     odm_method_service = OdmMethodService()
     return odm_method_service.get_active_relationships(uid=odm_method_uid)
@@ -214,9 +223,7 @@ def create_odm_method(
     odm_method_create_input: Annotated[OdmMethodPostInput, Body()],
 ) -> OdmMethod:
     odm_method_service = OdmMethodService()
-    return odm_method_service.create_with_relations(
-        concept_input=odm_method_create_input
-    )
+    return odm_method_service.create(concept_input=odm_method_create_input)
 
 
 @router.patch(
@@ -246,7 +253,7 @@ def edit_odm_method(
     odm_method_edit_input: Annotated[OdmMethodPatchInput, Body()],
 ) -> OdmMethod:
     odm_method_service = OdmMethodService()
-    return odm_method_service.update_with_relations(
+    return odm_method_service.edit_draft(
         uid=odm_method_uid, concept_edit_input=odm_method_edit_input
     )
 

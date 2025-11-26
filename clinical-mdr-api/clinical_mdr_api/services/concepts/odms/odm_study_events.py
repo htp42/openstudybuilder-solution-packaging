@@ -86,8 +86,8 @@ class OdmStudyEventService(OdmGenericService[OdmStudyEventAR]):
         odm_study_event_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 
         BusinessLogicException.raise_if(
-            odm_study_event_ar.item_metadata.status == LibraryItemStatus.RETIRED,
-            msg=self.OBJECT_IS_INACTIVE,
+            odm_study_event_ar.item_metadata.status != LibraryItemStatus.DRAFT,
+            msg=self.OBJECT_NOT_IN_DRAFT,
         )
 
         if override:

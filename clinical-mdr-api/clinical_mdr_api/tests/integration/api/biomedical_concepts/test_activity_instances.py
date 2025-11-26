@@ -5,6 +5,7 @@ Tests for /concepts/activities/activity-instances endpoints
 import json
 import logging
 import uuid
+from copy import deepcopy
 from functools import reduce
 from operator import itemgetter
 from typing import Any
@@ -29,11 +30,22 @@ from clinical_mdr_api.models.concepts.activities.activity_item import ActivityIt
 from clinical_mdr_api.models.concepts.activities.activity_sub_group import (
     ActivitySubGroup,
 )
-from clinical_mdr_api.models.concepts.odms.odm_form import OdmForm
+from clinical_mdr_api.models.concepts.odms.odm_common_models import (
+    OdmRefVendorPostInput,
+)
+from clinical_mdr_api.models.concepts.odms.odm_form import (
+    OdmForm,
+    OdmFormItemGroupPostInput,
+)
 from clinical_mdr_api.models.concepts.odms.odm_item import OdmItem
-from clinical_mdr_api.models.concepts.odms.odm_item_group import OdmItemGroup
+from clinical_mdr_api.models.concepts.odms.odm_item_group import (
+    OdmItemGroup,
+    OdmItemGroupItemPostInput,
+)
 from clinical_mdr_api.models.controlled_terminologies.ct_codelist import CTCodelist
 from clinical_mdr_api.models.controlled_terminologies.ct_term import CTTerm
+from clinical_mdr_api.services.concepts.odms.odm_forms import OdmFormService
+from clinical_mdr_api.services.concepts.odms.odm_item_groups import OdmItemGroupService
 from clinical_mdr_api.tests.integration.utils.api import (
     inject_and_clear_db,
     inject_base_data,
@@ -62,9 +74,9 @@ activity_items: list[ActivityItem]
 activity_item_classes: list[ActivityItemClass]
 codelist: CTCodelist
 ct_terms: list[CTTerm]
-odm_forms: list[OdmForm]
-odm_item_groups: list[OdmItemGroup]
-odm_items: list[OdmItem]
+odm_form: OdmForm
+odm_item_group: OdmItemGroup
+odm_item: OdmItem
 role_term: CTTerm
 data_type_term: CTTerm
 base_test_data: dict[str, Any]
@@ -195,9 +207,9 @@ def test_data():
         ),
     ]
     global ct_terms
-    global odm_forms
-    global odm_item_groups
-    global odm_items
+    global odm_form
+    global odm_item_group
+    global odm_item
     global codelist
 
     codelist = TestUtils.create_ct_codelist(extensible=True, approve=True)
@@ -211,21 +223,33 @@ def test_data():
             sponsor_preferred_name="Activity item term2",
         ),
     ]
-    odm_forms = [
-        TestUtils.create_odm_form(name="ODM Item 1"),
-        TestUtils.create_odm_form(name="ODM Item 2"),
-        TestUtils.create_odm_form(name="ODM Item 3"),
-    ]
-    odm_item_groups = [
-        TestUtils.create_odm_item_group(name="ODM Item 1"),
-        TestUtils.create_odm_item_group(name="ODM Item 2"),
-        TestUtils.create_odm_item_group(name="ODM Item 3"),
-    ]
-    odm_items = [
-        TestUtils.create_odm_item(name="ODM Item 1"),
-        TestUtils.create_odm_item(name="ODM Item 2"),
-        TestUtils.create_odm_item(name="ODM Item 3"),
-    ]
+    odm_form = TestUtils.create_odm_form(name="ODM Form 1", approve=False)
+    odm_item_group = TestUtils.create_odm_item_group(
+        name="ODM Item Group 1", approve=False
+    )
+    odm_item = TestUtils.create_odm_item(name="ODM Item 1", approve=False)
+    OdmFormService().add_item_groups(
+        odm_form.uid,
+        [
+            OdmFormItemGroupPostInput(
+                uid=odm_item_group.uid,
+                order_number=1,
+                mandatory="yes",
+                vendor=OdmRefVendorPostInput(attributes=[]),
+            )
+        ],
+    )
+    OdmItemGroupService().add_items(
+        odm_item_group.uid,
+        [
+            OdmItemGroupItemPostInput(
+                uid=odm_item.uid,
+                order_number=1,
+                mandatory="yes",
+                vendor=OdmRefVendorPostInput(attributes=[]),
+            )
+        ],
+    )
     global activity_items
     activity_items = [
         {
@@ -235,9 +259,9 @@ def test_data():
                 base_test_data["day_unit"].uid,
             ],
             "is_adam_param_specific": True,
-            "odm_form_uids": [odm_forms[0].uid],
-            "odm_item_group_uids": [odm_item_groups[0].uid],
-            "odm_item_uids": [odm_items[0].uid],
+            "odm_form_uid": odm_form.uid,
+            "odm_item_group_uid": odm_item_group.uid,
+            "odm_item_uid": odm_item.uid,
         },
         {
             "activity_item_class_uid": activity_item_classes[1].uid,
@@ -249,9 +273,9 @@ def test_data():
             ],
             "unit_definition_uids": [],
             "is_adam_param_specific": False,
-            "odm_form_uids": [odm_forms[1].uid],
-            "odm_item_group_uids": [odm_item_groups[1].uid],
-            "odm_item_uids": [odm_items[1].uid],
+            "odm_form_uid": odm_form.uid,
+            "odm_item_group_uid": odm_item_group.uid,
+            "odm_item_uid": odm_item.uid,
         },
         {
             "activity_item_class_uid": activity_item_classes[2].uid,
@@ -267,9 +291,9 @@ def test_data():
             ],
             "unit_definition_uids": [],
             "is_adam_param_specific": False,
-            "odm_form_uids": [odm_forms[0].uid, odm_forms[2].uid],
-            "odm_item_group_uids": [odm_item_groups[0].uid, odm_item_groups[2].uid],
-            "odm_item_uids": [odm_items[0].uid, odm_items[2].uid],
+            "odm_form_uid": odm_form.uid,
+            "odm_item_group_uid": odm_item_group.uid,
+            "odm_item_uid": odm_item.uid,
         },
     ]
     global activity_instances_all
@@ -511,29 +535,15 @@ def test_get_activity_instance(api_client):
         res["activity_items"][0]["unit_definitions"][0]["dimension_name"]
         == base_test_data["unit_dimension_terms"][0].sponsor_preferred_name
     )
-    expected_odm_form_uids = set(
-        odm_form_uid for odm_form_uid in activity_items[0]["odm_form_uids"]
-    )
-    actual_odm_form_uids = set(
-        odm_form["uid"] for odm_form in res["activity_items"][0]["odm_forms"]
-    )
-    assert expected_odm_form_uids == actual_odm_form_uids
-    expected_odm_item_group_uids = set(
-        odm_item_group_uid
-        for odm_item_group_uid in activity_items[0]["odm_item_group_uids"]
-    )
-    actual_odm_item_group_uids = set(
-        odm_item_group["uid"]
-        for odm_item_group in res["activity_items"][0]["odm_item_groups"]
-    )
-    assert expected_odm_item_group_uids == actual_odm_item_group_uids
-    expected_odm_item_uids = set(
-        odm_item_uid for odm_item_uid in activity_items[0]["odm_item_uids"]
-    )
-    actual_odm_item_uids = set(
-        odm_item["uid"] for odm_item in res["activity_items"][0]["odm_items"]
-    )
-    assert expected_odm_item_uids == actual_odm_item_uids
+    expected_odm_form_uid = activity_items[0]["odm_form_uid"]
+    actual_odm_form_uid = res["activity_items"][0]["odm_form"]["uid"]
+    assert expected_odm_form_uid == actual_odm_form_uid
+    expected_odm_item_group_uid = activity_items[0]["odm_item_group_uid"]
+    actual_odm_item_group_uid = res["activity_items"][0]["odm_item_group"]["uid"]
+    assert expected_odm_item_group_uid == actual_odm_item_group_uid
+    expected_odm_item_uid = activity_items[0]["odm_item_uid"]
+    actual_odm_item_uid = res["activity_items"][0]["odm_item"]["uid"]
+    assert expected_odm_item_uid == actual_odm_item_uid
 
     assert res["library_name"] == "Sponsor"
     assert res["version"] == "1.0"
@@ -1054,24 +1064,15 @@ def test_edit_activity_instance(api_client):
     )
     actual_unit_uids = set(unit["uid"] for unit in items[0]["unit_definitions"])
     assert expected_unit_uids == actual_unit_uids
-    expected_odm_form_uids = set(
-        odm_form_uid for odm_form_uid in activity_items[0]["odm_form_uids"]
-    )
-    actual_odm_form_uids = set(odm_form["uid"] for odm_form in items[0]["odm_forms"])
-    assert expected_odm_form_uids == actual_odm_form_uids
-    expected_odm_item_group_uids = set(
-        odm_item_group_uid
-        for odm_item_group_uid in activity_items[0]["odm_item_group_uids"]
-    )
-    actual_odm_item_group_uids = set(
-        odm_item_group["uid"] for odm_item_group in items[0]["odm_item_groups"]
-    )
-    assert expected_odm_item_group_uids == actual_odm_item_group_uids
-    expected_odm_item_uids = set(
-        odm_item_uid for odm_item_uid in activity_items[0]["odm_item_uids"]
-    )
-    actual_odm_item_uids = set(odm_item["uid"] for odm_item in items[0]["odm_items"])
-    assert expected_odm_item_uids == actual_odm_item_uids
+    expected_odm_form_uid = activity_items[0]["odm_form_uid"]
+    actual_odm_form_uid = items[0]["odm_form"]["uid"]
+    assert expected_odm_form_uid == actual_odm_form_uid
+    expected_odm_item_group_uid = activity_items[0]["odm_item_group_uid"]
+    actual_odm_item_group_uid = items[0]["odm_item_group"]["uid"]
+    assert expected_odm_item_group_uid == actual_odm_item_group_uid
+    expected_odm_item_uid = activity_items[0]["odm_item_uid"]
+    actual_odm_item_uid = items[0]["odm_item"]["uid"]
+    assert expected_odm_item_uid == actual_odm_item_uid
 
     assert items[1]["activity_item_class"]["uid"] == activity_item_classes[1].uid
     expected_term_uids = set(
@@ -1087,21 +1088,15 @@ def test_edit_activity_instance(api_client):
     )
     actual_unit_uids = set(unit["uid"] for unit in items[1]["unit_definitions"])
     assert expected_unit_uids == actual_unit_uids
-    expected_odm_form_uids = set(
-        odm_form_uid for odm_form_uid in activity_items[1]["odm_form_uids"]
-    )
-    actual_odm_form_uids = set(odm_form["uid"] for odm_form in items[1]["odm_forms"])
-    assert expected_odm_form_uids == actual_odm_form_uids
-    expected_odm_form_uids = set(
-        odm_form_uid for odm_form_uid in activity_items[1]["odm_form_uids"]
-    )
-    actual_odm_form_uids = set(odm_form["uid"] for odm_form in items[1]["odm_forms"])
-    assert expected_odm_form_uids == actual_odm_form_uids
-    expected_odm_item_uids = set(
-        odm_item_uid for odm_item_uid in activity_items[1]["odm_item_uids"]
-    )
-    actual_odm_item_uids = set(odm_item["uid"] for odm_item in items[1]["odm_items"])
-    assert expected_odm_item_uids == actual_odm_item_uids
+    expected_odm_form_uid = activity_items[1]["odm_form_uid"]
+    actual_odm_form_uid = items[1]["odm_form"]["uid"]
+    assert expected_odm_form_uid == actual_odm_form_uid
+    expected_odm_form_uid = activity_items[1]["odm_form_uid"]
+    actual_odm_form_uid = items[1]["odm_form"]["uid"]
+    assert expected_odm_form_uid == actual_odm_form_uid
+    expected_odm_item_uid = activity_items[1]["odm_item_uid"]
+    actual_odm_item_uid = items[1]["odm_item"]["uid"]
+    assert expected_odm_item_uid == actual_odm_item_uid
 
     assert res["version"] == "0.3"
     assert res["status"] == "Draft"
@@ -1251,28 +1246,15 @@ def test_post_activity_instance(api_client):
         unit["uid"] for unit in res["activity_items"][0]["unit_definitions"]
     )
     assert expected_unit_uids == actual_unit_uids
-    expected_odm_form_uids = set(
-        odm_form_uid for odm_form_uid in item_to_post["odm_form_uids"]
-    )
-    actual_odm_form_uids = set(
-        odm_form["uid"] for odm_form in res["activity_items"][0]["odm_forms"]
-    )
-    assert expected_odm_form_uids == actual_odm_form_uids
-    expected_odm_item_group_uids = set(
-        odm_item_group_uid for odm_item_group_uid in item_to_post["odm_item_group_uids"]
-    )
-    actual_odm_item_group_uids = set(
-        odm_item_group["uid"]
-        for odm_item_group in res["activity_items"][0]["odm_item_groups"]
-    )
-    assert expected_odm_item_group_uids == actual_odm_item_group_uids
-    expected_odm_item_uids = set(
-        odm_item_uid for odm_item_uid in item_to_post["odm_item_uids"]
-    )
-    actual_odm_item_uids = set(
-        odm_item["uid"] for odm_item in res["activity_items"][0]["odm_items"]
-    )
-    assert expected_odm_item_uids == actual_odm_item_uids
+    expected_odm_form_uid = item_to_post["odm_form_uid"]
+    actual_odm_form_uid = res["activity_items"][0]["odm_form"]["uid"]
+    assert expected_odm_form_uid == actual_odm_form_uid
+    expected_odm_item_group_uid = item_to_post["odm_item_group_uid"]
+    actual_odm_item_group_uid = res["activity_items"][0]["odm_item_group"]["uid"]
+    assert expected_odm_item_group_uid == actual_odm_item_group_uid
+    expected_odm_item_uid = item_to_post["odm_item_uid"]
+    actual_odm_item_uid = res["activity_items"][0]["odm_item"]["uid"]
+    assert expected_odm_item_uid == actual_odm_item_uid
 
     assert res["name_sentence_case"] == "activity instance name"
     assert res["topic_code"] is None
@@ -1425,18 +1407,18 @@ def verify_instance_overview_content(res: dict[Any, Any]):
     assert len(items[0]["unit_definitions"]) == 1
     assert items[0]["unit_definitions"][0]["uid"] == base_test_data["day_unit"].uid
     assert items[0]["unit_definitions"][0]["name"] == base_test_data["day_unit"].name
-    assert len(items[0]["odm_forms"]) == 1
-    assert items[0]["odm_forms"][0]["uid"] == odm_forms[0].uid
-    assert items[0]["odm_forms"][0]["oid"] == odm_forms[0].oid
-    assert items[0]["odm_forms"][0]["name"] == odm_forms[0].name
-    assert len(items[0]["odm_item_groups"]) == 1
-    assert items[0]["odm_item_groups"][0]["uid"] == odm_item_groups[0].uid
-    assert items[0]["odm_item_groups"][0]["oid"] == odm_item_groups[0].oid
-    assert items[0]["odm_item_groups"][0]["name"] == odm_item_groups[0].name
-    assert len(items[0]["odm_items"]) == 1
-    assert items[0]["odm_items"][0]["uid"] == odm_items[0].uid
-    assert items[0]["odm_items"][0]["oid"] == odm_items[0].oid
-    assert items[0]["odm_items"][0]["name"] == odm_items[0].name
+    assert items[0]["odm_form"]
+    assert items[0]["odm_form"]["uid"] == odm_form.uid
+    assert items[0]["odm_form"]["oid"] == odm_form.oid
+    assert items[0]["odm_form"]["name"] == odm_form.name
+    assert items[0]["odm_item_group"]
+    assert items[0]["odm_item_group"]["uid"] == odm_item_group.uid
+    assert items[0]["odm_item_group"]["oid"] == odm_item_group.oid
+    assert items[0]["odm_item_group"]["name"] == odm_item_group.name
+    assert items[0]["odm_item"]
+    assert items[0]["odm_item"]["uid"] == odm_item.uid
+    assert items[0]["odm_item"]["oid"] == odm_item.oid
+    assert items[0]["odm_item"]["name"] == odm_item.name
     assert items[0]["activity_item_class"]["name"] == "Activity Item Class name1"
     assert items[0]["activity_item_class"]["role_name"] == "Role"
     assert items[0]["activity_item_class"]["data_type_name"] == "Data type"
@@ -1446,18 +1428,15 @@ def verify_instance_overview_content(res: dict[Any, Any]):
     assert items[1]["ct_terms"][0]["uid"] == ct_terms[1].term_uid
     assert items[1]["ct_terms"][0]["name"] == ct_terms[1].sponsor_preferred_name
     assert len(items[1]["unit_definitions"]) == 0
-    assert len(items[0]["odm_forms"]) == 1
-    assert items[1]["odm_forms"][0]["uid"] == odm_forms[1].uid
-    assert items[1]["odm_forms"][0]["oid"] == odm_forms[1].oid
-    assert items[1]["odm_forms"][0]["name"] == odm_forms[1].name
-    assert len(items[0]["odm_item_groups"]) == 1
-    assert items[1]["odm_item_groups"][0]["uid"] == odm_item_groups[1].uid
-    assert items[1]["odm_item_groups"][0]["oid"] == odm_item_groups[1].oid
-    assert items[1]["odm_item_groups"][0]["name"] == odm_item_groups[1].name
-    assert len(items[0]["odm_items"]) == 1
-    assert items[1]["odm_items"][0]["uid"] == odm_items[1].uid
-    assert items[1]["odm_items"][0]["oid"] == odm_items[1].oid
-    assert items[1]["odm_items"][0]["name"] == odm_items[1].name
+    assert items[1]["odm_form"]["uid"] == odm_form.uid
+    assert items[1]["odm_form"]["oid"] == odm_form.oid
+    assert items[1]["odm_form"]["name"] == odm_form.name
+    assert items[1]["odm_item_group"]["uid"] == odm_item_group.uid
+    assert items[1]["odm_item_group"]["oid"] == odm_item_group.oid
+    assert items[1]["odm_item_group"]["name"] == odm_item_group.name
+    assert items[1]["odm_item"]["uid"] == odm_item.uid
+    assert items[1]["odm_item"]["oid"] == odm_item.oid
+    assert items[1]["odm_item"]["name"] == odm_item.name
     assert items[1]["activity_item_class"]["name"] == "Activity Item Class name2"
     assert items[1]["activity_item_class"]["role_name"] == "Role"
     assert items[1]["activity_item_class"]["data_type_name"] == "Data type"
@@ -1472,27 +1451,15 @@ def verify_instance_overview_content(res: dict[Any, Any]):
     assert terms[1]["name"] == ct_terms[1].sponsor_preferred_name
     assert len(items[2]["unit_definitions"]) == 0
     assert len(items[0]["unit_definitions"]) == 1
-    assert len(items[0]["odm_forms"]) == 1
-    assert items[2]["odm_forms"][0]["uid"] == odm_forms[0].uid
-    assert items[2]["odm_forms"][0]["oid"] == odm_forms[0].oid
-    assert items[2]["odm_forms"][0]["name"] == odm_forms[0].name
-    assert items[2]["odm_forms"][1]["uid"] == odm_forms[2].uid
-    assert items[2]["odm_forms"][1]["oid"] == odm_forms[2].oid
-    assert items[2]["odm_forms"][1]["name"] == odm_forms[2].name
-    assert len(items[0]["odm_item_groups"]) == 1
-    assert items[2]["odm_item_groups"][0]["uid"] == odm_item_groups[0].uid
-    assert items[2]["odm_item_groups"][0]["oid"] == odm_item_groups[0].oid
-    assert items[2]["odm_item_groups"][0]["name"] == odm_item_groups[0].name
-    assert items[2]["odm_item_groups"][1]["uid"] == odm_item_groups[2].uid
-    assert items[2]["odm_item_groups"][1]["oid"] == odm_item_groups[2].oid
-    assert items[2]["odm_item_groups"][1]["name"] == odm_item_groups[2].name
-    assert len(items[0]["odm_items"]) == 1
-    assert items[2]["odm_items"][0]["uid"] == odm_items[0].uid
-    assert items[2]["odm_items"][0]["oid"] == odm_items[0].oid
-    assert items[2]["odm_items"][0]["name"] == odm_items[0].name
-    assert items[2]["odm_items"][1]["uid"] == odm_items[2].uid
-    assert items[2]["odm_items"][1]["oid"] == odm_items[2].oid
-    assert items[2]["odm_items"][1]["name"] == odm_items[2].name
+    assert items[2]["odm_form"]["uid"] == odm_form.uid
+    assert items[2]["odm_form"]["oid"] == odm_form.oid
+    assert items[2]["odm_form"]["name"] == odm_form.name
+    assert items[2]["odm_item_group"]["uid"] == odm_item_group.uid
+    assert items[2]["odm_item_group"]["oid"] == odm_item_group.oid
+    assert items[2]["odm_item_group"]["name"] == odm_item_group.name
+    assert items[2]["odm_item"]["uid"] == odm_item.uid
+    assert items[2]["odm_item"]["oid"] == odm_item.oid
+    assert items[2]["odm_item"]["name"] == odm_item.name
     assert items[2]["activity_item_class"]["name"] == "Activity Item Class name3"
     assert items[2]["activity_item_class"]["role_name"] == "Role"
     assert items[2]["activity_item_class"]["data_type_name"] == "Data type"
@@ -2408,9 +2375,9 @@ def test_cannot_provide_is_adam_param_specific_if_is_adam_param_specific_enabled
                     ],
                     "unit_definition_uids": [],
                     "is_adam_param_specific": True,
-                    "odm_form_uids": [],
-                    "odm_item_group_uids": [],
-                    "odm_item_uids": [],
+                    "odm_form_uid": None,
+                    "odm_item_group_uid": None,
+                    "odm_item_uid": None,
                 }
             ],
             "is_required_for_activity": True,
@@ -2516,9 +2483,9 @@ def create_activity_instance_with_molecular_weight(
                             ).term_uid,
                         ).uid
                     ],
-                    "odm_form_uids": [],
-                    "odm_item_group_uids": [],
-                    "odm_item_uids": [],
+                    "odm_form_uid": None,
+                    "odm_item_group_uid": None,
+                    "odm_item_uid": None,
                     "is_adam_param_specific": False,
                 }
             ],
@@ -2589,4 +2556,76 @@ def test_create_activity_instance_with_non_final_subgroup_fails(api_client, test
         "not in Final status" in res["message"]
         or "currently not in Final status" in res["message"]
         or "non-final" in res["message"].lower()
+    )
+
+
+def test_cannot_connect_odm_item_group_of_other_forms(api_client):
+    item_to_post = deepcopy(activity_items[1])
+
+    _odm_item_group = TestUtils.create_odm_item_group("New Item Group", approve=False)
+
+    item_to_post["odm_item_group_uid"] = _odm_item_group.uid
+
+    response = api_client.post(
+        "/concepts/activities/activity-instances",
+        json={
+            "name": "testing odm item group",
+            "name_sentence_case": "testing odm item group",
+            "nci_concept_id": "000",
+            "activity_groupings": [
+                {
+                    "activity_uid": activities[0].uid,
+                    "activity_subgroup_uid": activity_subgroup.uid,
+                    "activity_group_uid": activity_group.uid,
+                }
+            ],
+            "activity_instance_class_uid": activity_instance_classes[0].uid,
+            "activity_items": [item_to_post],
+            "is_required_for_activity": True,
+            "is_derived": True,
+            "library_name": "Sponsor",
+        },
+    )
+    assert_response_status_code(response, 400)
+    res = response.json()
+    assert res["type"] == "BusinessLogicException"
+    assert (
+        res["message"]
+        == f"ODM Form with UID '{item_to_post["odm_form_uid"]}' doesn't contain the ODM Item Group with UID '{item_to_post["odm_item_group_uid"]}'."
+    )
+
+
+def test_cannot_connect_odm_item_of_other_forms(api_client):
+    item_to_post = deepcopy(activity_items[1])
+
+    _odm_item = TestUtils.create_odm_item("New Item", approve=False)
+
+    item_to_post["odm_item_uid"] = _odm_item.uid
+
+    response = api_client.post(
+        "/concepts/activities/activity-instances",
+        json={
+            "name": "testing odm item group",
+            "name_sentence_case": "testing odm item group",
+            "nci_concept_id": "000",
+            "activity_groupings": [
+                {
+                    "activity_uid": activities[0].uid,
+                    "activity_subgroup_uid": activity_subgroup.uid,
+                    "activity_group_uid": activity_group.uid,
+                }
+            ],
+            "activity_instance_class_uid": activity_instance_classes[0].uid,
+            "activity_items": [item_to_post],
+            "is_required_for_activity": True,
+            "is_derived": True,
+            "library_name": "Sponsor",
+        },
+    )
+    assert_response_status_code(response, 400)
+    res = response.json()
+    assert res["type"] == "BusinessLogicException"
+    assert (
+        res["message"]
+        == f"ODM Item Group with UID '{item_to_post["odm_item_group_uid"]}' doesn't contain the ODM Item with UID '{item_to_post["odm_item_uid"]}'."
     )

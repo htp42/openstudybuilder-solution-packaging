@@ -879,6 +879,17 @@ onMounted(() => {
   background-color: transparent !important;
 }
 
+/* Round table corners */
+.group-overview-container :deep(.v-data-table) {
+  border-radius: 8px !important;
+  overflow: visible;
+}
+
+.group-overview-container :deep(.v-table__wrapper) {
+  border-radius: 8px !important;
+  overflow-x: auto;
+}
+
 .group-overview-container :deep(.v-table),
 .subgroups-table :deep(.v-table) {
   background: transparent !important;

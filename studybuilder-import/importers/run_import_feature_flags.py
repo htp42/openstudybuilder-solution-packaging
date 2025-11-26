@@ -4,8 +4,8 @@ import csv
 
 import requests
 
-from .functions.utils import load_env
 from .functions.parsers import map_boolean
+from .functions.utils import load_env
 from .utils.importer import BaseImporter, open_file
 from .utils.metrics import Metrics
 from .utils.path_join import path_join

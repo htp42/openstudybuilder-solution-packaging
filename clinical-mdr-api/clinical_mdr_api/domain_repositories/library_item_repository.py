@@ -86,6 +86,13 @@ class LibraryItemRepositoryImplBase(
     ) -> _AggregateRootType:
         raise NotImplementedError
 
+    def _connect_relationships_to_new_value_node(
+        self, root: VersionRoot, value: VersionValue
+    ) -> None:
+        """
+        Upgrades all connected nodes to their latest version.
+        """
+
     @abc.abstractmethod
     def _maintain_parameters(
         self,
@@ -112,12 +119,14 @@ class LibraryItemRepositoryImplBase(
         """
         if not on_root:
             query = f"""
-                MATCH (or:{self.root_class.__label__})-[:LATEST_FINAL|LATEST_DRAFT|LATEST_RETIRED|LATEST]->(:{self.value_class.__label__} {{{property_name}: ${property_name}}})
+                MATCH (or:{self.root_class.__label__})-[:LATEST]->(:{self.value_class.__label__} {{{property_name}: ${property_name}}})
+                WHERE any(label IN labels(or) WHERE NOT label STARTS WITH 'Deleted')
                 RETURN or
                 """
         else:
             query = f"""
-                MATCH (or:{self.root_class.__label__} {{{property_name}: ${property_name}}})-[:LATEST_FINAL|LATEST_DRAFT|LATEST_RETIRED|LATEST]->(:{self.value_class.__label__})
+                MATCH (or:{self.root_class.__label__} {{{property_name}: ${property_name}}})-[:LATEST]->(:{self.value_class.__label__})
+                WHERE any(label IN labels(or) WHERE NOT label STARTS WITH 'Deleted')
                 RETURN or
                 """
 
@@ -176,27 +185,31 @@ class LibraryItemRepositoryImplBase(
 
     @sb_clear_cache(caches=["cache_store_item_by_uid"])
     def _get_or_create_value(
-        self, root: VersionRoot, ar: _AggregateRootType
+        self,
+        root: VersionRoot,
+        ar: _AggregateRootType,
+        force_new_value_node: bool = False,
     ) -> VersionValue:
-        (
-            has_version_rel,
-            _,
-            latest_draft_rel,
-            latest_final_rel,
-            latest_retired_rel,
-        ) = self._get_version_relation_keys(root)
-        for itm in has_version_rel.filter(name=ar.name):
-            return itm
+        if not force_new_value_node:
+            (
+                has_version_rel,
+                _,
+                latest_draft_rel,
+                latest_final_rel,
+                latest_retired_rel,
+            ) = self._get_version_relation_keys(root)
+            for itm in has_version_rel.filter(name=ar.name):
+                return itm
 
-        latest_draft = latest_draft_rel.get_or_none()
-        if latest_draft and not self._has_data_changed(ar, latest_draft):
-            return latest_draft
-        latest_final = latest_final_rel.get_or_none()
-        if latest_final and not self._has_data_changed(ar, latest_final):
-            return latest_final
-        latest_retired = latest_retired_rel.get_or_none()
-        if latest_retired and not self._has_data_changed(ar, latest_retired):
-            return latest_retired
+            latest_draft = latest_draft_rel.get_or_none()
+            if latest_draft and not self._has_data_changed(ar, latest_draft):
+                return latest_draft
+            latest_final = latest_final_rel.get_or_none()
+            if latest_final and not self._has_data_changed(ar, latest_final):
+                return latest_final
+            latest_retired = latest_retired_rel.get_or_none()
+            if latest_retired and not self._has_data_changed(ar, latest_retired):
+                return latest_retired
 
         additional_props = {}
 
@@ -216,7 +229,9 @@ class LibraryItemRepositoryImplBase(
     ) -> bool:
         return self._has_data_changed(ar, value)
 
-    def _update(self, versioned_object: _AggregateRootType):
+    def _update(
+        self, versioned_object: _AggregateRootType, force_new_value_node: bool = False
+    ) -> _AggregateRootType:
         """
         Updates the state of the versioned object in the graph.
 
@@ -280,9 +295,11 @@ class LibraryItemRepositoryImplBase(
             versioned_object, previous_versioned_object
         )
         new_version_needed = self._is_new_version_necessary(versioned_object, value)
-        if changes_possible and new_version_needed:
+        if (changes_possible and new_version_needed) or force_new_value_node:
             # Creating nev value object if necessary
-            new_value = self._get_or_create_value(root, versioned_object)
+            new_value = self._get_or_create_value(
+                root, versioned_object, force_new_value_node
+            )
 
             # recreating latest_value relationship
             self._db_remove_relationship(has_latest_value_rel)
@@ -314,6 +331,8 @@ class LibraryItemRepositoryImplBase(
 
             # close all previous HAS_VERSIONs
             self._close_previous_versions(root, versioning_data)
+
+        self._connect_relationships_to_new_value_node(root, new_value)
 
         # recreating parameters connections
         self._maintain_parameters(versioned_object, root, new_value)
@@ -1864,7 +1883,7 @@ class LibraryItemRepositoryImplBase(
         filter_operator: FilterOperator = FilterOperator.AND,
         version_specific_uids: dict[str, Iterable[str]] | None = None,
     ):
-        def date_stmt(name: str):
+        def date_stmt(filter_by: dict[str, dict[str, Any]], name: str):
             if name in filter_by:  # type: ignore[operator]
                 if (
                     "op" not in filter_by[name]
@@ -1929,8 +1948,8 @@ END
                 params["uids"] = filter_by["uid"]["v"]
                 filter_by.pop("uid", None)
 
-            date_stmt("start_date")
-            date_stmt("end_date")
+            date_stmt(filter_by, "start_date")
+            date_stmt(filter_by, "end_date")
 
             filter_by.pop("*", None)
             for filter_name, items in filter_by.items():

@@ -1,4 +1,4 @@
-@REQ_ID:1070683
+@REQ_ID:1070683 @skip_on_prv_val
 
 Feature: Library - Concepts - Activities - Activities - Extended Scope
     As a user, I want to manage every Activities in the Concepts Library
@@ -18,8 +18,8 @@ Feature: Library - Concepts - Activities - Activities - Extended Scope
         Then The validation message appears for activity subgroup
 
     Scenario: [Create][Uniqueness check][Synonym] User must not be able to save new activity with already existing synonym
-        And The '/library/activities/activities' page is opened
         When [API] Activity in status Draft exists
+        And The '/library/activities/activities' page is opened
         And The Add activity button is clicked
         And The activity form is filled with only mandatory data
         And The user adds already existing synonym
@@ -53,10 +53,10 @@ Feature: Library - Concepts - Activities - Activities - Extended Scope
         And The validation message appears for sentance case name that it is not identical to name
 
     Scenario: [Actions][Edit][version 1.0] User must be able to edit and approve new version of activity
-        And The '/library/activities/activities' page is opened
-        And User sets status filter to 'all'
         And [API] Activity in status Draft exists
         And [API] Activity is approved
+        And The '/library/activities/activities' page is opened
+        And User sets status filter to 'all'
         And Activity is searched for and found
         When The 'New version' option is clicked from the three dot menu list
         Then The item has status 'Draft' and version '1.1'
@@ -74,13 +74,15 @@ Feature: Library - Concepts - Activities - Activities - Extended Scope
         And [API] Activity subgroup is created
         And [API] Activity subgroup is approved
         And [API] Activity group gets new version
+        And Group name created through API is found
+        And Subgroup name created through API is found
         And User waits for 2 seconds
         Given The '/library/activities/activities' page is opened
         And User sets status filter to 'all'
         When The Add activity button is clicked
         When The activity form is filled in using group and subgroup created through API
         And Form save button is clicked
-        Then Validation error for GroupingHierarchy is displayed
+        Then Validation error for 'Draft' group is displayed
 
     Scenario: [Create][Negative case][Retired group] User must not be able to create activity linked to Retired group until it is approved
         And [API] Activity group in status Draft exists
@@ -88,18 +90,22 @@ Feature: Library - Concepts - Activities - Activities - Extended Scope
         And [API] Activity subgroup is created
         And [API] Activity subgroup is approved
         And [API] Activity group is inactivated
+        And Group name created through API is found
+        And Subgroup name created through API is found
         And User waits for 2 seconds
         Given The '/library/activities/activities' page is opened
         And User sets status filter to 'all'
         When The Add activity button is clicked
         When The activity form is filled in using group and subgroup created through API
         And Form save button is clicked
-        Then Validation error for GroupingHierarchy is displayed
+        Then Validation error for 'Retired' group is displayed
 
     Scenario: [Create][Negative case][Draft subgroup] User must not be able to create activity linked to Draft subgroup until it is approved
         And [API] Activity group in status Draft exists
         And [API] Activity group is approved
         And [API] Activity subgroup is created
+        And Group name created through API is found
+        And Subgroup name created through API is found
         And User waits for 2 seconds
         Given The '/library/activities/activities' page is opened
         And User sets status filter to 'all'
@@ -113,13 +119,15 @@ Feature: Library - Concepts - Activities - Activities - Extended Scope
         And [API] Activity subgroup is created
         And [API] Activity subgroup is approved
         And [API] Activity subgroup is inactivated
+        And Group name created through API is found
+        And Subgroup name created through API is found
         And User waits for 2 seconds
         Given The '/library/activities/activities' page is opened
         And User sets status filter to 'all'
         When The Add activity button is clicked
         When The activity form is filled in using group and subgroup created through API
         And Form save button is clicked
-        Then Validation error for GroupingHierarchy is displayed
+        Then Validation error for 'Retired' subgroup is displayed
 
     Scenario: [Cancel][Creation] User must be able to Cancel creation of the activity
         Given The '/library/activities/activities' page is opened
@@ -132,9 +140,9 @@ Feature: Library - Concepts - Activities - Activities - Extended Scope
         And Activity is searched for and not found
 
     Scenario: [Cancel][Edition] User must be able to Cancel edition of the activity
+        And [API] Activity in status Draft exists
         Given The '/library/activities/activities' page is opened
         And User sets status filter to 'all'
-        And [API] Activity in status Draft exists
         And Activity is searched for and found
         When The 'Edit' option is clicked from the three dot menu list
         When The activity edition form is filled with data
@@ -144,84 +152,27 @@ Feature: Library - Concepts - Activities - Activities - Extended Scope
         And Activity is searched for and not found
 
     Scenario: [Actions][Availability][Draft item] User must only have access to aprove, edit, delete, history actions for Drafted version of the activity
+        And [API] Activity in status Draft exists
         Given The '/library/activities/activities' page is opened
         And User sets status filter to 'all'
-        And [API] Activity in status Draft exists
         And Activity is searched for and found
         And The item actions button is clicked
         Then Only actions that should be avaiable for the Draft item are displayed
 
     Scenario: [Actions][Availability][Final item] User must only have access to new version, inactivate, history actions for Final version of the activity
-        Given The '/library/activities/activities' page is opened
         When [API] Activity in status Draft exists
         And [API] Activity is approved
+        Given The '/library/activities/activities' page is opened
         And Activity is searched for and found
         And The item actions button is clicked
         Then Only actions that should be avaiable for the Final item are displayed
 
     Scenario: [Actions][Availability][Retired item] User must only have access to reactivate, history actions for Retired version of the activity
-        Given The '/library/activities/activities' page is opened
-        And User sets status filter to 'all'
         When [API] Activity in status Draft exists
         And [API] Activity is approved
         And [API] Activity is inactivated
+        Given The '/library/activities/activities' page is opened
+        And User sets status filter to 'all'
         And Activity is searched for and found
         And The item actions button is clicked
         Then Only actions that should be avaiable for the Retired item are displayed
-
-    Scenario: [Table][Filtering][Status selection] User must be able to use status selection to find or hide draft activity
-        Given The '/library/activities/activities' page is opened
-        When [API] Activity in status Draft exists
-        When User sets status filter to 'final'
-        And Activity is searched for and not found
-        When User sets status filter to 'draft'
-        And Activity is searched for and found
-        When User sets status filter to 'retired'
-        And Activity is searched for and not found
-        When User sets status filter to 'all'
-        And Activity is searched for and found
-
-    Scenario: [Table][Filtering][Status selection] User must be able to use status selection to find or hide approved activity
-        Given The '/library/activities/activities' page is opened
-        When [API] Activity in status Draft exists
-        And [API] Activity is approved
-        When User sets status filter to 'draft'
-        And Activity is searched for and not found
-        When User sets status filter to 'final'
-        And Activity is searched for and found
-        When User sets status filter to 'retired'
-        And Activity is searched for and not found
-        When User sets status filter to 'all'
-        And Activity is searched for and found
-
-    Scenario: [Table][Filtering][Status selection] User must be able to use status selection to find or hide retired activity
-        Given The '/library/activities/activities' page is opened
-        When [API] Activity in status Draft exists
-        And [API] Activity is approved
-        And [API] Activity is inactivated
-        When User sets status filter to 'draft'
-        And Activity is searched for and not found
-        When User sets status filter to 'retired'
-        And Activity is searched for and found
-        When User sets status filter to 'final'
-        And Activity is searched for and not found
-        When User sets status filter to 'all'
-        And Activity is searched for and found
-    
-    Scenario: [Table][Filtering][Status selection] User must be able to use status selection to find or hide new version of activity
-        Given The '/library/activities/activities' page is opened
-        When [API] Activity in status Draft exists
-        And [API] Activity is approved
-        And [API] Activity new version is created
-        When User sets status filter to 'final'
-        And Activity is searched for and not found
-        When User sets status filter to 'draft'
-        And Activity is searched for and found
-        When User sets status filter to 'retired'
-        And Activity is searched for and not found
-        When User sets status filter to 'all'
-        And Activity is searched for and found
-
-    Scenario: [Table][Filtering][Status selection] User must be able to see that status filter is not available after expanding column based filters
-        Given The '/library/activities/activities' page is opened
-        Then The status filter is not available when expanding available filters

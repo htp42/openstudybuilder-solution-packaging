@@ -25,6 +25,7 @@
               density="compact"
               clearable
               hide-no-data
+              variant="outlined"
               :loading="loadingCompounds"
               :rules="[formRules.required]"
             />
@@ -42,100 +43,6 @@
               />
             </v-col>
           </v-row>
-          <v-row>
-            <v-col cols="4">
-              <v-text-field
-                v-model="form.compound.analyte_number"
-                :label="$t('CompoundForm.analyte_number')"
-                density="compact"
-                disabled
-                variant="filled"
-                hide-details
-              />
-            </v-col>
-            <v-col cols="4">
-              <v-text-field
-                v-model="form.compound.nnc_long_number"
-                :label="$t('CompoundForm.long_number')"
-                density="compact"
-                disabled
-                variant="filled"
-                hide-details
-              />
-            </v-col>
-            <v-col cols="4">
-              <v-text-field
-                v-model="form.compound.nnc_short_number"
-                :label="$t('CompoundForm.short_number')"
-                density="compact"
-                disabled
-                variant="filled"
-                hide-details
-              />
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col cols="12">
-              <v-text-field
-                v-model="form.compound.name"
-                :label="$t('CompoundForm.name')"
-                density="compact"
-                disabled
-                variant="filled"
-                hide-details
-              />
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col cols="12">
-              <v-textarea
-                v-model="form.compound.definition"
-                :label="$t('_global.definition')"
-                density="compact"
-                auto-grow
-                rows="1"
-                disabled
-                variant="filled"
-                hide-details
-              />
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col cols="12">
-              <v-text-field
-                :value="brandNames"
-                :label="$t('CompoundForm.brand_name')"
-                density="compact"
-                disabled
-                variant="filled"
-                hide-details
-              />
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col cols="12">
-              <v-text-field
-                :value="substances"
-                :label="$t('CompoundAliasForm.substance')"
-                density="compact"
-                disabled
-                variant="filled"
-                hide-details
-              />
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col cols="12">
-              <v-text-field
-                :value="pharmacologicalClass"
-                :label="$t('CompoundAliasForm.pharmacological_class')"
-                density="compact"
-                disabled
-                variant="filled"
-                hide-details
-              />
-            </v-col>
-          </v-row>
         </template>
       </v-form>
     </template>
@@ -147,6 +54,7 @@
               v-model="form.name"
               :label="$t('CompoundAliasForm.name')"
               density="compact"
+              variant="outlined"
               clearable
               :rules="[formRules.required]"
             />
@@ -158,6 +66,7 @@
               v-model="form.name_sentence_case"
               :label="$t('CompoundAliasForm.sentence_case_name')"
               density="compact"
+              variant="outlined"
               clearable
               :rules="[formRules.required]"
             />
@@ -178,9 +87,24 @@
               v-model="form.definition"
               :label="$t('_global.definition')"
               density="compact"
+              variant="outlined"
               clearable
               auto-grow
               rows="1"
+            />
+          </v-col>
+        </v-row>
+        <v-row v-if="compoundAliasUid">
+          <v-col cols="12">
+            <v-textarea
+              v-model="form.change_description"
+              :label="$t('HistoryTable.change_description')"
+              density="compact"
+              clearable
+              auto-grow
+              rows="1"
+              variant="outlined"
+              :rules="[formRules.required]"
             />
           </v-col>
         </v-row>
@@ -355,7 +279,6 @@ export default {
       })
     },
     async update(data) {
-      data.change_description = this.$t('_global.work_in_progress')
       await compoundAliases.update(this.compoundAlias.uid, data)
       this.$emit('updated')
       this.eventBusEmit('notification', {

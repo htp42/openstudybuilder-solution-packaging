@@ -190,35 +190,9 @@ def test_updating_an_existing_odm_study_event(api_client):
     assert res["possible_actions"] == ["approve", "delete", "edit"]
 
 
-def test_approving_an_odm_study_event(api_client):
-    response = api_client.post(
-        "concepts/odms/study-events/OdmStudyEvent_000001/approvals"
-    )
-
-    assert_response_status_code(response, 201)
-
-    res = response.json()
-
-    assert res["uid"] == "OdmStudyEvent_000001"
-    assert res["library_name"] == "Sponsor"
-    assert res["name"] == "name1"
-    assert res["oid"] == "new oid1"
-    assert res["effective_date"] == "2022-04-21"
-    assert res["retired_date"] == "2022-04-21"
-    assert res["description"] == "description1"
-    assert res["display_in_tree"] is True
-    assert res["end_date"] is None
-    assert res["status"] == "Final"
-    assert res["version"] == "1.0"
-    assert res["change_description"] == "Approved version"
-    assert res["author_username"] == "unknown-user@example.com"
-    assert res["forms"] == []
-    assert res["possible_actions"] == ["inactivate", "new_version"]
-
-
-def test_inactivating_a_specific_odm_study_event(api_client):
-    response = api_client.delete(
-        "concepts/odms/study-events/OdmStudyEvent_000001/activations"
+def test_getting_a_specific_odm_study_event_in_specific_version(api_client):
+    response = api_client.get(
+        "concepts/odms/study-events/OdmStudyEvent_000001?version=0.1"
     )
 
     assert_response_status_code(response, 200)
@@ -228,44 +202,18 @@ def test_inactivating_a_specific_odm_study_event(api_client):
     assert res["uid"] == "OdmStudyEvent_000001"
     assert res["library_name"] == "Sponsor"
     assert res["name"] == "name1"
-    assert res["oid"] == "new oid1"
+    assert res["oid"] == "oid1"
     assert res["effective_date"] == "2022-04-21"
     assert res["retired_date"] == "2022-04-21"
     assert res["description"] == "description1"
-    assert res["display_in_tree"] is True
-    assert res["end_date"] is None
-    assert res["status"] == "Retired"
-    assert res["version"] == "1.0"
-    assert res["change_description"] == "Inactivated version"
+    assert res["display_in_tree"] is False
+    assert res["end_date"]
+    assert res["status"] == "Draft"
+    assert res["version"] == "0.1"
+    assert res["change_description"] == "Initial version"
     assert res["author_username"] == "unknown-user@example.com"
     assert res["forms"] == []
-    assert res["possible_actions"] == ["delete", "reactivate"]
-
-
-def test_reactivating_a_specific_odm_study_event(api_client):
-    response = api_client.post(
-        "concepts/odms/study-events/OdmStudyEvent_000001/activations"
-    )
-
-    assert_response_status_code(response, 200)
-
-    res = response.json()
-
-    assert res["uid"] == "OdmStudyEvent_000001"
-    assert res["library_name"] == "Sponsor"
-    assert res["name"] == "name1"
-    assert res["oid"] == "new oid1"
-    assert res["effective_date"] == "2022-04-21"
-    assert res["retired_date"] == "2022-04-21"
-    assert res["description"] == "description1"
-    assert res["display_in_tree"] is True
-    assert res["end_date"] is None
-    assert res["status"] == "Final"
-    assert res["version"] == "1.0"
-    assert res["change_description"] == "Reactivated version"
-    assert res["author_username"] == "unknown-user@example.com"
-    assert res["forms"] == []
-    assert res["possible_actions"] == ["inactivate", "new_version"]
+    assert res["possible_actions"] == ["approve", "delete", "edit"]
 
 
 def test_adding_odm_forms_to_a_specific_odm_study_event(api_client):
@@ -295,21 +243,22 @@ def test_adding_odm_forms_to_a_specific_odm_study_event(api_client):
     assert res["description"] == "description1"
     assert res["display_in_tree"] is True
     assert res["end_date"] is None
-    assert res["status"] == "Final"
-    assert res["version"] == "1.0"
-    assert res["change_description"] == "Reactivated version"
+    assert res["status"] == "Draft"
+    assert res["version"] == "0.2"
+    assert res["change_description"] == "oid and display_in_tree changed"
     assert res["author_username"] == "unknown-user@example.com"
     assert res["forms"] == [
         {
             "uid": "odm_form1",
             "name": "name1",
+            "version": "1.0",
             "order_number": 1,
             "mandatory": "Yes",
             "locked": "Yes",
             "collection_exception_condition_oid": "None",
         }
     ]
-    assert res["possible_actions"] == ["inactivate", "new_version"]
+    assert res["possible_actions"] == ["approve", "delete", "edit"]
 
 
 def test_overriding_odm_forms_from_a_specific_odm_study_event(api_client):
@@ -339,6 +288,114 @@ def test_overriding_odm_forms_from_a_specific_odm_study_event(api_client):
     assert res["description"] == "description1"
     assert res["display_in_tree"] is True
     assert res["end_date"] is None
+    assert res["status"] == "Draft"
+    assert res["version"] == "0.2"
+    assert res["change_description"] == "oid and display_in_tree changed"
+    assert res["author_username"] == "unknown-user@example.com"
+    assert res["forms"] == [
+        {
+            "uid": "odm_form2",
+            "name": "name2",
+            "version": "1.0",
+            "order_number": 2,
+            "mandatory": "Yes",
+            "locked": "Yes",
+            "collection_exception_condition_oid": "None",
+        }
+    ]
+    assert res["possible_actions"] == ["approve", "delete", "edit"]
+
+
+def test_approving_an_odm_study_event(api_client):
+    response = api_client.post(
+        "concepts/odms/study-events/OdmStudyEvent_000001/approvals"
+    )
+
+    assert_response_status_code(response, 201)
+
+    res = response.json()
+
+    assert res["uid"] == "OdmStudyEvent_000001"
+    assert res["library_name"] == "Sponsor"
+    assert res["name"] == "name1"
+    assert res["oid"] == "new oid1"
+    assert res["effective_date"] == "2022-04-21"
+    assert res["retired_date"] == "2022-04-21"
+    assert res["description"] == "description1"
+    assert res["display_in_tree"] is True
+    assert res["end_date"] is None
+    assert res["status"] == "Final"
+    assert res["version"] == "1.0"
+    assert res["change_description"] == "Approved version"
+    assert res["author_username"] == "unknown-user@example.com"
+    assert res["forms"] == [
+        {
+            "uid": "odm_form2",
+            "name": "name2",
+            "version": "1.0",
+            "order_number": 2,
+            "mandatory": "Yes",
+            "locked": "Yes",
+            "collection_exception_condition_oid": "None",
+        }
+    ]
+    assert res["possible_actions"] == ["inactivate", "new_version"]
+
+
+def test_inactivating_a_specific_odm_study_event(api_client):
+    response = api_client.delete(
+        "concepts/odms/study-events/OdmStudyEvent_000001/activations"
+    )
+
+    assert_response_status_code(response, 200)
+
+    res = response.json()
+
+    assert res["uid"] == "OdmStudyEvent_000001"
+    assert res["library_name"] == "Sponsor"
+    assert res["name"] == "name1"
+    assert res["oid"] == "new oid1"
+    assert res["effective_date"] == "2022-04-21"
+    assert res["retired_date"] == "2022-04-21"
+    assert res["description"] == "description1"
+    assert res["display_in_tree"] is True
+    assert res["end_date"] is None
+    assert res["status"] == "Retired"
+    assert res["version"] == "1.0"
+    assert res["change_description"] == "Inactivated version"
+    assert res["author_username"] == "unknown-user@example.com"
+    assert res["forms"] == [
+        {
+            "uid": "odm_form2",
+            "name": "name2",
+            "version": "1.0",
+            "order_number": 2,
+            "mandatory": "Yes",
+            "locked": "Yes",
+            "collection_exception_condition_oid": "None",
+        }
+    ]
+    assert res["possible_actions"] == ["delete", "reactivate"]
+
+
+def test_reactivating_a_specific_odm_study_event(api_client):
+    response = api_client.post(
+        "concepts/odms/study-events/OdmStudyEvent_000001/activations"
+    )
+
+    assert_response_status_code(response, 200)
+
+    res = response.json()
+
+    assert res["uid"] == "OdmStudyEvent_000001"
+    assert res["library_name"] == "Sponsor"
+    assert res["name"] == "name1"
+    assert res["oid"] == "new oid1"
+    assert res["effective_date"] == "2022-04-21"
+    assert res["retired_date"] == "2022-04-21"
+    assert res["description"] == "description1"
+    assert res["display_in_tree"] is True
+    assert res["end_date"] is None
     assert res["status"] == "Final"
     assert res["version"] == "1.0"
     assert res["change_description"] == "Reactivated version"
@@ -347,6 +404,7 @@ def test_overriding_odm_forms_from_a_specific_odm_study_event(api_client):
         {
             "uid": "odm_form2",
             "name": "name2",
+            "version": "1.0",
             "order_number": 2,
             "mandatory": "Yes",
             "locked": "Yes",
@@ -382,6 +440,7 @@ def test_creating_a_new_odm_study_event_version(api_client):
         {
             "uid": "odm_form2",
             "name": "name2",
+            "version": "1.0",
             "order_number": 2,
             "mandatory": "Yes",
             "locked": "Yes",

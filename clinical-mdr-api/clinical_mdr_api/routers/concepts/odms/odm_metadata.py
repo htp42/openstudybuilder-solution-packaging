@@ -7,14 +7,19 @@ from urllib.parse import quote
 from fastapi import APIRouter, File, Path, Query, Response, UploadFile
 from fastapi.responses import StreamingResponse
 
-from clinical_mdr_api.domains._utils import ObjectStatus
 from clinical_mdr_api.domains.concepts.utils import ExporterType, TargetType
+from clinical_mdr_api.models.utils import CustomPage
 from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.services.concepts.odms.odm_clinspark_import import (
     OdmClinicalXmlImporterService,
 )
 from clinical_mdr_api.services.concepts.odms.odm_csv_exporter import (
     OdmCsvExporterService,
+)
+from clinical_mdr_api.services.concepts.odms.odm_metadata import (
+    get_odm_aliases,
+    get_odm_descriptions,
+    get_odm_formal_expressions,
 )
 from clinical_mdr_api.services.concepts.odms.odm_xml_exporter import (
     OdmXmlExporterService,
@@ -27,10 +32,101 @@ from clinical_mdr_api.services.concepts.odms.odm_xml_stylesheets import (
 )
 from common.auth import rbac
 from common.auth.dependencies import security
+from common.config import settings
 from common.exceptions import ValidationException
 
 # Prefixed with "/concepts/odms/metadata"
 router = APIRouter()
+
+
+@router.get(
+    "/aliases",
+    dependencies=[security, rbac.LIBRARY_READ],
+    summary="Listing of ODM Aliases",
+    status_code=200,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+    },
+)
+def get_aliases(
+    page_size: Annotated[
+        int, Query(ge=1, le=settings.max_page_size)
+    ] = settings.default_page_size,
+    page_number: Annotated[int, Query(ge=1)] = 1,
+    search: Annotated[
+        str | None,
+        Query(description="Search by name or context. Search is case insensitive."),
+    ] = None,
+) -> CustomPage:
+    aliases, total = get_odm_aliases(
+        page_size=page_size, page_number=page_number, search=search
+    )
+    return CustomPage(items=aliases, size=page_size, page=page_number, total=total)
+
+
+@router.get(
+    "/descriptions",
+    dependencies=[security, rbac.LIBRARY_READ],
+    summary="Listing of ODM Descriptions",
+    status_code=200,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+    },
+)
+def get_descriptions(
+    page_number: Annotated[
+        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
+    ] = settings.default_page_number,
+    page_size: Annotated[
+        int,
+        Query(
+            ge=0,
+            le=settings.max_page_size,
+            description=_generic_descriptions.PAGE_SIZE,
+        ),
+    ] = settings.default_page_size,
+    search: Annotated[
+        str | None,
+        Query(
+            description="Search by name, description, instruction or sponsor instruction. Search is case insensitive."
+        ),
+    ] = None,
+) -> CustomPage:
+    descriptions, total = get_odm_descriptions(
+        page_size=page_size, page_number=page_number, search=search
+    )
+
+    return CustomPage(items=descriptions, size=page_size, page=page_number, total=total)
+
+
+@router.get(
+    "/formal-expressions",
+    dependencies=[security, rbac.LIBRARY_READ],
+    summary="Listing of ODM Formal Expressions",
+    status_code=200,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+    },
+)
+def get_formal_expressions(
+    page_size: Annotated[
+        int, Query(ge=1, le=settings.max_page_size)
+    ] = settings.default_page_size,
+    page_number: Annotated[int, Query(ge=1)] = 1,
+    search: Annotated[
+        str | None,
+        Query(
+            description="Search by context or expression. Search is case insensitive."
+        ),
+    ] = None,
+) -> CustomPage:
+    formal_expressions, total = get_odm_formal_expressions(
+        page_size=page_size, page_number=page_number, search=search
+    )
+
+    return CustomPage(
+        items=formal_expressions, size=page_size, page=page_number, total=total
+    )
 
 
 MAPPER_DESCRIPTION = """
@@ -69,7 +165,9 @@ def get_odm_document(
             description="Names of the Vendor Namespaces to export or `*` to export all available Vendor Namespaces. If not specified, no Vendor Namespaces will be exported."
         ),
     ] = None,
-    status: Annotated[ObjectStatus, Query()] = ObjectStatus.LATEST_FINAL,
+    version: Annotated[
+        str | None, Query(description="Get a specific version of the ODM element")
+    ] = None,
     pdf: Annotated[
         bool, Query(description="Whether or not to export the ODM as a PDF.")
     ] = False,
@@ -83,13 +181,15 @@ def get_odm_document(
     odm_xml_export_service = OdmXmlExporterService(
         target_uids,
         target_type,
-        status,
+        version or None,
         allowed_namespaces,
         pdf,
         stylesheet,
         mapper_file,
     )
     rs = odm_xml_export_service.get_odm_document()
+
+    safe_filename = quote(f"CRF - {datetime.now()}.pdf", safe="")
 
     if pdf:
         buffer_io = BytesIO()
@@ -99,16 +199,20 @@ def get_odm_document(
         return Response(
             pdf_bytes,
             headers={
-                "Content-Disposition": f"attachment; filename=CRF - {datetime.now()}.pdf"
+                "Content-Disposition": f'attachment; filename="{safe_filename}"',
             },
             media_type="application/pdf",
         )
+
+    safe_filename = quote(
+        f"odm_export_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xml", safe=""
+    )
 
     return Response(
         content=rs,
         media_type="application/xml",
         headers={
-            "Content-Disposition": f'attachment; filename="odm_export_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xml"',
+            "Content-Disposition": f'attachment; filename="{safe_filename}"',
             "X-Content-Type-Options": "nosniff",
         },
     )

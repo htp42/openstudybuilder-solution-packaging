@@ -1,16 +1,15 @@
+import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import dictionaries from '@/api/dictionaries'
 
-export const useCompoundsStore = defineStore('compounds', {
-  state: () => ({
-    substances: [],
-  }),
+export const useCompoundsStore = defineStore('compounds', () => {
+  const substances = ref([])
 
-  actions: {
-    fetchSubstances() {
-      return dictionaries.getSubstances().then((resp) => {
-        this.substances = resp.data.items
-      })
-    },
-  },
+  function fetchSubstances() {
+    return dictionaries.getSubstances().then((resp) => {
+      substances.value = resp.data.items
+    })
+  }
+
+  return { substances, fetchSubstances }
 })

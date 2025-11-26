@@ -95,12 +95,12 @@ def get_valid_time_references_for_study(
         (:CTCodelistNameRoot)-[:LATEST]->(:CTCodelistNameValue {{name:$time_reference_codelist_name}})
 
         {time_reference_match}
-        
+
         MATCH (study_root:StudyRoot {{uid:$study_uid}})-[:LATEST]->(:StudyValue)-[:HAS_STUDY_VISIT]->
             (study_visit:StudyVisit)-[:HAS_VISIT_TYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(visit_type_root:CTTermNameRoot) 
         
         {visit_type_match}
-            
+
         WITH time_reference_root, time_reference_value, COLLECT(visit_type_value.name) AS visit_type_value_names 
             WHERE time_reference_value.name IN visit_type_value_names 
                 OR time_reference_value.name IN [$global_anchor_visit_name, $previous_visit_name]
@@ -241,7 +241,7 @@ class StudyVisitRepository:
     def _create_aggregate_root_instance_from_cypher_result(
         cls, input_dict: dict[str, Any], audit_trail: bool = False
     ) -> StudyVisitVO | StudyVisitHistoryVO:
-        epoch = input_dict.get("epoch")  # merged from study_epoch and epoch_ct_name
+        epoch = input_dict["epoch"]  # merged from study_epoch and epoch_ct_name
         simple_study_epoch = SimpleStudyEpoch(
             uid=epoch.get("study_epoch_uid"),
             study_uid=input_dict["study_uid"],

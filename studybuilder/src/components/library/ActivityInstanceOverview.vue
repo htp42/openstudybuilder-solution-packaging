@@ -22,6 +22,7 @@
             :all-versions="allVersions(itemOverview)"
             :activity-groupings="activityGroupings"
             :show-data-collection="false"
+            :show-author="true"
             class="activity-summary"
             @version-change="(value) => manualChangeVersion(value)"
           />
@@ -262,6 +263,7 @@ function adaptActivityInstanceForSummary(
     abbreviation: activityInstance.abbreviation,
     library_name: activityInstance.library_name,
     nci_concept_id: activityInstance.nci_concept_id,
+    nci_concept_name: activityInstance.nci_concept_name,
     adam_param_code: activityInstance.adam_param_code,
     activity_instance_class:
       activityInstance.activity_instance_class?.name ||
@@ -273,6 +275,8 @@ function adaptActivityInstanceForSummary(
     is_legacy_usage: activityInstance.is_legacy_usage,
     topic_code: activityInstance.topic_code,
     activity_name: activityName,
+    author_username:
+      activityInstance.author_username || activityInstance.author_id,
   }
 }
 
@@ -587,6 +591,17 @@ onMounted(() => {
 .groupings-table :deep(.v-data-table-footer) {
   border-top: 1px solid #e0e0e0;
   background-color: transparent !important;
+}
+
+/* Round table corners */
+.activity-instance-overview-container :deep(.v-data-table) {
+  border-radius: 8px !important;
+  overflow: visible;
+}
+
+.activity-instance-overview-container :deep(.v-table__wrapper) {
+  border-radius: 8px !important;
+  overflow-x: auto;
 }
 
 .activity-instance-overview-container :deep(.v-table),

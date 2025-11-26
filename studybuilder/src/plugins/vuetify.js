@@ -6,6 +6,8 @@ import { createVuetify } from 'vuetify'
 // import * as directives from 'vuetify/directives'
 // import { aliases, mdi } from 'vuetify/iconsets/mdi'
 
+import { VTreeview } from 'vuetify/labs/VTreeview'
+
 const NNCustomLightTheme = {
   dark: false,
   colors: {
@@ -30,7 +32,7 @@ const NNCustomLightTheme = {
     nnGreen1: '#2a918b',
     nnPink1: '#eea7bf',
     parameterBackground: '#E0E0E0',
-    crfTemplate: '#193074',
+    crfCollection: '#193074',
     crfForm: '#005AD2',
     crfGroup: '#3B97DE',
     crfItem: '#63A8A5',
@@ -45,6 +47,7 @@ const NNCustomLightTheme = {
     nnBaseLight: '#F7F8FA',
     nnGray200: '#E9EAED',
     nnGray300: '#D3D6DB',
+    nnSeaBlue3: '#91B8EC',
     nnSeaBlue100: '#E5F1FF',
     nnSeaBlue200: '#CCE2FF',
     nnSeaBlue300: '#99C5FF',
@@ -65,6 +68,9 @@ const NNCustomLightTheme = {
 }
 
 export default createVuetify({
+  components: {
+    VTreeview,
+  },
   theme: {
     defaultTheme: 'NNCustomLightTheme',
     themes: {

@@ -1,6 +1,8 @@
 import json
 from typing import Any
 
+from neomodel import db
+
 from clinical_mdr_api.domain_repositories.concepts.odms.odm_generic_repository import (
     OdmGenericRepository,
 )
@@ -11,15 +13,11 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     VersionValue,
 )
 from clinical_mdr_api.domain_repositories.models.odm import (
-    OdmFormRoot,
-    OdmItemGroupRoot,
-    OdmItemRoot,
     OdmVendorAttributeRoot,
     OdmVendorAttributeValue,
     OdmVendorElementRoot,
     OdmVendorNamespaceRoot,
 )
-from clinical_mdr_api.domains._utils import ObjectStatus
 from clinical_mdr_api.domains.concepts.odms.vendor_attribute import (
     OdmVendorAttributeAR,
     OdmVendorAttributeRelationVO,
@@ -52,8 +50,8 @@ class VendorAttributeRepository(OdmGenericRepository[OdmVendorAttributeAR]):
         value: VersionValue,
         **_kwargs,
     ) -> OdmVendorAttributeAR:
-        vendor_namespace = root.belongs_to_vendor_namespace.get_or_none()
-        vendor_element = root.belongs_to_vendor_element.get_or_none()
+        vendor_namespace_value = value.belongs_to_vendor_namespace.get_or_none()
+        vendor_element_value = value.belongs_to_vendor_element.get_or_none()
         return OdmVendorAttributeAR.from_repository_values(
             uid=root.uid,
             concept_vo=OdmVendorAttributeVO.from_repository_values(
@@ -63,8 +61,16 @@ class VendorAttributeRepository(OdmGenericRepository[OdmVendorAttributeAR]):
                 ),
                 data_type=value.data_type,
                 value_regex=value.value_regex,
-                vendor_namespace_uid=vendor_namespace.uid if vendor_namespace else None,
-                vendor_element_uid=vendor_element.uid if vendor_element else None,
+                vendor_namespace_uid=(
+                    vendor_namespace_value.has_root.single().uid
+                    if vendor_namespace_value
+                    else None
+                ),
+                vendor_element_uid=(
+                    vendor_element_value.has_root.single().uid
+                    if vendor_element_value
+                    else None
+                ),
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=library.name,
@@ -107,20 +113,18 @@ class VendorAttributeRepository(OdmGenericRepository[OdmVendorAttributeAR]):
 
         return odm_form_ar
 
-    def specific_alias_clause(
-        self, only_specific_status: str = ObjectStatus.LATEST.name, **kwargs
-    ) -> str:
-        return f"""
+    def specific_alias_clause(self, **kwargs) -> str:
+        return """
 WITH *,
 concept_value.compatible_types AS compatible_types,
 concept_value.data_type AS data_type,
 concept_value.value_regex AS value_regex,
 
-head([(concept_value)<-[:{only_specific_status}]-(:OdmVendorAttributeRoot)<-[:HAS_VENDOR_ATTRIBUTE]-(vnr:OdmVendorNamespaceRoot)-[:LATEST]->(vnv:OdmVendorNamespaceValue) |
-{{uid: vnr.uid, name: vnv.name, prefix: vnv.prefix, url: vnv.url}}]) AS vendor_namespace,
+head([(concept_value)<-[:HAS_VENDOR_ATTRIBUTE]-(vnv:OdmVendorNamespaceValue)<-[:HAS_VERSION]-(vnr:OdmVendorNamespaceRoot) |
+{uid: vnr.uid, name: vnv.name, prefix: vnv.prefix, url: vnv.url}]) AS vendor_namespace,
 
-head([(concept_value)<-[:{only_specific_status}]-(:OdmVendorAttributeRoot)<-[:HAS_VENDOR_ATTRIBUTE]-(xtr:OdmVendorElementRoot)-[:LATEST]->(xtv:OdmVendorElementValue) |
-{{uid: xtr.uid, name: xtv.name}}]) AS vendor_element
+head([(concept_value)<-[:HAS_VENDOR_ATTRIBUTE]-(xtv:OdmVendorElementValue)<-[:HAS_VERSION]-(xtr:OdmVendorElementRoot) |
+{uid: xtr.uid, name: xtv.name}]) AS vendor_element
 
 
 WITH *,
@@ -129,24 +133,39 @@ vendor_element.uid AS vendor_element_uid
 """
 
     def _get_or_create_value(
-        self, root: VersionRoot, ar: OdmVendorAttributeAR
+        self,
+        root: VersionRoot,
+        ar: OdmVendorAttributeAR,
+        force_new_value_node: bool = False,
     ) -> VersionValue:
-        new_value = super()._get_or_create_value(root, ar)
+        new_value = super()._get_or_create_value(root, ar, force_new_value_node)
 
-        root.belongs_to_vendor_namespace.disconnect_all()
-        root.belongs_to_vendor_element.disconnect_all()
+        new_value.belongs_to_vendor_namespace.disconnect_all()
+        new_value.belongs_to_vendor_element.disconnect_all()
 
         if ar.concept_vo.vendor_namespace_uid is not None:
-            vendor_namespace = OdmVendorNamespaceRoot.nodes.get_or_none(
+            vendor_namespace_root = OdmVendorNamespaceRoot.nodes.get_or_none(
                 uid=ar.concept_vo.vendor_namespace_uid
             )
-            root.belongs_to_vendor_namespace.connect(vendor_namespace)
+            vendor_namespace_value = (
+                vendor_namespace_root.has_latest_value.get_or_none()
+                if vendor_namespace_root
+                else None
+            )
+            if vendor_namespace_value:
+                new_value.belongs_to_vendor_namespace.connect(vendor_namespace_value)
 
         if ar.concept_vo.vendor_element_uid is not None:
-            vendor_element = OdmVendorElementRoot.nodes.get_or_none(
+            vendor_element_root = OdmVendorElementRoot.nodes.get_or_none(
                 uid=ar.concept_vo.vendor_element_uid
             )
-            root.belongs_to_vendor_element.connect(vendor_element)
+            vendor_element_value = (
+                vendor_element_root.has_latest_value.get_or_none()
+                if vendor_element_root
+                else None
+            )
+            if vendor_element_value:
+                new_value.belongs_to_vendor_element.connect(vendor_element_value)
 
         return new_value
 
@@ -168,16 +187,16 @@ vendor_element.uid AS vendor_element_uid
     ) -> bool:
         are_concept_properties_changed = super()._has_data_changed(ar=ar, value=value)
 
-        root = OdmVendorAttributeRoot.nodes.get_or_none(uid=ar.uid)
-
         vendor_namespace_uid = (
-            vendor_namespace.uid
-            if (vendor_namespace := root.belongs_to_vendor_namespace.get_or_none())
+            vendor_namespace_value.has_root.single().uid
+            if (
+                vendor_namespace_value := value.belongs_to_vendor_namespace.get_or_none()
+            )
             else None
         )
         vendor_element_uid = (
-            vendor_element.uid
-            if (vendor_element := root.belongs_to_vendor_element.get_or_none())
+            vendor_element_value.has_root.single().uid
+            if (vendor_element_value := value.belongs_to_vendor_element.get_or_none())
             else None
         )
 
@@ -198,65 +217,76 @@ vendor_element.uid AS vendor_element_uid
         self,
         uid: str,
         odm_element_uid: str,
+        odm_element_version: str,
         odm_element_type: RelationType,
         vendor_element_attribute: bool = True,
     ):
-        vendor_attribute_root = self.root_class.nodes.get_or_none(uid=uid)
-        vendor_attribute_value = vendor_attribute_root.has_latest_value.get_or_none()
-
         if odm_element_type == RelationType.FORM:
-            odm_element_root = OdmFormRoot.nodes.get_or_none(uid=odm_element_uid)
-            if vendor_element_attribute:
-                rel = vendor_attribute_root.belongs_to_element_form.relationship(
-                    odm_element_root
-                )
-            else:
-                rel = vendor_attribute_root.belongs_to_form.relationship(
-                    odm_element_root
-                )
+            odm_element_root = "OdmFormRoot"
+            odm_element_value = "OdmFormValue"
         elif odm_element_type == RelationType.ITEM_GROUP:
-            odm_element_root = OdmItemGroupRoot.nodes.get_or_none(uid=odm_element_uid)
-            if vendor_element_attribute:
-                rel = vendor_attribute_root.belongs_to_element_item_group.relationship(
-                    odm_element_root
-                )
-            else:
-                rel = vendor_attribute_root.belongs_to_item_group.relationship(
-                    odm_element_root
-                )
+            odm_element_root = "OdmItemGroupRoot"
+            odm_element_value = "OdmItemGroupValue"
         elif odm_element_type == RelationType.ITEM:
-            odm_element_root = OdmItemRoot.nodes.get_or_none(uid=odm_element_uid)
-            if vendor_element_attribute:
-                rel = vendor_attribute_root.belongs_to_element_item.relationship(
-                    odm_element_root
-                )
-            else:
-                rel = vendor_attribute_root.belongs_to_item.relationship(
-                    odm_element_root
-                )
+            odm_element_root = "OdmItemRoot"
+            odm_element_value = "OdmItemValue"
         else:
             raise BusinessLogicException(msg="Invalid ODM element type.")
 
         if vendor_element_attribute:
+            rs, _ = db.cypher_query(
+                f"""
+                MATCH (:{odm_element_root} {{uid: $odm_element_uid}})-[:HAS_VERSION {{version: $odm_element_version}}]->(:{odm_element_value})
+                -[ref:HAS_VENDOR_ELEMENT_ATTRIBUTE]->(value:OdmVendorAttributeValue)<-[:HAS_VERSION]-(:OdmVendorAttributeRoot {{uid: $uid}})
+                MATCH (value)<-[:HAS_VENDOR_ATTRIBUTE]-(:OdmVendorElementValue)<-[:HAS_VERSION]-(vendor_element_root:OdmVendorElementRoot)
+                RETURN
+                    value.name AS name,
+                    value.data_type AS data_type,
+                    value.value_regex AS value_regex,
+                    ref.value AS value,
+                    vendor_element_root.uid AS vendor_element_uid
+                """,
+                params={
+                    "uid": uid,
+                    "odm_element_uid": odm_element_uid,
+                    "odm_element_version": odm_element_version,
+                },
+            )
             return OdmVendorElementAttributeRelationVO.from_repository_values(
                 uid=uid,
-                name=vendor_attribute_value.name,
-                data_type=vendor_attribute_value.data_type,
-                value_regex=vendor_attribute_value.value_regex,
-                value=rel.value,
-                vendor_element_uid=rel.end_node()
-                .belongs_to_vendor_element.get_or_none()
-                .uid,
+                name=rs[0][0],
+                data_type=rs[0][1],
+                value_regex=rs[0][2],
+                value=rs[0][3],
+                vendor_element_uid=rs[0][4],
             )
+
+        rs, _ = db.cypher_query(
+            f"""
+                MATCH (:{odm_element_root} {{uid: $odm_element_uid}})-[:HAS_VERSION {{version: $odm_element_version}}]->(:{odm_element_value})
+                -[ref:HAS_VENDOR_ATTRIBUTE]->(value:OdmVendorAttributeValue)<-[:HAS_VERSION]-(:OdmVendorAttributeRoot {{uid: $uid}})
+                MATCH (value)<-[:HAS_VENDOR_ATTRIBUTE]-(:OdmVendorNamespaceValue)<-[:HAS_VERSION]-(vendor_namespace_root:OdmVendorNamespaceRoot)
+                RETURN
+                    value.name AS name,
+                    value.compatible_types AS compatible_types,
+                    value.data_type AS data_type,
+                    value.value_regex AS value_regex,
+                    ref.value AS value,
+                    vendor_namespace_root.uid AS vendor_namespace_uid
+                """,
+            params={
+                "uid": uid,
+                "odm_element_uid": odm_element_uid,
+                "odm_element_version": odm_element_version,
+            },
+        )
 
         return OdmVendorAttributeRelationVO.from_repository_values(
             uid=uid,
-            name=vendor_attribute_value.name,
-            compatible_types=vendor_attribute_value.compatible_types,
-            data_type=vendor_attribute_value.data_type,
-            value_regex=vendor_attribute_value.value_regex,
-            value=rel.value,
-            vendor_namespace_uid=rel.end_node()
-            .belongs_to_vendor_namespace.get_or_none()
-            .uid,
+            name=rs[0][0],
+            compatible_types=json.loads(rs[0][1]),
+            data_type=rs[0][2],
+            value_regex=rs[0][3],
+            value=rs[0][4],
+            vendor_namespace_uid=rs[0][5],
         )

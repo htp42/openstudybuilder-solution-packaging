@@ -303,6 +303,7 @@ class StudySelectionActivitySubGroupRepository(
         activity_subgroup_uid: str,
         activity_group_uid: str,
         soa_group_term_uid: str,
+        sync_latest_version: bool = False,
     ) -> StudyActivitySubGroup | None:
         query = """
             MATCH (activity_subgroup_root:ActivitySubGroupRoot)-[:HAS_VERSION]->(activity_sub_group_value:ActivitySubGroupValue)
@@ -315,6 +316,18 @@ class StudySelectionActivitySubGroupRepository(
                 AND activity_subgroup_root.uid=$activity_subgroup_uid
                 AND activity_group_root.uid=$activity_group_uid
                 AND flowchart_group_term.uid=$soa_group_term_uid
+            WITH DISTINCT study_activity_subgroup, activity_subgroup_root, activity_sub_group_value, $sync_latest_version AS sync_latest_version
+            CALL apoc.do.case([
+                sync_latest_version=true,
+                'WHERE (activity_subgroup_root)-[:LATEST]->(activity_sub_group_value) RETURN *'
+            ],
+            '',
+            {
+                activity_subgroup_root: activity_subgroup_root,
+                activity_sub_group_value: activity_sub_group_value,
+                sync_latest_version: sync_latest_version
+            })
+            YIELD value
             RETURN DISTINCT study_activity_subgroup, activity_sub_group_value
         """
         study_activity_subgroups, _ = db.cypher_query(
@@ -324,6 +337,7 @@ class StudySelectionActivitySubGroupRepository(
                 "activity_subgroup_uid": activity_subgroup_uid,
                 "activity_group_uid": activity_group_uid,
                 "soa_group_term_uid": soa_group_term_uid,
+                "sync_latest_version": sync_latest_version,
             },
             resolve_objects=True,
         )

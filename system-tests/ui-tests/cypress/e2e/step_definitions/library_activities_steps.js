@@ -1,4 +1,6 @@
-import { apiGroupName } from "./api_library_steps"
+import { apiGroupName, apiSubgroupName } from "./api_library_steps"
+import { group_uid, subgroup_uid } from '../../support/api_requests/library_activities'
+
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
 
 export let activityName, synonym =`Synonym${Date.now()}`
@@ -16,7 +18,13 @@ Then('The activity form is filled in using group and subgroup created through AP
 
 When('The activity form is filled with all data', () => fillNewActivityData(true))
 
-Then('Validation error for GroupingHierarchy is displayed', () => cy.checkSnackbarMessage('1 validation error for ActivityGroupingHierarchySimpleModel'))
+Then('Validation error for {string} subgroup is displayed', (status) => {
+    cy.checkSnackbarMessage(`Activity Subgroup '${apiSubgroupName}' (${subgroup_uid}) is in status '${status}'. Activities can only be connected to Activity Subgroups in 'Final' status.`)
+})
+
+Then('Validation error for {string} group is displayed', (status) => {
+    cy.checkSnackbarMessage(`Activity Group '${apiGroupName}' (${group_uid}) is in status '${status}'. Activities can only be connected to Activity Groups in 'Final' status.`)
+})
 
 Then('The user adds already existing synonym', () => cy.fillInputNew('activityform-synonyms-field', synonym))
 
@@ -174,11 +182,9 @@ function createActivityViaApi(approve) {
 }
 
 function createActivityViaApiSimplified(customName = '') {
-    cy.intercept('/api/concepts/activities/activities?page_number=1&*').as('getData')
     getGroupAndSubgroupAndCreateActivity(customName)
     cy.getActivityNameByUid().then(name => activityName = name)
     cy.getActivitySynonymByUid().then(apiSynonym => synonym = apiSynonym)
-    cy.wait('@getData', {timeout: 20000})
 }
 
 function getGroupAndSubgroupAndCreateActivity(customName) {

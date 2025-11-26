@@ -37,20 +37,11 @@ from clinical_mdr_api.domain_repositories.concepts.compound_repository import (
 from clinical_mdr_api.domain_repositories.concepts.medicinal_product_repository import (
     MedicinalProductRepository,
 )
-from clinical_mdr_api.domain_repositories.concepts.odms.alias_repository import (
-    AliasRepository,
-)
 from clinical_mdr_api.domain_repositories.concepts.odms.condition_repository import (
     ConditionRepository,
 )
-from clinical_mdr_api.domain_repositories.concepts.odms.description_repository import (
-    DescriptionRepository,
-)
 from clinical_mdr_api.domain_repositories.concepts.odms.form_repository import (
     FormRepository,
-)
-from clinical_mdr_api.domain_repositories.concepts.odms.formal_expression_repository import (
-    FormalExpressionRepository,
 )
 from clinical_mdr_api.domain_repositories.concepts.odms.item_group_repository import (
     ItemGroupRepository,
@@ -484,10 +475,6 @@ class MetaRepository:
         return ConditionRepository()
 
     @property
-    def odm_formal_expression_repository(self) -> FormalExpressionRepository:
-        return FormalExpressionRepository()
-
-    @property
     def odm_form_repository(self) -> FormRepository:
         return FormRepository()
 
@@ -502,14 +489,6 @@ class MetaRepository:
     @property
     def odm_study_event_repository(self) -> StudyEventRepository:
         return StudyEventRepository()
-
-    @property
-    def odm_description_repository(self) -> DescriptionRepository:
-        return DescriptionRepository()
-
-    @property
-    def odm_alias_repository(self) -> AliasRepository:
-        return AliasRepository()
 
     @property
     def odm_vendor_namespace_repository(self) -> VendorNamespaceRepository:

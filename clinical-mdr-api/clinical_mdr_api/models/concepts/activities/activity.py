@@ -32,6 +32,7 @@ from common.utils import convert_to_datetime
 class ActivityHierarchySimpleModel(BaseModel):
     uid: Annotated[str, Field()]
     name: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
+    version: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
 
     @overload
     @classmethod

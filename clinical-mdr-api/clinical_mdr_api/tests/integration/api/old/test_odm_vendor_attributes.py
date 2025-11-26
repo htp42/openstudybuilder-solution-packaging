@@ -232,6 +232,39 @@ def test_updating_an_existing_odm_vendor_attribute(api_client):
     assert res["possible_actions"] == ["approve", "delete", "edit"]
 
 
+def test_getting_a_specific_odm_vendor_attribute_in_specific_version(api_client):
+    response = api_client.get(
+        "concepts/odms/vendor-attributes/OdmVendorAttribute_000001?version=0.1"
+    )
+
+    assert_response_status_code(response, 200)
+
+    res = response.json()
+
+    assert res["uid"] == "OdmVendorAttribute_000001"
+    assert res["library_name"] == "Sponsor"
+    assert res["name"] == "nameOne"
+    assert res["compatible_types"] == ["FormDef", "ItemRef"]
+    assert res["data_type"] == "string"
+    assert res["value_regex"] is None
+    assert res["end_date"]
+    assert res["status"] == "Draft"
+    assert res["version"] == "0.1"
+    assert res["change_description"] == "Initial version"
+    assert res["author_username"] == "unknown-user@example.com"
+    assert res["vendor_namespace"] == {
+        "uid": "odm_vendor_namespace1",
+        "name": "nameOne",
+        "prefix": "prefix",
+        "url": "url1",
+        "status": "Final",
+        "version": "1.0",
+        "possible_actions": ["inactivate", "new_version"],
+    }
+    assert res["vendor_element"] is None
+    assert res["possible_actions"] == ["approve", "delete", "edit"]
+
+
 def test_approving_an_odm_vendor_attribute(api_client):
     response = api_client.post(
         "concepts/odms/vendor-attributes/OdmVendorAttribute_000001/approvals"

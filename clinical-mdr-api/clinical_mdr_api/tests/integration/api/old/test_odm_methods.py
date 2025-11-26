@@ -9,11 +9,6 @@ from neomodel import db
 
 from clinical_mdr_api.main import app
 from clinical_mdr_api.tests.integration.utils.api import drop_db, inject_and_clear_db
-from clinical_mdr_api.tests.integration.utils.data_library import (
-    STARTUP_ODM_ALIASES,
-    STARTUP_ODM_DESCRIPTIONS,
-    STARTUP_ODM_FORMAL_EXPRESSIONS,
-)
 from clinical_mdr_api.tests.utils.checks import assert_response_status_code
 
 
@@ -25,9 +20,8 @@ def api_client(test_data):
 @pytest.fixture(scope="module")
 def test_data():
     inject_and_clear_db("old.json.test.odm.methods")
-    db.cypher_query(STARTUP_ODM_FORMAL_EXPRESSIONS)
-    db.cypher_query(STARTUP_ODM_DESCRIPTIONS)
-    db.cypher_query(STARTUP_ODM_ALIASES)
+
+    db.cypher_query("""CREATE (library:Library {name:"Sponsor", is_editable:true})""")
 
     yield
 
@@ -50,9 +44,24 @@ def test_creating_a_new_odm_method(api_client):
         "name": "name1",
         "oid": "oid1",
         "method_type": "type1",
-        "formal_expressions": ["odm_formal_expression1"],
-        "descriptions": ["odm_description2", "odm_description3"],
-        "alias_uids": ["odm_alias1"],
+        "formal_expressions": [{"context": "context1", "expression": "expression1"}],
+        "descriptions": [
+            {
+                "name": "name2",
+                "language": "eng",
+                "description": "description2",
+                "instruction": "instruction2",
+                "sponsor_instruction": "sponsor_instruction2",
+            },
+            {
+                "name": "name3",
+                "language": "eng",
+                "description": "description3",
+                "instruction": "instruction3",
+                "sponsor_instruction": "sponsor_instruction3",
+            },
+        ],
+        "aliases": [{"context": "context1", "name": "name1"}],
     }
     response = api_client.post("concepts/odms/methods", json=data)
 
@@ -71,36 +80,25 @@ def test_creating_a_new_odm_method(api_client):
     assert res["change_description"] == "Initial version"
     assert res["author_username"] == "unknown-user@example.com"
     assert res["formal_expressions"] == [
-        {
-            "uid": "odm_formal_expression1",
-            "context": "context1",
-            "expression": "expression1",
-            "version": "0.1",
-        }
+        {"context": "context1", "expression": "expression1"}
     ]
     assert res["descriptions"] == [
         {
-            "uid": "odm_description2",
             "name": "name2",
-            "language": "language2",
+            "language": "eng",
             "description": "description2",
             "instruction": "instruction2",
             "sponsor_instruction": "sponsor_instruction2",
-            "version": "0.1",
         },
         {
-            "uid": "odm_description3",
             "name": "name3",
-            "language": "ENG",
+            "language": "eng",
             "description": "description3",
             "instruction": "instruction3",
             "sponsor_instruction": "sponsor_instruction3",
-            "version": "0.1",
         },
     ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res["possible_actions"] == ["approve", "delete", "edit"]
 
 
@@ -122,36 +120,25 @@ def test_getting_non_empty_list_of_odm_methods(api_client):
     assert res["items"][0]["change_description"] == "Initial version"
     assert res["items"][0]["author_username"] == "unknown-user@example.com"
     assert res["items"][0]["formal_expressions"] == [
-        {
-            "uid": "odm_formal_expression1",
-            "context": "context1",
-            "expression": "expression1",
-            "version": "0.1",
-        }
+        {"context": "context1", "expression": "expression1"}
     ]
     assert res["items"][0]["descriptions"] == [
         {
-            "uid": "odm_description2",
             "name": "name2",
-            "language": "language2",
+            "language": "eng",
             "description": "description2",
             "instruction": "instruction2",
             "sponsor_instruction": "sponsor_instruction2",
-            "version": "0.1",
         },
         {
-            "uid": "odm_description3",
             "name": "name3",
-            "language": "ENG",
+            "language": "eng",
             "description": "description3",
             "instruction": "instruction3",
             "sponsor_instruction": "sponsor_instruction3",
-            "version": "0.1",
         },
     ]
-    assert res["items"][0]["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
+    assert res["items"][0]["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res["items"][0]["possible_actions"] == ["approve", "delete", "edit"]
 
 
@@ -183,36 +170,25 @@ def test_getting_a_specific_odm_method(api_client):
     assert res["change_description"] == "Initial version"
     assert res["author_username"] == "unknown-user@example.com"
     assert res["formal_expressions"] == [
-        {
-            "uid": "odm_formal_expression1",
-            "context": "context1",
-            "expression": "expression1",
-            "version": "0.1",
-        }
+        {"context": "context1", "expression": "expression1"}
     ]
     assert res["descriptions"] == [
         {
-            "uid": "odm_description2",
             "name": "name2",
-            "language": "language2",
+            "language": "eng",
             "description": "description2",
             "instruction": "instruction2",
             "sponsor_instruction": "sponsor_instruction2",
-            "version": "0.1",
         },
         {
-            "uid": "odm_description3",
             "name": "name3",
-            "language": "ENG",
+            "language": "eng",
             "description": "description3",
             "instruction": "instruction3",
             "sponsor_instruction": "sponsor_instruction3",
-            "version": "0.1",
         },
     ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res["possible_actions"] == ["approve", "delete", "edit"]
 
 
@@ -234,36 +210,25 @@ def test_getting_versions_of_a_specific_odm_method(api_client):
     assert res[0]["change_description"] == "Initial version"
     assert res[0]["author_username"] == "unknown-user@example.com"
     assert res[0]["formal_expressions"] == [
-        {
-            "uid": "odm_formal_expression1",
-            "context": "context1",
-            "expression": "expression1",
-            "version": "0.1",
-        }
+        {"context": "context1", "expression": "expression1"}
     ]
     assert res[0]["descriptions"] == [
         {
-            "uid": "odm_description2",
             "name": "name2",
-            "language": "language2",
+            "language": "eng",
             "description": "description2",
             "instruction": "instruction2",
             "sponsor_instruction": "sponsor_instruction2",
-            "version": "0.1",
         },
         {
-            "uid": "odm_description3",
             "name": "name3",
-            "language": "ENG",
+            "language": "eng",
             "description": "description3",
             "instruction": "instruction3",
             "sponsor_instruction": "sponsor_instruction3",
-            "version": "0.1",
         },
     ]
-    assert res[0]["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
+    assert res[0]["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res[0]["possible_actions"] == ["approve", "delete", "edit"]
 
 
@@ -273,10 +238,25 @@ def test_updating_an_existing_odm_method(api_client):
         "name": "name10",
         "oid": "oid1",
         "method_type": "type1",
-        "formal_expressions": ["odm_formal_expression1"],
+        "formal_expressions": [{"context": "context1", "expression": "expression1"}],
         "change_description": "name changed",
-        "descriptions": ["odm_description2", "odm_description3"],
-        "alias_uids": ["odm_alias1"],
+        "descriptions": [
+            {
+                "name": "name2",
+                "language": "eng",
+                "description": "description2",
+                "instruction": "instruction2",
+                "sponsor_instruction": "sponsor_instruction2",
+            },
+            {
+                "name": "name3",
+                "language": "eng",
+                "description": "description3",
+                "instruction": "instruction3",
+                "sponsor_instruction": "sponsor_instruction3",
+            },
+        ],
+        "aliases": [{"context": "context1", "name": "name1"}],
     }
     response = api_client.patch("concepts/odms/methods/OdmMethod_000001", json=data)
 
@@ -295,36 +275,65 @@ def test_updating_an_existing_odm_method(api_client):
     assert res["change_description"] == "name changed"
     assert res["author_username"] == "unknown-user@example.com"
     assert res["formal_expressions"] == [
-        {
-            "uid": "odm_formal_expression1",
-            "context": "context1",
-            "expression": "expression1",
-            "version": "0.1",
-        }
+        {"context": "context1", "expression": "expression1"}
     ]
     assert res["descriptions"] == [
         {
-            "uid": "odm_description2",
             "name": "name2",
-            "language": "language2",
+            "language": "eng",
             "description": "description2",
             "instruction": "instruction2",
             "sponsor_instruction": "sponsor_instruction2",
-            "version": "0.1",
         },
         {
-            "uid": "odm_description3",
             "name": "name3",
-            "language": "ENG",
+            "language": "eng",
             "description": "description3",
             "instruction": "instruction3",
             "sponsor_instruction": "sponsor_instruction3",
-            "version": "0.1",
         },
     ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
+    assert res["possible_actions"] == ["approve", "delete", "edit"]
+
+
+def test_getting_a_specific_odm_method_in_specific_version(api_client):
+    response = api_client.get("concepts/odms/methods/OdmMethod_000001?version=0.1")
+
+    assert_response_status_code(response, 200)
+
+    res = response.json()
+
+    assert res["uid"] == "OdmMethod_000001"
+    assert res["name"] == "name1"
+    assert res["library_name"] == "Sponsor"
+    assert res["oid"] == "oid1"
+    assert res["method_type"] == "type1"
+    assert res["end_date"]
+    assert res["status"] == "Draft"
+    assert res["version"] == "0.1"
+    assert res["change_description"] == "Initial version"
+    assert res["author_username"] == "unknown-user@example.com"
+    assert res["formal_expressions"] == [
+        {"context": "context1", "expression": "expression1"}
     ]
+    assert res["descriptions"] == [
+        {
+            "name": "name2",
+            "language": "eng",
+            "description": "description2",
+            "instruction": "instruction2",
+            "sponsor_instruction": "sponsor_instruction2",
+        },
+        {
+            "name": "name3",
+            "language": "eng",
+            "description": "description3",
+            "instruction": "instruction3",
+            "sponsor_instruction": "sponsor_instruction3",
+        },
+    ]
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res["possible_actions"] == ["approve", "delete", "edit"]
 
 
@@ -346,36 +355,25 @@ def test_approving_an_odm_method(api_client):
     assert res["change_description"] == "Approved version"
     assert res["author_username"] == "unknown-user@example.com"
     assert res["formal_expressions"] == [
-        {
-            "uid": "odm_formal_expression1",
-            "context": "context1",
-            "expression": "expression1",
-            "version": "0.1",
-        }
+        {"context": "context1", "expression": "expression1"}
     ]
     assert res["descriptions"] == [
         {
-            "uid": "odm_description2",
             "name": "name2",
-            "language": "language2",
+            "language": "eng",
             "description": "description2",
             "instruction": "instruction2",
             "sponsor_instruction": "sponsor_instruction2",
-            "version": "1.0",
         },
         {
-            "uid": "odm_description3",
             "name": "name3",
-            "language": "ENG",
+            "language": "eng",
             "description": "description3",
             "instruction": "instruction3",
             "sponsor_instruction": "sponsor_instruction3",
-            "version": "1.0",
         },
     ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res["possible_actions"] == ["inactivate", "new_version"]
 
 
@@ -397,36 +395,25 @@ def test_inactivating_a_specific_odm_method(api_client):
     assert res["change_description"] == "Inactivated version"
     assert res["author_username"] == "unknown-user@example.com"
     assert res["formal_expressions"] == [
-        {
-            "uid": "odm_formal_expression1",
-            "context": "context1",
-            "expression": "expression1",
-            "version": "0.1",
-        }
+        {"context": "context1", "expression": "expression1"}
     ]
     assert res["descriptions"] == [
         {
-            "uid": "odm_description2",
             "name": "name2",
-            "language": "language2",
+            "language": "eng",
             "description": "description2",
             "instruction": "instruction2",
             "sponsor_instruction": "sponsor_instruction2",
-            "version": "1.0",
         },
         {
-            "uid": "odm_description3",
             "name": "name3",
-            "language": "ENG",
+            "language": "eng",
             "description": "description3",
             "instruction": "instruction3",
             "sponsor_instruction": "sponsor_instruction3",
-            "version": "1.0",
         },
     ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res["possible_actions"] == ["delete", "reactivate"]
 
 
@@ -448,36 +435,25 @@ def test_reactivating_a_specific_odm_method(api_client):
     assert res["change_description"] == "Reactivated version"
     assert res["author_username"] == "unknown-user@example.com"
     assert res["formal_expressions"] == [
-        {
-            "uid": "odm_formal_expression1",
-            "context": "context1",
-            "expression": "expression1",
-            "version": "0.1",
-        }
+        {"context": "context1", "expression": "expression1"}
     ]
     assert res["descriptions"] == [
         {
-            "uid": "odm_description2",
             "name": "name2",
-            "language": "language2",
+            "language": "eng",
             "description": "description2",
             "instruction": "instruction2",
             "sponsor_instruction": "sponsor_instruction2",
-            "version": "1.0",
         },
         {
-            "uid": "odm_description3",
             "name": "name3",
-            "language": "ENG",
+            "language": "eng",
             "description": "description3",
             "instruction": "instruction3",
             "sponsor_instruction": "sponsor_instruction3",
-            "version": "1.0",
         },
     ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res["possible_actions"] == ["inactivate", "new_version"]
 
 
@@ -499,36 +475,25 @@ def test_creating_a_new_odm_method_version(api_client):
     assert res["change_description"] == "New draft created"
     assert res["author_username"] == "unknown-user@example.com"
     assert res["formal_expressions"] == [
-        {
-            "uid": "odm_formal_expression1",
-            "context": "context1",
-            "expression": "expression1",
-            "version": "0.1",
-        }
+        {"context": "context1", "expression": "expression1"}
     ]
     assert res["descriptions"] == [
         {
-            "uid": "odm_description2",
             "name": "name2",
-            "language": "language2",
+            "language": "eng",
             "description": "description2",
             "instruction": "instruction2",
             "sponsor_instruction": "sponsor_instruction2",
-            "version": "1.1",
         },
         {
-            "uid": "odm_description3",
             "name": "name3",
-            "language": "ENG",
+            "language": "eng",
             "description": "description3",
             "instruction": "instruction3",
             "sponsor_instruction": "sponsor_instruction3",
-            "version": "1.1",
         },
     ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res["possible_actions"] == ["approve", "edit"]
 
 
@@ -542,13 +507,13 @@ def test_create_a_new_odm_method_for_deleting_it(api_client):
         "descriptions": [
             {
                 "name": "name - delete",
-                "language": "ENG",
+                "language": "eng",
                 "description": "description - delete",
                 "instruction": "instruction - delete",
                 "sponsor_instruction": "sponsor_instruction - delete",
             }
         ],
-        "alias_uids": [],
+        "aliases": [],
     }
     response = api_client.post("concepts/odms/methods", json=data)
 
@@ -569,13 +534,11 @@ def test_create_a_new_odm_method_for_deleting_it(api_client):
     assert res["formal_expressions"] == []
     assert res["descriptions"] == [
         {
-            "uid": "OdmDescription_000001",
             "name": "name - delete",
-            "language": "ENG",
+            "language": "eng",
             "description": "description - delete",
             "instruction": "instruction - delete",
             "sponsor_instruction": "sponsor_instruction - delete",
-            "version": "0.1",
         }
     ]
     assert res["aliases"] == []
@@ -598,14 +561,13 @@ def test_creating_a_new_odm_method_with_relations(api_client):
         "descriptions": [
             {
                 "name": "string2",
-                "library_name": "Sponsor",
-                "language": "ENG",
+                "language": "eng",
                 "description": "string2",
                 "instruction": "string2",
                 "sponsor_instruction": "string2",
             },
         ],
-        "alias_uids": [],
+        "aliases": [],
     }
     response = api_client.post("concepts/odms/methods", json=data)
 
@@ -623,23 +585,14 @@ def test_creating_a_new_odm_method_with_relations(api_client):
     assert res["version"] == "0.1"
     assert res["change_description"] == "Initial version"
     assert res["author_username"] == "unknown-user@example.com"
-    assert res["formal_expressions"] == [
-        {
-            "uid": "OdmFormalExpression_000001",
-            "context": "string",
-            "expression": "string",
-            "version": "0.1",
-        }
-    ]
+    assert res["formal_expressions"] == [{"context": "string", "expression": "string"}]
     assert res["descriptions"] == [
         {
-            "uid": "OdmDescription_000002",
             "name": "string2",
-            "language": "ENG",
+            "language": "eng",
             "description": "string2",
             "instruction": "string2",
             "sponsor_instruction": "string2",
-            "version": "0.1",
         },
     ]
     assert res["aliases"] == []
@@ -654,24 +607,19 @@ def test_updating_an_existing_odm_method_with_relations(api_client):
         "method_type": "type1",
         "change_description": "name changed",
         "formal_expressions": [
-            "odm_formal_expression1",
-            {
-                "library_name": "Sponsor",
-                "context": "context3",
-                "expression": "expression3",
-            },
+            {"context": "context1", "expression": "expression1"},
+            {"context": "context4", "expression": "expression4"},
         ],
         "descriptions": [
             {
                 "name": "string3",
-                "library_name": "Sponsor",
-                "language": "ENG",
+                "language": "eng",
                 "description": "string3",
                 "instruction": "string3",
                 "sponsor_instruction": "string3",
             },
         ],
-        "alias_uids": ["odm_alias1"],
+        "aliases": [{"context": "context1", "name": "name1"}],
     }
     response = api_client.patch("concepts/odms/methods/OdmMethod_000001", json=data)
 
@@ -690,33 +638,19 @@ def test_updating_an_existing_odm_method_with_relations(api_client):
     assert res["change_description"] == "name changed"
     assert res["author_username"] == "unknown-user@example.com"
     assert res["formal_expressions"] == [
-        {
-            "uid": "odm_formal_expression1",
-            "context": "context1",
-            "expression": "expression1",
-            "version": "0.1",
-        },
-        {
-            "uid": "OdmFormalExpression_000002",
-            "context": "context3",
-            "expression": "expression3",
-            "version": "0.1",
-        },
+        {"context": "context1", "expression": "expression1"},
+        {"context": "context4", "expression": "expression4"},
     ]
     assert res["descriptions"] == [
         {
-            "uid": "OdmDescription_000003",
             "name": "string3",
-            "language": "ENG",
+            "language": "eng",
             "description": "string3",
             "instruction": "string3",
             "sponsor_instruction": "string3",
-            "version": "0.1",
         },
     ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res["possible_actions"] == ["approve", "edit"]
 
 

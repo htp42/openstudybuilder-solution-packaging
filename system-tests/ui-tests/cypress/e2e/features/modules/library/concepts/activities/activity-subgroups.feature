@@ -95,6 +95,15 @@ Feature: Library - Concepts - Activities - Activity Subgroups
         When The 'Approve' option is clicked from the three dot menu list
         Then The item has status 'Final' and version '2.0'
 
+    @pending_implementation
+    Scenario: Activity groups and activity instances must remain linked to activity subgroup when activity subgroup has been edited
+        Given The '/library/activities/activity-groups' page is opened
+        And The activity subgroup with linked activity instances and activity groups exist
+        And The activity subgroup is edited
+        And The Activity subgroup is approved
+        Then The activity groups previously linked to that subgroup remain linked
+        Then The activity instances previously linked to that subgroup remain linked
+
     Scenario: [Actions][Inactivate] User must be able to inactivate the approved version of the activity subgroup
         And [API] Activity subgroup in status Draft exists
         And [API] Activity subgroup is approved

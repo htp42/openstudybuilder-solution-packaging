@@ -2268,14 +2268,14 @@ class StudyActivitySubGroup(BaseModel):
 
 class StudyActivityGroupEditInput(PatchInputModel):
     show_activity_group_in_protocol_flowchart: Annotated[
-        bool | None, SHOW_ACTIVITY_GROUP_IN_PROTOCOL_FLOWCHART_FIELD
-    ] = None
+        bool, SHOW_ACTIVITY_GROUP_IN_PROTOCOL_FLOWCHART_FIELD
+    ] = False
 
 
 class StudyActivityGroup(BaseModel):
     show_activity_group_in_protocol_flowchart: Annotated[
-        bool | None, SHOW_ACTIVITY_GROUP_IN_PROTOCOL_FLOWCHART_FIELD
-    ] = None
+        bool, SHOW_ACTIVITY_GROUP_IN_PROTOCOL_FLOWCHART_FIELD
+    ]
     study_uid: Annotated[
         str | None,
         Field(description=STUDY_UID_DESC, json_schema_extra={"nullable": True}),
@@ -2834,9 +2834,18 @@ class StudySelectionActivityInstanceEditInput(PatchInputModel):
     keep_old_version: Annotated[bool, Field()] = False
 
 
-class StudySelectionActivityInstanceBatchCreate(InputModel):
-    activity_instance_uids: list[str] = Field(default_factory=list)
-    study_activity_uid: Annotated[str | None, Field()] = None
+class StudySelectionActivityInstanceBatchEditInput(InputModel):
+    activity_instance_uid: Annotated[str | None, Field()] = None
+    study_activity_instance_uid: Annotated[str, Field()]
+    study_activity_uid: Annotated[str, Field()]
+
+
+class StudySelectionActivityInstanceBatchInput(BatchInputModel):
+    method: Annotated[str, METHOD_FIELD]
+    content: (
+        StudySelectionActivityInstanceBatchEditInput
+        | StudySelectionActivityInstanceCreateInput
+    )
 
 
 class StudySelectionActivityInstanceBatchOutput(BaseModel):

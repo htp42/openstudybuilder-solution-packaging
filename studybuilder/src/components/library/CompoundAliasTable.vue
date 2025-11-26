@@ -9,6 +9,9 @@
       column-data-resource="concepts/compound-aliases"
       export-data-url="concepts/compound-aliases"
       export-object-label="compound-aliases"
+      :history-title="$t('_global.audit_trail')"
+      :history-data-fetcher="fetchGlobalAuditTrail"
+      history-change-field="change_description"
       @filter="fetchItems"
     >
       <template #actions="">
@@ -29,11 +32,11 @@
       <template #[`item.is_preferred_synonym`]="{ item }">
         {{ $filters.yesno(item.is_preferred_synonym) }}
       </template>
-      <template #[`item.name`]="{ item }">
+      <template #[`item.compound.name`]="{ item }">
         <router-link
           :to="{ name: 'CompoundOverview', params: { id: item.compound.uid } }"
         >
-          {{ item.name }}
+          {{ item.compound.name }}
         </router-link>
       </template>
       <template #[`item.start_date`]="{ item }">
@@ -179,7 +182,7 @@ export default {
           title: this.$t('CompoundAliasTable.compound_name'),
           key: 'compound.name',
         },
-        { title: this.$t('_global.name'), key: 'name' },
+        { title: this.$t('CompoundAliasTable.compound_alias'), key: 'name' },
         {
           title: this.$t('_global.sentence_case_name'),
           key: 'name_sentence_case',
@@ -301,21 +304,31 @@ export default {
         })
       })
     },
+    transformItems(items) {
+      const result = []
+      for (const item of items) {
+        const newItem = { ...item }
+        if (newItem.is_preferred_synonym !== undefined) {
+          newItem.is_preferred_synonym = dataFormating.yesno(
+            newItem.is_preferred_synonym
+          )
+        }
+        result.push(newItem)
+      }
+      return result
+    },
     async openHistory(item) {
       this.selectedItem = item
       const resp = await compoundAliases.getVersions(this.selectedItem.uid)
-      this.historyItems = resp.data
-      for (const historyItem of this.historyItems) {
-        if (historyItem.is_preferred_synonym !== undefined) {
-          historyItem.is_preferred_synonym = dataFormating.yesno(
-            historyItem.is_preferred_synonym
-          )
-        }
-      }
+      this.historyItems = this.transformItems(resp.data)
       this.showHistory = true
     },
     closeHistory() {
       this.showHistory = false
+    },
+    async fetchGlobalAuditTrail(options) {
+      const resp = await compoundAliases.getAllVersions(options)
+      return this.transformItems(resp.data.items)
     },
   },
 }

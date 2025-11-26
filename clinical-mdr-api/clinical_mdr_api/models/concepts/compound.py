@@ -82,6 +82,13 @@ class SimpleCompound(BaseModel):
 
         return simple_compound_model
 
+    @classmethod
+    def from_input(cls, input_data) -> Self:
+        return cls(
+            uid=input_data.uid,
+            name=input_data.name,
+        )
+
     uid: Annotated[str, Field()]
     name: Annotated[str, Field()]
 

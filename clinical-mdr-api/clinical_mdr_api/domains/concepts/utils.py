@@ -1,6 +1,7 @@
 from enum import Enum
 
-ENG_LANGUAGE = "ENG"
+ENG_LANGUAGE = "eng"
+EN_LANGUAGE = "en"
 
 
 class RelationType(Enum):

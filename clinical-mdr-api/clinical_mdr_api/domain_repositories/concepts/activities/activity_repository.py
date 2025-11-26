@@ -22,7 +22,6 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     VersionRoot,
     VersionValue,
 )
-from clinical_mdr_api.domains._utils import ObjectStatus
 from clinical_mdr_api.domains.concepts.activities.activity import (
     ActivityAR,
     ActivityGroupingVO,
@@ -579,9 +578,7 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
             return f"{_split[0]}.{_split[1]}"
         return key
 
-    def specific_alias_clause(
-        self, only_specific_status: str = ObjectStatus.LATEST.name, **kwargs
-    ) -> str:
+    def specific_alias_clause(self, **kwargs) -> str:
         # concept_value property comes from the main part of the query
         # which is specified in the concept_generic_repository
         activity_subgroup_names = self.filter_query_parameters.get(
@@ -1054,14 +1051,10 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
             for index, attribute_name in enumerate(attribute_names)
         }
 
-    def generic_match_clause(
-        self,
-        only_specific_status: str = ObjectStatus.LATEST.name,
-        **kwargs,
-    ):
+    def generic_match_clause(self, **kwargs):
         concept_label = self.root_class.__label__
         concept_value_label = self.value_class.__label__
-        query = f"""CYPHER runtime=slotted MATCH (concept_root:{concept_label})-[:{only_specific_status}]->(concept_value:{concept_value_label})
+        query = f"""CYPHER runtime=slotted MATCH (concept_root:{concept_label})-[:LATEST]->(concept_value:{concept_value_label})
         """
         # IF group_by_groupings false THEN add grouping granularity
         if kwargs.get("group_by_groupings") is False:
@@ -1243,156 +1236,63 @@ RETURN r.uid, [value IN $syn WHERE value IN v.synonyms] as existingSynonyms
         query = """
             // 1. Find a specific activity version
             MATCH (ar:ActivityRoot {uid: $uid})-[av_rel:HAS_VERSION {version: $version}]->(av:ActivityValue)
-
-            // 2. Find when this version's validity ends (either its end_date or the start of the next version)
-            OPTIONAL MATCH (ar)-[next_rel:HAS_VERSION]->(next_av:ActivityValue)
-            WHERE toFloat(next_rel.version) > toFloat(av_rel.version)
-            WITH av, ar, av_rel, 
-                 CASE WHEN av_rel.end_date IS NULL 
-                      THEN min(next_rel.start_date) 
-                      ELSE av_rel.end_date 
-                 END as version_end_date
-
-            // 3. Find all subgroup and group versions connected to it
-            MATCH (av)-[:HAS_GROUPING]->(agrp:ActivityGrouping)-[:IN_SUBGROUP]->(avg:ActivityValidGroup)
-            MATCH (avg)-[:IN_GROUP]->(gv:ActivityGroupValue)<-[gv_rel:HAS_VERSION]-(gr:ActivityGroupRoot)
-            MATCH (avg)<-[:HAS_GROUP]-(sgv:ActivitySubGroupValue)<-[sgv_rel:HAS_VERSION]-(sgr:ActivitySubGroupRoot)
-
-            // Filter versions that existed when the activity was created
-            WHERE sgv_rel.start_date <= av_rel.start_date AND gv_rel.start_date <= av_rel.start_date
-
-            WITH av, ar, av_rel, sgv, sgv_rel, gv, gv_rel, gr, sgr, avg, version_end_date
-
-            // 4. Find activity instances connected to this activity via groupings
-            OPTIONAL MATCH (avg)<-[:IN_SUBGROUP]-(agrp:ActivityGrouping)<-[:HAS_ACTIVITY]-(activity_instance_value:ActivityInstanceValue)<-[aihv:HAS_VERSION]-(activity_instance_root:ActivityInstanceRoot)
-
-            // Make sure the instance is connected to this specific activity
-            WHERE EXISTS {
-                (activity_instance_value)-[:HAS_ACTIVITY]->(agrp2:ActivityGrouping)-[:HAS_GROUPING]-(av)
-            }
-            AND aihv.start_date <= COALESCE(version_end_date, datetime())
-            AND NOT EXISTS((activity_instance_value)<--(:DeletedActivityInstanceRoot))
-
-            // 5. Collect all relevant data for processing
-            WITH 
-                ar.uid as activity_uid, 
-                av_rel.version as activity_version,
-                avg.uid as valid_group_uid,
-                sgr.uid as subgroup_uid, 
-                gr.uid as group_uid,
-                sgv_rel.version as subgroup_version,
-                gv_rel.version as group_version,
-                sgv.name as subgroup_name,
-                gv.name as group_name,
-                sgv_rel.status as subgroup_status,
-                gv_rel.status as group_status,
-                toInteger(SPLIT(sgv_rel.version, '.')[0]) as sg_major_version,
-                toInteger(SPLIT(sgv_rel.version, '.')[1]) as sg_minor_version,
-                toInteger(SPLIT(gv_rel.version, '.')[0]) as g_major_version,
-                toInteger(SPLIT(gv_rel.version, '.')[1]) as g_minor_version,
-                collect(DISTINCT {
-                    instance_uid: activity_instance_root.uid,
-                    instance_name: activity_instance_value.name
-                }) as activity_instances
-
-            // 6. For each valid group, collect all version information
-            WITH 
-                activity_uid, 
-                activity_version, 
-                valid_group_uid, 
-                subgroup_uid, 
-                group_uid,
-                collect({
-                    sg_major: sg_major_version, 
-                    sg_minor: sg_minor_version, 
-                    g_major: g_major_version, 
-                    g_minor: g_minor_version,
-                    subgroup_version: subgroup_version, 
-                    group_version: group_version,
-                    subgroup_name: subgroup_name, 
-                    group_name: group_name,
-                    subgroup_status: subgroup_status,
-                    group_status: group_status
-                }) as versions,
-                activity_instances
-
-            // 7. Find highest major version
-            WITH 
-                activity_uid, 
-                activity_version, 
-                valid_group_uid, 
-                subgroup_uid, 
-                group_uid, 
-                versions,
-                reduce(max_sg_major = 0, v IN versions | 
-                    CASE WHEN v.sg_major > max_sg_major THEN v.sg_major ELSE max_sg_major END
-                ) as max_sg_major,
-                reduce(max_g_major = 0, v IN versions | 
-                    CASE WHEN v.g_major > max_g_major THEN v.g_major ELSE max_g_major END
-                ) as max_g_major,
-                activity_instances
-
-            // 8. Filter to only include versions with the maximum major version
-            WITH 
-                activity_uid, 
-                activity_version, 
-                valid_group_uid, 
-                subgroup_uid, 
-                group_uid, 
-                [v in versions WHERE v.sg_major = max_sg_major] as sg_max_major_versions,
-                [v in versions WHERE v.g_major = max_g_major] as g_max_major_versions,
-                max_sg_major, 
-                max_g_major,
-                activity_instances
-
-            // 9. Find highest minor version
-            WITH 
-                activity_uid, 
-                activity_version, 
-                valid_group_uid, 
-                subgroup_uid, 
-                group_uid, 
-                max_sg_major, 
-                max_g_major,
-                reduce(max_sg_minor = -1, v IN sg_max_major_versions | 
-                    CASE WHEN v.sg_minor > max_sg_minor THEN v.sg_minor ELSE max_sg_minor END
-                ) as max_sg_minor,
-                reduce(max_g_minor = -1, v IN g_max_major_versions | 
-                    CASE WHEN v.g_minor > max_g_minor THEN v.g_minor ELSE max_g_minor END
-                ) as max_g_minor,
-                sg_max_major_versions, 
-                g_max_major_versions,
-                activity_instances
-
-            // 10. Extract the specific version information
-            WITH 
-                activity_uid, 
-                activity_version, 
-                valid_group_uid, 
-                subgroup_uid, 
-                group_uid, 
-                max_sg_major, 
-                max_sg_minor, 
-                max_g_major, 
-                max_g_minor,
-                [v in sg_max_major_versions WHERE v.sg_minor = max_sg_minor][0] as sg_version_info,
-                [v in g_max_major_versions WHERE v.g_minor = max_g_minor][0] as g_version_info,
-                activity_instances
-
-            // 11. Return data
-            RETURN 
-                activity_uid, 
-                activity_version, 
-                valid_group_uid,
-                subgroup_uid, 
-                sg_version_info.subgroup_name as subgroup_name, 
-                sg_version_info.subgroup_version as subgroup_version,
-                sg_version_info.subgroup_status as subgroup_status,
-                group_uid, 
-                g_version_info.group_name as group_name, 
-                g_version_info.group_version as group_version,
-                g_version_info.group_status as group_status,
-                activity_instances
+MATCH (av)-[:HAS_GROUPING]->(agrp:ActivityGrouping)
+CALL {
+    WITH agrp
+    MATCH (agrp)-[:IN_SUBGROUP]->(avg:ActivityValidGroup)
+    MATCH (avg)-[:IN_GROUP]->(gv:ActivityGroupValue)<-[:HAS_VERSION]-(gr:ActivityGroupRoot)
+    MATCH (avg)<-[:HAS_GROUP]-(sgv:ActivitySubGroupValue)<-[:HAS_VERSION]-(sgr:ActivitySubGroupRoot)
+    RETURN DISTINCT sgv, sgr, gv, gr
+}
+CALL {
+    WITH sgv, sgr
+    MATCH (sgr)-[hv:HAS_VERSION]->(sgv)
+    WITH hv
+    ORDER BY
+        toInteger(split(hv.version, '.')[0]) ASC,
+        toInteger(split(hv.version, '.')[1]) ASC,
+        hv.end_date ASC,
+        hv.start_date ASC
+    WITH collect(hv) as hvs
+    RETURN last(hvs) AS sg_ver
+}
+CALL {
+    WITH gv, gr
+    MATCH (gr)-[hv:HAS_VERSION]->(gv)
+    WITH hv
+    ORDER BY
+        toInteger(split(hv.version, '.')[0]) ASC,
+        toInteger(split(hv.version, '.')[1]) ASC,
+        hv.end_date ASC,
+        hv.start_date ASC
+    WITH collect(hv) as hvs
+    RETURN last(hvs) AS g_ver
+}
+CALL {
+    WITH agrp
+    MATCH (agrp)<-[:HAS_ACTIVITY]-(aiv:ActivityInstanceValue)<-[hv:HAS_VERSION]-(air:ActivityInstanceRoot)
+    WHERE NOT EXISTS((aiv)<--(:DeletedActivityInstanceRoot))
+    WITH aiv, hv, air
+    ORDER BY hv.start_date
+    WITH DISTINCT air, collect({aiv: aiv, version: hv.version}) AS aiv_versions
+    WITH air, last(aiv_versions) AS last_aiv_version
+    WITH DISTINCT last_aiv_version.aiv AS aiv, air, last_aiv_version.version AS instance_version
+    WITH {instance_name: aiv.name, instance_uid: air.uid, instance_version: instance_version} AS instance
+    RETURN collect(instance) AS activity_instances
+}
+RETURN
+  ar.uid AS activity_uid, 
+  av_rel.version AS activity_version, 
+  agrp.uid AS valid_group_uid,
+  sgr.uid AS subgroup_uid, 
+  sgv.name AS subgroup_name, 
+  sg_ver.version AS subgroup_version,
+  sg_ver.status AS subgroup_status,
+  gr.uid AS group_uid, 
+  gv.name AS group_name, 
+  g_ver.version AS group_version,
+  g_ver.status AS group_status,
+  activity_instances
             """
 
         result_array, _ = db.cypher_query(
@@ -1428,24 +1328,29 @@ RETURN r.uid, [value IN $syn WHERE value IN v.synonyms] as existingSynonyms
             # Process instances - filtering out None values and duplicates
             group_instances = []
             for instance in activity_instances:
+
+                # Mark this UID as seen
+                seen_instance_uids.add(instance["instance_uid"])
+
+                # Add to the specific group's instances
+                group_instances.append(
+                    {
+                        "uid": instance["instance_uid"],
+                        "name": instance["instance_name"],
+                        "version": instance.get("instance_version"),
+                    }
+                )
                 if (
                     instance["instance_uid"] is not None
                     and instance["instance_uid"] not in seen_instance_uids
                 ):
-
-                    # Mark this UID as seen
-                    seen_instance_uids.add(instance["instance_uid"])
-
-                    # Add to the specific group's instances
-                    group_instances.append(
-                        {
-                            "uid": instance["instance_uid"],
-                            "name": instance["instance_name"],
-                        }
-                    )
                     # Also track for the global list (backward compatibility)
                     all_activity_instances.add(
-                        (instance["instance_uid"], instance["instance_name"])
+                        (
+                            instance["instance_uid"],
+                            instance["instance_name"],
+                            instance.get("instance_version"),
+                        )
                     )
 
             # Add grouping information with its specific instances
@@ -1470,8 +1375,8 @@ RETURN r.uid, [value IN $syn WHERE value IN v.synonyms] as existingSynonyms
 
         # Convert activity instances to list of dictionaries
         activity_instances_list = [
-            {"uid": uid, "name": name}
-            for uid, name in all_activity_instances
+            {"uid": uid, "name": name, "version": version}
+            for uid, name, version in all_activity_instances
             if uid is not None
         ]
 
@@ -1707,9 +1612,10 @@ RETURN r.uid, [value IN $syn WHERE value IN v.synonyms] as existingSynonyms
         It should fetch only the required field, without supporting wildcard filtering.
         """
 
+        header_query: str | None = None
         # activities/activities/headers?field_name=is_used_by_legacy_instances
         if field_name == "is_used_by_legacy_instances":
-            return """
+            header_query = """
                 WITH concept_value,
                 apoc.coll.toSet([(concept_value)-[:HAS_GROUPING]->(:ActivityGrouping)<-[:HAS_ACTIVITY]-(activity_instance_value:ActivityInstanceValue)
                 <-[has_version:HAS_VERSION]-(activity_instance_root:ActivityInstanceRoot) | {uid: activity_instance_root.uid, name: activity_instance_value.name}]) AS activity_instances,
@@ -1733,5 +1639,12 @@ RETURN r.uid, [value IN $syn WHERE value IN v.synonyms] as existingSynonyms
                         ELSE false
                     END as is_used_by_legacy_instances
             """
-
-        return None
+        # activities/activities/headers?field_name=requester_study_id
+        elif field_name == "requester_study_id":
+            header_query = """WITH CASE
+                WHEN exists((concept_root)<-[:CONTAINS_CONCEPT]-(:Library {name:'Requested'}))
+                THEN head([(concept_root)-[:HAS_VERSION]->(:ActivityValue)<-[:HAS_SELECTED_ACTIVITY]->(:StudyActivity)<-[:HAS_STUDY_ACTIVITY]-(study_value:StudyValue)
+                   | coalesce(study_value.study_id_prefix, "") + "-" + toString(study_value.study_number)])
+                ELSE NULL
+            END AS requester_study_id"""
+        return header_query

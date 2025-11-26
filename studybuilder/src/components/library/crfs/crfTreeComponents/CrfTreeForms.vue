@@ -40,24 +40,32 @@
                 @click="toggleExpand(internalItem)"
               />
               <v-btn v-else variant="text" class="ml-4 hide" icon />
-              <v-btn
-                v-if="sortMode"
-                size="small"
-                variant="text"
-                icon="mdi-arrow-up-thin"
-                @click="orderUp(item, index)"
-              />
-              <v-btn
-                v-if="sortMode"
-                size="small"
-                variant="text"
-                icon="mdi-arrow-down-thin"
-                @click="orderDown(item, index)"
+              <CrfTreeReorderButtons
+                :sort-mode="sortMode"
+                :is-parent-draft="parentCollection.status === statuses.DRAFT"
+                :sibling-length="parentCollection.forms.length"
+                :item="item"
+                :index="index"
+                @order-up="orderUp"
+                @order-down="orderDown"
               />
               <ActionsMenu :actions="actions" :item="item" />
               <span class="ml-2">
-                <v-icon color="crfForm"> mdi-alpha-f-circle-outline </v-icon>
-                {{ item.name }}
+                <v-icon color="crfForm"> mdi-alpha-f-circle </v-icon>
+                <v-tooltip
+                  v-if="item.name.length > 60"
+                  location="top"
+                  max-width="300"
+                  :text="item.name"
+                  interactive
+                >
+                  <template #activator="{ props }">
+                    <span v-bind="props">{{
+                      item.name.substring(0, 60) + '...'
+                    }}</span>
+                  </template>
+                </v-tooltip>
+                <span v-else>{{ item.name }}</span>
               </span>
             </v-row>
           </td>
@@ -85,10 +93,10 @@
                     rounded
                     v-bind="props"
                     color="crfGroup"
-                    :title="$t('CrfTree.link_item_groups')"
+                    :title="$t('CRFTree.link_item_groups')"
                   >
                     <v-icon icon="mdi-plus" />
-                    {{ $t('CrfTree.item_groups') }}
+                    {{ $t('CRFTree.item_groups') }}
                   </v-btn>
                 </div>
               </template>
@@ -98,7 +106,7 @@
                     <v-icon icon="mdi-plus" />
                   </template>
                   <v-list-item-title>
-                    {{ $t('CrfTree.link_existing') }}
+                    {{ $t('CRFTree.link_existing') }}
                   </v-list-item-title>
                 </v-list-item>
                 <v-list-item @click="openCreateAndAddForm(item)">
@@ -106,7 +114,7 @@
                     <v-icon icon="mdi-pencil-outline" />
                   </template>
                   <v-list-item-title>
-                    {{ $t('CrfTree.create_and_link') }}
+                    {{ $t('CRFTree.create_and_link') }}
                   </v-list-item-title>
                 </v-list-item>
               </v-list>
@@ -122,6 +130,7 @@
           :columns="columns"
           :refresh-item-groups="refreshItemGroups"
           :expand-groups-for-form="expandGroupsForForm"
+          @update-parent-form-item-group="updateFormItemGroup"
         />
       </template>
     </v-data-table>
@@ -133,6 +142,7 @@
       class="fullscreen-dialog"
       @close="closeDefinition"
       @link-form="linkForm"
+      @update-form="updateForm"
     />
   </v-dialog>
   <CrfLinkForm
@@ -151,7 +161,7 @@
   </v-dialog>
   <CrfReferencesForm
     :open="showAttributesForm"
-    :parent="parentTemplate"
+    :parent="parentCollection"
     :element="selectedForm"
     :read-only="selectedForm.status === statuses.FINAL"
     @close="closeAttributesForm"
@@ -167,6 +177,8 @@
       @link-group="linkItemGroup"
     />
   </v-dialog>
+  <CrfApprovalSummaryConfirmDialog ref="confirmApproval" />
+  <CrfNewVersionSummaryConfirmDialog ref="confirmNewVersion" />
 </template>
 
 <script>
@@ -183,6 +195,9 @@ import CrfExportForm from '@/components/library/crfs/CrfExportForm.vue'
 import CrfReferencesForm from '@/components/library/crfs/CrfReferencesForm.vue'
 import crfTypes from '@/constants/crfTypes'
 import CrfItemGroupForm from '@/components/library/crfs/CrfItemGroupForm.vue'
+import CrfTreeReorderButtons from '@/components/library/crfs/CrfTreeReorderButtons.vue'
+import CrfApprovalSummaryConfirmDialog from '@/components/library/crfs/CrfApprovalSummaryConfirmDialog.vue'
+import CrfNewVersionSummaryConfirmDialog from '@/components/library/crfs/CrfNewVersionSummaryConfirmDialog.vue'
 
 export default {
   components: {
@@ -195,9 +210,13 @@ export default {
     CrfExportForm,
     CrfReferencesForm,
     CrfItemGroupForm,
+    CrfTreeReorderButtons,
+    CrfApprovalSummaryConfirmDialog,
+    CrfNewVersionSummaryConfirmDialog,
   },
+  inject: ['eventBusEmit'],
   props: {
-    parentTemplate: {
+    parentCollection: {
       type: Object,
       default: null,
     },
@@ -209,7 +228,7 @@ export default {
       type: Number,
       default: null,
     },
-    expandFormsForTemplate: {
+    expandFormsForCollection: {
       type: String,
       default: null,
     },
@@ -218,6 +237,7 @@ export default {
       default: false,
     },
   },
+  emits: ['updateParentCollectionForm'],
   data() {
     return {
       forms: [],
@@ -228,21 +248,35 @@ export default {
       refreshItemGroups: 0,
       actions: [
         {
-          label: this.$t('CrfTree.open_def'),
+          label: this.$t('CRFTree.open_def'),
           icon: 'mdi-arrow-left',
           click: this.openDefinition,
         },
         {
-          label: this.$t('CrfTree.edit_reference'),
+          label: this.$t('CRFTree.edit_reference'),
           icon: 'mdi-pencil-outline',
           click: this.editAttributes,
           condition: (item) => item.status === statuses.DRAFT,
           accessRole: this.$roles.LIBRARY_WRITE,
         },
         {
-          label: this.$t('CrfTree.preview_odm'),
+          label: this.$t('CRFTree.preview_odm'),
           icon: 'mdi-file-xml-box',
           click: this.previewODM,
+        },
+        {
+          label: this.$t('_global.approve'),
+          icon: 'mdi-check-decagram',
+          click: this.approve,
+          condition: (item) => item.status === statuses.DRAFT,
+          accessRole: this.$roles.LIBRARY_WRITE,
+        },
+        {
+          label: this.$t('_global.new_version'),
+          icon: 'mdi-plus-circle-outline',
+          click: this.newVersion,
+          condition: (item) => item.status === statuses.FINAL,
+          accessRole: this.$roles.LIBRARY_WRITE,
         },
         {
           label: this.$t('_global.export'),
@@ -250,7 +284,7 @@ export default {
           click: this.openExportForm,
         },
         {
-          label: this.$t('CrfTree.expand'),
+          label: this.$t('CRFTree.expand'),
           icon: 'mdi-arrow-expand-down',
           condition: (item) => item.item_groups.length > 0,
           click: this.expandAll,
@@ -267,8 +301,8 @@ export default {
     refreshForms() {
       this.fetchForms()
     },
-    expandFormsForTemplate(value) {
-      if (!_isEmpty(value) && value === this.parentTemplate.uid) {
+    expandFormsForCollection(value) {
+      if (!_isEmpty(value) && value === this.parentCollection.uid) {
         this.expanded = this.forms
           .map((form) => (form.item_groups.length > 0 ? form.name : null))
           .filter(function (val) {
@@ -289,6 +323,63 @@ export default {
     this.fetchForms()
   },
   methods: {
+    async newVersion(item) {
+      this.expanded = this.expanded.filter((e) => e !== item.name)
+
+      if (
+        await this.$refs.confirmNewVersion.open({
+          agreeLabel: this.$t('CRFForms.create_new_version'),
+          form: item,
+        })
+      ) {
+        this.loading = true
+
+        crfs.newVersion('forms', item.uid).then((resp) => {
+          if (this.parentCollection.status === statuses.DRAFT) {
+            this.updateForm(resp.data)
+          }
+
+          this.expandAll(item)
+          this.loading = false
+          this.eventBusEmit('notification', {
+            msg: this.$t('_global.new_version_success'),
+          })
+        })
+      }
+    },
+    async approve(item) {
+      this.expanded = this.expanded.filter((e) => e !== item.name)
+
+      if (
+        await this.$refs.confirmApproval.open({
+          agreeLabel: this.$t('CRFForms.approve_form'),
+          form: item,
+        })
+      ) {
+        this.loading = true
+
+        crfs.approve('forms', item.uid).then((resp) => {
+          this.updateForm(resp.data)
+
+          this.expandAll(item)
+          this.loading = false
+          this.eventBusEmit('notification', {
+            msg: this.$t('CRFForms.approved'),
+          })
+        })
+      }
+    },
+    updateFormItemGroup(affectedForm, updatedItemGroup) {
+      if (affectedForm.status === statuses.DRAFT) {
+        const form = this.forms.find((f) => f.uid === affectedForm.uid)
+
+        if (form) {
+          form.item_groups = form.item_groups.map((f) =>
+            f.uid === updatedItemGroup.uid ? { ...f, ...updatedItemGroup } : f
+          )
+        }
+      }
+    },
     openCreateAndAddForm(item) {
       this.selectedForm = item
       this.showCreateForm = true
@@ -315,39 +406,37 @@ export default {
     },
     async fetchForms() {
       this.loading = true
-      const params = {
-        total_count: true,
-        filters: JSON.stringify({
-          uid: { v: this.parentTemplate.forms.map((form) => form.uid) },
-        }),
-        page_size: 0,
-      }
-      await crfs.get('forms', { params }).then((resp) => {
-        this.forms = []
-        this.parentTemplate.forms.forEach((form) => {
-          this.forms.push({
-            ...form,
-            ...resp.data.items.find((a) => a.uid === form.uid),
-          })
+      this.forms = []
+      for (const form of this.parentCollection.forms) {
+        const rs = await crfs.get(`forms/${form.uid}`, {
+          params: { version: form.version },
         })
-        this.refreshItemGroups += 1
-        this.loading = false
-        if (
-          !_isEmpty(this.expandFormsForTemplate) &&
-          this.expandFormsForTemplate === this.parentTemplate.uid
-        ) {
-          this.expanded = this.forms
-            .map((form) => (form.item_groups.length > 0 ? form.name : null))
-            .filter(function (val) {
-              return val !== null
-            })
-          this.expandGroupsForForm = this.forms
-            .map((form) => (form.item_groups.length > 0 ? form.uid : null))
-            .filter(function (val) {
-              return val !== null
-            })
-        }
-      })
+        this.forms.push({ ...form, ...rs.data })
+      }
+
+      this.refreshItemGroups += 1
+      this.loading = false
+      if (
+        !_isEmpty(this.expandFormsForCollection) &&
+        this.expandFormsForCollection === this.parentCollection.uid
+      ) {
+        this.expanded = this.forms
+          .map((form) => (form.item_groups.length > 0 ? form.name : null))
+          .filter(function (val) {
+            return val !== null
+          })
+        this.expandGroupsForForm = this.forms
+          .map((form) => (form.item_groups.length > 0 ? form.uid : null))
+          .filter(function (val) {
+            return val !== null
+          })
+      }
+    },
+    updateForm(form) {
+      this.forms = this.forms.map((f) =>
+        f.uid === form.uid ? { ...f, ...form } : f
+      )
+      this.$emit('updateParentCollectionForm', this.parentCollection, form)
     },
     openDefinition(item) {
       this.selectedForm = item
@@ -389,7 +478,7 @@ export default {
     },
     previewODM(item) {
       this.$router.push({
-        name: 'Crfs',
+        name: 'CrfBuilder',
         params: {
           tab: 'odm-viewer',
           uid: item.uid,
@@ -406,7 +495,7 @@ export default {
         this.forms.sort((a, b) => {
           return a.order_number - b.order_number
         })
-        crfs.addFormsToTemplate(this.forms, this.parentTemplate.uid, true)
+        crfs.addFormsToCollection(this.forms, this.parentCollection.uid, true)
       }
     },
     orderDown(item, index) {
@@ -418,7 +507,7 @@ export default {
         this.forms.sort((a, b) => {
           return a.order_number - b.order_number
         })
-        crfs.addFormsToTemplate(this.forms, this.parentTemplate.uid, true)
+        crfs.addFormsToCollection(this.forms, this.parentCollection.uid, true)
       }
     },
   },

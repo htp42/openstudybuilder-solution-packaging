@@ -2,7 +2,6 @@ import asyncio
 import csv
 import sys
 import time
-import json 
 
 import aiohttp
 
@@ -34,7 +33,6 @@ class StandardCodelistTerms1(BaseImporter):
 
     def limit_codelists(self, codelists):
         self.limit_to_codelists = codelists
-
 
     @open_file_async()
     async def handle_codelist_definitions(self, csvfile, session):
@@ -78,7 +76,9 @@ class StandardCodelistTerms1(BaseImporter):
                 )
                 extensible = False
             try:
-                template_parameter = map_boolean(row["template_parameter"], raise_exception=True)
+                template_parameter = map_boolean(
+                    row["template_parameter"], raise_exception=True
+                )
             except ValueError as e:
                 self.log.warning(
                     f"Error parsing 'template_parameter' value {row['template_parameter']} as boolean \nerror: {e}\nDefaulting to False"
@@ -210,10 +210,10 @@ class StandardCodelistTerms1(BaseImporter):
         if get_result is not None and get_result.get("template_parameter") is True:
             self.metrics.icrement("/ct/codelists-AlreadyIsTemplateParameter")
             return get_result
-        status, post_result = await self.api.post_to_api_async(
+        _status, _post_result = await self.api.post_to_api_async(
             url=data["path"], body={}, session=session
         )
-        patch_status, patch_result = await self.api.patch_to_api_async(
+        _patch_status, _patch_result = await self.api.patch_to_api_async(
             path=data["patch_path"], body=data["body"], session=session
         )
         status, result = await self.api.approve_async(
@@ -224,7 +224,6 @@ class StandardCodelistTerms1(BaseImporter):
         else:
             self.metrics.icrement("/ct/codelists/-NamesApprove")
         return result
-
 
     async def async_run(self):
         timeout = aiohttp.ClientTimeout(None)
@@ -237,7 +236,6 @@ class StandardCodelistTerms1(BaseImporter):
                 MDR_MIGRATION_CODELIST_PARAMETER_SET, session
             )
 
-
     def run(self):
         self.log.info("Importing standard codelists")
         loop = asyncio.get_event_loop()
@@ -245,7 +243,7 @@ class StandardCodelistTerms1(BaseImporter):
         self.log.info("Done importing standard codelists")
 
 
-def main(codelists=[]):
+def main(codelists=None):
     metr = Metrics()
     migrator = StandardCodelistTerms1(metrics_inst=metr)
     if codelists:

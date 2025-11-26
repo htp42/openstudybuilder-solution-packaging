@@ -80,7 +80,7 @@ export default {
   emits: ['close'],
   data() {
     return {
-      templates: [],
+      collections: [],
       forms: [],
       groups: [],
       items: [],
@@ -105,7 +105,7 @@ export default {
   },
   methods: {
     close() {
-      this.templates = []
+      this.collections = []
       this.forms = []
       this.groups = []
       this.items = []
@@ -114,7 +114,7 @@ export default {
     },
     iconTypeAndColor(item) {
       if (item) {
-        if (item.template) {
+        if (item.collection) {
           return { type: 'mdi-alpha-t-circle-outline', color: 'primary' }
         } else if (item.form) {
           return { type: 'mdi-alpha-f-circle-outline', color: 'success' }
@@ -132,9 +132,10 @@ export default {
       this.crfTreeData = []
       const params = {}
       await crfs.get('study-events', { params }).then((resp) => {
-        this.templates = resp.data.items
-        for (const template of this.templates) {
-          this.templates[this.templates.indexOf(template)].template = true
+        this.collections = resp.data.items
+        for (const collection of this.collections) {
+          this.collections[this.collections.indexOf(collection)].collection =
+            true
         }
       })
       await crfs.get('forms', { params }).then((resp) => {
@@ -187,50 +188,50 @@ export default {
         this.graphKey += 1
         return
       }
-      this.templates = this.templates.filter((template) =>
+      this.collections = this.collections.filter((collection) =>
         this.forms.some((form) =>
-          template.forms.some((g) => g.uid === form.uid)
+          collection.forms.some((g) => g.uid === form.uid)
         )
       )
-      for (const template of this.templates) {
-        this.templates[this.templates.indexOf(template)].children =
-          this.templates[this.templates.indexOf(template)].forms.map((form) =>
-            this.forms.find((el) => el.uid === form.uid)
+      for (const collection of this.collections) {
+        this.collections[this.collections.indexOf(collection)].children =
+          this.collections[this.collections.indexOf(collection)].forms.map(
+            (form) => this.forms.find((el) => el.uid === form.uid)
           )
-        this.templates[this.templates.indexOf(template)].children =
-          this.templates[this.templates.indexOf(template)].children.filter(
-            function (val) {
-              return val !== undefined
-            }
-          )
+        this.collections[this.collections.indexOf(collection)].children =
+          this.collections[
+            this.collections.indexOf(collection)
+          ].children.filter(function (val) {
+            return val !== undefined
+          })
       }
-      if (this.templates.length > 0) {
-        this.crfData = this.templates
+      if (this.collections.length > 0) {
+        this.crfData = this.collections
       }
       this.loading = false
       this.graphKey += 1
     },
-    async getTemplates(form) {
+    async getCollections(form) {
       await crfs.getRelationships(form.uid, 'forms').then((resp) => {
-        this.templates = resp.data.OdmTemplate
+        this.collections = resp.data.OdmStudyEvent
       })
-      if (this.templates) {
+      if (this.collections) {
         const params = {
           filters: {
-            uid: { v: this.templates },
+            uid: { v: this.collections },
           },
         }
         await crfs.get('study-events', { params }).then((resp) => {
-          this.templates = resp.data.items
+          this.collections = resp.data.items
         })
       }
     },
-    async getForms(template, group) {
-      if (template) {
+    async getForms(collection, group) {
+      if (collection) {
         const params = {
           filters: {
             uid: {
-              v: Array.from(template.forms.map((f) => (f.uid ? f.uid : f))),
+              v: Array.from(collection.forms.map((f) => (f.uid ? f.uid : f))),
             },
           },
         }
@@ -261,14 +262,14 @@ export default {
         })
       }
     },
-    async getDataFromTemplateLevel() {
+    async getDataFromCollectionLevel() {
       this.loading = true
       this.crfData = [
         {
           name: this.item.name,
           uid: this.item.uid,
           children: [],
-          template: true,
+          collection: true,
         },
       ]
       await this.getForms(this.item, null)
@@ -318,15 +319,15 @@ export default {
         }
       }
       if (this.fullData) {
-        await this.getTemplates(this.item)
-        if (this.templates && this.templates.length > 0) {
-          this.crfData = this.templates
+        await this.getCollections(this.item)
+        if (this.collections && this.collections.length > 0) {
+          this.crfData = this.collections
           for (const el of this.crfData) {
             this.crfData[this.crfData.indexOf(el)] = {
               name: el.name,
               uid: el.uid,
               children: dataFromForm,
-              template: true,
+              collection: true,
             }
           }
         }
@@ -362,15 +363,15 @@ export default {
           }
           this.crfData = this.forms
           for (const form of this.forms) {
-            await this.getTemplates(form)
-            if (this.templates && this.templates.length > 0) {
+            await this.getCollections(form)
+            if (this.collections && this.collections.length > 0) {
               this.crfData = []
-              for (const template of this.templates) {
+              for (const collection of this.collections) {
                 this.crfData.push({
-                  name: template.name,
-                  uid: template.uid,
+                  name: collection.name,
+                  uid: collection.uid,
                   children: [form],
-                  template: true,
+                  collection: true,
                 })
               }
             }
@@ -397,8 +398,8 @@ export default {
     },
     fetchData() {
       this.activeNodes = [this.item.name]
-      if (this.type === 'template') {
-        this.getDataFromTemplateLevel()
+      if (this.type === 'collection') {
+        this.getDataFromCollectionLevel()
       } else if (this.type === 'form') {
         this.getDataFromFormLevel()
       } else if (this.type === 'group') {

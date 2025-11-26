@@ -14,7 +14,6 @@ from .utils.api_bindings import (
     CODELIST_CRITERIA_SUBCATEGORY,
     CODELIST_CRITERIA_TYPE,
     CODELIST_DELIVERY_DEVICE,
-    CODELIST_DOSAGE_FORM,
     CODELIST_ELEMENT_SUBTYPE,
     CODELIST_ELEMENT_TYPE,
     CODELIST_ENDPOINT_CATEGORY,
@@ -28,7 +27,6 @@ from .utils.api_bindings import (
     CODELIST_NULL_FLAVOR,
     CODELIST_OBJECTIVE_CATEGORY,
     CODELIST_OBJECTIVE_LEVEL,
-    CODELIST_ROUTE_OF_ADMINISTRATION,
     CODELIST_SEX_OF_PARTICIPANTS,
     CODELIST_STUDY_TYPE,
     CODELIST_TIMEPOINT_REFERENCE,
@@ -60,7 +58,9 @@ API_HEADERS = {"Accept": "application/json"}
 SAMPLE = load_env("MDR_MIGRATION_SAMPLE", default="False").lower() == "true"
 API_BASE_URL = load_env("API_BASE_URL")
 
-MDR_MIGRATION_FROM_SAME_ENV = environ.get("MDR_MIGRATION_FROM_SAME_ENV", "False").lower() == "true"
+MDR_MIGRATION_FROM_SAME_ENV = (
+    environ.get("MDR_MIGRATION_FROM_SAME_ENV", "False").lower() == "true"
+)
 
 IMPORT_PROJECTS = load_env("IMPORT_PROJECTS")
 MDR_MIGRATION_EXPORTED_PROGRAMMES = (
@@ -202,7 +202,7 @@ TEMPLATE_PARAM_MAP = {
         "path": "/concepts/visit-names",
         "template": import_templates.study_week,
         "import": True,
-    }
+    },
     # TODO handle these two properly
     #    "TimePoint": {
     #        "path": "/concepts/time-points",
@@ -215,6 +215,7 @@ TEMPLATE_PARAM_MAP = {
     #        "import": True
     #        }
 }
+
 
 # Print any object nicely, useful while debugging
 def jsonprint(data):
@@ -244,7 +245,9 @@ class MockdataJson(BaseImporter):
             library = ("Sponsor", "Requested")
         else:
             library = "Sponsor"
-        return self.lookup_concept_uid(name, "activities/activities", library=library, only_final=True)
+        return self.lookup_concept_uid(
+            name, "activities/activities", library=library, only_final=True
+        )
 
     def lookup_activity_group_uid(self, name):
         return self.lookup_concept_uid(name, "activities/activity-groups")
@@ -305,7 +308,7 @@ class MockdataJson(BaseImporter):
 
     # @lru_cache(maxsize=10000)
     def lookup_study_epoch_uid(self, study_uid, epoch_name):
-        self.log.info(
+        self.log.debug(
             f"Looking up study epoch name '{epoch_name}' for study '{study_uid}'"
         )
         filt = {"epoch_name": {"v": [epoch_name], "op": "eq"}}
@@ -382,7 +385,7 @@ class MockdataJson(BaseImporter):
             if uid is not None:
                 return uid
         else:
-            self.log.info(
+            self.log.debug(
                 f"Looking up parameter with name '{name}' of type '{param_type}'"
             )
             items = self.get_template_parameters(param_type)
@@ -412,7 +415,7 @@ class MockdataJson(BaseImporter):
         if shortname is None:
             shortname = name
         path = f"/{template_type}-templates"
-        self.log.info(
+        self.log.debug(
             f"Looking up {template_type} template with name '{shortname}' and subtype '{subtype}'"
         )
         filt = {"name": {"v": [name], "op": "eq"}}
@@ -437,7 +440,7 @@ class MockdataJson(BaseImporter):
         if shortname is None:
             shortname = name
         path = f"/{template_type}-pre-instances"
-        self.log.info(
+        self.log.debug(
             f"Looking up {template_type} pre-instance with name '{shortname}' and subtype '{subtype_id}'"
         )
         filt = {"name": {"v": [name], "op": "eq"}}
@@ -486,7 +489,7 @@ class MockdataJson(BaseImporter):
     @lru_cache(maxsize=10000)
     def lookup_study_objective_uid(self, name, study_uid):
         path = f"/studies/{study_uid}/study-objectives"
-        self.log.info(f"Looking up study objective with name '{name}'")
+        self.log.debug(f"Looking up study objective with name '{name}'")
         filt = {"objective.name": {"v": [name], "op": "eq"}}
         items = self.api.get_all_from_api(path, params={"filters": json.dumps(filt)})
         if items is not None and len(items) > 0:
@@ -497,7 +500,7 @@ class MockdataJson(BaseImporter):
 
     @lru_cache(maxsize=10000)
     def lookup_study_visit_uid(self, study_uid, visit_name):
-        self.log.info(
+        self.log.debug(
             f"Looking up study visit name '{visit_name}' for study '{study_uid}'"
         )
         filt = {"visit_name": {"v": [visit_name], "op": "eq"}}
@@ -516,7 +519,7 @@ class MockdataJson(BaseImporter):
     def lookup_study_activity_uid(
         self, study_uid, activity_name, group_name=None, subgroup_name=None
     ):
-        self.log.info(
+        self.log.debug(
             f"Looking up study activity name '{activity_name}' with group '{group_name}', subgroup '{subgroup_name}' for study '{study_uid}'"
         )
         # filt = {"activity.name": {"v": [activity_name], "op": "eq"}}
@@ -737,7 +740,13 @@ class MockdataJson(BaseImporter):
         pos[key] = value
 
     # Recursive walk through a dict to copy all values
-    def _copy_parameters_with_values(self, data_old, template, path=[], data_new={}):
+    def _copy_parameters_with_values(
+        self, data_old, template, path=None, data_new=None
+    ):
+        if path is None:
+            path = []
+        if data_new is None:
+            data_new = {}
         for key in list(template.keys()):
             if not key.lower().endswith("uid"):
                 value_old = data_old.get(key, None)
@@ -875,7 +884,7 @@ class MockdataJson(BaseImporter):
     ################### Study metadata uid lookups ################
 
     def fill_high_level_study_design(self, data):
-        self.log.info("--- Looking up data for High Level Study Design ---")
+        self.log.debug("--- Looking up data for High Level Study Design ---")
         metadata = self.get_dict_path(
             data, ["current_metadata", "high_level_study_design"], default={}
         )
@@ -904,7 +913,7 @@ class MockdataJson(BaseImporter):
         self.fill_null_value_codes(metadata, template)
 
     def fill_study_population(self, data):
-        self.log.info("--- Looking up data for Study Population ---")
+        self.log.debug("--- Looking up data for Study Population ---")
         metadata = self.get_dict_path(
             data, ["current_metadata", "study_population"], default={}
         )
@@ -928,7 +937,7 @@ class MockdataJson(BaseImporter):
         self.fill_null_value_codes(metadata, template)
 
     def fill_study_intervention(self, data):
-        self.log.info("--- Looking up data for Study Interventions ---")
+        self.log.debug("--- Looking up data for Study Interventions ---")
         metadata = self.get_dict_path(
             data, ["current_metadata", "study_intervention"], default={}
         )
@@ -1162,7 +1171,9 @@ class MockdataJson(BaseImporter):
             return study_id
 
         # Patch it to add more data
-        self.log.info(f"Patching study '{study_id}' with study number {study_nbr} and uid '{study_data['uid']}'")
+        self.log.info(
+            f"Patching study '{study_id}' with study number {study_nbr} and uid '{study_data['uid']}'"
+        )
         patch_data = copy.deepcopy(import_templates.study_patch)
 
         data = self._copy_parameters_with_values(
@@ -1360,7 +1371,9 @@ class MockdataJson(BaseImporter):
                         flow_name = item["study_soa_group"]["soa_group_term_name"]
                     else:
                         flow_name = item["study_soa_group"]["soa_group_name"]
-                data["soa_group_term_uid"] = self.lookup_codelist_term_uid(CODELIST_FLOWCHART_GROUP, flow_name)
+                data["soa_group_term_uid"] = self.lookup_codelist_term_uid(
+                    CODELIST_FLOWCHART_GROUP, flow_name
+                )
                 if data["soa_group_term_uid"] is None:
                     self.log.error(
                         f"Unable to find SoA group {flow_name}, skipping this entry"
@@ -1370,13 +1383,17 @@ class MockdataJson(BaseImporter):
                 # Reuse the UID from the exported data
                 # Use the UID as name, only used for logging
                 flow_name = item["study_soa_group"]["soa_group_term_uid"]
-                data["soa_group_term_uid"] = item["study_soa_group"]["soa_group_term_uid"]
+                data["soa_group_term_uid"] = item["study_soa_group"][
+                    "soa_group_term_uid"
+                ]
 
             act_name = item["activity"]["name"]
 
             if not MDR_MIGRATION_FROM_SAME_ENV:
                 # Look up the UID by name
-                data["activity_uid"] = self.lookup_activity_uid(act_name, allow_requested=True)
+                data["activity_uid"] = self.lookup_activity_uid(
+                    act_name, allow_requested=True
+                )
             else:
                 # Reuse the UID from the exported data
                 data["activity_uid"] = item["activity"]["uid"]
@@ -1394,7 +1411,9 @@ class MockdataJson(BaseImporter):
                 # Look up the group and subgroup UIDs by name
                 if item.get("study_activity_group", {}).get(
                     "activity_group_name"
-                ) and item.get("study_activity_subgroup", {}).get("activity_subgroup_name"):
+                ) and item.get("study_activity_subgroup", {}).get(
+                    "activity_subgroup_name"
+                ):
                     # Group and subgroup names are available in the exported data
                     group_name = item["study_activity_group"]["activity_group_name"]
                     subgroup_name = item["study_activity_subgroup"][
@@ -1404,7 +1423,9 @@ class MockdataJson(BaseImporter):
                     subgroup_uid = self.lookup_activity_subgroup_uid(subgroup_name)
                 elif item.get("study_activity_group", {}).get(
                     "activity_group_uid"
-                ) and item.get("study_activity_subgroup", {}).get("activity_subgroup_uid"):
+                ) and item.get("study_activity_subgroup", {}).get(
+                    "activity_subgroup_uid"
+                ):
                     # Group and subgroup uids are not directly available in the exported data,
                     # Look them up via the activity groupings.
                     for grouping in item["activity"]["activity_groupings"]:
@@ -1417,7 +1438,9 @@ class MockdataJson(BaseImporter):
                             group_name = grouping["activity_group_name"]
                             subgroup_name = grouping["activity_subgroup_name"]
                             group_uid = self.lookup_activity_group_uid(group_name)
-                            subgroup_uid = self.lookup_activity_subgroup_uid(subgroup_name)
+                            subgroup_uid = self.lookup_activity_subgroup_uid(
+                                subgroup_name
+                            )
                             break
 
                 if group_uid and subgroup_uid:
@@ -1432,8 +1455,12 @@ class MockdataJson(BaseImporter):
                 data["activity_subgroup_uid"] = subgroup_uid
             else:
                 # Reuse the UIDs from the exported data
-                data["activity_group_uid"] = item["study_activity_group"]["activity_group_uid"]
-                data["activity_subgroup_uid"] = item["study_activity_subgroup"]["activity_subgroup_uid"]
+                data["activity_group_uid"] = item["study_activity_group"][
+                    "activity_group_uid"
+                ]
+                data["activity_subgroup_uid"] = item["study_activity_subgroup"][
+                    "activity_subgroup_uid"
+                ]
 
             # print(json.dumps(data, indent=2))
             path = f"/studies/{study_uid}/study-activities"
@@ -1455,7 +1482,6 @@ class MockdataJson(BaseImporter):
         study_uid = self.lookup_study_uid_from_id(study_name)
         study_epochs = self.api.get_all_from_api(f"/studies/{study_uid}/study-epochs")
 
-        epochs_to_add = []
         imported = json.load(jsonfile)
 
         # Need to sort in order
@@ -1488,7 +1514,9 @@ class MockdataJson(BaseImporter):
             if not uid and not epoch_sub_name.endswith(" Epoch"):
                 # Try again with an "Epoch" suffix
                 epoch_sub_name_edited = epoch_sub_name + " Epoch"
-                uid = self.lookup_ct_term_uid(CODELIST_EPOCH_SUBTYPE, epoch_sub_name_edited)
+                uid = self.lookup_ct_term_uid(
+                    CODELIST_EPOCH_SUBTYPE, epoch_sub_name_edited
+                )
             if uid:
                 self.log.info(
                     f"Found epoch subtype '{epoch_sub_name}' with uid '{uid}'"
@@ -1662,7 +1690,9 @@ class MockdataJson(BaseImporter):
             if "visit_contact_mode_name" in imported_visit:
                 contmode = imported_visit["visit_contact_mode_name"]
             else:
-                contmode = imported_visit["visit_contact_mode"]["sponsor_preferred_name"]
+                contmode = imported_visit["visit_contact_mode"][
+                    "sponsor_preferred_name"
+                ]
             data["visit_contact_mode_uid"] = self.lookup_ct_term_uid(
                 CODELIST_VISIT_CONTACT_MODE, contmode
             )
@@ -1677,7 +1707,7 @@ class MockdataJson(BaseImporter):
                 continue
 
             if data.get("visit_sublabel_reference") is not None:
-                self.log.info(
+                self.log.debug(
                     f"Looking up parent visit for subvisit of visit {imported_visit['visit_number']}"
                 )
                 ref_uid = self._find_parent_visit(
@@ -2054,9 +2084,9 @@ class MockdataJson(BaseImporter):
                             if not key.lower().endswith("uid"):
                                 valuedata[key] = val.get(key, None)
                             else:
-                                valuedata[
-                                    key
-                                ] = self.lookup_or_create_parameter_value_uid(val)
+                                valuedata[key] = (
+                                    self.lookup_or_create_parameter_value_uid(val)
+                                )
                         paramdata["terms"].append(valuedata)
                     # Only include if the parameter has some content
                     if len(paramdata["terms"]) > 0:
@@ -2068,6 +2098,7 @@ class MockdataJson(BaseImporter):
         import_data = json.load(jsonfile)
         category_codelist = None
         subcategory_codelist = None
+        type_codelist = None
         if template_type == "objective":
             if is_preinstance:
                 post_data = import_templates.objective_preinstance
@@ -2640,7 +2671,7 @@ class MockdataJson(BaseImporter):
 
     @open_file()
     def get_study_activity_names(self, jsonfile):
-        self.log.info(f"======== Mapping study activity uids to names ========")
+        self.log.info("======== Mapping study activity uids to names ========")
         activities = json.load(jsonfile)
         names = {}
         for activity in activities:
@@ -2661,7 +2692,7 @@ class MockdataJson(BaseImporter):
 
     @open_file()
     def get_study_visit_names(self, jsonfile):
-        self.log.info(f"======== Mapping study visit uids to names ========")
+        self.log.info("======== Mapping study visit uids to names ========")
         visits = json.load(jsonfile)
         names = {}
         for visit in visits:
@@ -2750,9 +2781,7 @@ class MockdataJson(BaseImporter):
         imported = json.load(jsonfile)
         codelist_uid = self.get_codelist_uid_from_submval("UNIT")
         existing_terms = self.fetch_terms_for_codelist_submval("UNIT")
-        existing_names = [
-            term["sponsor_preferred_name"] for term in existing_terms
-        ]
+        existing_names = [term["sponsor_preferred_name"] for term in existing_terms]
         for term in imported:
             name = term.get("name", {}).get("sponsor_preferred_name")
             if name in existing_names:
@@ -2762,9 +2791,9 @@ class MockdataJson(BaseImporter):
             if "attributes" in term:
                 data["catalogue_names"] = [term.get("catalogue_name")]
                 data["codelists"][0]["codelist_uid"] = codelist_uid
-                data["codelists"][0]["submission_value"] = term.get("attributes", {}).get(
-                    "code_submission_value"
-                )
+                data["codelists"][0]["submission_value"] = term.get(
+                    "attributes", {}
+                ).get("code_submission_value")
                 data["codelists"][0]["order"] = term.get("name", {}).get("order")
                 # TODO remove this, should not exist
                 data["order"] = term.get("name", {}).get("order")
@@ -2780,7 +2809,9 @@ class MockdataJson(BaseImporter):
                 )
                 data["library_name"] = term.get("library_name")
             else:
-                self.log.warning("Skipping term '{}' that is in a new format, please update this script!")
+                self.log.warning(
+                    "Skipping term '{}' that is in a new format, please update this script!"
+                )
                 continue
             path = "/ct/terms"
             self.log.info(

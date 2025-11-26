@@ -1,12 +1,10 @@
 import asyncio
-import csv
 import sys
 
 import aiohttp
 
 from .functions.utils import create_logger, load_env
-from .utils.api_bindings import CODELIST_ELEMENT_TYPE, CODELIST_EPOCH_TYPE
-from .utils.importer import BaseImporter, open_file_async
+from .utils.importer import BaseImporter
 from .utils.metrics import Metrics
 
 logger = create_logger("legacy_mdr_migrations")
@@ -85,25 +83,59 @@ MDR_MIGRATION_UNIT_DIMENSION = load_env("MDR_MIGRATION_UNIT_DIMENSION")
 MDR_MIGRATION_SPONSOR_DOMAIN = load_env("MDR_MIGRATION_SPONSOR_DOMAIN")
 
 MDR_MIGRATION_EPOCH_ORDER = load_env("MDR_MIGRATION_EPOCH_ORDER")
-MDR_MIGRATION_CATEGORY_FOR_CLINICAL_EVENTS = load_env("MDR_MIGRATION_CATEGORY_FOR_CLINICAL_EVENTS")
-MDR_MIGRATION_CATEGORY_FOR_HEALTHCARE_ENCOUNTERS = load_env("MDR_MIGRATION_CATEGORY_FOR_HEALTHCARE_ENCOUNTERS")
-MDR_MIGRATION_CATEGORY_FOR_MEDICAL_HISTORY = load_env("MDR_MIGRATION_CATEGORY_FOR_MEDICAL_HISTORY")
-MDR_MIGRATION_CATEGORY_FOR_VITAL_SIGNS = load_env("MDR_MIGRATION_CATEGORY_FOR_VITAL_SIGNS")
-MDR_MIGRATION_SUBCATEGORY_FOR_MEDICAL_HISTORY = load_env("MDR_MIGRATION_SUBCATEGORY_FOR_MEDICAL_HISTORY")
-MDR_MIGRATION_EVENT_ADJUDICATION_TEST_NAME = load_env("MDR_MIGRATION_EVENT_ADJUDICATION_TEST_NAME")
-MDR_MIGRATION_EVENT_ADJUDICATION_TEST_CODE = load_env("MDR_MIGRATION_EVENT_ADJUDICATION_TEST_CODE")
-MDR_MIGRATION_PHARMACOKINETIC_TEST_NAME = load_env("MDR_MIGRATION_PHARMACOKINETIC_TEST_NAME")
-MDR_MIGRATION_PHARMACOKINETIC_TEST_CODE = load_env("MDR_MIGRATION_PHARMACOKINETIC_TEST_CODE")
-MDR_MIGRATION_CATEGORY_FOR_REPRODUCTIVE_SYSTEM_FINDING = load_env("MDR_MIGRATION_CATEGORY_FOR_REPRODUCTIVE_SYSTEM_FINDING")
-MDR_MIGRATION_CATEGORY_FOR_ECG_TEST_RESULTS = load_env("MDR_MIGRATION_CATEGORY_FOR_ECG_TEST_RESULTS")
-MDR_MIGRATION_CATEGORY_FOR_OPHTHALMIC_TEST_OR_EXAM = load_env("MDR_MIGRATION_CATEGORY_FOR_OPHTHALMIC_TEST_OR_EXAM")
-MDR_MIGRATION_RESPONSE_LIST_FOR_HEPATIC_EVENT_TOPIC_CODES = load_env("MDR_MIGRATION_RESPONSE_LIST_FOR_HEPATIC_EVENT_TOPIC_CODES")
+MDR_MIGRATION_CATEGORY_FOR_CLINICAL_EVENTS = load_env(
+    "MDR_MIGRATION_CATEGORY_FOR_CLINICAL_EVENTS"
+)
+MDR_MIGRATION_CATEGORY_FOR_HEALTHCARE_ENCOUNTERS = load_env(
+    "MDR_MIGRATION_CATEGORY_FOR_HEALTHCARE_ENCOUNTERS"
+)
+MDR_MIGRATION_CATEGORY_FOR_MEDICAL_HISTORY = load_env(
+    "MDR_MIGRATION_CATEGORY_FOR_MEDICAL_HISTORY"
+)
+MDR_MIGRATION_CATEGORY_FOR_VITAL_SIGNS = load_env(
+    "MDR_MIGRATION_CATEGORY_FOR_VITAL_SIGNS"
+)
+MDR_MIGRATION_SUBCATEGORY_FOR_MEDICAL_HISTORY = load_env(
+    "MDR_MIGRATION_SUBCATEGORY_FOR_MEDICAL_HISTORY"
+)
+MDR_MIGRATION_EVENT_ADJUDICATION_TEST_NAME = load_env(
+    "MDR_MIGRATION_EVENT_ADJUDICATION_TEST_NAME"
+)
+MDR_MIGRATION_EVENT_ADJUDICATION_TEST_CODE = load_env(
+    "MDR_MIGRATION_EVENT_ADJUDICATION_TEST_CODE"
+)
+MDR_MIGRATION_PHARMACOKINETIC_TEST_NAME = load_env(
+    "MDR_MIGRATION_PHARMACOKINETIC_TEST_NAME"
+)
+MDR_MIGRATION_PHARMACOKINETIC_TEST_CODE = load_env(
+    "MDR_MIGRATION_PHARMACOKINETIC_TEST_CODE"
+)
+MDR_MIGRATION_CATEGORY_FOR_REPRODUCTIVE_SYSTEM_FINDING = load_env(
+    "MDR_MIGRATION_CATEGORY_FOR_REPRODUCTIVE_SYSTEM_FINDING"
+)
+MDR_MIGRATION_CATEGORY_FOR_ECG_TEST_RESULTS = load_env(
+    "MDR_MIGRATION_CATEGORY_FOR_ECG_TEST_RESULTS"
+)
+MDR_MIGRATION_CATEGORY_FOR_OPHTHALMIC_TEST_OR_EXAM = load_env(
+    "MDR_MIGRATION_CATEGORY_FOR_OPHTHALMIC_TEST_OR_EXAM"
+)
+MDR_MIGRATION_RESPONSE_LIST_FOR_HEPATIC_EVENT_TOPIC_CODES = load_env(
+    "MDR_MIGRATION_RESPONSE_LIST_FOR_HEPATIC_EVENT_TOPIC_CODES"
+)
 MDR_MIGRATION_NAME_OF_TREATMENT_EC = load_env("MDR_MIGRATION_NAME_OF_TREATMENT_EC")
-MDR_MIGRATION_CATEGORY_FOR_PROCEDURE_AGENTS = load_env("MDR_MIGRATION_CATEGORY_FOR_PROCEDURE_AGENTS")
-MDR_MIGRATION_CATEGORY_FOR_CONCOMITANT_MEDICATIONS = load_env("MDR_MIGRATION_CATEGORY_FOR_CONCOMITANT_MEDICATIONS")
-MDR_MIGRATION_CATEGORY_FOR_EXPOSURE_AS_COLLECTED = load_env("MDR_MIGRATION_CATEGORY_FOR_EXPOSURE_AS_COLLECTED")
+MDR_MIGRATION_CATEGORY_FOR_PROCEDURE_AGENTS = load_env(
+    "MDR_MIGRATION_CATEGORY_FOR_PROCEDURE_AGENTS"
+)
+MDR_MIGRATION_CATEGORY_FOR_CONCOMITANT_MEDICATIONS = load_env(
+    "MDR_MIGRATION_CATEGORY_FOR_CONCOMITANT_MEDICATIONS"
+)
+MDR_MIGRATION_CATEGORY_FOR_EXPOSURE_AS_COLLECTED = load_env(
+    "MDR_MIGRATION_CATEGORY_FOR_EXPOSURE_AS_COLLECTED"
+)
 MDR_MIGRATION_CATEGORY_FOR_EXPOSURE = load_env("MDR_MIGRATION_CATEGORY_FOR_EXPOSURE")
-MDR_MIGRATION_CATEGORY_FOR_SUBSTANCE_USE = load_env("MDR_MIGRATION_CATEGORY_FOR_SUBSTANCE_USE")
+MDR_MIGRATION_CATEGORY_FOR_SUBSTANCE_USE = load_env(
+    "MDR_MIGRATION_CATEGORY_FOR_SUBSTANCE_USE"
+)
 MDR_DATA_SUPPLIER_TYPE = load_env("MDR_DATA_SUPPLIER_TYPE")
 MDR_MIGRATION_LOCK_STUDY_MILESTONE = load_env("MDR_MIGRATION_LOCK_STUDY_MILESTONE")
 MDR_MIGRATION_UNLOCK_STUDY_MILESTONE = load_env("MDR_MIGRATION_UNLOCK_STUDY_MILESTONE")
@@ -123,7 +155,7 @@ class StandardCodelistTerms2(BaseImporter):
     async def async_run(self):
         # we have to get all codelists when sponsor one will be migrated
         # otherwise sponsor defined terms won't know to which codelist they should connect
-        code_lists_uids = self.api.get_code_lists_uids()
+        _code_lists_uids = self.api.get_code_lists_uids()
         codelists_to_import = [
             (MDR_MIGRATION_CRITERIA_TYPE, "Criteria Type"),
             (MDR_MIGRATION_CRITERIA_CATEGORY, "Criteria Category"),
@@ -167,10 +199,8 @@ class StandardCodelistTerms2(BaseImporter):
             (MDR_MIGRATION_DISEASE_MILESTONE, "Disease Milestone Type"),
             (MDR_MIGRATION_REGISTID, "Registry Identifier"),
             (MDR_MIGRATION_EVENT_CATEGORIES, "Event Category Definition"),
-            
             (MDR_MIGRATION_EVENT_SUBCATEGORIES, "Event Subcategory Definition"),
             (MDR_MIGRATION_FINDING_CATEGORIES, "Finding Category Definition"),
-            
             (MDR_MIGRATION_FINDING_SUBCATEGORIES, "Finding Subcategory Definition"),
             (MDR_MIGRATION_INTERVENTION_CATEGORIES, "Intervention Category Definition"),
             (
@@ -182,23 +212,62 @@ class StandardCodelistTerms2(BaseImporter):
             (MDR_MIGRATION_SPONSOR_UNITS, "Unit"),
             (MDR_MIGRATION_UNIT_DIMENSION, "Unit Dimension"),
             (MDR_MIGRATION_SPONSOR_DOMAIN, "SDTM Domain Abbreviation"),
-            (MDR_MIGRATION_CATEGORY_FOR_CLINICAL_EVENTS, "Category for Clinical Events"),
-            (MDR_MIGRATION_CATEGORY_FOR_HEALTHCARE_ENCOUNTERS, "Category for Healthcare Encounters"),
-            (MDR_MIGRATION_CATEGORY_FOR_MEDICAL_HISTORY, "Category for Medical History"),
+            (
+                MDR_MIGRATION_CATEGORY_FOR_CLINICAL_EVENTS,
+                "Category for Clinical Events",
+            ),
+            (
+                MDR_MIGRATION_CATEGORY_FOR_HEALTHCARE_ENCOUNTERS,
+                "Category for Healthcare Encounters",
+            ),
+            (
+                MDR_MIGRATION_CATEGORY_FOR_MEDICAL_HISTORY,
+                "Category for Medical History",
+            ),
             (MDR_MIGRATION_CATEGORY_FOR_VITAL_SIGNS, "Category for Vital Signs"),
-            (MDR_MIGRATION_SUBCATEGORY_FOR_MEDICAL_HISTORY, "Subcategory for Medical History"),
-            (MDR_MIGRATION_EVENT_ADJUDICATION_TEST_CODE, "Event Adjudication Test Code"),
-            (MDR_MIGRATION_EVENT_ADJUDICATION_TEST_NAME, "Event Adjudication Test Name"),
+            (
+                MDR_MIGRATION_SUBCATEGORY_FOR_MEDICAL_HISTORY,
+                "Subcategory for Medical History",
+            ),
+            (
+                MDR_MIGRATION_EVENT_ADJUDICATION_TEST_CODE,
+                "Event Adjudication Test Code",
+            ),
+            (
+                MDR_MIGRATION_EVENT_ADJUDICATION_TEST_NAME,
+                "Event Adjudication Test Name",
+            ),
             (MDR_MIGRATION_PHARMACOKINETIC_TEST_CODE, "Pharmacokinetic Test Code"),
             (MDR_MIGRATION_PHARMACOKINETIC_TEST_NAME, "Pharmacokinetic Test Name"),
-            (MDR_MIGRATION_CATEGORY_FOR_REPRODUCTIVE_SYSTEM_FINDING, "Category for Reproductive System Finding"),
-            (MDR_MIGRATION_CATEGORY_FOR_ECG_TEST_RESULTS, "Category for ECG Test Results"),
-            (MDR_MIGRATION_CATEGORY_FOR_OPHTHALMIC_TEST_OR_EXAM, "Category for Ophthalmic Test or Exam"),
-            (MDR_MIGRATION_RESPONSE_LIST_FOR_HEPATIC_EVENT_TOPIC_CODES, "Response list for hepatic event topic codes"),
+            (
+                MDR_MIGRATION_CATEGORY_FOR_REPRODUCTIVE_SYSTEM_FINDING,
+                "Category for Reproductive System Finding",
+            ),
+            (
+                MDR_MIGRATION_CATEGORY_FOR_ECG_TEST_RESULTS,
+                "Category for ECG Test Results",
+            ),
+            (
+                MDR_MIGRATION_CATEGORY_FOR_OPHTHALMIC_TEST_OR_EXAM,
+                "Category for Ophthalmic Test or Exam",
+            ),
+            (
+                MDR_MIGRATION_RESPONSE_LIST_FOR_HEPATIC_EVENT_TOPIC_CODES,
+                "Response list for hepatic event topic codes",
+            ),
             (MDR_MIGRATION_NAME_OF_TREATMENT_EC, "Name of Treatment - EC"),
-            (MDR_MIGRATION_CATEGORY_FOR_PROCEDURE_AGENTS, "Category for Procedure Agents"),
-            (MDR_MIGRATION_CATEGORY_FOR_CONCOMITANT_MEDICATIONS, "Category for Concomitant Medications"),
-            (MDR_MIGRATION_CATEGORY_FOR_EXPOSURE_AS_COLLECTED, "Category for Exposure as Collected"),
+            (
+                MDR_MIGRATION_CATEGORY_FOR_PROCEDURE_AGENTS,
+                "Category for Procedure Agents",
+            ),
+            (
+                MDR_MIGRATION_CATEGORY_FOR_CONCOMITANT_MEDICATIONS,
+                "Category for Concomitant Medications",
+            ),
+            (
+                MDR_MIGRATION_CATEGORY_FOR_EXPOSURE_AS_COLLECTED,
+                "Category for Exposure as Collected",
+            ),
             (MDR_MIGRATION_CATEGORY_FOR_EXPOSURE, "Category for Exposure"),
             (MDR_MIGRATION_CATEGORY_FOR_SUBSTANCE_USE, "Category for Substance Use"),
             (MDR_DATA_SUPPLIER_TYPE, "Data Supplier Type"),
@@ -209,7 +278,9 @@ class StandardCodelistTerms2(BaseImporter):
         timeout = aiohttp.ClientTimeout(None)
         for file_path, codelist_name in codelists_to_import:
             if self.limit_to_codelists and codelist_name not in self.limit_to_codelists:
-                self.log.info(f"Skipping import of terms for codelist '{codelist_name}'")
+                self.log.info(
+                    f"Skipping import of terms for codelist '{codelist_name}'"
+                )
                 continue
             conn = aiohttp.TCPConnector(limit=4, force_close=True)
             async with aiohttp.ClientSession(
@@ -243,7 +314,7 @@ class StandardCodelistTerms2(BaseImporter):
         self.log.info("Done migrating sponsor terms")
 
 
-def main(codelists=[]):
+def main(codelists=None):
     metr = Metrics()
     migrator = StandardCodelistTerms2(metrics_inst=metr)
     if codelists:

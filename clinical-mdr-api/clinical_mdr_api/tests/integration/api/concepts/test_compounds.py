@@ -57,11 +57,7 @@ def test_data():
     # Create some compounds
     compounds_all = []
     compound_aliases_all = []
-    compounds_all.append(
-        TestUtils.create_compound(
-            name=f"Compound A {rand}",
-        )
-    )
+    compounds_all.append(TestUtils.create_compound(name=f"Compound A {rand}"))
 
     compounds_all.append(TestUtils.create_compound(name=f"name-AAA-{rand}"))
     compounds_all.append(TestUtils.create_compound(name=f"name-BBB-{rand}"))
@@ -69,7 +65,9 @@ def test_data():
     compounds_all.append(TestUtils.create_compound(definition=f"def-YYY-{rand}"))
 
     for index in range(5):
-        compound_a = TestUtils.create_compound(name=f"name-AAA-{rand}-{index}")
+        compound_a = TestUtils.create_compound(
+            name=f"name-AAA-{rand}-{index}", approve=True
+        )
         compounds_all.append(compound_a)
         compound_aliases_all.append(
             TestUtils.create_compound_alias(
@@ -170,7 +168,9 @@ def test_get_compounds_versions(api_client):
 
     assert_response_status_code(response, 200)
     assert len(res["items"]) == 10
-    assert res["total"] == len(compounds_all)
+    assert (
+        res["total"] == len(compounds_all) + 5
+    )  # +5 because 5 compound was approved, so they have 2 versions
 
     for item in res["items"]:
         assert set(list(item.keys())) == set(COMPOUND_FIELDS_ALL)

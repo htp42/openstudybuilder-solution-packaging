@@ -296,12 +296,14 @@ function getColumnData(value) {
     if (typeof items.value[0] === 'object') {
       const deconstructedItems = []
       items.value.forEach((item) => {
-        if (item.length > 1) {
-          item.forEach((i) => {
-            deconstructedItems.push(i.name)
-          })
-        } else if (item.length !== 0) {
-          deconstructedItems.push(item[0].name)
+        if (item) {
+          if (item.length > 1) {
+            item.forEach((i) => {
+              deconstructedItems.push(i.name)
+            })
+          } else if (item.length !== 0) {
+            deconstructedItems.push(item[0].name)
+          }
         }
       })
       items.value = Array.from(new Set(deconstructedItems))

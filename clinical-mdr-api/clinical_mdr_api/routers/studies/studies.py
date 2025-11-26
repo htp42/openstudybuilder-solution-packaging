@@ -41,6 +41,7 @@ from clinical_mdr_api.routers._generic_descriptions import (
     study_fields_audit_trail_section_description,
     study_section_description,
 )
+from clinical_mdr_api.services.studies.complexity_score import ComplexityScoreService
 from clinical_mdr_api.services.studies.study import StudyService
 from clinical_mdr_api.services.studies.study_pharma_cm import StudyPharmaCMService
 from common.auth import rbac
@@ -1222,4 +1223,30 @@ def patch_soa_preferences(
     return study_service.patch_study_soa_preferences(
         study_uid=study_uid,
         soa_preferences=soa_preferences,
+    )
+
+
+@router.get(
+    "/{study_uid}/complexity-score",
+    dependencies=[security, rbac.STUDY_READ],
+    summary="Get study complexity score",
+    response_model_by_alias=False,
+    status_code=200,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - study with the specified 'study_uid' doesn't exist",
+        },
+    },
+)
+def get_complexity_score(
+    study_uid: Annotated[str, StudyUID],
+    study_version_number: Annotated[
+        str | None, Query(description="Study Version Number", example="2.1")
+    ] = None,
+) -> float:
+    service = ComplexityScoreService()
+    return service.calculate_site_complexity_score(
+        study_uid=study_uid,
+        study_version_number=study_version_number,
     )

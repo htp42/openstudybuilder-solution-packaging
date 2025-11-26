@@ -73,5 +73,8 @@ export const useStudyActivitiesStore = defineStore('studyActivities', {
     batchSelectStudyActivityInstances(studyUid, data) {
       return study.batchSelectStudyActivityInstances(studyUid, data)
     },
+    deleteStudyActivityInstance(studyUid, instanceUid) {
+      return study.deleteStudyActivityInstance(studyUid, instanceUid)
+    },
   },
 })

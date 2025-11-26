@@ -277,6 +277,16 @@ def api_patch(path: str, payload: dict, params: Optional[Any] = None):
     return res
 
 
+def api_delete(path: str):
+    """Issues http DELETE request with specified payload.
+    Returns the response."""
+    url = API_BASE_URL + path
+    logger.info("DELETE %s", url)
+    res = requests.delete(url, timeout=30, headers=API_HEADERS)
+    assert res.status_code in [204], f"Response status {res.status_code} is not 204."
+    return res
+
+
 def parse_db_url(db_url):
     auth_info = re.search(r"//(.+?)@", db_url).group(1)
     username, password = auth_info.split(":")

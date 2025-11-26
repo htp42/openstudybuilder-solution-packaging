@@ -10,7 +10,6 @@
     export-data-url="ct/terms"
     :export-data-url-params="exportUrlParams"
     export-object-label="Terms"
-    item-value="term_uid"
     class="mt-4"
     column-data-resource="ct/codelists/terms"
     :codelist-uid="codelistUid"

@@ -176,6 +176,30 @@ def test_updating_an_existing_odm_vendor_namespace(api_client):
     assert res["possible_actions"] == ["approve", "delete", "edit"]
 
 
+def test_getting_a_specific_odm_vendor_namespace_in_specific_version(api_client):
+    response = api_client.get(
+        "concepts/odms/vendor-namespaces/OdmVendorNamespace_000001?version=0.1"
+    )
+
+    assert_response_status_code(response, 200)
+
+    res = response.json()
+
+    assert res["uid"] == "OdmVendorNamespace_000001"
+    assert res["library_name"] == "Sponsor"
+    assert res["name"] == "name1"
+    assert res["prefix"] == "prefix"
+    assert res["url"] == "url1"
+    assert res["end_date"]
+    assert res["status"] == "Draft"
+    assert res["version"] == "0.1"
+    assert res["change_description"] == "Initial version"
+    assert res["author_username"] == "unknown-user@example.com"
+    assert res["vendor_attributes"] == []
+    assert res["vendor_elements"] == []
+    assert res["possible_actions"] == ["approve", "delete", "edit"]
+
+
 def test_approving_an_odm_vendor_namespace(api_client):
     response = api_client.post(
         "concepts/odms/vendor-namespaces/OdmVendorNamespace_000001/approvals"

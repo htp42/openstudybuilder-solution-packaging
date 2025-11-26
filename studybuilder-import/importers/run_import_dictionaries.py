@@ -75,9 +75,8 @@ UNII_DEFINITION_MAPPER = {
         "body": {
             "name": row[headers.index("CD_VAL_LB")],
             "name_sentence_case": row[headers.index("CD_VAL_LB")].lower(),
-            "dictionary_id": row[
-                headers.index("CD_VAL")
-            ] or "TBD",  # find out which field is dictionaryID
+            "dictionary_id": row[headers.index("CD_VAL")]
+            or "TBD",  # find out which field is dictionaryID
             "codelist_uid": None,
             "library_name": "UNII",
             "pclass_uid": None,
@@ -172,7 +171,7 @@ class Dictionaries(BaseImporter):
             headers = next(csv_data)
             all_dictionary_codelist = self.api.get_all_identifiers(
                 self.api.get_all_from_api(
-                    f"/dictionaries/codelists", params={"library_name": library}
+                    "/dictionaries/codelists", params={"library_name": library}
                 ),
                 identifier="name",
                 value="codelist_uid",
@@ -266,7 +265,7 @@ class Dictionaries(BaseImporter):
             headers = next(readCSV)
             all_dictionary_codelist = self.api.get_all_identifiers(
                 self.api.get_all_from_api(
-                    f"/dictionaries/codelists", params={"library_name": library}
+                    "/dictionaries/codelists", params={"library_name": library}
                 ),
                 identifier="name",
                 value="codelist_uid",

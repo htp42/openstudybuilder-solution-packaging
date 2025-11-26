@@ -14,7 +14,10 @@ const subcategoryActivityItemClasses = {
   Interventions: 'intervention_subcategory',
 }
 
+const sdtmDomainAbbreviationCodelistUid = 'C66734'
+
 export default {
   categoryActivityItemClasses,
   subcategoryActivityItemClasses,
+  sdtmDomainAbbreviationCodelistUid,
 }

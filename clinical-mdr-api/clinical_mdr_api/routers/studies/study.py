@@ -24,7 +24,7 @@ from clinical_mdr_api.models.study_selections.study_selection import (
     StudySelectionActivityInput,
     StudySelectionActivityInSoACreateInput,
     StudySelectionActivityInstance,
-    StudySelectionActivityInstanceBatchCreate,
+    StudySelectionActivityInstanceBatchInput,
     StudySelectionActivityInstanceBatchOutput,
     StudySelectionActivityInstanceCreateInput,
     StudySelectionActivityInstanceEditInput,
@@ -3701,10 +3701,10 @@ def patch_study_activity_instance_sync_to_latest_activity_instance(
 
 
 @router.post(
-    "/studies/{study_uid}/study-activity-instances/batch-select",
+    "/studies/{study_uid}/study-activity-instances/batch",
     dependencies=[security, rbac.STUDY_WRITE],
-    summary="Batch select ActivityInstance to a given Study",
-    status_code=201,
+    summary="Batch create/edit StudyActivityInstances to a given Study",
+    status_code=207,
     responses={
         403: _generic_descriptions.ERROR_403,
         404: {
@@ -3714,17 +3714,17 @@ def patch_study_activity_instance_sync_to_latest_activity_instance(
     },
 )
 @decorators.validate_if_study_is_not_locked("study_uid")
-def post_new_soa_footnotes_batch_select(
+def study_activity_instances_batch(
     study_uid: Annotated[str, studyUID],
-    create_payload: Annotated[
-        StudySelectionActivityInstanceBatchCreate,
+    operations: Annotated[
+        list[StudySelectionActivityInstanceBatchInput],
         Body(
-            description="Related parameters of the StudyActivityInstance that shall be created."
+            description="Related parameters of the StudyActivityInstance that shall be batch created/edited."
         ),
     ],
 ) -> list[StudySelectionActivityInstanceBatchOutput]:
     service = StudyActivityInstanceSelectionService()
-    return service.batch_create(study_uid=study_uid, create_payload=create_payload)
+    return service.handle_batch_operations(study_uid=study_uid, operations=operations)
 
 
 #

@@ -1,5 +1,13 @@
 <template>
   <v-card elevation="0" class="rounded-0">
+    <v-alert
+      v-if="studiesGeneralStore.selectedStudy.study_parent_part"
+      color="nnLightBlue200"
+      icon="mdi-information-outline"
+      class="text-nnTrueBlue mx-4 my-2"
+    >
+      {{ $t('_global.sub_study_edit_warning') }}
+    </v-alert>
     <v-card-title
       style="z-index: 3; position: relative"
       class="pt-0 mt-3 d-flex align-center"

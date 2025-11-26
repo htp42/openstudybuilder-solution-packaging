@@ -380,3 +380,27 @@ input[type='datetime-local'] {
 .v-list-item__spacer {
   width: 16px !important;
 }
+
+.shake {
+  animation-name: shake;
+  animation-duration: 0.82s;
+}
+@keyframes shake {
+  10%,
+  90% {
+    transform: translate3d(-6px, 0, 0);
+  }
+  20%,
+  80% {
+    transform: translate3d(6px, 0, 0);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translate3d(-10px, 0, 0);
+  }
+  40%,
+  60% {
+    transform: translate3d(10px, 0, 0);
+  }
+}

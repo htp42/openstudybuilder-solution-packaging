@@ -121,6 +121,15 @@ Feature: Library - Concepts - Activities - Activity Groups
         When The 'Approve' option is clicked from the three dot menu list
         Then The item has status 'Final' and version '1.0'
 
+    @pending_implementation
+    Scenario: Activity subgroups and activity instances must remain linked to activity group when activity group has been edited
+        Given The '/library/activities/activity-groups' page is opened
+        And The activity group with linked activity instances and activity subgroups exist
+        And The activity group is edited
+        And The Activity group is approved
+        Then The activity subgroups previously linked to that group remain linked
+        Then The activity instances previously linked to that group remain linked
+
     Scenario: [Actions][Delete] User must be able to Delete the intial created version of the activity group
         And [API] Activity group in status Draft exists
         And Activity group is searched for and found

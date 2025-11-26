@@ -77,6 +77,11 @@ def test_post_create_compound2(api_client):
     assert res["possible_actions"] == ["approve", "delete", "edit"]
 
 
+def test_post_approve_compound2(api_client):
+    response = api_client.post("/concepts/compounds/Compound_000001/approvals")
+    assert_response_status_code(response, 201)
+
+
 def test_post_create_compound_alias_preferred_synonym(api_client):
     data = {
         "name": "compound_alias_name1",
@@ -159,8 +164,7 @@ def test_post_compound_alias_as_second_preferred_synonym(api_client):
 
     assert res["type"] == "AlreadyExistsException"
     assert (
-        res["message"]
-        == "Preferred synonym(s) already defined for Compound with UID 'Compound_000001'."
+        res["message"] == "Another preferred synonym for compound is already defined."
     )
 
 
@@ -185,8 +189,7 @@ def test_patch_compound_alias_as_second_preferred_synonym(api_client):
 
     assert res["type"] == "AlreadyExistsException"
     assert (
-        res["message"]
-        == "Preferred synonym(s) already defined for Compound with UID 'Compound_000001'."
+        res["message"] == "Another preferred synonym for compound is already defined."
     )
 
 

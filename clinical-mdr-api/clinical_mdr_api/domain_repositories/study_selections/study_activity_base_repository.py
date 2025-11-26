@@ -273,7 +273,6 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
         self,
         study_selection: StudySelectionBaseAR,
         author_id: str,
-        make_order_check=True,
     ) -> None:
         assert study_selection.repository_closure_data is not None
         # get the closure_data
@@ -316,6 +315,13 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
                         # update the selection by removing the old if the old exists, and adding new selection
                         selections_to_remove.append((order, closure_data[order - 1]))
                         selections_to_add.append((order, selection))
+                elif (
+                    selection_order := getattr(selection, "order", None)
+                ) and selection_order != order:
+                    selections_to_remove.append(
+                        (selection_order, closure_data[order - 1])
+                    )
+                    selections_to_add.append((order, selection))
             else:
                 # else something new have been added
                 selections_to_add.append((order, selection))
@@ -382,12 +388,10 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
                 audit_node.date = selection.start_date
                 audit_node.save()
                 study_root_node.audit_trail.connect(audit_node)
-            new_order = order
-            if not make_order_check:
-                new_order = selection.order
+
             self._add_new_selection(
                 latest_study_value_node,
-                new_order,
+                order,
                 selection,
                 audit_node,
                 last_study_selection_node,

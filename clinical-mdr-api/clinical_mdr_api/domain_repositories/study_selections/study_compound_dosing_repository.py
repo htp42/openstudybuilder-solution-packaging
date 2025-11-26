@@ -337,7 +337,7 @@ class StudyCompoundDosingRepository:
             OPTIONAL MATCH (all_scd)-[:HAS_DOSE_FREQUENCY]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(df:CTTermRoot)
             WITH all_scd, sc, se, asa, bsa, car, cr, mpr, dvr, df
             ORDER BY all_scd.uid, asa.date DESC
-            RETURN
+            RETURN DISTINCT
                 all_scd.uid AS uid,
                 all_scd.order AS order,
                 se.uid AS study_element_uid,
@@ -415,7 +415,7 @@ class StudyCompoundDosingRepository:
         OPTIONAL MATCH (scd)<-[:STUDY_COMPOUND_HAS_COMPOUND_DOSING]-(sc)-[:HAS_SELECTED_COMPOUND]->(:CompoundAliasValue)-[:IS_COMPOUND]->(cr:CompoundRoot)
         OPTIONAL MATCH (sc)-[:HAS_MEDICINAL_PRODUCT]->(:MedicinalProductValue)<-[:HAS_VERSION]-(mpr:MedicinalProductRoot)
         OPTIONAL MATCH (scd)<-[:STUDY_ELEMENT_HAS_COMPOUND_DOSING]-(se)--(sv)
-        OPTIONAL MATCH (scd)<-[:STUDY_COMPOUND_HAS_COMPOUND_DOSING]-(sc)--(sv)
+        MATCH (scd)<-[:STUDY_COMPOUND_HAS_COMPOUND_DOSING]-(sc)<-[:HAS_STUDY_COMPOUND]-(sv)
         WITH DISTINCT sr, sv, scd, sc, se, car, cr, mpr
         OPTIONAL MATCH (scd)-[:HAS_DOSE_VALUE]->(dvr:NumericValueWithUnitRoot)
         OPTIONAL MATCH (scd)-[:HAS_DOSE_FREQUENCY]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(df:CTTermRoot)
@@ -508,12 +508,12 @@ class StudyCompoundDosingRepository:
         self, study_compound_dosing: StudyCompoundDosingVO
     ) -> str | None:
         query = """
-            MATCH (:StudyRoot {uid: $study_uid})-[:LATEST]->(:StudyValue)-[rel:HAS_STUDY_COMPOUND_DOSING]->
-                    (scd:StudyCompoundDosing)-[HAS_DOSE_FREQUENCY]->(dfr:CTTermRoot {uid: $dose_frequency_uid})
+            MATCH (:StudyRoot {uid: $study_uid})-[:LATEST]->(sv:StudyValue)-[rel:HAS_STUDY_COMPOUND_DOSING]->
+                    (scd:StudyCompoundDosing)-[HAS_DOSE_FREQUENCY]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(dfr:CTTermRoot {uid: $dose_frequency_uid})
             WITH *
             MATCH (scd)-[:HAS_DOSE_VALUE]->(dvr:NumericValueWithUnitRoot {uid: $dose_value_uid})
             WITH *
-            MATCH (scd)<-[:STUDY_COMPOUND_HAS_COMPOUND_DOSING]-(sc:StudyCompound {uid: $study_compound_uid})               
+            MATCH (scd)<-[:STUDY_COMPOUND_HAS_COMPOUND_DOSING]-(sc:StudyCompound {uid: $study_compound_uid})<-[:HAS_STUDY_COMPOUND]-(sv)
             RETURN scd
             """
         result, _ = db.cypher_query(

@@ -63,6 +63,9 @@ def get_all_odm_conditions(
     total_count: Annotated[
         bool, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
+    version: Annotated[
+        str | None, Query(description="Get a specific version of the ODM element")
+    ] = None,
 ) -> CustomPage[OdmCondition]:
     odm_condition_service = OdmConditionService()
     results = odm_condition_service.get_all_concepts(
@@ -73,6 +76,7 @@ def get_all_odm_conditions(
         total_count=total_count,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
+        version=version or None,
     )
     return CustomPage(
         items=results.items, total=results.total, page=page_number, size=page_size
@@ -139,9 +143,14 @@ def get_distinct_values_for_header(
 )
 def get_odm_condition(
     odm_condition_uid: Annotated[str, OdmConditionUID],
+    version: Annotated[
+        str | None, Query(description="Get a specific version of the ODM element")
+    ] = None,
 ) -> OdmCondition:
     odm_condition_service = OdmConditionService()
-    return odm_condition_service.get_by_uid(uid=odm_condition_uid)
+    return odm_condition_service.get_by_uid(
+        uid=odm_condition_uid, version=version or None
+    )
 
 
 @router.get(
@@ -216,9 +225,7 @@ def create_odm_condition(
     odm_condition_create_input: Annotated[OdmConditionPostInput, Body()],
 ) -> OdmCondition:
     odm_condition_service = OdmConditionService()
-    return odm_condition_service.create_with_relations(
-        concept_input=odm_condition_create_input
-    )
+    return odm_condition_service.create(concept_input=odm_condition_create_input)
 
 
 @router.patch(
@@ -248,7 +255,7 @@ def edit_odm_condition(
     odm_condition_edit_input: Annotated[OdmConditionPatchInput, Body()],
 ) -> OdmCondition:
     odm_condition_service = OdmConditionService()
-    return odm_condition_service.update_with_relations(
+    return odm_condition_service.edit_draft(
         uid=odm_condition_uid, concept_edit_input=odm_condition_edit_input
     )
 

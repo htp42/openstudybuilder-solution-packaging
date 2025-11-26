@@ -65,6 +65,9 @@ def get_all_odm_vendor_attributes(
     total_count: Annotated[
         bool, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
+    version: Annotated[
+        str | None, Query(description="Get a specific version of the ODM element")
+    ] = None,
 ) -> CustomPage[OdmVendorAttribute]:
     odm_vendor_attribute_service = OdmVendorAttributeService()
     results = odm_vendor_attribute_service.get_all_concepts(
@@ -75,6 +78,7 @@ def get_all_odm_vendor_attributes(
         total_count=total_count,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
+        version=version or None,
     )
     return CustomPage(
         items=results.items, total=results.total, page=page_number, size=page_size
@@ -141,9 +145,14 @@ def get_distinct_values_for_header(
 )
 def get_odm_vendor_attribute(
     odm_vendor_attribute_uid: Annotated[str, OdmVendorAttributeUID],
+    version: Annotated[
+        str | None, Query(description="Get a specific version of the ODM element")
+    ] = None,
 ) -> OdmVendorAttribute:
     odm_vendor_attribute_service = OdmVendorAttributeService()
-    return odm_vendor_attribute_service.get_by_uid(uid=odm_vendor_attribute_uid)
+    return odm_vendor_attribute_service.get_by_uid(
+        uid=odm_vendor_attribute_uid, version=version or None
+    )
 
 
 @router.get(
@@ -167,7 +176,7 @@ def get_active_relationships(
 
 @router.get(
     "/{odm_vendor_attribute_uid}/versions",
-    dependencies=[security, rbac.LIBRARY_READ],
+    dependencies=[security, rbac.ADMIN_READ],
     summary="List version history for ODM Vendor Attribute",
     description="""
 State before:
@@ -203,7 +212,7 @@ def get_odm_vendor_attribute_versions(
 
 @router.post(
     "",
-    dependencies=[security, rbac.LIBRARY_WRITE],
+    dependencies=[security, rbac.ADMIN_WRITE],
     summary="Creates a new Vendor Attribute in 'Draft' status with version 0.1",
     status_code=201,
     responses={
@@ -230,7 +239,7 @@ def create_odm_vendor_attribute(
 
 @router.patch(
     "/{odm_vendor_attribute_uid}",
-    dependencies=[security, rbac.LIBRARY_WRITE],
+    dependencies=[security, rbac.ADMIN_WRITE],
     summary="Update ODM Vendor Attribute",
     status_code=200,
     responses={
@@ -261,7 +270,7 @@ def edit_odm_vendor_attribute(
 
 @router.post(
     "/{odm_vendor_attribute_uid}/versions",
-    dependencies=[security, rbac.LIBRARY_WRITE],
+    dependencies=[security, rbac.ADMIN_WRITE],
     summary=" Create a new version of ODM Vendor Attribute",
     description="""
 State before:
@@ -303,7 +312,7 @@ def create_odm_vendor_attribute_version(
 
 @router.post(
     "/{odm_vendor_attribute_uid}/approvals",
-    dependencies=[security, rbac.LIBRARY_WRITE],
+    dependencies=[security, rbac.ADMIN_WRITE],
     summary="Approve draft version of ODM Vendor Attribute",
     status_code=201,
     responses={
@@ -330,7 +339,7 @@ def approve_odm_vendor_attribute(
 
 @router.delete(
     "/{odm_vendor_attribute_uid}/activations",
-    dependencies=[security, rbac.LIBRARY_WRITE],
+    dependencies=[security, rbac.ADMIN_WRITE],
     summary=" Inactivate final version of ODM Vendor Attribute",
     status_code=200,
     responses={
@@ -356,7 +365,7 @@ def inactivate_odm_vendor_attribute(
 
 @router.post(
     "/{odm_vendor_attribute_uid}/activations",
-    dependencies=[security, rbac.LIBRARY_WRITE],
+    dependencies=[security, rbac.ADMIN_WRITE],
     summary="Reactivate retired version of a ODM Vendor Attribute",
     status_code=200,
     responses={
@@ -382,7 +391,7 @@ def reactivate_odm_vendor_attribute(
 
 @router.delete(
     "/{odm_vendor_attribute_uid}",
-    dependencies=[security, rbac.LIBRARY_WRITE],
+    dependencies=[security, rbac.ADMIN_WRITE],
     summary="Delete draft version of ODM Vendor Attribute",
     status_code=204,
     responses={

@@ -1,6 +1,8 @@
 # pylint: disable=unused-argument
 # pylint: disable=redefined-outer-name
 # pylint: disable=too-many-arguments
+from typing import Any
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -266,9 +268,9 @@ total_study_visits: int = 25
 study_activities: list[models.StudyActivity]
 study_activity_instances: list[models.StudyActivityInstance]
 total_study_activities: int = 25
-study_detailed_soas: list[models.StudyDetailedSoA]
+study_detailed_soas: list[dict[Any, Any]]
 total_study_detailed_soa: int = 25
-study_operational_soas: list[models.StudyOperationalSoA]
+study_operational_soas: list[dict[Any, Any]]
 total_study_operational_soa: int = 25
 
 

@@ -1,4 +1,7 @@
+import json
 from typing import Any
+
+from neomodel import db
 
 from clinical_mdr_api.domain_repositories.concepts.odms.odm_generic_repository import (
     OdmGenericRepository,
@@ -16,13 +19,9 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     VersionValue,
 )
 from clinical_mdr_api.domain_repositories.models.odm import (
-    OdmAliasRoot,
-    OdmDescriptionRoot,
-    OdmFormRoot,
     OdmItemGroupRoot,
     OdmItemGroupValue,
 )
-from clinical_mdr_api.domains._utils import ObjectStatus
 from clinical_mdr_api.domains.concepts.odms.item_group import (
     OdmItemGroupAR,
     OdmItemGroupRefVO,
@@ -33,7 +32,12 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemStatus,
     LibraryVO,
 )
+from clinical_mdr_api.models.concepts.odms.odm_common_models import (
+    OdmAliasModel,
+    OdmDescriptionModel,
+)
 from clinical_mdr_api.models.concepts.odms.odm_item_group import OdmItemGroup
+from clinical_mdr_api.services._utils import ensure_transaction
 from common.config import settings
 from common.utils import convert_to_datetime
 
@@ -52,7 +56,7 @@ class ItemGroupRepository(OdmGenericRepository[OdmItemGroupAR]):
         **_kwargs,
     ) -> OdmItemGroupAR:
         sdtm_domains = []
-        if sdtm_domain_contexts := root.has_sdtm_domain.all():
+        if sdtm_domain_contexts := value.has_sdtm_domain.all():
             for sdtm_domain in sdtm_domain_contexts:
                 if selected_term := sdtm_domain.has_selected_term.get_or_none():
                     sdtm_domains.append(selected_term)
@@ -68,27 +72,44 @@ class ItemGroupRepository(OdmGenericRepository[OdmItemGroupAR]):
                 origin=value.origin,
                 purpose=value.purpose,
                 comment=value.comment,
-                description_uids=[
-                    description.uid for description in root.has_description.all()
+                descriptions=[
+                    OdmDescriptionModel(
+                        name=description_value.name,
+                        language=description_value.language,
+                        description=description_value.description,
+                        instruction=description_value.instruction,
+                        sponsor_instruction=description_value.sponsor_instruction,
+                    )
+                    for description_value in value.has_description.all()
                 ],
-                alias_uids=[alias.uid for alias in root.has_alias.all()],
+                aliases=[
+                    OdmAliasModel(name=alias_value.name, context=alias_value.context)
+                    for alias_value in value.has_alias.all()
+                ],
                 sdtm_domain_uids=[sdtm_domain.uid for sdtm_domain in sdtm_domains],
-                activity_subgroup_uids=[
-                    activity_subgroup.uid
-                    for activity_subgroup in root.has_activity_subgroup.all()
+                item_uids=[
+                    item_root.uid
+                    for item_value in value.item_ref.all()
+                    if (item_root := item_value.has_root.single())
                 ],
-                item_uids=[item.uid for item in root.item_ref.all()],
                 vendor_element_uids=[
-                    vendor_element.uid
-                    for vendor_element in root.has_vendor_element.all()
+                    vendor_element_root.uid
+                    for vendor_element_value in value.has_vendor_element.all()
+                    if (vendor_element_root := vendor_element_value.has_root.single())
                 ],
                 vendor_attribute_uids=[
-                    vendor_attribute.uid
-                    for vendor_attribute in root.has_vendor_attribute.all()
+                    vendor_attribute_root.uid
+                    for vendor_attribute_value in value.has_vendor_attribute.all()
+                    if (
+                        vendor_attribute_root := vendor_attribute_value.has_root.single()
+                    )
                 ],
                 vendor_element_attribute_uids=[
-                    vendor_element_attribute.uid
-                    for vendor_element_attribute in root.has_vendor_element_attribute.all()
+                    vendor_element_attribute_root.uid
+                    for vendor_element_attribute_value in value.has_vendor_element_attribute.all()
+                    if (
+                        vendor_element_attribute_root := vendor_element_attribute_value.has_root.single()
+                    )
                 ],
             ),
             library=LibraryVO.from_input_values_2(
@@ -113,10 +134,23 @@ class ItemGroupRepository(OdmGenericRepository[OdmItemGroupAR]):
                 origin=input_dict.get("origin"),
                 purpose=input_dict.get("purpose"),
                 comment=input_dict.get("comment"),
-                description_uids=input_dict["description_uids"],
-                alias_uids=input_dict["alias_uids"],
+                descriptions=[
+                    OdmDescriptionModel(
+                        name=description["name"],
+                        language=description.get("language", None),
+                        description=description.get("description", None),
+                        instruction=description.get("instruction", None),
+                        sponsor_instruction=description.get(
+                            "sponsor_instruction", None
+                        ),
+                    )
+                    for description in input_dict["descriptions"]
+                ],
+                aliases=[
+                    OdmAliasModel(name=alias["name"], context=alias["context"])
+                    for alias in input_dict["aliases"]
+                ],
                 sdtm_domain_uids=input_dict["sdtm_domain_uids"],
-                activity_subgroup_uids=input_dict["activity_subgroup_uids"],
                 item_uids=input_dict["item_uids"],
                 vendor_element_uids=input_dict["vendor_element_uids"],
                 vendor_attribute_uids=input_dict["vendor_attribute_uids"],
@@ -144,10 +178,8 @@ class ItemGroupRepository(OdmGenericRepository[OdmItemGroupAR]):
 
         return odm_item_group_ar
 
-    def specific_alias_clause(
-        self, only_specific_status: str = ObjectStatus.LATEST.name, **kwargs
-    ) -> str:
-        return f"""
+    def specific_alias_clause(self, **kwargs) -> str:
+        return """
 WITH *,
 concept_value.oid AS oid,
 toString(concept_value.repeating) AS repeating,
@@ -157,37 +189,29 @@ concept_value.origin AS origin,
 concept_value.purpose AS purpose,
 concept_value.comment AS comment,
 
-[(concept_value)<-[:{only_specific_status}]-(:OdmItemGroupRoot)-[:HAS_DESCRIPTION]->(dr:OdmDescriptionRoot)-[:LATEST]->(dv:OdmDescriptionValue) |
-{{uid: dr.uid, name: dv.name, language: dv.language, description: dv.description, instruction: dv.instruction}}] AS descriptions,
+[(concept_value)-[:HAS_DESCRIPTION]->(dv:OdmDescription) |
+{name: dv.name, language: dv.language, description: dv.description, instruction: dv.instruction, sponsor_instruction: dv.sponsor_instruction}] AS descriptions,
 
-[(concept_value)<-[:{only_specific_status}]-(:OdmItemGroupRoot)-[:HAS_ALIAS]->(ar:OdmAliasRoot)-[:LATEST]->(av:OdmAliasValue) |
-{{uid: ar.uid, name: av.name, context: av.context}}] AS aliases,
+[(concept_value)-[:HAS_ALIAS]->(av:OdmAlias) | {name: av.name, context: av.context}] AS aliases,
 
-[(concept_value)<-[:{only_specific_status}]-(:OdmItemGroupRoot)-[:HAS_SDTM_DOMAIN]->(:CTTermContext)-[:HAS_SELECTED_TERM]->
-  (tr:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]->(:CTTermAttributesRoot)-[:LATEST]->(tav:CTTermAttributesValue) |
-{{uid: tr.uid, submission_value: tav.submission_value, preferred_term: tav.preferred_term}}] AS sdtm_domains,
+[(concept_value)-[:HAS_SDTM_DOMAIN]->(:CTTermContext)-[:HAS_SELECTED_TERM]->
+(tr:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]->(:CTTermAttributesRoot)-[:LATEST]->(tav:CTTermAttributesValue) |
+{uid: tr.uid, submission_value: tav.submission_value, preferred_term: tav.preferred_term}] AS sdtm_domains,
 
-[(concept_value)<-[:{only_specific_status}]-(:OdmItemGroupRoot)-[:HAS_ACTIVITY_SUB_GROUP]->
-  (agr:ActivitySubGroupRoot)-[:LATEST]->(agv:ActivitySubGroupValue) |
-{{uid: agr.uid, name: agv.name}}] AS activity_subgroups,
+[(concept_value)-[iref:ITEM_REF]->(iv:OdmItemValue)<-[:HAS_VERSION]-(ir:OdmItemRoot) |
+{uid: ir.uid, name: iv.name, order: iref.order, mandatory: iref.mandatory}] AS items,
 
-[(concept_value)<-[:{only_specific_status}]-(:OdmItemGroupRoot)-[iref:ITEM_REF]->(ir:OdmItemRoot)-[:LATEST]->(iv:OdmItemValue) |
-{{uid: ir.uid, name: iv.name, order: iref.order, mandatory: iref.mandatory}}] AS items,
+[(concept_value)-[hve:HAS_VENDOR_ELEMENT]->(vev:OdmVendorElementValue)<-[:HAS_VERSION]-(ver:OdmVendorElementRoot) |
+{uid: ver.uid, name: vev.name, value: hve.value}] AS vendor_elements,
 
-[(concept_value)<-[:{only_specific_status}]-(:OdmItemGroupRoot)-[hve:HAS_VENDOR_ELEMENT]->(ver:OdmVendorElementRoot)-[:LATEST]->(vev:OdmVendorElementValue) |
-{{uid: ver.uid, name: vev.name, value: hve.value}}] AS vendor_elements,
+[(concept_value)-[hva:HAS_VENDOR_ATTRIBUTE]->(vav:OdmVendorAttributeValue)<-[:HAS_VERSION]-(var:OdmVendorAttributeRoot) |
+{uid: var.uid, name: vav.name, value: hva.value}] AS vendor_attributes,
 
-[(concept_value)<-[:{only_specific_status}]-(:OdmItemGroupRoot)-[hva:HAS_VENDOR_ATTRIBUTE]->(var:OdmVendorAttributeRoot)-[:LATEST]->(vav:OdmVendorAttributeValue) |
-{{uid: var.uid, name: vav.name, value: hva.value}}] AS vendor_attributes,
-
-[(concept_value)<-[:{only_specific_status}]-(:OdmItemGroupRoot)-[hvea:HAS_VENDOR_ELEMENT_ATTRIBUTE]->(var:OdmVendorAttributeRoot)-[:LATEST]->(vav:OdmVendorAttributeValue) |
-{{uid: var.uid, name: vav.name, value: hvea.value}}] AS vendor_element_attributes
+[(concept_value)-[hvea:HAS_VENDOR_ELEMENT_ATTRIBUTE]->(vav:OdmVendorAttributeValue)<-[:HAS_VERSION]-(var:OdmVendorAttributeRoot) |
+{uid: var.uid, name: vav.name, value: hvea.value}] AS vendor_element_attributes
 
 WITH *,
-apoc.coll.toSet([description in descriptions | description.uid]) AS description_uids,
-apoc.coll.toSet([alias in aliases | alias.uid]) AS alias_uids,
 apoc.coll.toSet([sdtm_domain in sdtm_domains | sdtm_domain.uid]) AS sdtm_domain_uids,
-apoc.coll.toSet([activity_subgroup in activity_subgroups | activity_subgroup.uid]) AS activity_subgroup_uids,
 apoc.coll.toSet([item in items | item.uid]) AS item_uids,
 apoc.coll.toSet([vendor_element in vendor_elements | vendor_element.uid]) AS vendor_element_uids,
 apoc.coll.toSet([vendor_attribute in vendor_attributes | vendor_attribute.uid]) AS vendor_attribute_uids,
@@ -195,23 +219,48 @@ apoc.coll.toSet([vendor_element_attribute in vendor_element_attributes | vendor_
 """
 
     def _get_or_create_value(
-        self, root: VersionRoot, ar: OdmItemGroupAR
+        self, root: VersionRoot, ar: OdmItemGroupAR, force_new_value_node: bool = False
     ) -> VersionValue:
-        new_value = super()._get_or_create_value(root, ar)
+        current_latest = root.has_latest_value.single()
+        old_item_ref_nodes = current_latest.item_ref.all() if current_latest else []
+        new_item_ref_nodes = [
+            old_item_root.has_latest_value.single()
+            for old_item_ref_node in old_item_ref_nodes
+            if (old_item_root := old_item_ref_node.has_root.single())
+        ]
+        new_value = super()._get_or_create_value(root, ar, force_new_value_node)
 
-        root.has_description.disconnect_all()
-        root.has_alias.disconnect_all()
-        root.has_sdtm_domain.disconnect_all()
+        for old_item_ref_node, new_item_ref_node in zip(
+            old_item_ref_nodes,
+            new_item_ref_nodes,
+        ):
+            params = current_latest.item_ref.relationship(old_item_ref_node)
+            new_value.item_ref.connect(
+                new_item_ref_node,
+                {
+                    "order_number": params.order_number,
+                    "mandatory": params.mandatory,
+                    "key_sequence": params.key_sequence,
+                    "method_oid": params.method_oid,
+                    "imputation_method_oid": params.imputation_method_oid,
+                    "role": params.role,
+                    "role_codelist_oid": params.role_codelist_oid,
+                    "collection_exception_condition_oid": params.collection_exception_condition_oid,
+                    "vendor": params.vendor,
+                },
+            )
 
-        if ar.concept_vo.description_uids is not None:
-            for description_uid in ar.concept_vo.description_uids:
-                description = OdmDescriptionRoot.nodes.get_or_none(uid=description_uid)
-                root.has_description.connect(description)
+        if ar.should_disconnect_relationships:
+            for item_ref_node in old_item_ref_nodes:
+                current_latest.item_ref.disconnect(item_ref_node)
 
-        if ar.concept_vo.alias_uids is not None:
-            for alias_uid in ar.concept_vo.alias_uids:
-                alias = OdmAliasRoot.nodes.get_or_none(uid=alias_uid)
-                root.has_alias.connect(alias)
+        new_value.has_sdtm_domain.disconnect_all()
+
+        self.manage_vendor_relationships(
+            current_latest, new_value, ar.should_disconnect_relationships
+        )
+        self.connect_descriptions(ar.concept_vo.descriptions, new_value)
+        self.connect_aliases(ar.concept_vo.aliases, new_value)
 
         for sdtm_domain_uid in ar.concept_vo.sdtm_domain_uids:
             sdtm_domain_node = CTTermRoot.nodes.get(uid=sdtm_domain_uid)
@@ -222,7 +271,7 @@ apoc.coll.toSet([vendor_element_attribute in vendor_element_attributes | vendor_
                     catalogue_name=settings.sdtm_ct_catalogue_name,
                 )
             )
-            root.has_sdtm_domain.connect(selected_term_node)
+            new_value.has_sdtm_domain.connect(selected_term_node)
 
         return new_value
 
@@ -244,21 +293,29 @@ apoc.coll.toSet([vendor_element_attribute in vendor_element_attributes | vendor_
     def _has_data_changed(self, ar: OdmItemGroupAR, value: OdmItemGroupValue) -> bool:
         are_concept_properties_changed = super()._has_data_changed(ar=ar, value=value)
 
-        root = OdmItemGroupRoot.nodes.get_or_none(uid=ar.uid)
-
-        description_uids = {
-            description.uid for description in root.has_description.all()
+        description_nodes = {
+            OdmDescriptionModel(
+                name=description_node.name,
+                language=description_node.language,
+                description=description_node.description,
+                instruction=description_node.instruction,
+                sponsor_instruction=description_node.sponsor_instruction,
+            )
+            for description_node in value.has_description.all()
         }
-        alias_uids = {alias.uid for alias in root.has_alias.all()}
+        alias_nodes = {
+            OdmAliasModel(name=alias_node.name, context=alias_node.context)
+            for alias_node in value.has_alias.all()
+        }
         sdtm_domain_uids = {
             sdtm_domain.uid
-            for sdtm_domain_context in root.has_sdtm_domain.all()
+            for sdtm_domain_context in value.has_sdtm_domain.all()
             if (sdtm_domain := sdtm_domain_context.has_selected_term.get_or_none())
         }
 
         are_rels_changed = (
-            set(ar.concept_vo.description_uids) != description_uids
-            or set(ar.concept_vo.alias_uids) != alias_uids
+            set(ar.concept_vo.descriptions) != description_nodes
+            or set(ar.concept_vo.aliases) != alias_nodes
             or set(ar.concept_vo.sdtm_domain_uids) != sdtm_domain_uids
         )
 
@@ -274,21 +331,71 @@ apoc.coll.toSet([vendor_element_attribute in vendor_element_attributes | vendor_
             or ar.concept_vo.comment != value.comment
         )
 
-    def find_by_uid_with_form_relation(self, uid: str, form_uid: str):
-        item_group_root = self.root_class.nodes.get_or_none(uid=uid)
-        item_group_value = item_group_root.has_latest_value.get_or_none()
-
-        form_root = OdmFormRoot.nodes.get_or_none(uid=form_uid)
-
-        rel = item_group_root.item_group_ref.relationship(form_root)
+    def find_by_uid_with_form_relation(
+        self, uid: str, form_uid: str, form_version: str
+    ):
+        rs, _ = db.cypher_query(
+            """
+            MATCH (:OdmFormRoot {uid: $form_uid})-[:HAS_VERSION {version: $form_version}]->(:OdmFormValue)
+            -[ref:ITEM_GROUP_REF]->(value:OdmItemGroupValue)<-[hv_rel:HAS_VERSION]-(:OdmItemGroupRoot {uid: $uid})
+            RETURN
+                value.oid AS oid,
+                value.name AS name,
+                hv_rel.version AS version,
+                ref.order_number AS order_number,
+                ref.mandatory AS mandatory,
+                ref.collection_exception_condition_oid AS collection_exception_condition_oid,
+                ref.vendor AS vendor
+            """,
+            params={"uid": uid, "form_uid": form_uid, "form_version": form_version},
+            resolve_objects=True,
+        )
 
         return OdmItemGroupRefVO.from_repository_values(
             uid=uid,
-            oid=item_group_value.oid,
-            name=item_group_value.name,
+            oid=rs[0][0],
+            name=rs[0][1],
+            version=rs[0][2],
             form_uid=form_uid,
-            order_number=rel.order_number,
-            mandatory=rel.mandatory,
-            collection_exception_condition_oid=rel.collection_exception_condition_oid,
-            vendor=rel.vendor,
+            order_number=rs[0][3],
+            mandatory=rs[0][4],
+            collection_exception_condition_oid=rs[0][5],
+            vendor=json.loads(rs[0][6]) if rs[0][6] else {},
         )
+
+    @ensure_transaction(db)
+    def _connect_relationships_to_new_value_node(
+        self, root: VersionRoot, _: VersionValue
+    ) -> None:
+        """
+        Upgrades all incoming ITEM_GROUP_REF relationships to the second latest version to
+        point to the latest version of OdmItemGroupValue, preserving relationship properties.
+        """
+        query = f"""
+        MATCH (root:{self.root_class.__name__} {{uid: $root_uid}})-[ver_rel:HAS_VERSION]->(value:{self.value_class.__name__})
+
+        WITH root, ver_rel, value
+        ORDER BY ver_rel.start_date DESC
+        LIMIT 2
+        WITH root, collect(value) AS values
+        WITH root, values[0] as latest_value, values[1] as second_latest_value
+
+        MATCH (:OdmFormRoot)-[p_ver_rel:HAS_VERSION]->(parent_value:OdmFormValue)-[ref_rel:ITEM_GROUP_REF]->(second_latest_value)
+        WHERE p_ver_rel.end_date IS NULL AND p_ver_rel.status = "Draft"
+
+        WITH latest_value, ref_rel, parent_value,
+            ref_rel.order_number AS order_number,
+            ref_rel.mandatory AS mandatory,
+            ref_rel.collection_exception_condition_oid AS collection_exception_condition_oid,
+            ref_rel.vendor AS vendor
+
+        CREATE (parent_value)-[new_ref_rel:ITEM_GROUP_REF]->(latest_value)
+
+        SET new_ref_rel.order_number = order_number,
+            new_ref_rel.mandatory = mandatory,
+            new_ref_rel.collection_exception_condition_oid = collection_exception_condition_oid,
+            new_ref_rel.vendor = vendor
+
+        DELETE ref_rel
+        """
+        db.cypher_query(query, {"root_uid": root.uid})

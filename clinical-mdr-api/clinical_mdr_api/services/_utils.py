@@ -15,6 +15,7 @@ from clinical_mdr_api.domain_repositories.libraries.library_repository import (
 from clinical_mdr_api.domains.concepts.unit_definitions.unit_definition import (
     UnitDefinitionAR,
 )
+from clinical_mdr_api.models.concepts.concept import SimpleNumericValueWithUnit
 from clinical_mdr_api.models.syntax_templates.template_parameter import (
     TemplateParameter,
     TemplateParameterTerm,
@@ -774,6 +775,11 @@ def service_level_generic_header_filtering(
                 extracted_values = extracted_values + extracted_value
             # * A single value when the property associated with key is a simple property
             # Skip if None
+            elif isinstance(extracted_value, SimpleNumericValueWithUnit):
+                # Append `{value} {unit_label}`
+                extracted_values.append(
+                    f"{str(extracted_value.value)} {extracted_value.unit_label}"
+                )
             elif extracted_value is not None:
                 # Append element to list
                 extracted_values.append(extracted_value)
@@ -887,6 +893,23 @@ def filter_aggregated_items(item, filter_key, filter_values, filter_operator):
     if isinstance(_item_value_for_key, Enum):
         return apply_filter_operator(
             _item_value_for_key.value, filter_operator, filter_values
+        )
+    if isinstance(_item_value_for_key, SimpleNumericValueWithUnit) and filter_values:
+        # When filtering on a SimpleNumericValueWithUnit we expect the filter value to be in the format "<number> <unit>", e.g., "5 mg"
+        # We split the filter value into a numeric part and a unit part and apply the filter operator to both parts
+        numeric_values = [
+            float(filter_value.split(" ")[0]) for filter_value in filter_values
+        ]
+        unit_values = [
+            filter_value.split(" ")[1]
+            for filter_value in filter_values
+            if " " in filter_value
+        ]
+
+        return apply_filter_operator(
+            float(_item_value_for_key.value), filter_operator, numeric_values
+        ) and apply_filter_operator(
+            _item_value_for_key.unit_label, filter_operator, unit_values
         )
     return apply_filter_operator(_item_value_for_key, filter_operator, filter_values)
 

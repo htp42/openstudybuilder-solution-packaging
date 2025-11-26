@@ -36,7 +36,7 @@ class OdmStudyEvent(ConceptModel):
         cls,
         odm_study_event_ar: OdmStudyEventAR,
         find_odm_form_by_uid_with_study_event_relation: Callable[
-            [str, str], OdmFormRefVO | None
+            [str, str, str], OdmFormRefVO
         ],
     ) -> Self:
         return cls(
@@ -59,6 +59,7 @@ class OdmStudyEvent(ConceptModel):
                     OdmFormRefModel.from_odm_form_uid(
                         uid=form_uid,
                         study_event_uid=odm_study_event_ar._uid,
+                        study_event_version=odm_study_event_ar.item_metadata.version,
                         find_odm_form_by_uid_with_study_event_relation=find_odm_form_by_uid_with_study_event_relation,
                     )
                     for form_uid in odm_study_event_ar.concept_vo.form_uids

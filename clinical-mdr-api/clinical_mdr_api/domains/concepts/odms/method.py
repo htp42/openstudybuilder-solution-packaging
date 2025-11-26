@@ -2,26 +2,26 @@ from dataclasses import dataclass
 from typing import Callable, Self
 
 from clinical_mdr_api.domains.concepts.concept_base import ConceptVO
-from clinical_mdr_api.domains.concepts.odms.description import OdmDescriptionAR
-from clinical_mdr_api.domains.concepts.odms.formal_expression import (
-    OdmFormalExpressionAR,
-)
 from clinical_mdr_api.domains.concepts.odms.odm_ar_base import OdmARBase
-from clinical_mdr_api.domains.concepts.utils import ENG_LANGUAGE
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemMetadataVO,
     LibraryVO,
 )
-from common.exceptions import AlreadyExistsException, BusinessLogicException
+from clinical_mdr_api.models.concepts.odms.odm_common_models import (
+    OdmAliasModel,
+    OdmDescriptionModel,
+    OdmFormalExpressionModel,
+)
+from common.exceptions import AlreadyExistsException
 
 
 @dataclass(frozen=True)
 class OdmMethodVO(ConceptVO):
     oid: str | None
     method_type: str | None
-    formal_expression_uids: list[str]
-    description_uids: list[str]
-    alias_uids: list[str]
+    formal_expressions: list[OdmFormalExpressionModel]
+    descriptions: list[OdmDescriptionModel]
+    aliases: list[OdmAliasModel]
 
     @classmethod
     def from_repository_values(
@@ -29,17 +29,17 @@ class OdmMethodVO(ConceptVO):
         oid: str | None,
         name: str,
         method_type: str | None,
-        formal_expression_uids: list[str],
-        description_uids: list[str],
-        alias_uids: list[str],
+        formal_expressions: list[OdmFormalExpressionModel],
+        descriptions: list[OdmDescriptionModel],
+        aliases: list[OdmAliasModel],
     ) -> Self:
         return cls(
             oid=oid,
             name=name,
             method_type=method_type,
-            formal_expression_uids=formal_expression_uids,
-            description_uids=description_uids,
-            alias_uids=alias_uids,
+            formal_expressions=formal_expressions,
+            descriptions=descriptions,
+            aliases=aliases,
             name_sentence_case=None,
             definition=None,
             abbreviation=None,
@@ -47,21 +47,9 @@ class OdmMethodVO(ConceptVO):
         )
 
     def validate(
-        self,
-        odm_object_exists_callback: Callable,
-        find_odm_formal_expression_callback: Callable[
-            [str], OdmFormalExpressionAR | None
-        ],
-        find_odm_description_callback: Callable[[str], OdmDescriptionAR | None],
-        get_odm_description_parent_uids_callback: Callable[[list[str]], dict],
-        odm_alias_exists_by_callback: Callable[[str, str, bool], bool],
-        previous_formal_expression_uids: list[str] | None = None,
-        odm_uid: str | None = None,
+        self, odm_object_exists_callback: Callable, odm_uid: str | None = None
     ) -> None:
         data = {
-            "alias_uids": self.alias_uids,
-            "description_uids": self.description_uids,
-            "formal_expression_uids": self.formal_expression_uids,
             "name": self.name,
             "oid": self.oid,
             "method_type": self.method_type,
@@ -71,72 +59,6 @@ class OdmMethodVO(ConceptVO):
                 raise AlreadyExistsException(
                     msg=f"ODM Method already exists with UID ({uids[0]}) and data {data}"
                 )
-
-        self.check_concepts_exist(
-            [
-                (
-                    self.alias_uids,
-                    "ODM Alias",
-                    odm_alias_exists_by_callback,
-                ),
-            ],
-            "ODM Method",
-        )
-
-        contexts = set()
-        for formal_expression_uid in self.formal_expression_uids:
-            formal_expression = find_odm_formal_expression_callback(
-                formal_expression_uid
-            )
-            BusinessLogicException.raise_if_not(
-                formal_expression,
-                msg="ODM Method tried to connect to non-existent concepts "
-                f"""[('Concept Name: ODM Formal Expression', "uids: {{'{formal_expression_uid}'}}")].""",
-            )
-            BusinessLogicException.raise_if(
-                formal_expression.concept_vo.context in contexts,
-                msg=f"ODM Method tried to connect to ODM Formal Expression with same Context '{formal_expression.concept_vo.context}'.",
-            )
-            contexts.add(formal_expression.concept_vo.context)
-
-            if previous_formal_expression_uids is None:
-                continue
-            for previous_formal_expression_uid in previous_formal_expression_uids:
-                previous_formal_expression = find_odm_formal_expression_callback(
-                    previous_formal_expression_uid
-                )
-                BusinessLogicException.raise_if(
-                    formal_expression
-                    and previous_formal_expression
-                    and formal_expression.concept_vo.context
-                    == previous_formal_expression.concept_vo.context
-                    and formal_expression.uid != previous_formal_expression.uid,
-                    msg=f"ODM Method tried to connect to ODM Formal Expression with same Context '{formal_expression.concept_vo.context}'.",
-                )
-
-        if uids := get_odm_description_parent_uids_callback(self.description_uids):
-            if odm_uid not in uids:
-                raise BusinessLogicException(
-                    msg=f"ODM Descriptions are already used: {dict(uids)}."
-                )
-
-        descriptions = []
-        for description_uid in self.description_uids:
-            desc = find_odm_description_callback(description_uid)
-            BusinessLogicException.raise_if_not(
-                desc,
-                msg="ODM Method tried to connect to non-existent concepts "
-                f"""[('Concept Name: ODM Description', "uids: {{'{description_uid}'}}")].""",
-            )
-            descriptions.append(desc)
-
-        BusinessLogicException.raise_if_not(
-            any(
-                description.concept_vo.language == ENG_LANGUAGE
-                for description in descriptions
-            ),
-            msg="An English ODM Description must be provided.",
-        )
 
 
 @dataclass
@@ -178,30 +100,12 @@ class OdmMethodAR(OdmARBase):
         library: LibraryVO,
         generate_uid_callback: Callable[[], str] = lambda: "",
         odm_object_exists_callback: Callable = lambda _: True,
-        find_odm_formal_expression_callback: Callable[
-            [str], OdmFormalExpressionAR | None
-        ] = lambda _: None,
-        find_odm_description_callback: Callable[
-            [str], OdmDescriptionAR | None
-        ] = lambda _: None,
-        get_odm_description_parent_uids_callback: Callable[
-            [list[str]], dict
-        ] = lambda _: {},
-        odm_alias_exists_by_callback: Callable[
-            [str, str, bool], bool
-        ] = lambda x, y, z: True,
     ) -> Self:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(
             author_id=author_id
         )
 
-        concept_vo.validate(
-            odm_object_exists_callback=odm_object_exists_callback,
-            find_odm_formal_expression_callback=find_odm_formal_expression_callback,
-            find_odm_description_callback=find_odm_description_callback,
-            get_odm_description_parent_uids_callback=get_odm_description_parent_uids_callback,
-            odm_alias_exists_by_callback=odm_alias_exists_by_callback,
-        )
+        concept_vo.validate(odm_object_exists_callback=odm_object_exists_callback)
 
         return cls(
             _uid=generate_uid_callback(),
@@ -219,30 +123,12 @@ class OdmMethodAR(OdmARBase):
             [str, str, bool], bool
         ] = lambda x, y, z: True,
         odm_object_exists_callback: Callable = lambda _: True,
-        find_odm_formal_expression_callback: Callable[
-            [str], OdmFormalExpressionAR | None
-        ] = lambda _: None,
-        find_odm_description_callback: Callable[
-            [str], OdmDescriptionAR | None
-        ] = lambda _: None,
-        get_odm_description_parent_uids_callback: Callable[
-            [list[str]], dict
-        ] = lambda _: {},
-        odm_alias_exists_by_callback: Callable[
-            [str, str, bool], bool
-        ] = lambda x, y, z: True,
     ) -> None:
         """
         Creates a new draft version for the object.
         """
         concept_vo.validate(
-            odm_object_exists_callback=odm_object_exists_callback,
-            find_odm_formal_expression_callback=find_odm_formal_expression_callback,
-            find_odm_description_callback=find_odm_description_callback,
-            get_odm_description_parent_uids_callback=get_odm_description_parent_uids_callback,
-            odm_alias_exists_by_callback=odm_alias_exists_by_callback,
-            previous_formal_expression_uids=self._concept_vo.formal_expression_uids,
-            odm_uid=self.uid,
+            odm_object_exists_callback=odm_object_exists_callback, odm_uid=self.uid
         )
 
         super()._edit_draft(change_description=change_description, author_id=author_id)

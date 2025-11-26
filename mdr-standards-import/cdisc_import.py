@@ -76,6 +76,10 @@ def get_staging_db_driver():
         uri,
         auth=(NEO4J_STAGING_AUTH_USER, NEO4J_STAGING_AUTH_PASSWORD),
         database=NEO4J_STAGING_DATABASE,
+        max_connection_lifetime=1800,
+        keep_alive=True,
+        connection_acquisition_timeout=60.0,
+        liveness_check_timeout=30.0,
     )
 
 
@@ -84,7 +88,11 @@ def get_sb_db_driver():
     return GraphDatabase.driver(
         uri,
         auth=(NEO4J_SB_AUTH_USER, NEO4J_SB_AUTH_PASSWORD),
-        database=NEO4J_SB_DATABASE
+        database=NEO4J_SB_DATABASE,
+        max_connection_lifetime=1800,
+        keep_alive=True,
+        connection_acquisition_timeout=60.0,
+        liveness_check_timeout=30.0,
     )
 
 

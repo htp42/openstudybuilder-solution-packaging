@@ -7,8 +7,8 @@ FROM $NODE_IMAGE as build-stage
 WORKDIR /app
 
 ## Install Node packages
-COPY ./package*.json ./
-RUN yarn install
+COPY ./package*.json ./yarn.lock ./
+RUN yarn install --frozen-lockfile
 
 ## Build the app
 COPY ./ .

@@ -1,6 +1,6 @@
 import datetime
 from dataclasses import dataclass, field
-from typing import Mapping
+from typing import Mapping, MutableMapping
 
 from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import (
     StudyStatus,
@@ -219,9 +219,9 @@ class TimelineAR(BaseTimelineAR):
         """
         epochs.sort(key=lambda epoch: epoch.order)
 
-        epoch_visits: Mapping[str, list[StudyVisitVO]] = {}
+        epoch_visits: MutableMapping[str, list[StudyVisitVO]] = {}
         for epoch in epochs:
-            epoch_visits[epoch.uid] = []
+            epoch_visits[epoch.uid] = []  # type: ignore[index]
 
         # removing basic epoch from the epoch list to not derive timings for that epoch
         epochs = [
@@ -233,7 +233,7 @@ class TimelineAR(BaseTimelineAR):
             if visit.epoch_uid in epoch_visits:
                 epoch_visits[visit.epoch_uid].append(visit)
         for epoch in epochs:
-            epoch.set_ordered_visits(epoch_visits[epoch.uid])
+            epoch.set_ordered_visits(epoch_visits[epoch.uid])  # type: ignore[index]
         # iterating to the one before last as we are accessing the next element in the for loop
         for i, epoch in enumerate(epochs[:-1]):
             # if next epoch has a visit then we set it as the next visit for the current epoch

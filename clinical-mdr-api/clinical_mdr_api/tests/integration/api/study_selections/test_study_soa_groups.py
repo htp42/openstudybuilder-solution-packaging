@@ -464,3 +464,39 @@ def test_study_soa_group_reordering(api_client):
     assert study_activities[3]["study_activity_group"]["order"] == 1
     assert study_activities[3]["study_activity_subgroup"]["order"] == 1
     assert study_activities[3]["order"] == 3
+
+    # Change SoAGroup of SA to check whether SoAGroups orders are updated when there is 0 StudyActivities in a SoAGroup after update
+    response = api_client.patch(
+        f"/studies/{test_study.uid}/study-activities/{weight_sa1.study_activity_uid}",
+        json={
+            "soa_group_term_uid": term_efficacy_uid,
+        },
+    )
+    assert_response_status_code(response, 200)
+
+    # Get all SA after StudyActivity SoAGroup patch
+    response = api_client.get(f"/studies/{test_study.uid}/study-activities")
+    assert_response_status_code(response, 200)
+    study_activities = response.json()["items"]
+    assert len(study_activities) == 4
+
+    assert study_activities[0]["activity"]["uid"] == randomized_sa.activity.uid
+    assert study_activities[0]["study_soa_group"]["order"] == 1
+    assert study_activities[0]["study_activity_group"]["order"] == 1
+    assert study_activities[0]["study_activity_subgroup"]["order"] == 1
+    assert study_activities[0]["order"] == 1
+    assert study_activities[1]["activity"]["uid"] == body_measurement_sa.activity.uid
+    assert study_activities[1]["study_soa_group"]["order"] == 1
+    assert study_activities[1]["study_activity_group"]["order"] == 1
+    assert study_activities[1]["study_activity_subgroup"]["order"] == 1
+    assert study_activities[1]["order"] == 2
+    assert study_activities[2]["activity"]["uid"] == weight_sa2.activity.uid
+    assert study_activities[2]["study_soa_group"]["order"] == 1
+    assert study_activities[2]["study_activity_group"]["order"] == 1
+    assert study_activities[2]["study_activity_subgroup"]["order"] == 1
+    assert study_activities[2]["order"] == 3
+    assert study_activities[3]["activity"]["uid"] == weight_sa1.activity.uid
+    assert study_activities[3]["study_soa_group"]["order"] == 1
+    assert study_activities[3]["study_activity_group"]["order"] == 1
+    assert study_activities[3]["study_activity_subgroup"]["order"] == 2
+    assert study_activities[3]["order"] == 1

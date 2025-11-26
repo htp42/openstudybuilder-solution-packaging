@@ -1,26 +1,8 @@
-from enum import Enum
 from typing import Literal, overload
 
 from clinical_mdr_api.domains.iso_languages import LANGUAGES_INDEXED_BY
 from clinical_mdr_api.domains.libraries.parameter_term import ParameterTermEntryVO
 from common import exceptions
-
-
-class ObjectStatus(Enum):
-    """
-    Enum for object status.
-
-    Possible values:
-    - LATEST_FINAL: The latest final version of the object.
-    - LATEST_RETIRED: The latest retired version of the object.
-    - LATEST_DRAFT: The latest draft version of the object.
-    - LATEST: The latest version of the object, regardless of the status.
-    """
-
-    LATEST_FINAL = "final"
-    LATEST_RETIRED = "retired"
-    LATEST_DRAFT = "draft"
-    LATEST = "latest"
 
 
 @overload

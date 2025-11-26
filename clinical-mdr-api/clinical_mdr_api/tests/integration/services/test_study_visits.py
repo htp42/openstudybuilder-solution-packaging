@@ -1202,6 +1202,45 @@ class TestStudyVisitManagement(unittest.TestCase):
         self.assertEqual(all_visits[2].min_visit_window_value, -9999)
         self.assertEqual(all_visits[2].max_visit_window_value, 9999)
 
+        unscheduled_visit_input = {
+            "study_epoch_uid": self.epoch1.uid,
+            "consecutive_visit_group": None,
+            "show_visit": True,
+            "description": "description",
+            "start_rule": "start_rule",
+            "end_rule": "end_rule",
+            "visit_contact_mode_uid": "VisitContactMode_0001",
+            "visit_type_uid": "VisitType_0003",
+            "is_global_anchor_visit": False,
+            "visit_class": "UNSCHEDULED_VISIT",
+        }
+        visit_input = StudyVisitCreateInput(**unscheduled_visit_input)
+        unscheduled_visit = visit_service.create(
+            study_uid=self.study.uid, study_visit_input=visit_input
+        )
+        with self.assertRaises(ValidationException) as message:
+            non_visit_input.update({"uid": unscheduled_visit.uid})
+            edit_input = StudyVisitEditInput(**non_visit_input)
+            visit_service.edit(
+                study_uid=self.study.uid,
+                study_visit_uid=unscheduled_visit.uid,
+                study_visit_input=edit_input,
+            )
+            self.assertEqual(
+                f"There's already and exists Non Visit in Study {self.study.uid}",
+                message.exception.msg,
+            )
+        updated_description = "Updated description"
+        unscheduled_visit_input.update(
+            {"uid": unscheduled_visit.uid, "description": updated_description}
+        )
+        edited_unscheduled_visit = visit_service.edit(
+            study_uid=self.study.uid,
+            study_visit_uid=unscheduled_visit.uid,
+            study_visit_input=StudyVisitEditInput(**unscheduled_visit_input),
+        )
+        assert edited_unscheduled_visit.description == updated_description
+
     def test__create_special_visit(self):
         visit_service: StudyVisitService = StudyVisitService(study_uid=self.study.uid)
         create_visit_with_update(

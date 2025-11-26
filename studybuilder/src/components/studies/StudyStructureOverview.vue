@@ -92,7 +92,12 @@
             <th colspan="3" scope="col" style="color: white">
               {{ $t('StudyStructureOverview.study_structure') }}
             </th>
-            <th :colspan="studyEpochs.length" scope="col" style="color: white">
+            <th
+              v-if="studyEpochs.length > 0"
+              :colspan="studyEpochs.length"
+              scope="col"
+              style="color: white"
+            >
               {{ $t('StudyStructureOverview.epochs') }}
             </th>
           </tr>
@@ -367,10 +372,6 @@ table {
   border-radius: 10px;
 }
 
-td:first-child,
-th:first-child {
-  border-left: none;
-}
 td:last-child,
 th:last-child {
   border-right: none;

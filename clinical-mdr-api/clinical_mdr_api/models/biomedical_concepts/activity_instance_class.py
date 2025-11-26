@@ -264,3 +264,64 @@ class ActivityInstanceClassWithDataset(BaseModel):
     ]
 
     datasets: list[str] = Field(default_factory=list)
+
+
+class ActivityInstanceClassDetail(BaseModel):
+    """Detailed view of an Activity Instance Class for the overview endpoint"""
+
+    uid: Annotated[str, Field()]
+    name: Annotated[str, Field()]
+    definition: Annotated[str | None, Field()] = None
+    is_domain_specific: Annotated[bool, Field()] = False
+    level: Annotated[int | None, Field()] = None
+    library_name: Annotated[str | None, Field()] = None
+    start_date: Annotated[str | None, Field()] = None
+    end_date: Annotated[str | None, Field()] = None
+    status: Annotated[str, Field()]
+    version: Annotated[str, Field()]
+    change_description: Annotated[str | None, Field()] = None
+    author_username: Annotated[str | None, Field()] = None
+    hierarchy: Annotated[str | None, Field()] = None
+    parent_class: Annotated[CompactActivityInstanceClass | None, Field()] = None
+
+
+class SimpleActivityInstanceClass(BaseModel):
+    """Simple representation of an Activity Instance Class for overview listing"""
+
+    uid: Annotated[str, Field()]
+    name: Annotated[str, Field()]
+    definition: Annotated[str | None, Field()] = None
+    is_domain_specific: Annotated[bool, Field()] = False
+    library_name: Annotated[str | None, Field()] = None
+    modified_date: Annotated[str | None, Field()] = None
+    modified_by: Annotated[str | None, Field()] = None
+    version: Annotated[str | None, Field()] = None
+    status: Annotated[str | None, Field()] = None
+
+
+class SimpleActivityItemClass(BaseModel):
+    """Simple representation of an Activity Item Class for overview listing"""
+
+    uid: Annotated[str, Field()]
+    name: Annotated[str, Field()]
+    parent_name: Annotated[str | None, Field()] = None
+    parent_uid: Annotated[str | None, Field()] = None
+    definition: Annotated[str | None, Field()] = None
+    modified_date: Annotated[str | None, Field()] = None
+    modified_by: Annotated[str | None, Field()] = None
+    version: Annotated[str | None, Field()] = None
+    status: Annotated[str | None, Field()] = None
+
+
+class ActivityInstanceParentClassOverview(BaseModel):
+    """Complete overview model for an Activity Instance Parent Class"""
+
+    parent_activity_instance_class: Annotated[ActivityInstanceClassDetail, Field()]
+    all_versions: Annotated[list[str], Field()]
+
+
+class ActivityInstanceClassOverview(BaseModel):
+    """Complete overview model for an Activity Instance Class"""
+
+    activity_instance_class: Annotated[ActivityInstanceClassDetail, Field()]
+    all_versions: Annotated[list[str], Field()]

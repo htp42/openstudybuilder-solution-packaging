@@ -161,47 +161,47 @@ class GenericSyntaxInstanceRepository(
         WITH pre_instance_value, param.name as parameter, u.position as position
         OPTIONAL MATCH (pre_instance_value)-[rel:USES_VALUE]->(tptv:TemplateParameterTermValue)<-[:HAS_VERSION]-(tptr:TemplateParameterTermRoot)
         CALL apoc.when(tptr IS NOT NULL AND tptr:StudyEndpoint,
-        "MATCH (:StudyValue)-->(tptr)-[:HAS_SELECTED_ENDPOINT]->(ev:EndpointValue)
-        OPTIONAL MATCH (tptr)-[:HAS_SELECTED_TIMEFRAME]->(tv:TimeframeValue)
-        CALL
-        {{
-        WITH tptr
-        OPTIONAL MATCH (tptr)-[rel:HAS_UNIT]->(un:UnitDefinitionRoot)-[:LATEST_FINAL]->(udv:UnitDefinitionValue)
-        WITH rel, udv, tptr ORDER BY rel.index
-        WITH collect(udv.name) as unit_names, tptr
-        OPTIONAL MATCH (tptr)-[:HAS_CONJUNCTION]->(co:Conjunction)
-        WITH unit_names, co
-        RETURN apoc.text.join(unit_names, ' ' + coalesce(co.string, '') + ' ') AS unit
-        }}
-        RETURN ev.name + coalesce(' ' + unit, '') + coalesce(' ' + tv.name, '') AS tptv_name",
-        "CALL apoc.case(
-        [
-        tptv.name_sentence_case IS NOT NULL, 'RETURN tptv.name_sentence_case AS name',
-        tptv.name_sentence_case IS NULL, 'RETURN tptv.name AS name'
-        ],
-        '',
-        {{ tptv:tptv }})
-        YIELD value
-        RETURN value.name AS tptv_name
-        ",
+            "MATCH (:StudyValue)-->(tptr)-[:HAS_SELECTED_ENDPOINT]->(ev:EndpointValue)
+            OPTIONAL MATCH (tptr)-[:HAS_SELECTED_TIMEFRAME]->(tv:TimeframeValue)
+            CALL
+            {{
+                WITH tptr
+                OPTIONAL MATCH (tptr)-[rel:HAS_UNIT]->(un:UnitDefinitionRoot)-[:LATEST_FINAL]->(udv:UnitDefinitionValue)
+                WITH rel, udv, tptr ORDER BY rel.index
+                WITH collect(udv.name) as unit_names, tptr
+                OPTIONAL MATCH (tptr)-[:HAS_CONJUNCTION]->(co:Conjunction)
+                WITH unit_names, co
+                RETURN apoc.text.join(unit_names, ' ' + coalesce(co.string, '') + ' ') AS unit
+            }}
+            RETURN ev.name + coalesce(' ' + unit, '') + coalesce(' ' + tv.name, '') AS tptv_name",
+            "CALL apoc.case(
+                [
+                    tptv.name_sentence_case IS NOT NULL, 'RETURN tptv.name_sentence_case AS name',
+                    tptv.name_sentence_case IS NULL, 'RETURN tptv.name AS name'
+                ],
+                '',
+                {{ tptv:tptv }})
+                YIELD value
+                RETURN value.name AS tptv_name
+            ",
         {{tptr:tptr, tptv:tptv}})
         YIELD value
         WITH pre_instance_value,
-        head([(tptr)<-[:HAS_PARAMETER_TERM]-(tp) | tp]) as tp,
-        rel,
-        position,
-        parameter,
-        tptr,
-        value.tptv_name AS tptv_name
+            rel,
+            position,
+            parameter,
+            tptr,
+            value.tptv_name AS tptv_name
         OPTIONAL MATCH (ptv: ParameterTemplateValue)<-[:LATEST_FINAL]-(td: ParameterTemplateRoot)-[:HAS_COMPLEX_VALUE]->(tptr)
-        WHERE tptv_name iS NOT NULL AND tp is NOT NULL
+        WHERE tptv_name iS NOT NULL
         WITH pre_instance_value, position, parameter, collect(DISTINCT {{
             set_number: 0,
             position: rel.position,
             index: rel.index,
-            parameter_name: tp.name,
+            parameter_name: parameter,
             parameter_term: tptv_name,
-            parameter_uid: tptr.uid,definition: td.uid,
+            parameter_uid: tptr.uid,
+            definition: td.uid,
             template: ptv.template_string,
             labels: labels(tptr)
         }}) as data
@@ -247,21 +247,19 @@ class GenericSyntaxInstanceRepository(
             ",
             {{tptr:tptr}})
             YIELD value
-           WITH vv,
-                head([(tptr)<-[:HAS_PARAMETER_TERM]-(tp) | tp]) as tp,
+            WITH vv,
                 rel,
                 position,
                 parameter,
                 tptr,
                 value.tpv AS tpv
         OPTIONAL MATCH (tpvv: ParameterTemplateValue)<-[:LATEST_FINAL]-(td: ParameterTemplateRoot)-[:HAS_COMPLEX_VALUE]->(tptr)
-        WHERE tpv iS NOT NULL AND tp is NOT NULL
-        
+        WHERE tpv iS NOT NULL
         WITH vv, position, parameter, collect(DISTINCT {{
             set_number: 0,
             position: rel.position,
             index: rel.index,
-            parameter_name: tp.name,
+            parameter_name: parameter,
             parameter_term: tpv,
             parameter_uid: tptr.uid,
             definition: td.uid,

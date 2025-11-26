@@ -168,3 +168,29 @@ Feature: Manage Library Concept Activity Instances in Clinical MDR API
     Test Coverage:
         |TestFile                                                      | TestID                                                |
         |/tests/integration/api/biomedical_concepts/test_activities.py | @TestID: test_edit_activity_instance                  |
+
+
+    # API test for CRF ODM - API development part of Wizard stepper feature 
+    Scenario: User must be able to create an activity instance with relationships to ODM elements (CRF)
+        When the user creates an activity instance with correct uids for ODM form, ODM group and ODM item
+        Then The activity instance is created successfully
+
+    Test Coverage:
+        |TestFile                                                      | TestID                                                |
+        |/tests/integration/api/biomedical_concepts/test_activities.py | @TestID: test_post_activity_instance                  |
+
+    Scenario: User must be able to edit an activity instance with relationships to ODM elements (CRF)
+        When the user edits an activity instance with correct uids for ODM form, ODM group and ODM item
+        Then The activity instance is updated with ODM relationships successfully
+
+    Test Coverage:
+        |TestFile                                                      | TestID                                                |
+        |/tests/integration/api/biomedical_concepts/test_activities.py | @TestID: test_edit_activity_instance                  |
+
+    Scenario: User must be able to retrive an activity instance including ODM elements relationships (CRF)
+        When the user retrieves an activity instance with correct uid for ODM form, ODM group and ODM item
+        Then The activity instance is retrieved successfully including the correct relationships to ODM form, ODM group and ODM item
+
+    Test Coverage:
+        |TestFile                                                      | TestID                                                |
+        |/tests/integration/api/biomedical_concepts/test_activities.py | @TestID: test_get_activity_instance                   |

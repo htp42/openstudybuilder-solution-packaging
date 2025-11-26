@@ -166,6 +166,8 @@ class BaseModel(PydanticBaseModel):
                 elif field.default == PydanticUndefined and not hasattr(obj, name):
                     setattr(obj, name, None)
                 continue
+            if isinstance(source, dict):
+                source = source["path"]
             if "." in source or "|" in source:
                 orig_source = source
                 # split by . that implicates property on node or | that indicates property on the relationship

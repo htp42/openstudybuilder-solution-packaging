@@ -1,5 +1,6 @@
 import json
 import os
+
 import pytest
 
 from migrations import migration_016
@@ -14,7 +15,6 @@ from migrations.utils.utils import (
 from tests import common
 from tests.data.db_before_migration_016 import TEST_DATA
 from tests.utils.utils import clear_db
-
 
 # pylint: disable=unused-argument
 # pylint: disable=redefined-outer-name
@@ -141,13 +141,17 @@ def test_migrate_ct(migration):
         records[0]["count"] == 0
     ), f"""Found {records[0]["count"]} nodes with _sideload label suffix."""
 
+
 @pytest.mark.order(after="test_migrate_ct")
 def test_repeat_migrate_ct(migration):
     assert not migration_016.migrate_ct(DB_DRIVER, logger)
 
+
 def test_migrate_ct_with_test_data(migration):
 
-    logger.info("CT migration, check that API returns the expected replies for migrated test data")
+    logger.info(
+        "CT migration, check that API returns the expected replies for migrated test data"
+    )
     # Get elements from the API and make sure they are properly returned
     # General checks
     codelists_path = "/ct/codelists"

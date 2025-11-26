@@ -2,10 +2,12 @@
 
 import re
 from datetime import datetime, timezone
+from typing import Any
 
 from pydantic import ValidationInfo
 
 from clinical_mdr_api.domains._utils import get_iso_lang_data
+from clinical_mdr_api.domains.concepts.utils import EN_LANGUAGE, ENG_LANGUAGE
 from common.exceptions import ValidationException
 
 FLOAT_REGEX = "^[0-9]+\\.?[0-9]*$"
@@ -118,3 +120,27 @@ def is_language_supported(value: str):
                 raise
 
     return None
+
+
+def has_english_description(descriptions: list[Any]):
+    """
+    Ensures that at least one description is in English (`eng` or `en`).
+
+    Args:
+        descriptions (list[Any]): List of descriptions.
+
+    Returns:
+        list[Any]: The original list if valid.
+
+    Raises:
+        ValidationException: If no English description is found.
+    """
+
+    if not descriptions or any(
+        desc.language in {ENG_LANGUAGE, EN_LANGUAGE} for desc in descriptions
+    ):
+        return descriptions
+
+    raise ValidationException(
+        msg="At least one description must be in English ('eng' or 'en')."
+    )

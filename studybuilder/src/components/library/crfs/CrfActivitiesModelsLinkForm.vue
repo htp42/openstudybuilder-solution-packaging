@@ -93,12 +93,12 @@ export default {
   computed: {
     title() {
       if (this.itemType === 'form') {
-        return this.$t('CrfLinikingForm.link_activity_groups')
+        return this.$t('CRFLinkingForm.link_activity_groups')
       }
       if (this.itemType === 'itemGroup') {
-        return this.$t('CrfLinikingForm.link_activity_sub_groups')
+        return this.$t('CRFLinkingForm.link_activity_sub_groups')
       }
-      return this.$t('CrfLinikingForm.link_activities')
+      return this.$t('CRFLinkingForm.link_activities')
     },
   },
   watch: {

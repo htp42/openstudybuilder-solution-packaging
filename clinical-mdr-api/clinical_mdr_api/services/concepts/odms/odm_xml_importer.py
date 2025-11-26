@@ -19,8 +19,10 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemStatus,
     LibraryVO,
 )
-from clinical_mdr_api.models.concepts.odms.odm_alias import OdmAliasPostInput
 from clinical_mdr_api.models.concepts.odms.odm_common_models import (
+    OdmAliasModel,
+    OdmDescriptionModel,
+    OdmFormalExpressionModel,
     OdmRefVendorPostInput,
     OdmVendorElementRelationPostInput,
     OdmVendorRelationPostInput,
@@ -29,17 +31,10 @@ from clinical_mdr_api.models.concepts.odms.odm_condition import (
     OdmCondition,
     OdmConditionPostInput,
 )
-from clinical_mdr_api.models.concepts.odms.odm_description import (
-    OdmDescriptionPostInput,
-)
 from clinical_mdr_api.models.concepts.odms.odm_form import (
     OdmForm,
     OdmFormItemGroupPostInput,
     OdmFormPostInput,
-)
-from clinical_mdr_api.models.concepts.odms.odm_formal_expression import (
-    OdmFormalExpression,
-    OdmFormalExpressionPostInput,
 )
 from clinical_mdr_api.models.concepts.odms.odm_item import (
     OdmItem,
@@ -87,14 +82,7 @@ from clinical_mdr_api.models.controlled_terminologies.ct_term import (
 )
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services._utils import is_library_editable
-from clinical_mdr_api.services.concepts.odms.odm_aliases import OdmAliasService
 from clinical_mdr_api.services.concepts.odms.odm_conditions import OdmConditionService
-from clinical_mdr_api.services.concepts.odms.odm_descriptions import (
-    OdmDescriptionService,
-)
-from clinical_mdr_api.services.concepts.odms.odm_formal_expressions import (
-    OdmFormalExpressionService,
-)
 from clinical_mdr_api.services.concepts.odms.odm_forms import OdmFormService
 from clinical_mdr_api.services.concepts.odms.odm_item_groups import OdmItemGroupService
 from clinical_mdr_api.services.concepts.odms.odm_items import OdmItemService
@@ -140,9 +128,6 @@ class OdmXmlImporterService:
     odm_item_service: OdmItemService
     odm_condition_service: OdmConditionService
     odm_method_service: OdmMethodService
-    odm_formal_expression_service: OdmFormalExpressionService
-    odm_description_service: OdmDescriptionService
-    odm_alias_service: OdmAliasService
     unit_definition_service: UnitDefinitionService
     ct_term_service: CTTermService
     ct_term_attributes_service: CTTermAttributesService
@@ -203,9 +188,6 @@ class OdmXmlImporterService:
         self.odm_item_service = OdmItemService()
         self.odm_condition_service = OdmConditionService()
         self.odm_method_service = OdmMethodService()
-        self.odm_formal_expression_service = OdmFormalExpressionService()
-        self.odm_description_service = OdmDescriptionService()
-        self.odm_alias_service = OdmAliasService()
         self.ct_term_service = CTTermService()
         self.ct_term_attributes_service = CTTermAttributesService()
         self.ct_codelist_service = CTCodelistService()
@@ -775,27 +757,6 @@ class OdmXmlImporterService:
             for term_name_ar, term_attributes_ar, ct_term_codelists in rs
         ]
 
-    def _create_formal_expressions(self, target):
-        new_formal_expressions: list[OdmFormalExpression] = []
-        for formal_expression in target.getElementsByTagName("FormalExpression"):
-            rs = self._create(
-                self._repos.odm_formal_expression_repository,
-                self.odm_formal_expression_service,
-                new_formal_expressions,
-                OdmFormalExpressionPostInput(
-                    context=formal_expression.getAttribute("Context"),
-                    expression=formal_expression.firstChild.nodeValue,
-                ),
-            )
-
-            self._approve(
-                self._repos.odm_formal_expression_repository,
-                self.odm_formal_expression_service,
-                rs,
-            )
-
-        return new_formal_expressions
-
     def _create_conditions_with_relations(self):
         for condition_def in self.condition_defs:
             descriptions = self._extract_descriptions(condition_def)
@@ -808,9 +769,12 @@ class OdmXmlImporterService:
                     oid=condition_def.getAttribute("OID"),
                     name=condition_def.getAttribute("Name"),
                     formal_expressions=[
-                        formal_expression.uid
-                        for formal_expression in self._create_formal_expressions(
-                            condition_def
+                        OdmFormalExpressionModel(
+                            context=formal_expression.getAttribute("Context"),
+                            expression=formal_expression.firstChild.nodeValue,
+                        )
+                        for formal_expression in condition_def.getElementsByTagName(
+                            "FormalExpression"
                         )
                     ],
                     descriptions=[
@@ -818,14 +782,14 @@ class OdmXmlImporterService:
                             name=description["name"],
                             lang=description["lang"],
                             description=description["description"],
-                        ).uid
+                        )
                         for description in descriptions
                     ],
-                    alias_uids=[
-                        self._create_alias(
+                    aliases=[
+                        OdmAliasModel(
                             name=alias_element.getAttribute("Name"),
                             context=alias_element.getAttribute("Context"),
-                        ).uid
+                        )
                         for alias_element in condition_def.getElementsByTagName("Alias")
                     ],
                 ),
@@ -847,9 +811,12 @@ class OdmXmlImporterService:
                     name=method_def.getAttribute("Name"),
                     method_type=method_def.getAttribute("Name"),
                     formal_expressions=[
-                        formal_expression.uid
-                        for formal_expression in self._create_formal_expressions(
-                            method_def
+                        OdmFormalExpressionModel(
+                            context=formal_expression.getAttribute("Context"),
+                            expression=formal_expression.firstChild.nodeValue,
+                        )
+                        for formal_expression in method_def.getElementsByTagName(
+                            "FormalExpression"
                         )
                     ],
                     descriptions=[
@@ -857,14 +824,14 @@ class OdmXmlImporterService:
                             name=description["name"],
                             lang=description["lang"],
                             description=description["description"],
-                        ).uid
+                        )
                         for description in descriptions
                     ],
-                    alias_uids=[
-                        self._create_alias(
+                    aliases=[
+                        OdmAliasModel(
                             name=alias_element.getAttribute("Name"),
                             context=alias_element.getAttribute("Context"),
-                        ).uid
+                        )
                         for alias_element in method_def.getElementsByTagName("Alias")
                     ],
                 ),
@@ -887,7 +854,9 @@ class OdmXmlImporterService:
             )
 
             if odm_item_post_input.terms:
-                self.odm_item_service._manage_terms(rs.uid, odm_item_post_input)
+                self.odm_item_service._manage_terms(
+                    rs.uid, odm_item_post_input.codelist_uid, odm_item_post_input.terms
+                )
             self.odm_item_service._manage_unit_definitions(
                 rs.uid, odm_item_post_input.unit_definitions
             )
@@ -1075,32 +1044,6 @@ class OdmXmlImporterService:
             self._repos.odm_study_event_repository, self.odm_study_event_service, rs
         )
 
-    def _create_alias(self, name: str, context: str):
-        concept_input = OdmAliasPostInput(name=name, context=context)
-
-        library_vo = self._get_library(concept_input)
-
-        try:
-            concept_ar = self.odm_alias_service._create_aggregate_root(
-                concept_input=concept_input, library=library_vo
-            )
-            self._repos.odm_alias_repository.save(concept_ar)
-            self._approve(
-                self._repos.odm_alias_repository,
-                self.odm_alias_service,
-                concept_ar,
-            )
-        except exceptions.AlreadyExistsException as e:
-            uid = re.search(r" already exists with UID \((.*)\) and data {", e.msg)
-            if uid:
-                concept_ar = self._repos.odm_alias_repository.find_by_uid_2(uid=uid[1])
-            else:
-                raise
-
-        return self.odm_alias_service._transform_aggregate_root_to_pydantic_model(
-            concept_ar
-        )
-
     def _create_description(
         self,
         name: str | minidom.Text,
@@ -1108,7 +1051,7 @@ class OdmXmlImporterService:
         description: str | None = None,
         instruction: str | None = None,
         sponsor_instruction: str | None = None,
-    ):
+    ) -> OdmDescriptionModel:
         if isinstance(name, minidom.Text):
             name = name.nodeValue
 
@@ -1121,23 +1064,12 @@ class OdmXmlImporterService:
         if not sponsor_instruction:
             sponsor_instruction = "Please update this sponsor instruction"
 
-        concept_input = OdmDescriptionPostInput(
+        return OdmDescriptionModel(
             name=str(name) or "TBD",
             language=lang,
             description=description,
             instruction=instruction if lang == ENG_LANGUAGE else None,
             sponsor_instruction=sponsor_instruction if lang == ENG_LANGUAGE else None,
-        )
-
-        library_vo = self._get_library(concept_input)
-
-        concept_ar = self.odm_description_service._create_aggregate_root(
-            concept_input=concept_input, library=library_vo
-        )
-        self._repos.odm_description_repository.save(concept_ar)
-
-        return self.odm_description_service._transform_aggregate_root_to_pydantic_model(
-            concept_ar
         )
 
     def _extract_descriptions(self, elm):
@@ -1186,15 +1118,7 @@ class OdmXmlImporterService:
         for description in descriptions:
             description["lang"] = get_iso_lang_data(
                 description["lang"] or "en", "639-1", "639-2/B"
-            ).upper()
-
-        exceptions.BusinessLogicException.raise_if(
-            elm.tagName in {"ConditionDef", "MethodDef"}
-            and not any(
-                description["lang"] == ENG_LANGUAGE for description in descriptions
-            ),
-            msg=f"An English OdmDescription must be provided for '{elm.tagName}' with OID '{elm.getAttribute('OID')}'.",
-        )
+            )
 
         return descriptions
 
@@ -1589,14 +1513,14 @@ class OdmXmlImporterService:
                     sponsor_instruction=item_def.getAttribute(
                         self.OSB_SPONSOR_INSTRUCTION
                     ),
-                ).uid
+                )
                 for description in descriptions
             ],
-            alias_uids=[
-                self._create_alias(
+            aliases=[
+                OdmAliasModel(
                     name=alias_element.getAttribute("Name"),
                     context=alias_element.getAttribute("Context"),
-                ).uid
+                )
                 for alias_element in item_def.getElementsByTagName("Alias")
             ],
             unit_definitions=item_unit_definitions,
@@ -1649,14 +1573,14 @@ class OdmXmlImporterService:
                     sponsor_instruction=item_group_def.getAttribute(
                         self.OSB_SPONSOR_INSTRUCTION
                     ),
-                ).uid
+                )
                 for description in descriptions
             ],
-            alias_uids=[
-                self._create_alias(
+            aliases=[
+                OdmAliasModel(
                     name=alias_element.getAttribute("Name"),
                     context=alias_element.getAttribute("Context"),
-                ).uid
+                )
                 for alias_element in item_group_def.getElementsByTagName("Alias")
             ],
             sdtm_domain_uids=sdtm_domain_uids,
@@ -1679,14 +1603,14 @@ class OdmXmlImporterService:
                     sponsor_instruction=form_def.getAttribute(
                         self.OSB_SPONSOR_INSTRUCTION
                     ),
-                ).uid
+                )
                 for description in descriptions
             ],
-            alias_uids=[
-                self._create_alias(
+            aliases=[
+                OdmAliasModel(
                     name=alias_element.getAttribute("Name"),
                     context=alias_element.getAttribute("Context"),
-                ).uid
+                )
                 for alias_element in form_def.getElementsByTagName("Alias")
             ],
         )
@@ -1740,6 +1664,7 @@ class OdmXmlImporterService:
 
     def _create(self, repository, service, save_to, concept_input):
         library_vo = self._get_library(concept_input)
+
         try:
             concept_ar = service._create_aggregate_root(
                 concept_input=concept_input, library=library_vo

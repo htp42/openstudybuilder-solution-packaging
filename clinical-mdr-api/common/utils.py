@@ -73,7 +73,11 @@ class BaseTimelineAR(Generic[StudyVisit]):
             visit.uid: visit for visit in self._visits
         }
         subvisit_sets: dict[str, list[Subvisit]] = {}
-        references = [visit.visit_sublabel_reference for visit in self._visits]
+        references = [
+            visit.visit_sublabel_reference
+            for visit in self._visits
+            if visit.visit_sublabel_reference
+        ]
         amount_of_subvisits_for_visit: dict[str, int] = {
             ref: references.count(ref) for ref in references
         }
@@ -90,6 +94,7 @@ class BaseTimelineAR(Generic[StudyVisit]):
                 visit.visit_subclass == VisitSubclass.ANCHOR_VISIT_IN_GROUP_OF_SUBV
                 and visit.uid
             ):
+                visit.subvisit_number = 0
                 subvisit_sets[visit.uid] = [Subvisit(visit, 0)]
             elif visit.visit_class == VisitClass.SPECIAL_VISIT:
                 # SpecialVisits anchored to same StudyVisit have the same timing, in scope of the same anchor visit
@@ -206,12 +211,12 @@ class BaseTimelineAR(Generic[StudyVisit]):
                 # we have to assign subvisit numbers after we assign anchor visit numbers because some of subvisits may
                 # happen before the anchor visit in group of subvisits and that will influence numbering
                 visits: list[Subvisit] = subvisit_sets[visit.visit_sublabel_reference]
-                amount_of_subvists = amount_of_subvisits_for_visit[
+                amount_of_subvisits = amount_of_subvisits_for_visit[
                     visit.visit_sublabel_reference
                 ]
-                if amount_of_subvists < 10:
+                if amount_of_subvisits < 10:
                     increment_step = 10
-                elif 10 <= amount_of_subvists < 20:
+                elif 10 <= amount_of_subvisits < 20:
                     increment_step = 5
                 else:
                     increment_step = 1

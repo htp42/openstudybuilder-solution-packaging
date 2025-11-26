@@ -6,6 +6,10 @@ let groupName, subgroupName, activityName, new_activity_name
 let first_in_order, last_in_order
 let activity_list = []
 
+When ('{string} view is available in SoA', (viewName) => cy.contains('.layoutSelector button', viewName).should('be.visible'))
+
+When ('{string} view is not available in SoA', (viewName) => cy.contains('.layoutSelector button', viewName).should('not.exist'))
+
 When('Action {string} is selected for study activity', (action) => {
     cy.contains('table tbody tr.bg-white', activityName).within(() => cy.clickButton('table-item-action-button'))
     cy.clickButton(action)

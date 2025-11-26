@@ -1,0 +1,4 @@
+burden_id,name,description,site_burden,patient_burden,median_cost_usd
+BRD_001,Low Complexity,Low complexity burden,1.2,1.5,100.0
+BRD_002,Medium Complexity,Medium complexity burden,3,3.5,300.0
+BRD_003,High Complexity,High complexity burden,5,5.5,500.0

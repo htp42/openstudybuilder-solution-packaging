@@ -15,6 +15,10 @@ from clinical_mdr_api.models.concepts.activities.activity import (
     ActivityGroupingHierarchySimpleModel,
 )
 from clinical_mdr_api.models.concepts.concept import VersionProperties
+from clinical_mdr_api.models.concepts.odms.odm_common_models import (
+    OdmAliasModel,
+    OdmDescriptionModel,
+)
 from clinical_mdr_api.models.controlled_terminologies.ct_term import SimpleTermModel
 from clinical_mdr_api.models.standard_data_models.sponsor_model import SponsorModelBase
 from common.exceptions import ValidationException
@@ -181,6 +185,8 @@ def get_field_path(prop, field):
     jse = field.json_schema_extra or {}
     source = jse.get("source")
     if source is not None:
+        if isinstance(source, dict):
+            source = source["path"]
         if "." in source:
             field_name = source.replace(".", "__")
         else:
@@ -188,6 +194,16 @@ def get_field_path(prop, field):
     else:
         field_name = prop
     return field_name
+
+
+def is_injected_field(field) -> bool:
+    jse = field.json_schema_extra or {}
+    source = jse.get("source")
+    if source is None:
+        return False
+    if isinstance(source, dict):
+        return source.get("injected", False)
+    return False
 
 
 def get_order_by_clause(sort_by: dict[str, bool] | None, model: type[BaseModel]):
@@ -209,22 +225,26 @@ def merge_q_query_filters(*args, filter_operator: "FilterOperator"):
     return args
 
 
-def get_versioning_q_filter(filter_elem, field, q_filters: list[Any]):
+def get_versioning_q_filter(filter_elem, field: str, q_filters: list[Any]):
     neomodel_filter = comparison_operator_to_neomodel.get(filter_elem.op)
     if neomodel_filter is None:
         raise AttributeError(
             f"The following operator {filter_elem.op} is not mapped to the neomodel operators."
         )
+    name = field.split("|")[1]
     q_filters.append(
-        Q(**{f"has_version|{field.name}{neomodel_filter}": f"{filter_elem.v[0]}"})
+        Q(**{f"has_version|{name}{neomodel_filter}": f"{filter_elem.v[0]}"})
     )
 
 
 def get_version_properties_sources() -> list[Any]:
-    return [
-        field.json_schema_extra.get("source") if field.json_schema_extra else None
-        for field in VersionProperties.model_fields.values()
-    ]
+    result = []
+    for field in VersionProperties.model_fields.values():
+        if field.json_schema_extra:
+            source = field.json_schema_extra.get("source")
+            if source is not None:
+                result.append(source["path"])  # type: ignore[call-overload,index]
+    return result
 
 
 def validate_sort_by_dict(sort_by: dict[str, bool] | None | str):
@@ -294,7 +314,7 @@ def transform_filters_into_neomodel(
                 model_sources = get_version_properties_sources()
                 if field_name in model_sources:
                     get_versioning_q_filter(
-                        filter_elem=filter_elem, field=field, q_filters=q_filters
+                        filter_elem=filter_elem, field=field_name, q_filters=q_filters
                     )
                     continue
 
@@ -788,6 +808,32 @@ class CypherQueryBuilder:
                                         )
                                         _predicates.append(
                                             f"any(attr in {attribute} WHERE toLower(attr.activity_subgroup.name) {_parsed_operator} $wildcard_{index})"
+                                        )
+                                    elif (
+                                        get_field_type(attr_desc.annotation)
+                                        is OdmDescriptionModel
+                                    ):
+                                        _predicates.append(
+                                            f"any(attr in {attribute} WHERE toLower(attr.name) {_parsed_operator} $wildcard_{index})"
+                                        )
+                                        _predicates.append(
+                                            f"any(attr in {attribute} WHERE toLower(attr.description) {_parsed_operator} $wildcard_{index})"
+                                        )
+                                        _predicates.append(
+                                            f"any(attr in {attribute} WHERE toLower(attr.instruction) {_parsed_operator} $wildcard_{index})"
+                                        )
+                                        _predicates.append(
+                                            f"any(attr in {attribute} WHERE toLower(attr.sponsor_instruction) {_parsed_operator} $wildcard_{index})"
+                                        )
+                                    elif (
+                                        get_field_type(attr_desc.annotation)
+                                        is OdmAliasModel
+                                    ):
+                                        _predicates.append(
+                                            f"any(attr in {attribute} WHERE toLower(attr.name) {_parsed_operator} $wildcard_{index})"
+                                        )
+                                        _predicates.append(
+                                            f"any(attr in {attribute} WHERE toLower(attr.context) {_parsed_operator} $wildcard_{index})"
                                         )
                             # If none are provided, raise an exception
                             else:

@@ -171,9 +171,15 @@ class ActivityItem(BaseModel):
     ct_terms: list[CompactCTTerm] = Field(default_factory=list)
     unit_definitions: list[CompactUnitDefinition] = Field(default_factory=list)
     is_adam_param_specific: Annotated[bool, Field()]
-    odm_forms: list[CompactOdmForm] = Field(default_factory=list)
-    odm_item_groups: list[CompactOdmItemGroup] = Field(default_factory=list)
-    odm_items: list[CompactOdmItem] = Field(default_factory=list)
+    odm_form: Annotated[
+        CompactOdmForm | None, Field(json_schema_extra={"nullable": True})
+    ] = None
+    odm_item_group: Annotated[
+        CompactOdmItemGroup | None, Field(json_schema_extra={"nullable": True})
+    ] = None
+    odm_item: Annotated[
+        CompactOdmItem | None, Field(json_schema_extra={"nullable": True})
+    ] = None
 
 
 class ActivityItemCreateInput(PostInputModel):
@@ -185,6 +191,6 @@ class ActivityItemCreateInput(PostInputModel):
     ct_terms: Annotated[list[CTTermsInput], Field()]
     unit_definition_uids: Annotated[list[str], Field()]
     is_adam_param_specific: Annotated[bool, Field()]
-    odm_form_uids: list[str] = Field(default_factory=list)
-    odm_item_group_uids: list[str] = Field(default_factory=list)
-    odm_item_uids: list[str] = Field(default_factory=list)
+    odm_form_uid: Annotated[str | None, Field()] = None
+    odm_item_group_uid: Annotated[str | None, Field()] = None
+    odm_item_uid: Annotated[str | None, Field()] = None

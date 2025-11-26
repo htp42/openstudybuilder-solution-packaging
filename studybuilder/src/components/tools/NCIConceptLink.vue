@@ -2,21 +2,17 @@
   <a :href="termBrowserUrl" target="_blank"> {{ conceptId }} </a>
 </template>
 
-<script>
-export default {
-  props: {
-    conceptId: {
-      type: String,
-      default: '',
-    },
+<script setup>
+import { computed } from 'vue'
+
+const props = defineProps({
+  conceptId: {
+    type: String,
+    default: '',
   },
-  computed: {
-    termBrowserUrl() {
-      return (
-        'https://ncit.nci.nih.gov/ncitbrowser/ConceptReport.jsp?code=' +
-        this.conceptId
-      )
-    },
-  },
-}
+})
+
+const termBrowserUrl = computed(() => {
+  return `https://evsexplore.semantics.cancer.gov/evsexplore/concept/ncit/${props.conceptId}`
+})
 </script>

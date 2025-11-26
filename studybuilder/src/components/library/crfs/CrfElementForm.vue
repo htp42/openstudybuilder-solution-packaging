@@ -13,7 +13,7 @@
           <v-col cols="6">
             <v-text-field
               v-model="form.name"
-              :label="$t('CrfExtensions.ele_name')"
+              :label="$t('CRFExtensions.ele_name')"
               density="compact"
               clearable
               :rules="[formRules.required]"
@@ -22,7 +22,7 @@
           <v-col>
             <v-select
               v-model="form.compatible_types"
-              :label="$t('CrfExtensions.compatible_types')"
+              :label="$t('CRFExtensions.compatible_types')"
               :items="compatibleTypes"
               density="compact"
               multiple
@@ -34,7 +34,7 @@
           <v-col cols="6">
             <v-select
               v-model="attribute"
-              :label="$t('CrfExtensions.add_existing_attr')"
+              :label="$t('CRFExtensions.add_existing_attr')"
               :items="existingAttributes"
               return-object
               item-title="name"
@@ -55,7 +55,7 @@
               color="primary"
               @click="addNewAttribute"
             >
-              {{ $t('CrfExtensions.add_new_attr') }}
+              {{ $t('CRFExtensions.add_new_attr') }}
             </v-btn>
           </v-col>
         </v-row>
@@ -64,7 +64,7 @@
             <v-text-field
               v-model="attr.name"
               :disabled="editItem.uid !== undefined"
-              :label="$t('CrfExtensions.attr_name')"
+              :label="$t('CRFExtensions.attr_name')"
               density="compact"
               clearable
             />
@@ -73,7 +73,7 @@
             <v-select
               v-model="attr.data_type"
               :disabled="editItem.uid !== undefined"
-              :label="$t('CrfExtensions.data_type')"
+              :label="$t('CRFExtensions.data_type')"
               :items="dataTypes"
               item-title="submission_value"
               item-value="submission_value"
@@ -118,10 +118,6 @@ export default {
       type: String,
       default: null,
     },
-    attributes: {
-      type: Array,
-      default: null,
-    },
   },
   emits: ['close'],
   data() {
@@ -129,6 +125,7 @@ export default {
       form: {},
       dataTypes: [],
       attribute: null,
+      attributes: [],
       attributesKeyIndex: 0,
       existingAttributes: [],
       attributesToCreate: [],
@@ -138,8 +135,8 @@ export default {
   computed: {
     title() {
       return this.editItem.uid
-        ? this.$t('CrfExtensions.edit_ele')
-        : this.$t('CrfExtensions.new_ele')
+        ? this.$t('CRFExtensions.edit_ele')
+        : this.$t('CRFExtensions.new_ele')
     },
   },
   watch: {
@@ -150,9 +147,19 @@ export default {
       this.existingAttributes = this.attributes
     },
   },
-  mounted() {
+  async mounted() {
     terms.getTermsByCodelist('dataType').then((resp) => {
       this.dataTypes = resp.data.items
+    })
+
+    await crfs.getAllAttributes({ page_size: 0 }).then((resp) => {
+      const seen = new Set()
+      this.attributes = resp.data.items.filter((item) => {
+        const key = `${item.name}|${item.data_type}|${item.regex}`
+        if (seen.has(key)) return false
+        seen.add(key)
+        return true
+      })
     })
   },
   methods: {
@@ -206,21 +213,19 @@ export default {
         )
       } else {
         let elementUid = ''
-        await crfs.createElement(this.form).then(
-          (resp) => {
-            elementUid = resp.data.uid
-          },
-          () => {
-            this.$refs.form.working = false
-          }
-        )
-        if (this.attributesToCreate.length > 0 && elementUid !== '') {
-          for (const attr of this.attributesToCreate) {
-            delete attr.compatible_types
-            attr.vendor_element_uid = elementUid
-            await crfs.createAttribute(attr)
+        try {
+          const resp = await crfs.createElement(this.form)
+          elementUid = resp.data.uid
+          if (this.attributesToCreate.length > 0 && elementUid !== '') {
+            for (const attr of this.attributesToCreate) {
+              delete attr.compatible_types
+              attr.vendor_element_uid = elementUid
+              await crfs.createAttribute(attr)
+            }
           }
           this.close()
+        } catch (error) {
+          this.$refs.form.working = false
         }
       }
     },

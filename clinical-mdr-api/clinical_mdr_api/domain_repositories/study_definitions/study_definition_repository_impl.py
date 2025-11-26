@@ -1112,8 +1112,40 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                 }
             )[0]
         if term_node:
-            study_field_node.has_type.connect(term_node)
+            # check if the term is already connected
+            existing_term_rel = study_field_node.has_type.get_or_none()
+            if existing_term_rel:
+                existing_term = existing_term_rel.has_selected_term.get_or_none()
+                new_term = term_node.has_selected_term.get_or_none()
+                if existing_term.uid != new_term.uid:
+                    # disconnect the existing term relationship if it exists
+                    study_field_node.has_type.disconnect(existing_term)
+                    study_field_node.has_type.connect(term_node)
+            else:
+                study_field_node.has_type.connect(term_node)
         if null_value_code:
+            existing_null_value_reason = None
+            existing_null_value_reason_rel = (
+                study_field_node.has_reason_for_null_value.get_or_none()
+            )
+            if existing_null_value_reason_rel:
+                existing_null_value_reason = (
+                    existing_null_value_reason_rel.has_selected_term.get_or_none()
+                )
+
+            # Return early if the null value reason is already correctly set
+            if (
+                existing_null_value_reason
+                and existing_null_value_reason.uid == null_value_code
+            ):
+                return study_field_node
+
+            # Disconnect the existing null value reason relationship if it exists
+            if existing_null_value_reason:
+                study_field_node.has_reason_for_null_value.disconnect(
+                    existing_null_value_reason
+                )
+
             # TODO This doesn't do much, just gets the node with the given uid
             null_value_reason_node = self._get_associated_ct_term_root_node(
                 term_uid=null_value_code,
@@ -1489,6 +1521,16 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                                     "field_name": study_array_field_name,
                                 }
                             )[0]
+                        # disconnect any existing has_term or has_dictionary_term relationships
+                        if config_item.is_dictionary_term:
+                            for rel in study_array_field_node.has_dictionary_type.all():
+                                study_array_field_node.has_dictionary_type.disconnect(
+                                    rel
+                                )
+                        else:
+                            for rel in study_array_field_node.has_type.all():
+                                study_array_field_node.has_type.disconnect(rel)
+                        # then reconnect the new set
                         for term_root_node in ct_term_root_nodes:
                             if not config_item.is_dictionary_term:
                                 study_array_field_node.has_type.connect(term_root_node)
@@ -1516,21 +1558,47 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                             study_array_field_node = StudyArrayField.create(
                                 {"value": [], "field_name": study_array_field_name}
                             )[0]
+                        # disconnect any existing has_type relationships
+                        for rel in study_array_field_node.has_type.all():
+                            study_array_field_node.has_type.disconnect(rel)
+                        # then reconnect the new set
                         for ct_term_root_node in ct_term_root_nodes:
                             study_array_field_node.has_type.connect(ct_term_root_node)
-                        null_value_reason_node = self._get_associated_ct_term_root_node(
-                            term_uid=study_array_field_null_value_code,
-                            study_field_name="Null Flavor",
-                        )
-                        null_value_reason_node = CTCodelistAttributesRepository().get_or_create_selected_term(
-                            null_value_reason_node,
-                            codelist_submission_value=settings.null_flavor_cl_submval,
-                            catalogue_name=settings.sdtm_ct_catalogue_name,
-                        )
 
-                        study_array_field_node.has_reason_for_null_value.connect(
-                            null_value_reason_node
+                        # check if the same null flavor reason is already connected,
+                        # don't connect again if so
+                        existing_null_value_reason_uid = None
+                        existing_null_value_reason_rel = (
+                            study_array_field_node.has_reason_for_null_value.get_or_none()
                         )
+                        if existing_null_value_reason_rel:
+                            existing_null_value_reason_uid = (
+                                existing_null_value_reason_rel.has_selected_term.get_or_none().uid
+                            )
+                            if (
+                                existing_null_value_reason_uid
+                                != study_array_field_null_value_code
+                            ):
+                                study_array_field_node.has_reason_for_null_value.disconnect(
+                                    existing_null_value_reason_rel
+                                )
+                                existing_null_value_reason_uid = None
+
+                        if not existing_null_value_reason_uid:
+                            null_value_reason_node = (
+                                self._get_associated_ct_term_root_node(
+                                    term_uid=study_array_field_null_value_code,
+                                    study_field_name="Null Flavor",
+                                )
+                            )
+                            null_value_reason_node = CTCodelistAttributesRepository().get_or_create_selected_term(
+                                null_value_reason_node,
+                                codelist_submission_value=settings.null_flavor_cl_submval,
+                                catalogue_name=settings.sdtm_ct_catalogue_name,
+                            )
+                            study_array_field_node.has_reason_for_null_value.connect(
+                                null_value_reason_node
+                            )
                         if not to_delete:
                             expected_latest_value.has_array_field.connect(
                                 study_array_field_node

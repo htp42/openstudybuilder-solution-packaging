@@ -262,22 +262,39 @@ class CTTermService:
         filter_by: dict[str, dict[str, Any]] | None = None,
         filter_operator: FilterOperator = FilterOperator.AND,
         page_size: int = 10,
+        lite: bool = False,
     ) -> list[Any]:
         self.enforce_codelist_package_library(
             codelist_uid, codelist_name, library, package
         )
 
-        header_values = self._repos.ct_term_aggregated_repository.get_distinct_headers(
-            codelist_uid=codelist_uid,
-            codelist_name=codelist_name,
-            library=library,
-            package=package,
-            field_name=field_name,
-            search_string=search_string,
-            filter_by=filter_by,
-            filter_operator=filter_operator,
-            page_size=page_size,
-        )
+        if lite:
+            header_values = (
+                self._repos.ct_term_aggregated_repository.get_distinct_headers_lite(
+                    codelist_uid=codelist_uid,
+                    codelist_name=codelist_name,
+                    library=library,
+                    package=package,
+                    field_name=field_name,
+                    search_string=search_string,
+                    filter_by=filter_by,
+                    page_size=page_size,
+                )
+            )
+        else:
+            header_values = (
+                self._repos.ct_term_aggregated_repository.get_distinct_headers(
+                    codelist_uid=codelist_uid,
+                    codelist_name=codelist_name,
+                    library=library,
+                    package=package,
+                    field_name=field_name,
+                    search_string=search_string,
+                    filter_by=filter_by,
+                    filter_operator=filter_operator,
+                    page_size=page_size,
+                )
+            )
 
         return header_values
 

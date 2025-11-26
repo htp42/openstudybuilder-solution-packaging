@@ -304,7 +304,11 @@ class StudySelectionActivityGroupRepository(
         return []
 
     def find_study_activity_group_with_same_groupings(
-        self, study_uid: str, activity_group_uid: str, soa_group_term_uid: str
+        self,
+        study_uid: str,
+        activity_group_uid: str,
+        soa_group_term_uid: str,
+        sync_latest_version: bool = False,
     ) -> StudyActivityGroup | None:
         query = """
             MATCH (activity_group_root:ActivityGroupRoot)-[:HAS_VERSION]->(activity_group_value:ActivityGroupValue)
@@ -314,6 +318,18 @@ class StudySelectionActivityGroupRepository(
             WHERE NOT (study_activity_group)<-[:BEFORE]-() AND NOT (study_activity_group)<-[]-(:Delete)
                 AND activity_group_root.uid=$activity_group_uid
                 AND flowchart_group_term.uid=$soa_group_term_uid
+            WITH DISTINCT study_activity_group, activity_group_root, activity_group_value, $sync_latest_version AS sync_latest_version
+            CALL apoc.do.case([
+                sync_latest_version=true,
+                'WHERE (activity_group_root)-[:LATEST]->(activity_group_value) RETURN *'
+            ],
+            '',
+            {
+                activity_group_root: activity_group_root,
+                activity_group_value: activity_group_value,
+                sync_latest_version: sync_latest_version
+            })
+            YIELD value
             RETURN DISTINCT study_activity_group, activity_group_value
         """
         study_activity_groups, _ = db.cypher_query(
@@ -322,6 +338,7 @@ class StudySelectionActivityGroupRepository(
                 "study_uid": study_uid,
                 "activity_group_uid": activity_group_uid,
                 "soa_group_term_uid": soa_group_term_uid,
+                "sync_latest_version": sync_latest_version,
             },
             resolve_objects=True,
         )

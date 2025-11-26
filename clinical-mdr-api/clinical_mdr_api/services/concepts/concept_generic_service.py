@@ -9,7 +9,6 @@ from pydantic import BaseModel
 from clinical_mdr_api.domain_repositories.concepts.concept_generic_repository import (
     ConceptGenericRepository,
 )
-from clinical_mdr_api.domains._utils import ObjectStatus
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemStatus,
     LibraryVO,
@@ -211,7 +210,6 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
         filter_by: dict[str, dict[str, Any]] | None = None,
         filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
-        only_specific_status: str = ObjectStatus.LATEST.name,
         **kwargs,
     ) -> GenericFilteringReturn[BaseModel]:
         return self.non_transactional_get_all_concepts(
@@ -222,7 +220,6 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
             filter_by,
             filter_operator,
             total_count,
-            only_specific_status,
             **kwargs,
         )
 
@@ -235,7 +232,6 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
         filter_by: dict[str, dict[str, Any]] | None = None,
         filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
-        only_specific_status: str = ObjectStatus.LATEST.name,
         **kwargs,
     ) -> GenericFilteringReturn[BaseModel]:
         self.enforce_library(library)
@@ -248,7 +244,6 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
             filter_operator=filter_operator,
             page_number=page_number,
             page_size=page_size,
-            only_specific_status=only_specific_status,
             **kwargs,
         )
 
@@ -271,11 +266,18 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
     ) -> list[Any]:
         self.enforce_library(library)
 
+        # Lite mode doesn't support filtering by relationship fields like status
+        # Fall back to non-lite mode when these filters are present
+        if lite and filter_by and "status" in filter_by:
+            lite = False
+
         if lite:
             header_values = self.repository.get_distinct_headers_lite(
                 library=library,
                 field_name=field_name,
                 search_string=search_string,
+                filter_by=filter_by,
+                filter_operator=filter_operator,
                 page_size=page_size,
                 **kwargs,
             )
@@ -378,18 +380,37 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
             return calculate_diffs(versions, self.version_class)
         return []
 
-    @db.transaction
+    @ensure_transaction(db)
     def create_new_version(
-        self, uid: str, cascade_new_version: bool = False
+        self,
+        uid: str,
+        cascade_new_version: bool = False,
+        force_new_value_node: bool = False,
+        ignore_exc: bool = False,
     ) -> BaseModel:
-        return self.non_transactional_create_new_version(uid, cascade_new_version)
+        return self.non_transactional_create_new_version(
+            uid, cascade_new_version, force_new_value_node, ignore_exc
+        )
 
     def non_transactional_create_new_version(
-        self, uid: str, cascade_new_version: bool = False
+        self,
+        uid: str,
+        cascade_new_version: bool = False,
+        force_new_value_node: bool = False,
+        ignore_exc: bool = False,
     ) -> BaseModel:
         item = self._find_by_uid_or_raise_not_found(uid, for_update=True)
-        item.create_new_version(author_id=self.author_id)
-        self.repository.save(item)
+        try:
+            item.create_new_version(author_id=self.author_id)
+            self.repository.save(item, force_new_value_node)
+        except BusinessLogicException as exc:
+            if (
+                not ignore_exc
+                or exc.msg
+                != "New draft version can be created only for FINAL versions."
+            ):
+                raise
+
         if cascade_new_version:
             self.cascade_new_version(item)
         return self._transform_aggregate_root_to_pydantic_model(item)
@@ -711,36 +732,46 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
             )
         return response_model
 
-    @db.transaction
-    def approve(self, uid: str, cascade_edit_and_approve: bool = False) -> BaseModel:
-        return self.non_transactional_approve(uid, cascade_edit_and_approve)
-
-    def non_transactional_approve(
-        self, uid: str, cascade_edit_and_approve: bool = False
+    @ensure_transaction(db)
+    def approve(
+        self, uid: str, cascade_edit_and_approve: bool = False, ignore_exc: bool = False
     ) -> BaseModel:
         item = self._find_by_uid_or_raise_not_found(uid, for_update=True)
-        item.approve(author_id=self.author_id)
-        self.repository.save(item)
+        try:
+            item.approve(author_id=self.author_id)
+            self.repository.save(item)
+        except BusinessLogicException as exc:
+            if not ignore_exc or exc.msg != "The object isn't in draft status.":
+                raise
+
         if cascade_edit_and_approve:
             self.cascade_edit_and_approve(item)
         return self._transform_aggregate_root_to_pydantic_model(item)
 
-    @db.transaction
-    def inactivate_final(self, uid: str, cascade_inactivate: bool = False) -> BaseModel:
+    @ensure_transaction(db)
+    def inactivate_final(
+        self,
+        uid: str,
+        cascade_inactivate: bool = False,
+        force_new_value_node: bool = False,
+    ) -> BaseModel:
         item = self._find_by_uid_or_raise_not_found(uid, for_update=True)
         item.inactivate(author_id=self.author_id)
-        self.repository.save(item)
+        self.repository.save(item, force_new_value_node=force_new_value_node)
         if cascade_inactivate:
             self.cascade_inactivate(item)
         return self._transform_aggregate_root_to_pydantic_model(item)
 
-    @db.transaction
+    @ensure_transaction(db)
     def reactivate_retired(
-        self, uid: str, cascade_reactivate: bool = False
+        self,
+        uid: str,
+        cascade_reactivate: bool = False,
+        force_new_value_node: bool = False,
     ) -> BaseModel:
         item = self._find_by_uid_or_raise_not_found(uid, for_update=True)
         item.reactivate(author_id=self.author_id)
-        self.repository.save(item)
+        self.repository.save(item, force_new_value_node=force_new_value_node)
         if cascade_reactivate:
             self.cascade_reactivate(item)
         return self._transform_aggregate_root_to_pydantic_model(item)

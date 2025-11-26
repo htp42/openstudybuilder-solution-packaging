@@ -33,6 +33,17 @@ Feature: Studies - Define Study - Study Activities - Schedule of Activities - De
         And The 'Schedule of Activities' tab is selected
         Then The current URL is '/activities/soa'
 
+    @smoke_test
+    Scenario: [View] User must be presented with option to switch between Detailed and Protocol view
+        When The test study '/activities/soa' page is opened
+        When 'Detailed' view is available in SoA
+        When 'Protocol' view is available in SoA
+
+    @smoke_test
+    Scenario: [View] User must not be presented with option to switch to Operational view
+        When The test study '/activities/soa' page is opened
+        When 'Operational' view is not available in SoA
+
     Scenario: [Table][Options] User must be able to see the Detailed SoA table with options listed in this scenario
         And The test study '/activities/soa' page is opened
         Then SoA table is available with Bulk actions, Export and Show version history

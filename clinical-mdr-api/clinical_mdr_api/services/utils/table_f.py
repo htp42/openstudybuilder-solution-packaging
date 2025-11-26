@@ -437,12 +437,14 @@ def table_to_xlsx(
                 workbook.add_named_style(NamedStyle(style_name))
 
         for r, row in enumerate(worksheet.iter_rows()):
-            for c, cell in enumerate(row):
+            for c, rowcell in enumerate(row):
                 if (
                     c < len(table.rows[r].cells)
                     and table.rows[r].cells[c].style in styles
                 ):
-                    cell.style = styles[table.rows[r].cells[c].style]
+                    style_index = table.rows[r].cells[c].style
+                    if style_index is not None:
+                        rowcell.style = styles[style_index]
 
     # define table
     tab = Table(

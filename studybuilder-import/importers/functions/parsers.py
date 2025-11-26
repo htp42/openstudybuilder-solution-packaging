@@ -12,7 +12,7 @@ def parse_to_int(s: str) -> int:
     try:
         return int(s)
     except ValueError:
-        logger.warning("Failed to parse %s to integer, defaulting to 0", s)
+        logger.debug("Failed to parse %s to integer, defaulting to 0", s)
         return 0
 
 
@@ -33,7 +33,7 @@ def parse_float(value: str) -> Optional[float]:
         new_value = float(value.replace("E", "e"))
     except ValueError:
         new_value = 0.0
-        logger.warning(
+        logger.debug(
             f"Unable to parse string '{value}' as a number, defaulting to {new_value}"
         )
     return new_value
@@ -46,7 +46,7 @@ def map_boolean(bool_str: str, raise_exception=False, default=False) -> bool:
         return False
     if raise_exception:
         raise ValueError(f"Unable to map string :'{bool_str}' to a boolean value")
-    logger.warning(
+    logger.debug(
         f"Unable to map string :'{bool_str}' to a boolean value, default is set to {default}"
     )
     return default

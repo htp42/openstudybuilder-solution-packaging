@@ -17,7 +17,7 @@
         variant="outlined"
         color="nnBaseBlue"
         icon="mdi-plus"
-        :title="$t('CrfExtensions.new_namespace')"
+        :title="$t('CRFExtensions.new_namespace')"
         :disabled="!accessGuard.checkPermission($roles.LIBRARY_WRITE)"
         @click.stop="openCreateForm"
       />
@@ -66,7 +66,7 @@ const confirmRef = ref()
 
 const actions = [
   {
-    label: t('CrfExtensions.edit_extension'),
+    label: t('CRFExtensions.edit_extension'),
     icon: 'mdi-pencil-outline',
     iconColor: 'primary',
     condition: (item) =>
@@ -75,7 +75,7 @@ const actions = [
     click: openEditForm,
   },
   {
-    label: t('CrfExtensions.edit_namespace'),
+    label: t('CRFExtensions.edit_namespace'),
     icon: 'mdi-pencil-outline',
     iconColor: 'primary',
     condition: (item) =>
@@ -138,8 +138,8 @@ const actions = [
 const headers = [
   { title: '', key: 'actions', width: '1%' },
   { title: t('_global.name'), key: 'name' },
-  { title: t('CrfExtensions.prefix'), key: 'prefix' },
-  { title: t('CrfExtensions.url'), key: 'url' },
+  { title: t('CRFExtensions.prefix'), key: 'prefix' },
+  { title: t('CRFExtensions.url'), key: 'url' },
   { title: t('_global.status'), key: 'status' },
   { title: t('_global.version'), key: 'version' },
 ]
@@ -192,13 +192,13 @@ async function deleteNamespace(item) {
   }
   if (
     await confirmRef.value.open(
-      t('CrfExtensions.namespace_delete_warning'),
+      t('CRFExtensions.namespace_delete_warning'),
       options
     )
   ) {
     crfs.delete('vendor-namespaces', item.uid).then(() => {
       eventBusEmit('notification', {
-        msg: t('CrfExtensions.namespace_deleted'),
+        msg: t('CRFExtensions.namespace_deleted'),
       })
       tableRef.value.filterTable()
     })

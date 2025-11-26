@@ -6,11 +6,6 @@ from clinical_mdr_api.descriptions.general import CHANGES_FIELD_DESC
 from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_codelist_name_repository import (
     CTCodelistNameRepository,
 )
-from clinical_mdr_api.domains.concepts.activities.activity_sub_group import (
-    ActivitySubGroupAR,
-)
-from clinical_mdr_api.domains.concepts.odms.alias import OdmAliasAR
-from clinical_mdr_api.domains.concepts.odms.description import OdmDescriptionAR
 from clinical_mdr_api.domains.concepts.odms.item import OdmItemRefVO
 from clinical_mdr_api.domains.concepts.odms.item_group import (
     OdmItemGroupAR,
@@ -25,24 +20,17 @@ from clinical_mdr_api.domains.concepts.odms.vendor_element import (
     OdmVendorElementRelationVO,
 )
 from clinical_mdr_api.domains.concepts.utils import RelationType
-from clinical_mdr_api.models.concepts.activities.activity import (
-    ActivityHierarchySimpleModel,
-)
 from clinical_mdr_api.models.concepts.concept import (
     ConceptModel,
     ConceptPatchInput,
     ConceptPostInput,
 )
-from clinical_mdr_api.models.concepts.odms.odm_alias import OdmAliasSimpleModel
 from clinical_mdr_api.models.concepts.odms.odm_common_models import (
+    OdmAliasModel,
+    OdmDescriptionModel,
     OdmRefVendor,
     OdmRefVendorAttributeModel,
     OdmRefVendorPostInput,
-)
-from clinical_mdr_api.models.concepts.odms.odm_description import (
-    OdmDescriptionBatchPatchInput,
-    OdmDescriptionPostInput,
-    OdmDescriptionSimpleModel,
 )
 from clinical_mdr_api.models.concepts.odms.odm_item import OdmItemRefModel
 from clinical_mdr_api.models.concepts.odms.odm_vendor_attribute import (
@@ -56,7 +44,10 @@ from clinical_mdr_api.models.controlled_terminologies.ct_term import (
     SimpleCodelistTermModel,
 )
 from clinical_mdr_api.models.utils import BaseModel, PostInputModel
-from clinical_mdr_api.models.validators import validate_string_represents_boolean
+from clinical_mdr_api.models.validators import (
+    has_english_description,
+    validate_string_represents_boolean,
+)
 from common.config import settings
 from common.utils import booltostr
 
@@ -73,10 +64,9 @@ class OdmItemGroup(ConceptModel):
     origin: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
     purpose: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
     comment: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
-    descriptions: Annotated[list[OdmDescriptionSimpleModel], Field()]
-    aliases: Annotated[list[OdmAliasSimpleModel], Field()]
+    descriptions: Annotated[list[OdmDescriptionModel], Field()]
+    aliases: Annotated[list[OdmAliasModel], Field()]
     sdtm_domains: Annotated[list[SimpleCodelistTermModel], Field()]
-    activity_subgroups: Annotated[list[ActivityHierarchySimpleModel], Field()]
     items: Annotated[list[OdmItemRefModel], Field()]
     vendor_elements: Annotated[list[OdmVendorElementRelationModel], Field()]
     vendor_attributes: Annotated[list[OdmVendorAttributeRelationModel], Field()]
@@ -93,19 +83,16 @@ class OdmItemGroup(ConceptModel):
     def from_odm_item_group_ar(
         cls,
         odm_item_group_ar: OdmItemGroupAR,
-        find_odm_description_by_uid: Callable[[str], OdmDescriptionAR | None],
-        find_odm_alias_by_uid: Callable[[str], OdmAliasAR | None],
-        find_activity_subgroup_by_uid: Callable[[str], ActivitySubGroupAR | None],
         find_odm_vendor_attribute_by_uid: Callable[[str], OdmVendorAttributeAR | None],
         find_odm_item_by_uid_with_item_group_relation: Callable[
-            [str, str], OdmItemRefVO | None
+            [str, str, str], OdmItemRefVO
         ],
         find_odm_vendor_element_by_uid_with_odm_element_relation: Callable[
-            [str, str, RelationType], OdmVendorElementRelationVO | None
+            [str, str, str, RelationType], OdmVendorElementRelationVO
         ],
         find_odm_vendor_attribute_by_uid_with_odm_element_relation: Callable[
-            [str, str, RelationType, bool],
-            OdmVendorAttributeRelationVO | OdmVendorElementAttributeRelationVO | None,
+            [str, str, str, RelationType, bool],
+            OdmVendorAttributeRelationVO | OdmVendorElementAttributeRelationVO,
         ],
     ) -> Self:
         codelist_repo = CTCodelistNameRepository()
@@ -137,44 +124,21 @@ class OdmItemGroup(ConceptModel):
             change_description=odm_item_group_ar.item_metadata.change_description,
             author_username=odm_item_group_ar.item_metadata.author_username,
             descriptions=sorted(
-                [
-                    OdmDescriptionSimpleModel.from_odm_description_uid(
-                        uid=description_uid,
-                        find_odm_description_by_uid=find_odm_description_by_uid,
-                    )
-                    for description_uid in odm_item_group_ar.concept_vo.description_uids
-                ],
-                key=lambda item: item.name or "",
+                odm_item_group_ar.concept_vo.descriptions, key=lambda item: item.name
             ),
             aliases=sorted(
-                [
-                    OdmAliasSimpleModel.from_odm_alias_uid(
-                        uid=alias_uid,
-                        find_odm_alias_by_uid=find_odm_alias_by_uid,
-                    )
-                    for alias_uid in odm_item_group_ar.concept_vo.alias_uids
-                ],
-                key=lambda item: item.name or "",
+                odm_item_group_ar.concept_vo.aliases, key=lambda item: item.name
             ),
             sdtm_domains=sorted(
                 domain_terms,
                 key=lambda item: item.submission_value or "",
-            ),
-            activity_subgroups=sorted(
-                [
-                    ActivityHierarchySimpleModel.from_activity_uid(
-                        uid=activity_subgroup_uid,
-                        find_activity_by_uid=find_activity_subgroup_by_uid,
-                    )
-                    for activity_subgroup_uid in odm_item_group_ar.concept_vo.activity_subgroup_uids
-                ],
-                key=lambda item: item.name or "",
             ),
             items=sorted(
                 [
                     OdmItemRefModel.from_odm_item_uid(
                         uid=item_uid,
                         item_group_uid=odm_item_group_ar._uid,
+                        item_group_version=odm_item_group_ar.item_metadata.version,
                         find_odm_item_by_uid_with_item_group_relation=find_odm_item_by_uid_with_item_group_relation,
                         find_odm_vendor_attribute_by_uid=find_odm_vendor_attribute_by_uid,
                     )
@@ -187,6 +151,7 @@ class OdmItemGroup(ConceptModel):
                     OdmVendorElementRelationModel.from_uid(
                         uid=vendor_element_uid,
                         odm_element_uid=odm_item_group_ar._uid,
+                        odm_element_version=odm_item_group_ar.item_metadata.version,
                         odm_element_type=RelationType.ITEM_GROUP,
                         find_by_uid_with_odm_element_relation=find_odm_vendor_element_by_uid_with_odm_element_relation,
                     )
@@ -199,6 +164,7 @@ class OdmItemGroup(ConceptModel):
                     OdmVendorAttributeRelationModel.from_uid(
                         uid=vendor_attribute_uid,
                         odm_element_uid=odm_item_group_ar._uid,
+                        odm_element_version=odm_item_group_ar.item_metadata.version,
                         odm_element_type=RelationType.ITEM_GROUP,
                         find_by_uid_with_odm_element_relation=find_odm_vendor_attribute_by_uid_with_odm_element_relation,  # type: ignore[arg-type]
                         vendor_element_attribute=False,
@@ -212,6 +178,7 @@ class OdmItemGroup(ConceptModel):
                     OdmVendorElementAttributeRelationModel.from_uid(
                         uid=vendor_element_attribute_uid,
                         odm_element_uid=odm_item_group_ar._uid,
+                        odm_element_version=odm_item_group_ar.item_metadata.version,
                         odm_element_type=RelationType.ITEM_GROUP,
                         find_by_uid_with_odm_element_relation=find_odm_vendor_attribute_by_uid_with_odm_element_relation,  # type: ignore[arg-type]
                     )
@@ -232,8 +199,9 @@ class OdmItemGroupRefModel(BaseModel):
         cls,
         uid: str,
         form_uid: str,
+        form_version: str,
         find_odm_item_group_by_uid_with_form_relation: Callable[
-            [str, str], OdmItemGroupRefVO | None
+            [str, str, str], OdmItemGroupRefVO
         ],
         find_odm_vendor_attribute_by_uid: Callable[[str], OdmVendorAttributeAR | None],
     ) -> Self: ...
@@ -243,8 +211,9 @@ class OdmItemGroupRefModel(BaseModel):
         cls,
         uid: None,
         form_uid: str,
+        form_version: str,
         find_odm_item_group_by_uid_with_form_relation: Callable[
-            [str, str], OdmItemGroupRefVO | None
+            [str, str, str], OdmItemGroupRefVO
         ],
         find_odm_vendor_attribute_by_uid: Callable[[str], OdmVendorAttributeAR | None],
     ) -> None: ...
@@ -253,8 +222,9 @@ class OdmItemGroupRefModel(BaseModel):
         cls,
         uid: str | None,
         form_uid: str,
+        form_version: str,
         find_odm_item_group_by_uid_with_form_relation: Callable[
-            [str, str], OdmItemGroupRefVO | None
+            [str, str, str], OdmItemGroupRefVO
         ],
         find_odm_vendor_attribute_by_uid: Callable[[str], OdmVendorAttributeAR | None],
     ) -> Self | None:
@@ -262,13 +232,14 @@ class OdmItemGroupRefModel(BaseModel):
 
         if uid is not None:
             odm_item_group_ref_vo = find_odm_item_group_by_uid_with_form_relation(
-                uid, form_uid
+                uid, form_uid, form_version
             )
             if odm_item_group_ref_vo is not None:
                 odm_item_group_ref_model = cls(
                     uid=uid,
                     oid=odm_item_group_ref_vo.oid,
                     name=odm_item_group_ref_vo.name,
+                    version=odm_item_group_ref_vo.version,
                     order_number=odm_item_group_ref_vo.order_number,
                     mandatory=odm_item_group_ref_vo.mandatory,
                     collection_exception_condition_oid=odm_item_group_ref_vo.collection_exception_condition_oid,
@@ -294,6 +265,7 @@ class OdmItemGroupRefModel(BaseModel):
                     uid=uid,
                     oid=None,
                     name=None,
+                    version=None,
                     order_number=None,
                     mandatory=None,
                     collection_exception_condition_oid=None,
@@ -304,6 +276,7 @@ class OdmItemGroupRefModel(BaseModel):
     uid: Annotated[str, Field()]
     oid: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
     name: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
+    version: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
     order_number: Annotated[int | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
@@ -322,13 +295,16 @@ class OdmItemGroupPostInput(ConceptPostInput):
     origin: Annotated[str | None, Field()] = None
     purpose: Annotated[str | None, Field()] = None
     comment: Annotated[str | None, Field()] = None
-    descriptions: Annotated[list[OdmDescriptionPostInput | str], Field()]
-    alias_uids: Annotated[list[str], Field()]
+    descriptions: Annotated[list[OdmDescriptionModel], Field()]
+    aliases: list[OdmAliasModel] = Field(default_factory=list)
     sdtm_domain_uids: Annotated[list[str], Field()]
 
     _validate_string_represents_boolean = field_validator(
         "repeating", "is_reference_data", mode="before"
     )(validate_string_represents_boolean)
+    _english_description_validator = field_validator("descriptions")(
+        has_english_description
+    )
 
 
 class OdmItemGroupPatchInput(ConceptPatchInput):
@@ -340,19 +316,16 @@ class OdmItemGroupPatchInput(ConceptPatchInput):
     origin: Annotated[str | None, Field()]
     purpose: Annotated[str | None, Field()]
     comment: Annotated[str | None, Field()]
-    descriptions: Annotated[
-        list[OdmDescriptionBatchPatchInput | OdmDescriptionPostInput | str], Field()
-    ]
-    alias_uids: Annotated[list[str], Field()]
+    descriptions: Annotated[list[OdmDescriptionModel], Field()]
+    aliases: list[OdmAliasModel] = Field(default_factory=list)
     sdtm_domain_uids: Annotated[list[str], Field()]
 
     _validate_string_represents_boolean = field_validator(
         "repeating", "is_reference_data", mode="before"
     )(validate_string_represents_boolean)
-
-
-class OdmItemGroupActivitySubGroupPostInput(PostInputModel):
-    uid: Annotated[str, Field(min_length=1)]
+    _english_description_validator = field_validator("descriptions")(
+        has_english_description
+    )
 
 
 class OdmItemGroupItemPostInput(PostInputModel):

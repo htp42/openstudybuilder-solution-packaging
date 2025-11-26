@@ -183,8 +183,7 @@ const actions = [
     label: t('StudyActivityInstances.delete_relationship'),
     icon: 'mdi-delete-outline',
     iconColor: 'error',
-    condition: (item) =>
-      !studiesGeneralStore.selectedStudyVersion && item.activity_instance,
+    condition: () => !studiesGeneralStore.selectedStudyVersion,
     click: deleteRelationship,
     accessRole: roles.STUDY_WRITE,
   },
@@ -352,17 +351,10 @@ async function deleteRelationship(item) {
       options
     )
   ) {
-    const data = {
-      activity_instance_uid: null,
-      study_activity_uid: item.study_activity_uid,
-      show_activity_instance_in_protocol_flowchart:
-        item.show_activity_instance_in_protocol_flowchart,
-    }
     activitiesStore
-      .updateStudyActivityInstance(
+      .deleteStudyActivityInstance(
         studiesGeneralStore.selectedStudy.uid,
-        item.study_activity_instance_uid,
-        data
+        item.study_activity_instance_uid
       )
       .then(() => {
         eventBusEmit('notification', {

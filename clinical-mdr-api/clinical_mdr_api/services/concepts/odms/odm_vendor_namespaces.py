@@ -62,8 +62,8 @@ class OdmVendorNamespaceService(OdmGenericService[OdmVendorNamespaceAR]):
                 name=concept_edit_input.name,
                 prefix=concept_edit_input.prefix,
                 url=concept_edit_input.url,
-                vendor_element_uids=[],
-                vendor_attribute_uids=[],
+                vendor_element_uids=item.concept_vo.vendor_element_uids,
+                vendor_attribute_uids=item.concept_vo.vendor_attribute_uids,
             ),
             concept_exists_by_callback=self._repos.odm_vendor_namespace_repository.exists_by,
         )

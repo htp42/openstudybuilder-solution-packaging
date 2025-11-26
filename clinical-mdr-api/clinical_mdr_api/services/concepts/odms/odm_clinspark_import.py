@@ -409,10 +409,10 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
                     name=description["name"],
                     description=description["description"],
                     lang=description["lang"],
-                ).uid
+                )
                 for description in descriptions
             ],
-            alias_uids=[],
+            aliases=[],
             unit_definitions=item_unit_definitions,
             codelist_uid=codelist_uid,
             terms=input_terms,
@@ -445,10 +445,10 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
                     name=description["name"],
                     description=description["description"],
                     lang=description["lang"],
-                ).uid
+                )
                 for description in descriptions
             ],
-            alias_uids=[],
+            aliases=[],
             sdtm_domain_uids=[],
         )
 
@@ -471,10 +471,10 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
                     name=description["name"],
                     description=description["description"],
                     lang=description["lang"],
-                ).uid
+                )
                 for description in descriptions
             ],
-            alias_uids=[],
+            aliases=[],
         )
 
     @staticmethod

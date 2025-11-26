@@ -26,7 +26,6 @@ from clinical_mdr_api.domain_repositories.models.generic import (
 from clinical_mdr_api.domain_repositories.models.template_parameter import (
     TemplateParameterTermRoot,
 )
-from clinical_mdr_api.domains._utils import ObjectStatus
 from clinical_mdr_api.models.utils import BaseModel
 from clinical_mdr_api.repositories._utils import (
     CypherQueryBuilder,
@@ -63,9 +62,7 @@ class ConceptGenericRepository(
         raise NotImplementedError
 
     @abstractmethod
-    def specific_alias_clause(
-        self, only_specific_status: str = ObjectStatus.LATEST.name, **kwargs
-    ) -> str:
+    def specific_alias_clause(self, **kwargs) -> str:
         """
         Methods is overridden in the ConceptGenericRepository subclasses
         and it contains matches and traversals specific for domain object represented by subclass repository.
@@ -110,24 +107,32 @@ class ConceptGenericRepository(
     def generate_uid(self) -> str:
         return self.root_class.get_next_free_uid_and_increment_counter()
 
-    # pylint: disable=unused-argument
-    def generic_match_clause(
-        self,
-        only_specific_status: str = ObjectStatus.LATEST.name,
-        **kwargs,
-    ):
+    def generic_match_clause(self, **kwargs):
         concept_label = self.root_class.__label__
         concept_value_label = self.value_class.__label__
-        return f"""CYPHER runtime=slotted MATCH (concept_root:{concept_label})-[:{only_specific_status}]->(concept_value:{concept_value_label})"""
 
-    # pylint: disable=unused-argument
+        version = kwargs.get("version", None)
+        rel = (
+            "hv:HAS_VERSION WHERE hv.version = $requested_version"
+            if version is not None
+            else ":LATEST"
+        )
+
+        return f"""CYPHER runtime=slotted MATCH (concept_root:{concept_label})-[{rel}]->(concept_value:{concept_value_label})"""
+
     def generic_alias_clause(self, **kwargs):
-        return """
+        version = kwargs.get("version", None)
+        where_version = (
+            "WHERE hv.version = $requested_version" if version is not None else ""
+        )
+
+        return f"""
             DISTINCT concept_root, concept_value,
             head([(library)-[:CONTAINS_CONCEPT]->(concept_root) | library]) AS library
-            CALL {
+            CALL {{
                 WITH concept_root, concept_value
                 MATCH (concept_root)-[hv:HAS_VERSION]-(concept_value)
+                {where_version}
                 WITH hv
                 ORDER BY
                     toInteger(split(hv.version, '.')[0]) ASC,
@@ -136,7 +141,7 @@ class ConceptGenericRepository(
                     hv.start_date ASC
                 WITH collect(hv) as hvs
                 RETURN last(hvs) AS version_rel
-            }
+            }}
             WITH
                 concept_root,
                 concept_root.uid AS uid,
@@ -144,12 +149,12 @@ class ConceptGenericRepository(
                 library.name AS library_name,
                 library.is_editable AS is_library_editable,
                 version_rel
-                CALL {
+                CALL {{
                     WITH version_rel
                     OPTIONAL MATCH (author: User)
                     WHERE author.user_id = version_rel.author_id
                     RETURN author
-                }    
+                }}
             WITH
                 uid,
                 concept_root,
@@ -323,6 +328,9 @@ class ConceptGenericRepository(
             format_filter_sort_keys=self.format_filter_sort_keys,
         )
 
+        if kwargs.get("version", None) is not None:
+            query.parameters.update({"requested_version": kwargs["version"]})
+
         query.parameters.update(filter_query_parameters)
 
         result_array, attributes_names = query.execute()
@@ -437,6 +445,8 @@ class ConceptGenericRepository(
         search_string: str = "",
         library: str | None = None,
         page_size: int = 10,
+        filter_by: dict[str, Any] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         **kwargs,
     ) -> list[Any]:
         match_clause = self.generic_match_clause()
@@ -444,7 +454,7 @@ class ConceptGenericRepository(
         # Set header field name in the `filter_by` dict,
         # which will be used to generate `WHERE toLower(toString(field_name)) CONTAINS ...` clause
         filter_by = validate_filters_and_add_search_string(
-            search_string, field_name, filter_by=None
+            search_string, field_name, filter_by=filter_by
         )
 
         # This will allow filtering by library (if specified)
@@ -603,11 +613,13 @@ class ConceptGenericRepository(
         )
 
     @sb_clear_cache(caches=["cache_store_item_by_uid"])
-    def save(self, item: _AggregateRootType) -> None:
+    def save(
+        self, item: _AggregateRootType, force_new_value_node: bool = False
+    ) -> None:
         if item.uid is not None and item.repository_closure_data is None:
             self._create(item)
         elif item.uid is not None and not item.is_deleted:
-            self._update(item)
+            self._update(item, force_new_value_node)
         elif item.is_deleted:
             assert item.uid is not None
             self._soft_delete(item.uid)
@@ -731,20 +743,24 @@ class ConceptGenericRepository(
         return self._has_data_changed(ar, value)
 
     def _get_or_create_value(
-        self, root: VersionRoot, ar: _AggregateRootType
+        self,
+        root: VersionRoot,
+        ar: _AggregateRootType,
+        force_new_value_node: bool = False,
     ) -> VersionValue:
-        for itm in root.has_version.all():
-            if not self._has_data_changed(ar, itm):
-                return itm
-        latest_draft = root.latest_draft.get_or_none()
-        if latest_draft and not self._has_data_changed(ar, latest_draft):
-            return latest_draft
-        latest_final = root.latest_final.get_or_none()
-        if latest_final and not self._has_data_changed(ar, latest_final):
-            return latest_final
-        latest_retired = root.latest_retired.get_or_none()
-        if latest_retired and not self._has_data_changed(ar, latest_retired):
-            return latest_retired
+        if not force_new_value_node:
+            for itm in root.has_version.all():
+                if not self._has_data_changed(ar, itm):
+                    return itm
+            latest_draft = root.latest_draft.get_or_none()
+            if latest_draft and not self._has_data_changed(ar, latest_draft):
+                return latest_draft
+            latest_final = root.latest_final.get_or_none()
+            if latest_final and not self._has_data_changed(ar, latest_final):
+                return latest_final
+            latest_retired = root.latest_retired.get_or_none()
+            if latest_retired and not self._has_data_changed(ar, latest_retired):
+                return latest_retired
         new_value = self._create_new_value_node(ar=ar)
         self._db_save_node(new_value)
         return new_value

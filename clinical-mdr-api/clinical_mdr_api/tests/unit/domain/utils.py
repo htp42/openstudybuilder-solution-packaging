@@ -9,7 +9,7 @@ def random_str() -> str:
     return str(uuid.uuid4())
 
 
-def random_bool() -> str:
+def random_bool() -> bool:
     return random.choice([True, False])
 
 

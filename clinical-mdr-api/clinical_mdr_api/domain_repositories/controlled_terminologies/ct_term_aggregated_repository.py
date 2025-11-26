@@ -9,6 +9,7 @@ from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_get_all_qu
     create_term_filter_statement,
     create_term_name_aggregate_instances_from_cypher_result,
     format_term_filter_sort_keys,
+    format_term_filter_sort_keys_for_headers_lite,
     list_term_wildcard_properties,
 )
 from clinical_mdr_api.domain_repositories.models._utils import (
@@ -373,6 +374,204 @@ class CTTermAggregatedRepository:
             else []
         )
 
+    def get_distinct_headers_lite(
+        self,
+        field_name: str,
+        codelist_uid: str | None = None,
+        codelist_name: str | None = None,
+        library: str | None = None,
+        package: str | None = None,
+        is_sponsor: bool = False,
+        search_string: str = "",
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        page_size: int = 10,
+    ) -> list[Any]:
+        match_clause, filter_query_parameters = self._generate_generic_match_clause(
+            codelist_uid=codelist_uid,
+            codelist_name=codelist_name,
+            library_name=library,
+            package=package,
+            is_sponsor=is_sponsor,
+        )
+
+        # Set header field name in the `filter_by` dict,
+        # which will be used to generate `WHERE toLower(toString(field_name)) CONTAINS ...` clause
+        filter_by = validate_filters_and_add_search_string(
+            search_string, field_name, filter_by=None
+        )
+
+        # Specific match clauses for each field, so that only necessary data is fetched
+
+        if field_name in [
+            "name.status",
+            "name.start_date",
+            "name.version",
+            "attributes.status",
+            "attributes.start_date",
+            "attributes.version",
+        ]:
+            prefix = field_name.split(".")[0]
+            root = f"term_{prefix}_root"
+            value = f"term_{prefix}_value"
+
+            match_clause += f"""
+                WITH DISTINCT term_root, term_attributes_root, term_attributes_value, term_name_root, term_name_value
+                
+                CALL {{
+                    WITH {root}, {value}
+                    MATCH ({root})-[hv:HAS_VERSION]->({value})
+                    WITH hv
+                    ORDER BY
+                        toInteger(split(hv.version, '.')[0]) ASC,
+                        toInteger(split(hv.version, '.')[1]) ASC,
+                        hv.end_date ASC,
+                        hv.start_date ASC
+                    WITH collect(hv) as hvs
+                    RETURN last(hvs) AS version_rel
+                }}
+
+                WITH    version_rel.status AS {prefix}_status,
+                        version_rel.start_date AS {prefix}_start_date,
+                        version_rel.version AS {prefix}_version
+            """
+
+        elif field_name in [
+            "name.name",
+            "name.name_sentence_case",
+            "name.sponsor_preferred_name",  # Alias of `name.name`
+            "attributes.concept_id",
+            "attributes.definition",
+            "attributes.synonyms",
+            "attributes.nci_preferred_name",  # Alias of `preferred_term`
+        ]:
+            prefix = field_name.split(".")[0]
+            db_property, alias = self._get_db_property_and_alias_for_api_field(
+                field_name
+            )
+
+            match_clause += f"""
+                WITH term_{prefix}_value.{db_property} AS {alias}
+            """
+
+        elif field_name == "library_name":
+            match_clause += """
+                WITH DISTINCT term_root,
+                    head([(library)-[:CONTAINS_TERM]->(term_root) | library]) AS library
+                WITH library.name AS library_name
+            """
+
+        elif field_name in [
+            "codelists.codelist_uid",
+            "codelists.codelist_name",
+            "codelists.codelist_submission_value",
+            "codelists.submission_value",
+            "codelists.codelist_concept_id",
+            "codelists.order",
+            "codelists.library",
+            "codelists.start_date",
+        ]:
+            db_property, alias = self._get_db_property_and_alias_for_api_field(
+                field_name
+            )
+            match_clause += f"""
+            WITH DISTINCT term_root, term_attributes_root, term_attributes_value, term_name_root, term_name_value, 
+                COLLECT {{
+                    MATCH (codelist_library:Library)-[:CONTAINS_CODELIST]->(codelist_root:CTCodelistRoot)-[rel_term:HAS_TERM]->
+                    (codelist_term:CTCodelistTerm)-[rel_term_root:HAS_TERM_ROOT]->(term_root) WHERE rel_term.end_date IS NULL
+                    MATCH (codelist_name_value:CTCodelistNameValue)<-[:LATEST]-(codelist_name_root:CTCodelistNameRoot)<-[:HAS_NAME_ROOT]-
+                    (codelist_root)-[:HAS_ATTRIBUTES_ROOT]->(codelist_attributes_root:CTCodelistAttributesRoot)-[:LATEST]->(codelist_attributes_value:CTCodelistAttributesValue)
+                    RETURN {{
+                        codelist_uid: codelist_root.uid,
+                        codelist_name: codelist_name_value.name,
+                        codelist_submission_value: codelist_attributes_value.submission_value,
+                        codelist_concept_id: codelist_attributes_value.concept_id,
+                        submission_value: codelist_term.submission_value,
+                        order: rel_term.order,
+                        library: codelist_library.name,
+                        start_date: rel_term.start_date
+                    }} AS codelists
+                }} AS codelists
+
+            WITH DISTINCT [x in codelists | x.{db_property}] AS {alias}
+            WITH apoc.coll.toSet(apoc.coll.flatten(collect(DISTINCT {alias}))) AS vals
+            UNWIND vals as {alias}
+            WITH {alias}
+            """
+
+        if field_name in [
+            "name.author_username",
+            "attributes.author_username",
+        ]:
+            prefix = field_name.split(".")[0]
+            root = f"term_{prefix}_root"
+            value = f"term_{prefix}_value"
+
+            match_clause += f"""
+                WITH DISTINCT term_root, {root}, {value}
+
+                CALL {{
+                    WITH {root}, {value}
+                    MATCH ({root})-[hv:HAS_VERSION]->({value})
+                    WITH hv
+                    ORDER BY
+                        toInteger(split(hv.version, '.')[0]) ASC,
+                        toInteger(split(hv.version, '.')[1]) ASC,
+                        hv.end_date ASC,
+                        hv.start_date ASC
+                    WITH collect(hv) as hvs
+                    RETURN last(hvs) AS version_rel
+                }}
+                CALL {{
+                    WITH version_rel
+                    OPTIONAL MATCH (author: User)
+                    WHERE author.user_id = version_rel.author_id
+                    RETURN author
+                }}
+                WITH author.username AS {field_name.replace(".", "_")}
+            """
+
+        query = CypherQueryBuilder(
+            filter_by=FilterDict.model_validate({"elements": filter_by}),
+            match_clause=match_clause,
+            alias_clause=field_name.replace(".", "_"),
+            return_model=CTTermNameAndAttributes,
+            format_filter_sort_keys=format_term_filter_sort_keys_for_headers_lite,
+        )
+
+        query.parameters.update(filter_query_parameters)
+
+        query.full_query = query.build_header_query(
+            header_alias=field_name.replace(".", "_"), page_size=page_size
+        )
+        result_array, _ = query.execute()
+
+        return (
+            format_generic_header_values(result_array[0][0])
+            if len(result_array) > 0
+            else []
+        )
+
+    def _get_db_property_and_alias_for_api_field(
+        self, field_name: str
+    ) -> tuple[str, str]:
+        """Some API fields do not map 1:1 to the database properties, so we need a mapping for those.
+        For other fields, we just take the part after the dot as the database property.
+
+        :param field_name: The API field name
+        :return: A tuple containing the database property name and the alias
+        """
+
+        special_mappings = {
+            # "api_field_name": "db_property_name"
+            "name.sponsor_preferred_name": "name",
+            "attributes.nci_preferred_name": "preferred_term",
+        }
+
+        db_property = special_mappings.get(field_name, field_name.split(".")[1])
+        alias = field_name.replace(".", "_")
+
+        return db_property, alias
+
     def _generate_generic_match_clause(
         self,
         codelist_uid: str | None = None,
@@ -390,7 +589,7 @@ class CTTermAggregatedRepository:
 
             match_clause += f"""
                 MATCH (package:CTPackage)-[:EXTENDS_PACKAGE]->(parent_package:CTPackage)
-                WITH package, parent_package, datetime(package.effective_date + "T23:59:59") AS exact_datetime
+                WITH package, parent_package, datetime(toString(date(package.effective_date)) + 'T23:59:59') AS exact_datetime
                 {"WHERE package.name=$package_name" if package else ""}
             """
 

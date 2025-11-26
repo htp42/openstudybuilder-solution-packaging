@@ -1,7 +1,7 @@
 <template>
   <div class="px-4">
     <div class="d-flex page-title">
-      {{ $t('CrfsView.title') }}
+      {{ $t('CRFBuilder.title') }}
       <HelpButton
         :title="$t('_global.definition')"
         :help-text="$t('HelpMessages.crfs')"
@@ -18,9 +18,9 @@
       </v-tab>
     </v-tabs>
     <v-window v-model="tab" class="bg-white">
-      <v-window-item value="templates">
-        <CrfTemplateTable
-          :key="`templates-${tabKeys['templates']}`"
+      <v-window-item value="collections">
+        <CrfCollectionTable
+          :key="`collections-${tabKeys['collections']}`"
           :element-prop="{ uid: uid, type: type, tab: tab }"
         />
       </v-window-item>
@@ -51,12 +51,6 @@
       <v-window-item value="odm-viewer">
         <OdmBuildingViewer :element-prop="uid" :refresh="tab" />
       </v-window-item>
-      <v-window-item value="alias">
-        <CrfAliasTable :key="`alias-${tabKeys['alias']}`" />
-      </v-window-item>
-      <v-window-item value="extensions">
-        <CrfExtensionsTable :key="`extensions-${tabKeys['extensions']}`" />
-      </v-window-item>
     </v-window>
   </div>
 </template>
@@ -64,14 +58,12 @@
 <script setup>
 import { useAppStore } from '@/stores/app'
 import HelpButton from '@/components/tools/HelpButton.vue'
-import CrfTemplateTable from '@/components/library/crfs/CrfTemplateTable.vue'
+import CrfCollectionTable from '@/components/library/crfs/CrfCollectionTable.vue'
 import CrfFormTable from '@/components/library/crfs/CrfFormTable.vue'
 import CrfItemGroupTable from '@/components/library/crfs/CrfItemGroupTable.vue'
 import CrfItemTable from '@/components/library/crfs/CrfItemTable.vue'
 import CrfTreeMain from '@/components/library/crfs/crfTreeComponents/CrfTreeMain.vue'
 import OdmBuildingViewer from '@/components/library/crfs/OdmBuildingViewer.vue'
-import CrfAliasTable from '@/components/library/crfs/CrfAliasTable.vue'
-import CrfExtensionsTable from '@/components/library/crfs/CrfExtensionsTable.vue'
 import { ref, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -89,33 +81,31 @@ const uid = ref('')
 const updatedElement = ref({})
 const tabs = [
   {
-    tab: 'templates',
-    name: t('CrfsView.tab1_title'),
-    icon: 'mdi-alpha-t-circle-outline',
-    iconColor: 'crfTemplate',
+    tab: 'collections',
+    name: t('CRFBuilder.tab1_title'),
+    icon: 'mdi-alpha-c-circle',
+    iconColor: 'crfCollection',
   },
   {
     tab: 'forms',
-    name: t('CrfsView.tab2_title'),
-    icon: 'mdi-alpha-f-circle-outline',
+    name: t('CRFBuilder.tab2_title'),
+    icon: 'mdi-alpha-f-circle',
     iconColor: 'crfForm',
   },
   {
     tab: 'item-groups',
-    name: t('CrfsView.tab3_title'),
-    icon: 'mdi-alpha-g-circle-outline',
+    name: t('CRFBuilder.tab3_title'),
+    icon: 'mdi-alpha-g-circle',
     iconColor: 'crfGroup',
   },
   {
     tab: 'items',
-    name: t('CrfsView.tab4_title'),
-    icon: 'mdi-alpha-i-circle-outline',
+    name: t('CRFBuilder.tab4_title'),
+    icon: 'mdi-alpha-i-circle',
     iconColor: 'crfItem',
   },
-  { tab: 'crf-tree', name: t('CrfsView.tab5_title') },
-  { tab: 'odm-viewer', name: t('CrfsView.tab6_title') },
-  { tab: 'alias', name: t('CrfsView.tab7_title') },
-  { tab: 'extensions', name: t('CrfsView.tab8_title') },
+  { tab: 'crf-tree', name: t('CRFBuilder.tab5_title') },
+  { tab: 'odm-viewer', name: t('CRFBuilder.tab6_title') },
 ]
 
 watch(tab, (newValue) => {
@@ -126,13 +116,13 @@ watch(tab, (newValue) => {
     params.value = uid.value
   }
   router.push({
-    name: 'Crfs',
+    name: 'CrfBuilder',
     params: params,
   })
   const tabName = tabs.find((el) => el.tab === activeTab).name
   appStore.addBreadcrumbsLevel(
     tabName,
-    { name: 'Crfs', params: { tab: tabName } },
+    { name: 'CrfBuilder', params: { tab: tabName } },
     3,
     true
   )

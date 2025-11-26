@@ -325,4 +325,4 @@ class TestStudyCompoundsService(unittest.TestCase):
         items = StudyCompoundDosingSelectionService().get_all_selection_audit_trail(
             STUDY_UID
         )
-        assert len(items) == 4
+        assert len(items) == 2

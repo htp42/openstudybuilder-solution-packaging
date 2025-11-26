@@ -14,7 +14,8 @@
         v-if="
           studiesGeneralStore.selectedStudy.current_metadata.version_metadata
             .study_status === 'DRAFT' &&
-          !studiesGeneralStore.selectedStudy.study_parent_part
+          !studiesGeneralStore.selectedStudy.study_parent_part &&
+          isLatestStudySelected()
         "
         size="small"
         color="red"
@@ -29,7 +30,8 @@
         v-if="
           studiesGeneralStore.selectedStudy.current_metadata.version_metadata
             .study_status === 'DRAFT' &&
-          !studiesGeneralStore.selectedStudy.study_parent_part
+          !studiesGeneralStore.selectedStudy.study_parent_part &&
+          isLatestStudySelected()
         "
         class="ml-2"
         size="small"
@@ -46,7 +48,8 @@
         v-if="
           studiesGeneralStore.selectedStudy.current_metadata.version_metadata
             .study_status === 'LOCKED' &&
-          !studiesGeneralStore.selectedStudy.study_parent_part
+          !studiesGeneralStore.selectedStudy.study_parent_part &&
+          isLatestStudySelected()
         "
         size="small"
         color="green"
@@ -100,6 +103,7 @@ import StudyStatusForm from './StudyStatusForm.vue'
 import ActionsMenu from '@/components/tools/ActionsMenu.vue'
 import { useAccessGuard } from '@/composables/accessGuard'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
+import _isEmpty from 'lodash/isEmpty'
 
 export default {
   components: {
@@ -158,6 +162,7 @@ export default {
           click: this.selectStudyVersion,
         },
       ],
+      latestStudy: {},
     }
   },
   methods: {
@@ -195,7 +200,17 @@ export default {
         .then((resp) => {
           this.items = resp.data.items
           this.total = resp.data.total
+          if (_isEmpty(params.sort_by) && _isEmpty(params.filters)) {
+            this.latestStudy = resp.data.items[0]
+          }
         })
+    },
+    isLatestStudySelected() {
+      return (
+        this.latestStudy.current_metadata.version_metadata.version_number ===
+        this.studiesGeneralStore.selectedStudy.current_metadata.version_metadata
+          .version_number
+      )
     },
     releaseStudy() {
       this.loading = true

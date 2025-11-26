@@ -11,10 +11,14 @@ from clinical_mdr_api.models.biomedical_concepts.activity_instance_class import 
     ActivityInstanceClassEditInput,
     ActivityInstanceClassInput,
     ActivityInstanceClassMappingInput,
+    ActivityInstanceClassOverview,
     ActivityInstanceClassWithDataset,
+    ActivityInstanceParentClassOverview,
     CompactActivityItemClass,
+    SimpleActivityInstanceClass,
+    SimpleActivityItemClass,
 )
-from clinical_mdr_api.models.utils import CustomPage
+from clinical_mdr_api.models.utils import CustomPage, GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.biomedical_concepts.activity_instance_class import (
@@ -217,9 +221,17 @@ Possible errors:
 )
 def get_activity_item_classes(
     activity_instance_class_uid: Annotated[str, ActivityInstanceClassUID],
+    dataset_uid: Annotated[
+        str | None,
+        Query(
+            description="Optionally, the uid of a dataset to filter relevant activity item classes against"
+        ),
+    ] = None,
 ) -> list[CompactActivityItemClass]:
     service = ActivityItemClassService()
-    return service.get_all_for_activity_instance_class(activity_instance_class_uid)
+    return service.get_all_for_activity_instance_class(
+        activity_instance_class_uid, dataset_uid
+    )
 
 
 @router.get(
@@ -604,6 +616,291 @@ def reactivate(
     activity_instance_class_service = ActivityInstanceClassService()
     return activity_instance_class_service.reactivate_retired(
         uid=activity_instance_class_uid
+    )
+
+
+@router.get(
+    "/{activity_instance_class_uid}/parent-class-overview",
+    dependencies=[security, rbac.LIBRARY_READ],
+    summary="Get detailed overview of an activity instance parent class",
+    description="""
+Returns detailed information about an activity instance parent class including:
+- Parent class details (name, definition, status, version, etc.)
+- Child activity instance classes
+- Activity item classes
+- Version history
+
+State before:
+- UID must exist
+- The class must be a parent class (have child classes)
+
+State after:
+- No change
+
+Possible errors:
+- Invalid uid
+- Class is not a parent class
+    """,
+    status_code=200,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - The activity instance class with the specified UID wasn't found or is not a parent class.",
+        },
+    },
+)
+@decorators.allow_exports(
+    {
+        "defaults": ["uid", "name", "start_date", "status", "version"],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+def get_parent_class_overview(
+    # pylint: disable=unused-argument
+    request: Request,  # request is actually required by the allow_exports decorator
+    activity_instance_class_uid: Annotated[str, ActivityInstanceClassUID],
+    version: Annotated[
+        str | None,
+        Query(description="Select specific version, omit to view latest version"),
+    ] = None,
+) -> ActivityInstanceParentClassOverview:
+    if version == "":
+        version = None
+
+    service = ActivityInstanceClassService()
+    return service.get_parent_class_overview(
+        parent_class_uid=activity_instance_class_uid, version=version
+    )
+
+
+@router.get(
+    "/{activity_instance_class_uid}/overview",
+    dependencies=[security, rbac.LIBRARY_READ],
+    summary="Get detailed overview of an activity instance class",
+    description="""
+Returns detailed information about an activity instance class including:
+- Activity instance class details (name, definition, status, version, hierarchy, etc.)
+- Activity item classes
+- Version history
+
+State before:
+- UID must exist
+
+State after:
+- No change
+
+Possible errors:
+- Invalid uid
+    """,
+    status_code=200,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - The activity instance class with the specified UID wasn't found.",
+        },
+    },
+)
+@decorators.allow_exports(
+    {
+        "defaults": ["uid", "name", "start_date", "status", "version"],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+def get_activity_instance_class_overview(
+    # pylint: disable=unused-argument
+    request: Request,  # request is actually required by the allow_exports decorator
+    activity_instance_class_uid: Annotated[str, ActivityInstanceClassUID],
+    version: Annotated[
+        str | None,
+        Query(description="Select specific version, omit to view latest version"),
+    ] = None,
+) -> ActivityInstanceClassOverview:
+    if version == "":
+        version = None
+
+    service = ActivityInstanceClassService()
+    return service.get_activity_instance_class_overview(
+        activity_instance_class_uid=activity_instance_class_uid, version=version
+    )
+
+
+@router.get(
+    "/{activity_instance_class_uid}/child-classes",
+    dependencies=[security, rbac.LIBRARY_READ],
+    summary="Get paginated child activity instance classes",
+    description="""
+Retrieves a paginated list of child activity instance classes for a parent class.
+
+When a version is specified, returns the child classes that were valid at that version's date.
+Otherwise returns the latest version of each child class.
+
+State before:
+- Parent class UID must exist
+- Parent class must have child classes (otherwise empty list)
+
+State after:
+- No change
+
+Possible errors:
+- Invalid uid
+    """,
+    response_model=GenericFilteringReturn[SimpleActivityInstanceClass],
+    status_code=200,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - The activity instance class with the specified UID wasn't found.",
+        },
+    },
+)
+@decorators.allow_exports(
+    {
+        "defaults": ["uid", "name", "version", "status", "modified_date"],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+def get_child_instance_classes(
+    # pylint: disable=unused-argument
+    request: Request,  # request is actually required by the allow_exports decorator
+    activity_instance_class_uid: Annotated[str, ActivityInstanceClassUID],
+    version: Annotated[
+        str | None,
+        Query(description="Select specific version, omit to view latest version"),
+    ] = None,
+    page_number: Annotated[
+        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
+    ] = settings.default_page_number,
+    page_size: Annotated[
+        int,
+        Query(
+            ge=0,
+            le=settings.max_page_size,
+            description=_generic_descriptions.PAGE_SIZE,
+        ),
+    ] = settings.default_page_size,
+    total_count: Annotated[
+        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
+    ] = False,
+    sort_by: Annotated[
+        Json | None, Query(description=_generic_descriptions.SORT_BY)
+    ] = None,
+) -> GenericFilteringReturn[SimpleActivityInstanceClass]:
+    if version == "":
+        version = None
+
+    service = ActivityInstanceClassService()
+    return service.get_child_instance_classes_paginated(
+        parent_uid=activity_instance_class_uid,
+        version=version,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
+        sort_by=sort_by,
+    )
+
+
+@router.get(
+    "/{activity_instance_class_uid}/item-classes",
+    dependencies=[security, rbac.LIBRARY_READ],
+    summary="Get paginated activity item classes",
+    description="""
+Retrieves a paginated list of activity item classes for an activity instance class.
+
+When a version is specified, returns the item classes that were valid at that version's date.
+Otherwise returns the latest version of each item class.
+
+State before:
+- Activity instance class UID must exist
+
+State after:
+- No change
+
+Possible errors:
+- Invalid uid
+    """,
+    response_model=GenericFilteringReturn[SimpleActivityItemClass],
+    status_code=200,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - The activity instance class with the specified UID wasn't found.",
+        },
+    },
+)
+@decorators.allow_exports(
+    {
+        "defaults": [
+            "uid",
+            "name",
+            "parent_name",
+            "version",
+            "status",
+            "modified_date",
+        ],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+def get_activity_item_classes_paginated(
+    # pylint: disable=unused-argument
+    request: Request,  # request is actually required by the allow_exports decorator
+    activity_instance_class_uid: Annotated[str, ActivityInstanceClassUID],
+    version: Annotated[
+        str | None,
+        Query(description="Select specific version, omit to view latest version"),
+    ] = None,
+    page_number: Annotated[
+        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
+    ] = settings.default_page_number,
+    page_size: Annotated[
+        int,
+        Query(
+            ge=0,
+            le=settings.max_page_size,
+            description=_generic_descriptions.PAGE_SIZE,
+        ),
+    ] = settings.default_page_size,
+    total_count: Annotated[
+        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
+    ] = False,
+    sort_by: Annotated[
+        Json | None, Query(description=_generic_descriptions.SORT_BY)
+    ] = None,
+) -> GenericFilteringReturn[SimpleActivityItemClass]:
+    if version == "":
+        version = None
+
+    service = ActivityInstanceClassService()
+    return service.get_activity_item_classes_paginated(
+        activity_instance_class_uid=activity_instance_class_uid,
+        version=version,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
+        sort_by=sort_by,
     )
 
 

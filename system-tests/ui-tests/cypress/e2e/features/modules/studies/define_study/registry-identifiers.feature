@@ -21,7 +21,7 @@ Feature: Studies - Define Study - Registry Identifiers
          | 3   | Registry identifiers  | Japanese Trial Registry ID (JAPIC)                |
          | 4   | Registry identifiers  | Investigational New Drug Application (IND) Number |
          | 5   | Registry identifiers  | EU Trial Number                                   |
-         | 6   | Registry identifiers  | CID ID SIN Number                                 |
+         | 6   | Registry identifiers  | CIV-ID/SIN Number                                 |
          | 7   | Registry identifiers  | National Clinical Trial Number                    |
          | 8   | Registry identifiers  | Japanese Trial Registry Number                    |
          | 9   | Registry identifiers  | NMPA Number                                       |
@@ -39,7 +39,7 @@ Feature: Studies - Define Study - Registry Identifiers
          | Japanese Trial Registry ID (JAPIC)                | POIU9631   |
          | Investigational New Drug Application (IND) Number | Zxcv2142   |
          | EU Trial Number                                   | Azerty2345 |
-         | CID ID SIN Number                                 | Azerty3456 |
+         | CIV-ID/SIN Number                                  | Azerty3456 |
          | National Clinical Trial Number                    | Azerty5678 |
          | Japanese Trial Registry Number                    | Azerty6789 |
          | NMPA Number                                       | Azerty0123 |
@@ -54,7 +54,7 @@ Feature: Studies - Define Study - Registry Identifiers
          | Japanese Trial Registry ID (JAPIC)                | POIU9631   |
          | Investigational New Drug Application (IND) Number | Zxcv2142   |
          | EU Trial Number                                   | Azerty2345 |
-         | CID ID SIN Number                                 | Azerty3456 |
+         | CIV-ID/SIN Number                                  | Azerty3456 |
          | National Clinical Trial Number                    | Azerty5678 |
          | Japanese Trial Registry Number                    | Azerty6789 |
          | NMPA Number                                       | Azerty0123 |
@@ -72,7 +72,7 @@ Feature: Studies - Define Study - Registry Identifiers
          | Japanese Trial Registry ID (JAPIC)                |
          | Investigational New Drug Application (IND) Number |
          | EU Trial Number                                   |
-         | CID ID SIN Number                                 |
+         | CIV-ID/SIN Number                                  |
          | National Clinical Trial Number                    |
          | Japanese Trial Registry Number                    |
          | NMPA Number                                       |
@@ -81,18 +81,18 @@ Feature: Studies - Define Study - Registry Identifiers
 
       Then The identifiers table is showing following data
          | identifier                                        | value          |
-         | ClinicalTrials.gov ID                             | Not Applicable |
-         | EUDRACT ID                                        | Not Applicable |
-         | Universal Trial Number (UTN)                      | Not Applicable |
-         | Japanese Trial Registry ID (JAPIC)                | Not Applicable |
-         | Investigational New Drug Application (IND) Number | Not Applicable |
-         | EU Trial Number                                   | Not Applicable |
-         | CID ID SIN Number                                 | Not Applicable |
-         | National Clinical Trial Number                    | Not Applicable |
-         | Japanese Trial Registry Number                    | Not Applicable |
-         | NMPA Number                                       | Not Applicable |
-         | EUDAMED number                                    | Not Applicable |
-         | Investigational Device Exemption Number           | Not Applicable |
+         | ClinicalTrials.gov ID                             | Not applicable |
+         | EUDRACT ID                                        | Not applicable |
+         | Universal Trial Number (UTN)                      | Not applicable |
+         | Japanese Trial Registry ID (JAPIC)                | Not applicable |
+         | Investigational New Drug Application (IND) Number | Not applicable |
+         | EU Trial Number                                   | Not applicable |
+         | CIV-ID/SIN Number                                  | Not applicable |
+         | National Clinical Trial Number                    | Not applicable |
+         | Japanese Trial Registry Number                    | Not applicable |
+         | NMPA Number                                       | Not applicable |
+         | EUDAMED number                                    | Not applicable |
+         | Investigational Device Exemption Number           | Not applicable |
 
 
    @manual_test

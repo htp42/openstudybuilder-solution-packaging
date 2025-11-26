@@ -3,7 +3,7 @@ const NUMERIC_FINDINGS = 'NumericFindings'
 const NUM_VALUE = 'NumericValue'
 const TEXT_VALUE = 'TextValue'
 const NULL = 'null'
-const ENG = 'ENG'
+const ENG = 'eng'
 
 export default {
   NUMERIC_FINDING,

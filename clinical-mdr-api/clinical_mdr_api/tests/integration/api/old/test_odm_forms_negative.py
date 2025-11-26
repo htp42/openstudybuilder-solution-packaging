@@ -11,8 +11,6 @@ from clinical_mdr_api.main import app
 from clinical_mdr_api.tests.integration.utils.api import drop_db, inject_and_clear_db
 from clinical_mdr_api.tests.integration.utils.data_library import (
     STARTUP_CT_TERM,
-    STARTUP_ODM_ALIASES,
-    STARTUP_ODM_DESCRIPTIONS,
     STARTUP_ODM_ITEM_GROUPS,
     STARTUP_ODM_VENDOR_ATTRIBUTES,
     STARTUP_ODM_VENDOR_ELEMENTS,
@@ -29,9 +27,7 @@ def api_client(test_data):
 @pytest.fixture(scope="module")
 def test_data():
     inject_and_clear_db("old.json.test.odm.forms.negative")
-    db.cypher_query(STARTUP_ODM_DESCRIPTIONS)
     db.cypher_query(STARTUP_CT_TERM)
-    db.cypher_query(STARTUP_ODM_ALIASES)
     db.cypher_query(STARTUP_ODM_ITEM_GROUPS)
     db.cypher_query(STARTUP_ODM_VENDOR_NAMESPACES)
     db.cypher_query(STARTUP_ODM_VENDOR_ELEMENTS)
@@ -49,8 +45,23 @@ def test_create_a_new_odm_form(api_client):
         "oid": "oid1",
         "sdtm_version": "0.1",
         "repeating": "No",
-        "descriptions": ["odm_description2", "odm_description3"],
-        "alias_uids": ["odm_alias1"],
+        "descriptions": [
+            {
+                "name": "name2",
+                "language": "eng",
+                "description": "description2",
+                "instruction": "instruction2",
+                "sponsor_instruction": "sponsor_instruction2",
+            },
+            {
+                "name": "name3",
+                "language": "eng",
+                "description": "description3",
+                "instruction": "instruction3",
+                "sponsor_instruction": "sponsor_instruction3",
+            },
+        ],
+        "aliases": [{"context": "context1", "name": "name1"}],
     }
     response = api_client.post("concepts/odms/forms", json=data)
 
@@ -71,28 +82,21 @@ def test_create_a_new_odm_form(api_client):
     assert res["sdtm_version"] == "0.1"
     assert res["descriptions"] == [
         {
-            "uid": "odm_description2",
             "name": "name2",
-            "language": "language2",
+            "language": "eng",
             "description": "description2",
             "instruction": "instruction2",
             "sponsor_instruction": "sponsor_instruction2",
-            "version": "0.1",
         },
         {
-            "uid": "odm_description3",
             "name": "name3",
-            "language": "ENG",
+            "language": "eng",
             "description": "description3",
             "instruction": "instruction3",
             "sponsor_instruction": "sponsor_instruction3",
-            "version": "0.1",
         },
     ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
-    assert res["activity_groups"] == []
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res["item_groups"] == []
     assert res["vendor_elements"] == []
     assert res["vendor_attributes"] == []
@@ -165,28 +169,21 @@ def test_add_odm_vendor_element_to_an_odm_form(api_client):
     assert res["sdtm_version"] == "0.1"
     assert res["descriptions"] == [
         {
-            "uid": "odm_description2",
             "name": "name2",
-            "language": "language2",
+            "language": "eng",
             "description": "description2",
             "instruction": "instruction2",
             "sponsor_instruction": "sponsor_instruction2",
-            "version": "0.1",
         },
         {
-            "uid": "odm_description3",
             "name": "name3",
-            "language": "ENG",
+            "language": "eng",
             "description": "description3",
             "instruction": "instruction3",
             "sponsor_instruction": "sponsor_instruction3",
-            "version": "0.1",
         },
     ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
-    assert res["activity_groups"] == []
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res["item_groups"] == []
     assert res["vendor_elements"] == [
         {"uid": "odm_vendor_element1", "name": "nameOne", "value": "value1"}
@@ -219,28 +216,21 @@ def test_add_odm_vendor_element_attribute_to_an_odm_form(api_client):
     assert res["sdtm_version"] == "0.1"
     assert res["descriptions"] == [
         {
-            "uid": "odm_description2",
             "name": "name2",
-            "language": "language2",
+            "language": "eng",
             "description": "description2",
             "instruction": "instruction2",
             "sponsor_instruction": "sponsor_instruction2",
-            "version": "0.1",
         },
         {
-            "uid": "odm_description3",
             "name": "name3",
-            "language": "ENG",
+            "language": "eng",
             "description": "description3",
             "instruction": "instruction3",
             "sponsor_instruction": "sponsor_instruction3",
-            "version": "0.1",
         },
     ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
-    assert res["activity_groups"] == []
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res["item_groups"] == []
     assert res["vendor_elements"] == [
         {"uid": "odm_vendor_element1", "name": "nameOne", "value": "value1"}
@@ -266,8 +256,23 @@ def test_cannot_create_a_new_odm_form_with_same_properties(api_client):
         "oid": "oid1",
         "sdtm_version": "0.1",
         "repeating": "No",
-        "descriptions": ["odm_description2", "odm_description3"],
-        "alias_uids": ["odm_alias1"],
+        "descriptions": [
+            {
+                "name": "name2",
+                "language": "eng",
+                "description": "description2",
+                "instruction": "instruction2",
+                "sponsor_instruction": "sponsor_instruction2",
+            },
+            {
+                "name": "name3",
+                "language": "eng",
+                "description": "description3",
+                "instruction": "instruction3",
+                "sponsor_instruction": "sponsor_instruction3",
+            },
+        ],
+        "aliases": [{"context": "context1", "name": "name1"}],
     }
     response = api_client.post("concepts/odms/forms", json=data)
 
@@ -278,30 +283,37 @@ def test_cannot_create_a_new_odm_form_with_same_properties(api_client):
     assert res["type"] == "AlreadyExistsException"
     assert (
         res["message"]
-        == "ODM Form already exists with UID (OdmForm_000001) and data {'library_name': 'Sponsor', 'alias_uids': ['odm_alias1'], 'name': 'name1', 'oid': 'oid1', 'sdtm_version': '0.1', 'repeating': False}"
+        == "ODM Form already exists with UID (OdmForm_000001) and data {'library_name': 'Sponsor', 'name': 'name1', 'oid': 'oid1', 'sdtm_version': '0.1', 'repeating': False}"
     )
 
 
-def test_cannot_create_an_odm_form_connected_to_non_existent_concepts(api_client):
+def test_cannot_create_a_new_odm_form_without_an_english_description(api_client):
     data = {
         "library_name": "Sponsor",
-        "name": "new name",
-        "oid": "new oid",
+        "name": "name1",
+        "oid": "oid1",
         "sdtm_version": "0.1",
         "repeating": "No",
-        "descriptions": ["wrong_uid"],
-        "alias_uids": ["wrong_uid"],
+        "descriptions": [
+            {
+                "name": "name - non-eng",
+                "language": "DAN",
+                "description": "description - non-eng",
+                "instruction": "instruction - non-eng",
+                "sponsor_instruction": "sponsor_instruction - non-eng",
+            }
+        ],
+        "aliases": [],
     }
     response = api_client.post("concepts/odms/forms", json=data)
 
-    assert_response_status_code(response, 400)
+    assert_response_status_code(response, 422)
 
     res = response.json()
 
-    assert res["type"] == "BusinessLogicException"
+    assert res["type"] == "ValidationException"
     assert (
-        res["message"]
-        == """ODM Form tried to connect to non-existent concepts [('Concept Name: ODM Description', "uids: {'wrong_uid'}"), ('Concept Name: ODM Alias', "uids: {'wrong_uid'}")]."""
+        res["message"] == "At least one description must be in English ('eng' or 'en')."
     )
 
 
@@ -396,66 +408,6 @@ def test_cannot_add_odm_vendor_attribute_to_an_odm_form_as_an_odm_vendor_element
         res["message"]
         == "ODM Vendor Attribute with UID 'odm_vendor_attribute3' cannot not be added as an Vendor Element Attribute."
     )
-
-
-def test_approve_odm_form(api_client):
-    response = api_client.post("concepts/odms/forms/OdmForm_000001/approvals")
-
-    assert_response_status_code(response, 201)
-
-    res = response.json()
-
-    assert res["uid"] == "OdmForm_000001"
-    assert res["name"] == "name1"
-    assert res["library_name"] == "Sponsor"
-    assert res["oid"] == "oid1"
-    assert res["repeating"] == "No"
-    assert res["end_date"] is None
-    assert res["status"] == "Final"
-    assert res["version"] == "1.0"
-    assert res["change_description"] == "Approved version"
-    assert res["author_username"] == "unknown-user@example.com"
-    assert res["sdtm_version"] == "0.1"
-    assert res["descriptions"] == [
-        {
-            "uid": "odm_description2",
-            "name": "name2",
-            "language": "language2",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
-            "version": "1.0",
-        },
-        {
-            "uid": "odm_description3",
-            "name": "name3",
-            "language": "ENG",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
-            "version": "1.0",
-        },
-    ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
-    assert res["activity_groups"] == []
-    assert res["item_groups"] == []
-    assert res["vendor_elements"] == [
-        {"uid": "odm_vendor_element1", "name": "nameOne", "value": "value1"}
-    ]
-    assert res["vendor_attributes"] == []
-    assert res["vendor_element_attributes"] == [
-        {
-            "uid": "odm_vendor_attribute1",
-            "name": "nameOne",
-            "data_type": "string",
-            "value_regex": "^[a-zA-Z]+$",
-            "value": "valueOne",
-            "vendor_element_uid": "odm_vendor_element1",
-        }
-    ]
-    assert res["possible_actions"] == ["inactivate", "new_version"]
 
 
 def test_cannot_add_odm_item_groups_with_an_invalid_value_to_an_odm_form(api_client):
@@ -556,6 +508,59 @@ def test_cannot_add_odm_item_groups_with_non_compatible_odm_vendor_attribute_to_
     )
 
 
+def test_approve_odm_form(api_client):
+    response = api_client.post("concepts/odms/forms/OdmForm_000001/approvals")
+
+    assert_response_status_code(response, 201)
+
+    res = response.json()
+
+    assert res["uid"] == "OdmForm_000001"
+    assert res["name"] == "name1"
+    assert res["library_name"] == "Sponsor"
+    assert res["oid"] == "oid1"
+    assert res["repeating"] == "No"
+    assert res["end_date"] is None
+    assert res["status"] == "Final"
+    assert res["version"] == "1.0"
+    assert res["change_description"] == "Approved version"
+    assert res["author_username"] == "unknown-user@example.com"
+    assert res["sdtm_version"] == "0.1"
+    assert res["descriptions"] == [
+        {
+            "name": "name2",
+            "language": "eng",
+            "description": "description2",
+            "instruction": "instruction2",
+            "sponsor_instruction": "sponsor_instruction2",
+        },
+        {
+            "name": "name3",
+            "language": "eng",
+            "description": "description3",
+            "instruction": "instruction3",
+            "sponsor_instruction": "sponsor_instruction3",
+        },
+    ]
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
+    assert res["item_groups"] == []
+    assert res["vendor_elements"] == [
+        {"uid": "odm_vendor_element1", "name": "nameOne", "value": "value1"}
+    ]
+    assert res["vendor_attributes"] == []
+    assert res["vendor_element_attributes"] == [
+        {
+            "uid": "odm_vendor_attribute1",
+            "name": "nameOne",
+            "data_type": "string",
+            "value_regex": "^[a-zA-Z]+$",
+            "value": "valueOne",
+            "vendor_element_uid": "odm_vendor_element1",
+        }
+    ]
+    assert res["possible_actions"] == ["inactivate", "new_version"]
+
+
 def test_inactivate_odm_form(api_client):
     response = api_client.delete("concepts/odms/forms/OdmForm_000001/activations")
 
@@ -576,28 +581,21 @@ def test_inactivate_odm_form(api_client):
     assert res["sdtm_version"] == "0.1"
     assert res["descriptions"] == [
         {
-            "uid": "odm_description2",
             "name": "name2",
-            "language": "language2",
+            "language": "eng",
             "description": "description2",
             "instruction": "instruction2",
             "sponsor_instruction": "sponsor_instruction2",
-            "version": "1.0",
         },
         {
-            "uid": "odm_description3",
             "name": "name3",
-            "language": "ENG",
+            "language": "eng",
             "description": "description3",
             "instruction": "instruction3",
             "sponsor_instruction": "sponsor_instruction3",
-            "version": "1.0",
         },
     ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
-    assert res["activity_groups"] == []
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res["item_groups"] == []
     assert res["vendor_elements"] == [
         {"uid": "odm_vendor_element1", "name": "nameOne", "value": "value1"}
@@ -638,23 +636,7 @@ def test_cannot_add_odm_item_groups_to_an_odm_form_that_is_in_retired_status(
     res = response.json()
 
     assert res["type"] == "BusinessLogicException"
-    assert res["message"] == "The object is inactive"
-
-
-def test_cannot_add_odm_activity_groups_to_an_odm_form_that_is_in_retired_status(
-    api_client,
-):
-    data = [{"uid": "activity_group_root1"}]
-    response = api_client.post(
-        "concepts/odms/forms/OdmForm_000001/activity-groups", json=data
-    )
-
-    assert_response_status_code(response, 400)
-
-    res = response.json()
-
-    assert res["type"] == "BusinessLogicException"
-    assert res["message"] == "The object is inactive"
+    assert res["message"] == "ODM element is not in Draft."
 
 
 def test_cannot_add_odm_vendor_element_to_an_odm_form_that_is_in_retired_status(
@@ -670,7 +652,7 @@ def test_cannot_add_odm_vendor_element_to_an_odm_form_that_is_in_retired_status(
     res = response.json()
 
     assert res["type"] == "BusinessLogicException"
-    assert res["message"] == "The object is inactive"
+    assert res["message"] == "ODM element is not in Draft."
 
 
 def test_cannot_add_odm_vendor_attribute_to_an_odm_form_that_is_in_retired_status(
@@ -686,7 +668,7 @@ def test_cannot_add_odm_vendor_attribute_to_an_odm_form_that_is_in_retired_statu
     res = response.json()
 
     assert res["type"] == "BusinessLogicException"
-    assert res["message"] == "The object is inactive"
+    assert res["message"] == "ODM element is not in Draft."
 
 
 def test_cannot_add_odm_vendor_element_attribute_to_an_odm_form_that_is_in_retired_status(
@@ -702,4 +684,4 @@ def test_cannot_add_odm_vendor_element_attribute_to_an_odm_form_that_is_in_retir
     res = response.json()
 
     assert res["type"] == "BusinessLogicException"
-    assert res["message"] == "The object is inactive"
+    assert res["message"] == "ODM element is not in Draft."

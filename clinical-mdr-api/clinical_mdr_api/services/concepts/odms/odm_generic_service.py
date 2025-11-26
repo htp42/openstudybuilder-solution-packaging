@@ -2,6 +2,8 @@ import re
 from abc import ABC
 from typing import Any
 
+from neomodel import db
+
 from clinical_mdr_api.domain_repositories.concepts.odms.form_repository import (
     FormRepository,
 )
@@ -25,6 +27,7 @@ from clinical_mdr_api.models.concepts.odms.odm_common_models import (
     OdmVendorRelationPostInput,
     OdmVendorsPostInput,
 )
+from clinical_mdr_api.services._utils import ensure_transaction
 from clinical_mdr_api.services.concepts.concept_generic_service import (
     ConceptGenericService,
     _AggregateRootType,
@@ -33,7 +36,7 @@ from common.exceptions import BusinessLogicException
 
 
 class OdmGenericService(ConceptGenericService[_AggregateRootType], ABC):
-    OBJECT_IS_INACTIVE = "The object is inactive"
+    OBJECT_NOT_IN_DRAFT = "ODM element is not in Draft."
 
     def fail_if_non_present_vendor_elements_are_used_by_current_odm_element_attributes(
         self,
@@ -347,78 +350,115 @@ class OdmGenericService(ConceptGenericService[_AggregateRootType], ABC):
                     },
                 )
 
-    def cascade_new_version(self, item):
-        from clinical_mdr_api.services.concepts.odms.odm_descriptions import (
-            OdmDescriptionService,
-        )
-
-        description_service = OdmDescriptionService()
-
-        if getattr(item.concept_vo, "description_uids", None):
-            for description_uid in item.concept_vo.description_uids:
-
-                item = description_service._find_by_uid_or_raise_not_found(
-                    description_uid, for_update=True
-                )
-                item.create_new_version(author_id=description_service.author_id)
-                description_service.repository.save(item)
-
-    def cascade_inactivate(self, item):
-        from clinical_mdr_api.services.concepts.odms.odm_descriptions import (
-            OdmDescriptionService,
-        )
-
-        description_service = OdmDescriptionService()
-
-        if getattr(item.concept_vo, "description_uids", None):
-            for description_uid in item.concept_vo.description_uids:
-                item = description_service._find_by_uid_or_raise_not_found(
-                    description_uid, for_update=True
-                )
-                item.inactivate(author_id=description_service.author_id)
-                description_service.repository.save(item)
-
-    def cascade_reactivate(self, item):
-        from clinical_mdr_api.services.concepts.odms.odm_descriptions import (
-            OdmDescriptionService,
-        )
-
-        description_service = OdmDescriptionService()
-
-        if getattr(item.concept_vo, "description_uids", None):
-            for description_uid in item.concept_vo.description_uids:
-                item = description_service._find_by_uid_or_raise_not_found(
-                    description_uid, for_update=True
-                )
-                item.reactivate(author_id=description_service.author_id)
-                description_service.repository.save(item)
-
+    @ensure_transaction(db)
     def cascade_edit_and_approve(self, item):
-        from clinical_mdr_api.services.concepts.odms.odm_descriptions import (
-            OdmDescriptionService,
-        )
+        if getattr(item.concept_vo, "form_uids", None):
+            from clinical_mdr_api.services.concepts.odms.odm_forms import OdmFormService
 
-        description_service = OdmDescriptionService()
+            form_service = OdmFormService()
 
-        if getattr(item.concept_vo, "description_uids", None):
-            for description_uid in item.concept_vo.description_uids:
-                item = description_service._find_by_uid_or_raise_not_found(
-                    description_uid, for_update=True
+            for form_uid in item.concept_vo.form_uids:
+                form_service.approve(
+                    form_uid, cascade_edit_and_approve=True, ignore_exc=True
                 )
-                item.approve(author_id=description_service.author_id)
-                description_service.repository.save(item)
 
-    def cascade_delete(self, item):
-        from clinical_mdr_api.services.concepts.odms.odm_descriptions import (
-            OdmDescriptionService,
-        )
+        if getattr(item.concept_vo, "item_group_uids", None):
+            from clinical_mdr_api.services.concepts.odms.odm_item_groups import (
+                OdmItemGroupService,
+            )
 
-        description_service = OdmDescriptionService()
+            item_group_service = OdmItemGroupService()
 
-        if getattr(item.concept_vo, "description_uids", None):
-            for description_uid in item.concept_vo.description_uids:
-                item = description_service._find_by_uid_or_raise_not_found(
-                    description_uid, for_update=True
+            for item_group_uid in item.concept_vo.item_group_uids:
+                item_group_service.approve(
+                    item_group_uid, cascade_edit_and_approve=True, ignore_exc=True
                 )
-                item.soft_delete()
-                description_service.repository.save(item)
+
+        if getattr(item.concept_vo, "item_uids", None):
+            from clinical_mdr_api.services.concepts.odms.odm_items import OdmItemService
+
+            item_service = OdmItemService()
+
+            for item_uid in item.concept_vo.item_uids:
+                item_service.approve(
+                    item_uid, cascade_edit_and_approve=True, ignore_exc=True
+                )
+
+        if getattr(item.concept_vo, "vendor_attribute_uids", None):
+            from clinical_mdr_api.services.concepts.odms.odm_vendor_attributes import (
+                OdmVendorAttributeService,
+            )
+
+            vendor_attribute_service = OdmVendorAttributeService()
+
+            for vendor_attribute_uid in item.concept_vo.vendor_attribute_uids:
+                vendor_attribute_service.approve(
+                    vendor_attribute_uid, cascade_edit_and_approve=True, ignore_exc=True
+                )
+
+        if getattr(item.concept_vo, "vendor_element_uids", None):
+            from clinical_mdr_api.services.concepts.odms.odm_vendor_elements import (
+                OdmVendorElementService,
+            )
+
+            vendor_element_service = OdmVendorElementService()
+
+            for vendor_element_uid in item.concept_vo.vendor_element_uids:
+                vendor_element_service.approve(
+                    vendor_element_uid, cascade_edit_and_approve=True, ignore_exc=True
+                )
+
+        if getattr(item.concept_vo, "vendor_namespace_uids", None):
+            from clinical_mdr_api.services.concepts.odms.odm_vendor_namespaces import (
+                OdmVendorNamespaceService,
+            )
+
+            vendor_namespace_service = OdmVendorNamespaceService()
+
+            for vendor_namespace_uid in item.concept_vo.vendor_namespace_uids:
+                vendor_namespace_service.approve(
+                    vendor_namespace_uid, cascade_edit_and_approve=True, ignore_exc=True
+                )
+
+    @ensure_transaction(db)
+    def cascade_new_version(self, item):
+        if getattr(item.concept_vo, "form_uids", None):
+            from clinical_mdr_api.services.concepts.odms.odm_forms import OdmFormService
+
+            form_service = OdmFormService()
+
+            for form_uid in item.concept_vo.form_uids:
+                form_service.create_new_version(
+                    form_uid,
+                    cascade_new_version=True,
+                    force_new_value_node=True,
+                    ignore_exc=True,
+                )
+
+        if getattr(item.concept_vo, "item_group_uids", None):
+            from clinical_mdr_api.services.concepts.odms.odm_item_groups import (
+                OdmItemGroupService,
+            )
+
+            item_group_service = OdmItemGroupService()
+
+            for item_group_uid in item.concept_vo.item_group_uids:
+                item_group_service.create_new_version(
+                    item_group_uid,
+                    cascade_new_version=True,
+                    force_new_value_node=True,
+                    ignore_exc=True,
+                )
+
+        if getattr(item.concept_vo, "item_uids", None):
+            from clinical_mdr_api.services.concepts.odms.odm_items import OdmItemService
+
+            item_service = OdmItemService()
+
+            for item_uid in item.concept_vo.item_uids:
+                item_service.create_new_version(
+                    item_uid,
+                    cascade_new_version=True,
+                    force_new_value_node=True,
+                    ignore_exc=True,
+                )

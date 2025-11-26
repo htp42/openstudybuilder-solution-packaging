@@ -46,35 +46,46 @@
           <template #activator="{ props }">
             <div
               v-bind="props"
-              v-html="sanitizeHTMLHandler(getDescription(item, true))"
+              v-html="
+                sanitizeHTMLHandler(
+                  getDescriptionAttribute(item, 'description', true)
+                )
+              "
             />
           </template>
-          <span>{{ getDescription(item, false) }}</span>
+          <span>{{ getDescriptionAttribute(item, 'description', false) }}</span>
         </v-tooltip>
       </template>
-      <template #[`item.notes`]="{ item }">
+      <template #[`item.sponsor_instruction`]="{ item }">
         <v-tooltip bottom>
           <template #activator="{ props }">
             <div
               v-bind="props"
-              v-html="sanitizeHTMLHandler(getNotes(item, true))"
+              v-html="
+                sanitizeHTMLHandler(
+                  getDescriptionAttribute(item, 'sponsor_instruction', true)
+                )
+              "
             />
           </template>
-          <span>{{ getNotes(item, false) }}</span>
+          <span>{{
+            getDescriptionAttribute(item, 'sponsor_instruction', false)
+          }}</span>
         </v-tooltip>
       </template>
-      <template #[`item.activities`]="{ item }">
-        <v-tooltip v-if="item.activity" bottom>
+      <template #[`item.instruction`]="{ item }">
+        <v-tooltip bottom>
           <template #activator="{ props }">
-            <div v-bind="props">
-              {{
-                item.activity.name.length > 40
-                  ? item.activity.name.substring(0, 40) + '...'
-                  : item.activity.name
-              }}
-            </div>
+            <div
+              v-bind="props"
+              v-html="
+                sanitizeHTMLHandler(
+                  getDescriptionAttribute(item, 'instruction', true)
+                )
+              "
+            />
           </template>
-          <span>{{ item.activity.name }}</span>
+          <span>{{ getDescriptionAttribute(item, 'instruction', false) }}</span>
         </v-tooltip>
       </template>
       <template #[`item.status`]="{ item }">
@@ -115,6 +126,7 @@
       @close="closeLinkForm"
     />
     <ConfirmDialog ref="confirm" :text-cols="6" :action-cols="5" />
+    <CrfNewVersionSummaryConfirmDialog ref="confirmNewVersion" />
   </div>
 </template>
 
@@ -132,11 +144,11 @@ import filteringParameters from '@/utils/filteringParameters'
 import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
 import crfTypes from '@/constants/crfTypes'
 import parameters from '@/constants/parameters'
-import dataFormating from '@/utils/dataFormating'
 import { useAccessGuard } from '@/composables/accessGuard'
 import { useCrfsStore } from '@/stores/crfs'
 import { computed } from 'vue'
 import { sanitizeHTML } from '@/utils/sanitize'
+import CrfNewVersionSummaryConfirmDialog from '@/components/library/crfs/CrfNewVersionSummaryConfirmDialog.vue'
 
 export default {
   components: {
@@ -148,14 +160,15 @@ export default {
     HistoryTable,
     CrfActivitiesModelsLinkForm,
     ConfirmDialog,
+    CrfNewVersionSummaryConfirmDialog,
   },
+  inject: ['eventBusEmit'],
   props: {
     elementProp: {
       type: Object,
       default: null,
     },
   },
-  emits: ['updateItem'],
   setup() {
     const crfsStore = useCrfsStore()
 
@@ -231,14 +244,6 @@ export default {
           click: this.delete,
         },
         {
-          label: this.$t('CrfLinikingForm.link_activities'),
-          icon: 'mdi-plus',
-          iconColor: 'primary',
-          condition: (item) => item.status === constants.DRAFT,
-          accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.openLinkForm,
-        },
-        {
           label: this.$t('_global.history'),
           icon: 'mdi-history',
           click: this.openItemHistory,
@@ -254,14 +259,18 @@ export default {
           filteringName: 'descriptions.description',
         },
         {
-          title: this.$t('CRFItems.impl_notes'),
-          key: 'notes',
+          title: this.$t('CRFDescriptions.sponsor_instruction'),
+          key: 'sponsor_instruction',
           filteringName: 'descriptions.sponsor_instruction',
+        },
+        {
+          title: this.$t('CRFDescriptions.instruction'),
+          key: 'instruction',
+          filteringName: 'descriptions.instruction',
         },
         { title: this.$t('CRFItems.type'), key: 'datatype', width: '1%' },
         { title: this.$t('CRFItems.length'), key: 'length', width: '1%' },
         { title: this.$t('CRFItems.sds_name'), key: 'sds_var_name' },
-        { title: this.$t('_global.links'), key: 'activity.name' },
         { title: this.$t('_global.version'), key: 'version', width: '1%' },
         { title: this.$t('_global.status'), key: 'status', width: '1%' },
       ],
@@ -306,29 +315,16 @@ export default {
     sanitizeHTMLHandler(html) {
       return sanitizeHTML(html)
     },
-    getDescription(item, short) {
+    getDescriptionAttribute(item, attr, short) {
       const engDesc = item.descriptions.find(
         (el) => el.language === parameters.ENG
       )
-      if (engDesc && engDesc.description) {
+      if (engDesc && engDesc[attr]) {
         return short
-          ? engDesc.description.length > 40
-            ? engDesc.description.substring(0, 40) + '...'
-            : engDesc.description
-          : engDesc.description
-      }
-      return ''
-    },
-    getNotes(item, short) {
-      const engDesc = item.descriptions.find(
-        (el) => el.language === parameters.ENG
-      )
-      if (engDesc && engDesc.sponsor_instruction) {
-        return short
-          ? engDesc.sponsor_instruction.length > 40
-            ? engDesc.sponsor_instruction.substring(0, 40) + '...'
-            : engDesc.sponsor_instruction
-          : engDesc.sponsor_instruction
+          ? engDesc[attr].length > 40
+            ? engDesc[attr].substring(0, 40) + '...'
+            : engDesc[attr]
+          : engDesc[attr]
       }
       return ''
     },
@@ -341,9 +337,12 @@ export default {
       this.$refs.table.filterTable()
     },
     approve(item) {
-      crfs.approve('items', item.uid).then((resp) => {
-        this.$emit('updateItem', { type: crfTypes.ITEM, element: resp.data })
+      crfs.approve('items', item.uid).then(() => {
         this.$refs.table.filterTable()
+
+        this.eventBusEmit('notification', {
+          msg: this.$t('CRFItems.approved'),
+        })
       })
     },
     async delete(item) {
@@ -361,7 +360,7 @@ export default {
       if (
         relationships > 0 &&
         (await this.$refs.confirm.open(
-          `${this.$t('CRFItems.delete_warning_1')} ${relationships} ${this.$t('CRFItems.delete_warning_2')}`,
+          `${this.$t('CRFItems.delete_warning', { count: relationships })}`,
           options
         ))
       ) {
@@ -375,44 +374,28 @@ export default {
       }
     },
     inactivate(item) {
-      crfs.inactivate('items', item.uid).then((resp) => {
-        this.$emit('updateItem', { type: crfTypes.ITEM, element: resp.data })
+      crfs.inactivate('items', item.uid).then(() => {
         this.$refs.table.filterTable()
       })
     },
     reactivate(item) {
-      crfs.reactivate('items', item.uid).then((resp) => {
-        this.$emit('updateItem', { type: crfTypes.ITEM, element: resp.data })
+      crfs.reactivate('items', item.uid).then(() => {
         this.$refs.table.filterTable()
       })
     },
     async newVersion(item) {
-      let relationships = 0
-      await crfs.getRelationships(item.uid, 'items').then((resp) => {
-        if (resp.data.OdmItemGroup && resp.data.OdmItemGroup.length > 0) {
-          relationships = resp.data.OdmItemGroup.length
-        }
-      })
-      const options = {
-        type: 'warning',
-        cancelLabel: this.$t('_global.cancel'),
-        agreeLabel: this.$t('_global.continue'),
-      }
       if (
-        relationships > 1 &&
-        (await this.$refs.confirm.open(
-          `${this.$t('CRFForms.new_version_warning')}`,
-          options
-        ))
-      ) {
-        crfs.newVersion('items', item.uid).then((resp) => {
-          this.$emit('updateItem', { type: crfTypes.ITEM, element: resp.data })
-          this.$refs.table.filterTable()
+        await this.$refs.confirmNewVersion.open({
+          agreeLabel: this.$t('CRFItems.create_new_version'),
+          item: item,
         })
-      } else if (relationships <= 1) {
-        crfs.newVersion('items', item.uid).then((resp) => {
-          this.$emit('updateItem', { type: crfTypes.ITEM, element: resp.data })
+      ) {
+        crfs.newVersion('items', item.uid).then(() => {
           this.$refs.table.filterTable()
+
+          this.eventBusEmit('notification', {
+            msg: this.$t('_global.new_version_success'),
+          })
         })
       }
     },
@@ -431,25 +414,12 @@ export default {
     async openItemHistory(item) {
       this.selectedItem = item
       const resp = await crfs.getItemAuditTrail(item.uid)
-      this.itemHistoryItems = this.transformItems(resp.data)
+      this.itemHistoryItems = resp.data
       this.showItemHistory = true
     },
     closeItemHistory() {
       this.selectedItem = null
       this.showItemHistory = false
-    },
-    transformItems(items) {
-      const result = []
-      for (const item of items) {
-        const newItem = { ...item }
-        if (newItem.activities) {
-          newItem.activities = dataFormating.names(newItem.activities)
-        } else {
-          newItem.activities = ''
-        }
-        result.push(newItem)
-      }
-      return result
     },
     openLinkForm(item) {
       this.selectedItem = item

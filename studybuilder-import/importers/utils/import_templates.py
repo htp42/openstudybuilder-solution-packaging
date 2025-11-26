@@ -881,20 +881,14 @@ activity_subgroups = {
 
 ct_term = {
     "catalogue_names": ["string"],
-    "codelists": [
-        {
-            "codelist_uid": "string",
-            "submission_value": "string",
-            "order": 0
-        }
-    ],
+    "codelists": [{"codelist_uid": "string", "submission_value": "string", "order": 0}],
     "nci_preferred_name": "string",
     "definition": "string",
     "sponsor_preferred_name": "string",
     "sponsor_preferred_name_sentence_case": "string",
     "order": 0,
     "library_name": "string",
-    "concept_id": "string"
+    "concept_id": "string",
 }
 
 dictionary_term = {

@@ -131,7 +131,13 @@
                 />
               </v-col>
               <v-col
-                v-if="form.visit_class !== visitConstants.CLASS_SPECIAL_VISIT"
+                v-if="
+                  [
+                    visitConstants.CLASS_SPECIAL_VISIT,
+                    visitConstants.CLASS_NON_VISIT,
+                    visitConstants.CLASS_UNSCHEDULED_VISIT,
+                  ].indexOf(form.visit_class) === -1
+                "
                 cols="4"
               >
                 <div class="d-flex">
@@ -346,13 +352,11 @@
               <div class="sub-title">
                 {{ $t('StudyVisitForm.visit_window') }}
               </div>
-              <v-alert
-                v-if="!disableWindowUnit"
-                density="compact"
-                type="warning"
-                class="text-white"
-                :text="$t('StudyVisitForm.visit_window_alert')"
-              />
+              <v-alert density="compact" type="warning" class="text-white">
+                <div
+                  v-html="sanitizeHTML($t('StudyVisitForm.visit_window_alert'))"
+                />
+              </v-alert>
               <div class="d-flex align-center">
                 <div class="mr-2 flex-grow-1">
                   <v-row>
@@ -508,6 +512,7 @@ import { useStudiesGeneralStore } from '@/stores/studies-general'
 import { useEpochsStore } from '@/stores/studies-epochs'
 import { inject, ref, watch, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { sanitizeHTML } from '@/utils/sanitize'
 
 const eventBusEmit = inject('eventBusEmit')
 const formRules = inject('formRules')

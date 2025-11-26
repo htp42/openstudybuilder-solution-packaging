@@ -178,7 +178,7 @@ def test_create_an_odm_form(api_client):
         "sdtm_version": "0.1",
         "repeating": "No",
         "descriptions": [],
-        "alias_uids": [],
+        "aliases": [],
     }
     response = api_client.post("concepts/odms/forms", json=data)
 
@@ -199,7 +199,6 @@ def test_create_an_odm_form(api_client):
     assert res["author_username"] == "unknown-user@example.com"
     assert res["descriptions"] == []
     assert res["aliases"] == []
-    assert res["activity_groups"] == []
     assert res["item_groups"] == []
     assert res["vendor_elements"] == []
     assert res["vendor_attributes"] == []
@@ -230,7 +229,6 @@ def test_add_odm_vendor_element_to_the_odm_form(api_client):
     assert res["sdtm_version"] == "0.1"
     assert res["descriptions"] == []
     assert res["aliases"] == []
-    assert res["activity_groups"] == []
     assert res["item_groups"] == []
     assert res["vendor_elements"] == [
         {"uid": "OdmVendorElement_000001", "name": "nameTwo", "value": "value1"}

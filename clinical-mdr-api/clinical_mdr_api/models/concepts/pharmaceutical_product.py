@@ -251,9 +251,19 @@ class SimplePharmaceuticalProduct(BaseModel):
         if uid is not None:
             item_ar: PharmaceuticalProductAR | None = find_by_uid(uid)
             if item_ar is not None:
-                item = cls(uid=uid, external_id=item_ar.concept_vo.external_id)
+                item = cls(
+                    uid=uid,
+                    external_id=item_ar.concept_vo.external_id,
+                )
 
         return item
+
+    @classmethod
+    def from_input(cls, input_data) -> Self:
+        return cls(
+            uid=input_data.uid,
+            external_id=input_data.external_id,
+        )
 
     uid: Annotated[str, Field()]
     external_id: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (

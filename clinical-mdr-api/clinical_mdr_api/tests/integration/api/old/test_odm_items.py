@@ -10,10 +10,7 @@ from neomodel import db
 from clinical_mdr_api.main import app
 from clinical_mdr_api.tests.integration.utils.api import drop_db, inject_and_clear_db
 from clinical_mdr_api.tests.integration.utils.data_library import (
-    STARTUP_ACTIVITIES,
     STARTUP_CT_TERM_ATTRIBUTES_CYPHER,
-    STARTUP_ODM_ALIASES,
-    STARTUP_ODM_DESCRIPTIONS,
     STARTUP_ODM_VENDOR_ATTRIBUTES,
     STARTUP_ODM_VENDOR_ELEMENTS,
     STARTUP_ODM_VENDOR_NAMESPACES,
@@ -30,11 +27,8 @@ def api_client(test_data):
 @pytest.fixture(scope="module")
 def test_data():
     inject_and_clear_db("old.json.test.odm.items")
-    db.cypher_query(STARTUP_ACTIVITIES)
     db.cypher_query(STARTUP_CT_TERM_ATTRIBUTES_CYPHER)
     db.cypher_query(STARTUP_UNIT_DEFINITIONS)
-    db.cypher_query(STARTUP_ODM_DESCRIPTIONS)
-    db.cypher_query(STARTUP_ODM_ALIASES)
     db.cypher_query(STARTUP_ODM_VENDOR_NAMESPACES)
     db.cypher_query(STARTUP_ODM_VENDOR_ELEMENTS)
     db.cypher_query(STARTUP_ODM_VENDOR_ATTRIBUTES)
@@ -67,8 +61,23 @@ def test_creating_a_new_odm_item(api_client):
         "sds_var_name": "sds_var_name1",
         "origin": "origin1",
         "comment": "comment1",
-        "descriptions": ["odm_description2", "odm_description3"],
-        "alias_uids": ["odm_alias1"],
+        "descriptions": [
+            {
+                "name": "name2",
+                "language": "eng",
+                "description": "description2",
+                "instruction": "instruction2",
+                "sponsor_instruction": "sponsor_instruction2",
+            },
+            {
+                "name": "name3",
+                "language": "eng",
+                "description": "description3",
+                "instruction": "instruction3",
+                "sponsor_instruction": "sponsor_instruction3",
+            },
+        ],
+        "aliases": [{"context": "context1", "name": "name1"}],
         "unit_definitions": [
             {"uid": "unit_definition_root1", "mandatory": False, "order": 1}
         ],
@@ -108,27 +117,21 @@ def test_creating_a_new_odm_item(api_client):
     assert res["author_username"] == "unknown-user@example.com"
     assert res["descriptions"] == [
         {
-            "uid": "odm_description2",
             "name": "name2",
-            "language": "language2",
+            "language": "eng",
             "description": "description2",
             "instruction": "instruction2",
             "sponsor_instruction": "sponsor_instruction2",
-            "version": "0.1",
         },
         {
-            "uid": "odm_description3",
             "name": "name3",
-            "language": "ENG",
+            "language": "eng",
             "description": "description3",
             "instruction": "instruction3",
             "sponsor_instruction": "sponsor_instruction3",
-            "version": "0.1",
         },
     ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res["unit_definitions"] == [
         {
             "uid": "unit_definition_root1",
@@ -160,7 +163,6 @@ def test_creating_a_new_odm_item(api_client):
             "version": "1.0",
         }
     ]
-    assert res["activity"] is None
     assert res["vendor_elements"] == []
     assert res["vendor_attributes"] == []
     assert res["vendor_element_attributes"] == []
@@ -193,27 +195,21 @@ def test_getting_non_empty_list_of_odm_items(api_client):
     assert res["items"][0]["author_username"] == "unknown-user@example.com"
     assert res["items"][0]["descriptions"] == [
         {
-            "uid": "odm_description2",
             "name": "name2",
-            "language": "language2",
+            "language": "eng",
             "description": "description2",
             "instruction": "instruction2",
             "sponsor_instruction": "sponsor_instruction2",
-            "version": "0.1",
         },
         {
-            "uid": "odm_description3",
             "name": "name3",
-            "language": "ENG",
+            "language": "eng",
             "description": "description3",
             "instruction": "instruction3",
             "sponsor_instruction": "sponsor_instruction3",
-            "version": "0.1",
         },
     ]
-    assert res["items"][0]["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
+    assert res["items"][0]["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res["items"][0]["unit_definitions"] == [
         {
             "uid": "unit_definition_root1",
@@ -245,7 +241,6 @@ def test_getting_non_empty_list_of_odm_items(api_client):
             "version": "1.0",
         }
     ]
-    assert res["items"][0]["activity"] is None
     assert res["items"][0]["vendor_elements"] == []
     assert res["items"][0]["vendor_attributes"] == []
     assert res["items"][0]["vendor_element_attributes"] == []
@@ -288,27 +283,21 @@ def test_getting_a_specific_odm_item(api_client):
     assert res["author_username"] == "unknown-user@example.com"
     assert res["descriptions"] == [
         {
-            "uid": "odm_description2",
             "name": "name2",
-            "language": "language2",
+            "language": "eng",
             "description": "description2",
             "instruction": "instruction2",
             "sponsor_instruction": "sponsor_instruction2",
-            "version": "0.1",
         },
         {
-            "uid": "odm_description3",
             "name": "name3",
-            "language": "ENG",
+            "language": "eng",
             "description": "description3",
             "instruction": "instruction3",
             "sponsor_instruction": "sponsor_instruction3",
-            "version": "0.1",
         },
     ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res["unit_definitions"] == [
         {
             "uid": "unit_definition_root1",
@@ -340,7 +329,6 @@ def test_getting_a_specific_odm_item(api_client):
             "version": "1.0",
         }
     ]
-    assert res["activity"] is None
     assert res["vendor_elements"] == []
     assert res["vendor_attributes"] == []
     assert res["vendor_element_attributes"] == []
@@ -373,27 +361,21 @@ def test_getting_versions_of_a_specific_odm_item(api_client):
     assert res[0]["author_username"] == "unknown-user@example.com"
     assert res[0]["descriptions"] == [
         {
-            "uid": "odm_description2",
             "name": "name2",
-            "language": "language2",
+            "language": "eng",
             "description": "description2",
             "instruction": "instruction2",
             "sponsor_instruction": "sponsor_instruction2",
-            "version": "0.1",
         },
         {
-            "uid": "odm_description3",
             "name": "name3",
-            "language": "ENG",
+            "language": "eng",
             "description": "description3",
             "instruction": "instruction3",
             "sponsor_instruction": "sponsor_instruction3",
-            "version": "0.1",
         },
     ]
-    assert res[0]["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
+    assert res[0]["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res[0]["unit_definitions"] == [
         {
             "uid": "unit_definition_root1",
@@ -425,7 +407,6 @@ def test_getting_versions_of_a_specific_odm_item(api_client):
             "version": "1.0",
         }
     ]
-    assert res[0]["activity"] is None
     assert res[0]["vendor_elements"] == []
     assert res[0]["vendor_attributes"] == []
     assert res[0]["vendor_element_attributes"] == []
@@ -446,8 +427,23 @@ def test_updating_an_existing_odm_item(api_client):
         "origin": "origin1",
         "comment": "new comment",
         "change_description": "comment added",
-        "descriptions": ["odm_description2", "odm_description3"],
-        "alias_uids": ["odm_alias1"],
+        "descriptions": [
+            {
+                "name": "name2",
+                "language": "eng",
+                "description": "description2",
+                "instruction": "instruction2",
+                "sponsor_instruction": "sponsor_instruction2",
+            },
+            {
+                "name": "name3",
+                "language": "eng",
+                "description": "description3",
+                "instruction": "instruction3",
+                "sponsor_instruction": "sponsor_instruction3",
+            },
+        ],
+        "aliases": [{"context": "context1", "name": "name1"}],
         "unit_definitions": [
             {"uid": "unit_definition_root1", "mandatory": False, "order": 1}
         ],
@@ -487,27 +483,21 @@ def test_updating_an_existing_odm_item(api_client):
     assert res["author_username"] == "unknown-user@example.com"
     assert res["descriptions"] == [
         {
-            "uid": "odm_description2",
             "name": "name2",
-            "language": "language2",
+            "language": "eng",
             "description": "description2",
             "instruction": "instruction2",
             "sponsor_instruction": "sponsor_instruction2",
-            "version": "0.1",
         },
         {
-            "uid": "odm_description3",
             "name": "name3",
-            "language": "ENG",
+            "language": "eng",
             "description": "description3",
             "instruction": "instruction3",
             "sponsor_instruction": "sponsor_instruction3",
-            "version": "0.1",
         },
     ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res["unit_definitions"] == [
         {
             "uid": "unit_definition_root1",
@@ -539,10 +529,743 @@ def test_updating_an_existing_odm_item(api_client):
             "version": "1.0",
         }
     ]
-    assert res["activity"] is None
     assert res["vendor_elements"] == []
     assert res["vendor_attributes"] == []
     assert res["vendor_element_attributes"] == []
+    assert res["possible_actions"] == ["approve", "delete", "edit"]
+
+
+def test_getting_a_specific_odm_item_in_specific_version(api_client):
+    response = api_client.get("concepts/odms/items/OdmItem_000001?version=0.1")
+
+    assert_response_status_code(response, 200)
+
+    res = response.json()
+
+    assert res["uid"] == "OdmItem_000001"
+    assert res["library_name"] == "Sponsor"
+    assert res["name"] == "name1"
+    assert res["oid"] == "oid1"
+    assert res["prompt"] == "prompt1"
+    assert res["datatype"] == "string"
+    assert res["length"] == 1
+    assert res["significant_digits"] == 11
+    assert res["sas_field_name"] == "sas_field_name1"
+    assert res["sds_var_name"] == "sds_var_name1"
+    assert res["origin"] == "origin1"
+    assert res["comment"] == "comment1"
+    assert res["end_date"]
+    assert res["status"] == "Draft"
+    assert res["version"] == "0.1"
+    assert res["change_description"] == "Initial version"
+    assert res["author_username"] == "unknown-user@example.com"
+    assert res["descriptions"] == [
+        {
+            "name": "name2",
+            "language": "eng",
+            "description": "description2",
+            "instruction": "instruction2",
+            "sponsor_instruction": "sponsor_instruction2",
+        },
+        {
+            "name": "name3",
+            "language": "eng",
+            "description": "description3",
+            "instruction": "instruction3",
+            "sponsor_instruction": "sponsor_instruction3",
+        },
+    ]
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
+    assert res["unit_definitions"] == [
+        {
+            "uid": "unit_definition_root1",
+            "name": "name1",
+            "mandatory": False,
+            "order": 1,
+            "ucum": {
+                "term_uid": "term_root1_uid",
+                "name": "name1",
+                "dictionary_id": "dictionary_id1",
+            },
+            "ct_units": [{"term_uid": "C25532_name1", "name": "name1"}],
+        }
+    ]
+    assert res["codelist"] == {
+        "uid": "editable_cr",
+        "name": "codelist attributes value1",
+        "submission_value": "codelist submission value1",
+        "preferred_term": "codelist preferred term",
+    }
+    assert res["terms"] == [
+        {
+            "term_uid": "term_root_final",
+            "name": "term_value_name1",
+            "mandatory": True,
+            "order": 1,
+            "submission_value": "submission_value_1",
+            "display_text": "display text",
+            "version": "1.0",
+        }
+    ]
+    assert res["vendor_elements"] == []
+    assert res["vendor_attributes"] == []
+    assert res["vendor_element_attributes"] == []
+    assert res["possible_actions"] == ["approve", "delete", "edit"]
+
+
+def test_adding_odm_vendor_element_to_a_specific_odm_item(api_client):
+    data = [{"uid": "odm_vendor_element2", "value": "value"}]
+    response = api_client.post(
+        "concepts/odms/items/OdmItem_000001/vendor-elements", json=data
+    )
+
+    assert_response_status_code(response, 201)
+
+    res = response.json()
+
+    assert res["uid"] == "OdmItem_000001"
+    assert res["library_name"] == "Sponsor"
+    assert res["name"] == "name1"
+    assert res["oid"] == "oid1"
+    assert res["prompt"] == "prompt1"
+    assert res["datatype"] == "string"
+    assert res["length"] == 22
+    assert res["significant_digits"] == 11
+    assert res["sas_field_name"] == "sas_field_name1"
+    assert res["sds_var_name"] == "sds_var_name1"
+    assert res["origin"] == "origin1"
+    assert res["comment"] == "new comment"
+    assert res["end_date"] is None
+    assert res["status"] == "Draft"
+    assert res["version"] == "0.2"
+    assert res["change_description"] == "comment added"
+    assert res["author_username"] == "unknown-user@example.com"
+    assert res["descriptions"] == [
+        {
+            "name": "name2",
+            "language": "eng",
+            "description": "description2",
+            "instruction": "instruction2",
+            "sponsor_instruction": "sponsor_instruction2",
+        },
+        {
+            "name": "name3",
+            "language": "eng",
+            "description": "description3",
+            "instruction": "instruction3",
+            "sponsor_instruction": "sponsor_instruction3",
+        },
+    ]
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
+    assert res["unit_definitions"] == [
+        {
+            "uid": "unit_definition_root1",
+            "name": "name1",
+            "mandatory": False,
+            "order": 1,
+            "ucum": {
+                "term_uid": "term_root1_uid",
+                "name": "name1",
+                "dictionary_id": "dictionary_id1",
+            },
+            "ct_units": [{"term_uid": "C25532_name1", "name": "name1"}],
+        }
+    ]
+    assert res["codelist"] == {
+        "uid": "editable_cr",
+        "name": "codelist attributes value1",
+        "submission_value": "codelist submission value1",
+        "preferred_term": "codelist preferred term",
+    }
+    assert res["terms"] == [
+        {
+            "term_uid": "term_root_final",
+            "name": "term_value_name1",
+            "mandatory": True,
+            "order": 1,
+            "submission_value": "submission_value_1",
+            "display_text": "display text",
+            "version": "1.0",
+        }
+    ]
+    assert res["vendor_elements"] == [
+        {"uid": "odm_vendor_element2", "name": "nameTwo", "value": "value"}
+    ]
+    assert res["vendor_attributes"] == []
+    assert res["vendor_element_attributes"] == []
+    assert res["possible_actions"] == ["approve", "delete", "edit"]
+
+
+def test_overriding_odm_vendor_element_from_a_specific_odm_item(api_client):
+    data = [{"uid": "odm_vendor_element1", "value": "value"}]
+    response = api_client.post(
+        "concepts/odms/items/OdmItem_000001/vendor-elements?override=true", json=data
+    )
+
+    assert_response_status_code(response, 201)
+
+    res = response.json()
+
+    assert res["uid"] == "OdmItem_000001"
+    assert res["library_name"] == "Sponsor"
+    assert res["name"] == "name1"
+    assert res["oid"] == "oid1"
+    assert res["prompt"] == "prompt1"
+    assert res["datatype"] == "string"
+    assert res["length"] == 22
+    assert res["significant_digits"] == 11
+    assert res["sas_field_name"] == "sas_field_name1"
+    assert res["sds_var_name"] == "sds_var_name1"
+    assert res["origin"] == "origin1"
+    assert res["comment"] == "new comment"
+    assert res["end_date"] is None
+    assert res["status"] == "Draft"
+    assert res["version"] == "0.2"
+    assert res["change_description"] == "comment added"
+    assert res["author_username"] == "unknown-user@example.com"
+    assert res["descriptions"] == [
+        {
+            "name": "name2",
+            "language": "eng",
+            "description": "description2",
+            "instruction": "instruction2",
+            "sponsor_instruction": "sponsor_instruction2",
+        },
+        {
+            "name": "name3",
+            "language": "eng",
+            "description": "description3",
+            "instruction": "instruction3",
+            "sponsor_instruction": "sponsor_instruction3",
+        },
+    ]
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
+    assert res["unit_definitions"] == [
+        {
+            "uid": "unit_definition_root1",
+            "name": "name1",
+            "mandatory": False,
+            "order": 1,
+            "ucum": {
+                "term_uid": "term_root1_uid",
+                "name": "name1",
+                "dictionary_id": "dictionary_id1",
+            },
+            "ct_units": [{"term_uid": "C25532_name1", "name": "name1"}],
+        }
+    ]
+    assert res["codelist"] == {
+        "uid": "editable_cr",
+        "name": "codelist attributes value1",
+        "submission_value": "codelist submission value1",
+        "preferred_term": "codelist preferred term",
+    }
+    assert res["terms"] == [
+        {
+            "term_uid": "term_root_final",
+            "name": "term_value_name1",
+            "mandatory": True,
+            "order": 1,
+            "submission_value": "submission_value_1",
+            "display_text": "display text",
+            "version": "1.0",
+        }
+    ]
+    assert res["vendor_elements"] == [
+        {"uid": "odm_vendor_element1", "name": "nameOne", "value": "value"}
+    ]
+    assert res["vendor_attributes"] == []
+    assert res["vendor_element_attributes"] == []
+    assert res["possible_actions"] == ["approve", "delete", "edit"]
+
+
+def test_adding_odm_vendor_attribute_to_a_specific_odm_item(api_client):
+    data = [{"uid": "odm_vendor_attribute3", "value": "value"}]
+    response = api_client.post(
+        "concepts/odms/items/OdmItem_000001/vendor-attributes", json=data
+    )
+
+    assert_response_status_code(response, 201)
+
+    res = response.json()
+
+    assert res["uid"] == "OdmItem_000001"
+    assert res["library_name"] == "Sponsor"
+    assert res["name"] == "name1"
+    assert res["oid"] == "oid1"
+    assert res["prompt"] == "prompt1"
+    assert res["datatype"] == "string"
+    assert res["length"] == 22
+    assert res["significant_digits"] == 11
+    assert res["sas_field_name"] == "sas_field_name1"
+    assert res["sds_var_name"] == "sds_var_name1"
+    assert res["origin"] == "origin1"
+    assert res["comment"] == "new comment"
+    assert res["end_date"] is None
+    assert res["status"] == "Draft"
+    assert res["version"] == "0.2"
+    assert res["change_description"] == "comment added"
+    assert res["author_username"] == "unknown-user@example.com"
+    assert res["descriptions"] == [
+        {
+            "name": "name2",
+            "language": "eng",
+            "description": "description2",
+            "instruction": "instruction2",
+            "sponsor_instruction": "sponsor_instruction2",
+        },
+        {
+            "name": "name3",
+            "language": "eng",
+            "description": "description3",
+            "instruction": "instruction3",
+            "sponsor_instruction": "sponsor_instruction3",
+        },
+    ]
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
+    assert res["unit_definitions"] == [
+        {
+            "uid": "unit_definition_root1",
+            "name": "name1",
+            "mandatory": False,
+            "order": 1,
+            "ucum": {
+                "term_uid": "term_root1_uid",
+                "name": "name1",
+                "dictionary_id": "dictionary_id1",
+            },
+            "ct_units": [{"term_uid": "C25532_name1", "name": "name1"}],
+        }
+    ]
+    assert res["codelist"] == {
+        "uid": "editable_cr",
+        "name": "codelist attributes value1",
+        "submission_value": "codelist submission value1",
+        "preferred_term": "codelist preferred term",
+    }
+    assert res["terms"] == [
+        {
+            "term_uid": "term_root_final",
+            "name": "term_value_name1",
+            "mandatory": True,
+            "order": 1,
+            "submission_value": "submission_value_1",
+            "display_text": "display text",
+            "version": "1.0",
+        }
+    ]
+    assert res["vendor_elements"] == [
+        {"uid": "odm_vendor_element1", "name": "nameOne", "value": "value"}
+    ]
+    assert res["vendor_attributes"] == [
+        {
+            "uid": "odm_vendor_attribute3",
+            "name": "nameThree",
+            "data_type": "string",
+            "value_regex": "^[a-zA-Z]+$",
+            "value": "value",
+            "vendor_namespace_uid": "odm_vendor_namespace1",
+        }
+    ]
+    assert res["vendor_element_attributes"] == []
+    assert res["possible_actions"] == ["approve", "delete", "edit"]
+
+
+def test_overriding_odm_vendor_attribute_from_a_specific_odm_item(api_client):
+    data = [{"uid": "odm_vendor_attribute4", "value": "value"}]
+    response = api_client.post(
+        "concepts/odms/items/OdmItem_000001/vendor-attributes?override=true", json=data
+    )
+
+    assert_response_status_code(response, 201)
+
+    res = response.json()
+
+    assert res["uid"] == "OdmItem_000001"
+    assert res["library_name"] == "Sponsor"
+    assert res["name"] == "name1"
+    assert res["oid"] == "oid1"
+    assert res["prompt"] == "prompt1"
+    assert res["datatype"] == "string"
+    assert res["length"] == 22
+    assert res["significant_digits"] == 11
+    assert res["sas_field_name"] == "sas_field_name1"
+    assert res["sds_var_name"] == "sds_var_name1"
+    assert res["origin"] == "origin1"
+    assert res["comment"] == "new comment"
+    assert res["end_date"] is None
+    assert res["status"] == "Draft"
+    assert res["version"] == "0.2"
+    assert res["change_description"] == "comment added"
+    assert res["author_username"] == "unknown-user@example.com"
+    assert res["descriptions"] == [
+        {
+            "name": "name2",
+            "language": "eng",
+            "description": "description2",
+            "instruction": "instruction2",
+            "sponsor_instruction": "sponsor_instruction2",
+        },
+        {
+            "name": "name3",
+            "language": "eng",
+            "description": "description3",
+            "instruction": "instruction3",
+            "sponsor_instruction": "sponsor_instruction3",
+        },
+    ]
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
+    assert res["unit_definitions"] == [
+        {
+            "uid": "unit_definition_root1",
+            "name": "name1",
+            "mandatory": False,
+            "order": 1,
+            "ucum": {
+                "term_uid": "term_root1_uid",
+                "name": "name1",
+                "dictionary_id": "dictionary_id1",
+            },
+            "ct_units": [{"term_uid": "C25532_name1", "name": "name1"}],
+        }
+    ]
+    assert res["codelist"] == {
+        "uid": "editable_cr",
+        "name": "codelist attributes value1",
+        "submission_value": "codelist submission value1",
+        "preferred_term": "codelist preferred term",
+    }
+    assert res["terms"] == [
+        {
+            "term_uid": "term_root_final",
+            "name": "term_value_name1",
+            "mandatory": True,
+            "order": 1,
+            "submission_value": "submission_value_1",
+            "display_text": "display text",
+            "version": "1.0",
+        }
+    ]
+    assert res["vendor_elements"] == [
+        {"uid": "odm_vendor_element1", "name": "nameOne", "value": "value"}
+    ]
+    assert res["vendor_attributes"] == [
+        {
+            "uid": "odm_vendor_attribute4",
+            "name": "nameFour",
+            "data_type": "string",
+            "value_regex": None,
+            "value": "value",
+            "vendor_namespace_uid": "odm_vendor_namespace1",
+        }
+    ]
+    assert res["vendor_element_attributes"] == []
+    assert res["possible_actions"] == ["approve", "delete", "edit"]
+
+
+def test_adding_odm_vendor_element_attribute_to_a_specific_odm_item(api_client):
+    data = [{"uid": "odm_vendor_attribute1", "value": "value"}]
+    response = api_client.post(
+        "concepts/odms/items/OdmItem_000001/vendor-element-attributes", json=data
+    )
+
+    assert_response_status_code(response, 201)
+
+    res = response.json()
+
+    assert res["uid"] == "OdmItem_000001"
+    assert res["library_name"] == "Sponsor"
+    assert res["name"] == "name1"
+    assert res["oid"] == "oid1"
+    assert res["prompt"] == "prompt1"
+    assert res["datatype"] == "string"
+    assert res["length"] == 22
+    assert res["significant_digits"] == 11
+    assert res["sas_field_name"] == "sas_field_name1"
+    assert res["sds_var_name"] == "sds_var_name1"
+    assert res["origin"] == "origin1"
+    assert res["comment"] == "new comment"
+    assert res["end_date"] is None
+    assert res["status"] == "Draft"
+    assert res["version"] == "0.2"
+    assert res["change_description"] == "comment added"
+    assert res["author_username"] == "unknown-user@example.com"
+    assert res["descriptions"] == [
+        {
+            "name": "name2",
+            "language": "eng",
+            "description": "description2",
+            "instruction": "instruction2",
+            "sponsor_instruction": "sponsor_instruction2",
+        },
+        {
+            "name": "name3",
+            "language": "eng",
+            "description": "description3",
+            "instruction": "instruction3",
+            "sponsor_instruction": "sponsor_instruction3",
+        },
+    ]
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
+    assert res["unit_definitions"] == [
+        {
+            "uid": "unit_definition_root1",
+            "name": "name1",
+            "mandatory": False,
+            "order": 1,
+            "ucum": {
+                "term_uid": "term_root1_uid",
+                "name": "name1",
+                "dictionary_id": "dictionary_id1",
+            },
+            "ct_units": [{"term_uid": "C25532_name1", "name": "name1"}],
+        }
+    ]
+    assert res["codelist"] == {
+        "uid": "editable_cr",
+        "name": "codelist attributes value1",
+        "submission_value": "codelist submission value1",
+        "preferred_term": "codelist preferred term",
+    }
+    assert res["terms"] == [
+        {
+            "term_uid": "term_root_final",
+            "name": "term_value_name1",
+            "mandatory": True,
+            "order": 1,
+            "submission_value": "submission_value_1",
+            "display_text": "display text",
+            "version": "1.0",
+        }
+    ]
+    assert res["vendor_elements"] == [
+        {"uid": "odm_vendor_element1", "name": "nameOne", "value": "value"}
+    ]
+    assert res["vendor_attributes"] == [
+        {
+            "uid": "odm_vendor_attribute4",
+            "name": "nameFour",
+            "data_type": "string",
+            "value_regex": None,
+            "value": "value",
+            "vendor_namespace_uid": "odm_vendor_namespace1",
+        }
+    ]
+    assert res["vendor_element_attributes"] == [
+        {
+            "uid": "odm_vendor_attribute1",
+            "name": "nameOne",
+            "data_type": "string",
+            "value_regex": "^[a-zA-Z]+$",
+            "value": "value",
+            "vendor_element_uid": "odm_vendor_element1",
+        }
+    ]
+    assert res["possible_actions"] == ["approve", "delete", "edit"]
+
+
+def test_overriding_odm_vendor_element_attribute_from_a_specific_odm_item(api_client):
+    data = [{"uid": "odm_vendor_attribute2", "value": "value"}]
+    response = api_client.post(
+        "concepts/odms/items/OdmItem_000001/vendor-element-attributes?override=true",
+        json=data,
+    )
+
+    assert_response_status_code(response, 201)
+
+    res = response.json()
+
+    assert res["uid"] == "OdmItem_000001"
+    assert res["library_name"] == "Sponsor"
+    assert res["name"] == "name1"
+    assert res["oid"] == "oid1"
+    assert res["prompt"] == "prompt1"
+    assert res["datatype"] == "string"
+    assert res["length"] == 22
+    assert res["significant_digits"] == 11
+    assert res["sas_field_name"] == "sas_field_name1"
+    assert res["sds_var_name"] == "sds_var_name1"
+    assert res["origin"] == "origin1"
+    assert res["comment"] == "new comment"
+    assert res["end_date"] is None
+    assert res["status"] == "Draft"
+    assert res["version"] == "0.2"
+    assert res["change_description"] == "comment added"
+    assert res["author_username"] == "unknown-user@example.com"
+    assert res["descriptions"] == [
+        {
+            "name": "name2",
+            "language": "eng",
+            "description": "description2",
+            "instruction": "instruction2",
+            "sponsor_instruction": "sponsor_instruction2",
+        },
+        {
+            "name": "name3",
+            "language": "eng",
+            "description": "description3",
+            "instruction": "instruction3",
+            "sponsor_instruction": "sponsor_instruction3",
+        },
+    ]
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
+    assert res["unit_definitions"] == [
+        {
+            "uid": "unit_definition_root1",
+            "name": "name1",
+            "mandatory": False,
+            "order": 1,
+            "ucum": {
+                "term_uid": "term_root1_uid",
+                "name": "name1",
+                "dictionary_id": "dictionary_id1",
+            },
+            "ct_units": [{"term_uid": "C25532_name1", "name": "name1"}],
+        }
+    ]
+    assert res["codelist"] == {
+        "uid": "editable_cr",
+        "name": "codelist attributes value1",
+        "submission_value": "codelist submission value1",
+        "preferred_term": "codelist preferred term",
+    }
+    assert res["terms"] == [
+        {
+            "term_uid": "term_root_final",
+            "name": "term_value_name1",
+            "mandatory": True,
+            "order": 1,
+            "submission_value": "submission_value_1",
+            "display_text": "display text",
+            "version": "1.0",
+        }
+    ]
+    assert res["vendor_elements"] == [
+        {"uid": "odm_vendor_element1", "name": "nameOne", "value": "value"}
+    ]
+    assert res["vendor_attributes"] == [
+        {
+            "uid": "odm_vendor_attribute4",
+            "name": "nameFour",
+            "data_type": "string",
+            "value_regex": None,
+            "value": "value",
+            "vendor_namespace_uid": "odm_vendor_namespace1",
+        }
+    ]
+    assert res["vendor_element_attributes"] == [
+        {
+            "uid": "odm_vendor_attribute2",
+            "name": "nameTwo",
+            "data_type": "string",
+            "value_regex": None,
+            "value": "value",
+            "vendor_element_uid": "odm_vendor_element1",
+        }
+    ]
+    assert res["possible_actions"] == ["approve", "delete", "edit"]
+
+
+def test_overriding_odm_vendor_element_attribute_from_a_specific_odm_item1(api_client):
+    data = {
+        "elements": [{"uid": "odm_vendor_element3", "value": "value"}],
+        "element_attributes": [{"uid": "odm_vendor_attribute7", "value": "value"}],
+        "attributes": [{"uid": "odm_vendor_attribute4", "value": "value"}],
+    }
+    response = api_client.post("concepts/odms/items/OdmItem_000001/vendors", json=data)
+
+    assert_response_status_code(response, 201)
+
+    res = response.json()
+
+    assert res["uid"] == "OdmItem_000001"
+    assert res["library_name"] == "Sponsor"
+    assert res["name"] == "name1"
+    assert res["oid"] == "oid1"
+    assert res["prompt"] == "prompt1"
+    assert res["datatype"] == "string"
+    assert res["length"] == 22
+    assert res["significant_digits"] == 11
+    assert res["sas_field_name"] == "sas_field_name1"
+    assert res["sds_var_name"] == "sds_var_name1"
+    assert res["origin"] == "origin1"
+    assert res["comment"] == "new comment"
+    assert res["end_date"] is None
+    assert res["status"] == "Draft"
+    assert res["version"] == "0.2"
+    assert res["change_description"] == "comment added"
+    assert res["author_username"] == "unknown-user@example.com"
+    assert res["descriptions"] == [
+        {
+            "name": "name2",
+            "language": "eng",
+            "description": "description2",
+            "instruction": "instruction2",
+            "sponsor_instruction": "sponsor_instruction2",
+        },
+        {
+            "name": "name3",
+            "language": "eng",
+            "description": "description3",
+            "instruction": "instruction3",
+            "sponsor_instruction": "sponsor_instruction3",
+        },
+    ]
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
+    assert res["unit_definitions"] == [
+        {
+            "uid": "unit_definition_root1",
+            "name": "name1",
+            "mandatory": False,
+            "order": 1,
+            "ucum": {
+                "term_uid": "term_root1_uid",
+                "name": "name1",
+                "dictionary_id": "dictionary_id1",
+            },
+            "ct_units": [{"term_uid": "C25532_name1", "name": "name1"}],
+        }
+    ]
+    assert res["codelist"] == {
+        "uid": "editable_cr",
+        "name": "codelist attributes value1",
+        "submission_value": "codelist submission value1",
+        "preferred_term": "codelist preferred term",
+    }
+    assert res["terms"] == [
+        {
+            "term_uid": "term_root_final",
+            "name": "term_value_name1",
+            "mandatory": True,
+            "order": 1,
+            "submission_value": "submission_value_1",
+            "display_text": "display text",
+            "version": "1.0",
+        }
+    ]
+    assert res["vendor_elements"] == [
+        {"uid": "odm_vendor_element3", "name": "nameThree", "value": "value"}
+    ]
+    assert res["vendor_attributes"] == [
+        {
+            "uid": "odm_vendor_attribute4",
+            "name": "nameFour",
+            "data_type": "string",
+            "value_regex": None,
+            "value": "value",
+            "vendor_namespace_uid": "odm_vendor_namespace1",
+        }
+    ]
+    assert res["vendor_element_attributes"] == [
+        {
+            "uid": "odm_vendor_attribute7",
+            "name": "nameSeven",
+            "data_type": "string",
+            "value_regex": None,
+            "value": "value",
+            "vendor_element_uid": "odm_vendor_element3",
+        }
+    ]
     assert res["possible_actions"] == ["approve", "delete", "edit"]
 
 
@@ -572,27 +1295,21 @@ def test_approving_an_odm_item(api_client):
     assert res["author_username"] == "unknown-user@example.com"
     assert res["descriptions"] == [
         {
-            "uid": "odm_description2",
             "name": "name2",
-            "language": "language2",
+            "language": "eng",
             "description": "description2",
             "instruction": "instruction2",
             "sponsor_instruction": "sponsor_instruction2",
-            "version": "1.0",
         },
         {
-            "uid": "odm_description3",
             "name": "name3",
-            "language": "ENG",
+            "language": "eng",
             "description": "description3",
             "instruction": "instruction3",
             "sponsor_instruction": "sponsor_instruction3",
-            "version": "1.0",
         },
     ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res["unit_definitions"] == [
         {
             "uid": "unit_definition_root1",
@@ -624,10 +1341,29 @@ def test_approving_an_odm_item(api_client):
             "version": "1.0",
         }
     ]
-    assert res["activity"] is None
-    assert res["vendor_elements"] == []
-    assert res["vendor_attributes"] == []
-    assert res["vendor_element_attributes"] == []
+    assert res["vendor_elements"] == [
+        {"uid": "odm_vendor_element3", "name": "nameThree", "value": "value"}
+    ]
+    assert res["vendor_attributes"] == [
+        {
+            "uid": "odm_vendor_attribute4",
+            "name": "nameFour",
+            "data_type": "string",
+            "value_regex": None,
+            "value": "value",
+            "vendor_namespace_uid": "odm_vendor_namespace1",
+        }
+    ]
+    assert res["vendor_element_attributes"] == [
+        {
+            "uid": "odm_vendor_attribute7",
+            "name": "nameSeven",
+            "data_type": "string",
+            "value_regex": None,
+            "value": "value",
+            "vendor_element_uid": "odm_vendor_element3",
+        }
+    ]
     assert res["possible_actions"] == ["inactivate", "new_version"]
 
 
@@ -657,27 +1393,21 @@ def test_inactivating_a_specific_odm_item(api_client):
     assert res["author_username"] == "unknown-user@example.com"
     assert res["descriptions"] == [
         {
-            "uid": "odm_description2",
             "name": "name2",
-            "language": "language2",
+            "language": "eng",
             "description": "description2",
             "instruction": "instruction2",
             "sponsor_instruction": "sponsor_instruction2",
-            "version": "1.0",
         },
         {
-            "uid": "odm_description3",
             "name": "name3",
-            "language": "ENG",
+            "language": "eng",
             "description": "description3",
             "instruction": "instruction3",
             "sponsor_instruction": "sponsor_instruction3",
-            "version": "1.0",
         },
     ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res["unit_definitions"] == [
         {
             "uid": "unit_definition_root1",
@@ -709,10 +1439,29 @@ def test_inactivating_a_specific_odm_item(api_client):
             "version": "1.0",
         }
     ]
-    assert res["activity"] is None
-    assert res["vendor_elements"] == []
-    assert res["vendor_attributes"] == []
-    assert res["vendor_element_attributes"] == []
+    assert res["vendor_elements"] == [
+        {"uid": "odm_vendor_element3", "name": "nameThree", "value": "value"}
+    ]
+    assert res["vendor_attributes"] == [
+        {
+            "uid": "odm_vendor_attribute4",
+            "name": "nameFour",
+            "data_type": "string",
+            "value_regex": None,
+            "value": "value",
+            "vendor_namespace_uid": "odm_vendor_namespace1",
+        }
+    ]
+    assert res["vendor_element_attributes"] == [
+        {
+            "uid": "odm_vendor_attribute7",
+            "name": "nameSeven",
+            "data_type": "string",
+            "value_regex": None,
+            "value": "value",
+            "vendor_element_uid": "odm_vendor_element3",
+        }
+    ]
     assert res["possible_actions"] == ["delete", "reactivate"]
 
 
@@ -742,27 +1491,21 @@ def test_reactivating_a_specific_odm_item(api_client):
     assert res["author_username"] == "unknown-user@example.com"
     assert res["descriptions"] == [
         {
-            "uid": "odm_description2",
             "name": "name2",
-            "language": "language2",
+            "language": "eng",
             "description": "description2",
             "instruction": "instruction2",
             "sponsor_instruction": "sponsor_instruction2",
-            "version": "1.0",
         },
         {
-            "uid": "odm_description3",
             "name": "name3",
-            "language": "ENG",
+            "language": "eng",
             "description": "description3",
             "instruction": "instruction3",
             "sponsor_instruction": "sponsor_instruction3",
-            "version": "1.0",
         },
     ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res["unit_definitions"] == [
         {
             "uid": "unit_definition_root1",
@@ -794,868 +1537,6 @@ def test_reactivating_a_specific_odm_item(api_client):
             "version": "1.0",
         }
     ]
-    assert res["activity"] is None
-    assert res["vendor_elements"] == []
-    assert res["vendor_attributes"] == []
-    assert res["vendor_element_attributes"] == []
-    assert res["possible_actions"] == ["inactivate", "new_version"]
-
-
-def test_adding_activity_to_a_specific_odm_item(api_client):
-    data = {"uid": "activity_root1"}
-    response = api_client.post(
-        "concepts/odms/items/OdmItem_000001/activities", json=data
-    )
-
-    assert_response_status_code(response, 201)
-
-    res = response.json()
-
-    assert res["uid"] == "OdmItem_000001"
-    assert res["library_name"] == "Sponsor"
-    assert res["name"] == "name1"
-    assert res["oid"] == "oid1"
-    assert res["prompt"] == "prompt1"
-    assert res["datatype"] == "string"
-    assert res["length"] == 22
-    assert res["significant_digits"] == 11
-    assert res["sas_field_name"] == "sas_field_name1"
-    assert res["sds_var_name"] == "sds_var_name1"
-    assert res["origin"] == "origin1"
-    assert res["comment"] == "new comment"
-    assert res["end_date"] is None
-    assert res["status"] == "Final"
-    assert res["version"] == "1.0"
-    assert res["change_description"] == "Reactivated version"
-    assert res["author_username"] == "unknown-user@example.com"
-    assert res["descriptions"] == [
-        {
-            "uid": "odm_description2",
-            "name": "name2",
-            "language": "language2",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
-            "version": "1.0",
-        },
-        {
-            "uid": "odm_description3",
-            "name": "name3",
-            "language": "ENG",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
-            "version": "1.0",
-        },
-    ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
-    assert res["unit_definitions"] == [
-        {
-            "uid": "unit_definition_root1",
-            "name": "name1",
-            "mandatory": False,
-            "order": 1,
-            "ucum": {
-                "term_uid": "term_root1_uid",
-                "name": "name1",
-                "dictionary_id": "dictionary_id1",
-            },
-            "ct_units": [{"term_uid": "C25532_name1", "name": "name1"}],
-        }
-    ]
-    assert res["codelist"] == {
-        "uid": "editable_cr",
-        "name": "codelist attributes value1",
-        "submission_value": "codelist submission value1",
-        "preferred_term": "codelist preferred term",
-    }
-    assert res["terms"] == [
-        {
-            "term_uid": "term_root_final",
-            "name": "term_value_name1",
-            "mandatory": True,
-            "order": 1,
-            "submission_value": "submission_value_1",
-            "display_text": "display text",
-            "version": "1.0",
-        }
-    ]
-    assert res["activity"] == {"uid": "activity_root1", "name": "name1"}
-    assert res["vendor_elements"] == []
-    assert res["vendor_attributes"] == []
-    assert res["vendor_element_attributes"] == []
-    assert res["possible_actions"] == ["inactivate", "new_version"]
-
-
-def test_overriding_activity_from_a_specific_odm_item(api_client):
-    data = {"uid": "activity_root2"}
-    response = api_client.post(
-        "concepts/odms/items/OdmItem_000001/activities?override=true", json=data
-    )
-
-    assert_response_status_code(response, 201)
-
-    res = response.json()
-
-    assert res["uid"] == "OdmItem_000001"
-    assert res["library_name"] == "Sponsor"
-    assert res["name"] == "name1"
-    assert res["oid"] == "oid1"
-    assert res["prompt"] == "prompt1"
-    assert res["datatype"] == "string"
-    assert res["length"] == 22
-    assert res["significant_digits"] == 11
-    assert res["sas_field_name"] == "sas_field_name1"
-    assert res["sds_var_name"] == "sds_var_name1"
-    assert res["origin"] == "origin1"
-    assert res["comment"] == "new comment"
-    assert res["end_date"] is None
-    assert res["status"] == "Final"
-    assert res["version"] == "1.0"
-    assert res["change_description"] == "Reactivated version"
-    assert res["author_username"] == "unknown-user@example.com"
-    assert res["descriptions"] == [
-        {
-            "uid": "odm_description2",
-            "name": "name2",
-            "language": "language2",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
-            "version": "1.0",
-        },
-        {
-            "uid": "odm_description3",
-            "name": "name3",
-            "language": "ENG",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
-            "version": "1.0",
-        },
-    ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
-    assert res["unit_definitions"] == [
-        {
-            "uid": "unit_definition_root1",
-            "name": "name1",
-            "mandatory": False,
-            "order": 1,
-            "ucum": {
-                "term_uid": "term_root1_uid",
-                "name": "name1",
-                "dictionary_id": "dictionary_id1",
-            },
-            "ct_units": [{"term_uid": "C25532_name1", "name": "name1"}],
-        }
-    ]
-    assert res["codelist"] == {
-        "uid": "editable_cr",
-        "name": "codelist attributes value1",
-        "submission_value": "codelist submission value1",
-        "preferred_term": "codelist preferred term",
-    }
-    assert res["terms"] == [
-        {
-            "term_uid": "term_root_final",
-            "name": "term_value_name1",
-            "mandatory": True,
-            "order": 1,
-            "submission_value": "submission_value_1",
-            "display_text": "display text",
-            "version": "1.0",
-        }
-    ]
-    assert res["activity"] == {"uid": "activity_root2", "name": "name2"}
-    assert res["vendor_elements"] == []
-    assert res["vendor_attributes"] == []
-    assert res["vendor_element_attributes"] == []
-    assert res["possible_actions"] == ["inactivate", "new_version"]
-
-
-def test_adding_odm_vendor_element_to_a_specific_odm_item(api_client):
-    data = [{"uid": "odm_vendor_element2", "value": "value"}]
-    response = api_client.post(
-        "concepts/odms/items/OdmItem_000001/vendor-elements", json=data
-    )
-
-    assert_response_status_code(response, 201)
-
-    res = response.json()
-
-    assert res["uid"] == "OdmItem_000001"
-    assert res["library_name"] == "Sponsor"
-    assert res["name"] == "name1"
-    assert res["oid"] == "oid1"
-    assert res["prompt"] == "prompt1"
-    assert res["datatype"] == "string"
-    assert res["length"] == 22
-    assert res["significant_digits"] == 11
-    assert res["sas_field_name"] == "sas_field_name1"
-    assert res["sds_var_name"] == "sds_var_name1"
-    assert res["origin"] == "origin1"
-    assert res["comment"] == "new comment"
-    assert res["end_date"] is None
-    assert res["status"] == "Final"
-    assert res["version"] == "1.0"
-    assert res["change_description"] == "Reactivated version"
-    assert res["author_username"] == "unknown-user@example.com"
-    assert res["descriptions"] == [
-        {
-            "uid": "odm_description2",
-            "name": "name2",
-            "language": "language2",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
-            "version": "1.0",
-        },
-        {
-            "uid": "odm_description3",
-            "name": "name3",
-            "language": "ENG",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
-            "version": "1.0",
-        },
-    ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
-    assert res["unit_definitions"] == [
-        {
-            "uid": "unit_definition_root1",
-            "name": "name1",
-            "mandatory": False,
-            "order": 1,
-            "ucum": {
-                "term_uid": "term_root1_uid",
-                "name": "name1",
-                "dictionary_id": "dictionary_id1",
-            },
-            "ct_units": [{"term_uid": "C25532_name1", "name": "name1"}],
-        }
-    ]
-    assert res["codelist"] == {
-        "uid": "editable_cr",
-        "name": "codelist attributes value1",
-        "submission_value": "codelist submission value1",
-        "preferred_term": "codelist preferred term",
-    }
-    assert res["terms"] == [
-        {
-            "term_uid": "term_root_final",
-            "name": "term_value_name1",
-            "mandatory": True,
-            "order": 1,
-            "submission_value": "submission_value_1",
-            "display_text": "display text",
-            "version": "1.0",
-        }
-    ]
-    assert res["activity"] == {"uid": "activity_root2", "name": "name2"}
-    assert res["vendor_elements"] == [
-        {"uid": "odm_vendor_element2", "name": "nameTwo", "value": "value"}
-    ]
-    assert res["vendor_attributes"] == []
-    assert res["vendor_element_attributes"] == []
-    assert res["possible_actions"] == ["inactivate", "new_version"]
-
-
-def test_overriding_odm_vendor_element_from_a_specific_odm_item(api_client):
-    data = [{"uid": "odm_vendor_element1", "value": "value"}]
-    response = api_client.post(
-        "concepts/odms/items/OdmItem_000001/vendor-elements?override=true", json=data
-    )
-
-    assert_response_status_code(response, 201)
-
-    res = response.json()
-
-    assert res["uid"] == "OdmItem_000001"
-    assert res["library_name"] == "Sponsor"
-    assert res["name"] == "name1"
-    assert res["oid"] == "oid1"
-    assert res["prompt"] == "prompt1"
-    assert res["datatype"] == "string"
-    assert res["length"] == 22
-    assert res["significant_digits"] == 11
-    assert res["sas_field_name"] == "sas_field_name1"
-    assert res["sds_var_name"] == "sds_var_name1"
-    assert res["origin"] == "origin1"
-    assert res["comment"] == "new comment"
-    assert res["end_date"] is None
-    assert res["status"] == "Final"
-    assert res["version"] == "1.0"
-    assert res["change_description"] == "Reactivated version"
-    assert res["author_username"] == "unknown-user@example.com"
-    assert res["descriptions"] == [
-        {
-            "uid": "odm_description2",
-            "name": "name2",
-            "language": "language2",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
-            "version": "1.0",
-        },
-        {
-            "uid": "odm_description3",
-            "name": "name3",
-            "language": "ENG",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
-            "version": "1.0",
-        },
-    ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
-    assert res["unit_definitions"] == [
-        {
-            "uid": "unit_definition_root1",
-            "name": "name1",
-            "mandatory": False,
-            "order": 1,
-            "ucum": {
-                "term_uid": "term_root1_uid",
-                "name": "name1",
-                "dictionary_id": "dictionary_id1",
-            },
-            "ct_units": [{"term_uid": "C25532_name1", "name": "name1"}],
-        }
-    ]
-    assert res["codelist"] == {
-        "uid": "editable_cr",
-        "name": "codelist attributes value1",
-        "submission_value": "codelist submission value1",
-        "preferred_term": "codelist preferred term",
-    }
-    assert res["terms"] == [
-        {
-            "term_uid": "term_root_final",
-            "name": "term_value_name1",
-            "mandatory": True,
-            "order": 1,
-            "submission_value": "submission_value_1",
-            "display_text": "display text",
-            "version": "1.0",
-        }
-    ]
-    assert res["activity"] == {"uid": "activity_root2", "name": "name2"}
-    assert res["vendor_elements"] == [
-        {"uid": "odm_vendor_element1", "name": "nameOne", "value": "value"}
-    ]
-    assert res["vendor_attributes"] == []
-    assert res["vendor_element_attributes"] == []
-    assert res["possible_actions"] == ["inactivate", "new_version"]
-
-
-def test_adding_odm_vendor_attribute_to_a_specific_odm_item(api_client):
-    data = [{"uid": "odm_vendor_attribute3", "value": "value"}]
-    response = api_client.post(
-        "concepts/odms/items/OdmItem_000001/vendor-attributes", json=data
-    )
-
-    assert_response_status_code(response, 201)
-
-    res = response.json()
-
-    assert res["uid"] == "OdmItem_000001"
-    assert res["library_name"] == "Sponsor"
-    assert res["name"] == "name1"
-    assert res["oid"] == "oid1"
-    assert res["prompt"] == "prompt1"
-    assert res["datatype"] == "string"
-    assert res["length"] == 22
-    assert res["significant_digits"] == 11
-    assert res["sas_field_name"] == "sas_field_name1"
-    assert res["sds_var_name"] == "sds_var_name1"
-    assert res["origin"] == "origin1"
-    assert res["comment"] == "new comment"
-    assert res["end_date"] is None
-    assert res["status"] == "Final"
-    assert res["version"] == "1.0"
-    assert res["change_description"] == "Reactivated version"
-    assert res["author_username"] == "unknown-user@example.com"
-    assert res["descriptions"] == [
-        {
-            "uid": "odm_description2",
-            "name": "name2",
-            "language": "language2",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
-            "version": "1.0",
-        },
-        {
-            "uid": "odm_description3",
-            "name": "name3",
-            "language": "ENG",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
-            "version": "1.0",
-        },
-    ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
-    assert res["unit_definitions"] == [
-        {
-            "uid": "unit_definition_root1",
-            "name": "name1",
-            "mandatory": False,
-            "order": 1,
-            "ucum": {
-                "term_uid": "term_root1_uid",
-                "name": "name1",
-                "dictionary_id": "dictionary_id1",
-            },
-            "ct_units": [{"term_uid": "C25532_name1", "name": "name1"}],
-        }
-    ]
-    assert res["codelist"] == {
-        "uid": "editable_cr",
-        "name": "codelist attributes value1",
-        "submission_value": "codelist submission value1",
-        "preferred_term": "codelist preferred term",
-    }
-    assert res["terms"] == [
-        {
-            "term_uid": "term_root_final",
-            "name": "term_value_name1",
-            "mandatory": True,
-            "order": 1,
-            "submission_value": "submission_value_1",
-            "display_text": "display text",
-            "version": "1.0",
-        }
-    ]
-    assert res["activity"] == {"uid": "activity_root2", "name": "name2"}
-    assert res["vendor_elements"] == [
-        {"uid": "odm_vendor_element1", "name": "nameOne", "value": "value"}
-    ]
-    assert res["vendor_attributes"] == [
-        {
-            "uid": "odm_vendor_attribute3",
-            "name": "nameThree",
-            "data_type": "string",
-            "value_regex": "^[a-zA-Z]+$",
-            "value": "value",
-            "vendor_namespace_uid": "odm_vendor_namespace1",
-        }
-    ]
-    assert res["vendor_element_attributes"] == []
-    assert res["possible_actions"] == ["inactivate", "new_version"]
-
-
-def test_overriding_odm_vendor_attribute_from_a_specific_odm_item(api_client):
-    data = [{"uid": "odm_vendor_attribute4", "value": "value"}]
-    response = api_client.post(
-        "concepts/odms/items/OdmItem_000001/vendor-attributes?override=true", json=data
-    )
-
-    assert_response_status_code(response, 201)
-
-    res = response.json()
-
-    assert res["uid"] == "OdmItem_000001"
-    assert res["library_name"] == "Sponsor"
-    assert res["name"] == "name1"
-    assert res["oid"] == "oid1"
-    assert res["prompt"] == "prompt1"
-    assert res["datatype"] == "string"
-    assert res["length"] == 22
-    assert res["significant_digits"] == 11
-    assert res["sas_field_name"] == "sas_field_name1"
-    assert res["sds_var_name"] == "sds_var_name1"
-    assert res["origin"] == "origin1"
-    assert res["comment"] == "new comment"
-    assert res["end_date"] is None
-    assert res["status"] == "Final"
-    assert res["version"] == "1.0"
-    assert res["change_description"] == "Reactivated version"
-    assert res["author_username"] == "unknown-user@example.com"
-    assert res["descriptions"] == [
-        {
-            "uid": "odm_description2",
-            "name": "name2",
-            "language": "language2",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
-            "version": "1.0",
-        },
-        {
-            "uid": "odm_description3",
-            "name": "name3",
-            "language": "ENG",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
-            "version": "1.0",
-        },
-    ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
-    assert res["unit_definitions"] == [
-        {
-            "uid": "unit_definition_root1",
-            "name": "name1",
-            "mandatory": False,
-            "order": 1,
-            "ucum": {
-                "term_uid": "term_root1_uid",
-                "name": "name1",
-                "dictionary_id": "dictionary_id1",
-            },
-            "ct_units": [{"term_uid": "C25532_name1", "name": "name1"}],
-        }
-    ]
-    assert res["codelist"] == {
-        "uid": "editable_cr",
-        "name": "codelist attributes value1",
-        "submission_value": "codelist submission value1",
-        "preferred_term": "codelist preferred term",
-    }
-    assert res["terms"] == [
-        {
-            "term_uid": "term_root_final",
-            "name": "term_value_name1",
-            "mandatory": True,
-            "order": 1,
-            "submission_value": "submission_value_1",
-            "display_text": "display text",
-            "version": "1.0",
-        }
-    ]
-    assert res["activity"] == {"uid": "activity_root2", "name": "name2"}
-    assert res["vendor_elements"] == [
-        {"uid": "odm_vendor_element1", "name": "nameOne", "value": "value"}
-    ]
-    assert res["vendor_attributes"] == [
-        {
-            "uid": "odm_vendor_attribute4",
-            "name": "nameFour",
-            "data_type": "string",
-            "value_regex": None,
-            "value": "value",
-            "vendor_namespace_uid": "odm_vendor_namespace1",
-        }
-    ]
-    assert res["vendor_element_attributes"] == []
-    assert res["possible_actions"] == ["inactivate", "new_version"]
-
-
-def test_adding_odm_vendor_element_attribute_to_a_specific_odm_item(api_client):
-    data = [{"uid": "odm_vendor_attribute1", "value": "value"}]
-    response = api_client.post(
-        "concepts/odms/items/OdmItem_000001/vendor-element-attributes", json=data
-    )
-
-    assert_response_status_code(response, 201)
-
-    res = response.json()
-
-    assert res["uid"] == "OdmItem_000001"
-    assert res["library_name"] == "Sponsor"
-    assert res["name"] == "name1"
-    assert res["oid"] == "oid1"
-    assert res["prompt"] == "prompt1"
-    assert res["datatype"] == "string"
-    assert res["length"] == 22
-    assert res["significant_digits"] == 11
-    assert res["sas_field_name"] == "sas_field_name1"
-    assert res["sds_var_name"] == "sds_var_name1"
-    assert res["origin"] == "origin1"
-    assert res["comment"] == "new comment"
-    assert res["end_date"] is None
-    assert res["status"] == "Final"
-    assert res["version"] == "1.0"
-    assert res["change_description"] == "Reactivated version"
-    assert res["author_username"] == "unknown-user@example.com"
-    assert res["descriptions"] == [
-        {
-            "uid": "odm_description2",
-            "name": "name2",
-            "language": "language2",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
-            "version": "1.0",
-        },
-        {
-            "uid": "odm_description3",
-            "name": "name3",
-            "language": "ENG",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
-            "version": "1.0",
-        },
-    ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
-    assert res["unit_definitions"] == [
-        {
-            "uid": "unit_definition_root1",
-            "name": "name1",
-            "mandatory": False,
-            "order": 1,
-            "ucum": {
-                "term_uid": "term_root1_uid",
-                "name": "name1",
-                "dictionary_id": "dictionary_id1",
-            },
-            "ct_units": [{"term_uid": "C25532_name1", "name": "name1"}],
-        }
-    ]
-    assert res["codelist"] == {
-        "uid": "editable_cr",
-        "name": "codelist attributes value1",
-        "submission_value": "codelist submission value1",
-        "preferred_term": "codelist preferred term",
-    }
-    assert res["terms"] == [
-        {
-            "term_uid": "term_root_final",
-            "name": "term_value_name1",
-            "mandatory": True,
-            "order": 1,
-            "submission_value": "submission_value_1",
-            "display_text": "display text",
-            "version": "1.0",
-        }
-    ]
-    assert res["activity"] == {"uid": "activity_root2", "name": "name2"}
-    assert res["vendor_elements"] == [
-        {"uid": "odm_vendor_element1", "name": "nameOne", "value": "value"}
-    ]
-    assert res["vendor_attributes"] == [
-        {
-            "uid": "odm_vendor_attribute4",
-            "name": "nameFour",
-            "data_type": "string",
-            "value_regex": None,
-            "value": "value",
-            "vendor_namespace_uid": "odm_vendor_namespace1",
-        }
-    ]
-    assert res["vendor_element_attributes"] == [
-        {
-            "uid": "odm_vendor_attribute1",
-            "name": "nameOne",
-            "data_type": "string",
-            "value_regex": "^[a-zA-Z]+$",
-            "value": "value",
-            "vendor_element_uid": "odm_vendor_element1",
-        }
-    ]
-    assert res["possible_actions"] == ["inactivate", "new_version"]
-
-
-def test_overriding_odm_vendor_element_attribute_from_a_specific_odm_item(api_client):
-    data = [{"uid": "odm_vendor_attribute2", "value": "value"}]
-    response = api_client.post(
-        "concepts/odms/items/OdmItem_000001/vendor-element-attributes?override=true",
-        json=data,
-    )
-
-    assert_response_status_code(response, 201)
-
-    res = response.json()
-
-    assert res["uid"] == "OdmItem_000001"
-    assert res["library_name"] == "Sponsor"
-    assert res["name"] == "name1"
-    assert res["oid"] == "oid1"
-    assert res["prompt"] == "prompt1"
-    assert res["datatype"] == "string"
-    assert res["length"] == 22
-    assert res["significant_digits"] == 11
-    assert res["sas_field_name"] == "sas_field_name1"
-    assert res["sds_var_name"] == "sds_var_name1"
-    assert res["origin"] == "origin1"
-    assert res["comment"] == "new comment"
-    assert res["end_date"] is None
-    assert res["status"] == "Final"
-    assert res["version"] == "1.0"
-    assert res["change_description"] == "Reactivated version"
-    assert res["author_username"] == "unknown-user@example.com"
-    assert res["descriptions"] == [
-        {
-            "uid": "odm_description2",
-            "name": "name2",
-            "language": "language2",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
-            "version": "1.0",
-        },
-        {
-            "uid": "odm_description3",
-            "name": "name3",
-            "language": "ENG",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
-            "version": "1.0",
-        },
-    ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
-    assert res["unit_definitions"] == [
-        {
-            "uid": "unit_definition_root1",
-            "name": "name1",
-            "mandatory": False,
-            "order": 1,
-            "ucum": {
-                "term_uid": "term_root1_uid",
-                "name": "name1",
-                "dictionary_id": "dictionary_id1",
-            },
-            "ct_units": [{"term_uid": "C25532_name1", "name": "name1"}],
-        }
-    ]
-    assert res["codelist"] == {
-        "uid": "editable_cr",
-        "name": "codelist attributes value1",
-        "submission_value": "codelist submission value1",
-        "preferred_term": "codelist preferred term",
-    }
-    assert res["terms"] == [
-        {
-            "term_uid": "term_root_final",
-            "name": "term_value_name1",
-            "mandatory": True,
-            "order": 1,
-            "submission_value": "submission_value_1",
-            "display_text": "display text",
-            "version": "1.0",
-        }
-    ]
-    assert res["activity"] == {"uid": "activity_root2", "name": "name2"}
-    assert res["vendor_elements"] == [
-        {"uid": "odm_vendor_element1", "name": "nameOne", "value": "value"}
-    ]
-    assert res["vendor_attributes"] == [
-        {
-            "uid": "odm_vendor_attribute4",
-            "name": "nameFour",
-            "data_type": "string",
-            "value_regex": None,
-            "value": "value",
-            "vendor_namespace_uid": "odm_vendor_namespace1",
-        }
-    ]
-    assert res["vendor_element_attributes"] == [
-        {
-            "uid": "odm_vendor_attribute2",
-            "name": "nameTwo",
-            "data_type": "string",
-            "value_regex": None,
-            "value": "value",
-            "vendor_element_uid": "odm_vendor_element1",
-        }
-    ]
-    assert res["possible_actions"] == ["inactivate", "new_version"]
-
-
-def test_overriding_odm_vendor_element_attribute_from_a_specific_odm_item1(api_client):
-    data = {
-        "elements": [{"uid": "odm_vendor_element3", "value": "value"}],
-        "element_attributes": [{"uid": "odm_vendor_attribute7", "value": "value"}],
-        "attributes": [{"uid": "odm_vendor_attribute4", "value": "value"}],
-    }
-    response = api_client.post("concepts/odms/items/OdmItem_000001/vendors", json=data)
-
-    assert_response_status_code(response, 201)
-
-    res = response.json()
-
-    assert res["uid"] == "OdmItem_000001"
-    assert res["library_name"] == "Sponsor"
-    assert res["name"] == "name1"
-    assert res["oid"] == "oid1"
-    assert res["prompt"] == "prompt1"
-    assert res["datatype"] == "string"
-    assert res["length"] == 22
-    assert res["significant_digits"] == 11
-    assert res["sas_field_name"] == "sas_field_name1"
-    assert res["sds_var_name"] == "sds_var_name1"
-    assert res["origin"] == "origin1"
-    assert res["comment"] == "new comment"
-    assert res["end_date"] is None
-    assert res["status"] == "Final"
-    assert res["version"] == "1.0"
-    assert res["change_description"] == "Reactivated version"
-    assert res["author_username"] == "unknown-user@example.com"
-    assert res["descriptions"] == [
-        {
-            "uid": "odm_description2",
-            "name": "name2",
-            "language": "language2",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
-            "version": "1.0",
-        },
-        {
-            "uid": "odm_description3",
-            "name": "name3",
-            "language": "ENG",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
-            "version": "1.0",
-        },
-    ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
-    assert res["unit_definitions"] == [
-        {
-            "uid": "unit_definition_root1",
-            "name": "name1",
-            "mandatory": False,
-            "order": 1,
-            "ucum": {
-                "term_uid": "term_root1_uid",
-                "name": "name1",
-                "dictionary_id": "dictionary_id1",
-            },
-            "ct_units": [{"term_uid": "C25532_name1", "name": "name1"}],
-        }
-    ]
-    assert res["codelist"] == {
-        "uid": "editable_cr",
-        "name": "codelist attributes value1",
-        "submission_value": "codelist submission value1",
-        "preferred_term": "codelist preferred term",
-    }
-    assert res["terms"] == [
-        {
-            "term_uid": "term_root_final",
-            "name": "term_value_name1",
-            "mandatory": True,
-            "order": 1,
-            "submission_value": "submission_value_1",
-            "display_text": "display text",
-            "version": "1.0",
-        }
-    ]
-    assert res["activity"] == {"uid": "activity_root2", "name": "name2"}
     assert res["vendor_elements"] == [
         {"uid": "odm_vendor_element3", "name": "nameThree", "value": "value"}
     ]
@@ -1708,27 +1589,21 @@ def test_creating_a_new_odm_item_version(api_client):
     assert res["author_username"] == "unknown-user@example.com"
     assert res["descriptions"] == [
         {
-            "uid": "odm_description2",
             "name": "name2",
-            "language": "language2",
+            "language": "eng",
             "description": "description2",
             "instruction": "instruction2",
             "sponsor_instruction": "sponsor_instruction2",
-            "version": "1.1",
         },
         {
-            "uid": "odm_description3",
             "name": "name3",
-            "language": "ENG",
+            "language": "eng",
             "description": "description3",
             "instruction": "instruction3",
             "sponsor_instruction": "sponsor_instruction3",
-            "version": "1.1",
         },
     ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res["unit_definitions"] == [
         {
             "uid": "unit_definition_root1",
@@ -1760,7 +1635,6 @@ def test_creating_a_new_odm_item_version(api_client):
             "version": "1.0",
         }
     ]
-    assert res["activity"] == {"uid": "activity_root2", "name": "name2"}
     assert res["vendor_elements"] == [
         {"uid": "odm_vendor_element3", "name": "nameThree", "value": "value"}
     ]
@@ -1803,13 +1677,13 @@ def test_create_a_new_odm_item_for_deleting_it(api_client):
         "descriptions": [
             {
                 "name": "name3 - delete",
-                "language": "ENG",
+                "language": "eng",
                 "description": "description3 - delete",
                 "instruction": "instruction3 - delete",
                 "sponsor_instruction": "sponsor_instruction3 - delete",
             }
         ],
-        "alias_uids": [],
+        "aliases": [],
         "unit_definitions": [
             {"uid": "unit_definition_root1", "mandatory": False, "order": 1}
         ],
@@ -1841,13 +1715,11 @@ def test_create_a_new_odm_item_for_deleting_it(api_client):
     assert res["author_username"] == "unknown-user@example.com"
     assert res["descriptions"] == [
         {
-            "uid": "OdmDescription_000001",
             "name": "name3 - delete",
-            "language": "ENG",
+            "language": "eng",
             "description": "description3 - delete",
             "instruction": "instruction3 - delete",
             "sponsor_instruction": "sponsor_instruction3 - delete",
-            "version": "0.1",
         }
     ]
     assert res["aliases"] == []
@@ -1867,7 +1739,6 @@ def test_create_a_new_odm_item_for_deleting_it(api_client):
     ]
     assert res["codelist"] is None
     assert res["terms"] == []
-    assert res["activity"] is None
     assert res["vendor_elements"] == []
     assert res["vendor_attributes"] == []
     assert res["vendor_element_attributes"] == []
@@ -1896,14 +1767,20 @@ def test_creating_a_new_odm_item_with_relations(api_client):
         "descriptions": [
             {
                 "name": "string1",
-                "library_name": "Sponsor",
-                "language": "DAN",
+                "language": "eng",
                 "description": "string1",
                 "instruction": "string1",
                 "sponsor_instruction": "string1",
             },
+            {
+                "name": "string2",
+                "language": "dan",
+                "description": "string2",
+                "instruction": "string2",
+                "sponsor_instruction": "string2",
+            },
         ],
-        "alias_uids": [],
+        "aliases": [],
         "unit_definitions": [],
         "codelist_uid": None,
         "terms": [],
@@ -1933,20 +1810,24 @@ def test_creating_a_new_odm_item_with_relations(api_client):
     assert res["author_username"] == "unknown-user@example.com"
     assert res["descriptions"] == [
         {
-            "uid": "OdmDescription_000002",
             "name": "string1",
-            "language": "DAN",
+            "language": "eng",
             "description": "string1",
             "instruction": "string1",
             "sponsor_instruction": "string1",
-            "version": "0.1",
+        },
+        {
+            "name": "string2",
+            "language": "dan",
+            "description": "string2",
+            "instruction": "string2",
+            "sponsor_instruction": "string2",
         },
     ]
     assert res["aliases"] == []
     assert res["unit_definitions"] == []
     assert res["codelist"] is None
     assert res["terms"] == []
-    assert res["activity"] is None
     assert res["vendor_elements"] == []
     assert res["vendor_attributes"] == []
     assert res["vendor_element_attributes"] == []
@@ -1969,15 +1850,21 @@ def test_updating_an_existing_odm_item_with_relations(api_client):
         "change_description": "comment added",
         "descriptions": [
             {
+                "name": "string2",
+                "language": "eng",
+                "description": "string2",
+                "instruction": "string2",
+                "sponsor_instruction": "string2",
+            },
+            {
                 "name": "string3",
-                "library_name": "Sponsor",
-                "language": "ARA",
+                "language": "ara",
                 "description": "string3",
                 "instruction": "string3",
                 "sponsor_instruction": "string3",
             },
         ],
-        "alias_uids": ["odm_alias1"],
+        "aliases": [{"context": "context1", "name": "name1"}],
         "unit_definitions": [
             {"uid": "unit_definition_root1", "mandatory": False, "order": 1}
         ],
@@ -2009,18 +1896,21 @@ def test_updating_an_existing_odm_item_with_relations(api_client):
     assert res["author_username"] == "unknown-user@example.com"
     assert res["descriptions"] == [
         {
-            "uid": "OdmDescription_000003",
+            "name": "string2",
+            "language": "eng",
+            "description": "string2",
+            "instruction": "string2",
+            "sponsor_instruction": "string2",
+        },
+        {
             "name": "string3",
-            "language": "ARA",
+            "language": "ara",
             "description": "string3",
             "instruction": "string3",
             "sponsor_instruction": "string3",
-            "version": "0.1",
         },
     ]
-    assert res["aliases"] == [
-        {"uid": "odm_alias1", "context": "context1", "name": "name1", "version": "0.1"}
-    ]
+    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res["unit_definitions"] == [
         {
             "uid": "unit_definition_root1",
@@ -2052,7 +1942,6 @@ def test_updating_an_existing_odm_item_with_relations(api_client):
             "version": "1.0",
         }
     ]
-    assert res["activity"] == {"uid": "activity_root2", "name": "name2"}
     assert res["vendor_elements"] == [
         {"uid": "odm_vendor_element3", "name": "nameThree", "value": "value"}
     ]
@@ -2091,7 +1980,7 @@ def test_create_a_new_odm_item_group_with_relation_to_odm_item(api_client):
         "purpose": "purpose1",
         "comment": "comment1",
         "descriptions": [],
-        "alias_uids": [],
+        "aliases": [],
         "sdtm_domain_uids": [],
     }
     response = api_client.post("concepts/odms/item-groups", json=data)
@@ -2118,47 +2007,11 @@ def test_create_a_new_odm_item_group_with_relation_to_odm_item(api_client):
     assert res["descriptions"] == []
     assert res["aliases"] == []
     assert res["sdtm_domains"] == []
-    assert res["activity_subgroups"] == []
     assert res["items"] == []
     assert res["vendor_elements"] == []
     assert res["vendor_attributes"] == []
     assert res["vendor_element_attributes"] == []
     assert res["possible_actions"] == ["approve", "delete", "edit"]
-
-
-def test_approve_the_odm_item_group(api_client):
-    response = api_client.post(
-        "concepts/odms/item-groups/OdmItemGroup_000001/approvals"
-    )
-
-    assert_response_status_code(response, 201)
-
-    res = response.json()
-
-    assert res["uid"] == "OdmItemGroup_000001"
-    assert res["name"] == "name1"
-    assert res["library_name"] == "Sponsor"
-    assert res["oid"] == "oid1"
-    assert res["repeating"] == "No"
-    assert res["is_reference_data"] == "No"
-    assert res["sas_dataset_name"] == "sas_dataset_name1"
-    assert res["origin"] == "origin1"
-    assert res["purpose"] == "purpose1"
-    assert res["comment"] == "comment1"
-    assert res["end_date"] is None
-    assert res["status"] == "Final"
-    assert res["version"] == "1.0"
-    assert res["change_description"] == "Approved version"
-    assert res["author_username"] == "unknown-user@example.com"
-    assert res["descriptions"] == []
-    assert res["aliases"] == []
-    assert res["sdtm_domains"] == []
-    assert res["activity_subgroups"] == []
-    assert res["items"] == []
-    assert res["vendor_elements"] == []
-    assert res["vendor_attributes"] == []
-    assert res["vendor_element_attributes"] == []
-    assert res["possible_actions"] == ["inactivate", "new_version"]
 
 
 def test_add_the_odm_item_to_the_odm_item_group(api_client):
@@ -2197,6 +2050,67 @@ def test_add_the_odm_item_to_the_odm_item_group(api_client):
     assert res["purpose"] == "purpose1"
     assert res["comment"] == "comment1"
     assert res["end_date"] is None
+    assert res["status"] == "Draft"
+    assert res["version"] == "0.1"
+    assert res["change_description"] == "Initial version"
+    assert res["author_username"] == "unknown-user@example.com"
+    assert res["descriptions"] == []
+    assert res["aliases"] == []
+    assert res["sdtm_domains"] == []
+    assert res["items"] == [
+        {
+            "uid": "OdmItem_000001",
+            "oid": "oid1",
+            "name": "name1",
+            "version": "1.2",
+            "order_number": 1,
+            "mandatory": "Yes",
+            "key_sequence": "None",
+            "method_oid": "None",
+            "imputation_method_oid": "None",
+            "role": "role1",
+            "role_codelist_oid": "None",
+            "collection_exception_condition_oid": "None",
+            "vendor": {
+                "attributes": [
+                    {
+                        "uid": "odm_vendor_attribute3",
+                        "name": "nameThree",
+                        "data_type": "string",
+                        "value_regex": "^[a-zA-Z]+$",
+                        "value": "Yes",
+                        "vendor_namespace_uid": "odm_vendor_namespace1",
+                    }
+                ]
+            },
+        }
+    ]
+    assert res["vendor_attributes"] == []
+    assert res["vendor_elements"] == []
+    assert res["vendor_element_attributes"] == []
+    assert res["possible_actions"] == ["approve", "delete", "edit"]
+
+
+def test_approve_the_odm_item_group(api_client):
+    response = api_client.post(
+        "concepts/odms/item-groups/OdmItemGroup_000001/approvals"
+    )
+
+    assert_response_status_code(response, 201)
+
+    res = response.json()
+
+    assert res["uid"] == "OdmItemGroup_000001"
+    assert res["name"] == "name1"
+    assert res["library_name"] == "Sponsor"
+    assert res["oid"] == "oid1"
+    assert res["repeating"] == "No"
+    assert res["is_reference_data"] == "No"
+    assert res["sas_dataset_name"] == "sas_dataset_name1"
+    assert res["origin"] == "origin1"
+    assert res["purpose"] == "purpose1"
+    assert res["comment"] == "comment1"
+    assert res["end_date"] is None
     assert res["status"] == "Final"
     assert res["version"] == "1.0"
     assert res["change_description"] == "Approved version"
@@ -2204,12 +2118,12 @@ def test_add_the_odm_item_to_the_odm_item_group(api_client):
     assert res["descriptions"] == []
     assert res["aliases"] == []
     assert res["sdtm_domains"] == []
-    assert res["activity_subgroups"] == []
     assert res["items"] == [
         {
             "uid": "OdmItem_000001",
             "oid": "oid1",
             "name": "name1",
+            "version": "2.0",
             "order_number": 1,
             "mandatory": "Yes",
             "key_sequence": "None",

@@ -12,8 +12,10 @@ from clinical_mdr_api.models.biomedical_concepts.activity_item_class import (
     ActivityItemClassCreateInput,
     ActivityItemClassEditInput,
     ActivityItemClassMappingInput,
+    ActivityItemClassOverview,
+    SimpleActivityInstanceClassForItem,
 )
-from clinical_mdr_api.models.utils import CustomPage
+from clinical_mdr_api.models.utils import CustomPage, GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.biomedical_concepts.activity_item_class import (
@@ -609,6 +611,147 @@ def reactivate(
 ) -> ActivityItemClass:
     activity_item_class_service = ActivityItemClassService()
     return activity_item_class_service.reactivate_retired(uid=activity_item_class_uid)
+
+
+@router.get(
+    "/{activity_item_class_uid}/overview",
+    dependencies=[security, rbac.LIBRARY_READ],
+    summary="Get detailed overview of an activity item class",
+    description="""
+Returns detailed information about an activity item class including:
+- Activity item class details (name, definition, NCI code, status, version, etc.)
+- Activity Instance Classes that use this item class
+- Version history
+
+State before:
+- UID must exist
+
+State after:
+- No change
+
+Possible errors:
+- Invalid uid
+    """,
+    status_code=200,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - The activity item class with the specified UID wasn't found.",
+        },
+    },
+)
+@decorators.allow_exports(
+    {
+        "defaults": ["uid", "name", "start_date", "status", "version"],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+def get_activity_item_class_overview(
+    # pylint: disable=unused-argument
+    request: Request,  # request is actually required by the allow_exports decorator
+    activity_item_class_uid: Annotated[str, ActivityItemClassUID],
+    version: Annotated[
+        str | None,
+        Query(description="Select specific version, omit to view latest version"),
+    ] = None,
+) -> ActivityItemClassOverview:
+    if version == "":
+        version = None
+
+    service = ActivityItemClassService()
+    return service.get_activity_item_class_overview(
+        activity_item_class_uid=activity_item_class_uid, version=version
+    )
+
+
+@router.get(
+    "/{activity_item_class_uid}/activity-instance-classes",
+    dependencies=[security, rbac.LIBRARY_READ],
+    summary="Get paginated Activity Instance Classes that use this item",
+    description="""
+Retrieves a paginated list of Activity Instance Classes that use this Activity Item Class.
+
+When a version is specified, returns the instance classes that were using this item at that version's date.
+Otherwise returns the latest version of each instance class.
+
+State before:
+- Activity item class UID must exist
+
+State after:
+- No change
+
+Possible errors:
+- Invalid uid
+    """,
+    response_model=GenericFilteringReturn[SimpleActivityInstanceClassForItem],
+    status_code=200,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - The activity item class with the specified UID wasn't found.",
+        },
+    },
+)
+@decorators.allow_exports(
+    {
+        "defaults": [
+            "uid",
+            "name",
+            "mandatory",
+            "adam_param_specific_enabled",
+            "version",
+            "status",
+            "modified_date",
+        ],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+def get_activity_instance_classes_using_item(
+    # pylint: disable=unused-argument
+    request: Request,  # request is actually required by the allow_exports decorator
+    activity_item_class_uid: Annotated[str, ActivityItemClassUID],
+    version: Annotated[
+        str | None,
+        Query(description="Select specific version, omit to view latest version"),
+    ] = None,
+    page_number: Annotated[
+        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
+    ] = settings.default_page_number,
+    page_size: Annotated[
+        int,
+        Query(
+            ge=0,
+            le=settings.max_page_size,
+            description=_generic_descriptions.PAGE_SIZE,
+        ),
+    ] = settings.default_page_size,
+    total_count: Annotated[
+        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
+    ] = False,
+) -> GenericFilteringReturn[SimpleActivityInstanceClassForItem]:
+    if version == "":
+        version = None
+
+    service = ActivityItemClassService()
+    return service.get_activity_instance_classes_using_item_paginated(
+        activity_item_class_uid=activity_item_class_uid,
+        version=version,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
+    )
 
 
 @router.delete(

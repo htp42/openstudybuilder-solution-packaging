@@ -1,11 +1,11 @@
 <template>
   <div>
     <v-row class="mt-2 ml-2 mr-2" style="display: flex">
-      <v-col cols="2">
+      <v-col cols="3">
         <v-select
-          v-model="selectedTemplates"
-          :items="templates"
-          :label="$t('OdmViewer.crf_template')"
+          v-model="selectedCollections"
+          :items="collections"
+          :label="$t('OdmViewer.crf_collection')"
           variant="outlined"
           density="compact"
           clearable
@@ -14,8 +14,30 @@
           item-title="name"
           item-value="value"
           class="mt-2"
-          @update:model-value="getFormsForTemplates()"
+          :class="{ shake: shakeit && selectedCollections.length === 0 }"
         >
+          <template #prepend-item>
+            <v-list-item
+              :title="
+                allCollectionsSelected
+                  ? t('_global.unselect_all')
+                  : t('_global.select_all')
+              "
+              @click="toggleCollection"
+            >
+              <template #prepend>
+                <v-checkbox-btn
+                  :indeterminate="
+                    !allCollectionsSelected && someCollectionsSelected
+                  "
+                  :model-value="allCollectionsSelected"
+                ></v-checkbox-btn>
+              </template>
+            </v-list-item>
+
+            <v-divider class="mt-2"></v-divider>
+          </template>
+
           <template #selection="{ item, index }">
             <div v-if="index === 0">
               <span>{{
@@ -25,16 +47,19 @@
               }}</span>
             </div>
             <span v-if="index === 1" class="grey--text text-caption mr-1">
-              (+{{ selectedTemplates.length - 1 }})
+              (+{{ selectedCollections.length - 1 }})
             </span>
           </template>
         </v-select>
       </v-col>
-      <v-col cols="3">
+      <v-col
+        cols="3"
+        @click="() => activateShake(selectedCollections.length === 0)"
+      >
         <v-autocomplete
           v-model="selectedForms"
           :items="forms"
-          :label="$t('OdmViewer.select_forms')"
+          :label="$t('OdmViewer.forms')"
           variant="outlined"
           density="compact"
           clearable
@@ -42,7 +67,34 @@
           class="mt-2"
           item-title="name"
           item-value="uid"
+          :disabled="selectedCollections.length === 0"
+          :class="{
+            shake:
+              shakeit &&
+              selectedCollections.length !== 0 &&
+              selectedForms.length === 0,
+          }"
         >
+          <template #prepend-item>
+            <v-list-item
+              :title="
+                allFormsSelected
+                  ? t('_global.unselect_all')
+                  : t('_global.select_all')
+              "
+              @click="toggleForm"
+            >
+              <template #prepend>
+                <v-checkbox-btn
+                  :indeterminate="!allFormsSelected && someFormsSelected"
+                  :model-value="allFormsSelected"
+                ></v-checkbox-btn>
+              </template>
+            </v-list-item>
+
+            <v-divider class="mt-2"></v-divider>
+          </template>
+
           <template #selection="{ item, index }">
             <div v-if="index === 0">
               <span>{{
@@ -57,17 +109,15 @@
           </template>
         </v-autocomplete>
       </v-col>
-      <v-col cols="2">
-        <v-select
-          v-model="element_status"
-          :items="elementStatuses"
-          :label="$t('OdmViewer.element_status')"
-          variant="outlined"
-          density="compact"
-          class="mt-2"
-        />
-      </v-col>
-      <v-col cols="2">
+      <v-col
+        cols="3"
+        @click="
+          () =>
+            activateShake(
+              selectedCollections.length === 0 || selectedForms.length === 0
+            )
+        "
+      >
         <v-select
           v-model="data.selectedStylesheet"
           :items="data.stylesheet"
@@ -75,9 +125,18 @@
           density="compact"
           class="mt-2"
           :label="$t('OdmViewer.stylesheet')"
+          :disabled="selectedForms.length === 0"
         />
       </v-col>
-      <v-col cols="2">
+      <v-col
+        cols="2"
+        @click="
+          () =>
+            activateShake(
+              selectedCollections.length === 0 || selectedForms.length === 0
+            )
+        "
+      >
         <v-btn
           color="secondary"
           :label="$t('_global.load')"
@@ -87,54 +146,63 @@
           :disabled="selectedForms.length === 0"
           @click="loadXml"
         >
-          {{ $t('OdmViewer.load') }}
+          {{ $t('OdmViewer.generate') }}
         </v-btn>
       </v-col>
-      <v-spacer />
-      <v-menu rounded offset-y>
-        <template #activator="{ props }">
-          <slot name="button" :props="props">
-            <v-btn
-              class="mr-4 mt-4"
-              size="small"
-              variant="outlined"
-              color="nnBaseBlue"
-              v-bind="props"
-              :title="$t('DataTableExportButton.export')"
-              data-cy="table-export-button"
-              icon="mdi-download-outline"
-              :disabled="!doc"
-              :loading="loading || exportLoading"
-            />
-          </slot>
-        </template>
-        <v-list>
-          <v-list-item link color="nnBaseBlue" @click="downloadXml">
-            <v-list-item-title class="nnBaseBlue">
-              <v-icon color="nnBaseBlue" class="mr-2">
-                mdi-file-xml-box
-              </v-icon>
-              {{ $t('DataTableExportButton.export_xml') }}
-            </v-list-item-title>
-          </v-list-item>
-          <v-list-item link color="nnBaseBlue" @click="downloadPdf">
-            <v-list-item-title class="nnBaseBlue">
-              <v-icon color="nnBaseBlue" class="mr-2">
-                mdi-file-pdf-box
-              </v-icon>
-              {{ $t('DataTableExportButton.export_pdf') }}
-            </v-list-item-title>
-          </v-list-item>
-          <v-list-item link color="nnBaseBlue" @click="downloadHtml">
-            <v-list-item-title class="nnBaseBlue">
-              <v-icon color="nnBaseBlue" class="mr-2">
-                mdi-file-document-outline
-              </v-icon>
-              {{ $t('DataTableExportButton.export_html') }}
-            </v-list-item-title>
-          </v-list-item>
-        </v-list>
-      </v-menu>
+      <v-col
+        cols="1"
+        @click="
+          () =>
+            activateShake(
+              selectedCollections.length === 0 || selectedForms.length === 0
+            )
+        "
+      >
+        <v-menu rounded offset-y>
+          <template #activator="{ props }">
+            <slot name="button" :props="props">
+              <v-btn
+                class="mr-4 mt-2"
+                size="small"
+                variant="outlined"
+                color="nnBaseBlue"
+                v-bind="props"
+                :title="$t('DataTableExportButton.export')"
+                data-cy="table-export-button"
+                icon="mdi-download-outline"
+                :disabled="!doc"
+                :loading="loading || exportLoading"
+              />
+            </slot>
+          </template>
+          <v-list>
+            <v-list-item link color="nnBaseBlue" @click="downloadXml">
+              <v-list-item-title class="nnBaseBlue">
+                <v-icon color="nnBaseBlue" class="mr-2">
+                  mdi-file-xml-box
+                </v-icon>
+                {{ $t('DataTableExportButton.export_xml') }}
+              </v-list-item-title>
+            </v-list-item>
+            <v-list-item link color="nnBaseBlue" @click="downloadPdf">
+              <v-list-item-title class="nnBaseBlue">
+                <v-icon color="nnBaseBlue" class="mr-2">
+                  mdi-file-pdf-box
+                </v-icon>
+                {{ $t('DataTableExportButton.export_pdf') }}
+              </v-list-item-title>
+            </v-list-item>
+            <v-list-item link color="nnBaseBlue" @click="downloadHtml">
+              <v-list-item-title class="nnBaseBlue">
+                <v-icon color="nnBaseBlue" class="mr-2">
+                  mdi-file-document-outline
+                </v-icon>
+                {{ $t('DataTableExportButton.export_html') }}
+              </v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </v-menu>
+      </v-col>
     </v-row>
     <div v-show="loading">
       <v-row align="center" justify="center" style="text-align: -webkit-center">
@@ -166,24 +234,16 @@
 
 <script setup>
 import crfs from '@/api/crfs'
-import statuses from '@/constants/statuses'
 import exportLoader from '@/utils/exportLoader'
 import { DateTime } from 'luxon'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
 
-const elementStatuses = [
-  statuses.LATEST,
-  statuses.FINAL,
-  statuses.DRAFT,
-  statuses.RETIRED,
-]
-
 const showOdmXml = ref(false)
 
-const selectedTemplates = ref([])
-const templates = ref([])
+const selectedCollections = ref([])
+const collections = ref([])
 const selectedForms = ref([])
 const forms = ref([])
 
@@ -207,25 +267,63 @@ const data = ref({
 })
 const loading = ref(false)
 const exportLoading = ref(false)
-const element_status = ref(statuses.LATEST)
+
+const shakeit = ref(false)
 
 onMounted(() => {
-  getTemplates()
+  getCollections()
 })
 
-function getTemplates() {
+watch(selectedCollections, () => {
+  getFormsForCollections()
+})
+
+const allCollectionsSelected = computed(() => {
+  return (
+    someCollectionsSelected.value &&
+    selectedCollections.value.length === collections.value.length
+  )
+})
+const someCollectionsSelected = computed(() => {
+  return selectedCollections.value.length > 0
+})
+function toggleCollection() {
+  if (allCollectionsSelected.value) {
+    selectedCollections.value = []
+  } else {
+    selectedCollections.value = [...collections.value]
+  }
+}
+
+const allFormsSelected = computed(() => {
+  return (
+    someFormsSelected.value && selectedForms.value.length === forms.value.length
+  )
+})
+const someFormsSelected = computed(() => {
+  return selectedForms.value.length > 0
+})
+function toggleForm() {
+  if (allFormsSelected.value) {
+    selectedForms.value = []
+  } else {
+    selectedForms.value = forms.value.map((form) => form.uid)
+  }
+}
+
+function getCollections() {
   const params = { page_size: 0 }
   crfs.get('study-events', { params }).then((resp) => {
-    templates.value = resp.data.items
+    collections.value = resp.data.items
   })
 }
 
-function getFormsForTemplates() {
+function getFormsForCollections() {
   try {
     forms.value = []
     selectedForms.value = []
-    selectedTemplates.value.forEach((template) => {
-      forms.value = [...forms.value, ...template.forms]
+    selectedCollections.value.forEach((collection) => {
+      forms.value = [...forms.value, ...collection.forms]
     })
     forms.value = forms.value.filter(
       (form1, i, arr) => arr.findIndex((form2) => form2.uid === form1.uid) === i
@@ -238,7 +336,6 @@ function getFormsForTemplates() {
 async function loadXml() {
   doc.value = ''
   loading.value = true
-  data.value.status = element_status.value.toLowerCase()
   data.value.allowed_namespaces = '&allowed_namespaces=*'
   data.value.target_uids = ''
   selectedForms.value.forEach((form) => {
@@ -310,6 +407,15 @@ function downloadPdf() {
     )
     exportLoading.value = false
   })
+}
+
+function activateShake(condition) {
+  if (condition === false) return
+
+  shakeit.value = true
+  setTimeout(() => {
+    shakeit.value = false
+  }, 1000)
 }
 </script>
 <style>

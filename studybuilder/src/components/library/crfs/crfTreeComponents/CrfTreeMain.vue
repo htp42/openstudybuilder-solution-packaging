@@ -1,19 +1,48 @@
 <template>
   <v-row>
-    <v-switch
-      v-model="sortMode"
-      class="ml-6 mt-4"
-      :label="$t('CrfTree.reorder')"
-    />
+    <v-col>
+      <v-select
+        ref="mainSelect"
+        v-model="selectCollection"
+        :items="collections.concat(filteredOutCollections)"
+        :item-title="(item) => item?.name || $t('CRFTree.show_all')"
+        :item-value="(item) => item?.uid || null"
+        class="ms-4 mt-4"
+        variant="outlined"
+        density="compact"
+        prepend-inner-icon="mdi-filter"
+        hide-details
+      >
+        <template #prepend-item>
+          <v-list-item style="cursor: pointer" @click="selectAll">
+            <v-list-item-title class="ms-4">{{
+              $t('CRFTree.show_all')
+            }}</v-list-item-title>
+          </v-list-item>
+          <v-divider />
+        </template>
+      </v-select>
+    </v-col>
+    <v-spacer />
+    <v-col class="d-flex justify-end me-4">
+      <v-switch
+        v-model="sortMode"
+        class="ml-6 mt-4"
+        color="primary"
+        :label="$t('CRFTree.reorder')"
+        :disabled="expanded.length === 0"
+      />
+    </v-col>
   </v-row>
   <v-data-table-server
     ref="mainTable"
     v-model:expanded="expanded"
     :headers="headers"
     item-value="name"
-    :items-length="totalTemplates"
-    :items="templates"
-    @update:options="getTemplates"
+    :items-length="totalCollections"
+    :items="collections"
+    :loading="loading"
+    @update:options="getCollections"
   >
     <template #headers="{ columns }">
       <tr class="header">
@@ -43,8 +72,21 @@
             <v-btn v-else variant="text" class="hide" icon />
             <ActionsMenu :actions="actions" :item="item" />
             <span class="ml-2">
-              <v-icon color="crfTemplate"> mdi-alpha-t-circle-outline </v-icon>
-              {{ item.name }}
+              <v-icon color="crfCollection">mdi-alpha-c-circle</v-icon>
+              <v-tooltip
+                v-if="item.name.length > 60"
+                location="top"
+                max-width="300"
+                :text="item.name"
+                interactive
+              >
+                <template #activator="{ props }">
+                  <span v-bind="props">{{
+                    item.name.substring(0, 60) + '...'
+                  }}</span>
+                </template>
+              </v-tooltip>
+              <span v-else>{{ item.name }}</span>
             </span>
           </v-row>
         </td>
@@ -67,10 +109,10 @@
                   rounded
                   v-bind="props"
                   color="crfForm"
-                  :title="$t('CrfTree.link_forms')"
+                  :title="$t('CRFTree.link_forms')"
                 >
                   <v-icon icon="mdi-plus" />
-                  {{ $t('CrfTree.forms') }}
+                  {{ $t('CRFTree.forms') }}
                 </v-btn>
               </div>
             </template>
@@ -80,7 +122,7 @@
                   <v-icon icon="mdi-plus" />
                 </template>
                 <v-list-item-title>
-                  {{ $t('CrfTree.link_existing') }}
+                  {{ $t('CRFTree.link_existing') }}
                 </v-list-item-title>
               </v-list-item>
               <v-list-item @click="openCreateAndAddForm(item)">
@@ -88,7 +130,7 @@
                   <v-icon icon="mdi-pencil-outline" />
                 </template>
                 <v-list-item-title>
-                  {{ $t('CrfTree.create_and_link') }}
+                  {{ $t('CRFTree.create_and_link') }}
                 </v-list-item-title>
               </v-list-item>
             </v-list>
@@ -100,24 +142,26 @@
     <template #expanded-row="{ columns, item }">
       <CrfTreeForms
         :sort-mode="sortMode"
-        :parent-template="item"
+        :parent-collection="item"
         :columns="columns"
         :refresh-forms="refreshForms"
-        :expand-forms-for-template="expandFormsForTemplate"
+        :expand-forms-for-collection="expandFormsForCollection"
+        @update-parent-collection-form="updateCollectionForm"
       />
     </template>
   </v-data-table-server>
-  <CrfTemplateForm
-    :open="showTemplateForm"
-    :selected-template="selectedTemplate"
+  <CrfCollectionForm
+    :open="showCollectionForm"
+    :selected-collection="selectedCollection"
     :read-only-prop="
-      selectedTemplate && selectedTemplate.status === statuses.FINAL
+      selectedCollection && selectedCollection.status === statuses.FINAL
     "
     @close="closeDefinition"
+    @update-collection="updateCollection"
   />
   <CrfLinkForm
     :open="showLinkForm"
-    :item-to-link="selectedTemplate"
+    :item-to-link="selectedCollection"
     items-type="forms"
     @close="closeLinkForm"
   />
@@ -128,7 +172,7 @@
     @keydown.esc="closeExportForm"
   >
     <CrfExportForm
-      :item="selectedTemplate"
+      :item="selectedCollection"
       type="study_event"
       @close="closeExportForm"
     />
@@ -144,51 +188,80 @@
       @link-form="linkForm"
     />
   </v-dialog>
+  <CrfApprovalSummaryConfirmDialog ref="confirmApproval" />
+  <ConfirmDialog ref="confirmNewVersion" />
 </template>
 
 <script>
 import crfs from '@/api/crfs'
+import CrfApprovalSummaryConfirmDialog from '@/components/library/crfs/CrfApprovalSummaryConfirmDialog.vue'
 import CrfTreeForms from '@/components/library/crfs/crfTreeComponents/CrfTreeForms.vue'
 import StatusChip from '@/components/tools/StatusChip.vue'
 import statuses from '@/constants/statuses'
 import CrfLinkForm from '@/components/library/crfs/CrfLinkForm.vue'
 import ActionsMenu from '@/components/tools/ActionsMenu.vue'
-import CrfTemplateForm from '@/components/library/crfs/CrfTemplateForm.vue'
+import CrfCollectionForm from '@/components/library/crfs/CrfCollectionForm.vue'
 import CrfExportForm from '@/components/library/crfs/CrfExportForm.vue'
 import crfTypes from '@/constants/crfTypes'
 import CrfFormForm from '@/components/library/crfs/CrfFormForm.vue'
 import filteringParameters from '@/utils/filteringParameters'
+import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
+import isEmpty from 'lodash/isEmpty'
 
 export default {
   components: {
+    CrfApprovalSummaryConfirmDialog,
     CrfTreeForms,
     StatusChip,
     CrfLinkForm,
     ActionsMenu,
-    CrfTemplateForm,
+    CrfCollectionForm,
     CrfExportForm,
     CrfFormForm,
+    ConfirmDialog,
   },
+  inject: ['eventBusEmit'],
   data() {
     return {
       headers: [
-        { title: this.$t('CrfTree.items_for_linking'), key: 'name' },
-        { title: this.$t('CrfTree.ref_attr'), key: 'refAttr' },
-        { title: this.$t('CrfTree.def_attr'), key: 'defAttr' },
+        { title: this.$t('CRFTree.items_for_linking'), key: 'name' },
+        { title: this.$t('CRFTree.ref_attr'), key: 'refAttr' },
+        { title: this.$t('CRFTree.def_attr'), key: 'defAttr' },
         { title: this.$t('_global.status'), key: 'status' },
         { title: this.$t('_global.version'), key: 'version' },
-        { title: this.$t('CrfTree.link'), key: 'link' },
+        { title: this.$t('CRFTree.link'), key: 'link' },
       ],
       actions: [
         {
-          label: this.$t('CrfTree.open_def'),
+          label: this.$t('CRFTree.open_def'),
           icon: 'mdi-arrow-left',
           click: this.openDefinition,
         },
         {
-          label: this.$t('CrfTree.preview_odm'),
+          label: this.$t('CRFTree.preview_odm'),
           icon: 'mdi-file-xml-box',
           click: this.previewODM,
+        },
+        {
+          label: this.$t('_global.new_version'),
+          icon: 'mdi-plus-circle-outline',
+          click: this.newVersion,
+          condition: (item) => item.status === statuses.FINAL,
+          accessRole: this.$roles.LIBRARY_WRITE,
+        },
+        {
+          label: this.$t('_global.approve'),
+          icon: 'mdi-check-decagram',
+          click: this.approve,
+          condition: (item) => item.status === statuses.DRAFT,
+          accessRole: this.$roles.LIBRARY_WRITE,
+        },
+        {
+          label: this.$t('CRFTree.create_new_version_all'),
+          icon: 'mdi-plus-circle-outline',
+          click: this.newVersionAll,
+          condition: (item) => item.status === statuses.FINAL,
+          accessRole: this.$roles.LIBRARY_WRITE,
         },
         {
           label: this.$t('_global.export'),
@@ -196,107 +269,163 @@ export default {
           click: this.openExportForm,
         },
         {
-          label: this.$t('CrfTree.approve_all'),
-          icon: 'mdi-check-decagram',
-          click: this.approveAll,
-          accessRole: this.$roles.LIBRARY_WRITE,
-        },
-        {
-          label: this.$t('CrfTree.expand'),
+          label: this.$t('CRFTree.expand'),
           icon: 'mdi-arrow-expand-down',
           condition: (item) => item.forms.length > 0,
           click: this.expandAll,
         },
       ],
       showLinkForm: false,
-      showTemplateForm: false,
-      selectedTemplate: {},
+      showCollectionForm: false,
+      selectedCollection: {},
       refreshForms: 0,
       expanded: [],
-      expandFormsForTemplate: '',
+      expandFormsForCollection: '',
       showExportForm: false,
       showCreateForm: false,
       sortMode: false,
-      templates: [],
-      totalTemplates: 0,
+      collections: [],
+      filteredOutCollections: [],
+      totalCollections: 0,
+      loading: false,
+      selectCollection: {},
     }
+  },
+  watch: {
+    selectCollection(val) {
+      if (isEmpty(val)) {
+        this.collections = this.collections.concat(this.filteredOutCollections)
+        this.filteredOutCollections = []
+      } else {
+        this.collections = this.collections.concat(this.filteredOutCollections)
+        this.filteredOutCollections = this.collections.filter(
+          (c) => c.uid !== val
+        )
+        this.collections = this.collections.filter((c) => c.uid === val)
+      }
+    },
   },
   created() {
     this.statuses = statuses
   },
   mounted() {
-    this.getTemplates()
+    this.getCollections()
   },
   methods: {
-    async getTemplates(options) {
+    async newVersion(item) {
+      this.expanded = this.expanded.filter((e) => e !== item.name)
+
+      if (
+        await this.$refs.confirmNewVersion.open(
+          this.$t('_global.continuation_confirmation'),
+          { type: 'warning' }
+        )
+      ) {
+        this.loading = true
+
+        crfs.newVersion('study-events', item.uid).then((resp) => {
+          this.collections = this.collections.map((c) =>
+            c.uid === resp.data.uid ? { ...c, ...resp.data } : c
+          )
+
+          this.expandAll(item)
+          this.loading = false
+          this.eventBusEmit('notification', {
+            msg: this.$t('_global.new_version_success'),
+          })
+        })
+      }
+    },
+    updateCollectionForm(affectedCollection, updatedForm) {
+      if (affectedCollection.status == statuses.DRAFT) {
+        const collection = this.collections.find(
+          (c) => c.uid === affectedCollection.uid
+        )
+        if (collection) {
+          collection.forms = collection.forms.map((f) =>
+            f.uid === updatedForm.uid ? { ...f, ...updatedForm } : f
+          )
+        }
+      }
+    },
+    selectAll() {
+      this.selectCollection = {}
+      this.$refs.mainSelect?.blur()
+    },
+    async getCollections(options) {
       const params = filteringParameters.prepareParameters(options, null, null)
       if (!params) {
         params.total_count = true
       }
       return crfs.get('study-events', { params }).then((resp) => {
-        this.templates = resp.data.items
-        this.totalTemplates = resp.data.total
+        this.collections = resp.data.items
+        this.totalCollections = resp.data.total
       })
     },
     openCreateAndAddForm(item) {
-      this.selectedTemplate = item
+      this.selectedCollection = item
       this.showCreateForm = true
     },
     closeCreateAndAddForm() {
       this.showCreateForm = false
-      this.selectedTemplate = {}
+      this.selectedCollection = {}
     },
     linkForm(form) {
       const payload = [
         {
           uid: form.data.uid,
-          order_number: this.selectedTemplate.forms.length,
+          order_number: this.selectedCollection.forms.length,
           mandatory: 'No',
           collection_exception_condition_oid: null,
         },
       ]
       crfs
-        .addFormsToTemplate(payload, this.selectedTemplate.uid, false)
+        .addFormsToCollection(payload, this.selectedCollection.uid, false)
         .then(() => {
-          this.getTemplates().then(() => {
+          this.getCollections().then(() => {
             this.refreshForms += 1
           })
         })
     },
+    updateCollection(collection) {
+      this.collections = this.collections.map((c) =>
+        c.uid === collection.uid ? { ...c, ...collection } : c
+      )
+    },
     openDefinition(item) {
-      this.selectedTemplate = item
-      this.showTemplateForm = true
+      this.selectedCollection = item
+      this.showCollectionForm = true
     },
     closeDefinition() {
-      this.selectedTemplate = {}
-      this.showTemplateForm = false
-      this.getTemplates()
+      this.selectedCollection = {}
+      this.showCollectionForm = false
+      this.getCollections()
     },
     openLinkForm(item) {
-      this.selectedTemplate = item
+      this.selectedCollection = item
       this.showLinkForm = true
     },
     async closeLinkForm() {
       this.showLinkForm = false
-      this.selectedTemplate = {}
-      await this.getTemplates()
+      this.selectedCollection = {}
+      await this.getCollections()
       this.refreshForms += 1
     },
     async expandAll(item) {
       await this.expanded.push(item.name)
-      this.expandFormsForTemplate = item.uid
+      this.expandFormsForCollection = item.uid
     },
     openExportForm(item) {
-      this.selectedTemplate = item
+      this.selectedCollection = item
       this.showExportForm = true
     },
     closeExportForm() {
-      this.selectedTemplate = {}
+      this.selectedCollection = {}
       this.showExportForm = false
     },
     previewODM(item) {
       this.$router.push({
-        name: 'Crfs',
+        name: 'CrfBuilder',
         params: {
           tab: 'odm-viewer',
           uid: item.uid,
@@ -304,55 +433,65 @@ export default {
         },
       })
     },
-    async approveAll(item) {
+    async approve(item) {
       this.expanded = this.expanded.filter((e) => e !== item.name)
-      if (item.status === statuses.DRAFT) {
-        item.status = statuses.FINAL
-        await crfs.approve('study-events', item.uid)
+
+      if (
+        item.status === statuses.DRAFT &&
+        (await this.$refs.confirmApproval.open({
+          agreeLabel: this.$t('CRFCollections.approve_collection'),
+          collection: item,
+        }))
+      ) {
+        this.loading = true
+
+        await crfs.approve('study-events', item.uid).then((resp) => {
+          this.collections = this.collections.map((collection) => {
+            if (collection.uid === resp.data.uid) {
+              return { ...collection, ...resp.data }
+            }
+            return collection
+          })
+
+          this.loading = false
+          this.eventBusEmit('notification', {
+            msg: this.$t('CRFCollections.approved'),
+          })
+          this.expandAll(item)
+        })
       }
-      let forms = []
-      let params = {
-        total_count: true,
-        filters: JSON.stringify({
-          uid: { v: item.forms.map((form) => form.uid) },
-        }),
-        page_size: 0,
+    },
+    async newVersionAll(item) {
+      this.expanded = this.expanded.filter((e) => e !== item.name)
+
+      if (
+        item.status === statuses.FINAL &&
+        (await this.$refs.confirmNewVersion.open(
+          this.$t('CRFTree.new_version_affecting_children_warning'),
+          {
+            agreeLabel: this.$t('CRFTree.create_new_versions'),
+            type: 'warning',
+          }
+        ))
+      ) {
+        this.loading = true
+
+        await crfs
+          .newVersion('study-events', item.uid, {
+            params: { cascade_new_version: true },
+          })
+          .then((resp) => {
+            this.collections = this.collections.map((collection) => {
+              if (collection.uid === resp.data.uid) {
+                return { ...collection, ...resp.data }
+              }
+              return collection
+            })
+
+            this.loading = false
+            this.expandAll(item)
+          })
       }
-      await crfs.get('forms', { params }).then((resp) => {
-        forms = resp.data.items
-        for (const form of forms) {
-          if (form.status === statuses.DRAFT) {
-            crfs.approve('forms', form.uid)
-          }
-        }
-      })
-      let groups = []
-      forms.forEach((form) => {
-        groups.push(form.item_groups.map((group) => group.uid))
-      })
-      params.filters = JSON.stringify({ uid: { v: groups.flat(1) } })
-      await crfs.get('item-groups', { params }).then((resp) => {
-        groups = resp.data.items
-        for (const group of groups) {
-          if (group.status === statuses.DRAFT) {
-            crfs.approve('item-groups', group.uid)
-          }
-        }
-      })
-      let items = []
-      groups.forEach((group) => {
-        items.push(group.items.map((item) => item.uid))
-      })
-      params.filters = JSON.stringify({ uid: { v: items.flat(1) } })
-      await crfs.get('items', { params }).then((resp) => {
-        items = resp.data.items
-        for (const item of items) {
-          if (item.status === statuses.DRAFT) {
-            crfs.approve('items', item.uid)
-          }
-        }
-      })
-      this.expandAll(item)
     },
   },
 }

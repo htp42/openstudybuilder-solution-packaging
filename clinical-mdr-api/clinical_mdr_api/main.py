@@ -241,7 +241,7 @@ app.include_router(
     tags=["ODM Item Groups"],
 )
 app.include_router(
-    routers.odm_item_router, prefix="/concepts/odms/items", tags=["ODM Item"]
+    routers.odm_item_router, prefix="/concepts/odms/items", tags=["ODM Items"]
 )
 app.include_router(
     routers.odm_conditions_router,
@@ -252,19 +252,6 @@ app.include_router(
     routers.odm_methods_router,
     prefix="/concepts/odms/methods",
     tags=["ODM Methods"],
-)
-app.include_router(
-    routers.odm_formal_expressions_router,
-    prefix="/concepts/odms/formal-expressions",
-    tags=["ODM Formal Expressions"],
-)
-app.include_router(
-    routers.odm_descriptions_router,
-    prefix="/concepts/odms/descriptions",
-    tags=["ODM Descriptions"],
-)
-app.include_router(
-    routers.odm_aliases_router, prefix="/concepts/odms/aliases", tags=["ODM Aliases"]
 )
 app.include_router(
     routers.odm_vendor_namespace_router,
@@ -284,7 +271,7 @@ app.include_router(
 app.include_router(
     routers.odm_metadata_router,
     prefix="/concepts/odms/metadata",
-    tags=["ODM Metadata Import/Export"],
+    tags=["ODM Metadata"],
 )
 app.include_router(
     routers.activity_instruction_templates_router,

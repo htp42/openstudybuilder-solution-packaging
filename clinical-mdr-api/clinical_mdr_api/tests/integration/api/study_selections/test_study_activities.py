@@ -2572,6 +2572,50 @@ def test_sync_study_activity_to_latest_version_of_activity(api_client):
     assert sa_before_sync["activity"]["name"] == activity_name_before_change
     assert sa_before_sync["keep_old_version"] is False
 
+    # Update ActivityGroup name
+    response = api_client.post(
+        f"/concepts/activities/activity-groups/{general_activity_group.uid}/versions"
+    )
+    assert_response_status_code(response, 201)
+
+    general_activity_group_updated_name = general_activity_group.name + " Updated"
+    response = api_client.put(
+        f"/concepts/activities/activity-groups/{general_activity_group.uid}",
+        json={
+            "name": general_activity_group_updated_name,
+            "name_sentence_case": general_activity_group_updated_name.lower(),
+            "library_name": activity_to_change.library_name,
+            "change_description": "Updated name",
+        },
+    )
+    assert_response_status_code(response, 200)
+    response = api_client.post(
+        f"/concepts/activities/activity-groups/{general_activity_group.uid}/approvals"
+    )
+    assert_response_status_code(response, 201)
+
+    # Update ActivitySubGroup to latest ActivityGroup version
+    response = api_client.post(
+        f"/concepts/activities/activity-sub-groups/{randomisation_activity_subgroup.uid}/versions"
+    )
+    assert_response_status_code(response, 201)
+
+    response = api_client.put(
+        f"/concepts/activities/activity-sub-groups/{randomisation_activity_subgroup.uid}",
+        json={
+            "name": randomisation_activity_subgroup.name,
+            "name_sentence_case": randomisation_activity_subgroup.name.lower(),
+            "library_name": randomisation_activity_subgroup.library_name,
+            "activity_groups": [general_activity_group.uid],
+            "change_description": "Pulled ActivityGroup change",
+        },
+    )
+    assert_response_status_code(response, 200)
+    response = api_client.post(
+        f"/concepts/activities/activity-sub-groups/{randomisation_activity_subgroup.uid}/approvals"
+    )
+    assert_response_status_code(response, 201)
+
     # create new draft version for activity
     response = api_client.post(
         f"/concepts/activities/activities/{activity_to_change.uid}/versions"
@@ -2609,32 +2653,46 @@ def test_sync_study_activity_to_latest_version_of_activity(api_client):
     res = response.json()
     assert res["latest_activity"]["uid"] == activity_to_change.uid
     assert res["latest_activity"]["name"] == activity_name_after_change
+    assert (
+        res["latest_activity"]["activity_groupings"][0]["activity_group_name"]
+        == general_activity_group_updated_name
+    )
     assert res["activity"]["uid"] == activity_to_change.uid
     assert res["activity"]["name"] == activity_name_before_change
+    assert (
+        res["activity"]["activity_groupings"][0]["activity_group_name"]
+        == general_activity_group.name
+    )
 
     # sync to latest version of activity
     response = api_client.post(
         f"/studies/{test_study.uid}/study-activities/{study_activity_v1.study_activity_uid}/sync-latest-version",
+        json={
+            "activity_group_uid": general_activity_group.uid,
+            "activity_subgroup_uid": randomisation_activity_subgroup.uid,
+        },
     )
     assert_response_status_code(response, 201)
     sa_after_sync = response.json()
+    assert (
+        sa_after_sync["study_activity_group"]["study_activity_group_uid"]
+        != sa_before_sync["study_activity_group"]["study_activity_group_uid"]
+    )
     assert sa_after_sync["latest_activity"] is None
     assert sa_after_sync["activity"]["uid"] == activity_to_change.uid
     assert sa_after_sync["activity"]["name"] == activity_name_after_change
+    assert (
+        sa_after_sync["activity"]["activity_groupings"][0]["activity_group_name"]
+        == general_activity_group_updated_name
+    )
 
     assert sa_after_sync["order"] == sa_before_sync["order"]
     assert (
         sa_after_sync["study_soa_group"]["order"]
         == sa_before_sync["study_soa_group"]["order"]
     )
-    assert (
-        sa_after_sync["study_activity_group"]["order"]
-        == sa_before_sync["study_activity_group"]["order"]
-    )
-    assert (
-        sa_after_sync["study_activity_subgroup"]["order"]
-        == sa_before_sync["study_activity_subgroup"]["order"]
-    )
+    assert sa_after_sync["study_activity_group"]["order"] == 2
+    assert sa_after_sync["study_activity_subgroup"]["order"] == 1
 
     adverse_events_activity_group = TestUtils.create_activity_group(
         name="Adverse Events"

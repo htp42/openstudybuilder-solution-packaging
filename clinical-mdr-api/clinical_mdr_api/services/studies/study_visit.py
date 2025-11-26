@@ -68,6 +68,9 @@ from clinical_mdr_api.domains.study_selections.study_visit import (
     VisitGroupFormat,
 )
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryVO
+from clinical_mdr_api.models.controlled_terminologies.ct_term import (
+    SimpleCTTermNameWithConflictFlag,
+)
 from clinical_mdr_api.models.study_selections.study_selection import (
     StudyActivityScheduleCreateInput,
 )
@@ -457,7 +460,6 @@ class StudyVisitService(StudySelectionMixin):
         timeline: TimelineAR,
         create: bool = True,
         preview: bool = False,
-        study_visits: list[StudyVisitVO] | None = None,
     ):
         visit_group_name = (
             visit_vo.study_visit_group.group_name if visit_vo.study_visit_group else ""
@@ -466,8 +468,6 @@ class StudyVisitService(StudySelectionMixin):
             not create and visit_vo.study_visit_group is not None,
             msg=f"The study visit can't be edited as it is part of visit group {visit_group_name}. The visit group should be uncollapsed first.",
         )
-        if study_visits is None:
-            study_visits = []
         visit_classes_without_timing = (
             VisitClass.NON_VISIT,
             VisitClass.UNSCHEDULED_VISIT,
@@ -721,18 +721,21 @@ class StudyVisitService(StudySelectionMixin):
             not in self.study_visit_contact_modes_by_uid,
             msg=f"CT Term with UID '{visit_input.visit_contact_mode_uid}' is not a valid Visit Contact Mode term.",
         )
-        visits_class = [visit.visit_class for visit in study_visits]
+
+        visits_classes = [
+            visit.visit_class for visit in timeline._visits if visit.uid != visit_vo.uid
+        ]
         ValidationException.raise_if(
             not preview
             and visit_input.visit_class == VisitClass.NON_VISIT.name
-            and VisitClass.NON_VISIT in visits_class,
+            and VisitClass.NON_VISIT in visits_classes,
             msg=f"There's already and exists Non Visit in Study {visit_vo.study_uid}",
         )
         ValidationException.raise_if(
             not preview
             and visit_input.visit_class == VisitClass.UNSCHEDULED_VISIT.name
-            and VisitClass.UNSCHEDULED_VISIT in visits_class,
-            msg=f"There's already and exists an Unschedule Visit in Study {visit_vo.study_uid}",
+            and VisitClass.UNSCHEDULED_VISIT in visits_classes,
+            msg=f"There's already and exists an Unscheduled Visit in Study {visit_vo.study_uid}",
         )
 
     def _get_sponsor_library_vo(self):
@@ -1019,7 +1022,10 @@ class StudyVisitService(StudySelectionMixin):
         return study_visit_vo
 
     def synchronize_visit_numbers(
-        self, ordered_visits: list[Any], start_index_to_synchronize: int
+        self,
+        ordered_visits: list[Any],
+        start_index_to_synchronize: int,
+        edited_visit: StudyVisitVO | None = None,
     ):
         """
         Fixes the visit number if some visit was added in between of others or some of the visits were removed, edited.
@@ -1028,6 +1034,8 @@ class StudyVisitService(StudySelectionMixin):
         :return:
         """
         for visit in ordered_visits[start_index_to_synchronize:]:
+            if edited_visit and visit.uid == edited_visit.uid:
+                continue
             # Manually defined visits have explicitly specified order properties
             if visit.visit_class != VisitClass.MANUALLY_DEFINED_VISIT:
                 self.assign_props_derived_from_visit_number(study_visit=visit)
@@ -1111,7 +1119,6 @@ class StudyVisitService(StudySelectionMixin):
             study_visit,
             timeline,
             create=True,
-            study_visits=study_visits,
         )
         self.assign_props_derived_from_visit_number(study_visit=study_visit)
         self.assign_props_derived_from_visit_absolute_timing(study_visit_vo=study_visit)
@@ -1136,8 +1143,11 @@ class StudyVisitService(StudySelectionMixin):
                 timepoint.visit_timereference.term_uid
             )
             timepoint.visit_timereference = visit_timereference
-        visit.epoch_connector.epoch = self.study_epoch_epochs_by_uid.get(
+        epoch_ar = self._repos.ct_term_name_repository.find_by_uid(
             visit.epoch.epoch.term_uid
+        )
+        visit.epoch_connector.epoch = SimpleCTTermNameWithConflictFlag.from_ct_term_ar(
+            epoch_ar
         )
         visit.visit_type = self.study_visit_types_by_uid.get(visit.visit_type.term_uid)
         visit.visit_contact_mode = self.study_visit_contact_modes_by_uid.get(
@@ -1184,9 +1194,14 @@ class StudyVisitService(StudySelectionMixin):
         study_visit_input: StudyVisitEditInput,
     ):
         study_visits = self.repo.find_all_visits_by_study_uid(study_uid)
-        study_visit = self.repo.find_by_uid(
-            study_uid=study_uid, uid=study_visit_uid, for_update=True
+        timeline = TimelineAR(study_uid=study_uid, _visits=study_visits)
+        acquire_write_lock_study_value(uid=study_uid)
+        study_visit: StudyVisitVO | None = next(
+            (sv for sv in timeline.ordered_study_visits if sv.uid == study_visit_uid),
+            None,
         )
+        if study_visit is None:
+            raise exceptions.NotFoundException("Study Visit", study_visit_uid)
 
         epoch = self._repos.study_epoch_repository.find_by_uid(
             uid=study_visit_input.study_epoch_uid, study_uid=study_uid
@@ -1214,22 +1229,22 @@ class StudyVisitService(StudySelectionMixin):
         new_study_visit = dataclasses.replace(study_visit, **update_dict)
         new_study_visit.epoch_connector = epoch
 
-        timeline = TimelineAR(study_uid=study_uid, _visits=study_visits)
         timeline.update_visit(new_study_visit)
 
         self._validate_visit(study_visit_input, new_study_visit, timeline, create=False)
 
         ordered_visits = timeline.ordered_study_visits
-
         # If Visit Number was edited, then we have to synchronize the Visit Numbers in the database
-        if study_visit.visit_number != new_study_visit.visit_number:
-            if new_study_visit.visit_number < study_visit.visit_number:
-                start_index_to_sync = int(new_study_visit.visit_number) - 1
+
+        if study_visit.visit_order != new_study_visit.visit_order:
+            if new_study_visit.visit_order < study_visit.visit_order:
+                start_index_to_sync = int(new_study_visit.visit_order) - 1
             else:
-                start_index_to_sync = int(study_visit.visit_number) - 1
+                start_index_to_sync = int(study_visit.visit_order) - 1
             self.synchronize_visit_numbers(
                 ordered_visits=ordered_visits,
                 start_index_to_synchronize=start_index_to_sync,
+                edited_visit=new_study_visit,
             )
         self.assign_props_derived_from_visit_absolute_timing(
             study_visit_vo=new_study_visit

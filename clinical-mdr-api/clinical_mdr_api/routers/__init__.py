@@ -40,17 +40,8 @@ from clinical_mdr_api.routers.concepts.numeric_values import (
 from clinical_mdr_api.routers.concepts.numeric_values_with_unit import (
     router as numeric_values_with_unit_router,
 )
-from clinical_mdr_api.routers.concepts.odms.odm_aliases import (
-    router as odm_aliases_router,
-)
 from clinical_mdr_api.routers.concepts.odms.odm_conditions import (
     router as odm_conditions_router,
-)
-from clinical_mdr_api.routers.concepts.odms.odm_descriptions import (
-    router as odm_descriptions_router,
-)
-from clinical_mdr_api.routers.concepts.odms.odm_formal_expressions import (
-    router as odm_formal_expressions_router,
 )
 from clinical_mdr_api.routers.concepts.odms.odm_forms import router as odm_forms_router
 from clinical_mdr_api.routers.concepts.odms.odm_item_groups import (
@@ -285,9 +276,6 @@ __all__ = [
     "odm_item_router",
     "odm_conditions_router",
     "odm_methods_router",
-    "odm_formal_expressions_router",
-    "odm_descriptions_router",
-    "odm_aliases_router",
     "odm_vendor_namespace_router",
     "odm_vendor_element_router",
     "odm_vendor_attribute_router",

@@ -3,6 +3,7 @@ Tests for /admin/* endpoints
 """
 
 import logging
+import random
 
 import pytest
 from fastapi.testclient import TestClient
@@ -12,6 +13,7 @@ from clinical_mdr_api.tests.integration.utils.api import (
     inject_and_clear_db,
     inject_base_data,
 )
+from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 from clinical_mdr_api.tests.utils.checks import assert_response_status_code
 
 # pylint: disable=unused-argument
@@ -23,6 +25,35 @@ from clinical_mdr_api.tests.utils.checks import assert_response_status_code
 
 
 log = logging.getLogger(__name__)
+
+COMPLEXITY_BURDEN_FIELDS = [
+    "burden_id",
+    "name",
+    "description",
+    "site_burden",
+    "patient_burden",
+    "median_cost_usd",
+]
+COMPLEXITY_BURDEN_FIELDS_NOT_NULL = [
+    "burden_id",
+    "name",
+    "description",
+    "site_burden",
+    "patient_burden",
+]
+
+COMPLEXITY_ACTIVITY_BURDEN_FIELDS = [
+    "activity_subgroup_uid",
+    "activity_subgroup_name",
+    "burden_id",
+    "site_burden",
+    "patient_burden",
+    "median_cost_usd",
+]
+COMPLEXITY_ACTIVITY_BURDEN_FIELDS_NOT_NULL = [
+    "activity_subgroup_uid",
+    "activity_subgroup_name",
+]
 
 
 @pytest.fixture(scope="module")
@@ -113,3 +144,88 @@ def test_patch_user(api_client):
         if item["user_id"] == user_id:
             assert item["username"] == new_username
             break
+
+
+def test_complexity_score_post_burdens(api_client):
+    """Test POST /admin/complexity-scores/burdens"""
+    payload = {
+        "burden_id": "B001",
+        "name": "Test Burden",
+        "description": "This is a test burden",
+        "site_burden": 10.0,
+        "patient_burden": 5.0,
+        "median_cost_usd": 100.0,
+    }
+    response = api_client.post("/admin/complexity-scores/burdens", json=payload)
+    assert_response_status_code(response, 201)
+    assert response.json()["name"] == payload["name"]
+    assert response.json()["description"] == payload["description"]
+    assert response.json()["site_burden"] == payload["site_burden"]
+    assert response.json()["patient_burden"] == payload["patient_burden"]
+    assert response.json()["median_cost_usd"] == payload["median_cost_usd"]
+
+
+def test_complexity_score_put_activity_burdens(api_client):
+    """Test PUT /admin/complexity-scores/burdens/activity-burdens/{activity_subgroup_id}"""
+    activity_group = TestUtils.create_activity_group(
+        name="Test Activity Group",
+    )
+
+    activity_subgroup = TestUtils.create_activity_subgroup(
+        activity_groups=[activity_group.uid],
+        name="Test Activity Subgroup",
+    )
+
+    # Create a burden to be used in the activity burden mapping
+    burden_payload = {
+        "burden_id": f"B00-{random.randint(10,99999999)}",
+        "name": "Test Burden",
+        "description": "This is a test burden",
+        "site_burden": 3.4,
+        "patient_burden": 1.4,
+        "median_cost_usd": 134.0,
+    }
+    response = api_client.post("/admin/complexity-scores/burdens", json=burden_payload)
+    assert_response_status_code(response, 201)
+
+    # Map the activity subgroup to the created burden
+    payload = {
+        "burden_id": burden_payload["burden_id"],
+    }
+    response = api_client.put(
+        f"/admin/complexity-scores/burdens/activity-burdens/{activity_subgroup.uid}",
+        json=payload,
+    )
+    assert_response_status_code(response, 200)
+    assert response.json()["burden_id"] == payload["burden_id"]
+    assert response.json()["site_burden"] == burden_payload["site_burden"]
+    assert response.json()["patient_burden"] == burden_payload["patient_burden"]
+    assert response.json()["median_cost_usd"] == burden_payload["median_cost_usd"]
+
+
+def test_complexity_score_get_burdens(api_client):
+    """Test GET /admin/complexity-scores/burdens"""
+
+    response = api_client.get("/admin/complexity-scores/burdens")
+    assert_response_status_code(response, 200)
+    assert isinstance(response.json(), list)
+    for item in response.json():
+        TestUtils.assert_response_shape_ok(
+            item,
+            COMPLEXITY_BURDEN_FIELDS,
+            COMPLEXITY_BURDEN_FIELDS_NOT_NULL,
+        )
+
+
+def test_complexity_score_get_activity_burdens(api_client):
+    """Test GET /admin/complexity-scores/activity-burdens"""
+
+    response = api_client.get("/admin/complexity-scores/activity-burdens")
+    assert_response_status_code(response, 200)
+    assert isinstance(response.json(), list)
+    for item in response.json():
+        TestUtils.assert_response_shape_ok(
+            item,
+            COMPLEXITY_ACTIVITY_BURDEN_FIELDS,
+            COMPLEXITY_ACTIVITY_BURDEN_FIELDS_NOT_NULL,
+        )

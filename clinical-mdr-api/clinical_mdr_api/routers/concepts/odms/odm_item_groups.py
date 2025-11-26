@@ -12,7 +12,6 @@ from clinical_mdr_api.models.concepts.odms.odm_common_models import (
 )
 from clinical_mdr_api.models.concepts.odms.odm_item_group import (
     OdmItemGroup,
-    OdmItemGroupActivitySubGroupPostInput,
     OdmItemGroupItemPostInput,
     OdmItemGroupPatchInput,
     OdmItemGroupPostInput,
@@ -67,7 +66,6 @@ OdmItemGroupUID = Path(description="The unique id of the ODM Item Group.")
             "version",
             "sas_dataset_name",
             "sdtm_domains",
-            "activity_subgroups",
             "vendor_attributes",
             "vendor_attributes",
             "vendor_element_attributes",
@@ -90,7 +88,6 @@ OdmItemGroupUID = Path(description="The unique id of the ODM Item Group.")
             "version",
             "sas_dataset_name",
             "sdtm_domains",
-            "activity_subgroups",
             "vendor_attributes",
             "vendor_attributes",
             "vendor_element_attributes",
@@ -135,6 +132,9 @@ def get_all_odm_item_groups(
     total_count: Annotated[
         bool, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
+    version: Annotated[
+        str | None, Query(description="Get a specific version of the ODM element")
+    ] = None,
 ) -> CustomPage[OdmItemGroup]:
     odm_item_group_service = OdmItemGroupService()
     results = odm_item_group_service.get_all_concepts(
@@ -145,6 +145,7 @@ def get_all_odm_item_groups(
         total_count=total_count,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
+        version=version or None,
     )
     return CustomPage(
         items=results.items, total=results.total, page=page_number, size=page_size
@@ -255,9 +256,14 @@ def get_odm_item_group_that_belongs_to_form(
 )
 def get_odm_item_group(
     odm_item_group_uid: Annotated[str, OdmItemGroupUID],
+    version: Annotated[
+        str | None, Query(description="Get a specific version of the ODM element")
+    ] = None,
 ) -> OdmItemGroup:
     odm_item_group_service = OdmItemGroupService()
-    return odm_item_group_service.get_by_uid(uid=odm_item_group_uid)
+    return odm_item_group_service.get_by_uid(
+        uid=odm_item_group_uid, version=version or None
+    )
 
 
 @router.get(
@@ -332,9 +338,7 @@ def create_odm_item_group(
     odm_item_group_create_input: Annotated[OdmItemGroupPostInput, Body()],
 ) -> OdmItemGroup:
     odm_item_group_service = OdmItemGroupService()
-    return odm_item_group_service.create_with_relations(
-        concept_input=odm_item_group_create_input
-    )
+    return odm_item_group_service.create(concept_input=odm_item_group_create_input)
 
 
 @router.patch(
@@ -363,7 +367,7 @@ def edit_odm_item_group(
     odm_item_group_edit_input: Annotated[OdmItemGroupPatchInput, Body()],
 ) -> OdmItemGroup:
     odm_item_group_service = OdmItemGroupService()
-    return odm_item_group_service.update_with_relations(
+    return odm_item_group_service.edit_draft(
         uid=odm_item_group_uid, concept_edit_input=odm_item_group_edit_input
     )
 
@@ -405,10 +409,16 @@ Possible errors:
 )
 def create_odm_item_group_version(
     odm_item_group_uid: Annotated[str, OdmItemGroupUID],
+    cascade_new_version: Annotated[
+        bool,
+        Query(description="If true, all child elements will also get a new version."),
+    ] = False,
 ) -> OdmItemGroup:
     odm_item_group_service = OdmItemGroupService()
     return odm_item_group_service.create_new_version(
-        uid=odm_item_group_uid, cascade_new_version=True
+        uid=odm_item_group_uid,
+        cascade_new_version=cascade_new_version,
+        force_new_value_node=True,
     )
 
 
@@ -465,7 +475,7 @@ def inactivate_odm_item_group(
 ) -> OdmItemGroup:
     odm_item_group_service = OdmItemGroupService()
     return odm_item_group_service.inactivate_final(
-        uid=odm_item_group_uid, cascade_inactivate=True
+        uid=odm_item_group_uid, cascade_inactivate=True, force_new_value_node=True
     )
 
 
@@ -493,47 +503,7 @@ def reactivate_odm_item_group(
 ) -> OdmItemGroup:
     odm_item_group_service = OdmItemGroupService()
     return odm_item_group_service.reactivate_retired(
-        uid=odm_item_group_uid, cascade_reactivate=True
-    )
-
-
-@router.post(
-    "/{odm_item_group_uid}/activity-sub-groups",
-    dependencies=[security, rbac.LIBRARY_WRITE],
-    summary="Adds activity sub groups to the ODM Item Group.",
-    status_code=201,
-    responses={
-        403: _generic_descriptions.ERROR_403,
-        201: {
-            "description": "Created - The activity sub groups were successfully added to the ODM Item Group."
-        },
-        400: {
-            "model": ErrorResponse,
-            "description": "Forbidden - Reasons include e.g.: \n",
-        },
-        404: {
-            "model": ErrorResponse,
-            "description": "Not Found - The activity sub groups with the specified 'odm_item_group_uid' wasn't found.",
-        },
-    },
-)
-def add_activity_subgroups_to_odm_item_group(
-    odm_item_group_uid: Annotated[str, OdmItemGroupUID],
-    odm_item_group_activity_subgroup_post_input: Annotated[
-        list[OdmItemGroupActivitySubGroupPostInput], Body()
-    ],
-    override: Annotated[
-        bool,
-        Query(
-            description="If true, all existing activity sub group relationships will be replaced with the provided activity sub group relationships.",
-        ),
-    ] = False,
-) -> OdmItemGroup:
-    odm_item_group_service = OdmItemGroupService()
-    return odm_item_group_service.add_activity_subgroups(
-        uid=odm_item_group_uid,
-        odm_item_group_activity_subgroup_post_input=odm_item_group_activity_subgroup_post_input,
-        override=override,
+        uid=odm_item_group_uid, cascade_reactivate=True, force_new_value_node=True
     )
 
 

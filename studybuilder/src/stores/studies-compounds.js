@@ -34,6 +34,13 @@ export const useStudiesCompoundsStore = defineStore('studiesCompounds', {
       }
       return result
     },
+    getStudyCompoundDosingsByStudyCompoundDosingUid:
+      (state) => (studyCompoundDosingUid) => {
+        const res = state.studyCompoundDosings.find(
+          (item) => item.study_compound_dosing_uid === studyCompoundDosingUid
+        )
+        return res
+      },
   },
 
   actions: {
@@ -75,15 +82,15 @@ export const useStudiesCompoundsStore = defineStore('studiesCompounds', {
         })
       })
     },
-    fetchStudyCompoundDosings(studyUid) {
-      study.getStudyCompoundDosings(studyUid).then((resp) => {
+    fetchStudyCompoundDosings(studyUid, params) {
+      study.getStudyCompoundDosings(studyUid, params).then((resp) => {
         this.studyCompoundDosings = resp.data.items
         this.studyCompoundDosingTotal = resp.data.total
       })
     },
     addStudyCompoundDosing({ studyUid, data }) {
-      return study.addStudyCompoundDosing(studyUid, data).then(() => {
-        this.studyCompoundDosings.unshift(data)
+      return study.addStudyCompoundDosing(studyUid, data).then((resp) => {
+        this.studyCompoundDosings.push(resp.data)
       })
     },
     updateStudyCompoundDosing({ studyUid, studyCompoundDosingUid, data }) {

@@ -12,7 +12,6 @@ from clinical_mdr_api.models.concepts.odms.odm_common_models import (
 )
 from clinical_mdr_api.models.concepts.odms.odm_item import (
     OdmItem,
-    OdmItemActivityPostInput,
     OdmItemPatchInput,
     OdmItemPostInput,
 )
@@ -76,7 +75,6 @@ OdmItemUID = Path(description="The unique id of the ODM Item.")
             "terms",
             "unit_definitions",
             "sas_dataset_name",
-            "activity",
             "vendor_attributes",
             "vendor_element_attributes",
             "vendor_elements",
@@ -108,7 +106,6 @@ OdmItemUID = Path(description="The unique id of the ODM Item.")
             "terms",
             "unit_definitions",
             "sas_dataset_name",
-            "activity",
             "vendor_attributes",
             "vendor_element_attributes",
             "vendor_elements",
@@ -152,6 +149,9 @@ def get_all_odm_items(
     total_count: Annotated[
         bool, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
+    version: Annotated[
+        str | None, Query(description="Get a specific version of the ODM element")
+    ] = None,
 ) -> CustomPage[OdmItem]:
     odm_item_service = OdmItemService()
     results = odm_item_service.get_all_concepts(
@@ -162,6 +162,7 @@ def get_all_odm_items(
         total_count=total_count,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
+        version=version or None,
     )
     return CustomPage(
         items=results.items, total=results.total, page=page_number, size=page_size
@@ -241,9 +242,14 @@ def get_odm_items_that_belongs_to_item_group() -> list[OdmElementWithParentUid]:
         404: _generic_descriptions.ERROR_404,
     },
 )
-def get_odm_item(odm_item_uid: Annotated[str, OdmItemUID]) -> OdmItem:
+def get_odm_item(
+    odm_item_uid: Annotated[str, OdmItemUID],
+    version: Annotated[
+        str | None, Query(description="Get a specific version of the ODM element")
+    ] = None,
+) -> OdmItem:
     odm_item_service = OdmItemService()
-    return odm_item_service.get_by_uid(uid=odm_item_uid)
+    return odm_item_service.get_by_uid(uid=odm_item_uid, version=version or None)
 
 
 @router.get(
@@ -257,7 +263,7 @@ def get_odm_item(odm_item_uid: Annotated[str, OdmItemUID]) -> OdmItem:
     },
 )
 def get_active_relationships(
-    odm_item_uid: Annotated[str, OdmItemUID]
+    odm_item_uid: Annotated[str, OdmItemUID],
 ) -> dict[str, list[str]]:
     odm_item_service = OdmItemService()
     return odm_item_service.get_active_relationships(uid=odm_item_uid)
@@ -316,7 +322,7 @@ def create_odm_item(
     odm_item_create_input: Annotated[OdmItemPostInput, Body()],
 ) -> OdmItem:
     odm_item_service = OdmItemService()
-    return odm_item_service.create_with_relations(concept_input=odm_item_create_input)
+    return odm_item_service.create(concept_input=odm_item_create_input)
 
 
 @router.patch(
@@ -345,7 +351,7 @@ def edit_odm_item(
     odm_item_edit_input: Annotated[OdmItemPatchInput, Body()],
 ) -> OdmItem:
     odm_item_service = OdmItemService()
-    return odm_item_service.update_with_relations(
+    return odm_item_service.edit_draft(
         uid=odm_item_uid, concept_edit_input=odm_item_edit_input
     )
 
@@ -388,7 +394,7 @@ Possible errors:
 def create_odm_item_version(odm_item_uid: Annotated[str, OdmItemUID]) -> OdmItem:
     odm_item_service = OdmItemService()
     return odm_item_service.create_new_version(
-        uid=odm_item_uid, cascade_new_version=True
+        uid=odm_item_uid, cascade_new_version=True, force_new_value_node=True
     )
 
 
@@ -438,7 +444,9 @@ def approve_odm_item(odm_item_uid: Annotated[str, OdmItemUID]) -> OdmItem:
 )
 def inactivate_odm_item(odm_item_uid: Annotated[str, OdmItemUID]) -> OdmItem:
     odm_item_service = OdmItemService()
-    return odm_item_service.inactivate_final(uid=odm_item_uid, cascade_inactivate=True)
+    return odm_item_service.inactivate_final(
+        uid=odm_item_uid, cascade_inactivate=True, force_new_value_node=True
+    )
 
 
 @router.post(
@@ -463,45 +471,7 @@ def inactivate_odm_item(odm_item_uid: Annotated[str, OdmItemUID]) -> OdmItem:
 def reactivate_odm_item(odm_item_uid: Annotated[str, OdmItemUID]) -> OdmItem:
     odm_item_service = OdmItemService()
     return odm_item_service.reactivate_retired(
-        uid=odm_item_uid, cascade_reactivate=True
-    )
-
-
-@router.post(
-    "/{odm_item_uid}/activities",
-    dependencies=[security, rbac.LIBRARY_WRITE],
-    summary="Add an activity to the ODM Item.",
-    status_code=201,
-    responses={
-        403: _generic_descriptions.ERROR_403,
-        201: {
-            "description": "Created - The activity was successfully added to the ODM Item."
-        },
-        400: {
-            "model": ErrorResponse,
-            "description": "Forbidden - Reasons include e.g.: \n",
-        },
-        404: {
-            "model": ErrorResponse,
-            "description": "Not Found - The activity with the specified 'odm_item_uid' wasn't found.",
-        },
-    },
-)
-def add_activity_to_odm_item(
-    odm_item_uid: Annotated[str, OdmItemUID],
-    odm_item_activity_post_input: Annotated[OdmItemActivityPostInput, Body()],
-    override: Annotated[
-        bool,
-        Query(
-            description="If true, the existing activity relationship will be replaced with the provided activity relationship.",
-        ),
-    ] = False,
-) -> OdmItem:
-    odm_item_service = OdmItemService()
-    return odm_item_service.add_activity(
-        uid=odm_item_uid,
-        odm_item_activity_post_input=odm_item_activity_post_input,
-        override=override,
+        uid=odm_item_uid, cascade_reactivate=True, force_new_value_node=True
     )
 
 

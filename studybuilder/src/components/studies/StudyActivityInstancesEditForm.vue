@@ -83,6 +83,7 @@ const headers = [
 
 const instances = ref([])
 const selected = ref([])
+const selectedHolder = ref([])
 const form = ref()
 
 const getActivityPath = computed(() => {
@@ -129,6 +130,7 @@ async function getAvailableInstances() {
         )
       }
     })
+    selectedHolder.value = JSON.parse(JSON.stringify(selected.value))
     if (instances.value.length > 1) {
       const par = {
         filters: {
@@ -191,42 +193,55 @@ function getActivityState(activity) {
   }
 }
 function submit() {
-  if (selected.value.length === 1) {
-    setSingleActivityInstance()
-  } else {
+  try {
     setMultipleActivityInstances()
+  } catch (error) {
+    console.error(error)
   }
-}
-function setSingleActivityInstance() {
-  const data = {
-    activity_instance_uid: selected.value[0],
-    study_activity_uid: props.editedActivity.study_activity_uid,
-    show_activity_instance_in_protocol_flowchart:
-      props.editedActivity.show_activity_instance_in_protocol_flowchart,
-  }
-  activitiesStore
-    .updateStudyActivityInstance(
-      selectedStudy.value.uid,
-      props.editedActivity.study_activity_instance_uid,
-      data
-    )
-    .then(
-      () => {
-        eventBusEmit('notification', {
-          msg: t('StudyActivityInstances.instance_updated'),
-          type: 'success',
-        })
-        close()
-      },
-      () => {
-        form.value.working = false
-      }
-    )
 }
 function setMultipleActivityInstances() {
-  const data = {
-    activity_instance_uids: selected.value,
-    study_activity_uid: props.editedActivity.study_activity_uid,
+  const data = []
+  if (_isEmpty(selected.value) && !_isEmpty(selectedHolder.value)) {
+    data.push({
+      method: 'PATCH',
+      content: {
+        activity_instance_uid: null,
+        study_activity_uid: props.editedActivity.study_activity_uid,
+        study_activity_instance_uid:
+          props.editedActivity.study_activity_instance_uid,
+      },
+    })
+  } else if (selected.value.includes(selectedHolder.value[0])) {
+    selected.value.splice(selected.value.indexOf(selectedHolder.value[0]), 1)
+    selected.value.forEach((value) => {
+      data.push({
+        method: 'POST',
+        content: {
+          activity_instance_uid: value,
+          study_activity_uid: props.editedActivity.study_activity_uid,
+        },
+      })
+    })
+  } else {
+    for (let index = 0; index < selected.value.length; index++) {
+      let placeholder = {
+        method: index === 0 ? 'PATCH' : 'POST',
+        content: {
+          activity_instance_uid: selected.value[index],
+          study_activity_uid: props.editedActivity.study_activity_uid,
+        },
+      }
+      if (index === 0) {
+        placeholder.content.study_activity_instance_uid =
+          props.editedActivity.study_activity_instance_uid
+      }
+      data.push(placeholder)
+    }
+  }
+  if (_isEmpty(data)) {
+    form.value.working = false
+    close()
+    return
   }
   activitiesStore
     .batchSelectStudyActivityInstances(selectedStudy.value.uid, data)

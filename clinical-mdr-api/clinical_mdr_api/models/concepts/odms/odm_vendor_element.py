@@ -77,9 +77,10 @@ class OdmVendorElementRelationModel(BaseModel):
         cls,
         uid: str,
         odm_element_uid: str,
+        odm_element_version: str,
         odm_element_type: RelationType,
         find_by_uid_with_odm_element_relation: Callable[
-            [str, str, RelationType], OdmVendorElementRelationVO | None
+            [str, str, str, RelationType], OdmVendorElementRelationVO
         ],
     ) -> Self: ...
     @overload
@@ -88,9 +89,10 @@ class OdmVendorElementRelationModel(BaseModel):
         cls,
         uid: None,
         odm_element_uid: str,
+        odm_element_version: str,
         odm_element_type: RelationType,
         find_by_uid_with_odm_element_relation: Callable[
-            [str, str, RelationType], OdmVendorElementRelationVO | None
+            [str, str, str, RelationType], OdmVendorElementRelationVO
         ],
     ) -> None: ...
     @classmethod
@@ -98,16 +100,17 @@ class OdmVendorElementRelationModel(BaseModel):
         cls,
         uid: str | None,
         odm_element_uid: str,
+        odm_element_version: str,
         odm_element_type: RelationType,
         find_by_uid_with_odm_element_relation: Callable[
-            [str, str, RelationType], OdmVendorElementRelationVO | None
+            [str, str, str, RelationType], OdmVendorElementRelationVO
         ],
     ) -> Self | None:
         odm_vendor_element_ref_model = None
 
         if uid is not None:
             odm_vendor_element_ref_vo = find_by_uid_with_odm_element_relation(
-                uid, odm_element_uid, odm_element_type
+                uid, odm_element_uid, odm_element_version, odm_element_type
             )
             if odm_vendor_element_ref_vo is not None:
                 odm_vendor_element_ref_model = cls(

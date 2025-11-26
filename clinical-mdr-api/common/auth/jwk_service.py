@@ -1,7 +1,7 @@
 import logging
 import time
 import uuid
-from typing import Any, Mapping
+from typing import Any, Mapping, MutableMapping
 
 from authlib.integrations.base_client import OAuth2Mixin
 from authlib.jose import JsonWebKey, JWTClaims, Key, KeySet, jwt
@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 class JWKService(KeySet):
     """JWK store and JWT validator, relies on AsyncRemoteApp for metadata and HTTP client"""
 
-    keys: Mapping[str, Key]
+    keys: MutableMapping[str, Key]
     cooldown = 120
 
     def __init__(

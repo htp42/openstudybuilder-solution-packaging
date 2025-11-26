@@ -12,6 +12,9 @@ from clinical_mdr_api.domains.biomedical_concepts.activity_item_class import (
 from clinical_mdr_api.domains.concepts.activities.activity import ActivityGroupingVO
 from clinical_mdr_api.domains.concepts.activities.activity_item import ActivityItemVO
 from clinical_mdr_api.domains.concepts.concept_base import ConceptARBase, ConceptVO
+from clinical_mdr_api.domains.concepts.odms.form import OdmFormAR
+from clinical_mdr_api.domains.concepts.odms.item import OdmItemAR
+from clinical_mdr_api.domains.concepts.odms.item_group import OdmItemGroupAR
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemMetadataVO,
     LibraryVO,
@@ -121,9 +124,9 @@ class ActivityInstanceVO(ConceptVO):
         find_activity_instance_class_by_uid_callback: Callable[
             ..., ActivityInstanceClassAR | None
         ],
-        odm_form_exists_by_uid_callback: Callable[[str], bool],
-        odm_item_group_exists_by_uid_callback: Callable[[str], bool],
-        odm_item_exists_by_uid_callback: Callable[[str], bool],
+        get_odm_form_by_uid_callback: Callable[..., OdmFormAR],
+        get_odm_item_group_by_uid_callback: Callable[..., OdmItemGroupAR],
+        get_odm_item_by_uid_callback: Callable[..., OdmItemAR],
         get_dimension_names_by_unit_definition_uids: Callable[[list[str]], list[str]],
         activity_instance_exists_by_property_value: Callable[
             [str, str, str], bool
@@ -168,10 +171,10 @@ class ActivityInstanceVO(ConceptVO):
             activity = get_final_activity_value_by_uid_callback(
                 activity_grouping.activity_uid
             )
-            BusinessLogicException.raise_if(
-                activity is None,
-                msg=f"{type(self).__name__} tried to connect to non-existent or non-final Activity with UID '{activity_grouping.activity_uid}'.",
-            )
+            if activity is None:
+                raise BusinessLogicException(
+                    msg=f"{type(self).__name__} tried to connect to non-existent or non-final Activity with UID '{activity_grouping.activity_uid}'.",
+                )
             BusinessLogicException.raise_if_not(
                 activity["is_data_collected"],
                 msg=f"{type(self).__name__} tried to connect to Activity without data collection",
@@ -270,22 +273,77 @@ class ActivityInstanceVO(ConceptVO):
                     unit.uid and unit_definition_exists_by_uid_callback(unit.uid),
                     msg=f"{type(self).__name__} tried to connect to non-existent or non-final Unit Definition with UID '{unit.uid}'.",
                 )
-            for odm_form in activity_item.odm_forms:
-                BusinessLogicException.raise_if_not(
-                    odm_form.uid and odm_form_exists_by_uid_callback(odm_form.uid),
-                    msg=f"{type(self).__name__} tried to connect to non-existent or non-final ODM Form with UID '{odm_form.uid}'.",
+
+            if (
+                activity_item.odm_item_group is not None
+                and activity_item.odm_item_group.uid is not None
+                and activity_item.odm_form is not None
+                and activity_item.odm_form.uid is None
+            ):
+                raise BusinessLogicException(
+                    msg="ODM Form must be provided if ODM Item Group is provided.",
                 )
-            for odm_item_group in activity_item.odm_item_groups:
-                BusinessLogicException.raise_if_not(
-                    odm_item_group.uid
-                    and odm_item_group_exists_by_uid_callback(odm_item_group.uid),
-                    msg=f"{type(self).__name__} tried to connect to non-existent or non-final ODM Item Group with UID '{odm_item_group.uid}'.",
+            if (
+                activity_item.odm_item is not None
+                and activity_item.odm_item.uid is not None
+                and activity_item.odm_item_group is not None
+                and activity_item.odm_item_group.uid is None
+            ):
+                raise BusinessLogicException(
+                    msg="ODM Item Group must be provided if ODM Item is provided.",
                 )
-            for odm_item in activity_item.odm_items:
-                BusinessLogicException.raise_if_not(
-                    odm_item.uid and odm_item_exists_by_uid_callback(odm_item.uid),
-                    msg=f"{type(self).__name__} tried to connect to non-existent or non-final ODM Item with UID '{odm_item.uid}'.",
+
+            odm_form = None
+            if (
+                activity_item.odm_form is not None
+                and activity_item.odm_form.uid is not None
+            ):
+                odm_form = get_odm_form_by_uid_callback(activity_item.odm_form.uid)
+                if not odm_form:
+                    raise BusinessLogicException(
+                        msg=f"ODM Form with UID '{activity_item.odm_form.uid}' doesn't exist."
+                    )
+
+            odm_item_group = None
+            if (
+                activity_item.odm_item_group is not None
+                and activity_item.odm_item_group.uid is not None
+                and odm_form is not None
+            ):
+                if (
+                    activity_item.odm_item_group.uid
+                    not in odm_form.concept_vo.item_group_uids
+                ):
+                    raise BusinessLogicException(
+                        msg=f"ODM Form with UID '{activity_item.odm_form.uid}' doesn't contain the ODM Item Group with UID '{activity_item.odm_item_group.uid}'."
+                    )
+
+                odm_item_group = get_odm_item_group_by_uid_callback(
+                    activity_item.odm_item_group.uid
                 )
+                if not odm_item_group:
+                    raise BusinessLogicException(
+                        msg=f"ODM Item Group with UID '{activity_item.odm_item_group.uid}' doesn't exist."
+                    )
+
+            if (
+                activity_item.odm_item is not None
+                and activity_item.odm_item.uid is not None
+                and odm_item_group is not None
+            ):
+                if (
+                    activity_item.odm_item.uid
+                    not in odm_item_group.concept_vo.item_uids
+                ):
+                    raise BusinessLogicException(
+                        msg=f"ODM Item Group with UID '{activity_item.odm_item_group.uid}' doesn't contain the ODM Item with UID '{activity_item.odm_item.uid}'."
+                    )
+
+                odm_item = get_odm_item_by_uid_callback(activity_item.odm_item.uid)
+                if not odm_item:
+                    raise BusinessLogicException(
+                        msg=f"ODM Item with UID '{activity_item.odm_item.uid}' doesn't exist."
+                    )
 
         activity_instance_class = find_activity_instance_class_by_uid_callback(
             self.activity_instance_class_uid
@@ -361,6 +419,9 @@ class ActivityInstanceAR(ConceptARBase):
         author_id: str,
         concept_vo: ActivityInstanceVO,
         library: LibraryVO,
+        get_odm_form_by_uid_callback: Callable[..., OdmFormAR],
+        get_odm_item_group_by_uid_callback: Callable[..., OdmItemGroupAR],
+        get_odm_item_by_uid_callback: Callable[..., OdmItemAR],
         concept_exists_by_callback: Callable[
             [str, str, bool], bool
         ] = lambda x, y, z: True,
@@ -376,9 +437,6 @@ class ActivityInstanceAR(ConceptARBase):
         find_activity_instance_class_by_uid_callback: Callable[
             [str], ActivityInstanceClassAR
         ],
-        odm_form_exists_by_uid_callback: Callable[[str], bool] = lambda _: False,
-        odm_item_group_exists_by_uid_callback: Callable[[str], bool] = lambda _: False,
-        odm_item_exists_by_uid_callback: Callable[[str], bool] = lambda _: False,
         get_dimension_names_by_unit_definition_uids: Callable[
             [list[str]], list[str]
         ] = lambda _: [],
@@ -406,9 +464,9 @@ class ActivityInstanceAR(ConceptARBase):
             unit_definition_exists_by_uid_callback=unit_definition_exists_by_uid_callback,
             find_activity_item_class_by_uid_callback=find_activity_item_class_by_uid_callback,
             find_activity_instance_class_by_uid_callback=find_activity_instance_class_by_uid_callback,
-            odm_form_exists_by_uid_callback=odm_form_exists_by_uid_callback,
-            odm_item_group_exists_by_uid_callback=odm_item_group_exists_by_uid_callback,
-            odm_item_exists_by_uid_callback=odm_item_exists_by_uid_callback,
+            get_odm_form_by_uid_callback=get_odm_form_by_uid_callback,
+            get_odm_item_group_by_uid_callback=get_odm_item_group_by_uid_callback,
+            get_odm_item_by_uid_callback=get_odm_item_by_uid_callback,
             get_dimension_names_by_unit_definition_uids=get_dimension_names_by_unit_definition_uids,
             library_name=library.name,
             preview=preview,
@@ -432,6 +490,9 @@ class ActivityInstanceAR(ConceptARBase):
         author_id: str,
         change_description: str,
         concept_vo: ActivityInstanceVO,
+        get_odm_form_by_uid_callback: Callable[..., OdmFormAR],
+        get_odm_item_group_by_uid_callback: Callable[..., OdmItemGroupAR],
+        get_odm_item_by_uid_callback: Callable[..., OdmItemAR],
         concept_exists_by_callback: Callable[
             [str, str, bool], bool
         ] = lambda x, y, z: True,
@@ -451,9 +512,6 @@ class ActivityInstanceAR(ConceptARBase):
         find_activity_instance_class_by_uid_callback: Callable[
             ..., ActivityInstanceClassAR | None
         ] = lambda _: None,
-        odm_form_exists_by_uid_callback: Callable[[str], bool] = lambda _: True,
-        odm_item_group_exists_by_uid_callback: Callable[[str], bool] = lambda _: True,
-        odm_item_exists_by_uid_callback: Callable[[str], bool] = lambda _: True,
         get_dimension_names_by_unit_definition_uids: Callable[
             [list[str]], list[str]
         ] = lambda _: [],
@@ -469,9 +527,9 @@ class ActivityInstanceAR(ConceptARBase):
             unit_definition_exists_by_uid_callback=unit_definition_exists_by_uid_callback,
             find_activity_item_class_by_uid_callback=find_activity_item_class_by_uid_callback,
             find_activity_instance_class_by_uid_callback=find_activity_instance_class_by_uid_callback,
-            odm_form_exists_by_uid_callback=odm_form_exists_by_uid_callback,
-            odm_item_group_exists_by_uid_callback=odm_item_group_exists_by_uid_callback,
-            odm_item_exists_by_uid_callback=odm_item_exists_by_uid_callback,
+            get_odm_form_by_uid_callback=get_odm_form_by_uid_callback,
+            get_odm_item_group_by_uid_callback=get_odm_item_group_by_uid_callback,
+            get_odm_item_by_uid_callback=get_odm_item_by_uid_callback,
             get_dimension_names_by_unit_definition_uids=get_dimension_names_by_unit_definition_uids,
             activity_instance_exists_by_property_value=concept_exists_by_library_and_property_value_callback,
             previous_name=self.name,

@@ -72,21 +72,17 @@ class ActivityService(ConceptGenericService[ActivityAR]):
             activity_subgroup_uids.add(activity_grouping.activity_subgroup_uid)
 
         if activity_group_uids:
-            activity_groups_by_uid = (
-                self._repos.activity_group_repository.get_all_by_uid(
-                    activity_group_uids,
-                    get_latest_final=True,
-                )
+            activity_groups_by_uid = self._repos.activity_group_repository.get_all_by_uid(
+                activity_group_uids,
+                get_latest_final=False,  # Get latest version regardless of status to validate it's Final
             )
         else:
             activity_groups_by_uid = {}
 
         if activity_subgroup_uids:
-            activity_subgroups_by_uid = (
-                self._repos.activity_subgroup_repository.get_all_by_uid(
-                    activity_subgroup_uids,
-                    get_latest_final=True,
-                )
+            activity_subgroups_by_uid = self._repos.activity_subgroup_repository.get_all_by_uid(
+                activity_subgroup_uids,
+                get_latest_final=False,  # Get latest version regardless of status to validate it's Final
             )
         else:
             activity_subgroups_by_uid = {}
@@ -125,6 +121,41 @@ class ActivityService(ConceptGenericService[ActivityAR]):
         )
         activity_groups_by_uid: dict[Any, Any] = acg_and_acsg_by_uid[0]
         activity_subgroups_by_uid: dict[Any, Any] = acg_and_acsg_by_uid[1]
+
+        # Validate that all activity groups and subgroups are in Final status
+        for activity_grouping in activity_groupings:
+            # Check activity group status
+            if activity_grouping.activity_group_uid in activity_groups_by_uid:
+                activity_group = activity_groups_by_uid[
+                    activity_grouping.activity_group_uid
+                ]
+                if activity_group.item_metadata.status != LibraryItemStatus.FINAL:
+                    group_name = (
+                        activity_group.concept_vo.name
+                        if hasattr(activity_group, "concept_vo")
+                        else "Unknown"
+                    )
+                    raise BusinessLogicException(
+                        msg=f"Activity Group '{group_name}' ({activity_grouping.activity_group_uid}) is in status '{activity_group.item_metadata.status.value}'. "
+                        f"Activities can only be connected to Activity Groups in 'Final' status."
+                    )
+
+            # Check activity subgroup status
+            if activity_grouping.activity_subgroup_uid in activity_subgroups_by_uid:
+                activity_subgroup = activity_subgroups_by_uid[
+                    activity_grouping.activity_subgroup_uid
+                ]
+                if activity_subgroup.item_metadata.status != LibraryItemStatus.FINAL:
+                    subgroup_name = (
+                        activity_subgroup.concept_vo.name
+                        if hasattr(activity_subgroup, "concept_vo")
+                        else "Unknown"
+                    )
+                    raise BusinessLogicException(
+                        msg=f"Activity Subgroup '{subgroup_name}' ({activity_grouping.activity_subgroup_uid}) is in status '{activity_subgroup.item_metadata.status.value}'. "
+                        f"Activities can only be connected to Activity Subgroups in 'Final' status."
+                    )
+
         return [
             self._to_activity_grouping_vo(
                 activity_grouping,
@@ -178,25 +209,24 @@ class ActivityService(ConceptGenericService[ActivityAR]):
         activity_subgroups_by_uid: dict[Any, Any] | set
 
         if "activity_groupings" in concept_edit_input.model_fields_set:
-            acg_and_acsg_by_uid: tuple[Any, ...] = (
-                self._get_activity_groups_and_subgroups_from_activity_groupings(
-                    concept_edit_input.activity_groupings or []
-                )
-            )
-            activity_groups_by_uid = acg_and_acsg_by_uid[0]
-            activity_subgroups_by_uid = acg_and_acsg_by_uid[1]
+            # Use _to_activity_grouping_vos which includes validation
             activity_groupings = (
-                [
-                    self._to_activity_grouping_vo(
-                        activity_grouping,
-                        activity_groups_by_uid,
-                        activity_subgroups_by_uid,
-                    )
-                    for activity_grouping in concept_edit_input.activity_groupings
-                ]
+                self._to_activity_grouping_vos(concept_edit_input.activity_groupings)
                 if concept_edit_input.activity_groupings
                 else []
             )
+            # Get the activity groups and subgroups for domain validation
+            if concept_edit_input.activity_groupings:
+                acg_and_acsg_by_uid: tuple[Any, ...] = (
+                    self._get_activity_groups_and_subgroups_from_activity_groupings(
+                        concept_edit_input.activity_groupings
+                    )
+                )
+                activity_groups_by_uid = acg_and_acsg_by_uid[0]
+                activity_subgroups_by_uid = acg_and_acsg_by_uid[1]
+            else:
+                activity_groups_by_uid = {}
+                activity_subgroups_by_uid = {}
         else:
             activity_groupings = []
             activity_groups_by_uid = set()
@@ -458,7 +488,7 @@ class ActivityService(ConceptGenericService[ActivityAR]):
                 uid=instance["uid"], concept_edit_input=edit_input, patch_mode=False
             )
 
-            instance_service.non_transactional_approve(instance["uid"])
+            instance_service.approve(instance["uid"])
 
     def get_specific_activity_version_groupings(
         self,

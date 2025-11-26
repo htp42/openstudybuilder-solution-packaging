@@ -1,20 +1,9 @@
-from typing import Annotated, Callable, Self
+from typing import Annotated, Self
 
 from pydantic import Field
 
 from clinical_mdr_api.descriptions.general import CHANGES_FIELD_DESC
-from clinical_mdr_api.domains.concepts.compound import CompoundAR
 from clinical_mdr_api.domains.concepts.medicinal_product import MedicinalProductAR
-from clinical_mdr_api.domains.concepts.pharmaceutical_product import (
-    PharmaceuticalProductAR,
-)
-from clinical_mdr_api.domains.concepts.simple_concepts.numeric_value_with_unit import (
-    NumericValueWithUnitAR,
-)
-from clinical_mdr_api.domains.concepts.unit_definitions.unit_definition import (
-    UnitDefinitionAR,
-)
-from clinical_mdr_api.domains.controlled_terminologies.ct_term_name import CTTermNameAR
 from clinical_mdr_api.models.concepts.compound import SimpleCompound
 from clinical_mdr_api.models.concepts.concept import (
     SimpleNumericValueWithUnit,
@@ -68,55 +57,49 @@ class MedicinalProduct(VersionProperties):
     def from_medicinal_product_ar(
         cls,
         medicinal_product_ar: MedicinalProductAR,
-        find_term_by_uid: Callable[[str], CTTermNameAR | None],
-        find_numeric_value_by_uid: Callable[[str], NumericValueWithUnitAR | None],
-        find_unit_by_uid: Callable[[str], UnitDefinitionAR | None],
-        find_compound_by_uid: Callable[[str], CompoundAR | None],
-        find_pharmaceutical_product_by_uid: Callable[
-            [str], PharmaceuticalProductAR | None
-        ],
     ) -> Self:
         return cls(
             uid=medicinal_product_ar.uid,
             external_id=medicinal_product_ar.concept_vo.external_id,
             name=medicinal_product_ar.concept_vo.name or "",
             name_sentence_case=medicinal_product_ar.concept_vo.name_sentence_case,
-            compound=SimpleCompound.from_uid(
-                uid=medicinal_product_ar.concept_vo.compound_uid,
-                find_by_uid=find_compound_by_uid,
+            compound=SimpleCompound.from_input(
+                medicinal_product_ar.concept_vo.compound,
             ),
             pharmaceutical_products=sorted(
                 [
-                    SimplePharmaceuticalProduct.from_uid(
-                        uid=uid,
-                        find_by_uid=find_pharmaceutical_product_by_uid,
-                    )
-                    for uid in medicinal_product_ar.concept_vo.pharmaceutical_product_uids
+                    SimplePharmaceuticalProduct.from_input(x)
+                    for x in medicinal_product_ar.concept_vo.pharmaceutical_products
                 ],
                 key=lambda item: item.external_id if item.external_id else "",
             ),
             dose_values=sorted(
                 [
-                    SimpleNumericValueWithUnit.from_concept_uid(
-                        uid=uid,
-                        find_unit_by_uid=find_unit_by_uid,
-                        find_numeric_value_by_uid=find_numeric_value_by_uid,
-                    )
-                    for uid in medicinal_product_ar.concept_vo.dose_value_uids
+                    SimpleNumericValueWithUnit.from_input(x)
+                    for x in medicinal_product_ar.concept_vo.dose_values
                 ],
                 key=lambda item: item.value,
             ),
-            dose_frequency=SimpleTermModel.from_ct_code(
-                c_code=medicinal_product_ar.concept_vo.dose_frequency_uid,
-                find_term_by_uid=find_term_by_uid,
+            dose_frequency=(
+                SimpleTermModel.from_input(
+                    input_data=medicinal_product_ar.concept_vo.dose_frequency
+                )
+                if medicinal_product_ar.concept_vo.dose_frequency
+                else None
             ),
-            delivery_device=SimpleTermModel.from_ct_code(
-                c_code=medicinal_product_ar.concept_vo.delivery_device_uid,
-                find_term_by_uid=find_term_by_uid,
+            delivery_device=(
+                SimpleTermModel.from_input(
+                    input_data=medicinal_product_ar.concept_vo.delivery_device
+                )
+                if medicinal_product_ar.concept_vo.delivery_device
+                else None
             ),
-            dispenser=SimpleTermModel.from_ct_code(
-                c_code=medicinal_product_ar.concept_vo.dispenser_uid,
-                find_term_by_uid=find_term_by_uid,
+            dispenser=(
+                SimpleTermModel.from_input(
+                    input_data=medicinal_product_ar.concept_vo.dispenser
+                )
+                if medicinal_product_ar.concept_vo.dispenser
+                else None
             ),
             library_name=Library.from_library_vo(medicinal_product_ar.library).name,
             start_date=medicinal_product_ar.item_metadata.start_date,
