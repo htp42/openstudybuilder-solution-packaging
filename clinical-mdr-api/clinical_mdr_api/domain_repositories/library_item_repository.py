@@ -183,6 +183,22 @@ class LibraryItemRepositoryImplBase(
             itm.__WRITE_LOCK__ = None
             itm.save()
 
+    def lock_objects(self, uids: list[str]) -> None:
+        """
+        Acquires exclusive lock on Library object of given uids.
+        :param uids:
+        :return:
+        """
+        db.cypher_query(
+            f"""
+            MATCH (root:{self.root_class.__name__})
+            WHERE root.uid IN $uids
+            REMOVE root.__WRITE_LOCK__
+            RETURN true
+            """,
+            {"uids": uids},
+        )
+
     @sb_clear_cache(caches=["cache_store_item_by_uid"])
     def _get_or_create_value(
         self,
@@ -1450,6 +1466,7 @@ class LibraryItemRepositoryImplBase(
         at_specific_date: datetime | None = None,
         include_retired_versions: bool = False,
         get_latest_final: bool = False,
+        **kwargs,
     ):
         """
         Returns a hash key that will be used for mapping objects stored in cache,
@@ -1476,6 +1493,7 @@ class LibraryItemRepositoryImplBase(
             at_specific_date,
             include_retired_versions,
             get_latest_final,
+            **kwargs,
         )
 
     @cached(
@@ -1501,6 +1519,7 @@ class LibraryItemRepositoryImplBase(
         at_specific_date: datetime | None = None,
         include_retired_versions: bool = False,
         get_latest_final: bool = False,
+        **kwargs,
     ) -> tuple[list[Any], int]:
         validate_dict(filter_by, "filters")
         validate_dict(sort_by, "sort_by")
@@ -1666,6 +1685,7 @@ class LibraryItemRepositoryImplBase(
                 activity_groups=activity_groups[0] if activity_groups else [],
                 activity_subgroups=activity_subgroups[0] if activity_subgroups else [],
                 instance_template=instance_template,
+                **kwargs,
             )
 
             ar.repository_closure_data = RETRIEVED_READ_ONLY_MARK
@@ -2653,18 +2673,22 @@ END
                             (activity_subgroup_root:ActivitySubGroupRoot) WHERE has_version.status in ["Final", "Retired"]| 
                             {
                                 uid:activity_subgroup_root.uid,
+                                name: activity_subgroup_value.name,
                                 major_version: toInteger(split(has_version.version,'.')[0]),
                                 minor_version: toInteger(split(has_version.version,'.')[1]),
-                                name: activity_subgroup_value.name
-                            }], ['major_version', 'minor_version'])), 
+                                start_date: has_version.start_date,
+                                status: has_version.status
+                            }], ['major_version', 'minor_version', 'start_date'])),
                         activity_group: head(apoc.coll.sortMulti([(activity_valid_group)-[:IN_GROUP]-(activity_group_value:ActivityGroupValue)<-[has_version:HAS_VERSION]-
                             (activity_group_root:ActivityGroupRoot) WHERE has_version.status in ["Final", "Retired"] | 
                             {
                                 uid:activity_group_root.uid,
+                                name: activity_group_value.name,
                                 major_version: toInteger(split(has_version.version,'.')[0]),
                                 minor_version: toInteger(split(has_version.version,'.')[1]),
-                                name: activity_group_value.name
-                            }], ['major_version', 'minor_version']))
+                                start_date: has_version.start_date,
+                                status: has_version.status
+                            }], ['major_version', 'minor_version', 'start_date']))
                     }
                     ] as activity_groupings,
                     head([(library:Library)--(root)--(activity_value)<-[:HAS_SELECTED_ACTIVITY]-(:StudyActivity)<-[:HAS_STUDY_ACTIVITY]-(study_value:StudyValue) WHERE library.name="Requested" | study_value.study_id_prefix + "-" + study_value.study_number]) AS requester_study_id

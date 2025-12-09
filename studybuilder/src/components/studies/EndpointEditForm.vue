@@ -151,7 +151,7 @@ const props = defineProps({
 })
 const { t } = useI18n()
 const emit = defineEmits(['close', 'updated'])
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const formRules = inject('formRules')
 const studiesGeneralStore = useStudiesGeneralStore()
 const studiesEndpointsStore = useStudiesEndpointsStore()
@@ -226,6 +226,7 @@ onMounted(() => {
 })
 
 function close() {
+  notificationHub.clearErrors()
   timeframeTemplate.value = null
   emit('close')
 }
@@ -294,6 +295,9 @@ async function submit(newTemplate, form, parameters) {
     formRef.value.$refs.form.working = false
     return
   }
+
+  notificationHub.clearErrors()
+
   const data = formUtils.getDifferences(originalForm.value, form)
 
   if (newTemplate) {
@@ -337,7 +341,7 @@ async function submit(newTemplate, form, parameters) {
     }
   }
   if (_isEmpty(data)) {
-    eventBusEmit('notification', { msg: t('_global.no_changes'), type: 'info' })
+    notificationHub.add({ msg: t('_global.no_changes'), type: 'info' })
     formRef.value.close()
     return
   }
@@ -350,7 +354,7 @@ async function submit(newTemplate, form, parameters) {
   studiesEndpointsStore
     .updateStudyEndpoint(args)
     .then(() => {
-      eventBusEmit('notification', {
+      notificationHub.add({
         msg: t('StudyEndpointEditForm.endpoint_updated'),
       })
       emit('updated')

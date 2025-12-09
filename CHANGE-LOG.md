@@ -1,5 +1,60 @@
 # OpenStudyBuilder (OSB) Commits changelog
 
+## V 2.2
+
+New Features and Enhancements
+============
+
+### Fixes and Enhancements
+
+- When a user updates the name of the group or subgroup, and approves it, then the linkage of the approved group or subgroup does NOT lose the activities linked to the previous version.
+- The red bells appear in the 'Detailed SoA' and the 'Operational SoA' only when the actions are needed for the users.
+- Field Customization Persistence: Replaced a page reload mechanism for saving field customizations (NCI Name, Submission Name, ADAM Code, Topic Code). The customizations are now saved locally, ensuring they persist without losing user changes.
+- ADAM Parameter Auto-Fill: Resolved bugs related to the automatic population of ADAM parameters, improving data accuracy and consistency during the wizard flow.
+- A few minor UI and API updates are made.
+- Define Study, Data Specifications, Study Activity Instances now support specification of baseline flags for visit scheduling of an study activity instance.
+- Add important flag for study activity instances in operational SoA to indicate important data for risk based data monitoring.
+
+### New Feature
+
+- It is possible for users to track which instances are confirmed as correct/has been reviewed. The new statuses are: Review not needed (green), Review needed (yellow), Reviewed (green), Add instance (red), Remove instance (yellow) and Not applicable (grey).
+- For each study in OpenStudyBuilder, the data supplier(s) must be defined to ensure traceability of the data origin (for example, which EDC system the study is using or which laboratory vendor is delivering clinical results to the sponsor). To capture data-supplier information at the study level, a new page (Study Data Supplier) has been added under Manage Study. On this page, users can link a supplier from the library (Admin Definitions, Data Supplier) to a specific data type, or if the supplier is not yet present, add a new supplier.
+- It is possible to compare different versions of library CRFs.
+- CRF release notes can be viewed and extracted from the neodash report: CRF Library Versions.
+- By releasing the update to the consumer api, it is possible to get study SoA data including topic codes, baseline flag and important assessment flag, which is the first enabler of multiple to transition SDTM generation from using MMA data to OSB data
+
+### Performance Improvements
+
+- Faster loading of 'Study Structure > Overview' and 'Study Structure > Design Matrix' pages.
+
+### End-to-End Automated test enhancements
+
+- Various code improvements to ensure easier maintenance and overall tests stability.
+- Library > Concepts > Activities > Activity Group & Subgroup: Implemented test for cascade edits.
+- Studies > Manage Study > Study Data Supplier: Added Gherkin specification for study data supplier verification.
+- Studies > Define Study > Study Activities > Study Activities: Added Gherkin specification and tests implementation for red bell handling.
+- Studies > Define Study > Study Data Specifications > Study Activity Instances: Added Gherkin specification and tests implementation for red bell handling.
+- Studies > Define Study > Study Data Specifications > Study Activity Instances: Added Gherkin specification and tests implementation for reviewed flag.
+- Studies > Define Study > Study Data Specifications > Study Activity Instances: Added Gherkin specification and tests implementation for isImportant flag.
+
+Solved Bugs
+============
+
+### Library
+
+ **Code Lists -> Terms** 
+
+- Binding a term to another Codelist is not refreshing the page
+
+ **Concepts -> Activities -> Activity Instances** 
+
+- Missing data domain values on second step of wizard stepper
+
+ **Concepts -> Units** 
+
+- Missing front-end validation on 'Conversion factor to master'
+
+
 ## V 2.1
 
 New Features and Enhancements

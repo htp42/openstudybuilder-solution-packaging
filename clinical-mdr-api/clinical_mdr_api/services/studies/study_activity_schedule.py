@@ -23,9 +23,13 @@ from clinical_mdr_api.models.study_selections.study_selection import (
     StudyActivityScheduleBatchOutput,
     StudyActivityScheduleCreateInput,
     StudyActivityScheduleHistory,
+    StudySelectionActivityInstanceEditInput,
 )
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services._utils import ensure_transaction
+from clinical_mdr_api.services.studies.study_activity_instance_selection import (
+    StudyActivityInstanceSelectionService,
+)
 from clinical_mdr_api.services.studies.study_endpoint_selection import (
     StudySelectionMixin,
 )
@@ -66,6 +70,7 @@ class StudyActivityScheduleService(StudySelectionMixin):
         ]
         return study_activity_schedules_response_model
 
+    @trace_calls(args=[1, 2], kwargs=["study_uid", "study_activity_uid"])
     def get_all_schedules_for_specific_activity(
         self, study_uid: str, study_activity_uid: str
     ) -> list[StudyActivitySchedule]:
@@ -115,6 +120,40 @@ class StudyActivityScheduleService(StudySelectionMixin):
     def delete(self, study_uid: str, schedule_uid: str):
         try:
             acquire_write_lock_study_value(study_uid)
+
+            # Schedules connect a Study visit and activity instance
+            # If a child instance of the activity is connected to the visit
+            # We should remove that relationship first
+            impacted_activity_instances = self._repos.study_activity_instance_repository.get_all_study_activity_instances_impacted_by_schedule_deletion(
+                study_uid=study_uid,
+                schedule_uid=schedule_uid,
+            )
+            for activity_instance in impacted_activity_instances:
+                # Patch the impacted activity instance to remove the baseline relationship
+                # Get current baseline visits
+                current_baseline_visits = activity_instance.has_baseline.all()
+                current_baseline_visits_uids = [
+                    visit.uid for visit in current_baseline_visits
+                ]
+                # Get corresponding visit for schedule
+                visit_to_disconnect_uid = (
+                    StudyActivityScheduleNeoModel.nodes.filter(uid=schedule_uid)
+                    .study_visit.all()[0]
+                    .uid
+                )
+                # Remove impacted visit from baseline visits for activity instance
+                current_baseline_visits_uids.remove(visit_to_disconnect_uid)
+                # Patch the impacted activity instance to update the baseline visits
+                study_activity_instance_service = (
+                    StudyActivityInstanceSelectionService()
+                )
+                study_activity_instance_service.patch_selection(
+                    study_uid=study_uid,
+                    study_selection_uid=activity_instance.uid,
+                    selection_update_input=StudySelectionActivityInstanceEditInput(
+                        baseline_visit_uids=current_baseline_visits_uids,
+                    ),
+                )
             self._repos.study_activity_schedule_repository.delete(
                 study_uid, schedule_uid, self.author
             )

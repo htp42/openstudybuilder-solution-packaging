@@ -426,11 +426,11 @@ class ActivityInstanceEditInput(ExtendedConceptPatchInput):
     is_research_lab: Annotated[bool, Field()] = False
     molecular_weight: Annotated[float | None, Field()] = None
     adam_param_code: Annotated[str | None, Field(min_length=1)] = None
-    is_required_for_activity: Annotated[bool, Field()] = False
-    is_default_selected_for_activity: Annotated[bool, Field()] = False
-    is_data_sharing: Annotated[bool, Field()] = False
-    is_legacy_usage: Annotated[bool, Field()] = False
-    is_derived: Annotated[bool, Field()] = False
+    is_required_for_activity: Annotated[bool | None, Field()] = None
+    is_default_selected_for_activity: Annotated[bool | None, Field()] = None
+    is_data_sharing: Annotated[bool | None, Field()] = None
+    is_legacy_usage: Annotated[bool | None, Field()] = None
+    is_derived: Annotated[bool | None, Field()] = None
     legacy_description: Annotated[str | None, Field(min_length=1)] = None
     activity_instance_class_uid: Annotated[str | None, Field(min_length=1)] = None
     activity_groupings: Annotated[list[ActivityInstanceGrouping] | None, Field()] = None

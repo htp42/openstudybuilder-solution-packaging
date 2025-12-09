@@ -15,10 +15,13 @@ class DataSupplierValue(VersionValue):
     name = StringProperty()
     description = StringProperty()
     order = IntegerProperty()
-    supplier_api_base_url = StringProperty()
-    supplier_ui_base_url = StringProperty()
-    has_type = RelationshipTo(
-        CTTermContext, "HAS_TYPE", model=ClinicalMdrRel, cardinality=ZeroOrOne
+    api_base_url = StringProperty()
+    ui_base_url = StringProperty()
+    has_data_supplier_type = RelationshipTo(
+        CTTermContext,
+        "HAS_DATA_SUPPLIER_TYPE",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrOne,
     )
     has_origin_source = RelationshipTo(
         CTTermContext, "HAS_ORIGIN_SOURCE", model=ClinicalMdrRel, cardinality=ZeroOrOne

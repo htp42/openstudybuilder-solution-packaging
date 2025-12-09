@@ -15,6 +15,38 @@
     :default-filters="defaultFilters"
     @filter="getStudyActivityInstances"
   >
+    <template #headerCenter="">
+      <v-btn-toggle
+        v-model="selectedStatusTab"
+        mandatory
+        density="compact"
+        color="nnBaseBlue"
+        divided
+        variant="outlined"
+        class="layoutSelector"
+        @update:model-value="onStatusTabChange"
+      >
+        <v-btn v-for="tab in statusTabs" :key="tab.value" :value="tab.value">
+          <v-icon v-if="tab.icon" :color="tab.color">{{ tab.icon }}</v-icon>
+          {{ tab.label }}
+        </v-btn>
+      </v-btn-toggle>
+    </template>
+    <template #actions="">
+      <v-btn
+        variant="outlined"
+        color="nnBaseBlue"
+        :disabled="
+          !accessGuard.checkPermission($roles.STUDY_WRITE) ||
+          studiesGeneralStore.selectedStudyVersion !== null
+        "
+        rounded="xl"
+        prepend-icon="mdi-exclamation"
+        @click="openBatchUpdateForm()"
+      >
+        {{ $t('StudyActivityTable.review_instances') }}
+      </v-btn>
+    </template>
     <template #[`item.actions`]="{ item }">
       <ActionsMenu
         :actions="actions"
@@ -22,49 +54,55 @@
         :badge="actionsMenuBadge(item)"
       />
     </template>
-    <template #[`footer.prepend`]>
-      <v-chip
-        class="instanceAvailable"
-        variant="flat"
-        :text="$t('StudyActivityInstances.no_action_needed')"
-      />
-      <v-chip
-        class="ml-2 suggestion"
-        variant="flat"
-        :text="$t('StudyActivityInstances.notification')"
-      />
-      <v-chip
-        class="ml-2 noInstance"
-        variant="flat"
-        :text="$t('StudyActivityInstances.action_needed')"
-      />
-      <v-chip
-        class="ml-2 na"
-        variant="flat"
-        :text="$t('StudyActivityInstances.na')"
-      />
-      <v-spacer />
-    </template>
     <template #[`item.activity_instance.name`]="{ item }">
-      <div
-        :class="getInstanceCssClass(item)"
-        @click="
-          item.activity_instance
-            ? redirectToActivityInstance(item.activity_instance.uid)
-            : editRelationship(item)
-        "
-      >
-        {{
-          item.activity_instance
-            ? item.activity_instance.name
-            : item.activity.is_data_collected
-              ? $t('StudyActivityInstances.add_instance')
-              : $t('StudyActivityInstances.na')
-        }}
-      </div>
+      <template v-if="item.activity_instance">
+        <router-link
+          :to="{
+            name: 'ActivityInstanceOverview',
+            params: { id: item.activity_instance.uid },
+          }"
+        >
+          {{ item.activity_instance?.name }}
+        </router-link>
+      </template>
     </template>
     <template #[`item.activity.is_data_collected`]="{ item }">
       {{ $filters.yesno(item.activity.is_data_collected) }}
+    </template>
+    <template #[`item.state`]="{ item }">
+      <div
+        :class="getInstanceCssClass(item)"
+        @click="
+          [instancesActions.REVIEW_NEEDED, instancesActions.ADD].indexOf(
+            item.state
+          ) !== -1
+            ? editRelationship(item)
+            : ''
+        "
+      >
+        {{ item.state }}
+      </div>
+    </template>
+    <template #[`item.is_reviewed`]="{ item }">
+      <v-checkbox
+        v-model="item.is_reviewed"
+        class="mt-2 mb-n4"
+        :disabled="
+          [
+            instancesActions.ADD,
+            instancesActions.NA,
+            instancesActions.REMOVE,
+          ].indexOf(item.state) !== -1 ||
+          (item.is_activity_instance_updated && !item.keep_old_version)
+        "
+        @update:model-value="updateReviewedState(item)"
+      />
+    </template>
+    <template #[`item.is_important`]="{ item }">
+      {{ item.is_important ? $t('_global.yes') : '' }}
+    </template>
+    <template #[`item.baseline_visits`]="{ item }">
+      {{ displayVisits(item.baseline_visits) }}
     </template>
   </NNTable>
   <StudyActivityInstancesEditForm
@@ -90,6 +128,9 @@
     :open="showUpdateForm"
     @close="closeUpdateForm"
   />
+  <v-dialog v-model="showBatchUpdateForm">
+    <BatchUpdateActivityInstanceForm @close="closeBatchUpdateForm" />
+  </v-dialog>
   <ConfirmDialog ref="confirmRef" :text-cols="6" :action-cols="5" />
 </template>
 <script setup>
@@ -105,20 +146,24 @@ import StudyActivityInstancesEditForm from './StudyActivityInstancesEditForm.vue
 import HistoryTable from '@/components/tools/HistoryTable.vue'
 import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
 import UpdateActivityInstanceForm from './UpdateActivityInstanceForm.vue'
-import statuses from '@/constants/statuses'
-import { useRouter } from 'vue-router'
+import BatchUpdateActivityInstanceForm from './BatchUpdateActivityInstanceForm.vue'
+import instancesActions from '@/constants/instancesActions'
+import { useAccessGuard } from '@/composables/accessGuard'
+import _isEmpty from 'lodash/isEmpty'
 
 const { t } = useI18n()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const studiesGeneralStore = useStudiesGeneralStore()
 const activitiesStore = useStudyActivitiesStore()
+const accessGuard = useAccessGuard()
 const roles = inject('roles')
 const tableRef = ref()
 const confirmRef = ref()
-const router = useRouter()
 
 const headers = [
   { title: '', key: 'actions', width: '1%' },
+  { title: t('StudyActivityInstances.state_actions'), key: 'state' },
+  { title: t('StudyActivityInstances.reviewed'), key: 'is_reviewed' },
   { title: t('_global.library'), key: 'activity.library_name' },
   {
     title: t('StudyActivity.flowchart_group'),
@@ -157,10 +202,17 @@ const headers = [
     title: t('StudyActivityInstances.standard_unit'),
     key: 'activity_instance.standard_unit',
   },
-  { title: t('StudyActivityInstances.state_actions'), key: 'state' },
   {
     title: t('StudyActivityInstances.adam_code'),
     key: 'activity_instance.adam_param_code',
+  },
+  {
+    title: t('StudyActivityInstances.important'),
+    key: 'is_important',
+  },
+  {
+    title: t('StudyActivityInstances.baseline_visits'),
+    key: 'baseline_visits',
   },
 ]
 const studyActivitiesInstances = ref([])
@@ -170,6 +222,7 @@ const showEditForm = ref(false)
 const activityInstanceHistoryItems = ref([])
 const showHistory = ref(false)
 const showUpdateForm = ref(false)
+const showBatchUpdateForm = ref(false)
 const actions = [
   {
     label: t('StudyActivityInstances.edit_relationship'),
@@ -192,8 +245,22 @@ const actions = [
     icon: 'mdi-update',
     iconColor: 'primary',
     condition: (item) =>
-      !studiesGeneralStore.selectedStudyVersion && isDifferent(item),
+      !studiesGeneralStore.selectedStudyVersion &&
+      item.is_activity_instance_updated,
     click: openUpdateForm,
+    accessRole: roles.STUDY_WRITE,
+  },
+  {
+    label: (item) =>
+      item.is_important
+        ? t('StudyActivityInstances.unmark_as_important')
+        : t('StudyActivityInstances.mark_as_important'),
+    icon: 'mdi-alert-octagon-outline',
+    condition: (item) =>
+      !studiesGeneralStore.selectedStudyVersion &&
+      item.activity_instance &&
+      item.activity.is_data_collected,
+    click: toggleImportant,
     accessRole: roles.STUDY_WRITE,
   },
   {
@@ -201,6 +268,12 @@ const actions = [
     icon: 'mdi-history',
     click: openHistory,
   },
+]
+const selectedStatusTab = ref('all')
+const statusTabs = [
+  { value: 'all', label: t('_global.all') },
+  { value: 'updated', icon: 'mdi-alert-circle-outline', color: 'error' },
+  { value: 'reviewed', icon: 'mdi-alert-outline', color: 'warning' },
 ]
 const defaultFilters = computed(() => {
   return headers
@@ -223,16 +296,28 @@ const activityInstanceHistoryTitle = computed(() => {
 })
 
 function getInstanceCssClass(item) {
-  if (item.activity_instance) {
-    if (item.state === statuses.SUGGESTION) {
-      return 'px-1 suggestion row-pointer'
-    } else {
-      return 'px-1 instanceAvailable row-pointer'
-    }
-  }
-  return !item.activity.is_data_collected
-    ? 'px-1 na row-pointer'
-    : 'px-1 noInstance row-pointer'
+  if (
+    [instancesActions.REVIEWED, instancesActions.REVIEW_NOT_NEEDED].indexOf(
+      item.state
+    ) !== -1
+  )
+    return 'reviewed'
+  if (item.state === instancesActions.REMOVE) return 'needed'
+  if (item.state === instancesActions.REVIEW_NEEDED) return 'needed row-pointer'
+  if (item.state === instancesActions.ADD) return 'add row-pointer'
+  return 'na'
+}
+
+function updateReviewedState(instance) {
+  study
+    .updateStudyActivityInstance(
+      studiesGeneralStore.selectedStudy.uid,
+      instance.study_activity_instance_uid,
+      { is_reviewed: instance.is_reviewed }
+    )
+    .then(() => {
+      tableRef.value.filterTable()
+    })
 }
 
 function getStudyActivityInstances(filters, options, filtersUpdated) {
@@ -268,6 +353,28 @@ function getStudyActivityInstances(filters, options, filtersUpdated) {
       params.filters = JSON.stringify(filtersObj)
     } else {
       delete params.filters
+    }
+  }
+  let statusFilter = {}
+  if (selectedStatusTab.value === 'reviewed') {
+    statusFilter = { keep_old_version: { v: [true] } }
+  } else if (selectedStatusTab.value === 'updated') {
+    statusFilter = {
+      is_activity_instance_updated: { v: [true] },
+      keep_old_version: { v: [false] },
+    }
+  }
+
+  if (selectedStatusTab.value !== 'all') {
+    if (_isEmpty(params.filters)) {
+      params.filters = statusFilter
+    } else {
+      const filtersObj =
+        typeof params.filters === 'string'
+          ? JSON.parse(params.filters)
+          : params.filters
+      Object.assign(filtersObj, statusFilter)
+      params.filters = filtersObj
     }
   }
   params.studyUid = studiesGeneralStore.selectedStudy.uid
@@ -319,13 +426,6 @@ function modifyFilters(jsonFilter, params) {
   }
 }
 
-async function redirectToActivityInstance(instanceUid) {
-  router.push({
-    name: 'ActivityInstanceOverview',
-    params: { id: instanceUid },
-  })
-}
-
 function editRelationship(item) {
   activeActivity.value = item
   showEditForm.value = true
@@ -335,6 +435,13 @@ function closeEditForm() {
   activeActivity.value = {}
   showEditForm.value = false
   tableRef.value.filterTable()
+}
+
+function displayVisits(visits) {
+  if (!visits) {
+    return ''
+  }
+  return visits.map((v) => v.visit_name).join(', ')
 }
 
 async function deleteRelationship(item) {
@@ -357,7 +464,7 @@ async function deleteRelationship(item) {
         item.study_activity_instance_uid
       )
       .then(() => {
-        eventBusEmit('notification', {
+        notificationHub.add({
           msg: t('StudyActivityInstances.instance_deleted'),
           type: 'success',
         })
@@ -389,29 +496,15 @@ function closeHistory() {
 }
 
 function actionsMenuBadge(item) {
-  if (isDifferent(item)) {
+  if (item.is_activity_instance_updated) {
     return {
-      color: item.keep_old_version ? 'green' : 'error',
-      icon: 'mdi-bell-outline',
+      color: item.keep_old_version ? 'warning' : 'error',
+      icon: item.keep_old_version
+        ? 'mdi-alert-outline'
+        : 'mdi-alert-circle-outline',
     }
   }
   return undefined
-}
-
-function isDifferent(activity) {
-  if (activity.latest_activity_instance) {
-    return (
-      JSON.stringify(activity.activity_instance?.activity_instance_class) !==
-        JSON.stringify(
-          activity.latest_activity_instance?.activity_instance_class
-        ) ||
-      activity.activity_instance?.name !==
-        activity.latest_activity_instance?.name ||
-      activity.activity_instance?.topic_code !==
-        activity.latest_activity_instance?.topic_code
-    )
-  }
-  return false
 }
 
 function openUpdateForm(item) {
@@ -424,29 +517,80 @@ function closeUpdateForm() {
   showUpdateForm.value = false
   tableRef.value.filterTable()
 }
+
+function openBatchUpdateForm() {
+  showBatchUpdateForm.value = true
+}
+
+function closeBatchUpdateForm() {
+  showBatchUpdateForm.value = false
+  tableRef.value.filterTable()
+}
+
+function onStatusTabChange() {
+  if (tableRef.value) {
+    tableRef.value.filterTable()
+  }
+}
+async function toggleImportant(item) {
+  const newImportantStatus = !item.is_important
+  const data = {
+    is_important: newImportantStatus,
+  }
+
+  try {
+    await study.updateStudyActivityInstance(
+      studiesGeneralStore.selectedStudy.uid,
+      item.study_activity_instance_uid,
+      data
+    )
+
+    const messageKey = newImportantStatus
+      ? 'StudyActivityInstances.instance_marked_important'
+      : 'StudyActivityInstances.instance_unmarked_important'
+
+    notificationHub.add({ msg: t(messageKey), type: 'success' })
+
+    // Refresh the table to show updated data
+    tableRef.value.filterTable()
+  } catch (error) {
+    // Error notification is handled by the repository interceptor
+    console.error('Failed to toggle important status:', error)
+  }
+}
 </script>
 <style scoped>
-.instanceAvailable {
+.reviewed {
   background-color: darkseagreen;
   border-radius: 5px;
+  padding-inline: 5px;
   color: black;
 }
-.noInstance {
+.add {
   background-color: rgb(202, 124, 124);
   border-radius: 5px;
+  padding-inline: 5px;
   color: black;
 }
-.suggestion {
+.needed {
   background-color: rgb(217, 201, 106);
   border-radius: 5px;
+  padding-inline: 5px;
   color: black;
 }
 .na {
   background-color: rgb(179, 179, 179);
   border-radius: 5px;
+  padding-inline: 5px;
   color: black;
 }
 .row-pointer {
   cursor: pointer;
+}
+.layoutSelector {
+  border-color: rgb(var(--v-theme-nnBaseBlue));
+}
+.layoutSelector :deep(.v-btn) {
+  text-transform: none;
 }
 </style>

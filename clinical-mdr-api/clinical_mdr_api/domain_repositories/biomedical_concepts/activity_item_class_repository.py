@@ -1,23 +1,14 @@
 import json
 from typing import Any
 
-from neomodel import NodeSet, db
-from neomodel.sync_.match import (
-    Collect,
-    Last,
-    NodeNameResolver,
-    Optional,
-    Path,
-    RawCypher,
-    RelationNameResolver,
-)
+from neomodel import db
+from neomodel.sync_.match import NodeNameResolver, Path
 
+from clinical_mdr_api.domain_repositories.concepts.concept_generic_repository import (
+    ConceptGenericRepository,
+)
 from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_codelist_attributes_repository import (
     CTCodelistAttributesRepository,
-)
-from clinical_mdr_api.domain_repositories.library_item_repository import (
-    LibraryItemRepositoryImplBase,
-    _AggregateRootType,
 )
 from clinical_mdr_api.domain_repositories.models.biomedical_concepts import (
     ActivityInstanceClassRoot,
@@ -34,94 +25,177 @@ from clinical_mdr_api.domain_repositories.models.generic import (
 from clinical_mdr_api.domain_repositories.models.standard_data_model import (
     VariableClass,
 )
-from clinical_mdr_api.domain_repositories.neomodel_ext_item_repository import (
-    NeomodelExtBaseRepository,
-)
 from clinical_mdr_api.domains.biomedical_concepts.activity_item_class import (
     ActivityInstanceClassActivityItemClassRelVO,
     ActivityItemClassAR,
     ActivityItemClassVO,
     CTTermItem,
 )
-from clinical_mdr_api.domains.versioned_object_aggregate import LibraryVO
+from clinical_mdr_api.domains.versioned_object_aggregate import (
+    LibraryItemMetadataVO,
+    LibraryItemStatus,
+    LibraryVO,
+)
 from clinical_mdr_api.models.biomedical_concepts.activity_item_class import (
     ActivityItemClass,
 )
+from clinical_mdr_api.repositories._utils import sb_clear_cache
 from common.config import settings
+from common.utils import convert_to_datetime
 
 
-class ActivityItemClassRepository(  # type: ignore[misc]
-    NeomodelExtBaseRepository, LibraryItemRepositoryImplBase[_AggregateRootType]
-):
+class ActivityItemClassRepository(ConceptGenericRepository[ActivityItemClassAR]):
     root_class = ActivityItemClassRoot
     value_class = ActivityItemClassValue
+    aggregate_class = ActivityItemClassAR
+    value_object_class = ActivityItemClassVO
     return_model = ActivityItemClass
 
-    def get_neomodel_extension_query(self) -> NodeSet:
-        return (
-            ActivityItemClassRoot.nodes.fetch_relations(
-                "has_latest_value",
-                "has_library",
-                "has_latest_value__has_role__has_selected_term__has_name_root__has_latest_value",
-                "has_latest_value__has_role__has_selected_codelist",
-                "has_latest_value__has_data_type__has_selected_term__has_name_root__has_latest_value",
-                "has_latest_value__has_data_type__has_selected_codelist",
-                Optional("has_activity_instance_class"),
-                Optional("has_activity_instance_class__has_latest_value"),
-                Optional("maps_variable_class"),
-            )
-            .unique_variables("has_latest_value", "has_activity_instance_class")
-            .subquery(
-                ActivityItemClassRoot.nodes.fetch_relations("has_version")
-                .intermediate_transform(
-                    {"rel": {"source": RelationNameResolver("has_version")}},
-                    ordering=[
-                        RawCypher("toInteger(split(rel.version, '.')[0])"),
-                        RawCypher("toInteger(split(rel.version, '.')[1])"),
-                        "rel.end_date",
-                        "rel.start_date",
-                    ],
-                )
-                .annotate(latest_version=Last(Collect("rel"))),
-                ["latest_version"],
-                initial_context=[NodeNameResolver("self")],
-            )
-            .annotate(
-                Collect(NodeNameResolver("has_activity_instance_class"), distinct=True),
-                Collect(
-                    RelationNameResolver("has_activity_instance_class"), distinct=True
+    def generic_alias_clause(self, **kwargs):
+        """Override to use ActivityItemClass-specific library relationship."""
+        return """
+            DISTINCT concept_root, concept_value,
+            head([(library:Library)-[:CONTAINS]->(concept_root) | library]) AS library
+            CALL {
+                WITH concept_root, concept_value
+                MATCH (concept_root)-[hv:HAS_VERSION]-(concept_value)
+                WITH hv
+                ORDER BY
+                    toInteger(split(hv.version, '.')[0]) ASC,
+                    toInteger(split(hv.version, '.')[1]) ASC,
+                    hv.end_date ASC,
+                    hv.start_date ASC
+                WITH collect(hv) as hvs
+                RETURN last(hvs) AS version_rel
+            }
+            WITH
+                concept_root,
+                concept_root.uid AS uid,
+                concept_value as concept_value,
+                library.name AS library_name,
+                library.is_editable AS is_library_editable,
+                version_rel
+                CALL {
+                    WITH version_rel
+                    OPTIONAL MATCH (author: User)
+                    WHERE author.user_id = version_rel.author_id
+                    RETURN author
+                }
+            WITH
+                uid,
+                concept_root,
+                concept_value,
+                concept_value.nci_concept_id AS nci_concept_id,
+                concept_value.name AS name,
+                concept_value.definition AS definition,
+                library_name,
+                is_library_editable,
+                version_rel.version AS version,
+                version_rel.start_date AS start_date,
+                version_rel.end_date AS end_date,
+                version_rel.status AS status,
+                version_rel.change_description AS change_description,
+                version_rel.author_id AS author_id,
+                COALESCE(author.username, version_rel.author_id) AS author_username
+        """
+
+    def _create_aggregate_root_instance_from_cypher_result(
+        self, input_dict: dict[str, Any]
+    ) -> ActivityItemClassAR:
+        """Build ActivityItemClassAR from Cypher query result dictionary."""
+        activity_instance_classes = [
+            ActivityInstanceClassActivityItemClassRelVO(
+                uid=aic["uid"],
+                mandatory=aic.get("mandatory", False),
+                is_adam_param_specific_enabled=aic.get(
+                    "is_adam_param_specific_enabled", False
                 ),
-                Collect(
-                    NodeNameResolver("has_activity_instance_class__has_latest_value"),
-                    distinct=True,
-                ),
-                Collect(
-                    RelationNameResolver(
-                        "has_activity_instance_class__has_latest_value"
-                    ),
-                    distinct=True,
-                ),
-                Collect(NodeNameResolver("maps_variable_class"), distinct=True),
-                Collect(RelationNameResolver("maps_variable_class"), distinct=True),
             )
+            for aic in input_dict.get("activity_instance_classes", [])
+        ]
+
+        role = CTTermItem(
+            uid=input_dict["role"]["uid"],
+            name=input_dict["role"]["name"],
+            codelist_uid=input_dict["role"]["codelist_uid"],
         )
 
-    def extend_distinct_headers_query(self, nodeset: NodeSet) -> NodeSet:
-        return nodeset.subquery(
-            self.root_class.nodes.fetch_relations("has_version")
-            .intermediate_transform(
-                {"rel": {"source": RelationNameResolver("has_version")}},
-                ordering=[
-                    RawCypher("toInteger(split(rel.version, '.')[0])"),
-                    RawCypher("toInteger(split(rel.version, '.')[1])"),
-                    "rel.end_date",
-                    "rel.start_date",
-                ],
-            )
-            .annotate(latest_version=Last(Collect("rel"))),
-            ["latest_version"],
-            initial_context=[NodeNameResolver("self")],
+        data_type = CTTermItem(
+            uid=input_dict["data_type"]["uid"],
+            name=input_dict["data_type"]["name"],
+            codelist_uid=input_dict["data_type"]["codelist_uid"],
         )
+
+        # Split version into major and minor components
+        major, minor = input_dict["version"].split(".")
+
+        return self.aggregate_class.from_repository_values(
+            uid=input_dict["uid"],
+            activity_item_class_vo=self.value_object_class.from_repository_values(
+                name=input_dict["name"],
+                definition=input_dict["definition"],
+                nci_concept_id=input_dict.get("nci_concept_id"),
+                order=input_dict["order"],
+                activity_instance_classes=activity_instance_classes,
+                role=role,
+                data_type=data_type,
+                variable_class_uids=input_dict.get("variable_class_uids", []),
+            ),
+            library=LibraryVO.from_input_values_2(
+                library_name=input_dict.get("library_name", "Unknown"),
+                is_library_editable_callback=lambda _: input_dict.get(
+                    "is_library_editable", False
+                ),
+            ),
+            item_metadata=LibraryItemMetadataVO.from_repository_values(
+                change_description=input_dict["change_description"],
+                status=LibraryItemStatus(input_dict.get("status")),
+                author_id=input_dict["author_id"],
+                author_username=input_dict.get("author_username"),
+                start_date=convert_to_datetime(value=input_dict["start_date"]),
+                end_date=convert_to_datetime(value=input_dict.get("end_date")),
+                major_version=int(major),
+                minor_version=int(minor),
+            ),
+        )
+
+    def specific_alias_clause(self, **kwargs) -> str:
+        """Add ActivityItemClass-specific fields to the Cypher query."""
+        return """
+        WITH *,
+            concept_value.order AS order,
+
+            [(concept_root)<-[rel:HAS_ITEM_CLASS]-(activity_instance_class_root:ActivityInstanceClassRoot)-[:LATEST]->(activity_instance_class_value:ActivityInstanceClassValue) | {
+                uid: activity_instance_class_root.uid,
+                name: activity_instance_class_value.name,
+                mandatory: rel.mandatory,
+                is_adam_param_specific_enabled: rel.is_adam_param_specific_enabled
+            }] AS activity_instance_classes,
+
+            COLLECT {
+                MATCH (concept_value)-[:HAS_ROLE]->(role_context)-[:HAS_SELECTED_TERM]->(role_term:CTTermRoot)-[:HAS_NAME_ROOT]->(role_name_root:CTTermNameRoot)-[:LATEST]->(role_name_value:CTTermNameValue)
+                MATCH (role_context)-[:HAS_SELECTED_CODELIST]->(role_codelist:CTCodelistRoot)
+                RETURN {uid: role_term.uid, name: role_name_value.name, codelist_uid: role_codelist.uid}
+            }[0] AS role,
+
+            COLLECT {
+                MATCH (concept_value)-[:HAS_DATA_TYPE]->(data_type_context)-[:HAS_SELECTED_TERM]->(data_type_term:CTTermRoot)-[:HAS_NAME_ROOT]->(data_type_name_root:CTTermNameRoot)-[:LATEST]->(data_type_name_value:CTTermNameValue)
+                MATCH (data_type_context)-[:HAS_SELECTED_CODELIST]->(data_type_codelist:CTCodelistRoot)
+                RETURN {uid: data_type_term.uid, name: data_type_name_value.name, codelist_uid: data_type_codelist.uid}
+            }[0] AS data_type,
+
+            [(concept_root)-[:MAPS_VARIABLE_CLASS]->(variable_class:VariableClass) | variable_class.uid] AS variable_class_uids
+        """
+
+    def _create_new_value_node(self, ar: ActivityItemClassAR) -> ActivityItemClassValue:
+        """Override to handle ActivityItemClass-specific value node creation."""
+        new_value = ActivityItemClassValue(
+            name=ar.activity_item_class_vo.name,
+            order=ar.activity_item_class_vo.order,
+            definition=ar.activity_item_class_vo.definition,
+            nci_concept_id=ar.activity_item_class_vo.nci_concept_id,
+        )
+        return new_value
 
     def get_all_for_activity_instance_class(
         self, activity_instance_class_uid: str, dataset_uid: str | None = None
@@ -352,6 +426,7 @@ RETURN collect(DISTINCT m.uid)
             item_metadata=self._library_item_metadata_vo_from_relation(relationship),
         )
 
+    @sb_clear_cache(caches=["cache_store_item_by_uid"])
     def patch_mappings(self, uid: str, variable_class_uids: list[str]) -> None:
         root = ActivityItemClassRoot.nodes.get(uid=uid)
         root.maps_variable_class.disconnect_all()
@@ -361,7 +436,7 @@ RETURN collect(DISTINCT m.uid)
 
     def _maintain_parameters(
         self,
-        versioned_object: _AggregateRootType,
+        versioned_object: ActivityItemClassAR,
         root: ActivityItemClassRoot,
         value: ActivityItemClassValue,
     ) -> None:

@@ -14,7 +14,8 @@ Feature: Studies - Define Study - Study Activities - Study Activities Placeholde
         And Selected study id is saved
         And Form save button is clicked
         And User waits for 3 seconds
-        And The '/studies/Study_000002/activities/list' page is opened
+        When Get study 'CDISC DEV-9879' uid
+        When The page 'activities/list' is opened for selected study
         When Study activity add button is clicked
         When Activity from studies is selected
         And Study by id is selected
@@ -42,7 +43,8 @@ Feature: Studies - Define Study - Study Activities - Study Activities Placeholde
         When Activity placeholder data is filled in
         And Selected study id is saved
         And Form save button is clicked
-        And The '/studies/Study_000002/activities/list' page is opened
+        When Get study 'CDISC DEV-9879' uid
+        When The page 'activities/list' is opened for selected study
         When Study activity add button is clicked
         When Activity from studies is selected
         And Study by id is selected
@@ -70,7 +72,8 @@ Feature: Studies - Define Study - Study Activities - Study Activities Placeholde
         When Activity placeholder data is filled in
         And Selected study id is saved
         And Form save button is clicked
-        And The '/studies/Study_000002/activities/list' page is opened
+        When Get study 'CDISC DEV-9879' uid
+        When The page 'activities/list' is opened for selected study
         When Study activity add button is clicked
         When Activity from studies is selected
         And Study by id is selected
@@ -99,7 +102,8 @@ Feature: Studies - Define Study - Study Activities - Study Activities Placeholde
         And Selected study id is saved
         And Form save button is clicked
         And User waits for 3 seconds
-        And The '/studies/Study_000002/activities/list' page is opened
+        When Get study 'CDISC DEV-9879' uid
+        When The page 'activities/list' is opened for selected study
         When Study activity add button is clicked
         When Activity from studies is selected
         And Study by id is selected
@@ -107,6 +111,7 @@ Feature: Studies - Define Study - Study Activities - Study Activities Placeholde
         And Activity placeholder is searched for
         And The existing activity request is selected
         And Form save button is clicked
+        And User waits for table to load
         And Activity placeholder is found
         And The 'Edit' option is clicked from the three dot menu list
         And The study activity request SoA group field is edited
@@ -124,7 +129,8 @@ Feature: Studies - Define Study - Study Activities - Study Activities Placeholde
         And Selected study id is saved
         And Form save button is clicked
         And User waits for 3 seconds
-        And The '/studies/Study_000002/activities/list' page is opened
+        When Get study 'CDISC DEV-9879' uid
+        When The page 'activities/list' is opened for selected study
         When Study activity add button is clicked
         When Activity from studies is selected
         And Study by id is selected
@@ -149,7 +155,8 @@ Feature: Studies - Define Study - Study Activities - Study Activities Placeholde
         And Selected study id is saved
         And Form save button is clicked
         And User waits for 3 seconds
-        And The '/studies/Study_000002/activities/list' page is opened
+        When Get study 'CDISC DEV-9879' uid
+        When The page 'activities/list' is opened for selected study
         When Study activity add button is clicked
         When Activity from studies is selected
         And Study by id is selected
@@ -165,3 +172,8 @@ Feature: Studies - Define Study - Study Activities - Study Activities Placeholde
         And The test study '/activities/list' page is opened
         And Activity placeholder is found
         And The updated notification icon and update option are not present
+
+    @pending_implementation
+    Scenario: [Create][Positive case] System must select 'Multiple instances allowed' true as default for placeholder requests
+        Given The activity placeholder request is created
+        Then The checkbox 'Multiple instances allowed' is set true by default

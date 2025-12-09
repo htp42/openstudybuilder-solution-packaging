@@ -158,7 +158,7 @@ import { useI18n } from 'vue-i18n'
 import { useDragAndDrop } from '@formkit/drag-and-drop/vue'
 
 const { t } = useI18n()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const roles = inject('roles')
 const studiesGeneralStore = useStudiesGeneralStore()
 const accessGuard = useAccessGuard()
@@ -287,7 +287,7 @@ async function deleteStudyElement(element) {
       element.element_uid
     )
     .then(() => {
-      eventBusEmit('notification', {
+      notificationHub.add({
         msg: t('StudyElements.el_deleted'),
       })
       table.value.filterTable()

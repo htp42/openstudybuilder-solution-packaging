@@ -52,7 +52,7 @@ function filterByText() {
         cy.get('.v-list-item-title').first().then((element) => {
             cy.wrap(element).invoke('text').then(value => filterValue =  value.slice(0, 60))
             cy.intercept('**filters=**').as('filterRequest')
-            cy.wrap(element).click()
+            cy.wrap(element).should('not.contain.text', 'No data available').click()
         })
     })
     cy.wait(1500)

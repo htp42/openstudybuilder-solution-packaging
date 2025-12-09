@@ -196,7 +196,7 @@ import { useStudiesGeneralStore } from '@/stores/studies-general'
 import { useDragAndDrop } from '@formkit/drag-and-drop/vue'
 import { sanitizeHTML } from '@/utils/sanitize'
 
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const roles = inject('roles')
 const props = defineProps({
   criteriaType: {
@@ -410,7 +410,7 @@ async function deleteStudyCriteria(studyCriteria) {
       studyCriteria.study_criteria_uid
     )
     tableRef.value.filterTable()
-    eventBusEmit('notification', {
+    notificationHub.add({
       msg: t('EligibilityCriteriaTable.delete_success'),
     })
   }
@@ -528,13 +528,13 @@ async function updateVersion(item) {
     study
       .updateStudyCriteriaLatestVersion(item.study_uid, item.study_criteria_uid)
       .then(() => {
-        eventBusEmit('notification', {
+        notificationHub.add({
           msg: t('EligibilityCriteriaTable.update_version_successful'),
         })
         tableRef.value.filterTable()
       })
       .catch((error) => {
-        eventBusEmit('notification', {
+        notificationHub.add({
           type: 'error',
           msg: error.response.data.message,
         })
@@ -546,7 +546,7 @@ async function updateVersion(item) {
         tableRef.value.filterTable()
       })
       .catch((error) => {
-        eventBusEmit('notification', {
+        notificationHub.add({
           type: 'error',
           msg: error.response.data.message,
         })

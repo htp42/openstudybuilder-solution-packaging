@@ -72,22 +72,27 @@ Feature: Studies - Define Study - Study Structure - Study Visits
         Then The online help panel shows 'Study Visits' panel with content "A clinical encounter where the the subject interacts with the investigator. There can be one more visits in an Epoch. To edit visit(s) in the table view click on the pencil in the top-right menu."
 
     Scenario: [Table][Columns][Visibility] User must be able to use column selection option
-        Given The '/studies/Study_000005/study_structure/visits' page is opened
+        When Get study 'CDISC DEV-9881' uid
+        And Select study with uid saved in previous step
+        When The test study '/study_structure/visits' page is opened
         When The first column is selected from Select Columns option for table with actions
         Then The table contain only selected column and actions column
 
     Scenario: [Create][Pre-condition] User must not be able to add a new Study Visit when no Study Epoch has been defined
-        Given The '/studies/Study_000005/study_structure/visits' page is opened
+        When Get study 'CDISC DEV-9881' uid
+        And Select study with uid saved in previous step
+        When The test study '/study_structure/visits' page is opened
         When The 'add-visit' button is clicked
         Then The the user is prompted with a notification message "To add visits, you need to difine the epochs first. Would you like to define epochs?"
         And The 'Add epoch' button is visible
         And The 'Cancel' button is visible
 
     Scenario: [Create][Mandatory fields] User must not be able to create an visit without epoch selected
-        Given The study with uid 'Study_000001' is selected
+        When Get study 'CDISC DEV-0' uid
+        And Select study with uid saved in previous step
         And [API] The epoch with type 'Pre Treatment' and subtype 'Run-in' exists in selected study
         And User waits for 3 seconds
-        And The '/studies/Study_000001/study_structure/visits' page is opened
+        And The page 'study_structure/visits' is opened for selected study
         And User waits for epochs to load
         When Add visit button is clicked
         And Form continue button is clicked
@@ -95,10 +100,11 @@ Feature: Studies - Define Study - Study Structure - Study Visits
         Then The validation appears for missing study period
 
     Scenario: [Create][Mandatory fields] User must not be able to create an visit without type, contact mode, time reference and timing defined
-        Given The study with uid 'Study_000001' is selected
+        When Get study 'CDISC DEV-0' uid
+        And Select study with uid saved in previous step
         And [API] The epoch with type 'Pre Treatment' and subtype 'Run-in' exists in selected study
         And User waits for 3 seconds
-        And The '/studies/Study_000001/study_structure/visits' page is opened
+        And The page 'study_structure/visits' is opened for selected study
         And User waits for epochs to load
         When Add visit button is clicked
         And Form continue button is clicked
@@ -111,17 +117,17 @@ Feature: Studies - Define Study - Study Structure - Study Visits
         And The validation appears for missing visit timing
     
     Scenario: [Create][Fields check] User must not be able to select time referece for an anchor visit
-        Given The study with uid 'Study_000003' is selected
-        Given [API] Study vists uids are fetched for study 'Study_000003'
+        When Get study 'CDISC DEV-9880' uid
+        And Select study with uid saved in previous step
         And [API] Visits group 'V2-V4' is removed
         And [API] Visits group 'V2,V3,V4' is removed
         And [API] Visits group 'V1,V2' is removed
         And [API] Visits group 'V2,V3' is removed
-        And [API] Study visits in study 'Study_000003' are cleaned-up
-        And The study with uid 'Study_000003' is selected
+        And [API] Study vists uids are fetched for selected study
+        When [API] Study visits in selected study are cleaned-up
         And [API] The epoch with type 'Pre Treatment' and subtype 'Run-in' exists in selected study
         And User waits for 3 seconds
-        And The '/studies/Study_000003/study_structure/visits' page is opened
+        And The page 'study_structure/visits' is opened for selected study
         And User waits for epochs to load
         When Add visit button is clicked
         And Form continue button is clicked
@@ -131,9 +137,10 @@ Feature: Studies - Define Study - Study Structure - Study Visits
         Then It is not possible to edit Time Reference for anchor visit
 
     Scenario: [Create][First visit][Visit window warning] User must be presented with waring regarding visit window selection
-        Given The study with uid 'Study_000003' is selected
+        When Get study 'CDISC DEV-9880' uid
+        And Select study with uid saved in previous step
         And [API] The epoch with type 'Pre Treatment' and subtype 'Run-in' exists in selected study
-        And The '/studies/Study_000003/study_structure/visits' page is opened
+        And The page 'study_structure/visits' is opened for selected study
         And User waits for epochs to load
         And User waits for 3 seconds
         When Add visit button is clicked
@@ -143,7 +150,9 @@ Feature: Studies - Define Study - Study Structure - Study Visits
         Then Warning about visit window unit selection is displayed
 
     Scenario: [Create][Not first visit][Visit window warning] User must be presented with waring regarding visit window selection
-        And The '/studies/Study_000001/study_structure/visits' page is opened
+        When Get study 'CDISC DEV-0' uid
+        And Select study with uid saved in previous step
+        And The page 'study_structure/visits' is opened for selected study
         And User waits for epochs to load
         When Add visit button is clicked
         And Form continue button is clicked
@@ -153,9 +162,10 @@ Feature: Studies - Define Study - Study Structure - Study Visits
 
     @smoke_test
     Scenario: [Create][Anchor visit][Positive case] User must be able to create an anchor visit
-        Given The study with uid 'Study_000003' is selected
+        When Get study 'CDISC DEV-9880' uid
+        And Select study with uid saved in previous step
         And [API] The epoch with type 'Pre Treatment' and subtype 'Run-in' exists in selected study
-        And The '/studies/Study_000003/study_structure/visits' page is opened
+        And The page 'study_structure/visits' is opened for selected study
         And User waits for epochs to load
         When Add visit button is clicked
         And Form continue button is clicked
@@ -168,9 +178,10 @@ Feature: Studies - Define Study - Study Structure - Study Visits
 
     @manual_test
     Scenario: [Create] User must be able to create an information visit with visit 0
-        Given The study with uid 'Study_000001' is selected
+        When Get study 'CDISC DEV-0' uid
+        And Select study with uid saved in previous step
         And [API] The epoch with type 'Pre Treatment' and subtype 'Run-in' exists in selected study
-        When The '/studies/Study_000001/study_structure/visits' page is opened
+        And The page 'study_structure/visits' is opened for selected study
         Given A test study is selected
         And The epoch exists in selected study
         When The test study '/study_structure/visits' page is opened
@@ -180,7 +191,9 @@ Feature: Studies - Define Study - Study Structure - Study Visits
         And No reordering of existing visits should happen
 
     Scenario: [Create][Anchor visit][Negative case] User must not be able to create an anchor visit if one already exists
-        And The '/studies/Study_000003/study_structure/visits' page is opened
+        When Get study 'CDISC DEV-9880' uid
+        And Select study with uid saved in previous step
+        When The page 'study_structure/visits' is opened for selected study
         And User waits for epochs to load
         When Add visit button is clicked
         And Form continue button is clicked
@@ -189,11 +202,12 @@ Feature: Studies - Define Study - Study Structure - Study Visits
         Then The Anchor visit checkbox is disabled
 
     Scenario: [Actions][Edit] User must be able to edit the study visit
-        Given The study with uid 'Study_000003' is selected
+        When Get study 'CDISC DEV-9880' uid
+        And Select study with uid saved in previous step
         And [API] The static visit data is fetched
         And [API] The dynamic visit data is fetched: contact mode 'On Site Visit', time reference 'Global anchor visit', type 'Randomisation', epoch 'Run-in'
         And [API] The visit with following attributes is created: isGlobalAnchor 0, visitWeek 1
-        Given The '/studies/Study_000003/study_structure/visits' page is opened
+        When The page 'study_structure/visits' is opened for selected study
         When User searches for 'V2'
         And The 'Edit' option is clicked from the three dot menu list
         And Form continue button is clicked
@@ -203,7 +217,9 @@ Feature: Studies - Define Study - Study Structure - Study Visits
         Then Visit description is displayed in the table as 'Testing edition'
 
     Scenario: [Actions][Edit][Fields check] User must be able to update study visit epoch
-        Given The '/studies/Study_000003/study_structure/visits' page is opened
+        When Get study 'CDISC DEV-9880' uid
+        And Select study with uid saved in previous step
+        When The page 'study_structure/visits' is opened for selected study
         When User searches for 'V2'
         And The 'Edit' option is clicked from the three dot menu list
         And Form continue button is clicked
@@ -254,7 +270,9 @@ Feature: Studies - Define Study - Study Structure - Study Visits
         Then Reordering of other visits will occur
 
     Scenario: [Actions][Delete] User must be able to delete the study visit
-        Given The '/studies/Study_000003/study_structure/visits' page is opened
+        When Get study 'CDISC DEV-9880' uid
+        And Select study with uid saved in previous step
+        When The page 'study_structure/visits' is opened for selected study
         And The 'Delete' option is clicked from the three dot menu list
         Then The pop up displays 'Visit deleted'
 

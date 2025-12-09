@@ -307,7 +307,7 @@ def test_cannot_create_a_new_odm_form_without_an_english_description(api_client)
     }
     response = api_client.post("concepts/odms/forms", json=data)
 
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
 
     res = response.json()
 
@@ -575,7 +575,7 @@ def test_inactivate_odm_form(api_client):
     assert res["repeating"] == "No"
     assert res["end_date"] is None
     assert res["status"] == "Retired"
-    assert res["version"] == "1.0"
+    assert res["version"] == "2.0"
     assert res["change_description"] == "Inactivated version"
     assert res["author_username"] == "unknown-user@example.com"
     assert res["sdtm_version"] == "0.1"

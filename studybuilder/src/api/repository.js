@@ -1,10 +1,10 @@
 import axios from 'axios'
 
 import { auth } from '@/plugins/auth'
-import { i18n } from '@/plugins/i18n'
-import { eventBusEmit } from '@/plugins/eventBus'
+import { notificationHub } from '@/plugins/notificationHub'
 import { useGlobalConfig } from '@/main'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
+import { useErrorHandler } from '@/composables/errorHandler'
 
 const _axios = axios.create()
 
@@ -62,15 +62,13 @@ _axios.interceptors.response.use(
     return response
   },
   function (error) {
-    const timeout = 30000
     console.log(error)
     if (error.config && !error.config.ignoreErrors) {
       if (!error.response) {
         // We do not have a response, we don't know the tracing id, just display the error.message
-        eventBusEmit('notification', {
+        notificationHub.add({
           msg: error.message,
           type: 'error',
-          timeout,
         })
       } else if (error.response.status === 401) {
         // Unauthorized: handled elsewhere either by login-redirect or token-refresh routine
@@ -78,39 +76,7 @@ _axios.interceptors.response.use(
         // If status code is 422, display the validation error details from error.response.data.detail.
         // Otherwise, just display the error message contained in error.response.data.message.
 
-        let msg =
-          error.response.data && error.response.data.message
-            ? error.response.data.message
-            : error.message
-        let msgPrefix = ''
-
-        if (error.response.status === 422) {
-          // Validation error
-          msgPrefix = i18n.t('_errors.validation_error')
-          if (
-            error.response.data &&
-            error.response.data.detail &&
-            Array.isArray(error.response.data.detail)
-          ) {
-            // collect validation errors and include in error message
-            const details = []
-            error.response.data.detail.forEach((err) => {
-              if (err.loc && Array.isArray(err.loc)) {
-                details.push(`"${err.loc.join('.')}" ${err.msg || err.type}`)
-              }
-            })
-            if (details.length) {
-              msg = details.join('; ') + '.'
-            }
-          }
-        }
-
-        eventBusEmit('notification', {
-          msg: `${msgPrefix} ${msg}`.trim(),
-          type: 'error',
-          timeout: timeout,
-          correlationId: error.response.headers.traceresponse,
-        })
+        useErrorHandler(error)
       }
     }
     return Promise.reject(error)

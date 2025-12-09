@@ -262,13 +262,16 @@ class OdmGenericRepository(ConceptGenericRepository[_AggregateRootType], ABC):
                         target_node_without_suffix = target_node.__label__.removesuffix(
                             "Value"
                         )
+
+                        target_node_roots = target_node.has_root.all()
+                        if not target_node_roots:
+                            continue
+
                         if target_node_without_suffix not in rs:
-                            rs[target_node_without_suffix] = [
-                                target_node.has_root.single().uid
-                            ]
+                            rs[target_node_without_suffix] = [target_node_roots[0].uid]
                         else:
                             rs[target_node_without_suffix].append(
-                                target_node.has_root.single().uid
+                                target_node_roots[0].uid
                             )
             return rs
         except AttributeError as exc:

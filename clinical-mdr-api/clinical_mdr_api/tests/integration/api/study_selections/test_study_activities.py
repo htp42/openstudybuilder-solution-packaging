@@ -36,6 +36,9 @@ from clinical_mdr_api.models.concepts.activities.activity_sub_group import (
 from clinical_mdr_api.models.controlled_terminologies import ct_term
 from clinical_mdr_api.models.projects.project import Project
 from clinical_mdr_api.models.study_selections.study import Study
+from clinical_mdr_api.models.study_selections.study_selection import (
+    StudySelectionReviewAction,
+)
 from clinical_mdr_api.models.study_selections.study_visit import StudyVisit
 from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
     IndexedTemplateParameterTerm,
@@ -742,7 +745,6 @@ def test_cascade_delete_on_activities_schedules(api_client):
         },
     )
     res = response.json()
-    assert res["study_activity_uid"] == study_activity_uid
     assert res["study_activity_uid"] == study_activity_uid
     assert_response_status_code(response, 201)
 
@@ -2474,7 +2476,7 @@ def test_edit_study_activity_groupings(api_client):
             "activity_subgroup_uid": blood_incorrect_activity_subgroup.uid,
         },
     )
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
     assert (
         response.json()["message"]
         == f"Provided Activity Group is not included in '{blood_pressure_activity.uid}' Activity Groupings."
@@ -2484,7 +2486,7 @@ def test_edit_study_activity_groupings(api_client):
         f"/studies/{study.uid}/study-activities/{blood_pressure_study_activity.study_activity_uid}",
         json={"activity_group_uid": lab_assessment_activity_group.uid},
     )
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
     res = response.json()
     assert res["message"] == "An activity subgroup is required for the selection"
     # test change of just activity subgroup
@@ -2492,7 +2494,7 @@ def test_edit_study_activity_groupings(api_client):
         f"/studies/{study.uid}/study-activities/{blood_pressure_study_activity.study_activity_uid}",
         json={"activity_subgroup_uid": blood_activity_subgroup.uid},
     )
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
     res = response.json()
     assert res["message"] == "An activity group is required for the selection"
     # test change of activity group and subgroup to the same values
@@ -2521,7 +2523,7 @@ def test_edit_study_activity_groupings(api_client):
             "activity_subgroup_uid": "non_existent",
         },
     )
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
     # test change if non existent activity subgroup
     response = api_client.patch(
         f"/studies/{study.uid}/study-activities/{blood_pressure_study_activity.study_activity_uid}",
@@ -2530,7 +2532,7 @@ def test_edit_study_activity_groupings(api_client):
             "activity_subgroup_uid": "non_existent",
         },
     )
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
 
 
 def test_sync_study_activity_to_latest_version_of_activity(api_client):
@@ -2567,10 +2569,100 @@ def test_sync_study_activity_to_latest_version_of_activity(api_client):
     )
     assert_response_status_code(response, 200)
     sa_before_sync = response.json()
+    assert sa_before_sync["is_activity_updated"] is False
     assert sa_before_sync["latest_activity"] is None
     assert sa_before_sync["activity"]["uid"] == activity_to_change.uid
     assert sa_before_sync["activity"]["name"] == activity_name_before_change
     assert sa_before_sync["keep_old_version"] is False
+
+    temporary_ag = TestUtils.create_activity_group(name="Temporary AG")
+    # Update ActivitySubGroup to latest ActivityGroup version
+    response = api_client.post(
+        f"/concepts/activities/activity-sub-groups/{randomisation_activity_subgroup.uid}/versions"
+    )
+    assert_response_status_code(response, 201)
+
+    response = api_client.put(
+        f"/concepts/activities/activity-sub-groups/{randomisation_activity_subgroup.uid}",
+        json={
+            "name": randomisation_activity_subgroup.name,
+            "name_sentence_case": randomisation_activity_subgroup.name.lower(),
+            "library_name": randomisation_activity_subgroup.library_name,
+            "activity_groups": [general_activity_group.uid, temporary_ag.uid],
+            "change_description": "Pulled ActivityGroup change",
+        },
+    )
+    assert_response_status_code(response, 200)
+    response = api_client.post(
+        f"/concepts/activities/activity-sub-groups/{randomisation_activity_subgroup.uid}/approvals"
+    )
+    assert_response_status_code(response, 201)
+
+    # create new draft version for activity
+    response = api_client.post(
+        f"/concepts/activities/activities/{activity_to_change.uid}/versions"
+    )
+    assert_response_status_code(response, 201)
+
+    # update library activity
+    response = api_client.put(
+        f"/concepts/activities/activities/{activity_to_change.uid}",
+        json={
+            "name": activity_to_change.name,
+            "name_sentence_case": activity_to_change.name.lower(),
+            "activity_groupings": [
+                {
+                    "activity_group_uid": general_activity_group.uid,
+                    "activity_subgroup_uid": randomisation_activity_subgroup.uid,
+                },
+                {
+                    "activity_group_uid": temporary_ag.uid,
+                    "activity_subgroup_uid": randomisation_activity_subgroup.uid,
+                },
+            ],
+            "library_name": activity_to_change.library_name,
+            "change_description": "Updated name",
+        },
+    )
+    assert_response_status_code(response, 200)
+    response = api_client.post(
+        f"/concepts/activities/activities/{activity_to_change.uid}/approvals"
+    )
+    assert_response_status_code(response, 201)
+
+    # check if study activity sees that change was made on library level
+    response = api_client.get(
+        f"/studies/{test_study.uid}/study-activities/{study_activity_v1.study_activity_uid}"
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert res["is_activity_updated"] is False
+    assert res["latest_activity"]["uid"] == activity_to_change.uid
+    assert res["latest_activity"]["name"] == activity_to_change.name
+    assert len(res["latest_activity"]["activity_groupings"]) == 2
+    assert res["activity"]["uid"] == activity_to_change.uid
+    assert res["activity"]["name"] == activity_name_before_change
+    assert len(res["activity"]["activity_groupings"]) == 1
+
+    # sync to latest version of activity
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activities/{study_activity_v1.study_activity_uid}/sync-latest-version",
+        json={
+            "activity_group_uid": general_activity_group.uid,
+            "activity_subgroup_uid": randomisation_activity_subgroup.uid,
+        },
+    )
+    assert_response_status_code(response, 201)
+    sa_after_sync = response.json()
+    # Synced Activity got new pair of ActivityGroupings, so this change does not influence ProtocolSoA so we don't have to change StudyActivityGroup and StudyActivitySubGroup nodes
+    assert (
+        sa_after_sync["study_activity_group"]["study_activity_group_uid"]
+        == sa_before_sync["study_activity_group"]["study_activity_group_uid"]
+    )
+    assert (
+        sa_after_sync["study_activity_subgroup"]["study_activity_subgroup_uid"]
+        == sa_before_sync["study_activity_subgroup"]["study_activity_subgroup_uid"]
+    )
 
     # Update ActivityGroup name
     response = api_client.post(
@@ -2651,6 +2743,7 @@ def test_sync_study_activity_to_latest_version_of_activity(api_client):
     )
     assert_response_status_code(response, 200)
     res = response.json()
+    assert res["is_activity_updated"] is True
     assert res["latest_activity"]["uid"] == activity_to_change.uid
     assert res["latest_activity"]["name"] == activity_name_after_change
     assert (
@@ -2678,6 +2771,7 @@ def test_sync_study_activity_to_latest_version_of_activity(api_client):
         sa_after_sync["study_activity_group"]["study_activity_group_uid"]
         != sa_before_sync["study_activity_group"]["study_activity_group_uid"]
     )
+    assert sa_after_sync["is_activity_updated"] is False
     assert sa_after_sync["latest_activity"] is None
     assert sa_after_sync["activity"]["uid"] == activity_to_change.uid
     assert sa_after_sync["activity"]["name"] == activity_name_after_change
@@ -2735,6 +2829,8 @@ def test_sync_study_activity_to_latest_version_of_activity(api_client):
     assert_response_status_code(response, 200)
     res = response.json()
 
+    assert res["is_activity_updated"] is True
+    assert len(res["latest_activity"]["activity_groupings"]) == 1
     assert res["latest_activity"]["uid"] == activity_to_change.uid
     assert (
         res["latest_activity"]["activity_groupings"][0]["activity_group_uid"]
@@ -2744,6 +2840,7 @@ def test_sync_study_activity_to_latest_version_of_activity(api_client):
         res["latest_activity"]["activity_groupings"][0]["activity_subgroup_uid"]
         == adverse_events_activity_subgroup.uid
     )
+    assert len(res["activity"]["activity_groupings"]) == 1
     assert res["activity"]["uid"] == activity_to_change.uid
     assert (
         res["activity"]["activity_groupings"][0]["activity_group_uid"]
@@ -2782,6 +2879,8 @@ def test_sync_study_activity_to_latest_version_of_activity(api_client):
     )
     assert_response_status_code(response, 201)
     sa_after_sync = response.json()
+    assert sa_after_sync["is_activity_updated"] is False
+    assert sa_after_sync["latest_activity"] is None
     assert (
         sa_after_sync["study_activity_group"]["activity_group_uid"]
         == adverse_events_activity_group.uid
@@ -3860,6 +3959,195 @@ def test_batch_operations_for_combined_study_activity_and_activity_schedules(
     assert len(study_activity_schedules) == 0
 
 
+def test_study_activities_review_changes_batch(api_client):
+    test_study = TestUtils.create_study(project_number=project.project_number)
+    api_client.post(
+        f"/studies/{test_study.uid}/study-activities/batch",
+        json=[
+            {
+                "method": "POST",
+                "content": {
+                    "soa_group_term_uid": term_efficacy_uid,
+                    "activity_uid": weight_activity.uid,
+                    "activity_subgroup_uid": randomisation_activity_subgroup.uid,
+                    "activity_group_uid": general_activity_group.uid,
+                },
+            },
+            {
+                "method": "POST",
+                "content": {
+                    "soa_group_term_uid": term_efficacy_uid,
+                    "activity_uid": weight_activity.uid,
+                    "activity_subgroup_uid": body_measurements_activity_subgroup.uid,
+                    "activity_group_uid": general_activity_group.uid,
+                },
+            },
+        ],
+    )
+
+    response = api_client.get(f"/studies/{test_study.uid}/study-activities")
+    assert_response_status_code(response, 200)
+    study_activities = response.json()["items"]
+
+    assert len(study_activities) == 2
+    randomisation_sactivity = study_activities[0]["study_activity_uid"]
+    body_measurements_sactivity = study_activities[1]["study_activity_uid"]
+
+    # Retire Activity
+    response = api_client.delete(
+        f"/concepts/activities/activities/{weight_activity.uid}/activations"
+    )
+    assert_response_status_code(response, 200)
+
+    response = api_client.get(f"/studies/{test_study.uid}/study-activities")
+    assert_response_status_code(response, 200)
+    study_activities = response.json()["items"]
+    for sa in study_activities:
+        assert sa["latest_activity"] is not None
+        assert sa["latest_activity"]["uid"] == weight_activity.uid
+        assert sa["latest_activity"]["status"] == "Retired"
+        assert sa["activity"]["uid"] == weight_activity.uid
+        assert sa["activity"]["status"] == "Final"
+
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activities/changes-review/batch",
+        json=[
+            {
+                "action": StudySelectionReviewAction.DECLINE.value,
+                "uid": randomisation_sactivity,
+                "content": {
+                    "keep_old_version": True,
+                },
+            },
+            {
+                "action": StudySelectionReviewAction.DECLINE.value,
+                "uid": body_measurements_sactivity,
+                "content": {
+                    "keep_old_version": True,
+                },
+            },
+        ],
+    )
+    assert_response_status_code(response, 207)
+    response = api_client.get(f"/studies/{test_study.uid}/study-activities")
+    assert_response_status_code(response, 200)
+    study_activities = response.json()["items"]
+    for sa in study_activities:
+        assert sa["keep_old_version"] is True
+        assert sa["latest_activity"] is not None
+        assert sa["latest_activity"]["uid"] == weight_activity.uid
+        assert sa["latest_activity"]["status"] == "Retired"
+        assert sa["activity"]["uid"] == weight_activity.uid
+        assert sa["activity"]["status"] == "Final"
+
+    # Reactivate Activity
+    response = api_client.post(
+        f"/concepts/activities/activities/{weight_activity.uid}/activations"
+    )
+    assert_response_status_code(response, 200)
+
+    # create new draft version for activity
+    response = api_client.post(
+        f"/concepts/activities/activities/{weight_activity.uid}/versions"
+    )
+    assert_response_status_code(response, 201)
+
+    # update library activity
+    activity_name_after_change = "Activity Weight V2"
+    response = api_client.put(
+        f"/concepts/activities/activities/{weight_activity.uid}",
+        json={
+            "name": activity_name_after_change,
+            "name_sentence_case": activity_name_after_change.lower(),
+            "activity_groupings": [
+                {
+                    "activity_group_uid": general_activity_group.uid,
+                    "activity_subgroup_uid": randomisation_activity_subgroup.uid,
+                },
+                {
+                    "activity_group_uid": general_activity_group.uid,
+                    "activity_subgroup_uid": body_measurements_activity_subgroup.uid,
+                },
+            ],
+            "library_name": weight_activity.library_name,
+            "change_description": "Updated name",
+        },
+    )
+    assert_response_status_code(response, 200)
+    response = api_client.post(
+        f"/concepts/activities/activities/{weight_activity.uid}/approvals"
+    )
+    assert_response_status_code(response, 201)
+
+    # Retire Randomisation Subgroup
+    response = api_client.delete(
+        f"/concepts/activities/activity-sub-groups/{randomisation_activity_subgroup.uid}/activations"
+    )
+    assert_response_status_code(response, 200)
+
+    response = api_client.get(
+        f"/studies/{test_study.uid}/study-activities?filter_out_retired_groupings=true"
+    )
+    assert_response_status_code(response, 200)
+
+    res = response.json()["items"][0]
+    # Randomisation subgroups gets Retired so it got filtered out from /study-activities response
+    # so it couldn't be used in the StudyActivity version update form
+    assert len(res["latest_activity"]["activity_groupings"]) == 1
+    assert len(res["activity"]["activity_groupings"]) == 2
+
+    response = api_client.get(f"/concepts/activities/activities/{weight_activity.uid}")
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert len(res["activity_groupings"]) == 2
+
+    # Reactivate Randomisation Subgroup
+    response = api_client.post(
+        f"/concepts/activities/activity-sub-groups/{randomisation_activity_subgroup.uid}/activations"
+    )
+    assert_response_status_code(response, 200)
+
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activities/changes-review/batch",
+        json=[
+            {
+                "action": StudySelectionReviewAction.ACCEPT.value,
+                "uid": randomisation_sactivity,
+                "content": {
+                    "activity_group_uid": general_activity_group.uid,
+                    "activity_subgroup_uid": randomisation_activity_subgroup.uid,
+                },
+            },
+            {
+                "action": StudySelectionReviewAction.DECLINE.value,
+                "uid": body_measurements_sactivity,
+                "content": {
+                    "keep_old_version": True,
+                },
+            },
+        ],
+    )
+    assert_response_status_code(response, 207)
+
+    response = api_client.get(
+        f"/studies/{test_study.uid}/study-activities/{randomisation_sactivity}"
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert res["latest_activity"] is None
+    assert res["activity"]["name"] == activity_name_after_change
+    assert res["keep_old_version"] is False
+
+    response = api_client.get(
+        f"/studies/{test_study.uid}/study-activities/{body_measurements_sactivity}"
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert res["latest_activity"]["name"] == activity_name_after_change
+    assert res["activity"]["name"] == weight_activity.name
+    assert res["keep_old_version"] is True
+
+
 def test_study_activity_should_link_subgroup_and_group_version_based_on_the_version_linked_by_activity(
     api_client,
 ):
@@ -3922,3 +4210,105 @@ def test_study_activity_should_link_subgroup_and_group_version_based_on_the_vers
         res["study_activity_group"]["activity_group_name"]
         == group_in_specific_version["name"]
     )
+
+
+def test_study_activity_invalidate_keep_old_version(api_client):
+    test_study = TestUtils.create_study(project_number=project.project_number)
+    test_activity = TestUtils.create_activity(
+        name="Test activity",
+        activity_subgroups=[body_measurements_activity_subgroup.uid],
+        activity_groups=[general_activity_group.uid],
+        library_name="Sponsor",
+    )
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activities",
+        json={
+            "activity_uid": test_activity.uid,
+            "activity_subgroup_uid": body_measurements_activity_subgroup.uid,
+            "activity_group_uid": general_activity_group.uid,
+            "soa_group_term_uid": term_efficacy_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
+    study_activity_uid = response.json()["study_activity_uid"]
+
+    response = api_client.delete(
+        f"/concepts/activities/activities/{test_activity.uid}/activations"
+    )
+    assert_response_status_code(response, 200)
+
+    # TODO fix study-activities get by uid as it returns same activity for latest_activity and activity if activity is retired
+    # it should return Retired one as latest_activity and Final one as activity
+    # as temporary fix calling get all that works fine as for now.
+    response = api_client.get(f"/studies/{test_study.uid}/study-activities")
+    assert_response_status_code(response, 200)
+    res = response.json()["items"]
+
+    assert res[0]["keep_old_version"] is False
+    assert res[0]["activity"]["status"] == "Final"
+    assert res[0]["latest_activity"]["status"] == "Retired"
+
+    response = api_client.patch(
+        f"/studies/{test_study.uid}/study-activities/{study_activity_uid}",
+        json={
+            "keep_old_version": True,
+        },
+    )
+    assert_response_status_code(response, 200)
+
+    response = api_client.get(f"/studies/{test_study.uid}/study-activities")
+    assert_response_status_code(response, 200)
+    res = response.json()["items"]
+    assert res[0]["keep_old_version"] is True
+    assert res[0]["activity"]["status"] == "Final"
+    assert res[0]["latest_activity"]["status"] == "Retired"
+
+    response = api_client.post(
+        f"/concepts/activities/activities/{test_activity.uid}/activations"
+    )
+    assert_response_status_code(response, 200)
+
+    response = api_client.post(
+        f"/concepts/activities/activities/{test_activity.uid}/versions"
+    )
+    assert_response_status_code(response, 201)
+    activity = response.json()
+
+    updated_name = test_activity.name + " updated"
+    response = api_client.put(
+        f"/concepts/activities/activities/{test_activity.uid}",
+        json={
+            "name": updated_name,
+            "name_sentence_case": updated_name.lower(),
+            "activity_groupings": activity["activity_groupings"],
+            "library_name": test_activity.library_name,
+            "change_description": "Updated name",
+        },
+    )
+    assert_response_status_code(response, 200)
+
+    response = api_client.post(
+        f"/concepts/activities/activities/{test_activity.uid}/approvals"
+    )
+    assert_response_status_code(response, 201)
+
+    response = api_client.get(f"/studies/{test_study.uid}/study-activities")
+    assert_response_status_code(response, 200)
+    res = response.json()["items"]
+    assert res[0]["keep_old_version"] is False
+    assert res[0]["activity"]["status"] == "Final"
+    assert res[0]["latest_activity"]["status"] == "Final"
+    assert res[0]["latest_activity"]["name"] == updated_name
+
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activities/{study_activity_uid}/sync-latest-version",
+    )
+    assert_response_status_code(response, 201)
+
+    response = api_client.get(f"/studies/{test_study.uid}/study-activities")
+    assert_response_status_code(response, 200)
+    res = response.json()["items"]
+    assert res[0]["keep_old_version"] is False
+    assert res[0]["activity"]["status"] == "Final"
+    assert res[0]["activity"]["name"] == updated_name
+    assert res[0]["latest_activity"] is None

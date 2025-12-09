@@ -19,7 +19,7 @@ Feature: Library - Data Collection Standards - CRF Builder - Forms
             | headers              |
             | OID                  |
             | Name                 |
-            | Implementation Notes |
+            | Design Notes         |
             | Repeating            |
             | Version              |
             | Status               |
@@ -71,21 +71,21 @@ Feature: Library - Data Collection Standards - CRF Builder - Forms
         Given The '/library/crf-builder/forms' page is opened
         And Created CRF form is found
         When The 'Inactivate' option is clicked from the three dot menu list
-        Then The item has status 'Retired' and version '1.0'
+        Then The item has status 'Retired' and version '2.0'
 
     Scenario: [Actions][Reactivate] User must be able to reactivate CRF form in retired status
         Given The '/library/crf-builder/forms' page is opened
         And Created CRF form is found
         When The 'Reactivate' option is clicked from the three dot menu list
-        Then The item has status 'Final' and version '1.0'
+        Then The item has status 'Final' and version '3.0'
 
-    Scenario: [Actions][Edit][version 1.0] User must be able to create new version of currently approved CRF form
+    Scenario: [Actions][Edit][version 3.0] User must be able to create new version of currently approved CRF form
         Given The '/library/crf-builder/forms' page is opened
         And Created CRF form is found
         When The 'New version' option is clicked from the three dot menu list
         Then The New version popup window is displayed
         When Action is confirmed by clicking continue
-        Then The item has status 'Draft' and version '1.1'
+        Then The item has status 'Draft' and version '3.1'
 
     Scenario: [Actions][Delete] User must be able to delete CRF Form in draft status
         Given The '/library/crf-builder/forms' page is opened

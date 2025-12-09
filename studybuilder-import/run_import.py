@@ -3,6 +3,7 @@ from importers.run_import_complexity_burdens import ComplexityBurdens
 from importers.run_import_compounds import Compounds
 from importers.run_import_config import Configuration
 from importers.run_import_crfs import Crfs
+from importers.run_import_data_suppliers import DataSuppliers
 from importers.run_import_dictionaries import Dictionaries
 from importers.run_import_e2e import MockdataJsonE2E
 from importers.run_import_mockdata import Mockdata
@@ -51,6 +52,10 @@ def main():
     # Finish up sponsor library
     finishing = StandardCodelistFinish(metrics_inst=metr)
     finishing.run()
+
+    # Import data suppliers
+    data_suppliers = DataSuppliers(metrics_inst=metr)
+    data_suppliers.run()
 
     # Import compounds
     compounds = Compounds(metrics_inst=metr)

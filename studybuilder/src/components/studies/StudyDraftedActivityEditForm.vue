@@ -131,7 +131,7 @@ export default {
   components: {
     HelpButton,
   },
-  inject: ['eventBusEmit', 'formRules'],
+  inject: ['notificationHub', 'formRules'],
   props: {
     studyActivity: {
       type: Object,
@@ -208,6 +208,7 @@ export default {
     },
     close() {
       this.working = false
+      this.notificationHub.clearErrors()
       this.form = {}
       this.$refs.observer.reset()
       this.$emit('close')
@@ -220,6 +221,9 @@ export default {
       if (!valid) {
         return
       }
+
+      this.notificationHub.clearErrors()
+
       this.working = true
       study
         .updateStudyActivityRequest(
@@ -229,7 +233,7 @@ export default {
         )
         .then(
           () => {
-            this.eventBusEmit('notification', {
+            this.notificationHub.add({
               type: 'success',
               msg: this.$t('StudyActivityEditForm.update_success'),
             })

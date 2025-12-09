@@ -225,7 +225,7 @@ export default {
     SimpleFormDialog,
     YesNoField,
   },
-  inject: ['eventBusEmit'],
+  inject: ['notificationHub'],
   props: {
     initialData: {
       type: Object,
@@ -374,6 +374,7 @@ export default {
     },
     close() {
       this.$emit('close')
+      this.notificationHub.clearErrors()
       this.$refs.observer.resetValidation()
     },
     async cancel() {
@@ -440,6 +441,8 @@ export default {
       return data
     },
     async submit() {
+      this.notificationHub.clearErrors()
+
       const data = this.prepareRequestPayload()
       try {
         await this.studiesManageStore.editStudyPopulation(
@@ -450,7 +453,7 @@ export default {
             : null
         )
         this.$emit('updated', data)
-        this.eventBusEmit('notification', {
+        this.notificationHub.add({
           msg: this.$t('StudyPopulationForm.update_success'),
         })
         this.close()

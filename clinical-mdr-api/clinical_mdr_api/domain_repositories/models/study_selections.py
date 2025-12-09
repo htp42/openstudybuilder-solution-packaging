@@ -29,6 +29,7 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     ClinicalMdrRel,
     Conjunction,
     ConjunctionRelation,
+    ZonedDateTimeProperty,
 )
 from clinical_mdr_api.domain_repositories.models.medicinal_product import (
     MedicinalProductValue,
@@ -89,6 +90,21 @@ class HasProtocolSoAFootnoteRel(ClinicalMdrRel):
 class StudySelection(ClinicalMdrNodeWithUID, AuditTrailMixin):
     order = IntegerProperty()
     accepted_version = BooleanProperty()
+
+
+class StudyDataSupplier(StudySelection):
+    study_value = RelationshipFrom(
+        STUDY_VALUE_CLASS_NAME,
+        "HAS_STUDY_DATA_SUPPLIER",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrOne,
+    )
+    has_study_data_supplier_type = RelationshipTo(
+        CTTermContext,
+        "HAS_STUDY_DATA_SUPPLIER_TYPE",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrOne,
+    )
 
 
 class StudyObjective(StudySelection):
@@ -339,6 +355,7 @@ class StudyActivityGroup(StudySelection):
 
 class StudyActivity(StudySelection):
     keep_old_version = BooleanProperty(default=False)
+    keep_old_version_date = ZonedDateTimeProperty()
     show_activity_in_protocol_flowchart = BooleanProperty(default=False)
     has_study_activity = RelationshipFrom(
         STUDY_VALUE_CLASS_NAME,
@@ -397,6 +414,9 @@ class StudyActivity(StudySelection):
 
 class StudyActivityInstance(StudySelection):
     keep_old_version = BooleanProperty(default=False)
+    keep_old_version_date = ZonedDateTimeProperty()
+    show_activity_instance_in_protocol_flowchart = BooleanProperty(default=False)
+    is_important = BooleanProperty(default=False)
     has_study_activity_instance = RelationshipFrom(
         STUDY_VALUE_CLASS_NAME,
         "HAS_STUDY_ACTIVITY_INSTANCE",
@@ -414,7 +434,13 @@ class StudyActivityInstance(StudySelection):
         model=ClinicalMdrRel,
         cardinality=One,
     )
-    show_activity_instance_in_protocol_flowchart = BooleanProperty(default=False)
+    is_reviewed = BooleanProperty(default=False)
+    has_baseline = RelationshipTo(
+        ".study_visit.StudyVisit",
+        "HAS_BASELINE",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrMore,
+    )
 
 
 class StudyActivitySchedule(StudySelection):

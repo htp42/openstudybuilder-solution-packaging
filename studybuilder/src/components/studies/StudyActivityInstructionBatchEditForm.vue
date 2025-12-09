@@ -64,7 +64,7 @@ export default {
     SimpleFormDialog,
     StudyActivitySelectionTable,
   },
-  inject: ['eventBusEmit'],
+  inject: ['notificationHub'],
   props: {
     selection: {
       type: Array,
@@ -122,6 +122,7 @@ export default {
   methods: {
     close() {
       this.$emit('close')
+      this.notificationHub.clearErrors()
       this.form = {}
     },
     async loadParameters(template) {
@@ -149,6 +150,9 @@ export default {
           this.$refs.form.working = false
           return
         }
+
+        this.notificationHub.clearErrors()
+
         for (const item of this.selection) {
           operations.push({
             method: 'DELETE',
@@ -201,7 +205,7 @@ export default {
         notifType = 'info'
         msg = this.$t('_global.no_changes')
       }
-      this.eventBusEmit('notification', { msg, type: notifType })
+      this.notificationHub.add({ msg, type: notifType })
       this.$refs.form.working = false
       this.close()
     },

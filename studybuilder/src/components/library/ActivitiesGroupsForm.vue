@@ -99,7 +99,7 @@ export default {
     SimpleFormDialog,
     SentenceCaseNameField,
   },
-  inject: ['eventBusEmit', 'formRules'],
+  inject: ['notificationHub', 'formRules'],
   props: {
     open: Boolean,
     editedGroupOrSubgroup: {
@@ -211,6 +211,7 @@ export default {
     },
     close() {
       this.$emit('close')
+      this.notificationHub.clearErrors()
       this.form = {}
       this.editing = false
       this.$refs.form.working = false
@@ -218,12 +219,14 @@ export default {
       this.$refs.observer.reset()
     },
     async submit() {
+      this.notificationHub.clearErrors()
+
       this.form.library_name = 'Sponsor' // Hardcoded for now at the Sinna and Mikkel request
       if (!this.editedGroupOrSubgroup) {
         if (!this.subgroup) {
           activities.create(this.form, 'activity-groups').then(
             () => {
-              this.eventBusEmit('notification', {
+              this.notificationHub.add({
                 msg: this.$t('ActivityForms.group_created'),
               })
               this.close()
@@ -235,7 +238,7 @@ export default {
         } else {
           activities.create(this.form, 'activity-sub-groups').then(
             () => {
-              this.eventBusEmit('notification', {
+              this.notificationHub.add({
                 msg: this.$t('ActivityForms.subgroup_created'),
               })
               this.close()
@@ -256,7 +259,7 @@ export default {
             )
             .then(
               () => {
-                this.eventBusEmit('notification', {
+                this.notificationHub.add({
                   msg: this.$t('ActivityForms.group_updated'),
                 })
                 this.close()
@@ -275,7 +278,7 @@ export default {
             )
             .then(
               () => {
-                this.eventBusEmit('notification', {
+                this.notificationHub.add({
                   msg: this.$t('ActivityForms.subgroup_updated'),
                 })
                 this.close()

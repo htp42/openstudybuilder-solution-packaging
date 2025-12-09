@@ -203,7 +203,10 @@ class ActivityService(ConceptGenericService[ActivityAR]):
         )
 
     def _edit_aggregate(
-        self, item: ActivityAR, concept_edit_input: ActivityEditInput
+        self,
+        item: ActivityAR,
+        concept_edit_input: ActivityEditInput,
+        perform_validation: bool = True,
     ) -> ActivityAR:
         activity_groups_by_uid: dict[Any, Any] | set
         activity_subgroups_by_uid: dict[Any, Any] | set
@@ -256,6 +259,7 @@ class ActivityService(ConceptGenericService[ActivityAR]):
             activity_subgroup_exists=activity_subgroups_by_uid.__contains__,
             activity_group_exists=activity_groups_by_uid.__contains__,
             get_activity_uids_by_synonyms_callback=self._repos.activity_repository.get_activity_uids_by_synonyms,
+            perform_validation=perform_validation,
         )
         return item
 
@@ -441,10 +445,7 @@ class ActivityService(ConceptGenericService[ActivityAR]):
             # Do not upversion any instances if the activity is without data collection
             return
 
-        _, _, _, activity_after_save = item.repository_closure_data
-        _, _, _, activity_before_save = activity_after_save.repository_closure_data
-        item_metadata = activity_before_save.item_metadata
-        last_final_version = f"{item_metadata.major_version}.0"
+        last_final_version = f"{item.item_metadata.major_version-1}.0"
 
         linked_instances = (
             self._repos.activity_repository.get_linked_upgradable_activity_instances(
@@ -453,42 +454,65 @@ class ActivityService(ConceptGenericService[ActivityAR]):
         )
         if linked_instances is None:
             return
+        self.batch_cascade_update(item, linked_instances)
 
-        instance_service = ActivityInstanceService()
-
-        for instance in linked_instances.get("activity_instances", []):
-            # Only process FINAL status instances - skip DRAFT instances entirely
-            if instance["version"]["status"] != LibraryItemStatus.FINAL.value:
-                continue
-
-            instance_groupings = []
-            for grouping in item.concept_vo.activity_groupings:
-                grp = {
-                    "activity_uid": item.uid,
-                    "activity_group_uid": grouping.activity_group_uid,
-                    "activity_subgroup_uid": grouping.activity_subgroup_uid,
-                }
-                if grp in instance["activity_groupings"]:
-                    instance_groupings.append(ActivityInstanceGrouping(**grp))
-
-            if not instance_groupings:
-                # No matching groupings found, skip this instance
-                continue
-
-            # For FINAL instances: create new version, edit, and approve
-            instance_service.non_transactional_create_new_version(instance["uid"])
-
-            edit_input = ActivityInstanceEditInput(
-                change_description="Cascade edit",
-                activity_groupings=instance_groupings,
-                name=instance["name"],
-                name_sentence_case=instance["name_sentence_case"],
+    def batch_cascade_update(self, item: ActivityAR, linked_instances: dict[str, Any]):
+        activity_instance_service = ActivityInstanceService()
+        linked_instances_map = {
+            activity_instance["uid"]: activity_instance
+            for activity_instance in linked_instances.get("activity_instances", [])
+        }
+        activity_instance_uids = list(linked_instances_map.keys())
+        if activity_instance_uids:
+            self._repos.activity_instance_repository.lock_objects(
+                uids=activity_instance_uids
             )
-            instance_service.non_transactional_edit(
-                uid=instance["uid"], concept_edit_input=edit_input, patch_mode=False
+            activity_instance_ars, _ = (
+                self._repos.activity_instance_repository.find_all(
+                    uids=activity_instance_uids,
+                )
             )
+            for activity_instance in activity_instance_ars:
+                # Only process FINAL status activity instances - skip DRAFT instances entirely
+                if (
+                    activity_instance.item_metadata.status.value
+                    != LibraryItemStatus.FINAL.value
+                ):
+                    continue
+                instance_from_db = linked_instances_map[activity_instance.uid]
+                instance_groupings = []
+                for grouping in item.concept_vo.activity_groupings:
+                    grp = {
+                        "activity_uid": item.uid,
+                        "activity_group_uid": grouping.activity_group_uid,
+                        "activity_subgroup_uid": grouping.activity_subgroup_uid,
+                    }
+                    if grp in instance_from_db["activity_groupings"]:
+                        instance_groupings.append(ActivityInstanceGrouping(**grp))
 
-            instance_service.approve(instance["uid"])
+                if not instance_groupings:
+                    # No matching groupings found, skip this instance
+                    continue
+
+                # For FINAL activity instances: create new version, edit, and approve
+                activity_instance.create_new_version(author_id=self.author_id)
+
+                edit_input = ActivityInstanceEditInput(
+                    change_description="Cascade edit",
+                    activity_groupings=instance_groupings,
+                    name=activity_instance.concept_vo.name,
+                    name_sentence_case=activity_instance.concept_vo.name_sentence_case,
+                )
+                activity_instance = activity_instance_service._edit_aggregate(
+                    item=activity_instance,
+                    concept_edit_input=edit_input,
+                    perform_validation=False,
+                )
+
+                activity_instance.approve(author_id=self.author_id)
+                self._repos.activity_instance_repository.copy_activity_instance_and_recreate_activity_groupings(
+                    activity_instance=activity_instance, author_id=self.author_id
+                )
 
     def get_specific_activity_version_groupings(
         self,

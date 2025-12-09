@@ -63,7 +63,7 @@ import ParameterValueSelector from '@/components/tools/ParameterValueSelector.vu
 import templatesApi from '@/api/templates'
 import templatePreInstancesApi from '@/api/templatePreInstances'
 
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const formRules = inject('formRules')
 const props = defineProps({
   objectType: {
@@ -177,6 +177,7 @@ onMounted(() => {
 })
 
 function close() {
+  notificationHub.clearErrors()
   parameters.value = []
   form.value = {}
   stepper.value.reset()
@@ -237,12 +238,14 @@ function prepareIndexingPayload() {
 }
 
 async function submit() {
+  notificationHub.clearErrors()
+
   const data = { ...form.value }
   await preparePayload(data, props.template !== undefined)
   if (props.template) {
     await api.addPreInstance(props.template.uid, data)
     emit('success')
-    eventBusEmit('notification', {
+    notificationHub.add({
       msg: t(`${translationKey.value}PreInstanceForm.add_success`),
     })
   } else {
@@ -258,11 +261,11 @@ async function submit() {
     }
     if (updated) {
       emit('success')
-      eventBusEmit('notification', {
+      notificationHub.add({
         msg: t(`${translationKey.value}PreInstanceForm.update_success`),
       })
     } else {
-      eventBusEmit('notification', {
+      notificationHub.add({
         type: 'info',
         msg: t('_global.no_changes'),
       })

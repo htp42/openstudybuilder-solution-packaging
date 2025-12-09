@@ -219,7 +219,7 @@ def test_get_dataset_scenario(api_client):
     assert res["uid"] == dataset_scenarios[0].uid
     assert res["label"] == "DatasetScenario A label"
     assert res["catalogue_name"] == data_model_catalogue_name
-    assert res["dataset"]["name"] == dataset.label
+    assert res["dataset"]["uid"] == dataset.uid
     assert res["data_model_ig_names"] == [data_model_ig.name]
 
 
@@ -387,9 +387,9 @@ def test_filtering_wildcard(
         pytest.param('{"label": {"v": ["name-BBB"]}}', "label", "name-BBB"),
         pytest.param('{"label": {"v": ["cc"]}}', None, None),
         pytest.param(
-            '{"dataset.name": {"v": ["Dataset A label"]}}',
-            "dataset.name",
-            "Dataset A label",
+            '{"dataset.uid": {"v": ["Dataset_000001"]}}',
+            "dataset.uid",
+            "Dataset_000001",
         ),
         pytest.param(
             '{"catalogue_name": {"v": ["DataModelCatalogue name"]}}',
@@ -449,7 +449,7 @@ def test_filtering_exact(
     "field_name",
     [
         pytest.param("label"),
-        pytest.param("dataset.name"),
+        pytest.param("dataset.uid"),
         pytest.param("catalogue_name"),
     ],
 )

@@ -194,7 +194,9 @@ class LibraryItemMetadataVO:
                 _change_description=change_description,
                 _author_id=author_id,
             )
-        raise BusinessLogicException(msg="Cannot create new Draft version")
+        raise BusinessLogicException(
+            msg="New draft version can be created only for FINAL versions."
+        )
 
     def new_final_version(self, author_id: str, change_description: str) -> Self:
         """
@@ -270,12 +272,15 @@ class VersioningActionMixin:
         )
         BusinessLogicException.raise_if(
             self.item_metadata.status != LibraryItemStatus.DRAFT,
-            msg="Only DRAFT version can be approved.",
+            msg="The object isn't in draft status.",
         )
         self._item_metadata = new_metadata
 
     def inactivate(
-        self, author_id: str, change_description: str = _RETIRED_VERSION_LABEL
+        self,
+        author_id: str,
+        change_description: str = _RETIRED_VERSION_LABEL,
+        force_new_value_node: bool = False,
     ) -> None:
         """
         Inactivates latest version.
@@ -285,9 +290,23 @@ class VersioningActionMixin:
         self._item_metadata = self._item_metadata.new_retired_version(
             author_id=author_id, change_description=change_description
         )
+        if force_new_value_node:
+            self._item_metadata = replace(
+                self._item_metadata,
+                _start_date=self._item_metadata.start_date,
+                _end_date=self._item_metadata.end_date,
+                _status=self._item_metadata.status,
+                _major_version=self._item_metadata.major_version + 1,
+                _minor_version=self._item_metadata.minor_version,
+                _change_description=self._item_metadata.change_description,
+                _author_id=self._item_metadata.author_id,
+            )
 
     def reactivate(
-        self, author_id: str, change_description: str = _REACTIVATED_VERSION_LABEL
+        self,
+        author_id: str,
+        change_description: str = _REACTIVATED_VERSION_LABEL,
+        force_new_value_node: bool = False,
     ) -> None:
         """
         Reactivates latest retired version and sets the version to draft.
@@ -298,10 +317,20 @@ class VersioningActionMixin:
             self.item_metadata.status != LibraryItemStatus.RETIRED,
             msg="Only RETIRED version can be reactivated.",
         )
-        new_metadata = self._item_metadata.new_final_version(
+        self._item_metadata = self._item_metadata.new_final_version(
             author_id=author_id, change_description=change_description
         )
-        self._item_metadata = new_metadata
+        if force_new_value_node:
+            self._item_metadata = replace(
+                self._item_metadata,
+                _start_date=self._item_metadata.start_date,
+                _end_date=self._item_metadata.end_date,
+                _status=self._item_metadata.status,
+                _major_version=self._item_metadata.major_version + 1,
+                _minor_version=self._item_metadata.minor_version,
+                _change_description=self._item_metadata.change_description,
+                _author_id=self._item_metadata.author_id,
+            )
 
     def _create_new_version(
         self, author_id: str, change_description: str = _NEW_VERSION_LABEL

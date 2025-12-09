@@ -159,7 +159,7 @@ export default {
     CrfApprovalSummaryConfirmDialog,
     CrfNewVersionSummaryConfirmDialog,
   },
-  inject: ['eventBusEmit'],
+  inject: ['notificationHub'],
   props: {
     elementProp: {
       type: Object,
@@ -341,7 +341,7 @@ export default {
         agreeLabel: this.$t('_global.continue'),
       }
       if (
-        relationships > 0 &&
+        relationships < 1 ||
         (await this.$refs.confirm.open(
           `${this.$t('CRFForms.delete_warning', { count: relationships })}`,
           options
@@ -349,10 +349,10 @@ export default {
       ) {
         crfs.delete('forms', item.uid).then(() => {
           this.$refs.table.filterTable()
-        })
-      } else if (relationships === 0) {
-        crfs.delete('forms', item.uid).then(() => {
-          this.$refs.table.filterTable()
+
+          this.notificationHub.add({
+            msg: this.$t('CRFForms.deleted'),
+          })
         })
       }
     },
@@ -366,7 +366,7 @@ export default {
         crfs.approve('forms', item.uid).then(() => {
           this.$refs.table.filterTable()
 
-          this.eventBusEmit('notification', {
+          this.notificationHub.add({
             msg: this.$t('CRFForms.approved'),
           })
         })
@@ -375,11 +375,19 @@ export default {
     inactivate(item) {
       crfs.inactivate('forms', item.uid).then(() => {
         this.$refs.table.filterTable()
+
+        this.notificationHub.add({
+          msg: this.$t('CRFForms.inactivated'),
+        })
       })
     },
     reactivate(item) {
       crfs.reactivate('forms', item.uid).then(() => {
         this.$refs.table.filterTable()
+
+        this.notificationHub.add({
+          msg: this.$t('CRFForms.reactivated'),
+        })
       })
     },
     async newVersion(item) {
@@ -392,7 +400,7 @@ export default {
         crfs.newVersion('forms', item.uid).then(() => {
           this.$refs.table.filterTable()
 
-          this.eventBusEmit('notification', {
+          this.notificationHub.add({
             msg: this.$t('_global.new_version_success'),
           })
         })

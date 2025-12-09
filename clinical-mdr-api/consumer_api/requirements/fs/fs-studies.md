@@ -56,12 +56,12 @@ Response must include basic information about each study activity, together with
 
 ### Test coverage
 
-| Test File                    | Test Function                                |
-| ---------------------------- | -------------------------------------------- |
-| tests/v1/test_api_studies.py | test_get_study_activities                    |
-| tests/v1/test_api_studies.py | test_get_study_activities_pagination_sorting |
-| tests/v1/test_api_studies.py | test_get_study_activities_all                |
-| tests/v1/test_api_studies.py | test_get_study_activities_filtering **TODO** |
+| Test File                    | Test Function                                        |
+| ---------------------------- | ---------------------------------------------------- |
+| tests/v1/test_api_studies.py | test_get_study_activities                            |
+| tests/v1/test_api_studies.py | test_get_study_activities_pagination_sorting         |
+| tests/v1/test_api_studies.py | test_get_study_activities_all                        |
+| tests/v1/test_api_studies.py | test_get_study_activities_all_specific_study_version |
 
 ## FS-ConsumerApi-Studies-ActivityInstances-Get-010 [`URS-ConsumerApi-Studies-SoA`]
 
@@ -88,12 +88,12 @@ Response must include basic information about each activity instance, together w
 
 ### Test coverage
 
-| Test File                    | Test Function                                        |
-| ---------------------------- | ---------------------------------------------------- |
-| tests/v1/test_api_studies.py | test_get_study_activity_instances                    |
-| tests/v1/test_api_studies.py | test_get_study_activity_instances_pagination_sorting |
-| tests/v1/test_api_studies.py | test_get_study_activity_instances_all                |
-| tests/v1/test_api_studies.py | test_get_study_activity_instances_filtering **TODO** |
+| Test File                    | Test Function                                                |
+| ---------------------------- | ------------------------------------------------------------ |
+| tests/v1/test_api_studies.py | test_get_study_activity_instances                            |
+| tests/v1/test_api_studies.py | test_get_study_activity_instances_pagination_sorting         |
+| tests/v1/test_api_studies.py | test_get_study_activity_instances_all                        |
+| tests/v1/test_api_studies.py | test_get_study_activity_instances_all_specific_study_version |
 
 ## FS-ConsumerApi-Studies-Visits-Get-010 [`URS-ConsumerApi-Studies-SoA`]
 
@@ -114,12 +114,12 @@ Response must include basic information about each study visit.
 
 ### Test coverage
 
-| Test File                    | Test Function                            |
-| ---------------------------- | ---------------------------------------- |
-| tests/v1/test_api_studies.py | test_get_study_visits                    |
-| tests/v1/test_api_studies.py | test_get_study_visits_pagination_sorting |
-| tests/v1/test_api_studies.py | test_get_study_visits_all                |
-| tests/v1/test_api_studies.py | test_get_study_visits_filtering **TODO** |
+| Test File                    | Test Function                                    |
+| ---------------------------- | ------------------------------------------------ |
+| tests/v1/test_api_studies.py | test_get_study_visits                            |
+| tests/v1/test_api_studies.py | test_get_study_visits_pagination_sorting         |
+| tests/v1/test_api_studies.py | test_get_study_visits_all                        |
+| tests/v1/test_api_studies.py | test_get_study_visits_all_specific_study_version |
 
 ## FS-ConsumerApi-Studies-SoaDetailed-Get-010 [`URS-ConsumerApi-Studies-SoA`]
 
@@ -142,12 +142,12 @@ SoA items are sorted by the specified sort criteria and order.
 
 ### Test coverage
 
-| Test File                    | Test Function                                  |
-| ---------------------------- | ---------------------------------------------- |
-| tests/v1/test_api_studies.py | test_get_study_detailed_soa                    |
-| tests/v1/test_api_studies.py | test_get_study_detailed_soa_pagination_sorting |
-| tests/v1/test_api_studies.py | test_get_study_detailed_soa_all                |
-| tests/v1/test_api_studies.py | test_get_study_detailed_soa_filtering **TODO** |
+| Test File                    | Test Function                                          |
+| ---------------------------- | ------------------------------------------------------ |
+| tests/v1/test_api_studies.py | test_get_study_detailed_soa                            |
+| tests/v1/test_api_studies.py | test_get_study_detailed_soa_pagination_sorting         |
+| tests/v1/test_api_studies.py | test_get_study_detailed_soa_all                        |
+| tests/v1/test_api_studies.py | test_get_study_detailed_soa_all_specific_study_version |
 
 ## FS-ConsumerApi-Studies-SoaOperational-Get-010 [`URS-ConsumerApi-Studies-SoA`]
 
@@ -170,11 +170,11 @@ SoA items are sorted by the specified sort criteria and order.
 
 ### Test coverage
 
-| Test File                    | Test Function                                     |
-| ---------------------------- | ------------------------------------------------- |
-| tests/v1/test_api_studies.py | test_get_study_operational_soa                    |
-| tests/v1/test_api_studies.py | test_get_study_operational_soa_pagination_sorting |
-| tests/v1/test_api_studies.py | test_get_study_operational_soa_all                |
-| tests/v1/test_api_studies.py | test_get_study_operational_soa_filtering **TODO** |
+| Test File                    | Test Function                                             |
+| ---------------------------- | --------------------------------------------------------- |
+| tests/v1/test_api_studies.py | test_get_study_operational_soa                            |
+| tests/v1/test_api_studies.py | test_get_study_operational_soa_pagination_sorting         |
+| tests/v1/test_api_studies.py | test_get_study_operational_soa_all                        |
+| tests/v1/test_api_studies.py | test_get_study_operational_soa_all_specific_study_version |
 
 

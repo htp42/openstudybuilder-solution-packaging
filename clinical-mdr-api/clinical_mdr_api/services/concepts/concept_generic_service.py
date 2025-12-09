@@ -317,7 +317,6 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
             page_number=page_number,
             page_size=page_size,
             return_all_versions=True,
-            only_specific_status=None,
             **kwargs,
         )
 
@@ -621,12 +620,22 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
                 # EXTRACT code_submission_value
                 params = {"ct_uid": item.ct_terms[0].uid}
                 cypher_expression_ct_code_extraction = """
-                    match (lib:Library)--(n:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]->(o:CTTermAttributesRoot)-[:LATEST]->(ctav:CTTermAttributesValue)
-                    where lib.name="CDISC" 
-                        AND n.uid = $ct_uid
-                    MATCH (n)<-[:HAS_TERM_ROOT]-(m:CTCodelistTerm) 
-                    where tolower(m.submission_value) <> tolower(ctav.preferred_term) 
-                    return m.submission_value
+                    MATCH   (lib:Library)-[:CONTAINS_TERM]->
+                            (ctterm_root:CTTermRoot)
+                        where 
+                            lib.name="CDISC" 
+                            AND ctterm_root.uid = $ct_uid
+                    MATCH (ctterm_root)<-[:HAS_TERM_ROOT]-
+                            (codelist_term:CTCodelistTerm)<-[:HAS_TERM]-
+                            (:CTCodelistRoot)<-[:REFERENCES_CODELIST]-
+                            (:SponsorModelDatasetVariableInstance|DatasetVariableInstance)-[:IMPLEMENTS_VARIABLE_CLASS|IMPLEMENTS_VARIABLE]->
+                            (:VariableClassInstance)<-[:HAS_INSTANCE]-
+                            (:VariableClass)<-[:MAPS_VARIABLE_CLASS]-
+                            (:ActivityItemClassRoot)-[:LATEST]->
+                            (act_item_class_val:ActivityItemClassValue)
+                        where 
+                            act_item_class_val.name = "test_code"
+                    return DISTINCT codelist_term.submission_value
                 """
                 cypher_result, _ = db.cypher_query(
                     cypher_expression_ct_code_extraction,
@@ -756,7 +765,9 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
         force_new_value_node: bool = False,
     ) -> BaseModel:
         item = self._find_by_uid_or_raise_not_found(uid, for_update=True)
-        item.inactivate(author_id=self.author_id)
+        item.inactivate(
+            author_id=self.author_id, force_new_value_node=force_new_value_node
+        )
         self.repository.save(item, force_new_value_node=force_new_value_node)
         if cascade_inactivate:
             self.cascade_inactivate(item)
@@ -770,7 +781,9 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
         force_new_value_node: bool = False,
     ) -> BaseModel:
         item = self._find_by_uid_or_raise_not_found(uid, for_update=True)
-        item.reactivate(author_id=self.author_id)
+        item.reactivate(
+            author_id=self.author_id, force_new_value_node=force_new_value_node
+        )
         self.repository.save(item, force_new_value_node=force_new_value_node)
         if cascade_reactivate:
             self.cascade_reactivate(item)

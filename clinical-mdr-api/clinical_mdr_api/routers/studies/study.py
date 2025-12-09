@@ -5,6 +5,7 @@ from typing import Annotated, Any
 
 from fastapi import APIRouter, Body, Path, Query, Request
 from fastapi.responses import HTMLResponse, StreamingResponse
+from pydantic import Field
 from pydantic.types import Json
 
 from clinical_mdr_api.models.study_selections.study_selection import (
@@ -28,8 +29,10 @@ from clinical_mdr_api.models.study_selections.study_selection import (
     StudySelectionActivityInstanceBatchOutput,
     StudySelectionActivityInstanceCreateInput,
     StudySelectionActivityInstanceEditInput,
+    StudySelectionActivityInstanceReviewBatchInput,
     StudySelectionActivityNewOrder,
     StudySelectionActivityRequestEditInput,
+    StudySelectionActivityReviewBatchInput,
     StudySelectionArm,
     StudySelectionArmBatchInput,
     StudySelectionArmBatchOutput,
@@ -63,6 +66,9 @@ from clinical_mdr_api.models.study_selections.study_selection import (
     StudySelectionCriteriaKeyCriteria,
     StudySelectionCriteriaNewOrder,
     StudySelectionCriteriaTemplateSelectInput,
+    StudySelectionDataSupplier,
+    StudySelectionDataSupplierInput,
+    StudySelectionDataSupplierNewOrder,
     StudySelectionElement,
     StudySelectionElementCreateInput,
     StudySelectionElementInput,
@@ -118,6 +124,9 @@ from clinical_mdr_api.services.studies.study_compound_selection import (
 from clinical_mdr_api.services.studies.study_criteria_selection import (
     StudyCriteriaSelectionService,
 )
+from clinical_mdr_api.services.studies.study_data_supplier import (
+    StudyDataSupplierSelectionService,
+)
 from clinical_mdr_api.services.studies.study_element_selection import (
     StudyElementSelectionService,
 )
@@ -169,9 +178,384 @@ PROJECT_NUMBER = Query(
 )
 
 
-"""
-    API endpoints to study objectives
-"""
+# API endpoints to study data suppliers
+
+
+@router.get(
+    "/study-data-suppliers",
+    dependencies=[security, rbac.STUDY_READ],
+    summary="Get a paginated list of study data suppliers",
+    status_code=200,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+    },
+)
+def get_a_paginated_list_of_study_data_suppliers(
+    sort_by: Annotated[
+        Json | None, Query(description=_generic_descriptions.SORT_BY)
+    ] = None,
+    page_number: Annotated[
+        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
+    ] = settings.default_page_number,
+    page_size: Annotated[
+        int,
+        Query(
+            ge=0,
+            le=settings.max_page_size,
+            description=_generic_descriptions.PAGE_SIZE,
+        ),
+    ] = settings.default_page_size,
+    filters: Annotated[
+        Json | None,
+        Query(
+            description=_generic_descriptions.FILTERS,
+            openapi_examples=_generic_descriptions.FILTERS_EXAMPLE,
+        ),
+    ] = None,
+    operator: Annotated[
+        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
+    ] = settings.default_filter_operator,
+    total_count: Annotated[
+        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
+    ] = False,
+    study_value_version: Annotated[
+        str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
+    ] = None,
+) -> CustomPage[StudySelectionDataSupplier]:
+    service = StudyDataSupplierSelectionService()
+
+    all_items = service.get_all_selections(
+        sort_by=sort_by,
+        filter_by=filters,
+        filter_operator=FilterOperator.from_str(operator),
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
+        study_value_version=study_value_version,
+    )
+
+    return CustomPage(
+        items=all_items.items,
+        total=all_items.total,
+        page=page_number,
+        size=page_size,
+    )
+
+
+@router.get(
+    "/study-data-suppliers/headers",
+    dependencies=[security, rbac.STUDY_READ],
+    summary="Returns possible values from the database for a given header",
+    description="""Allowed parameters include : field name for which to get possible
+    values, search string to provide filtering for the field name, additional filters to apply on other fields""",
+    status_code=200,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - Invalid field name specified",
+        },
+    },
+)
+def get_distinct_study_data_supplier_values_for_header(
+    field_name: Annotated[
+        str, Query(description=_generic_descriptions.HEADER_FIELD_NAME)
+    ],
+    search_string: Annotated[
+        str, Query(description=_generic_descriptions.HEADER_SEARCH_STRING)
+    ] = "",
+    filters: Annotated[
+        Json | None,
+        Query(
+            description=_generic_descriptions.FILTERS,
+            openapi_examples=_generic_descriptions.FILTERS_EXAMPLE,
+        ),
+    ] = None,
+    operator: Annotated[
+        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
+    ] = settings.default_filter_operator,
+    page_size: Annotated[
+        int, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
+    ] = settings.default_header_page_size,
+    study_value_version: Annotated[
+        str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
+    ] = None,
+) -> list[Any]:
+    service = StudyDataSupplierSelectionService()
+    return service.get_distinct_values_for_header(
+        field_name=field_name,
+        search_string=search_string,
+        filter_by=filters,
+        filter_operator=FilterOperator.from_str(operator),
+        page_size=page_size,
+        study_value_version=study_value_version,
+    )
+
+
+@router.get(
+    "/studies/{study_uid}/study-data-suppliers",
+    dependencies=[security, rbac.STUDY_READ],
+    summary="Get a paginated list of study data suppliers of a study",
+    status_code=200,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+    },
+)
+def get_a_paginated_list_of_study_data_suppliers_of_a_study(
+    study_uid: Annotated[str, studyUID],
+    sort_by: Annotated[
+        Json | None, Query(description=_generic_descriptions.SORT_BY)
+    ] = None,
+    page_number: Annotated[
+        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
+    ] = settings.default_page_number,
+    page_size: Annotated[
+        int,
+        Query(
+            ge=0,
+            le=settings.max_page_size,
+            description=_generic_descriptions.PAGE_SIZE,
+        ),
+    ] = settings.default_page_size,
+    filters: Annotated[
+        Json | None,
+        Query(
+            description=_generic_descriptions.FILTERS,
+            openapi_examples=_generic_descriptions.FILTERS_EXAMPLE,
+        ),
+    ] = None,
+    operator: Annotated[
+        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
+    ] = settings.default_filter_operator,
+    total_count: Annotated[
+        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
+    ] = False,
+    study_value_version: Annotated[
+        str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
+    ] = None,
+) -> CustomPage[StudySelectionDataSupplier]:
+    service = StudyDataSupplierSelectionService()
+
+    all_items = service.get_all_selections(
+        study_uid=study_uid,
+        sort_by=sort_by,
+        filter_by=filters,
+        filter_operator=FilterOperator.from_str(operator),
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
+        study_value_version=study_value_version,
+    )
+
+    return CustomPage(
+        items=all_items.items,
+        total=all_items.total,
+        page=page_number,
+        size=page_size,
+    )
+
+
+@router.get(
+    "/studies/{study_uid}/study-data-suppliers/headers",
+    dependencies=[security, rbac.STUDY_READ],
+    summary="Returns possible values from the database for a given header",
+    description="""Allowed parameters include : field name for which to get possible
+    values, search string to provide filtering for the field name, additional filters to apply on other fields""",
+    status_code=200,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - Invalid field name specified",
+        },
+    },
+)
+def get_distinct_study_data_supplier_values_of_a_study_for_header(
+    field_name: Annotated[
+        str, Query(description=_generic_descriptions.HEADER_FIELD_NAME)
+    ],
+    study_uid: Annotated[str, studyUID],
+    search_string: Annotated[
+        str, Query(description=_generic_descriptions.HEADER_SEARCH_STRING)
+    ] = "",
+    filters: Annotated[
+        Json | None,
+        Query(
+            description=_generic_descriptions.FILTERS,
+            openapi_examples=_generic_descriptions.FILTERS_EXAMPLE,
+        ),
+    ] = None,
+    operator: Annotated[
+        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
+    ] = settings.default_filter_operator,
+    page_size: Annotated[
+        int, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
+    ] = settings.default_header_page_size,
+    study_value_version: Annotated[
+        str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
+    ] = None,
+) -> list[Any]:
+    service = StudyDataSupplierSelectionService()
+    return service.get_distinct_values_for_header(
+        study_uid=study_uid,
+        field_name=field_name,
+        search_string=search_string,
+        filter_by=filters,
+        filter_operator=FilterOperator.from_str(operator),
+        page_size=page_size,
+        study_value_version=study_value_version,
+    )
+
+
+@router.get(
+    "/studies/{study_uid}/study-data-suppliers/{study_data_supplier_uid}/audit-trail",
+    dependencies=[security, rbac.STUDY_READ],
+    summary="List full audit trail of a specific study data supplier.",
+    status_code=200,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        404: _generic_descriptions.ERROR_404,
+    },
+)
+def get_specific_study_data_supplier_audit_trail(
+    study_uid: Annotated[str, studyUID],
+    study_data_supplier_uid: Annotated[str, Field()],
+) -> list[StudySelectionDataSupplier]:
+    service = StudyDataSupplierSelectionService()
+    return service.get_audit_trail(study_uid, study_data_supplier_uid)
+
+
+@router.get(
+    "/studies/{study_uid}/study-data-suppliers/audit-trail",
+    dependencies=[security, rbac.STUDY_READ],
+    summary="List full audit trail of a specific study data supplier.",
+    status_code=200,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        404: _generic_descriptions.ERROR_404,
+    },
+)
+def get_study_data_suppliers_audit_trail(
+    study_uid: Annotated[str, studyUID],
+) -> list[StudySelectionDataSupplier]:
+    service = StudyDataSupplierSelectionService()
+    return service.get_audit_trail(study_uid)
+
+
+@router.post(
+    "/studies/{study_uid}/study-data-suppliers",
+    dependencies=[security, rbac.STUDY_WRITE],
+    summary="Creating a study data supplier selection based on the input data",
+    status_code=201,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+    },
+)
+@decorators.validate_if_study_is_not_locked("study_uid")
+def create_a_new_study_data_supplier_selection(
+    study_uid: Annotated[str, studyUID],
+    selection: Annotated[StudySelectionDataSupplierInput, Body()],
+) -> StudySelectionDataSupplier:
+    service = StudyDataSupplierSelectionService()
+
+    return service.make_selection(study_uid=study_uid, selection_input=selection)
+
+
+@router.get(
+    "/studies/{study_uid}/study-data-suppliers/{study_data_supplier_uid}",
+    dependencies=[security, rbac.STUDY_READ],
+    summary="Get a specific study data supplier selection",
+    status_code=200,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        404: _generic_descriptions.ERROR_404,
+    },
+)
+@decorators.validate_if_study_is_not_locked("study_uid")
+def get_a_data_supplier(
+    study_uid: Annotated[str, studyUID],
+    study_data_supplier_uid: Annotated[str, Field()],
+):
+    service = StudyDataSupplierSelectionService()
+
+    return service.get_selection(
+        study_uid=study_uid, study_data_supplier_uid=study_data_supplier_uid
+    )
+
+
+@router.put(
+    "/studies/{study_uid}/study-data-suppliers/{study_data_supplier_uid}",
+    dependencies=[security, rbac.STUDY_WRITE],
+    summary="Updating a study data supplier selection based on the input data",
+    status_code=200,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        404: _generic_descriptions.ERROR_404,
+    },
+)
+@decorators.validate_if_study_is_not_locked("study_uid")
+def update_a_data_supplier(
+    study_uid: Annotated[str, studyUID],
+    study_data_supplier_uid: Annotated[str, Field()],
+    selection: Annotated[StudySelectionDataSupplierInput, Body()],
+):
+    service = StudyDataSupplierSelectionService()
+
+    return service.update_selection(
+        study_uid=study_uid,
+        study_data_supplier_uid=study_data_supplier_uid,
+        selection_input=selection,
+    )
+
+
+@router.delete(
+    "/studies/{study_uid}/study-data-suppliers/{study_data_supplier_uid}",
+    dependencies=[security, rbac.STUDY_WRITE],
+    summary="Deleting a study data supplier selection",
+    status_code=204,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        404: _generic_descriptions.ERROR_404,
+    },
+)
+@decorators.validate_if_study_is_not_locked("study_uid")
+def delete_a_study_data_supplier(
+    study_uid: Annotated[str, studyUID],
+    study_data_supplier_uid: Annotated[str, Field()],
+):
+    service = StudyDataSupplierSelectionService()
+
+    return service.delete_selection(
+        study_uid=study_uid, study_data_supplier_uid=study_data_supplier_uid
+    )
+
+
+@router.patch(
+    "/studies/{study_uid}/study-data-suppliers/{study_data_supplier_uid}/order",
+    dependencies=[security, rbac.STUDY_WRITE],
+    summary="Set new order for a study data supplier selection",
+    status_code=200,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        404: _generic_descriptions.ERROR_404,
+    },
+)
+@decorators.validate_if_study_is_not_locked("study_uid")
+def set_order_for_a_data_supplier(
+    study_uid: Annotated[str, studyUID],
+    study_data_supplier_uid: Annotated[str, Field()],
+    new_order: Annotated[StudySelectionDataSupplierNewOrder, Body()],
+):
+    service = StudyDataSupplierSelectionService()
+
+    return service.set_order(
+        study_uid=study_uid,
+        study_data_supplier_uid=study_data_supplier_uid,
+        order=new_order,
+    )
+
+
+# API endpoints to study objectives
 
 
 @router.get(
@@ -3286,6 +3670,9 @@ def get_all_selected_activity_instances_for_all_studies(
         "defaults": [
             "study_uid",
             "order",
+            "show_activity_instance_in_protocol_flowchart",
+            "keep_old_version",
+            "is_important",
             "soa_group=study_soa_group.soa_group_term_name",
             "activity_group=study_activity_group.activity_group_name",
             "activity_subgroup=study_activity_subgroup.activity_subgroup_name",
@@ -3302,7 +3689,9 @@ def get_all_selected_activity_instances_for_all_studies(
             "multiple_selection=activity.is_multiple_selection_allowed",
             "legacy=activity_instance.is_legacy_usage",
             "instance_class=activity_instance.activity_instance_class.name",
-            "activity_items=activity_instance.activity_items",
+            "test_name_code=activity_instance.test_name_code",
+            "specimen=activity_instance.specimen",
+            "standard_unit=activity_instance.standard_unit",
             "modified=start_date",
             "modified_by=author_username",
         ],
@@ -3727,6 +4116,25 @@ def study_activity_instances_batch(
     return service.handle_batch_operations(study_uid=study_uid, operations=operations)
 
 
+@router.post(
+    "/studies/{study_uid}/study-activity-instances/changes-review/batch",
+    dependencies=[security, rbac.STUDY_WRITE],
+    summary="Review changes to the study activity instances in batch (Accept or Decline)",
+    status_code=207,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        404: _generic_descriptions.ERROR_404,
+    },
+)
+@decorators.validate_if_study_is_not_locked("study_uid")
+def study_activity_instance_change_review_batch(
+    study_uid: Annotated[str, studyUID],
+    operations: Annotated[list[StudySelectionActivityInstanceReviewBatchInput], Body()],
+) -> list[StudySelectionActivityInstanceBatchOutput]:
+    service = StudyActivityInstanceSelectionService()
+    return service.handle_review_changes(study_uid, operations)
+
+
 #
 # API endpoints to study activity
 
@@ -3911,6 +4319,12 @@ def get_all_selected_activities(
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,
+    filter_out_retired_groupings: Annotated[
+        bool,
+        Query(
+            description="Specifies whether Retired ActivityGroups/Subgroups should removed from latest_activity.activity_groupings",
+        ),
+    ] = False,
 ) -> CustomPage[StudySelectionActivity]:
     service = StudyActivitySelectionService()
     all_items = service.get_all_selection(
@@ -3925,6 +4339,7 @@ def get_all_selected_activities(
         filter_operator=FilterOperator.from_str(operator),
         sort_by=sort_by,
         study_value_version=study_value_version,
+        filter_out_retired_groupings=filter_out_retired_groupings,
     )
     return CustomPage(
         items=all_items.items,
@@ -4775,6 +5190,25 @@ def activity_selection_batch_operations(
 ) -> list[StudySelectionActivityBatchOutput]:
     service = StudyActivitySelectionService()
     return service.handle_batch_operations(study_uid, operations)
+
+
+@router.post(
+    "/studies/{study_uid}/study-activities/changes-review/batch",
+    dependencies=[security, rbac.STUDY_WRITE],
+    summary="Review changes to the study activity in batch (Accept or Decline)",
+    status_code=207,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        404: _generic_descriptions.ERROR_404,
+    },
+)
+@decorators.validate_if_study_is_not_locked("study_uid")
+def study_activity_change_review_batch(
+    study_uid: Annotated[str, studyUID],
+    operations: Annotated[list[StudySelectionActivityReviewBatchInput], Body()],
+) -> list[StudySelectionActivityBatchOutput]:
+    service = StudyActivitySelectionService()
+    return service.handle_review_changes(study_uid, operations)
 
 
 @router.post(

@@ -169,7 +169,7 @@ def test_patch_non_matching_sentence_case1(api_client):
         "/dictionaries/substances/DictionaryTerm_000002", json=data
     )
 
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
 
     res = response.json()
 

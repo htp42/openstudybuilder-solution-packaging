@@ -9,7 +9,7 @@
 
   <xsl:output method="html" />
   <xsl:template match="/">
-    <html>
+    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word">
       <head>
         <meta charset="UTF-8" />
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous" />
@@ -35,7 +35,7 @@
           }
 
           .btn-clicked {
-          background-color: #BDD6EE !important; /* Example: a blue color */
+          background-color: #BDD6EE !important;
           border-color: #BDD6EE !important;
           color: #fff !important;
           }
@@ -78,8 +78,8 @@
 
           @media print {
           .page-break {
-          page-break-before: always; /* For older browsers */
-          break-before: page; /* Modern spec */
+          page-break-before: always;
+          break-before: page;
           }
           thead { display: table-header-group; }
           tfoot { display: table-footer-group; }
@@ -90,11 +90,28 @@
 
           div.Section2 {page:Section2;}
         </style>
+        <xsl:comment>[if gte mso 9]&gt;
+        &lt;style&gt;
+          .d-print-none {
+            mso-hide: all;
+            display: none !important;
+            visibility: hidden !important;
+            height: 0 !important;
+            width: 0 !important;
+            overflow: hidden !important;
+            font-size: 0 !important;
+            line-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+        &lt;/style&gt;
+        &lt;![endif]</xsl:comment>
       </head>
       <body>
         <div class="Section1">
           <table style="border-collapse: collapse; width: 100%; margin: 0 auto; background: #fff;">
             <tbody>
+              <xsl:comment>[if !mso]&gt;&lt;!</xsl:comment>
               <div class="d-print-none" align="right">
                 <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="collapse" data-bs-target=".Cdash" onclick="toggleButtonColor(this)">Cdash</button>&#160;
                 <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="collapse" data-bs-target=".Sdtm" onclick="toggleButtonColor(this)">SDTM</button>&#160;
@@ -102,6 +119,7 @@
                 <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="collapse" data-bs-target=".AdamCode" onclick="toggleButtonColor(this)">AdamCode</button>&#160;
                 <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="collapse" data-bs-target=".oid" onclick="toggleButtonColor(this)">Keys</button>
               </div>
+              <xsl:comment>&lt;![endif]</xsl:comment>
               <xsl:apply-templates select="/ODM/Study/MetaDataVersion/FormDef" />
             </tbody>
           </table>
@@ -163,30 +181,40 @@
                 <xsl:with-param name="aliasBgcolor" select="'#2f2f2f'" />
               </xsl:call-template>
             </xsl:for-each>
-            <div class="oidinfo oid collapse">[OID=<xsl:value-of select="@OID" />, Version=<xsl:value-of select="@osb:version" />]</div>
+            <xsl:comment>[if !mso]&gt;&lt;!</xsl:comment>
+              <div class="oidinfo oid collapse d-print-none">[OID=<xsl:value-of select="@OID" />, Version=<xsl:value-of select="@osb:version" />]</div>
+            <xsl:comment>&lt;![endif]</xsl:comment>
           </td>
           <td style="border: 1px solid #fff; padding: 6px 12px; width:30%;">
-            <!-- A CodeList -->
             <xsl:for-each select="CodeListRef">
               <xsl:for-each select="//CodeList[@OID = current()/@CodeListOID]/CodeListItem">
                 <xsl:sort select="@OrderNumber" data-type="number" order="ascending" />
                 <div>
                   <span style='font-size:30px;'>&#9675;</span>&#160;<xsl:value-of select="@osb:name" />&#160;
                 </div>
-                <span class="oidinfo oid collapse">
+                <xsl:comment>[if !mso]&gt;&lt;!</xsl:comment>
+                  <div class="oidinfo oid collapse d-print-none">[OID=<xsl:value-of select="@OID" />, Version=<xsl:value-of select="@osb:version" />]</div>
+                <xsl:comment>&lt;![endif]</xsl:comment>
+                <!-- <span class="oidinfo oid collapse">
                   [OID=<xsl:value-of select="@osb:OID" />, Version=<xsl:value-of select="@osb:version" />
-                </span>
+                </span> -->
               </xsl:for-each>
               <xsl:for-each select="//CodeList[@OID = current()/@CodeListOID]/EnumeratedItem">
                 <xsl:sort select="@OrderNumber" data-type="number" order="ascending" />
                 <div>
                   <span style='font-size:30px;'>&#9675;</span>&#160;<xsl:value-of select="@osb:name" />&#160;
                 </div>
-                <span class="oidinfo oid collapse">
+                <xsl:comment>[if !mso]&gt;&lt;!</xsl:comment>
+                  <div class="oidinfo oid collapse d-print-none">[OID=<xsl:value-of select="@OID" />, Version=<xsl:value-of select="@osb:version" />]</div>
+                <xsl:comment>&lt;![endif]</xsl:comment>
+                <!-- <span class="oidinfo oid collapse">
                   [OID=<xsl:value-of select="@osb:OID" />, Version=<xsl:value-of select="@osb:version" />
-                </span>
+                </span> -->
               </xsl:for-each>
-              <span class="oidinfo oid collapse">[OID=<xsl:value-of select="@CodeListOID" />, Version=<xsl:value-of select="//CodeList[@OID = current()/@CodeListOID]/@osb:version" />]</span>
+              <xsl:comment>[if !mso]&gt;&lt;!</xsl:comment>
+                <div class="oidinfo oid collapse d-print-none">[OID=<xsl:value-of select="@CodeListOID" />, Version=<xsl:value-of select="//CodeList[@OID = current()/@CodeListOID]/@osb:version" />]</div>
+              <xsl:comment>&lt;![endif]</xsl:comment>
+              <!-- <span class="oidinfo oid collapse">[OID=<xsl:value-of select="@CodeListOID" />, Version=<xsl:value-of select="//CodeList[@OID = current()/@CodeListOID]/@osb:version" />]</span> -->
             </xsl:for-each>
             <xsl:for-each select="./Alias[@Context = 'wordFormat']">
               <xsl:value-of disable-output-escaping="yes" select="@Name" />&#160;
@@ -277,16 +305,19 @@
       </xsl:choose>
     </xsl:variable>
     <tr style="background: #1a3172; color: #ffffff;">
-      <th colspan="3" style="text-align: left;"><!-- Name of the ItemGroup -->
+      <th colspan="3" style="text-align: left;">
         <h4>
           <xsl:value-of disable-output-escaping="yes" select="@Name" />
           <xsl:if test="//FormDef/ItemGroupRef[@ItemGroupOID = current()/@OID]/@Mandatory = 'Yes'">
             <em>&#160;*&#160;</em>
           </xsl:if>
         </h4>
-        <div class="oidinfo oid collapse">
+         <xsl:comment>[if !mso]&gt;&lt;!</xsl:comment>
+            <div class="oidinfo oid collapse d-print-none">[OID=<xsl:value-of select="@OID" />, Version=<xsl:value-of select="@osb:version" />]</div>
+          <xsl:comment>&lt;![endif]</xsl:comment>
+        <!-- <div class="oidinfo oid collapse">
           [OID=<xsl:value-of select="@OID" />, Version=<xsl:value-of select="@osb:version" />]
-        </div>
+        </div> -->
       </th>
       <th colspan="2" style="text-align: right;">
         <xsl:for-each select="./Alias[@Context = 'IgType']">
@@ -318,7 +349,6 @@
     </tr>
     <tr>
       <td>
-        <!-- For each Item in an ItemGroup in a Form -->
         <xsl:for-each select="ItemRef">
           <xsl:sort select="@OrderNumber" data-type="number" />
           <xsl:apply-templates
@@ -340,9 +370,12 @@
       <tr style="repeat-on-each-page padding: 6px 12px;">
         <td colspan="5" style="background: #ffffff;">
           <h2>
-            <xsl:value-of select="@Name" /><!-- Name of the Form -->
+            <xsl:value-of select="@Name" />
           </h2>
-          <span class="oidinfo oid collapse">[OID=<xsl:value-of select="@OID" />, Version=<xsl:value-of select="@osb:version" />]</span>
+           <xsl:comment>[if !mso]&gt;&lt;!</xsl:comment>
+            <div class="oidinfo oid collapse d-print-none">[OID=<xsl:value-of select="@OID" />, Version=<xsl:value-of select="@osb:version" />]</div>
+          <xsl:comment>&lt;![endif]</xsl:comment>
+          <!-- <span class="oidinfo oid collapse">[OID=<xsl:value-of select="@OID" />, Version=<xsl:value-of select="@osb:version" />]</span> -->
         </td>
       </tr>
     </thead>
@@ -370,7 +403,6 @@
         Integration
       </td>
     </tr>
-    <!-- For each ItemGroup in the Form -->
     <xsl:for-each select="ItemGroupRef">
       <xsl:sort select="current()/@OrderNumber" data-type="number" />
       <xsl:apply-templates
@@ -384,8 +416,6 @@
         </td>
       </tr>
     </xsl:template>
-
-    <!-- TEMPLATES -->
 
     <xsl:template match="Question">
       <xsl:param name="lockItem" />

@@ -14,15 +14,9 @@ Feature: Library - Code Lists - CT Catalogues
 		And The 'CT Catalogues' title is visible
 		And The following tabs are visible
 			| tabs 			|
+			| All			|
 			| ADAM CT       |
-			| CDASH CT      |
-			| COA CT        |
-			| DEFINE-XML CT |
-			| PROTOCOL CT   |
-			| QRS CT        |
-			| QS-FT CT      |
-			| SDTM CT       |
-			| SEND CT       |
+			| SEND CT		|
 		And The table is loaded
 		And The table is visible and not empty
 

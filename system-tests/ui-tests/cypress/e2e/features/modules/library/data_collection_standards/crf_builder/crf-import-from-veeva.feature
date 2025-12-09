@@ -1,7 +1,7 @@
 @REQ_ID:1070683
 Feature: Library - Data Collection Standards - CRF Builder - CRFs from Veeva EDC
 
-  As a user, I want to verify that the CRFs Librarr imported from Veeva EDC Libary are correctly displayed
+  As a user, I want to verify that the CRFs Library imported from Veeva EDC Libary are correctly displayed
   so that I can ensure the integrity and accuracy of the CRF data within the StudyBuilder CRF Library.
 
   Background: User must be logged in
@@ -14,6 +14,7 @@ Feature: Library - Data Collection Standards - CRF Builder - CRFs from Veeva EDC
 
 @manual_test
   Scenario: CRFs must be exported exactly the same numbers of forms, items and item groups from Veeva EDC to StudyBuilder CRF Library
+    Given The CRF is already imported from Veeva to CRF Library
     When I view the StudyBuilder CRF 'Forms' tab
     And The number of 'Forms' in the CRF library should match the number in Veeva EDC library
     When I view the StudyBuilder CRF 'Item Groups' tab
@@ -23,6 +24,7 @@ Feature: Library - Data Collection Standards - CRF Builder - CRFs from Veeva EDC
 
 @manual_test
   Scenario: Verify Primary Properties of CRF Items between Veeva EDC and CRF Library
+    Given The CRF is already imported from Veeva to CRF Library
     When I view the StudyBuilder CRF 'Forms' tab
     And The imported form 'Vital Sign' should be visible in the StudyBuilder CRF forms library
     When I view the StudyBuilder CRF 'Items' tab
@@ -33,7 +35,8 @@ Feature: Library - Data Collection Standards - CRF Builder - CRFs from Veeva EDC
     And The item OID, Name and description displayed should match the item name in Veeva EDC library
 
   @manual_test
-  Scenario: Verify Additional Properties of CRF Items between Veeva EDC and CRF Library  
+  Scenario: Verify Additional Properties of CRF Items between Veeva EDC and CRF Library 
+    Given The CRF is already imported from Veeva to CRF Library 
     When I view the StudyBuilder CRF 'Items' tab
     And I search for item with data type: 'Float', such as 'VSORRES_TEMP'
     And I select on Edit option from the three dot menu of this item
@@ -51,6 +54,7 @@ Feature: Library - Data Collection Standards - CRF Builder - CRFs from Veeva EDC
 
 @manual_test
   Scenario: Verify Properties of CRF Item Groups between Veeva EDC and CRF Library
+    Given The CRF is already imported from Veeva to CRF Library
     When I view the StudyBuilder CRF 'Item Groups' tab
     And  I search for 'G.VS.BPP' in the search field
     Then The imported item groups 'G.VS.BPP' should have the same values as in Veeva EDC, including OID, Name, Description and Repeating.

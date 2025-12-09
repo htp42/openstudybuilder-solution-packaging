@@ -27,6 +27,8 @@ class ActivityVO(ConceptVO):
     The ActivityVO acts as the value object for a single Activity aggregate
     """
 
+    name: str
+    name_sentence_case: str
     nci_concept_id: str | None
     nci_concept_name: str | None
     synonyms: list[str]
@@ -54,7 +56,7 @@ class ActivityVO(ConceptVO):
         nci_concept_id: str | None,
         nci_concept_name: str | None,
         name: str,
-        name_sentence_case: str | None,
+        name_sentence_case: str,
         synonyms: list[str],
         definition: str | None,
         abbreviation: str | None,
@@ -222,19 +224,21 @@ class ActivityAR(ConceptARBase):
         get_activity_uids_by_synonyms_callback: Callable[
             [list[str]], dict[str, list[str]]
         ] = lambda _: {},
+        perform_validation: bool = True,
     ) -> None:
         """
         Creates a new draft version for the object.
         """
-        concept_vo.validate(
-            activity_exists_by_name_callback=concept_exists_by_library_and_name_callback,
-            activity_subgroup_exists=activity_subgroup_exists,
-            activity_group_exists=activity_group_exists,
-            get_activity_uids_by_synonyms_callback=get_activity_uids_by_synonyms_callback,
-            previous_name=self.name,
-            previous_synonyms=self.concept_vo.synonyms,
-            library_name=self.library.name,
-        )
+        if perform_validation:
+            concept_vo.validate(
+                activity_exists_by_name_callback=concept_exists_by_library_and_name_callback,
+                activity_subgroup_exists=activity_subgroup_exists,
+                activity_group_exists=activity_group_exists,
+                get_activity_uids_by_synonyms_callback=get_activity_uids_by_synonyms_callback,
+                previous_name=self.name,
+                previous_synonyms=self.concept_vo.synonyms,
+                library_name=self.library.name,
+            )
         if self._concept_vo != concept_vo:
             super()._edit_draft(
                 change_description=change_description, author_id=author_id

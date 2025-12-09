@@ -29,8 +29,9 @@ class DatasetVariableRepository(StandardDataModelRepository):
             uid_filter = f"{{uid: '{uid}'}}"
         return f"""MATCH (standard_root:{standard_data_model_label} {uid_filter})-[:HAS_INSTANCE]->
                 (standard_value:{standard_data_model_value_label})<-[has_dataset_variable_rel:HAS_DATASET_VARIABLE]-
-                (dataset_value:DatasetInstance)<-[:HAS_DATASET]-(data_model_ig_value:DataModelIGValue)
-                <-[:HAS_VERSION]-(data_model_ig_root:DataModelIGRoot)"""
+                (dataset_instance:DatasetInstance)<-[:HAS_DATASET]-(data_model_ig_value:DataModelIGValue)
+                <-[:HAS_VERSION]-(data_model_ig_root:DataModelIGRoot)
+                MATCH (dataset_root:Dataset)-[:HAS_INSTANCE]->(dataset_instance)"""
 
     def union_match_clause(
         self, filter_query_parameters: dict[Any, Any] | None = None
@@ -42,9 +43,9 @@ class DatasetVariableRepository(StandardDataModelRepository):
             standard_data_model_value_label = self.value_class.__label__
             return f"""
                     MATCH (data_model_ig_root:DataModelIGRoot)-[:HAS_VERSION]->(data_model_ig_value:DataModelIGValue)-
-                    [:HAS_DATASET]->(dataset_value:DatasetInstance)
+                    [:HAS_DATASET]->(dataset_instance:DatasetInstance)<-[:HAS_INSTANCE]-(dataset_root:Dataset)
                     MATCH (scenario_root:DatasetScenario {{uid: $dataset_scenario_uid}})-[:HAS_INSTANCE]->(scenario_value)
-                    MATCH (dataset_value)-[:HAS_DATASET_SCENARIO]->(scenario_value:DatasetScenarioInstance)
+                    MATCH (dataset_instance)-[:HAS_DATASET_SCENARIO]->(scenario_value:DatasetScenarioInstance)
                     -[has_dataset_variable_rel:HAS_DATASET_VARIABLE]->
                     (standard_value:{standard_data_model_value_label})<-[:HAS_INSTANCE]-(standard_root:{standard_data_model_label})"""
         return None
@@ -112,8 +113,9 @@ class DatasetVariableRepository(StandardDataModelRepository):
             name,
             description,
             standard_value,
-            has_dataset_variable_rel, 
-            dataset_value,
+            has_dataset_variable_rel,
+            dataset_root,
+            dataset_instance,
             standard_value.label AS label,
             standard_value.title AS title,
             standard_value.core AS core,
@@ -130,7 +132,7 @@ class DatasetVariableRepository(StandardDataModelRepository):
             apoc.coll.toSet([(standard_value)<-[:HAS_DATASET_VARIABLE]-
                 (:DatasetInstance)<-[:HAS_DATASET]-(data_model_ig_value:DataModelIGValue) 
                 | data_model_ig_value.name]) AS data_model_ig_names,
-            {ordinal:has_dataset_variable_rel.ordinal, name:dataset_value.label} AS dataset,
+            {ordinal:has_dataset_variable_rel.ordinal, uid:dataset_root.uid} AS dataset,
             head([(standard_value)-[:IMPLEMENTS_VARIABLE]->(class_variable_value:VariableClassInstance)<-[:HAS_INSTANCE]-(class_variable_root) | {
             uid:class_variable_root.uid, name:class_variable_value.label }]) AS implements_variable,
             head([(standard_value)-[:HAS_MAPPING_TARGET]->(dataset_variable_value:DatasetVariableInstance)

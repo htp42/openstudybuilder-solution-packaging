@@ -16,7 +16,7 @@ pytest = "~=8.4.1"
 pytest-cov = "~=6.0.0"
 
 [requires]
-python_version = "3.13.0"
+python_version = "3.13"
 
 [scripts]
 import_cdisc_ct_into_cdisc_db = "python cdisc_staging.py"
@@ -27,4 +27,4 @@ import_data_models_from_cdisc_db_into_mdr = "python -m mdr_standards_import.scri
 download_ct_json_data_from_cdisc_api = "python -m mdr_standards_import.scripts.import_scripts.cdisc_ct.download_json_data_from_cdisc_api"
 download_data_models_json_data_from_cdisc_api = "python -m mdr_standards_import.scripts.import_scripts.cdisc_data_models.download_json_data_from_cdisc_api"
 test = "python -m pytest -s --cov-report html:test_coverage --cov-report xml:reports/coverage.xml --cov --junitxml=reports/test_report.xml mdr_standards_import/tests"
-build-sbom = "python pipelines/scripts/generate_sbom.py"
+build-sbom = "pipenv run python3 assbom.py --pipfile --fallback-dir doc/licenses --level 2 --output sbom.md"

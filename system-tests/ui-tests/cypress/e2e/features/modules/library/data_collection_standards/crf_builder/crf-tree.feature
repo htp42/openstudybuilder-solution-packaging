@@ -25,29 +25,6 @@ Feature: Library - Data Collection Standards - CRF Builder - CRF Tree
             | Link                                      |
         # And showing CRF Collections in all status in Draft, Final and retired in latest version (this is manual test scenario)
 
-    @manual_test
-    Scenario: User must be able to add the links in CRF Tree for existing child elements
-        Given The CRF Collection in 'Final' status exists
-        And The CRF Form in 'Final' status exists
-        And The CRF Item Group in 'Final' status exists
-        And The CRF Item in 'Final' status exists
-        And The '/library/crf-builder/crf-tree' page is opened
-        When I click '+ FORM' button under the Link column for the CRF Collection
-        And I select '+ Link or remove existing element' option
-        Then The 'Link Forms' page is opened
-        When I select the existing CRF Form and click the 'SAVE' button
-        Then I can see the CRF Form is linked to the CRF Collection
-        When I click '+ ITEM GROUPS' button under the Link column for the CRF Form
-        And I select '+ Link or remove existing element' option
-        Then The 'Link Item Groups' page is opened
-        When I select the existing CRF Item Group and click the 'SAVE' button
-        Then I can see the CRF Item Group is linked to the CRF Form
-        When I click '+ ITEM' button under the Link column for the CRF Collection
-        And I select '+ Link or remove existing element' option
-        Then The 'Link Items' page is opened
-        When I select the existing CRF Item and click the 'SAVE' button
-        Then I can see the CRF Item is linked to the CRF Item Group
-
   @manual_test
   Scenario: User must be able to add the links in CRF Tree for newly created child elements
         Given The CRF Collection exists

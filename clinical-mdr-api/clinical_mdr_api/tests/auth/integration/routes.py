@@ -1964,6 +1964,11 @@ ALL_ROUTES_METHODS_ROLES = (
         {"Study.Write"},
     ),
     ("/studies/{study_uid}/study-activities/batch", "POST", {"Study.Write"}),
+    (
+        "/studies/{study_uid}/study-activities/changes-review/batch",
+        "POST",
+        {"Study.Write"},
+    ),
     ("/studies/{study_uid}/soa-edits/batch", "POST", {"Study.Write"}),
     (
         "/studies/{study_uid}/study-activities/{study_activity_uid}/order",
@@ -2012,6 +2017,11 @@ ALL_ROUTES_METHODS_ROLES = (
     ),
     (
         "/studies/{study_uid}/study-activity-instances/batch",
+        "POST",
+        {"Study.Write"},
+    ),
+    (
+        "/studies/{study_uid}/study-activity-instances/changes-review/batch",
         "POST",
         {"Study.Write"},
     ),
@@ -2337,6 +2347,11 @@ ALL_ROUTES_METHODS_ROLES = (
     ("/studies/{study_uid}/study-visits/audit-trail", "GET", {"Study.Read"}),
     ("/studies/{study_uid}/study-visits/{study_visit_uid}", "GET", {"Study.Read"}),
     (
+        "/studies/{study_uid}/study-visits-for-activity-instance/{study_activity_instance_uid}",
+        "GET",
+        {"Study.Read"},
+    ),
+    (
         "/studies/{study_uid}/get-amount-of-visits-in-epoch/{study_epoch_uid}",
         "GET",
         {"Study.Read"},
@@ -2562,4 +2577,35 @@ ALL_ROUTES_METHODS_ROLES = (
     ("/data-suppliers/{data_supplier_uid}", "PATCH", {"Library.Write"}),
     ("/data-suppliers/{data_supplier_uid}/activations", "DELETE", {"Library.Write"}),
     ("/data-suppliers/{data_supplier_uid}/activations", "POST", {"Library.Write"}),
+    ("/study-data-suppliers", "GET", {"Study.Read"}),
+    ("/study-data-suppliers/headers", "GET", {"Study.Read"}),
+    ("/studies/{study_uid}/study-data-suppliers", "GET", {"Study.Read"}),
+    (
+        "/studies/{study_uid}/study-data-suppliers/{study_data_supplier_uid}",
+        "GET",
+        {"Study.Read"},
+    ),
+    ("/studies/{study_uid}/study-data-suppliers/headers", "GET", {"Study.Read"}),
+    (
+        "/studies/{study_uid}/study-data-suppliers/{study_data_supplier_uid}/audit-trail",
+        "GET",
+        {"Study.Read"},
+    ),
+    ("/studies/{study_uid}/study-data-suppliers/audit-trail", "GET", {"Study.Read"}),
+    ("/studies/{study_uid}/study-data-suppliers", "POST", {"Study.Write"}),
+    (
+        "/studies/{study_uid}/study-data-suppliers/{study_data_supplier_uid}",
+        "PUT",
+        {"Study.Write"},
+    ),
+    (
+        "/studies/{study_uid}/study-data-suppliers/{study_data_supplier_uid}",
+        "DELETE",
+        {"Study.Write"},
+    ),
+    (
+        "/studies/{study_uid}/study-data-suppliers/{study_data_supplier_uid}/order",
+        "PATCH",
+        {"Study.Write"},
+    ),
 )

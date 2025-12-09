@@ -213,7 +213,7 @@ const props = defineProps({
   },
 })
 
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const formRules = inject('formRules')
 const emit = defineEmits(['close'])
 const { t } = useI18n()
@@ -359,7 +359,7 @@ async function extraValidation(step) {
     return true
   }
   if (selectedGroupings.value.length === 0) {
-    eventBusEmit('notification', {
+    notificationHub.add({
       msg: t('ActivityForms.grouping_selection_info'),
       type: 'info',
     })
@@ -370,6 +370,7 @@ async function extraValidation(step) {
 
 function close() {
   emit('close')
+  notificationHub.clearErrors()
   form.value = { activity_groupings: [] }
   selectedActivity.value = null
   selectedGroupings.value = []
@@ -379,6 +380,8 @@ function close() {
 }
 
 async function submit() {
+  notificationHub.clearErrors()
+
   form.value.library_name = libraries.LIBRARY_SPONSOR
   form.value.activities = [form.value.activities]
   selectedGroupings.value = selectedGroupings.value.filter(function (val) {
@@ -397,7 +400,7 @@ async function submit() {
   if (!props.editedActivity) {
     activitiesApi.create(form.value, source).then(
       () => {
-        eventBusEmit('notification', {
+        notificationHub.add({
           msg: t('ActivityForms.activity_created'),
         })
         close()
@@ -409,7 +412,7 @@ async function submit() {
   } else {
     activitiesApi.update(props.editedActivity.uid, form.value, {}, source).then(
       () => {
-        eventBusEmit('notification', {
+        notificationHub.add({
           msg: t('ActivityForms.activity_updated'),
         })
         close()

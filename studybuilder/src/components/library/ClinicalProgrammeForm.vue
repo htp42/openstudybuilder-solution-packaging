@@ -37,7 +37,7 @@ import programmes from '@/api/clinicalProgrammes'
 
 const { t } = useI18n()
 
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const formRules = inject('formRules')
 const formStore = useFormStore()
 const props = defineProps({
@@ -80,6 +80,7 @@ onMounted(() => {
 })
 
 async function close() {
+  notificationHub.clearErrors()
   if (!formStore.isEqual(form.value)) {
     const options = {
       type: 'warning',
@@ -100,17 +101,21 @@ function initForm() {
   formStore.reset()
 }
 async function addProgramme() {
+  notificationHub.clearErrors()
+
   const data = JSON.parse(JSON.stringify(form.value))
   await programmes.create(data)
-  eventBusEmit('notification', {
+  notificationHub.add({
     msg: t('ClinicalProgrammes.add_success'),
   })
 }
 
 async function updateProgramme() {
+  notificationHub.clearErrors()
+
   const data = JSON.parse(JSON.stringify(form.value))
   await programmes.patch(props.programmeUid, data)
-  eventBusEmit('notification', {
+  notificationHub.add({
     msg: t('ClinicalProgrammes.update_success'),
   })
 }

@@ -36,8 +36,4 @@ def format_generic_header_values(values: list[Any]):
 
 class ListDistinct(list):
     def distinct(self):
-        uniques = []
-        for ith in self:
-            if ith not in uniques:
-                uniques.extend([ith])
-        return uniques
+        return list(dict.fromkeys(self))

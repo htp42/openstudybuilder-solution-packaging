@@ -36,10 +36,10 @@ log = logging.getLogger(__name__)
 data_suppliers_all: list[DataSupplier]
 supplier_type: CTTerm
 supplier_type_codelist: CTCodelist
-supplier_origin_source: CTTerm
-supplier_origin_source_codelist: CTCodelist
-supplier_origin_type: CTTerm
-supplier_origin_type_codelist: CTCodelist
+origin_source: CTTerm
+origin_source_codelist: CTCodelist
+origin_type: CTTerm
+origin_type_codelist: CTCodelist
 
 
 @pytest.fixture(scope="module")
@@ -57,11 +57,11 @@ def test_data():
 
     global data_suppliers_all
     global supplier_type
-    global supplier_origin_source
-    global supplier_origin_type
+    global origin_source
+    global origin_type
     global supplier_type_codelist
-    global supplier_origin_source_codelist
-    global supplier_origin_type_codelist
+    global origin_source_codelist
+    global origin_type_codelist
 
     supplier_type_codelist = TestUtils.create_ct_codelist(
         name="Data Supplier Type",
@@ -77,7 +77,7 @@ def test_data():
         sponsor_preferred_name="Type",
     )
 
-    supplier_origin_source_codelist = TestUtils.create_ct_codelist(
+    origin_source_codelist = TestUtils.create_ct_codelist(
         name="Origin Source",
         sponsor_preferred_name="Origin Source",
         extensible=True,
@@ -86,11 +86,11 @@ def test_data():
         catalogue_name=settings.sdtm_ct_catalogue_name,
         codelist_uid="C170450",
     )
-    supplier_origin_source = TestUtils.create_ct_term(
-        codelist_uid=supplier_origin_source_codelist.codelist_uid,
+    origin_source = TestUtils.create_ct_term(
+        codelist_uid=origin_source_codelist.codelist_uid,
         sponsor_preferred_name="Origin Source",
     )
-    supplier_origin_type_codelist = TestUtils.create_ct_codelist(
+    origin_type_codelist = TestUtils.create_ct_codelist(
         name="Origin Type",
         sponsor_preferred_name="Origin Type",
         extensible=True,
@@ -99,8 +99,8 @@ def test_data():
         catalogue_name=settings.sdtm_ct_catalogue_name,
         codelist_uid="C170449",
     )
-    supplier_origin_type = TestUtils.create_ct_term(
-        codelist_uid=supplier_origin_type_codelist.codelist_uid,
+    origin_type = TestUtils.create_ct_term(
+        codelist_uid=origin_type_codelist.codelist_uid,
         sponsor_preferred_name="Origin Type",
     )
 
@@ -110,51 +110,51 @@ def test_data():
             name="name A",
             order=1,
             description="Description A",
-            supplier_api_base_url="supplier_api_base_url",
-            supplier_ui_base_url="supplier_ui_base_url",
+            api_base_url="api_base_url",
+            ui_base_url="ui_base_url",
             supplier_type_uid=supplier_type.term_uid,
-            supplier_origin_source_uid=supplier_origin_source.term_uid,
-            supplier_origin_type_uid=supplier_origin_type.term_uid,
+            origin_source_uid=origin_source.term_uid,
+            origin_type_uid=origin_type.term_uid,
         ),
         TestUtils.create_data_supplier(
             name="name-AAA",
             order=2,
             description="Description AAA",
-            supplier_api_base_url="supplier_api_base_url",
-            supplier_ui_base_url="supplier_ui_base_url",
+            api_base_url="api_base_url",
+            ui_base_url="ui_base_url",
             supplier_type_uid=supplier_type.term_uid,
-            supplier_origin_source_uid=supplier_origin_source.term_uid,
-            supplier_origin_type_uid=supplier_origin_type.term_uid,
+            origin_source_uid=origin_source.term_uid,
+            origin_type_uid=origin_type.term_uid,
         ),
         TestUtils.create_data_supplier(
             name="name-BBB",
             order=3,
             description="Description BBB",
-            supplier_api_base_url="supplier_api_base_url",
-            supplier_ui_base_url="supplier_ui_base_url",
+            api_base_url="api_base_url",
+            ui_base_url="ui_base_url",
             supplier_type_uid=supplier_type.term_uid,
-            supplier_origin_source_uid=supplier_origin_source.term_uid,
-            supplier_origin_type_uid=supplier_origin_type.term_uid,
+            origin_source_uid=origin_source.term_uid,
+            origin_type_uid=origin_type.term_uid,
         ),
         TestUtils.create_data_supplier(
             name="name XXX",
             order=4,
             description="Description XXX",
-            supplier_api_base_url="supplier_api_base_url",
-            supplier_ui_base_url="supplier_ui_base_url",
+            api_base_url="api_base_url",
+            ui_base_url="ui_base_url",
             supplier_type_uid=supplier_type.term_uid,
-            supplier_origin_source_uid=supplier_origin_source.term_uid,
-            supplier_origin_type_uid=supplier_origin_type.term_uid,
+            origin_source_uid=origin_source.term_uid,
+            origin_type_uid=origin_type.term_uid,
         ),
         TestUtils.create_data_supplier(
             name="name YYY",
             order=5,
             description="Description YYY",
-            supplier_api_base_url="supplier_api_base_url",
-            supplier_ui_base_url="supplier_ui_base_url",
+            api_base_url="api_base_url",
+            ui_base_url="ui_base_url",
             supplier_type_uid=supplier_type.term_uid,
-            supplier_origin_source_uid=supplier_origin_source.term_uid,
-            supplier_origin_type_uid=supplier_origin_type.term_uid,
+            origin_source_uid=origin_source.term_uid,
+            origin_type_uid=origin_type.term_uid,
         ),
     ]
 
@@ -164,11 +164,11 @@ def test_data():
                 name=f"name-AAA-{index}",
                 order=(index * 4) + 1,
                 description=f"Description AAA {index}",
-                supplier_api_base_url="supplier_api_base_url",
-                supplier_ui_base_url="supplier_ui_base_url",
+                api_base_url="api_base_url",
+                ui_base_url="ui_base_url",
                 supplier_type_uid=supplier_type.term_uid,
-                supplier_origin_source_uid=supplier_origin_source.term_uid,
-                supplier_origin_type_uid=supplier_origin_type.term_uid,
+                origin_source_uid=origin_source.term_uid,
+                origin_type_uid=origin_type.term_uid,
             )
         )
         data_suppliers_all.append(
@@ -176,11 +176,11 @@ def test_data():
                 name=f"name-BBB-{index}",
                 order=(index * 4) + 1,
                 description=f"Description BBB {index}",
-                supplier_api_base_url="supplier_api_base_url",
-                supplier_ui_base_url="supplier_ui_base_url",
+                api_base_url="api_base_url",
+                ui_base_url="ui_base_url",
                 supplier_type_uid=supplier_type.term_uid,
-                supplier_origin_source_uid=supplier_origin_source.term_uid,
-                supplier_origin_type_uid=supplier_origin_type.term_uid,
+                origin_source_uid=origin_source.term_uid,
+                origin_type_uid=origin_type.term_uid,
             )
         )
         data_suppliers_all.append(
@@ -188,11 +188,11 @@ def test_data():
                 name=f"name-XXX-{index}",
                 order=(index * 4) + 1,
                 description=f"Description XXX {index}",
-                supplier_api_base_url="supplier_api_base_url",
-                supplier_ui_base_url="supplier_ui_base_url",
+                api_base_url="api_base_url",
+                ui_base_url="ui_base_url",
                 supplier_type_uid=supplier_type.term_uid,
-                supplier_origin_source_uid=supplier_origin_source.term_uid,
-                supplier_origin_type_uid=supplier_origin_type.term_uid,
+                origin_source_uid=origin_source.term_uid,
+                origin_type_uid=origin_type.term_uid,
             )
         )
         data_suppliers_all.append(
@@ -200,11 +200,11 @@ def test_data():
                 name=f"name-YYY-{index}",
                 order=(index * 4) + 1,
                 description=f"Description YYY {index}",
-                supplier_api_base_url="supplier_api_base_url",
-                supplier_ui_base_url="supplier_ui_base_url",
+                api_base_url="api_base_url",
+                ui_base_url="ui_base_url",
                 supplier_type_uid=supplier_type.term_uid,
-                supplier_origin_source_uid=supplier_origin_source.term_uid,
-                supplier_origin_type_uid=supplier_origin_type.term_uid,
+                origin_source_uid=origin_source.term_uid,
+                origin_type_uid=origin_type.term_uid,
             )
         )
 
@@ -215,10 +215,10 @@ DATA_SUPPLIER_FIELDS_ALL = [
     "description",
     "order",
     "supplier_type",
-    "supplier_origin_source",
-    "supplier_origin_type",
-    "supplier_api_base_url",
-    "supplier_ui_base_url",
+    "origin_source",
+    "origin_type",
+    "api_base_url",
+    "ui_base_url",
     "library_name",
     "possible_actions",
     "version",
@@ -252,11 +252,11 @@ def test_get_data_supplier(api_client):
     assert res["name"] == "name A"
     assert res["order"] == 1
     assert res["description"] == "Description A"
-    assert res["supplier_api_base_url"] == "supplier_api_base_url"
-    assert res["supplier_ui_base_url"] == "supplier_ui_base_url"
+    assert res["api_base_url"] == "api_base_url"
+    assert res["ui_base_url"] == "ui_base_url"
     assert res["supplier_type"]["uid"] == supplier_type.term_uid
-    assert res["supplier_origin_source"]["uid"] == supplier_origin_source.term_uid
-    assert res["supplier_origin_type"]["uid"] == supplier_origin_type.term_uid
+    assert res["origin_source"]["uid"] == origin_source.term_uid
+    assert res["origin_type"]["uid"] == origin_type.term_uid
     assert res["version"] == "1.0"
     assert res["status"] == "Final"
     assert res["library_name"] == "Sponsor"
@@ -468,8 +468,8 @@ def test_filtering_wildcard(
             "Type",
         ),
         pytest.param(
-            '{"supplier_origin_type.name": {"v": ["Origin Type"]}}',
-            "supplier_origin_type.name",
+            '{"origin_type.name": {"v": ["Origin Type"]}}',
+            "origin_type.name",
             "Origin Type",
         ),
     ],
@@ -515,18 +515,18 @@ def test_edit_data_supplier(api_client):
         name="New data supplier",
         order=30,
         supplier_type_uid=supplier_type.term_uid,
-        supplier_origin_source_uid=supplier_origin_source.term_uid,
+        origin_source_uid=origin_source.term_uid,
     )
 
     _supplier_type = TestUtils.create_ct_term(
         codelist_uid=supplier_type_codelist.codelist_uid, sponsor_preferred_name="_Type"
     )
     _supplier_origin_source = TestUtils.create_ct_term(
-        codelist_uid=supplier_origin_source_codelist.codelist_uid,
+        codelist_uid=origin_source_codelist.codelist_uid,
         sponsor_preferred_name="_Origin Source",
     )
     _supplier_origin_type = TestUtils.create_ct_term(
-        codelist_uid=supplier_origin_type_codelist.codelist_uid,
+        codelist_uid=origin_type_codelist.codelist_uid,
         sponsor_preferred_name="_Origin Type",
     )
     response = api_client.patch(
@@ -536,10 +536,10 @@ def test_edit_data_supplier(api_client):
             "order": 45,
             "description": "new description for data supplier",
             "supplier_type_uid": _supplier_type.term_uid,
-            "supplier_origin_source_uid": _supplier_origin_source.term_uid,
-            "supplier_origin_type_uid": _supplier_origin_type.term_uid,
-            "supplier_api_base_url": None,
-            "supplier_ui_base_url": None,
+            "origin_source_uid": _supplier_origin_source.term_uid,
+            "origin_type_uid": _supplier_origin_type.term_uid,
+            "api_base_url": None,
+            "ui_base_url": None,
             "change_description": "Updated via API",
         },
     )
@@ -549,8 +549,8 @@ def test_edit_data_supplier(api_client):
     assert res["order"] == 45
     assert res["description"] == "new description for data supplier"
     assert res["supplier_type"]["uid"] == _supplier_type.term_uid
-    assert res["supplier_origin_source"]["uid"] == _supplier_origin_source.term_uid
-    assert res["supplier_origin_type"]["uid"] == _supplier_origin_type.term_uid
+    assert res["origin_source"]["uid"] == _supplier_origin_source.term_uid
+    assert res["origin_type"]["uid"] == _supplier_origin_type.term_uid
     assert res["version"] == "2.0"
     assert res["status"] == "Final"
     assert res["possible_actions"] == ["edit", "inactivate"]
@@ -565,11 +565,11 @@ def test_post_data_supplier(api_client):
             "order": 36,
             "description": "New Data Supplier Desc",
             "supplier_type_uid": supplier_type.term_uid,
-            "supplier_origin_source_uid": supplier_origin_source.term_uid,
-            "supplier_origin_type_uid": supplier_origin_type.term_uid,
+            "origin_source_uid": origin_source.term_uid,
+            "origin_type_uid": origin_type.term_uid,
             "library_name": "Sponsor",
-            "supplier_api_base_url": None,
-            "supplier_ui_base_url": None,
+            "api_base_url": None,
+            "ui_base_url": None,
         },
     )
     assert_response_status_code(response, 201)
@@ -578,8 +578,8 @@ def test_post_data_supplier(api_client):
     assert res["order"] == 36
     assert res["description"] == "New Data Supplier Desc"
     assert res["supplier_type"]["uid"] == supplier_type.term_uid
-    assert res["supplier_origin_source"]["uid"] == supplier_origin_source.term_uid
-    assert res["supplier_origin_type"]["uid"] == supplier_origin_type.term_uid
+    assert res["origin_source"]["uid"] == origin_source.term_uid
+    assert res["origin_type"]["uid"] == origin_type.term_uid
     assert res["version"] == "1.0"
     assert res["status"] == "Final"
     assert res["possible_actions"] == ["edit", "inactivate"]
@@ -591,8 +591,8 @@ def test_data_supplier_versioning(api_client):
         name="New data supplier",
         order=2,
         supplier_type_uid=supplier_type.term_uid,
-        supplier_origin_source_uid=supplier_origin_source.term_uid,
-        supplier_origin_type_uid=supplier_origin_type.term_uid,
+        origin_source_uid=origin_source.term_uid,
+        origin_type_uid=origin_type.term_uid,
     )
 
     # not successful reactivate

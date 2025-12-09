@@ -17,6 +17,13 @@ Feature: Library - Code Lists - Sponsor CT Packages
     #     And The Sponsor CT Package form is populated and saved
     #     Then The table presents created Sponsor CT Package
 
+    Scenario: [Create][Negative case] User must not be able to create multiple Sponsor CT Packages for the same date
+        Given [API] User fetches first available package on ADAM CT
+        And [API] User creates a package if it doesn not exists
+        And The '/library/sponsor-ct-packages' page is opened
+        When Sponsor CT Package is created for the same date as already existing one
+        Then The pop up displays 'A sponsor CTPackage already exists for this date'
+
     @smoke_test
     Scenario: [Table][Columns][Names] User must be able to see the columns list of Sponsor CT Package for a selected CDISC CT Package
         Given The '/library/sponsor-ct-packages' page is opened
@@ -40,8 +47,3 @@ Feature: Library - Code Lists - Sponsor CT Packages
             | Extensible             |
             | Attributes status      |
             | Attributes modified    |
-
-Scenario: [Create][Negative case] User must not be able to create multiple Sponsor CT Packages for the same date
-    Given The '/library/sponsor-ct-packages' page is opened
-    When Sponsor CT Package is created for the same date as already existing one
-    Then The pop up displays 'A sponsor CTPackage already exists for this date'

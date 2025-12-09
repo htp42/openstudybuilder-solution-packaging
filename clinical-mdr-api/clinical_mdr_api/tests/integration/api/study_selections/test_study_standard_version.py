@@ -175,7 +175,7 @@ def test_study_standard_version_crud_operations(api_client):
         f"/studies/{study.uid}/study-standard-versions/{standard_version_uid}",
     )
     res = response.json()
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
     assert (
         res["message"]
         == f"The StudyStandardVersion with UID '{standard_version_uid}' doesn't exist."

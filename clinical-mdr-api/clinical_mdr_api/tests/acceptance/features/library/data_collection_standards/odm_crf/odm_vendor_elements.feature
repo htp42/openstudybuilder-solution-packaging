@@ -62,7 +62,7 @@ Feature: Manage ODM Vendor Elements in Clinical MDR API
 
     Scenario: User must not be able to create an ODM vendor element without providing compatible types
         When the user sends a request to create an ODM vendor element without compatible types
-        Then the response status code must be 422
+        Then the response status code must be 400
         And the response must indicate a validation error for compatible types
     Test Coverage:
         | TestFile                                               | TestID                                                                                  |

@@ -38,6 +38,7 @@ from clinical_mdr_api.services.studies.study_endpoint_selection import (
 )
 from common import exceptions
 from common.auth.user import user
+from common.telemetry import trace_calls
 
 
 class StudyDesignCellService(StudySelectionMixin):
@@ -47,6 +48,7 @@ class StudyDesignCellService(StudySelectionMixin):
         self._repos = MetaRepository()
         self.author = user().id()
 
+    @trace_calls
     @db.transaction
     def get_all_design_cells(
         self,
@@ -175,6 +177,7 @@ class StudyDesignCellService(StudySelectionMixin):
             start_date=datetime.now(timezone.utc),
         )
 
+    @trace_calls
     @ensure_transaction(db)
     def create(
         self, study_uid: str, design_cell_input: StudyDesignCellCreateInput

@@ -128,7 +128,7 @@ export default {
     NotApplicableField,
     ConfirmDialog,
   },
-  inject: ['eventBusEmit', 'formRules'],
+  inject: ['notificationHub', 'formRules'],
   props: {
     template: {
       type: Object,
@@ -283,7 +283,7 @@ export default {
       }
       return this.api.create(data).then(() => {
         this.$emit('templateAdded')
-        this.eventBusEmit('notification', {
+        this.notificationHub.add({
           msg: this.$t(this.translationObject + '.add_success'),
         })
         this.close()
@@ -311,7 +311,7 @@ export default {
       }
       return this.api.update(this.template.uid, data).then((resp) => {
         this.$emit('templateUpdated', resp.data)
-        this.eventBusEmit('notification', {
+        this.notificationHub.add({
           msg: this.$t(this.translationObject + '.update_success'),
         })
         this.close()
@@ -322,6 +322,9 @@ export default {
       if (!valid) {
         return
       }
+
+      this.notificationHub.clearErrors()
+
       this.loading = true
       try {
         if (!this.template) {
@@ -357,6 +360,7 @@ export default {
       }
     },
     close() {
+      this.notificationHub.clearErrors()
       this.form = this.getInitialFormContent()
       this.formStore.reset()
       this.$refs.observer.reset()
@@ -368,7 +372,7 @@ export default {
       }
       const data = { name: this.form.name }
       this.api.preValidate(data).then(() => {
-        this.eventBusEmit('notification', {
+        this.notificationHub.add({
           msg: this.$t('_global.valid_syntax'),
         })
       })

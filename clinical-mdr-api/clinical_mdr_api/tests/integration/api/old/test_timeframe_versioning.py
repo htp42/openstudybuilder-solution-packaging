@@ -233,32 +233,15 @@ def test_patching_aproved_timeframe_with_missing_field(api_client):
     }
     response = api_client.patch("/timeframes/Timeframe_000001", json=data)
 
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
 
     res = response.json()
 
-    assert res["detail"] == [
+    assert res["details"] == [
         {
-            "type": "missing",
-            "loc": ["body", "change_description"],
+            "error_code": "missing",
+            "field": ["body", "change_description"],
             "msg": "Field required",
-            "input": {
-                "name": "test{test-uid}",
-                "parameter_terms": [
-                    {
-                        "name": "Intervention",
-                        "terms": [
-                            {
-                                "uid": "TemplateParameter_000003",
-                                "type": "Intervention",
-                                "name": "Intervention",
-                                "value": "diabetes",
-                                "index": 1,
-                            }
-                        ],
-                        "conjunction": "",
-                    }
-                ],
-            },
+            "ctx": {},
         }
     ]

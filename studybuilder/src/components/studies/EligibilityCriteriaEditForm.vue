@@ -42,7 +42,7 @@ export default {
     StudySelectionEditForm,
     YesNoField,
   },
-  inject: ['eventBusEmit'],
+  inject: ['notificationHub'],
   props: {
     studyCriteria: {
       type: Object,
@@ -111,6 +111,8 @@ export default {
       return resp.data.criteria.name
     },
     async submit(newTemplate, form, parameters) {
+      this.notificationHub.clearErrors()
+
       const payload = { ...form }
       // FIXME:
       // The PATCH endpoint does not behave properly since it expects a complete payload...
@@ -127,7 +129,7 @@ export default {
       //   }
       // }
       // if (_isEmpty(payload)) {
-      //   this.eventBusEmit('notification', { msg: this.$t('_global.no_changes'), type: 'info' })
+      //   this.notificationHub.add({ msg: this.$t('_global.no_changes'), type: 'info' })
       //   this.$refs.form.close()
       //   return
       // }
@@ -145,7 +147,7 @@ export default {
         this.editedObject.study_criteria_uid,
         payload
       )
-      this.eventBusEmit('notification', {
+      this.notificationHub.add({
         msg: this.$t('EligibilityCriteriaEditForm.update_success'),
       })
       this.$emit('updated')

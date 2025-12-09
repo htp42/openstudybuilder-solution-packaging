@@ -219,7 +219,7 @@ def get_distinct_values_for_header(
     activity_subgroup_names: Annotated[
         list[str] | None,
         Query(
-            description="A list of activity sub group names to use as a specific filter",
+            description="A list of activity subgroup names to use as a specific filter",
             alias="activity_subgroup_names[]",
         ),
     ] = None,
@@ -266,7 +266,7 @@ def get_distinct_values_for_header(
     summary="Get details on a specific activity group (in a specific version)",
     description="""
 State before:
- - an activity sub group with uid must exist.
+ - an activity group with uid must exist.
 
 Business logic:
  - If parameter at_specified_date_time is specified then the latest/newest representation of the concept at this point in time is returned. The point in time needs to be specified in ISO 8601 format including the timezone, e.g.: '2020-10-31T16:00:00+02:00' for October 31, 2020 at 4pm in UTC+2 timezone. If the timezone is ommitted, UTC�0 is assumed.
@@ -675,6 +675,8 @@ Business logic:
  - The status of the new approved version will be automatically set to 'Final'.
  - The 'version' property of the new version will be automatically set to the version of the latest 'Final' version increased by +1.0.
  - The 'change_description' property will be set automatically 'Approved version'.
+ - If cascade_edit_and_approve is set to True, all activity subgroups that are linked to the latest 'Final' version of this activity group
+   are updated to link to the newly approved activity group, and then approved.
 
 State after:
  - Activity group changed status to Final and assigned a new major version number.
@@ -699,9 +701,16 @@ Possible errors:
         },
     },
 )
-def approve(activity_group_uid: Annotated[str, ActivityGroupUID]) -> ActivityGroup:
+def approve(
+    activity_group_uid: Annotated[str, ActivityGroupUID],
+    cascade_edit_and_approve: Annotated[
+        bool, Query(description="Approve all linked activity subgroups")
+    ] = False,
+) -> ActivityGroup:
     activity_group_service = ActivityGroupService()
-    return activity_group_service.approve(uid=activity_group_uid)
+    return activity_group_service.approve(
+        uid=activity_group_uid, cascade_edit_and_approve=cascade_edit_and_approve
+    )
 
 
 @router.delete(
@@ -816,7 +825,7 @@ Possible errors:
             "description": "Forbidden - Reasons include e.g.: \n"
             "- The activity group is not in draft status.\n"
             "- The activity group was already in final state or is in use.\n"
-            "- The library doesn't allow to delete activity sub group.",
+            "- The library doesn't allow to delete activity group.",
         },
         404: {
             "model": ErrorResponse,

@@ -17,14 +17,7 @@ Feature: Library - Code Lists - CT Packages
 		And The following tabs are visible
 			| tabs 			|
 			| ADAM CT       |
-			| CDASH CT      |
-			| COA CT        |
-			| DEFINE-XML CT |
-			| PROTOCOL CT   |
-			| QRS CT        |
-			| QS-FT CT      |
-			| SDTM CT       |
-			| SEND CT       |
+			| SEND CT		|
 
 	Scenario: [Table][Columns][Visibility] User must be able to select visibility of columns in the table
 		Given The '/library/ct_packages' page is opened

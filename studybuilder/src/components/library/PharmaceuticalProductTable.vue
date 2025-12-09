@@ -101,7 +101,7 @@ const props = defineProps({
 const { t } = useI18n()
 const { displayIngredients } = usePharmaceuticalProducts()
 const accessGuard = useAccessGuard()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const roles = inject('roles')
 
 const products = ref([])
@@ -237,7 +237,7 @@ function editItem(item) {
 function approveItem(item) {
   api.approve(item.uid).then(() => {
     fetchItems()
-    eventBusEmit('notification', {
+    notificationHub.add({
       msg: t('PharmaceuticalProductTable.approve_success'),
       type: 'success',
     })
@@ -254,7 +254,7 @@ async function deleteItem(item) {
   ) {
     await api.deleteObject(item.uid)
     fetchItems()
-    eventBusEmit('notification', {
+    notificationHub.add({
       msg: t('PharmaceuticalProductTable.delete_success'),
       type: 'success',
     })
@@ -264,7 +264,7 @@ async function deleteItem(item) {
 function createNewVersion(item) {
   api.newVersion(item.uid).then(() => {
     fetchItems()
-    eventBusEmit('notification', {
+    notificationHub.add({
       msg: t('PharmaceuticalProductTable.new_version_success'),
       type: 'success',
     })
@@ -274,7 +274,7 @@ function createNewVersion(item) {
 function inactivateItem(item) {
   api.inactivate(item.uid).then(() => {
     fetchItems()
-    eventBusEmit('notification', {
+    notificationHub.add({
       msg: t('PharmaceuticalProductTable.inactivate_success'),
       type: 'success',
     })
@@ -284,7 +284,7 @@ function inactivateItem(item) {
 function reactivateItem(item) {
   api.reactivate(item.uid).then(() => {
     fetchItems()
-    eventBusEmit('notification', {
+    notificationHub.add({
       msg: t('PharmaceuticalProductTable.reactivate_success'),
       type: 'success',
     })

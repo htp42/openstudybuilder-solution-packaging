@@ -80,7 +80,7 @@ import projects from '@/api/projects'
 const { t } = useI18n()
 const formStore = useFormStore()
 const formRules = inject('formRules')
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 
 const props = defineProps({
   projectUid: {
@@ -130,6 +130,7 @@ onMounted(() => {
 })
 
 async function close() {
+  notificationHub.clearErrors()
   if (!formStore.isEqual(form.value)) {
     const options = {
       type: 'warning',
@@ -152,7 +153,7 @@ function initForm() {
 async function addProject() {
   const data = JSON.parse(JSON.stringify(form.value))
   await projects.create(data)
-  eventBusEmit('notification', {
+  notificationHub.add({
     msg: t('Projects.add_success'),
   })
 }
@@ -160,12 +161,14 @@ async function addProject() {
 async function updateProject() {
   const data = JSON.parse(JSON.stringify(form.value))
   await projects.patch(props.projectUid, data)
-  eventBusEmit('notification', {
+  notificationHub.add({
     msg: t('Projects.update_success'),
   })
 }
 
 async function submit() {
+  notificationHub.clearErrors()
+
   try {
     if (!props.projectUid) {
       await addProject()

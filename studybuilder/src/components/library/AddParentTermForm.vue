@@ -80,7 +80,7 @@ import filteringParameters from '@/utils/filteringParameters'
 import _debounce from 'lodash/debounce'
 
 const { t } = useI18n()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const props = defineProps({
   relationship: {
     type: String,
@@ -138,6 +138,7 @@ onMounted(() => {
 
 function close() {
   emit('close')
+  notificationHub.clearErrors()
   relationshipType.value = 'type'
   selectedTerm.value = null
   form.value = {}
@@ -163,6 +164,8 @@ function getObserver() {
 }
 
 async function submit() {
+  notificationHub.clearErrors()
+
   let firstUid, secondUid
   if (props.relationship === 'parent') {
     firstUid = props.termUid
@@ -177,7 +180,7 @@ async function submit() {
       secondUid,
       relationshipType.value
     )
-    eventBusEmit('notification', {
+    notificationHub.add({
       msg: t('CodelistTermCreationForm.add_success'),
     })
     emit('created', resp.data)

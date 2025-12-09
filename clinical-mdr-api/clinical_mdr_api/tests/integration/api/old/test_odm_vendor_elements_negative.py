@@ -90,16 +90,15 @@ def test_cannot_create_a_new_odm_vendor_element_without_providing_compatible_typ
     }
     response = api_client.post("concepts/odms/vendor-elements", json=data)
 
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
 
     res = response.json()
 
-    assert res["detail"] == [
+    assert res["details"] == [
         {
-            "type": "too_short",
-            "loc": ["body", "compatible_types"],
+            "error_code": "too_short",
+            "field": ["body", "compatible_types"],
             "msg": "List should have at least 1 item after validation, not 0",
-            "input": [],
             "ctx": {"field_type": "List", "min_length": 1, "actual_length": 0},
         }
     ]

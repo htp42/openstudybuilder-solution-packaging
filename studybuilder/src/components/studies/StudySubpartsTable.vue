@@ -150,7 +150,7 @@ import HistoryTable from '@/components/tools/HistoryTable.vue'
 import { useDragAndDrop } from '@formkit/drag-and-drop/vue'
 
 const { t } = useI18n()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const roles = inject('roles')
 const accessGuard = useAccessGuard()
 const studiesGeneralStore = useStudiesGeneralStore()
@@ -301,7 +301,7 @@ function removeSubpart(subpart) {
   subpart.current_metadata.identification_metadata.study_number = null
   studies.updateStudy(subpart.uid, subpart).then(() => {
     fetchStudySubparts()
-    eventBusEmit('notification', { msg: t('StudySubparts.substudy_removed') })
+    notificationHub.add({ msg: t('StudySubparts.substudy_removed') })
   })
 }
 

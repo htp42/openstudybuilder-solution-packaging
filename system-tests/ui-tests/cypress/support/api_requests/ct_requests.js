@@ -39,6 +39,8 @@ Cypress.Commands.add('createAndOpenTerm', () => {
   })
 })
 
+Cypress.Commands.add('getAvailablePackageName', (catalogueName) => cy.sendGetRequest(`/ct/packages?catalogue_name=${catalogueName}`).then(response => { return response.body[0].uid }))
+
 Cypress.Commands.add('createCTPackage', (packageName) => {
   cy.request({
     url: `${Cypress.env('API')}/ct/packages/sponsor`,

@@ -192,13 +192,14 @@ def test_endpoints_rbac_correct_roles(
             content_type,
         )
         assert_response_status_code(
-            response, (200, 201, 202, 204, 207, 400, 403, 404, 409, 422)
+            response, (200, 201, 202, 204, 207, 400, 403, 404, 409)
         )
 
         if response.status_code == 400:
             payload = response.json()
             assert (payload.get("type") or "") in (
                 "BusinessLogicException",
+                "RequestValidationError",
                 "ValidationException",
                 "ValidationError",
             )

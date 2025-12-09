@@ -689,6 +689,24 @@ const routes = [
         },
       },
       {
+        path: ':study_id/data-suppliers',
+        name: 'StudyDataSuppliers',
+        component: () => import('../views/studies/StudyDataSuppliers.vue'),
+        meta: {
+          authRequired: true,
+          studyRequired: true,
+        },
+      },
+      {
+        path: ':study_id/data-suppliers/edit',
+        name: 'StudyDataSuppliersEdit',
+        component: () => import('../views/studies/StudyDataSuppliersEdit.vue'),
+        meta: {
+          authRequired: true,
+          studyRequired: true,
+        },
+      },
+      {
         path: ':study_id/data_specifications/:tab?',
         name: 'StudyDataSpecifications',
         component: () => import('../views/studies/StudyDataSpecifications.vue'),

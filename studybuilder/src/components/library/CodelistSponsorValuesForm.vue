@@ -76,7 +76,7 @@ export default {
     HelpButtonWithPanels,
     ConfirmDialog,
   },
-  inject: ['eventBusEmit', 'formRules'],
+  inject: ['notificationHub', 'formRules'],
   props: {
     modelValue: {
       type: Object,
@@ -140,11 +140,15 @@ export default {
     },
     close() {
       this.$emit('close')
+      this.notificationHub.clearErrors()
       this.formStore.reset()
     },
     async submit() {
       const { valid } = await this.$refs.observer.validate()
       if (!valid) return
+
+      this.notificationHub.clearErrors()
+
       this.working = true
       try {
         const resp = await controlledTerminology.updateCodelistNames(
@@ -152,7 +156,7 @@ export default {
           this.form
         )
         this.$emit('update:modelValue', resp.data)
-        this.eventBusEmit('notification', {
+        this.notificationHub.add({
           msg: this.$t('CodelistSponsorValuesForm.update_success'),
         })
         delete this.form.change_description

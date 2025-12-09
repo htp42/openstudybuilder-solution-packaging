@@ -598,7 +598,7 @@ const { t } = useI18n()
 const accessGuard = useAccessGuard()
 const activitiesStore = useLibraryActivitiesStore()
 const featureFlagsStore = useFeatureFlagsStore()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const roles = inject('roles')
 const tableRef = ref()
 const groupFormRef = ref()
@@ -1418,7 +1418,7 @@ function activitiesDisplay(item) {
 function inactivateItem(item, source) {
   source = source === undefined ? props.source : source
   activitiesApi.inactivate(item.uid, source).then(() => {
-    eventBusEmit('notification', {
+    notificationHub.add({
       msg: t(`ActivitiesTable.inactivate_${props.source}_success`),
       type: 'success',
     })
@@ -1429,7 +1429,7 @@ function inactivateItem(item, source) {
 function reactivateItem(item, source) {
   source = source === undefined ? props.source : source
   activitiesApi.reactivate(item.uid, source).then(() => {
-    eventBusEmit('notification', {
+    notificationHub.add({
       msg: t(`ActivitiesTable.reactivate_${props.source}_success`),
       type: 'success',
     })
@@ -1440,7 +1440,7 @@ function reactivateItem(item, source) {
 function deleteItem(item, source) {
   source = source === undefined ? props.source : source
   activitiesApi.delete(item.uid, source).then(() => {
-    eventBusEmit('notification', {
+    notificationHub.add({
       msg: t(`ActivitiesTable.delete_${props.source}_success`),
       type: 'success',
     })
@@ -1451,14 +1451,37 @@ function deleteItem(item, source) {
 function approveItem(item, source) {
   source = source === undefined ? props.source : source
   const options = {}
-  if (source === 'activities') {
+  if (
+    ['activity-groups', 'activity-sub-groups', 'activities'].indexOf(source) !==
+    -1
+  ) {
     options.cascade_edit_and_approve = true
   }
-  activitiesApi.approve(item.uid, source, options).then(() => {
-    eventBusEmit('notification', {
-      msg: t(`ActivitiesTable.approve_${props.source}_success`),
-      type: 'success',
-    })
+  activitiesApi.approve(item.uid, source, options).then((resp) => {
+    if (source === 'activity-sub-groups') {
+      if (resp.data.was_cascade_update_performed) {
+        notificationHub.add({
+          msg: t(`ActivitiesTable.approve_activity-sub-groups_success_cascade`),
+          type: 'success',
+        })
+        notificationHub.add({
+          msg: t(`ActivitiesTable.approve_${props.source}_success`),
+          type: 'success',
+        })
+      } else {
+        notificationHub.add({
+          msg: t(
+            `ActivitiesTable.approve_activity-sub-groups_success_no_cascade`
+          ),
+          type: 'warning',
+        })
+      }
+    } else {
+      notificationHub.add({
+        msg: t(`ActivitiesTable.approve_${props.source}_success`),
+        type: 'success',
+      })
+    }
     tableRef.value.filterTable()
   })
 }
@@ -1466,7 +1489,7 @@ function approveItem(item, source) {
 function newItemVersion(item, source) {
   source = source === undefined ? props.source : source
   activitiesApi.newVersion(item.uid, source).then(() => {
-    eventBusEmit('notification', {
+    notificationHub.add({
       msg: t('_global.new_version_success'),
       type: 'success',
     })

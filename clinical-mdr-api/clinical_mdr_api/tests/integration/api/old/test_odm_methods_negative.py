@@ -150,7 +150,7 @@ def test_cannot_create_a_new_odm_method_without_an_english_description(api_clien
     }
     response = api_client.post("concepts/odms/methods", json=data)
 
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
 
     res = response.json()
 

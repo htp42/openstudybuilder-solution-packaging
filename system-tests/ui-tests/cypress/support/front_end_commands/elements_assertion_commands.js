@@ -3,7 +3,7 @@ Cypress.Commands.add('elementContain', (selector, text) => {
 })
 
 Cypress.Commands.add('checkSnackbarMessage', (message) => {
-    cy.get('.v-snackbar__content').should('contain', message).and('be.visible')
+    cy.get('.v-alert').should('contain', message).and('be.visible')
 })
 
 Cypress.Commands.add('checkIfValidationAppears', (locator, message = 'This field is required') => {

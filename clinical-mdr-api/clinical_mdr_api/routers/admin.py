@@ -25,6 +25,7 @@ CACHE_STORE_NAMES = [
     "cache_store_item_by_uid",
     "cache_store_item_by_study_uid",
     "cache_store_item_by_project_number",
+    "cache_get_user",
 ]
 
 

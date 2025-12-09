@@ -31,18 +31,59 @@ from clinical_mdr_api.models.utils import (
     GenericFilteringReturn,
 )
 from clinical_mdr_api.repositories._utils import FilterOperator
+from clinical_mdr_api.services.concepts.concept_generic_service import (
+    ConceptGenericService,
+)
 from clinical_mdr_api.services.controlled_terminologies.ct_codelist import (
     CTCodelistService,
 )
-from clinical_mdr_api.services.neomodel_ext_generic import NeomodelExtGenericService
 from common.exceptions import NotFoundException
 from common.utils import version_string_to_tuple
 
 
-class ActivityItemClassService(NeomodelExtGenericService[ActivityItemClassAR]):
+class ActivityItemClassService(ConceptGenericService[ActivityItemClassAR]):
+    aggregate_class = ActivityItemClassAR
     repository_interface = ActivityItemClassRepository
-    api_model_class = ActivityItemClass
     version_class = ActivityItemClassVersion
+
+    def get_all_items(
+        self,
+        sort_by: dict[str, bool] | None = None,
+        page_number: int = 1,
+        page_size: int = 0,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
+        total_count: bool = False,
+        **kwargs,
+    ) -> GenericFilteringReturn[ActivityItemClass]:
+        """Wrapper method to maintain compatibility with router."""
+        return self.get_all_concepts(
+            sort_by=sort_by,
+            page_number=page_number,
+            page_size=page_size,
+            filter_by=filter_by,
+            filter_operator=filter_operator,
+            total_count=total_count,
+            **kwargs,
+        )
+
+    def get_distinct_values_for_header(
+        self,
+        field_name: str,
+        search_string: str = "",
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
+        page_size: int = 10,
+    ) -> list[Any]:
+        """Wrapper method to maintain compatibility with router - library param optional."""
+        return super().get_distinct_values_for_header(
+            field_name=field_name,
+            library=None,
+            search_string=search_string,
+            filter_by=filter_by,
+            filter_operator=filter_operator,
+            page_size=page_size,
+        )
 
     def _transform_aggregate_root_to_pydantic_model(
         self, item_ar: ActivityItemClassAR
@@ -53,26 +94,28 @@ class ActivityItemClassService(NeomodelExtGenericService[ActivityItemClassAR]):
         )
 
     def _create_aggregate_root(
-        self, item_input: ActivityItemClassCreateInput, library: LibraryVO
+        self, concept_input: ActivityItemClassCreateInput, library: LibraryVO
     ) -> ActivityItemClassAR:
         return ActivityItemClassAR.from_input_values(
             author_id=self.author_id,
             activity_item_class_vo=ActivityItemClassVO.from_repository_values(
-                name=item_input.name,
-                definition=item_input.definition,
-                nci_concept_id=item_input.nci_concept_id,
-                order=item_input.order,
+                name=concept_input.name,
+                definition=concept_input.definition,
+                nci_concept_id=concept_input.nci_concept_id,
+                order=concept_input.order,
                 activity_instance_classes=[
                     ActivityInstanceClassActivityItemClassRelVO(
                         uid=item.uid,
                         mandatory=item.mandatory,
                         is_adam_param_specific_enabled=item.is_adam_param_specific_enabled,
                     )
-                    for item in item_input.activity_instance_classes
+                    for item in concept_input.activity_instance_classes
                 ],
-                role=CTTermItem(uid=item_input.role_uid, name=None, codelist_uid=None),
+                role=CTTermItem(
+                    uid=concept_input.role_uid, name=None, codelist_uid=None
+                ),
                 data_type=CTTermItem(
-                    uid=item_input.data_type_uid, name=None, codelist_uid=None
+                    uid=concept_input.data_type_uid, name=None, codelist_uid=None
                 ),
             ),
             library=library,
@@ -83,36 +126,38 @@ class ActivityItemClassService(NeomodelExtGenericService[ActivityItemClassAR]):
         )
 
     def _edit_aggregate(
-        self, item: ActivityItemClassAR, item_edit_input: ActivityItemClassEditInput
+        self, item: ActivityItemClassAR, concept_edit_input: ActivityItemClassEditInput
     ) -> ActivityItemClassAR:
         item.edit_draft(
             author_id=self.author_id,
-            change_description=item_edit_input.change_description,
+            change_description=concept_edit_input.change_description,
             activity_item_class_vo=ActivityItemClassVO.from_repository_values(
-                name=item_edit_input.name or item.activity_item_class_vo.name,
-                definition=item_edit_input.definition,
-                nci_concept_id=item_edit_input.nci_concept_id,
-                order=item_edit_input.order or item.activity_item_class_vo.order,
+                name=concept_edit_input.name or item.activity_item_class_vo.name,
+                definition=concept_edit_input.definition,
+                nci_concept_id=concept_edit_input.nci_concept_id,
+                order=concept_edit_input.order or item.activity_item_class_vo.order,
                 activity_instance_classes=[
                     ActivityInstanceClassActivityItemClassRelVO(
-                        uid=item.uid,
-                        mandatory=item.mandatory,
-                        is_adam_param_specific_enabled=item.is_adam_param_specific_enabled,
+                        uid=inst.uid,
+                        mandatory=inst.mandatory,
+                        is_adam_param_specific_enabled=inst.is_adam_param_specific_enabled,
                     )
-                    for item in item_edit_input.activity_instance_classes
+                    for inst in concept_edit_input.activity_instance_classes
                 ],
                 role=(
                     CTTermItem(
-                        uid=item_edit_input.role_uid, name=None, codelist_uid=None
+                        uid=concept_edit_input.role_uid, name=None, codelist_uid=None
                     )
-                    if item_edit_input.role_uid
+                    if concept_edit_input.role_uid
                     else item.activity_item_class_vo.role
                 ),
                 data_type=(
                     CTTermItem(
-                        uid=item_edit_input.data_type_uid, name=None, codelist_uid=None
+                        uid=concept_edit_input.data_type_uid,
+                        name=None,
+                        codelist_uid=None,
                     )
-                    if item_edit_input.data_type_uid
+                    if concept_edit_input.data_type_uid
                     else item.activity_item_class_vo.data_type
                 ),
             ),
@@ -125,7 +170,7 @@ class ActivityItemClassService(NeomodelExtGenericService[ActivityItemClassAR]):
     def patch_mappings(
         self, uid: str, mapping_input: ActivityItemClassMappingInput
     ) -> ActivityItemClass:
-        activity_item_class = self._repos.activity_item_class_repository.find_by_uid(
+        activity_item_class = self._repos.activity_item_class_repository.find_by_uid_2(
             uid
         )
 

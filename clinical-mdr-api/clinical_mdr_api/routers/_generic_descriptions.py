@@ -183,7 +183,10 @@ STUDY_VALUE_VERSION_QUERY = Query(
     pattern=FLOAT_REGEX,
 )
 
-ERROR_400 = {"model": ErrorResponse, "description": "Error"}
+ERROR_400 = {
+    "model": ErrorResponse,
+    "description": "Bad Request",
+}
 ERROR_403 = {"model": ErrorResponse, "description": "Forbidden"}
 ERROR_404 = {"model": ErrorResponse, "description": "Entity not found"}
 ERROR_409 = {

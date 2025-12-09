@@ -108,7 +108,7 @@ import terms from '@/api/controlledTerminology/terms'
 import HelpButton from '@/components/tools/HelpButton.vue'
 
 const { t } = useI18n()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const formRules = inject('formRules')
 const props = defineProps({
   studyActivity: {
@@ -190,6 +190,7 @@ onMounted(() => {
 
 function close() {
   working.value = false
+  notificationHub.clearErrors()
   form.value = {}
   observer.value.reset()
   emit('close')
@@ -200,6 +201,9 @@ async function submit() {
   if (!valid) {
     return
   }
+
+  notificationHub.clearErrors()
+
   working.value = true
   const data = {
     soa_group_term_uid: form.value.study_soa_group.term_uid,
@@ -214,7 +218,7 @@ async function submit() {
     )
     .then(
       () => {
-        eventBusEmit('notification', {
+        notificationHub.add({
           type: 'success',
           msg: t('StudyActivityEditForm.update_success'),
         })

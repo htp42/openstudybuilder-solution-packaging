@@ -95,6 +95,7 @@ class Settings(BaseSettings):
     default_filter_operator: str = "and"
     max_page_size: int = 1000
     page_size_100: int = 100
+    consumer_api_audit_trail_max_rows: int = 10000
 
     # Performance
     slow_query_duration: int = 1

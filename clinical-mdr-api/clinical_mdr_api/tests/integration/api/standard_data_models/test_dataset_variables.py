@@ -264,7 +264,7 @@ def test_get_class_variable(api_client):
     assert res["label"] == "DatasetVariable A label"
     assert res["description"] == "DatasetVariable A desc"
     assert res["catalogue_name"] == data_model_catalogue_name
-    assert res["dataset"]["name"] == dataset.label
+    assert res["dataset"]["uid"] == dataset.uid
     assert res["implements_variable"]["name"] == class_variable.label
     assert res["data_model_ig_names"] == [data_model_ig.name]
 
@@ -436,9 +436,9 @@ def test_filtering_wildcard(
         pytest.param('{"description": {"v": ["def-YYY"]}}', "description", "def-YYY"),
         pytest.param('{"description": {"v": ["cc"]}}', None, None),
         pytest.param(
-            '{"dataset.name": {"v": ["Dataset A label"]}}',
-            "dataset.name",
-            "Dataset A label",
+            '{"dataset.uid": {"v": ["Dataset_000001"]}}',
+            "dataset.uid",
+            "Dataset_000001",
         ),
         pytest.param(
             '{"implements_variable.name": {"v": ["VariableClass A label"]}}',
@@ -505,7 +505,7 @@ def test_filtering_exact(
         pytest.param("label"),
         pytest.param("description"),
         pytest.param("role"),
-        pytest.param("dataset.name"),
+        pytest.param("dataset.uid"),
         pytest.param("implements_variable.name"),
         pytest.param("catalogue_name"),
     ],

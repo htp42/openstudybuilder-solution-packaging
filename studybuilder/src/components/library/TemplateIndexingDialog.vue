@@ -24,7 +24,7 @@ export default {
   components: {
     SimpleFormDialog,
   },
-  inject: ['eventBusEmit'],
+  inject: ['notificationHub'],
   props: {
     preparePayloadFunc: {
       type: Function,
@@ -62,6 +62,7 @@ export default {
   },
   methods: {
     close() {
+      this.notificationHub.clearErrors()
       this.$refs.observer.reset()
       this.$emit('close')
     },
@@ -73,6 +74,8 @@ export default {
       return result.slice(1)
     },
     async submit() {
+      this.notificationHub.clearErrors()
+
       const data = this.preparePayloadFunc()
       const api = this.preInstanceMode
         ? templatePreInstances(this.getBaseObjectType())
@@ -82,7 +85,7 @@ export default {
           this.$emit('updated')
           this.$emit('close')
           const msg = this.$t('TemplateIndexingDialog.update_success')
-          this.eventBusEmit('notification', { msg, type: 'success' })
+          this.notificationHub.add({ msg, type: 'success' })
         },
         () => {
           this.$refs.form.working = false

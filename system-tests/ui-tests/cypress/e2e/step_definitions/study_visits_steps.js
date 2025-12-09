@@ -112,7 +112,11 @@ When('[API] Study vists uids are fetched for study {string}', (study_uid) => cy.
 
 When('[API] Study vists uids are fetched for current study', () => cy.getExistingStudyVisits(`${Cypress.env('TEST_STUDY_UID')}`).then(uids => studyVisits_uid = uids))
 
+When('[API] Study vists uids are fetched for selected study', () => cy.getExistingStudyVisits(getCurrStudyUid()).then(uids => studyVisits_uid = uids))
+
 When('[API] Study visits in study {string} are cleaned-up', (study_uid) => deleteVisits(study_uid))
+
+When('[API] Study visits in selected study are cleaned-up', () => deleteVisits(getCurrStudyUid()))
 
 When('[API] Study visits in current study are cleaned-up', () => deleteVisits(`${Cypress.env('TEST_STUDY_UID')}`))
 

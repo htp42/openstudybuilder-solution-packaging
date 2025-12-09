@@ -1069,9 +1069,16 @@ class DummyData(BaseImporter):
             self.studies[study_uid]["epochs"].append(uid)
 
     def create_study_activities(self, nbr_activities_per_study, study_uid):
+        params = {
+            "page_size": nbr_activities_per_study,
+            "sort_by": json.dumps({"uid": False}),
+            "filters": json.dumps({"status": {"v": ["Final"]}}),
+        }
+
         activities = requests.get(
-            f"""{self.api.api_base_url}/concepts/activities/activities?sort_by={{"uid": false}}&page_size={nbr_activities_per_study}""",
+            f"""{self.api.api_base_url}/concepts/activities/activities""",
             headers=self.api.api_headers,
+            params=params,
         ).json()["items"]
 
         for idx, activity in enumerate(activities):

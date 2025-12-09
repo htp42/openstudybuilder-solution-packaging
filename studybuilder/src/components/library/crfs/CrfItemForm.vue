@@ -474,7 +474,7 @@ export default {
     CrfNewVersionSummaryConfirmDialog,
     CrfApprovalSummaryConfirmDialog,
   },
-  inject: ['eventBusEmit', 'formRules'],
+  inject: ['notificationHub', 'formRules'],
   props: {
     selectedItem: {
       type: Object,
@@ -848,7 +848,7 @@ export default {
           this.readOnly = false
           this.getItem()
 
-          this.eventBusEmit('notification', {
+          this.notificationHub.add({
             msg: this.$t('_global.new_version_success'),
           })
         })
@@ -867,7 +867,7 @@ export default {
           this.close()
           this.getItem()
 
-          this.eventBusEmit('notification', {
+          this.notificationHub.add({
             msg: this.$t('CRFItems.approved'),
           })
         })
@@ -971,6 +971,7 @@ export default {
       this.checkFieldAvailable(this.form.datatype)
     },
     close() {
+      this.notificationHub.clearErrors()
       this.form = {
         oid: 'I.',
         aliases: [],
@@ -1020,6 +1021,8 @@ export default {
       )
     },
     async submit() {
+      this.notificationHub.clearErrors()
+
       if (this.readOnly) {
         this.close()
         return
@@ -1064,7 +1067,7 @@ export default {
             .updateItem(this.form, this.selectedItem.uid)
             .then(async () => {
               await this.linkExtensions(this.selectedItem.uid)
-              this.eventBusEmit('notification', {
+              this.notificationHub.add({
                 msg: this.$t('CRFItems.item_updated'),
               })
               this.close()
@@ -1072,7 +1075,7 @@ export default {
         } else {
           await crfs.createItem(this.form).then(async (resp) => {
             await this.linkExtensions(resp.data.uid)
-            this.eventBusEmit('notification', {
+            this.notificationHub.add({
               msg: this.$t('CRFItems.item_created'),
             })
             this.$emit('linkItem', resp)

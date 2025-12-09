@@ -58,7 +58,7 @@ import { useAccessGuard } from '@/composables/accessGuard'
 import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
 
 const accessGuard = useAccessGuard()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const roles = inject('roles')
 const { t } = useI18n()
 const tableRef = ref()
@@ -197,7 +197,7 @@ async function deleteNamespace(item) {
     )
   ) {
     crfs.delete('vendor-namespaces', item.uid).then(() => {
-      eventBusEmit('notification', {
+      notificationHub.add({
         msg: t('CRFExtensions.namespace_deleted'),
       })
       tableRef.value.filterTable()

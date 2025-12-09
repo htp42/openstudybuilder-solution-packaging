@@ -64,10 +64,8 @@
         <v-row>
           <v-col>
             <v-text-field
-              v-model="dataSupplier.supplier_api_base_url"
-              :label="
-                t('DataSupplierView.DataSupplierForm.supplier_api_base_url')
-              "
+              v-model="dataSupplier.api_base_url"
+              :label="t('DataSupplierView.DataSupplierForm.api_base_url')"
               data-cy="data-supplier-description"
               density="compact"
               clearable
@@ -75,10 +73,8 @@
           </v-col>
           <v-col>
             <v-text-field
-              v-model="dataSupplier.supplier_ui_base_url"
-              :label="
-                t('DataSupplierView.DataSupplierForm.supplier_ui_base_url')
-              "
+              v-model="dataSupplier.ui_base_url"
+              :label="t('DataSupplierView.DataSupplierForm.ui_base_url')"
               data-cy="data-supplier-description"
               density="compact"
               clearable
@@ -88,11 +84,9 @@
         <v-row>
           <v-col>
             <v-select
-              v-model="dataSupplier.supplier_origin_source_uid"
+              v-model="dataSupplier.origin_source_uid"
               data-cy="data-supplier-origin-source-uid"
-              :label="
-                t('DataSupplierView.DataSupplierForm.supplier_origin_source')
-              "
+              :label="t('DataSupplierView.DataSupplierForm.origin_source')"
               :items="dataSupplierOriginSources"
               item-title="sponsor_preferred_name"
               item-value="term_uid"
@@ -103,11 +97,9 @@
           </v-col>
           <v-col>
             <v-select
-              v-model="dataSupplier.supplier_origin_type_uid"
+              v-model="dataSupplier.origin_type_uid"
               data-cy="data-supplier-origin-type-uid"
-              :label="
-                t('DataSupplierView.DataSupplierForm.supplier_origin_type')
-              "
+              :label="t('DataSupplierView.DataSupplierForm.origin_type')"
               :items="dataSupplierOriginTypes"
               item-title="sponsor_preferred_name"
               item-value="term_uid"
@@ -133,7 +125,7 @@ import terms from '@/api/controlledTerminology/terms'
 
 const { t } = useI18n()
 const formStore = useFormStore()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const formRules = inject('formRules')
 const emit = defineEmits(['close'])
 
@@ -143,6 +135,10 @@ const props = defineProps({
     default: null,
   },
   open: Boolean,
+  defaultSupplierTypeUid: {
+    type: String,
+    default: null,
+  },
 })
 
 const observer = ref()
@@ -150,20 +146,20 @@ const formRef = ref()
 
 const dataSupplier = ref({
   description: null,
-  supplier_api_base_url: null,
-  supplier_ui_base_url: null,
-  supplier_origin_source_uid: null,
-  supplier_origin_type_uid: null,
+  api_base_url: null,
+  ui_base_url: null,
+  origin_source_uid: null,
+  origin_type_uid: null,
 })
 const helpItems = [
   'DataSupplierView.DataSupplierForm.name',
   'DataSupplierView.DataSupplierForm.supplier_type',
   'DataSupplierView.DataSupplierForm.description',
   'DataSupplierView.DataSupplierForm.order',
-  'DataSupplierView.DataSupplierForm.supplier_api_base_url',
-  'DataSupplierView.DataSupplierForm.supplier_ui_base_url',
-  'DataSupplierView.DataSupplierForm.supplier_origin_source',
-  'DataSupplierView.DataSupplierForm.supplier_origin_type',
+  'DataSupplierView.DataSupplierForm.api_base_url',
+  'DataSupplierView.DataSupplierForm.ui_base_url',
+  'DataSupplierView.DataSupplierForm.origin_source',
+  'DataSupplierView.DataSupplierForm.origin_type',
 ]
 const dataSupplierTypes = ref([])
 const dataSupplierOriginSources = ref([])
@@ -183,11 +179,19 @@ watch(
     if (value) {
       dataSupplier.value = { ...value }
       dataSupplier.value.supplier_type_uid = value.supplier_type.uid
-      dataSupplier.value.supplier_origin_source_uid =
-        value.supplier_origin_source?.uid || null
-      dataSupplier.value.supplier_origin_type_uid =
-        value.supplier_origin_type?.uid || null
+      dataSupplier.value.origin_source_uid = value.origin_source?.uid || null
+      dataSupplier.value.origin_type_uid = value.origin_type?.uid || null
       formStore.save(dataSupplier.value)
+    }
+  }
+)
+
+watch(
+  () => props.open,
+  (isOpen) => {
+    if (isOpen && !props.selectedDataSupplier && props.defaultSupplierTypeUid) {
+      // Pre-populate supplier type for create mode
+      dataSupplier.value.supplier_type_uid = props.defaultSupplierTypeUid
     }
   }
 )
@@ -208,12 +212,14 @@ async function submit() {
   const { valid } = await observer.value.validate()
   if (!valid) return
 
+  notificationHub.clearErrors()
+
   if (isEdit()) {
     dataSuppliersApi
       .update(dataSupplier.value, props.selectedDataSupplier.uid)
       .then(
         () => {
-          eventBusEmit('notification', {
+          notificationHub.add({
             msg: t('DataSupplierView.DataSupplierForm.data_supplier_updated'),
           })
           close()
@@ -225,7 +231,7 @@ async function submit() {
   } else {
     dataSuppliersApi.create(dataSupplier.value).then(
       () => {
-        eventBusEmit('notification', {
+        notificationHub.add({
           msg: t('DataSupplierView.DataSupplierForm.data_supplier_created'),
         })
         close()
@@ -254,12 +260,13 @@ async function cancel() {
   }
 }
 function close() {
+  notificationHub.clearErrors()
   dataSupplier.value = {
     description: null,
-    supplier_api_base_url: null,
-    supplier_ui_base_url: null,
-    supplier_origin_source_uid: null,
-    supplier_origin_type_uid: null,
+    api_base_url: null,
+    ui_base_url: null,
+    origin_source_uid: null,
+    origin_type_uid: null,
   }
   observer.value.reset()
   emit('close')

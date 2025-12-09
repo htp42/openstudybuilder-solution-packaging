@@ -8,7 +8,7 @@ Then('The CRF Item is no longer available', () => cy.searchAndCheckPresence(crfI
 
 Given('[API] The CRF Item in draft status exists', () => {
     crfItemName = `API_CrfItem${Date.now()}`
-    cy.createCrfItem(crfItemName, `API_Oid${Date.now()}`)
+    cy.createCrfItem(crfItemName)
 })
 
 Then("The CRF Item is visible in the table", () => {

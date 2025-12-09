@@ -145,7 +145,7 @@ import { useI18n } from 'vue-i18n'
 import { useDragAndDrop } from '@formkit/drag-and-drop/vue'
 
 const { t } = useI18n()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const roles = inject('roles')
 const studiesGeneralStore = useStudiesGeneralStore()
 const accessGuard = useAccessGuard()
@@ -297,7 +297,7 @@ function closeForm() {
 function deleteEpoch(item) {
   if (item.study_visit_count > 0) {
     const epoch = item.epoch_name
-    eventBusEmit('notification', {
+    notificationHub.add({
       type: 'warning',
       msg: t('StudyEpochTable.epoch_linked_to_visits_warning', {
         epoch,
@@ -311,7 +311,7 @@ function deleteEpoch(item) {
       studyEpochUid: item.uid,
     })
     .then(() => {
-      eventBusEmit('notification', {
+      notificationHub.add({
         msg: t('StudyEpochTable.delete_success'),
       })
       table.value.filterTable()

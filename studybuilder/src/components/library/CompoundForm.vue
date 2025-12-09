@@ -75,7 +75,7 @@ import YesNoField from '@/components/tools/YesNoField.vue'
 import { useFormStore } from '@/stores/form'
 
 const { t } = useI18n()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const formRules = inject('formRules')
 const props = defineProps({
   compoundUid: {
@@ -128,6 +128,7 @@ watch(
 
 function close() {
   emit('close')
+  notificationHub.clearErrors()
   form.value = getInitialForm()
   formStore.reset()
 }
@@ -138,6 +139,8 @@ function getInitialForm() {
 }
 
 async function addCompound(data) {
+  notificationHub.clearErrors()
+
   data.library_name = libConstants.LIBRARY_SPONSOR
   const createdCompound = await compounds.create(data)
   try {
@@ -156,15 +159,17 @@ async function addCompound(data) {
     throw error
   }
   emit('created')
-  eventBusEmit('notification', {
+  notificationHub.add({
     msg: t('CompoundForm.add_success'),
     type: 'success',
   })
 }
 async function updateCompound(data) {
+  notificationHub.clearErrors()
+
   if (formStore.isEmpty || formStore.isEqual(data)) {
     close()
-    eventBusEmit('notification', {
+    notificationHub.add({
       type: 'info',
       msg: t('_global.no_changes'),
     })
@@ -172,13 +177,15 @@ async function updateCompound(data) {
   }
   await compounds.update(props.compoundUid, data)
   emit('updated')
-  eventBusEmit('notification', {
+  notificationHub.add({
     msg: t('CompoundForm.update_success'),
     type: 'success',
   })
 }
 
 async function submit() {
+  notificationHub.clearErrors()
+
   const data = { ...form.value }
   data.name_sentence_case = data.name.toLowerCase()
   try {

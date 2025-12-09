@@ -1388,7 +1388,7 @@ def test_inactivating_a_specific_odm_item(api_client):
     assert res["comment"] == "new comment"
     assert res["end_date"] is None
     assert res["status"] == "Retired"
-    assert res["version"] == "1.0"
+    assert res["version"] == "2.0"
     assert res["change_description"] == "Inactivated version"
     assert res["author_username"] == "unknown-user@example.com"
     assert res["descriptions"] == [
@@ -1486,7 +1486,7 @@ def test_reactivating_a_specific_odm_item(api_client):
     assert res["comment"] == "new comment"
     assert res["end_date"] is None
     assert res["status"] == "Final"
-    assert res["version"] == "1.0"
+    assert res["version"] == "3.0"
     assert res["change_description"] == "Reactivated version"
     assert res["author_username"] == "unknown-user@example.com"
     assert res["descriptions"] == [
@@ -1584,7 +1584,7 @@ def test_creating_a_new_odm_item_version(api_client):
     assert res["comment"] == "new comment"
     assert res["end_date"] is None
     assert res["status"] == "Draft"
-    assert res["version"] == "1.1"
+    assert res["version"] == "3.1"
     assert res["change_description"] == "New draft created"
     assert res["author_username"] == "unknown-user@example.com"
     assert res["descriptions"] == [
@@ -1891,7 +1891,7 @@ def test_updating_an_existing_odm_item_with_relations(api_client):
     assert res["comment"] == "new comment"
     assert res["end_date"] is None
     assert res["status"] == "Draft"
-    assert res["version"] == "1.2"
+    assert res["version"] == "3.2"
     assert res["change_description"] == "comment added"
     assert res["author_username"] == "unknown-user@example.com"
     assert res["descriptions"] == [
@@ -2062,7 +2062,7 @@ def test_add_the_odm_item_to_the_odm_item_group(api_client):
             "uid": "OdmItem_000001",
             "oid": "oid1",
             "name": "name1",
-            "version": "1.2",
+            "version": "3.2",
             "order_number": 1,
             "mandatory": "Yes",
             "key_sequence": "None",
@@ -2123,7 +2123,7 @@ def test_approve_the_odm_item_group(api_client):
             "uid": "OdmItem_000001",
             "oid": "oid1",
             "name": "name1",
-            "version": "2.0",
+            "version": "4.0",
             "order_number": 1,
             "mandatory": "Yes",
             "key_sequence": "None",

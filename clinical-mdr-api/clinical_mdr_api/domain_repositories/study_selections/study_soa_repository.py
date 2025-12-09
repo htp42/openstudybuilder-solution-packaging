@@ -479,15 +479,17 @@ class StudySoARepository:
                         CASE
                             WHEN activity_instance_root.uid IS NOT NULL THEN
                                 CASE
-                                    WHEN activity_instance_value.is_required_for_activity THEN 'Required'
-                                    WHEN activity_instance_value.is_default_selected_for_activity THEN 'Defaulted'
-                                    ELSE 'Suggestion'
+                                    WHEN activity_instance_value.is_required_for_activity THEN 'Review not needed'
+                                    WHEN study_activity_instance.is_reviewed THEN 'Reviewed'
+                                    ELSE 'Review needed'
                                 END
-                            ELSE 'Missing selection'
+                            ELSE 'Add instance'
                         END
-                    ELSE 'Not required'
+                    ELSE 'Not applicable'
                 END,
+                is_reviewed: coalesce(study_activity_instance.is_reviewed, false),
                 show_activity_instance_in_protocol_flowchart: COALESCE(study_activity_instance.show_activity_instance_in_protocol_flowchart, false),
+                is_important: COALESCE(study_activity_instance.is_important, false),
                 order: study_activity_instance.order,
             """
                 )

@@ -60,7 +60,7 @@ import constants from '@/constants/libraries'
 import _isEmpty from 'lodash/isEmpty'
 
 const { t } = useI18n()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const formRules = inject('formRules')
 const props = defineProps({
   editedTerm: {
@@ -111,11 +111,14 @@ watch(
 
 function close() {
   formRef.value.working = false
+  notificationHub.clearErrors()
   form.value = {}
   emit('close')
 }
 
 async function submit() {
+  notificationHub.clearErrors()
+
   const data = { ...form.value }
   data.name_sentence_case = form.value.name
   data.dictionary_id = form.value.name
@@ -123,12 +126,12 @@ async function submit() {
     if (!props.editedTerm) {
       data.library_name = constants.LIBRARY_UCUM
       await dictionaries.create(form.value)
-      eventBusEmit('notification', {
+      notificationHub.add({
         msg: t('DictionaryTermForm.create_success'),
       })
     } else {
       await dictionaries.update(props.editedTerm.term_uid, form.value)
-      eventBusEmit('notification', {
+      notificationHub.add({
         msg: t('DictionaryTermForm.update_success'),
       })
     }

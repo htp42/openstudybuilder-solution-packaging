@@ -254,7 +254,7 @@ class StudySoAFootnoteRepository:
                     CALL {
                         WITH sf
                         OPTIONAL MATCH (sf)-[:HAS_SELECTED_FOOTNOTE]->(fv:FootnoteValue)<-[ver:HAS_VERSION]-(fr:FootnoteRoot)<-[:CONTAINS_SYNTAX_INSTANCE]-(library:Library)
-                        OPTIONAL MATCH (ftr:FootnoteTemplateRoot)-[:HAS_FOOTNOTE]->(fr)
+                        OPTIONAL MATCH (ftv:FootnoteTemplateValue)<-[:HAS_VERSION]-(ftr:FootnoteTemplateRoot)-[:HAS_FOOTNOTE]->(fr)
                         WHERE ver.status = 'Final'
                         RETURN
                             {uid:fr.uid, name: fv.name, name_plain:fv.name_plain, status: ver.status
@@ -264,7 +264,7 @@ class StudySoAFootnoteRepository:
         if full_query:
             query.append(
                 dedent(
-                    " ,version: ver.version, library_name: library.name, template_uid: ftr.uid, template_name: fv.name "
+                    " ,version: ver.version, library_name: library.name, template_uid: ftr.uid, template_name: ftv.name "
                 )
             )
         query.append(

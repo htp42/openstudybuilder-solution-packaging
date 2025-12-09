@@ -63,7 +63,7 @@ Feature: Manage ODM Methods in Clinical MDR API
 
     Scenario: User cannot create a new ODM method without an English description
         When the user sends a request to create an ODM method without an English description
-        Then the response status code must be 422
+        Then the response status code must be 400
         And the response must include the message "At least one description must be in English ('eng' or 'en')."
     Test Coverage:
         | TestFile                                                | TestID                                                                      |

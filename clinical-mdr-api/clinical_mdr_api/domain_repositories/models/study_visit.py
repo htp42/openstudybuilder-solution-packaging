@@ -29,6 +29,7 @@ from clinical_mdr_api.domain_repositories.models.generic import (
 from clinical_mdr_api.domain_repositories.models.study import StudyValue
 from clinical_mdr_api.domain_repositories.models.study_epoch import StudyEpoch
 from clinical_mdr_api.domain_repositories.models.study_selections import (
+    StudyActivityInstance,
     StudyActivitySchedule,
     StudySelection,
     StudySoAFootnote,
@@ -165,6 +166,12 @@ class StudyVisit(StudySelection):
     study_soa_footnote_references_study_visit = RelationshipFrom(
         StudySoAFootnote,
         "REFERENCES_STUDY_VISIT",
+        cardinality=ZeroOrMore,
+        model=ClinicalMdrRel,
+    )
+    is_baseline_for_study_activity_instance = RelationshipFrom(
+        StudyActivityInstance,
+        "HAS_BASELINE",
         cardinality=ZeroOrMore,
         model=ClinicalMdrRel,
     )

@@ -59,7 +59,7 @@ def test_throw_exception_if_stylesheet_name_contains_disallowed_character(api_cl
             f"concepts/odms/metadata/xmls/stylesheets/{name}",
         )
 
-        assert_response_status_code(response, 422)
+        assert_response_status_code(response, 400)
         res = response.json()
         assert res["type"] == "ValidationException"
         assert (

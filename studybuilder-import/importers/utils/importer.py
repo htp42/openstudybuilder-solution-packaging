@@ -126,9 +126,15 @@ class BaseImporter:
         api_token = load_env("STUDYBUILDER_API_TOKEN", "")
 
         if api_token:
+            logger.info(
+                "Using API access token from STUDYBUILDER_API_TOKEN env variable"
+            )
             headers["Authorization"] = f"Bearer {api_token}"
 
         elif client_id:
+            logger.info(
+                "Fetching API access token using CLIENT_SECRET, TOKEN_ENDPOINT, SCOPE env variables"
+            )
             client_secret = load_env("CLIENT_SECRET")
             token_endpoint = load_env("TOKEN_ENDPOINT")
             scope = load_env("SCOPE")
@@ -157,8 +163,15 @@ class BaseImporter:
                 msg = "missing token type from token payload"
                 logger.error(msg)
                 raise RuntimeError(msg)
-
+            logger.info(
+                "Successfully fetched API access token of type '%s'", token_type
+            )
             headers["Authorization"] = f"{token_type} {access_token}"
+
+        else:
+            logger.info(
+                "No authentication method specified, proceeding without Authorization header"
+            )
 
         return headers
 

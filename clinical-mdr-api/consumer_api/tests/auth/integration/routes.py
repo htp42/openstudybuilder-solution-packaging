@@ -9,6 +9,7 @@ ALL_ROUTES_METHODS_ROLES = (
     ("/v1/studies/{uid}/study-activity-instances", "GET", {"Study.Read"}),
     ("/v1/studies/{uid}/operational-soa", "GET", {"Study.Read"}),
     ("/v1/studies/{uid}/detailed-soa", "GET", {"Study.Read"}),
+    ("/v1/studies/audit-trail", "GET", {"Study.Read"}),
     ("/v1/papillons/soa", "GET", {"Study.Read"}),
     ("/v1/library/activities", "GET", {"Library.Read"}),
     ("/v1/library/activity-instances", "GET", {"Library.Read"}),

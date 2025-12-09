@@ -129,7 +129,7 @@ export default {
     SimpleFormDialog,
     DurationField,
   },
-  inject: ['eventBusEmit', 'formRules'],
+  inject: ['notificationHub', 'formRules'],
   props: {
     metadata: {
       type: Object,
@@ -230,6 +230,7 @@ export default {
   },
   methods: {
     close() {
+      this.notificationHub.clearErrors()
       // Reset form data
       this.form = {
         planned_duration: {},
@@ -269,6 +270,8 @@ export default {
       }
     },
     async submit() {
+      this.notificationHub.clearErrors()
+
       if (!this.form.planned_duration.duration_value) {
         this.form.planned_duration = null
       }
@@ -289,7 +292,7 @@ export default {
           )
           .then(
             () => {
-              this.eventBusEmit('notification', {
+              this.notificationHub.add({
                 msg: this.$t('StudyElements.el_edited'),
               })
               this.$refs.form.working = false
@@ -302,7 +305,7 @@ export default {
       } else {
         arms.addStudyElement(this.selectedStudy.uid, this.form).then(
           () => {
-            this.eventBusEmit('notification', {
+            this.notificationHub.add({
               msg: this.$t('StudyElements.el_created'),
             })
             this.$refs.form.working = false

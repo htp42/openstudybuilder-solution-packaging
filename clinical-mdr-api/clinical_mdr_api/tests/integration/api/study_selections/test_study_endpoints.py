@@ -445,7 +445,7 @@ def test_study_value_version_validation(api_client):
     response = api_client.get(
         f"/studies/{study.uid}/study-endpoints?study_value_version=a",
     )
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
 
     # get study study endpoint headers
     response = api_client.get(

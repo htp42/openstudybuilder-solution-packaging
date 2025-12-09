@@ -92,7 +92,7 @@ import api from '@/api/concepts/pharmaceuticalProducts'
 
 const { t } = useI18n()
 const formulationsStore = useFormulationsStore()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const formRules = inject('formRules')
 const { createNumericValue } = useNumericValues()
 const props = defineProps({
@@ -182,6 +182,7 @@ async function createLagTime(item) {
 
 function close() {
   emit('close')
+  notificationHub.clearErrors()
   form.value = getInitialForm()
 }
 
@@ -189,7 +190,7 @@ async function addProduct(data) {
   data.library_name = libConstants.LIBRARY_SPONSOR
   await api.create(data)
   emit('created')
-  eventBusEmit('notification', {
+  notificationHub.add({
     msg: t('PharmaceuticalProductForm.add_success'),
     type: 'success',
   })
@@ -199,13 +200,15 @@ async function updateProduct(data) {
   data.change_description = t('_global.work_in_progress')
   await api.update(props.pharmaceuticalProductUid, data)
   emit('updated')
-  eventBusEmit('notification', {
+  notificationHub.add({
     msg: t('PharmaceuticalProductForm.update_success'),
     type: 'success',
   })
 }
 
 async function submit() {
+  notificationHub.clearErrors()
+
   const data = {}
   if (form.value.dosage_form_uid) {
     data.dosage_form_uids = [form.value.dosage_form_uid]

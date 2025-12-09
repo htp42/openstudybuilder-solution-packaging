@@ -90,7 +90,7 @@ const emit = defineEmits(['close', 'save'])
 
 const { t } = useI18n()
 const formRules = inject('formRules')
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const studiesGeneralStore = useStudiesGeneralStore()
 
 const catalogues = ref([])
@@ -141,6 +141,7 @@ watch(
 )
 
 function close() {
+  notificationHub.clearErrors()
   form.value = {}
   selectedCatalogue.value = null
   selectedPackage.value = null
@@ -178,6 +179,9 @@ async function submit() {
     dialog.value.working = false
     return
   }
+
+  notificationHub.clearErrors()
+
   try {
     if (creationMode.value === 'create') {
       const { data: sponsorPackage } = await createSponsorCtPackage()
@@ -190,7 +194,7 @@ async function submit() {
         studiesGeneralStore.selectedStudy.uid,
         form.value
       )
-      eventBusEmit('notification', {
+      notificationHub.add({
         msg: t('CTStandardVersionsForm.add_success'),
       })
     } else {
@@ -198,7 +202,7 @@ async function submit() {
         selectedPackage.value.uid === props.standardVersion.ct_package.uid &&
         props.standardVersion.description === form.value.description
       ) {
-        eventBusEmit('notification', {
+        notificationHub.add({
           type: 'info',
           msg: t('_global.no_changes'),
         })
@@ -210,7 +214,7 @@ async function submit() {
         props.standardVersion.uid,
         form.value
       )
-      eventBusEmit('notification', {
+      notificationHub.add({
         msg: t('CTStandardVersionsForm.update_success'),
       })
     }

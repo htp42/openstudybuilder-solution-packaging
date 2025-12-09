@@ -89,7 +89,7 @@ export default {
     CrfCollectionForm,
     StatusChip,
   },
-  inject: ['eventBusEmit'],
+  inject: ['notificationHub'],
   props: {
     elementProp: {
       type: Object,
@@ -234,7 +234,7 @@ export default {
         crfs.approve('study-events', item.uid).then(() => {
           this.$refs.table.filterTable()
 
-          this.eventBusEmit('notification', {
+          this.notificationHub.add({
             msg: this.$t('CRFCollections.approved'),
           })
         })
@@ -243,18 +243,26 @@ export default {
     inactivateCollection(item) {
       crfs.inactivate('study-events', item.uid).then(() => {
         this.$refs.table.filterTable()
+
+        this.notificationHub.add({
+          msg: this.$t('CRFCollections.inactivated'),
+        })
       })
     },
     reactivateCollection(item) {
       crfs.reactivate('study-events', item.uid).then(() => {
         this.$refs.table.filterTable()
+
+        this.notificationHub.add({
+          msg: this.$t('CRFCollections.reactivated'),
+        })
       })
     },
     newCollectionVersion(item) {
       crfs.newVersion('study-events', item.uid).then(() => {
         this.$refs.table.filterTable()
 
-        this.eventBusEmit('notification', {
+        this.notificationHub.add({
           msg: this.$t('_global.new_version_success'),
         })
       })
@@ -262,6 +270,10 @@ export default {
     deleteCollection(item) {
       crfs.delete('study-events', item.uid).then(() => {
         this.$refs.table.filterTable()
+
+        this.notificationHub.add({
+          msg: this.$t('CRFCollections.deleted'),
+        })
       })
     },
     edit(item) {

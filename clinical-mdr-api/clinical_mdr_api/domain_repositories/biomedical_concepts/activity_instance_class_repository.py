@@ -208,6 +208,7 @@ class ActivityInstanceClassRepository(  # type: ignore[misc]
     def get_mapped_datasets(
         self,
         activity_instance_class_uid: str | None = None,
+        ig_uid: str | None = None,
         include_sponsor: bool = True,
     ) -> list[ActivityInstanceClassWithDataset]:
         dataset_label = (
@@ -215,20 +216,41 @@ class ActivityInstanceClassRepository(  # type: ignore[misc]
             if include_sponsor
             else "DatasetInstance"
         )
+        model_value_label = (
+            "DataModelIGValue|SponsorModelValue"
+            if include_sponsor
+            else "DataModelIGValue"
+        )
         query = "MATCH (aicv:ActivityInstanceClassValue)<-[:LATEST]-(aicr:ActivityInstanceClassRoot) "
         if activity_instance_class_uid:
             query += "WHERE aicr.uid=$activity_instance_class_uid"
         query += f"""
-            OPTIONAL MATCH (aicr)-[:MAPS_DATASET_CLASS]->(:DatasetClass)-[:HAS_INSTANCE]->(:DatasetClassInstance)<-[:IMPLEMENTS_DATASET_CLASS]-(:{dataset_label})<-[:HAS_INSTANCE]-(d:Dataset)
+            OPTIONAL MATCH (aicr)-[:MAPS_DATASET_CLASS]->(:DatasetClass)-[:HAS_INSTANCE]->(:DatasetClassInstance)<-[:IMPLEMENTS_DATASET_CLASS]-(di:{dataset_label})<-[:HAS_INSTANCE]-(d:Dataset)
+        """
+        if ig_uid:
+            query += f"""
+                WHERE EXISTS ((di)<-[:HAS_DATASET]-(:{model_value_label})<-[:HAS_VERSION]-(:DataModelIGRoot {{uid: $ig_uid}}))
+            """
+        query += f"""
             OPTIONAL MATCH (aicr)-[:PARENT_CLASS]->{{1,3}}()-[:MAPS_DATASET_CLASS]->(:DatasetClass)
-            -[:HAS_INSTANCE]->(:DatasetClassInstance)<-[:IMPLEMENTS_DATASET_CLASS]-(:{dataset_label})<-[:HAS_INSTANCE]-(parent_d:Dataset)
+            -[:HAS_INSTANCE]->(:DatasetClassInstance)<-[:IMPLEMENTS_DATASET_CLASS]-(parent_di:{dataset_label})<-[:HAS_INSTANCE]-(parent_d:Dataset)
+        """
+        if ig_uid:
+            query += f"""
+                WHERE EXISTS ((parent_di)<-[:HAS_DATASET]-(:{model_value_label})<-[:HAS_VERSION]-(:DataModelIGRoot {{uid: $ig_uid}}))
+            """
+        query += """
             WITH DISTINCT aicr.uid AS uid, aicv.name AS name, d.uid AS dataset_uid, parent_d.uid AS parent_dataset_uid ORDER BY name, dataset_uid, parent_dataset_uid 
             WITH uid, name, apoc.coll.sort(apoc.coll.toSet(collect(dataset_uid) + collect(parent_dataset_uid))) AS dataset_uids WHERE size(dataset_uids) > 0
             RETURN uid, name, dataset_uids
         """
 
         results, meta = db.cypher_query(
-            query, params={"activity_instance_class_uid": activity_instance_class_uid}
+            query,
+            params={
+                "activity_instance_class_uid": activity_instance_class_uid,
+                "ig_uid": ig_uid,
+            },
         )
 
         mapped_datasets = [dict(zip(meta, row)) for row in results]

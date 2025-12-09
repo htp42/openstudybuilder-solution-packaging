@@ -86,7 +86,7 @@ export default {
   components: {
     StudySelectionEditForm,
   },
-  inject: ['eventBusEmit'],
+  inject: ['notificationHub'],
   props: {
     studyFootnote: {
       type: Object,
@@ -193,10 +193,12 @@ export default {
       data.type_uid = this.footnoteType.term_uid
     },
     async submit(newTemplate, form, parameters) {
+      this.notificationHub.clearErrors()
+
       const payload = formUtils.getDifferences(this.originalForm, form)
       payload.parameters = parameters
       if (_isEmpty(payload) && !newTemplate) {
-        this.eventBusEmit('notification', {
+        this.notificationHub.add({
           msg: this.$t('_global.no_changes'),
           type: 'info',
         })
@@ -217,13 +219,14 @@ export default {
         args.template = this.template
       }
       await this.footnotesStore.updateStudyFootnote(args)
-      this.eventBusEmit('notification', {
+      this.notificationHub.add({
         msg: this.$t('StudyFootnoteEditForm.update_success'),
       })
       this.$emit('updated')
       this.$refs.form.close()
     },
     close() {
+      this.notificationHub.clearErrors()
       this.referencedSoAGroups = []
       this.referencedActivities = []
       this.referencedEpochsAndVisits = []

@@ -346,7 +346,7 @@ def create(
     activity_item_class_input: Annotated[ActivityItemClassCreateInput, Body()],
 ) -> ActivityItemClass:
     activity_item_class_service = ActivityItemClassService()
-    return activity_item_class_service.create(item_input=activity_item_class_input)
+    return activity_item_class_service.create(concept_input=activity_item_class_input)
 
 
 @router.patch(
@@ -394,7 +394,7 @@ def edit(
 ) -> ActivityItemClass:
     activity_item_class_service = ActivityItemClassService()
     return activity_item_class_service.edit_draft(
-        uid=activity_item_class_uid, item_edit_input=activity_item_class_input
+        uid=activity_item_class_uid, concept_edit_input=activity_item_class_input
     )
 
 

@@ -1,5 +1,6 @@
 import functools
 import inspect
+import json
 from collections.abc import Hashable
 from dataclasses import dataclass
 from enum import Enum
@@ -452,14 +453,16 @@ def service_level_generic_filtering(
     with trace_block("service_level_generic_filtering") as span:
         span.add_attribute(
             "call.kwargs",
-            {
-                "filter_by": filter_by,
-                "filter_operator": filter_operator,
-                "sort_by": sort_by,
-                "total_count": total_count,
-                "page_number": page_number,
-                "page_size": page_size,
-            },
+            json.dumps(
+                {
+                    "filter_by": filter_by,
+                    "filter_operator": filter_operator.value,
+                    "sort_by": sort_by,
+                    "total_count": total_count,
+                    "page_number": page_number,
+                    "page_size": page_size,
+                }
+            ),
         )
         span.add_attribute("call.num_input", len(items))
 
@@ -524,11 +527,13 @@ def generic_item_filtering(
     with trace_block("generic_item_filtering") as span:
         span.add_attribute(
             "call.kwargs",
-            {
-                "filter_by": filter_by,
-                "filter_operator": filter_operator,
-                "sort_by": sort_by,
-            },
+            json.dumps(
+                {
+                    "filter_by": filter_by,
+                    "filter_operator": filter_operator.value,
+                    "sort_by": sort_by,
+                }
+            ),
         )
         span.add_attribute("call.num_input", len(items))
 
@@ -716,12 +721,14 @@ def service_level_generic_header_filtering(
     with trace_block("service_level_generic_header_filtering") as span:
         span.add_attribute(
             "call.kwargs",
-            {
-                "filter_by": filter_by,
-                "filter_operator": filter_operator,
-                "search_string": search_string,
-                "page_size": page_size,
-            },
+            json.dumps(
+                {
+                    "filter_by": filter_by,
+                    "filter_operator": filter_operator.value,
+                    "search_string": search_string,
+                    "page_size": page_size,
+                }
+            ),
         )
         span.add_attribute("call.num_input", len(items))
 

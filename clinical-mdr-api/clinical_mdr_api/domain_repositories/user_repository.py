@@ -8,10 +8,10 @@ from neomodel import db
 from clinical_mdr_api.domain_repositories.models.user import User as UserNode
 from clinical_mdr_api.models.user import UserInfo, UserInfoPatchInput
 
-cache_get_user = TTLCache(maxsize=1000, ttl=10)
-
 
 class UserRepository:
+    cache_get_user = TTLCache(maxsize=1000, ttl=10)
+
     def _transform_to_model(self, item: UserNode) -> UserInfo:
         def extract_roles(roles: str) -> list[str]:
             if roles:

@@ -24,8 +24,8 @@ class Dataset(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     uid: Annotated[str, Field()]
-    label: Annotated[str, Field()]
-    title: Annotated[str, Field()]
+    label: Annotated[str | None, Field(json_schema_extra={"nullable": True})]
+    title: Annotated[str | None, Field(json_schema_extra={"nullable": True})]
     description: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )

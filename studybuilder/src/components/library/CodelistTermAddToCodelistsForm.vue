@@ -82,7 +82,7 @@ import { escapeHTML } from '@/utils/sanitize'
 import _debounce from 'lodash/debounce'
 
 const { t } = useI18n()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const formRules = inject('formRules')
 const props = defineProps({
   termUid: {
@@ -137,6 +137,7 @@ onMounted(() => {
 
 function close() {
   emit('close')
+  notificationHub.clearErrors()
   form.value = {}
   stepper.value.reset()
 }
@@ -159,6 +160,8 @@ function getObserver(step) {
   return undefined
 }
 async function submit() {
+  notificationHub.clearErrors()
+
   // TODO this should be a single api call
   for (const item of form.value) {
     const data = {
@@ -168,7 +171,7 @@ async function submit() {
     }
     await controlledTerminology.addTermToCodelist(item.codelist_uid, data)
   }
-  eventBusEmit('notification', {
+  notificationHub.add({
     msg: t('CodelistTermAddToCodelistsForm.add_success'),
   })
   close()

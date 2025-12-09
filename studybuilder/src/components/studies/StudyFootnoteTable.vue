@@ -142,7 +142,7 @@ import { useStudyActivitiesStore } from '@/stores/studies-activities'
 import { useFootnotesStore } from '@/stores/studies-footnotes'
 
 const { t } = useI18n()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const roles = inject('roles')
 const emit = defineEmits([
   'enableFootnoteMode',
@@ -386,7 +386,7 @@ async function deleteStudyFootnote(studyFootnote) {
       )
       .then(() => {
         table.value.filterTable()
-        eventBusEmit('notification', {
+        notificationHub.add({
           msg: t('StudyFootnoteTable.delete_footnote_success'),
         })
       })
@@ -419,7 +419,7 @@ async function updateFootnoteVersion(item) {
       )
       .then(() => {
         table.value.filterTable()
-        eventBusEmit('notification', {
+        notificationHub.add({
           msg: t('StudyFootnoteTable.footnote_version_updated'),
         })
       })
@@ -431,7 +431,7 @@ async function updateFootnoteVersion(item) {
       )
       .then(() => {
         table.value.filterTable()
-        eventBusEmit('notification', {
+        notificationHub.add({
           msg: t('StudyFootnoteTable.footnote_version_accepted'),
         })
       })

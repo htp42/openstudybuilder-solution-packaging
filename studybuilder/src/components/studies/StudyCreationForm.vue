@@ -154,7 +154,7 @@ import HorizontalStepperForm from '@/components/tools/HorizontalStepperForm.vue'
 import StudyStructureCopyForm from '@/components/studies/StudyStructureCopyForm.vue'
 import studyApi from '@/api/study'
 
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const formRules = inject('formRules')
 const { t } = useI18n()
 const appStore = useAppStore()
@@ -192,6 +192,7 @@ const studyId = computed(() => {
 const helpItems = []
 
 function close() {
+  notificationHub.clearErrors()
   studyForm.value = {}
   cloneStudyForm.value = {}
   createFromScratch.value = true
@@ -210,15 +211,17 @@ function getObserver(step) {
 }
 
 async function submit() {
+  notificationHub.clearErrors()
+
   if (createFromScratch.value) {
     const data = JSON.parse(JSON.stringify(studyForm.value))
     data.project_number = project.value.project_number
     const resp = await studiesManageStore.addStudy(data)
-    eventBusEmit('notification', { msg: t('StudyForm.add_success') })
+    notificationHub.add({ msg: t('StudyForm.add_success') })
     await studiesGeneralStore.selectStudy(resp.data, true)
   } else {
     if (!copyForm.value.selectionMade) {
-      eventBusEmit('notification', {
+      notificationHub.add({
         msg: t('StudyStructureCopyForm.no_selection'),
         type: 'error',
       })
@@ -240,7 +243,7 @@ async function submit() {
     delete data.study
     try {
       const resp = await studyApi.cloneStudy(studyUid, data)
-      eventBusEmit('notification', { msg: t('StudyForm.add_success') })
+      notificationHub.add({ msg: t('StudyForm.add_success') })
       await studiesGeneralStore.selectStudy(resp.data, true)
     } finally {
       stepper.value.loading = false

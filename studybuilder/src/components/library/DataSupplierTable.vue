@@ -129,24 +129,24 @@ const headers = [
   { title: t('_global.description'), key: 'description' },
   { title: t('_global.order'), key: 'order' },
   {
-    title: t('DataSupplierView.DataSupplierTable.supplier_api_base_url'),
-    key: 'supplier_api_base_url',
+    title: t('DataSupplierView.DataSupplierTable.api_base_url'),
+    key: 'api_base_url',
   },
   {
-    title: t('DataSupplierView.DataSupplierTable.supplier_ui_base_url'),
-    key: 'supplier_ui_base_url',
+    title: t('DataSupplierView.DataSupplierTable.ui_base_url'),
+    key: 'ui_base_url',
   },
   {
     title: t('DataSupplierView.DataSupplierTable.supplier_type'),
     key: 'supplier_type.name',
   },
   {
-    title: t('DataSupplierView.DataSupplierTable.supplier_origin_source'),
-    key: 'supplier_origin_source.name',
+    title: t('DataSupplierView.DataSupplierTable.origin_source'),
+    key: 'origin_source.name',
   },
   {
-    title: t('DataSupplierView.DataSupplierTable.supplier_origin_type'),
-    key: 'supplier_origin_type.name',
+    title: t('DataSupplierView.DataSupplierTable.origin_type'),
+    key: 'origin_type.name',
   },
   { title: t('_global.author'), key: 'author_username' },
   { title: t('_global.modified'), key: 'start_date' },

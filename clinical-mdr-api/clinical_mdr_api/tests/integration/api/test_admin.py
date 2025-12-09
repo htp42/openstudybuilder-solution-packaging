@@ -129,7 +129,8 @@ def test_get_users(api_client):
 
 def test_patch_user(api_client):
     """Test PATCH /admin/users/{user_id}"""
-    user_id = "unknown-user"
+    user_id = "test-user-" + str(random.randint(1000, 9999))
+    TestUtils.create_dummy_user(user_id=user_id)
     new_username = "new_username"
 
     response = api_client.patch(

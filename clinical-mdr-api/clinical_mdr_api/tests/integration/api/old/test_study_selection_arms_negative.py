@@ -228,7 +228,7 @@ def test_adding_selection_with_non_unique_name_short_name_randomization(api_clie
     data = {"name": "Arm_Name_1"}
     response = api_client.post("/studies/study_root/study-arms", json=data)
 
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
 
     res = response.json()
 
@@ -382,7 +382,7 @@ def test_patch_specific_patch_some_randomization_group_that_is_already_used_on_a
         "/studies/study_root/study-arms/StudyArm_000001", json=data
     )
 
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
 
     res = response.json()
 

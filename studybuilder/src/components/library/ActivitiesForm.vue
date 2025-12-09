@@ -141,12 +141,20 @@
           </v-col>
         </v-row>
         <v-row>
-          <v-col>
+          <v-col cols="3">
             <v-checkbox
               v-model="form.is_data_collected"
               :label="$t('ActivityForms.is_data_collected')"
               color="primary"
               data-cy="activityform-datacollection-checkbox"
+            />
+          </v-col>
+          <v-col>
+            <v-checkbox
+              v-model="form.is_multiple_selection_allowed"
+              :label="$t('ActivityForms.multiple_instances')"
+              color="primary"
+              data-cy="activityform-multipleselection-checkbox"
             />
           </v-col>
         </v-row>
@@ -210,7 +218,7 @@ import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
 const formStore = useFormStore()
 const activitiesStore = useLibraryActivitiesStore()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const formRules = inject('formRules')
 const emit = defineEmits(['close'])
 const formRef = ref()
@@ -228,6 +236,7 @@ const form = ref({
   library_name: constants.LIBRARY_SPONSOR,
   activity_groupings: [{}],
   is_data_collected: true,
+  is_multiple_selection_allowed: true,
 })
 const errors = ref([])
 const helpItems = [
@@ -300,6 +309,7 @@ function initForm(value) {
     nci_concept_name: value.nci_concept_name,
     synonyms: value.synonyms,
     is_data_collected: value.is_data_collected,
+    is_multiple_selection_allowed: value.is_multiple_selection_allowed,
     definition: value.definition,
     abbreviation: value.abbreviation,
     change_description: t('_global.work_in_progress'),
@@ -332,10 +342,12 @@ function clearSubgroup(index) {
 
 async function close() {
   observer.value.reset()
+  notificationHub.clearErrors()
   form.value = {
     library_name: constants.LIBRARY_SPONSOR,
     activity_groupings: [{}],
     is_data_collected: true,
+    is_multiple_selection_allowed: true,
   }
   editing.value = false
   formStore.reset()
@@ -343,10 +355,12 @@ async function close() {
 }
 
 async function submit() {
+  notificationHub.clearErrors()
+
   if (!props.editedActivity) {
     activities.create(form.value, 'activities').then(
       () => {
-        eventBusEmit('notification', {
+        notificationHub.add({
           msg: t('ActivityForms.activity_created'),
         })
         close()
@@ -360,7 +374,7 @@ async function submit() {
       .update(props.editedActivity.uid, form.value, {}, 'activities')
       .then(
         () => {
-          eventBusEmit('notification', {
+          notificationHub.add({
             msg: t('ActivityForms.activity_updated'),
           })
           close()

@@ -24,6 +24,7 @@ class ActivitySubGroup(ActivityBase):
         cls,
         activity_subgroup_ar: ActivitySubGroupAR,
         find_activity_by_uid: Callable[[str], ConceptARBase | None],
+        was_cascade_update_performed: bool | None = None,
     ) -> Self:
         activity_groups = []
         for activity_group in activity_subgroup_ar.concept_vo.activity_groups:
@@ -57,9 +58,11 @@ class ActivitySubGroup(ActivityBase):
             possible_actions=sorted(
                 [_.value for _ in activity_subgroup_ar.get_possible_actions()]
             ),
+            was_cascade_update_performed=was_cascade_update_performed,
         )
 
     activity_groups: Annotated[list[ActivityHierarchySimpleModel], Field()]
+    was_cascade_update_performed: Annotated[bool | None, Field()] = None
 
 
 class ActivitySubGroupCreateInput(ExtendedConceptPostInput):

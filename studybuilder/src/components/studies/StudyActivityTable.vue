@@ -25,7 +25,37 @@
       </v-chip>
       <v-spacer />
     </template>
+    <template #headerCenter="">
+      <v-btn-toggle
+        v-model="selectedStatusTab"
+        mandatory
+        density="compact"
+        color="nnBaseBlue"
+        divided
+        variant="outlined"
+        class="layoutSelector justify-center mr-12"
+        @update:model-value="onStatusTabChange"
+      >
+        <v-btn v-for="tab in statusTabs" :key="tab.value" :value="tab.value">
+          <v-icon v-if="tab.icon" :color="tab.color">{{ tab.icon }}</v-icon>
+          {{ tab.label }}
+        </v-btn>
+      </v-btn-toggle>
+    </template>
     <template #actions="slot">
+      <v-btn
+        variant="outlined"
+        color="nnBaseBlue"
+        :disabled="
+          !accessGuard.checkPermission($roles.STUDY_WRITE) ||
+          studiesGeneralStore.selectedStudyVersion !== null
+        "
+        rounded="xl"
+        prepend-icon="mdi-exclamation"
+        @click="openBatchUpdateForm()"
+      >
+        Review activity updates
+      </v-btn>
       <v-btn
         v-if="slot.showSelectBoxes"
         size="small"
@@ -134,6 +164,9 @@
     :open="showUpdateForm"
     @close="closeUpdateForm"
   />
+  <v-dialog v-model="showBatchUpdateForm">
+    <BatchUpdateActivityForm @close="closeBatchUpdateForm" />
+  </v-dialog>
 </template>
 
 <script setup>
@@ -150,6 +183,7 @@ import StudyDraftedActivityEditForm from './StudyDraftedActivityEditForm.vue'
 import StudyActivityForm from './StudyActivityForm.vue'
 import UpdateActivityRequestForm from './UpdateActivityRequestForm.vue'
 import UpdateActivityForm from './UpdateActivityForm.vue'
+import BatchUpdateActivityForm from './BatchUpdateActivityForm.vue'
 import libConstants from '@/constants/libraries'
 import { useAccessGuard } from '@/composables/accessGuard'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
@@ -157,9 +191,10 @@ import { useStudyActivitiesStore } from '@/stores/studies-activities'
 import { computed, inject, ref, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { escapeHTML } from '@/utils/sanitize'
+import _isEmpty from 'lodash/isEmpty'
 
 const { t } = useI18n()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const roles = inject('roles')
 const studiesGeneralStore = useStudiesGeneralStore()
 const activitiesStore = useStudyActivitiesStore()
@@ -181,7 +216,7 @@ const actions = [
     label: t('StudyActivityTable.update_activity_version'),
     icon: 'mdi-update',
     condition: (item) =>
-      isDifferent(item) && !item.latest_activity.is_request_rejected,
+      item.is_activity_updated && !item.latest_activity.is_request_rejected,
     click: openUpdateForm,
     accessRole: roles.STUDY_WRITE,
   },
@@ -230,7 +265,14 @@ const showActivityForm = ref(false)
 const showBatchEditForm = ref(false)
 const showRequestUpdateForm = ref(false)
 const showUpdateForm = ref(false)
+const showBatchUpdateForm = ref(false)
 const showHistory = ref(false)
+const selectedStatusTab = ref('all')
+const statusTabs = [
+  { value: 'all', label: t('_global.all') },
+  { value: 'updated', icon: 'mdi-alert-circle-outline', color: 'error' },
+  { value: 'reviewed', icon: 'mdi-alert-outline', color: 'warning' },
+]
 const headers = [
   { title: '', key: 'actions', width: '1%' },
   { title: t('_global.library'), key: 'activity.library_name' },
@@ -288,6 +330,12 @@ onMounted(() => {
   checkIfFormOpen()
 })
 
+function onStatusTabChange() {
+  if (table.value) {
+    table.value.filterTable()
+  }
+}
+
 function checkIfFormOpen() {
   if (localStorage.getItem('open-form')) {
     showActivityForm.value = true
@@ -330,7 +378,7 @@ async function showRejectingInfo(item) {
       )
       .then(() => {
         table.value.filterTable()
-        eventBusEmit('notification', {
+        notificationHub.add({
           type: 'success',
           msg: t('StudyActivityTable.delete_success'),
         })
@@ -351,17 +399,6 @@ function getActionsForItem(item) {
   return result
 }
 
-function isDifferent(activity) {
-  if (activity.latest_activity) {
-    return (
-      JSON.stringify(activity.activity?.activity_groupings) !==
-        JSON.stringify(activity.latest_activity?.activity_groupings) ||
-      activity.activity?.name !== activity.latest_activity?.name
-    )
-  }
-  return false
-}
-
 function openUpdateForm(item) {
   selectedStudyActivity.value = item
   if (item.activity.library_name === 'Sponsor') {
@@ -378,15 +415,26 @@ function closeUpdateForm() {
   table.value.filterTable()
 }
 
+function openBatchUpdateForm() {
+  showBatchUpdateForm.value = true
+}
+
+function closeBatchUpdateForm() {
+  showBatchUpdateForm.value = false
+  table.value.filterTable()
+}
+
 function actionsMenuBadge(item) {
   if (
     item.activity.replaced_by_activity ||
-    isDifferent(item) ||
+    item.is_activity_updated ||
     item.latest_activity?.is_request_rejected
   ) {
     return {
-      color: item.keep_old_version ? 'green' : 'error',
-      icon: 'mdi-exclamation',
+      color: item.keep_old_version ? 'warning' : 'error',
+      icon: item.keep_old_version
+        ? 'mdi-alert-outline'
+        : 'mdi-alert-circle-outline',
     }
   }
   return undefined
@@ -418,7 +466,7 @@ async function deleteStudyActivity(sa) {
       )
       .then(() => {
         table.value.filterTable()
-        eventBusEmit('notification', {
+        notificationHub.add({
           type: 'success',
           msg: t('StudyActivityTable.delete_success'),
         })
@@ -500,6 +548,29 @@ async function getStudyActivities(filters, options, filtersUpdated) {
       delete params.filters
     }
   }
+  let statusFilter = {}
+  if (selectedStatusTab.value === 'reviewed') {
+    statusFilter = { keep_old_version: { v: [true] } }
+  } else if (selectedStatusTab.value === 'updated') {
+    statusFilter = {
+      is_activity_updated: { v: [true] },
+      keep_old_version: { v: [false] },
+    }
+  }
+
+  if (selectedStatusTab.value !== 'all') {
+    if (_isEmpty(params.filters)) {
+      params.filters = statusFilter
+    } else {
+      const filtersObj =
+        typeof params.filters === 'string'
+          ? JSON.parse(params.filters)
+          : params.filters
+      Object.assign(filtersObj, statusFilter)
+      params.filters = filtersObj
+    }
+  }
+
   params.studyUid = studiesGeneralStore.selectedStudy.uid
   const resp = await activitiesStore.fetchStudyActivities(params)
   studyActivities.value = resp.data.items
@@ -540,7 +611,7 @@ function modifyFilters(jsonFilter, params) {
 
 function openBatchEditForm(selection) {
   if (!selection.length) {
-    eventBusEmit('notification', {
+    notificationHub.add({
       type: 'warning',
       msg: t('StudyActivityTable.batch_edit_no_selection'),
     })
@@ -591,5 +662,13 @@ tbody tr td {
   border-bottom-style: outset;
   border-width: 1px !important;
   border-color: rgb(var(--v-theme-nnFadedBlue200)) !important;
+}
+
+.layoutSelector {
+  border-color: rgb(var(--v-theme-nnBaseBlue));
+}
+
+.layoutSelector :deep(.v-btn) {
+  text-transform: none;
 }
 </style>

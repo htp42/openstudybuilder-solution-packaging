@@ -110,7 +110,9 @@ onMounted(() => {
 })
 
 const getAliases = (filters, options, filtersUpdated) => {
-  if (!props.disabled) {
+  if (props.disabled) {
+    aliases.value = [...modelValue.value]
+  } else {
     const params = filteringParameters.prepareParameters(
       options,
       null,
@@ -121,8 +123,6 @@ const getAliases = (filters, options, filtersUpdated) => {
       aliases.value = resp.data.items
       total.value = resp.data.total
     })
-  } else {
-    aliases.value = [...modelValue.value]
   }
 }
 

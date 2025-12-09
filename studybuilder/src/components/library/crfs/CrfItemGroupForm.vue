@@ -353,7 +353,7 @@ export default {
     CrfApprovalSummaryConfirmDialog,
     CrfNewVersionSummaryConfirmDialog,
   },
-  inject: ['eventBusEmit', 'formRules'],
+  inject: ['notificationHub', 'formRules'],
   props: {
     selectedGroup: {
       type: Object,
@@ -619,7 +619,7 @@ export default {
           this.readOnly = false
           this.getGroup()
 
-          this.eventBusEmit('notification', {
+          this.notificationHub.add({
             msg: this.$t('_global.new_version_success'),
           })
         })
@@ -638,7 +638,7 @@ export default {
           this.close()
           this.getGroup()
 
-          this.eventBusEmit('notification', {
+          this.notificationHub.add({
             msg: this.$t('CRFItemGroups.approved'),
           })
         })
@@ -681,6 +681,7 @@ export default {
       return this.$refs[`observer_${step}`]
     },
     close() {
+      this.notificationHub.clearErrors()
       this.form = {
         oid: 'G.',
         repeating: 'No',
@@ -697,6 +698,8 @@ export default {
       this.$emit('close')
     },
     async submit() {
+      this.notificationHub.clearErrors()
+
       if (this.readOnly) {
         this.close()
         return
@@ -715,7 +718,7 @@ export default {
             .updateItemGroup(this.form, this.selectedGroup.uid)
             .then(async () => {
               await this.linkExtensions(this.selectedGroup.uid)
-              this.eventBusEmit('notification', {
+              this.notificationHub.add({
                 msg: this.$t('CRFItemGroups.group_updated'),
               })
               this.close()
@@ -723,7 +726,7 @@ export default {
         } else {
           await crfs.createItemGroup(this.form).then(async (resp) => {
             await this.linkExtensions(resp.data.uid)
-            this.eventBusEmit('notification', {
+            this.notificationHub.add({
               msg: this.$t('CRFItemGroups.group_created'),
             })
             this.$emit('linkGroup', resp)

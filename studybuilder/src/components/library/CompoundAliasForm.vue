@@ -127,7 +127,7 @@ export default {
     HorizontalStepperForm,
     YesNoField,
   },
-  inject: ['eventBusEmit', 'formRules'],
+  inject: ['notificationHub', 'formRules'],
   props: {
     compoundAliasUid: {
       type: String,
@@ -242,6 +242,7 @@ export default {
   methods: {
     close() {
       this.$emit('close')
+      this.notificationHub.clearErrors()
       this.compounds = []
       this.form = this.getInitialForm()
       this.$refs.stepper.reset()
@@ -273,7 +274,7 @@ export default {
       data.library_name = libConstants.LIBRARY_SPONSOR
       await compoundAliases.create(data)
       this.$emit('created')
-      this.eventBusEmit('notification', {
+      this.notificationHub.add({
         msg: this.$t('CompoundAliasForm.add_success'),
         type: 'success',
       })
@@ -281,15 +282,17 @@ export default {
     async update(data) {
       await compoundAliases.update(this.compoundAlias.uid, data)
       this.$emit('updated')
-      this.eventBusEmit('notification', {
+      this.notificationHub.add({
         msg: this.$t('CompoundAliasForm.update_success'),
         type: 'success',
       })
     },
     async submit() {
+      this.notificationHub.clearErrors()
+
       if (this.formStore.isEmpty || this.formStore.isEqual(this.form)) {
         this.close()
-        this.eventBusEmit('notification', {
+        this.notificationHub.add({
           type: 'info',
           msg: this.$t('_global.no_changes'),
         })

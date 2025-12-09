@@ -8,6 +8,7 @@ import router from './router'
 import appInsights from '@/plugins/appInsights'
 import auth from '@/plugins/auth'
 import eventBus from '@/plugins/eventBus'
+import notificationHub from '@/plugins/notificationHub'
 import formRules from '@/plugins/formRules'
 import i18n from '@/plugins/i18n'
 import vuetify from '@/plugins/vuetify'
@@ -55,6 +56,7 @@ fetch('/config.json').then((resp) => {
       cloudRoleInstance: 'vue-app',
     })
     app.use(eventBus)
+    app.use(notificationHub)
     app.use(formRules)
     app.use(i18n).provide('$i18n', i18n)
     app.use(vuetify)

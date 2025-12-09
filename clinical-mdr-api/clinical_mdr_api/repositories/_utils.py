@@ -11,6 +11,9 @@ from neomodel import Q, db
 from pydantic import BaseModel, Field, field_validator
 from pydantic.types import T
 
+from clinical_mdr_api.models.biomedical_concepts.activity_item_class import (
+    CompactActivityInstanceClass,
+)
 from clinical_mdr_api.models.concepts.activities.activity import (
     ActivityGroupingHierarchySimpleModel,
 )
@@ -605,9 +608,33 @@ class CypherQueryBuilder:
                 path = traversal
 
             if get_sub_fields(attr_desc) is None:
-                _predicates.append(
-                    f"toLower({path}.{_alias}){_parsed_operator}${_query_param_name}"
-                )
+                # Need to get the nested field descriptor to check its type
+                # attr_desc at this point refers to the parent list field (e.g., activity_instance_classes)
+                # We need to get the field descriptor for the actual field we're filtering on
+                parent_field_type = get_field_type(attr_desc.annotation)
+                if hasattr(parent_field_type, "model_fields"):
+                    nested_field_desc = parent_field_type.model_fields.get(_alias)
+                    field_type = (
+                        get_field_type(nested_field_desc.annotation)
+                        if nested_field_desc
+                        else None
+                    )
+
+                    # Check if field is a string type - if so, apply toLower()
+                    if field_type is str:
+                        _predicates.append(
+                            f"toLower({path}.{_alias}){_parsed_operator}${_query_param_name}"
+                        )
+                    else:
+                        # For non-string types (bool, int, etc.), don't use toLower()
+                        _predicates.append(
+                            f"{path}.{_alias}{_parsed_operator}${_query_param_name}"
+                        )
+                else:
+                    # Fallback to original behavior if we can't determine the type
+                    _predicates.append(
+                        f"toLower({path}.{_alias}){_parsed_operator}${_query_param_name}"
+                    )
             else:
                 # Special handling for activity_groupings fields that map to nested structure
                 # activity_group_name -> activity_group.name
@@ -625,10 +652,31 @@ class CypherQueryBuilder:
                         f"any(attr in {path} WHERE toLower(attr.activity_subgroup.name) {_parsed_operator} ${_query_param_name})"
                     )
                 else:
-                    # Default behavior for other array fields
-                    _predicates.append(
-                        f"any(attr in {path} WHERE toLower(attr.{_alias}) {_parsed_operator} ${_query_param_name})"
-                    )
+                    # Default behavior for other array fields - check field type first
+                    # Get the element type of the list
+                    list_element_type = get_field_type(attr_desc.annotation)
+                    if hasattr(list_element_type, "model_fields"):
+                        nested_field_desc = list_element_type.model_fields.get(_alias)
+                        field_type = (
+                            get_field_type(nested_field_desc.annotation)
+                            if nested_field_desc
+                            else None
+                        )
+
+                        if field_type is str:
+                            _predicates.append(
+                                f"any(attr in {path} WHERE toLower(attr.{_alias}) {_parsed_operator} ${_query_param_name})"
+                            )
+                        else:
+                            # For non-string types, don't use toLower()
+                            _predicates.append(
+                                f"any(attr in {path} WHERE attr.{_alias} {_parsed_operator} ${_query_param_name})"
+                            )
+                    else:
+                        # Fallback to original behavior
+                        _predicates.append(
+                            f"any(attr in {path} WHERE toLower(attr.{_alias}) {_parsed_operator} ${_query_param_name})"
+                        )
         else:
             attr_desc = self.return_model.model_fields.get(_alias)
             if get_sub_fields(attr_desc) is None:
@@ -808,6 +856,15 @@ class CypherQueryBuilder:
                                         )
                                         _predicates.append(
                                             f"any(attr in {attribute} WHERE toLower(attr.activity_subgroup.name) {_parsed_operator} $wildcard_{index})"
+                                        )
+                                    elif (
+                                        get_field_type(attr_desc.annotation)
+                                        is CompactActivityInstanceClass
+                                    ):
+                                        # Wildcard filtering for activity_instance_classes
+                                        # Search in the name field of each activity instance class
+                                        _predicates.append(
+                                            f"any(attr in {attribute} WHERE toLower(attr.name) {_parsed_operator} $wildcard_{index})"
                                         )
                                     elif (
                                         get_field_type(attr_desc.annotation)
@@ -1127,7 +1184,8 @@ class CypherQueryBuilder:
     def execute(self) -> tuple[Any, Any]:
         try:
             result_array, attributes_names = db.cypher_query(
-                query=self.full_query, params=self.parameters
+                query=self.full_query,
+                params=self.parameters,
             )
         except CypherSyntaxError as ex:
             log.error("%s: %s", ex.code, ex.message)

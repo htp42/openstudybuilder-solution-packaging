@@ -17,7 +17,7 @@ class SimpleImplementsVariable(BaseModel):
 
 class SimpleDataset(BaseModel):
     ordinal: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
-    name: Annotated[str, Field()]
+    uid: Annotated[str, Field()]
 
 
 class SimpleReferencedCodelist(BaseModel):
@@ -112,7 +112,7 @@ class DatasetVariable(BaseModel):
             catalogue_name=input_dict["catalogue_name"],
             data_model_ig_names=input_dict["data_model_ig_names"],
             dataset=SimpleDataset(
-                name=input_dict.get("dataset").get("name"),
+                uid=input_dict.get("dataset").get("uid"),
                 ordinal=input_dict.get("dataset").get("ordinal"),
             ),
             implements_variable=(

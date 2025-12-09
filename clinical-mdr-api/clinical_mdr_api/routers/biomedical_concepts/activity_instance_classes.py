@@ -289,6 +289,10 @@ def get_mapped_datasets(
         str | None,
         Query(description="Optionally, the uid of a specific ActivityInstanceClass"),
     ] = None,
+    ig_uid: Annotated[
+        str | None,
+        Query(description="Optionally, the uid of a specific DataModelIG, e.g. SDTMIG"),
+    ] = None,
     include_sponsor: Annotated[
         bool,
         Query(
@@ -299,6 +303,7 @@ def get_mapped_datasets(
     activity_instance_class_service = ActivityInstanceClassService()
     return activity_instance_class_service.get_mapped_datasets(
         activity_instance_class_uid=activity_instance_class_uid,
+        ig_uid=ig_uid,
         include_sponsor=include_sponsor,
     )
 

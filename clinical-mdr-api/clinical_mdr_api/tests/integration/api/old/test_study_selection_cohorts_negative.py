@@ -190,7 +190,7 @@ def test_data():
 def test_adding_selection8(api_client):
     data = {"name": "Cohort_Name_1", "short_name": "Cohort_Short_Name_1"}
     response = api_client.post("/studies/study_root/study-cohorts", json=data)
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
     res = response.json()
 
     assert res["type"] == "ValidationException"
@@ -381,7 +381,7 @@ def test_patch_specific_patch_some_name_that_is_already_used_on_another_cohort(
 
     res = response.json()
 
-    assert response.status_code == 422
+    assert response.status_code == 400
     assert res["type"] == "ValidationException"
     assert (
         res["message"]
@@ -404,7 +404,7 @@ def test_patch_specific_patch_some_name_that_is_already_used_on_another_cohort1(
 
     res = response.json()
 
-    assert response.status_code == 422
+    assert response.status_code == 400
     assert res["type"] == "ValidationException"
     assert (
         res["message"]

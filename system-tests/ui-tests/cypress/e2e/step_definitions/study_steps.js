@@ -10,28 +10,13 @@ Given('A {string} study is selected', (study_id) => {
     cy.selectStudyByStudyId(study_id)
 })
 
-Given('A secondary test study is selected', () => {
-    cy.selectTestStudy('Study_000002')
-})
+Given('Get study {string} uid', (studyId) => cy.getStudyUidById(studyId).then(uid => study_uid = uid))
 
-Given('The study with multiple visists created has been selected', () => {
-    cy.selectTestStudy('Study_000003')
-})
+Given('Select study with uid saved in previous step', () => cy.selectTestStudy(study_uid))
 
-Given('A study in draft status without study number is selected', () => {
-    cy.selectTestStudy('Study_000004')
-})
-
-Given('A study in draft status without title is selected', () => {
-    cy.selectTestStudy('Study_000005')
-})
-
-Given('A study in draft status with defined study number and study title is selected', () => {
-    cy.selectTestStudy('Study_000006')
-})
-
-Given('A study in locked status with defined study number and study title is selected', () => {
-    cy.selectTestStudy('Study_000007')
+When('The page {string} is opened for selected study', (page) => {
+    cy.visit(`/studies/${study_uid}/${page}`)
+    cy.waitForPage()
 })
 
 When('A new study is added', () => {

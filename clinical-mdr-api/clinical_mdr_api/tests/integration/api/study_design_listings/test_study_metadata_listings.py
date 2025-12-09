@@ -785,7 +785,7 @@ def test_study_metadata_listing_with_subpart(api_client):
     response = api_client.get(
         f"/listings/studies/study-metadata?project_id={project_id}&study_number={p_study_number}&datetime=2099-12-30",
     )
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
     assert (
         response.json()["message"]
         == f"Study {project_id}-{p_study_number} is a parent study, please specify study subpart acronym for specific sub study."

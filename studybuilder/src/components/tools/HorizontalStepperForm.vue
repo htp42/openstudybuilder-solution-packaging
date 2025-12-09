@@ -143,7 +143,7 @@ import HelpButtonWithPanels from '@/components/tools/HelpButtonWithPanels.vue'
 import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
 import { useFormStore } from '@/stores/form'
 
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const { t } = useI18n()
 const props = defineProps({
   title: {
@@ -239,7 +239,7 @@ function copyUrl() {
 
 function closeWithNoChange() {
   close()
-  eventBusEmit('notification', { type: 'info', msg: t('_global.no_changes') })
+  notificationHub.add({ type: 'info', msg: t('_global.no_changes') })
 }
 
 async function cancel() {

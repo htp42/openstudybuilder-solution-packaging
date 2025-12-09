@@ -35,6 +35,10 @@ from clinical_mdr_api.models.concepts.activities.activity_sub_group import (
 )
 from clinical_mdr_api.models.projects.project import Project
 from clinical_mdr_api.models.study_selections.study import Study
+from clinical_mdr_api.models.study_selections.study_selection import (
+    StudySelectionReviewAction,
+)
+from clinical_mdr_api.models.study_selections.study_visit import StudyVisit
 from clinical_mdr_api.models.syntax_templates.template_parameter_term import (
     IndexedTemplateParameterTerm,
     MultiTemplateParameterTerm,
@@ -89,6 +93,8 @@ body_mes_activity_instance: ActivityInstance
 clinical_programme: ClinicalProgramme
 project: Project
 term_efficacy_uid: str
+study_visit_1: StudyVisit
+study_visit_2: StudyVisit
 
 
 @pytest.fixture(scope="module")
@@ -363,7 +369,7 @@ def test_create_remove_study_activity_instance_when_study_activity_is_created_re
     )
     assert (
         study_activity_instances[0]["state"]
-        == StudyActivityInstanceState.REQUIRED.value
+        == StudyActivityInstanceState.REVIEW_NOT_NEEDED.value
     )
     response = api_client.get(
         f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
@@ -440,6 +446,7 @@ def test_delete_study_activity_instance(api_client):
     res = response.json()["items"]
     assert len(res) == 2
     required_study_activity_instance_uid = res[0]["study_activity_instance_uid"]
+    assert res[0]["is_reviewed"] is True
     second_randonmized_activity_instance_uid = res[1]["study_activity_instance_uid"]
 
     # Delete one StudyActivityInstance pointing to the Randomized Activity, the whole StudyActivityInstance object should be removed
@@ -466,6 +473,7 @@ def test_delete_study_activity_instance(api_client):
     res = response.json()
     assert res["study_activity_instance_uid"] == required_study_activity_instance_uid
     assert res["activity_instance"] is None
+    assert res["is_reviewed"] is False
 
     response = api_client.get(
         f"/studies/{test_study.uid}/study-activity-instances",
@@ -565,16 +573,54 @@ def test_create_study_activity_instance(api_client):
         diff[0] for diff in diffs
     }
     assert ("uid", "PreviewTemporalUid") in diffs
+
+    # Test is_important flag and has_baseline rels
+    # add activity schedule for parent activity and visit 1
+    test_study_epoch = create_study_epoch("EpochSubType_0001", study_uid=test_study.uid)
+    inputs = {
+        "study_uid": test_study.uid,
+        "study_epoch_uid": test_study_epoch.uid,
+        "visit_type_uid": "VisitType_0001",
+        "show_visit": True,
+        "time_reference_uid": "VisitSubType_0005",
+        "time_value": 100,
+        "time_unit_uid": DAYUID,
+        "visit_class": "SINGLE_VISIT",
+        "visit_subclass": "SINGLE_VISIT",
+        "is_global_anchor_visit": False,
+    }
+    datadict = visits_basic_data
+    datadict.update(inputs)
+    study_visit_1 = TestUtils.create_study_visit(**datadict)
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activity-schedules",
+        json={
+            "study_activity_uid": study_activity_uid,
+            "study_visit_uid": study_visit_1.uid,
+        },
+    )
+
     response = api_client.post(
         f"/studies/{test_study.uid}/study-activity-instances",
         json={
             "study_activity_uid": study_activity_uid,
             "activity_instance_uid": new_activity_instance_linked_to_weight.uid,
+            "is_important": True,
+            "baseline_visit_uids": [study_visit_1.uid],
         },
     )
     assert_response_status_code(response, 201)
     res = response.json()
     study_activity_instance_uid = res["study_activity_instance_uid"]
+    assert res["is_important"] is True
+    assert res["baseline_visits"] == [
+        {
+            "uid": study_visit_1.uid,
+            "visit_name": study_visit_1.visit_name,
+            "visit_type_name": study_visit_1.visit_type_name,
+        }
+    ]
+
     response = api_client.get(
         f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
     )
@@ -582,7 +628,15 @@ def test_create_study_activity_instance(api_client):
     res = response.json()
     assert res["study_activity_uid"] == study_activity_uid
     assert res["activity_instance"]["uid"] == new_activity_instance_linked_to_weight.uid
-    assert res["state"] == StudyActivityInstanceState.REQUIRED.value
+    assert res["state"] == StudyActivityInstanceState.REVIEW_NOT_NEEDED.value
+    assert res["is_important"] is True
+    assert res["baseline_visits"] == [
+        {
+            "uid": study_visit_1.uid,
+            "visit_name": study_visit_1.visit_name,
+            "visit_type_name": study_visit_1.visit_type_name,
+        }
+    ]
 
     response = api_client.post(
         f"/studies/{test_study.uid}/study-activity-instances",
@@ -600,6 +654,7 @@ def test_create_study_activity_instance(api_client):
 
 
 def test_edit_study_activity_instance(api_client):
+    expected_audit_trail_length = 0
     test_study = TestUtils.create_study(project_number=project.project_number)
     response = api_client.post(
         f"/studies/{test_study.uid}/study-activities",
@@ -611,7 +666,10 @@ def test_edit_study_activity_instance(api_client):
         },
     )
     assert_response_status_code(response, 201)
+    res = response.json()
+    study_activity_uid = res["study_activity_uid"]
 
+    expected_audit_trail_length += 1
     response = api_client.get(
         f"/studies/{test_study.uid}/study-activity-instances",
     )
@@ -626,8 +684,235 @@ def test_edit_study_activity_instance(api_client):
     assert_response_status_code(response, 200)
     res = response.json()
     assert res["activity_instance"]["uid"] == randomized_activity_instance.uid
-    assert res["state"] == StudyActivityInstanceState.REQUIRED.value
+    assert res["state"] == StudyActivityInstanceState.REVIEW_NOT_NEEDED.value
 
+    # add activity schedule for parent activity and both visit 1 & 2
+    test_study_epoch = create_study_epoch("EpochSubType_0001", study_uid=test_study.uid)
+    inputs = {
+        "study_uid": test_study.uid,
+        "study_epoch_uid": test_study_epoch.uid,
+        "visit_type_uid": "VisitType_0001",
+        "show_visit": True,
+        "time_reference_uid": "VisitSubType_0005",
+        "time_value": 100,
+        "time_unit_uid": DAYUID,
+        "visit_class": "SINGLE_VISIT",
+        "visit_subclass": "SINGLE_VISIT",
+        "is_global_anchor_visit": False,
+    }
+    datadict = visits_basic_data
+    datadict.update(inputs)
+    study_visit_1 = TestUtils.create_study_visit(**datadict)
+    inputs["time_value"] = 200
+    datadict.update(inputs)
+    study_visit_2 = TestUtils.create_study_visit(**datadict)
+    inputs["time_value"] = 300
+    datadict.update(inputs)
+    unscheduled_visit = TestUtils.create_study_visit(**datadict)
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activity-schedules",
+        json={
+            "study_activity_uid": study_activity_uid,
+            "study_visit_uid": study_visit_1.uid,
+        },
+    )
+    res = response.json()
+    study_activity_schedule_1_uid = res["study_activity_schedule_uid"]
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activity-schedules",
+        json={
+            "study_activity_uid": study_activity_uid,
+            "study_visit_uid": study_visit_2.uid,
+        },
+    )
+
+    # Test is_important & baseline visits
+    # Test is_important field - initially should be False
+    response = api_client.get(
+        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert res["is_important"] is False
+    assert res["baseline_visits"] is None
+
+    # Test setting is_important to True
+    # Test setting baseline visits
+    response = api_client.patch(
+        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
+        json={
+            "is_important": True,
+            "baseline_visit_uids": [study_visit_1.uid, study_visit_2.uid],
+        },
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert res["is_important"] is True
+    assert len(res["baseline_visits"]) == 2
+    assert {
+        "uid": study_visit_1.uid,
+        "visit_name": study_visit_1.visit_name,
+        "visit_type_name": study_visit_1.visit_type_name,
+    } in res["baseline_visits"]
+    assert {
+        "uid": study_visit_2.uid,
+        "visit_name": study_visit_2.visit_name,
+        "visit_type_name": study_visit_2.visit_type_name,
+    } in res["baseline_visits"]
+    expected_audit_trail_length += 1
+
+    # Test setting is_important to False
+    # Test removing one baseline visit
+    response = api_client.patch(
+        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
+        json={
+            "is_important": False,
+            "baseline_visit_uids": [study_visit_2.uid],
+        },
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert res["is_important"] is False
+    assert len(res["baseline_visits"]) == 1
+    assert {
+        "uid": study_visit_2.uid,
+        "visit_name": study_visit_2.visit_name,
+        "visit_type_name": study_visit_2.visit_type_name,
+    } in res["baseline_visits"]
+    expected_audit_trail_length += 1
+
+    # Test baseline does not change when not specified
+    response = api_client.patch(
+        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
+        json={
+            "is_important": True,
+        },
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert res["is_important"] is True
+    assert len(res["baseline_visits"]) == 1
+    assert {
+        "uid": study_visit_2.uid,
+        "visit_name": study_visit_2.visit_name,
+        "visit_type_name": study_visit_2.visit_type_name,
+    } in res["baseline_visits"]
+    expected_audit_trail_length += 1
+
+    # Test removing all baseline visits - should set baseline_visits to None
+    response = api_client.patch(
+        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
+        json={
+            "baseline_visit_uids": [],
+        },
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert res["baseline_visits"] is None
+    expected_audit_trail_length += 1
+    # Test adding unscheduled visit to baseline visits - should send an exception
+    response = api_client.patch(
+        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
+        json={
+            "baseline_visit_uids": [unscheduled_visit.uid],
+        },
+    )
+    assert_response_status_code(response, 400)
+    assert (
+        response.json()["message"]
+        == f"The Study Visit with UID '{unscheduled_visit.uid}' does not correspond to a current StudyActivitySchedule for the parent StudyActivity with UID '{study_activity_uid}'."
+    )
+
+    # Test cascade deletion of baseline rel for Visit / Schedule deletion
+    # Delete schedule 1 - should remove visit 1 from baseline visits
+    response = api_client.patch(
+        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
+        json={
+            "is_important": True,
+            "baseline_visit_uids": [study_visit_1.uid, study_visit_2.uid],
+        },
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert len(res["baseline_visits"]) == 2
+    expected_audit_trail_length += 1
+    response = api_client.delete(
+        f"/studies/{test_study.uid}/study-activity-schedules/{study_activity_schedule_1_uid}",
+    )
+    assert_response_status_code(response, 204)
+    response = api_client.get(
+        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert len(res["baseline_visits"]) == 1
+    assert {
+        "uid": study_visit_2.uid,
+        "visit_name": study_visit_2.visit_name,
+        "visit_type_name": study_visit_2.visit_type_name,
+    } in res["baseline_visits"]
+    expected_audit_trail_length += 1
+    # Before deleting visit, check that patching visit does not change baseline visits
+    _ = api_client.patch(
+        f"/studies/{test_study.uid}/study-visits/{study_visit_2.uid}",
+        json={
+            "time_value": 400,
+        },
+    )
+    response = api_client.get(
+        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert len(res["baseline_visits"]) == 1
+    assert {
+        "uid": study_visit_2.uid,
+        "visit_name": study_visit_2.visit_name,
+        "visit_type_name": study_visit_2.visit_type_name,
+    } in res["baseline_visits"]
+
+    # Delete Visit 2 - should remove visit 2 from baseline visits
+    _ = api_client.delete(
+        f"/studies/{test_study.uid}/study-visits/{study_visit_2.uid}",
+    )
+    response = api_client.get(
+        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert res["baseline_visits"] is None
+    expected_audit_trail_length += 1
+
+    # Finally, test audit trail for baseline visits
+    response = api_client.get(
+        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}/audit-trail",
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert len(res) == expected_audit_trail_length
+    assert len([x for x in res if x["baseline_visits"] is None]) == 3
+    assert (
+        len(
+            [
+                x
+                for x in res
+                if x["baseline_visits"] is not None and len(x["baseline_visits"]) == 2
+            ]
+        )
+        == 2
+    )
+    assert (
+        len(
+            [
+                x
+                for x in res
+                if x["baseline_visits"] is not None and len(x["baseline_visits"]) == 1
+            ]
+        )
+        == expected_audit_trail_length - 5
+    )
+
+    # test detaching from activity instance - should set state to MISSING_SELECTION
     response = api_client.patch(
         f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
         json={
@@ -644,7 +929,7 @@ def test_edit_study_activity_instance(api_client):
     assert_response_status_code(response, 200)
     res = response.json()
     assert res["activity_instance"] is None
-    assert res["state"] == StudyActivityInstanceState.MISSING_SELECTION.value
+    assert res["state"] == StudyActivityInstanceState.ADD_INSTANCE.value
 
     TestUtils.delete_study(test_study.uid)
 
@@ -740,6 +1025,7 @@ def test_study_activity_instance_audit_trails(api_client):
     assert res[0]["activity"]["name"] == randomized_activity.name
     assert res[0]["activity_instance"]["name"] == "Randomized activity instance"
     assert res[0]["show_activity_instance_in_protocol_flowchart"] is True
+    assert res[0]["is_important"] is False
     assert res[1]["activity"]["name"] == randomized_activity.name
     assert res[1]["activity_instance"]["name"] == "Randomized activity instance"
     assert res[1]["show_activity_instance_in_protocol_flowchart"] is False
@@ -786,43 +1072,40 @@ def test_get_study_activity_instances_csv_xml_excel(api_client, export_format):
 
 
 @pytest.mark.parametrize(
-    "activity_name, activity_instance_name, is_required, is_defaulted, expected_state, is_data_collected, retired_instance",
+    "activity_name, activity_instance_name, is_required, is_defaulted, expected_state, is_data_collected, retired_instance, is_multiple_selection_allowed",
     [
         pytest.param(
-            "Required activity",
-            "Required activity instance",
+            "Review not needed activity",
+            "Review not needed activity instance",
             True,
             False,
-            "Required",
+            "Review not needed",
             True,
             False,
+            True,
         ),
         pytest.param(
-            "Defaulted activity",
-            "Defaulted activity instance",
+            "Review needed activity",
+            "Review needed activity instance",
             False,
             True,
-            "Defaulted",
+            "Review needed",
             True,
             False,
+            True,
         ),
         pytest.param(
-            "Suggestion activity",
-            "Suggestion activity instance",
+            "Review needed activity 2",
+            "Review needed activity instance 2",
             False,
             False,
-            "Suggestion",
+            "Review needed",
             True,
             False,
+            True,
         ),
         pytest.param(
-            "Not collected activity",
-            None,
-            False,
-            False,
-            None,
-            False,
-            False,
+            "Not collected activity", None, False, False, None, False, False, True
         ),
         pytest.param(
             "Activity with retired instance",
@@ -832,6 +1115,17 @@ def test_get_study_activity_instances_csv_xml_excel(api_client, export_format):
             None,
             True,
             True,
+            True,
+        ),
+        pytest.param(
+            "Multiple selection not allowed activity",
+            "Multiple selection not allowed instance",
+            False,
+            False,
+            "Remove instance",
+            True,
+            False,
+            False,
         ),
     ],
 )
@@ -844,6 +1138,7 @@ def test_study_activity_instances_states(
     expected_state,
     is_data_collected,
     retired_instance,
+    is_multiple_selection_allowed,
 ):
     test_study = TestUtils.create_study(project_number=project.project_number)
     new_test_activity = TestUtils.create_activity(
@@ -852,7 +1147,9 @@ def test_study_activity_instances_states(
         activity_groups=[general_activity_group.uid],
         library_name="Sponsor",
         is_data_collected=is_data_collected,
+        is_multiple_selection_allowed=is_multiple_selection_allowed,
     )
+    new_test_activity_instance = None
     if is_data_collected:
         new_test_activity_instance = TestUtils.create_activity_instance(
             name=activity_instance_name,
@@ -867,8 +1164,6 @@ def test_study_activity_instances_states(
             activity_items=[],
             retire_after_approve=retired_instance,
         )
-    else:
-        new_test_activity_instance = None
 
     response = api_client.post(
         f"/studies/{test_study.uid}/study-activities",
@@ -880,13 +1175,15 @@ def test_study_activity_instances_states(
         },
     )
     assert_response_status_code(response, 201)
+    study_activity_uid = response.json()["study_activity_uid"]
+
     response = api_client.get(
         f"/studies/{test_study.uid}/study-activity-instances",
     )
     assert_response_status_code(response, 200)
     res = response.json()["items"]
 
-    if is_data_collected and not retired_instance:
+    if is_data_collected and not retired_instance and is_multiple_selection_allowed:
         assert len(res) == 1
         assert res[0]["activity_instance"]["uid"] == new_test_activity_instance.uid
         assert res[0]["activity"]["uid"] == new_test_activity.uid
@@ -900,6 +1197,63 @@ def test_study_activity_instances_states(
         )
         assert res[0]["activity"]["uid"] == new_test_activity.uid
         assert res[0]["state"] == expected_state
+    elif not is_multiple_selection_allowed:
+        second_instance_name = activity_instance_name + " 2"
+        second_instance = TestUtils.create_activity_instance(
+            name=second_instance_name,
+            activity_instance_class_uid=weight_activity_instance_class.uid,
+            name_sentence_case=second_instance_name.lower(),
+            topic_code=second_instance_name + " topic code",
+            is_required_for_activity=is_required,
+            is_default_selected_for_activity=is_defaulted,
+            activities=[new_test_activity.uid],
+            activity_subgroups=[body_measurements_activity_subgroup.uid],
+            activity_groups=[general_activity_group.uid],
+            activity_items=[],
+            retire_after_approve=retired_instance,
+        )
+        response = api_client.post(
+            f"/studies/{test_study.uid}/study-activity-instances/batch",
+            json=[
+                {
+                    "method": "POST",
+                    "content": {
+                        "activity_instance_uid": second_instance.uid,
+                        "study_activity_uid": study_activity_uid,
+                    },
+                }
+            ],
+        )
+        assert_response_status_code(response, 207)
+        response = api_client.get(
+            f"/studies/{test_study.uid}/study-activity-instances",
+        )
+        assert_response_status_code(response, 200)
+        res = response.json()["items"]
+        assert len(res) == 2
+        for study_activity_instance in res:
+            assert study_activity_instance["activity_instance"] is not None
+            assert study_activity_instance["activity"]["uid"] == new_test_activity.uid
+            assert study_activity_instance["state"] == expected_state
+        # Delete SAI to check if REMOVE_INSTANCE state changes to REVIEW_NEEDED
+        sai_to_delete = res[0]["study_activity_instance_uid"]
+        response = api_client.delete(
+            f"/studies/{test_study.uid}/study-activity-instances/{sai_to_delete}",
+        )
+        assert_response_status_code(response, 204)
+        response = api_client.get(
+            f"/studies/{test_study.uid}/study-activity-instances",
+        )
+        assert_response_status_code(response, 200)
+        res = response.json()["items"]
+        assert len(res) == 1
+        for study_activity_instance in res:
+            assert study_activity_instance["activity_instance"] is not None
+            assert study_activity_instance["activity"]["uid"] == new_test_activity.uid
+            assert (
+                study_activity_instance["state"]
+                == StudyActivityInstanceState.REVIEW_NEEDED.value
+            )
     else:
         # We should get a placeholder, with activity_instance set to None
         assert len(res) == 1
@@ -962,10 +1316,11 @@ def test_sync_to_latest_version_activity_instance(api_client):
     )
     assert_response_status_code(response, 201)
     # PATCH underling activity-instance
+    changed_definition = "new activity instance definition for sync test"
     response = api_client.patch(
         f"/concepts/activities/activity-instances/{new_test_activity_instance.uid}",
         json={
-            "definition": "new activity instance definition for sync test",
+            "definition": changed_definition,
             "change_description": "Sync to latest version test",
         },
     )
@@ -982,6 +1337,9 @@ def test_sync_to_latest_version_activity_instance(api_client):
     )
     assert_response_status_code(response, 200)
     study_activity_instance = response.json()
+
+    # The red bell should not be shown if there modified property is not any of (topic code, activity instance class or activity instance name)
+    assert study_activity_instance["is_activity_instance_updated"] is False
     assert study_activity_instance["activity_instance"]["version"] == "1.0"
     assert (
         study_activity_instance["activity_instance"]["uid"]
@@ -991,6 +1349,54 @@ def test_sync_to_latest_version_activity_instance(api_client):
     assert (
         study_activity_instance["latest_activity_instance"]["uid"]
         == new_test_activity_instance.uid
+    )
+
+    response = api_client.post(
+        f"/concepts/activities/activity-instances/{new_test_activity_instance.uid}/versions",
+    )
+    assert_response_status_code(response, 201)
+    # PATCH underling activity-instance
+    response = api_client.patch(
+        f"/concepts/activities/activity-instances/{new_test_activity_instance.uid}",
+        json={
+            "activity_instance_class_uid": randomized_activity_instance_class.uid,
+            "change_description": "Sync to latest version test",
+        },
+    )
+    assert_response_status_code(response, 200)
+
+    response = api_client.post(
+        f"/concepts/activities/activity-instances/{new_test_activity_instance.uid}/approvals",
+    )
+    assert_response_status_code(response, 201)
+
+    # Fetch StudyActivityInstance after underlying ActivityInstance is edited
+    response = api_client.get(
+        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
+    )
+    assert_response_status_code(response, 200)
+    study_activity_instance = response.json()
+
+    assert study_activity_instance["is_activity_instance_updated"] is True
+    assert study_activity_instance["activity_instance"]["version"] == "1.0"
+    assert (
+        study_activity_instance["activity_instance"]["activity_instance_class"]["uid"]
+        == weight_activity_instance_class.uid
+    )
+    assert (
+        study_activity_instance["activity_instance"]["uid"]
+        == new_test_activity_instance.uid
+    )
+    assert study_activity_instance["latest_activity_instance"]["version"] == "3.0"
+    assert (
+        study_activity_instance["latest_activity_instance"]["uid"]
+        == new_test_activity_instance.uid
+    )
+    assert (
+        study_activity_instance["latest_activity_instance"]["activity_instance_class"][
+            "uid"
+        ]
+        == randomized_activity_instance_class.uid
     )
 
     # Check the ActivityInstance update, decide to keep old version
@@ -1024,10 +1430,15 @@ def test_sync_to_latest_version_activity_instance(api_client):
     )
     assert_response_status_code(response, 200)
     study_activity_instance = response.json()
-    assert study_activity_instance["activity_instance"]["version"] == "2.0"
+    assert study_activity_instance["is_activity_instance_updated"] is False
+    assert study_activity_instance["activity_instance"]["version"] == "3.0"
     assert (
         study_activity_instance["activity_instance"]["uid"]
         == new_test_activity_instance.uid
+    )
+    assert (
+        study_activity_instance["activity_instance"]["activity_instance_class"]["uid"]
+        == randomized_activity_instance_class.uid
     )
     assert study_activity_instance["latest_activity_instance"] is None
     TestUtils.delete_study(test_study.uid)
@@ -1100,7 +1511,8 @@ def test_activity_activity_instance_relationship(api_client):
         == new_test_activity_instance.name
     )
     assert (
-        study_activity_instance["state"] == StudyActivityInstanceState.SUGGESTION.value
+        study_activity_instance["state"]
+        == StudyActivityInstanceState.REVIEW_NEEDED.value
     )
 
     # Delete Activity-ActivityInstance relationship
@@ -1133,7 +1545,7 @@ def test_activity_activity_instance_relationship(api_client):
     assert study_activity_instance["activity_instance"] is None
     assert (
         study_activity_instance["state"]
-        == StudyActivityInstanceState.MISSING_SELECTION.value
+        == StudyActivityInstanceState.ADD_INSTANCE.value
     )
     TestUtils.delete_study(test_study.uid)
 
@@ -1333,12 +1745,321 @@ def test_batch_operations(api_client):
     assert_response_status_code(response, 200)
     study_activity_instances = response.json()["items"]
     assert len(study_activity_instances) == 2
-    assert study_activity_instances[0]["activity_instance"] is None
+    assert any(
+        item["activity_instance"] is None
+        and item["study_activity_instance_uid"] == study_activity_instance_uid
+        for item in study_activity_instances
+    )
+    assert any(
+        item.get("activity_instance", {}).get("uid")
+        == second_randomized_activity_instance.uid
+        for item in study_activity_instances
+    )
+    assert study_activity_instances[1]["activity_instance"] is None
     assert (
-        study_activity_instances[0]["study_activity_instance_uid"]
+        study_activity_instances[1]["study_activity_instance_uid"]
         == study_activity_instance_uid
     )
-    assert (
-        study_activity_instances[1]["activity_instance"]["uid"]
-        == second_randomized_activity_instance.uid
+
+
+def test_study_activity_instances_review_changes_batch(api_client):
+    test_study = TestUtils.create_study(project_number=project.project_number)
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activities",
+        json={
+            "activity_uid": randomized_activity.uid,
+            "activity_subgroup_uid": randomisation_activity_subgroup.uid,
+            "activity_group_uid": general_activity_group.uid,
+            "soa_group_term_uid": term_efficacy_uid,
+        },
     )
+    assert_response_status_code(response, 201)
+    study_activity_uid = response.json()["study_activity_uid"]
+
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activity-instances/batch",
+        json=[
+            {
+                "method": "POST",
+                "content": {
+                    "study_activity_uid": study_activity_uid,
+                    "activity_instance_uid": second_randomized_activity_instance.uid,
+                },
+            },
+        ],
+    )
+    assert_response_status_code(response, 207)
+
+    response = api_client.get(f"/studies/{test_study.uid}/study-activity-instances")
+    assert_response_status_code(response, 200)
+    study_activity_instances = response.json()["items"]
+
+    assert len(study_activity_instances) == 2
+    randomized_sa_instance = study_activity_instances[0]["study_activity_instance_uid"]
+    assert study_activity_instances[0]["is_reviewed"] is True
+    assert (
+        study_activity_instances[0]["state"]
+        == StudyActivityInstanceState.REVIEW_NOT_NEEDED.value
+    )
+    second_randomized_sa_instance = study_activity_instances[1][
+        "study_activity_instance_uid"
+    ]
+    assert study_activity_instances[1]["is_reviewed"] is False
+    assert (
+        study_activity_instances[1]["state"]
+        == StudyActivityInstanceState.REVIEW_NEEDED.value
+    )
+
+    response = api_client.delete(
+        f"/concepts/activities/activity-instances/{randomized_activity_instance.uid}/activations"
+    )
+    assert_response_status_code(response, 200)
+
+    response = api_client.get(
+        f"/studies/{test_study.uid}/study-activity-instances/{randomized_sa_instance}"
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert res["latest_activity_instance"] is not None
+    assert res["latest_activity_instance"]["uid"] == randomized_activity_instance.uid
+    assert res["latest_activity_instance"]["status"] == "Retired"
+    assert res["activity_instance"]["uid"] == randomized_activity_instance.uid
+    assert res["activity_instance"]["status"] == "Final"
+    assert res["state"] == StudyActivityInstanceState.REVIEW_NEEDED.value
+
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activity-instances/changes-review/batch",
+        json=[
+            {
+                "action": StudySelectionReviewAction.DECLINE.value,
+                "uid": randomized_sa_instance,
+                "content": {
+                    "keep_old_version": True,
+                },
+            },
+        ],
+    )
+    assert_response_status_code(response, 207)
+    assert response.json()[0]["response_code"] == 204
+
+    response = api_client.get(
+        f"/studies/{test_study.uid}/study-activity-instances/{randomized_sa_instance}"
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert res["keep_old_version"] is True
+    assert res["is_reviewed"] is True
+    assert res["latest_activity_instance"] is not None
+    assert res["latest_activity_instance"]["uid"] == randomized_activity_instance.uid
+    assert res["latest_activity_instance"]["status"] == "Retired"
+    assert res["activity_instance"]["uid"] == randomized_activity_instance.uid
+    assert res["activity_instance"]["status"] == "Final"
+    assert res["state"] == StudyActivityInstanceState.REVIEW_NOT_NEEDED.value
+
+    response = api_client.post(
+        f"/concepts/activities/activity-instances/{randomized_activity_instance.uid}/activations"
+    )
+    assert_response_status_code(response, 200)
+
+    # update library activity instance
+    response = api_client.post(
+        f"/concepts/activities/activity-instances/{randomized_activity_instance.uid}/versions"
+    )
+    assert_response_status_code(response, 201)
+
+    randomized_activity_tc_after_update = "Randomized activity TC after update"
+    response = api_client.patch(
+        f"/concepts/activities/activity-instances/{randomized_activity_instance.uid}",
+        json={
+            "topic_code": randomized_activity_tc_after_update,
+            "change_description": "Updated topic code",
+        },
+    )
+    assert_response_status_code(response, 200)
+    response = api_client.post(
+        f"/concepts/activities/activity-instances/{randomized_activity_instance.uid}/approvals"
+    )
+    assert_response_status_code(response, 201)
+
+    # update library activity
+    response = api_client.post(
+        f"/concepts/activities/activity-instances/{second_randomized_activity_instance.uid}/versions"
+    )
+    assert_response_status_code(response, 201)
+
+    second_randomized_activity_tc_after_update = (
+        "Second Randomized activity TC after update"
+    )
+    response = api_client.patch(
+        f"/concepts/activities/activity-instances/{second_randomized_activity_instance.uid}",
+        json={
+            "topic_code": second_randomized_activity_tc_after_update,
+            "change_description": "Updated topic code",
+        },
+    )
+    assert_response_status_code(response, 200)
+    response = api_client.post(
+        f"/concepts/activities/activity-instances/{second_randomized_activity_instance.uid}/approvals"
+    )
+    assert_response_status_code(response, 201)
+
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activity-instances/changes-review/batch",
+        json=[
+            {
+                "action": StudySelectionReviewAction.ACCEPT.value,
+                "uid": randomized_sa_instance,
+                "content": None,
+            },
+            {
+                "action": StudySelectionReviewAction.DECLINE.value,
+                "uid": second_randomized_sa_instance,
+                "content": {
+                    "keep_old_version": True,
+                },
+            },
+        ],
+    )
+    assert_response_status_code(response, 207)
+
+    response = api_client.get(f"/studies/{test_study.uid}/study-activity-instances")
+    assert_response_status_code(response, 200)
+    study_activity_instances = response.json()["items"]
+    assert len(study_activity_instances) == 2
+    assert study_activity_instances[0]["latest_activity_instance"] is None
+    assert (
+        study_activity_instances[0]["activity_instance"]["topic_code"]
+        == randomized_activity_tc_after_update
+    )
+    assert study_activity_instances[0]["keep_old_version"] is False
+    assert study_activity_instances[0]["is_reviewed"] is True
+    assert (
+        study_activity_instances[0]["state"]
+        == StudyActivityInstanceState.REVIEW_NOT_NEEDED.value
+    )
+    assert (
+        study_activity_instances[1]["latest_activity_instance"]["topic_code"]
+        == second_randomized_activity_tc_after_update
+    )
+    assert (
+        study_activity_instances[1]["activity_instance"]["topic_code"]
+        == second_randomized_activity_instance.topic_code
+    )
+    assert study_activity_instances[1]["keep_old_version"] is True
+    assert study_activity_instances[1]["is_reviewed"] is True
+    assert (
+        study_activity_instances[1]["state"]
+        == StudyActivityInstanceState.REVIEWED.value
+    )
+
+
+def test_study_activity_instances_invalidate_keep_old_version(api_client):
+    test_study = TestUtils.create_study(project_number=project.project_number)
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activities",
+        json={
+            "activity_uid": randomized_activity.uid,
+            "activity_subgroup_uid": randomisation_activity_subgroup.uid,
+            "activity_group_uid": general_activity_group.uid,
+            "soa_group_term_uid": term_efficacy_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
+
+    response = api_client.get(f"/studies/{test_study.uid}/study-activity-instances")
+    assert_response_status_code(response, 200)
+    study_activity_instances = response.json()["items"]
+    assert len(study_activity_instances) == 1
+    study_activity_instance_uid = study_activity_instances[0][
+        "study_activity_instance_uid"
+    ]
+    assert study_activity_instances[0]["keep_old_version"] is False
+    assert study_activity_instances[0]["latest_activity_instance"] is None
+    assert study_activity_instances[0]["activity_instance"]["status"] == "Final"
+
+    response = api_client.delete(
+        f"/concepts/activities/activity-instances/{randomized_activity_instance.uid}/activations"
+    )
+    assert_response_status_code(response, 200)
+
+    response = api_client.get(
+        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}"
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert res["keep_old_version"] is False
+    assert res["activity_instance"]["status"] == "Final"
+    assert res["latest_activity_instance"]["status"] == "Retired"
+
+    response = api_client.patch(
+        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
+        json={
+            "keep_old_version": True,
+        },
+    )
+    assert_response_status_code(response, 200)
+
+    response = api_client.get(
+        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}"
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert res["keep_old_version"] is True
+    assert res["is_reviewed"] is True
+    assert res["state"] == StudyActivityInstanceState.REVIEW_NOT_NEEDED.value
+    assert res["activity_instance"]["status"] == "Final"
+    assert res["latest_activity_instance"]["status"] == "Retired"
+
+    response = api_client.post(
+        f"/concepts/activities/activity-instances/{randomized_activity_instance.uid}/activations"
+    )
+    assert_response_status_code(response, 200)
+
+    response = api_client.post(
+        f"/concepts/activities/activity-instances/{randomized_activity_instance.uid}/versions"
+    )
+    assert_response_status_code(response, 201)
+
+    updated_tc = randomized_activity_instance.topic_code + " updated"
+    response = api_client.patch(
+        f"/concepts/activities/activity-instances/{randomized_activity_instance.uid}",
+        json={
+            "topic_code": updated_tc,
+            "change_description": "Updated topic code",
+        },
+    )
+    assert_response_status_code(response, 200)
+
+    response = api_client.post(
+        f"/concepts/activities/activity-instances/{randomized_activity_instance.uid}/approvals"
+    )
+    assert_response_status_code(response, 201)
+
+    response = api_client.get(
+        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}"
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert res["keep_old_version"] is False
+    assert res["is_reviewed"] is False
+    assert res["state"] == StudyActivityInstanceState.REVIEW_NEEDED.value
+    assert res["activity_instance"]["status"] == "Final"
+    assert res["latest_activity_instance"]["status"] == "Final"
+    assert res["latest_activity_instance"]["topic_code"] == updated_tc
+
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}/sync-latest-version",
+    )
+    assert_response_status_code(response, 201)
+
+    response = api_client.get(
+        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}"
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert res["keep_old_version"] is False
+    assert res["is_reviewed"] is True
+    assert res["state"] == StudyActivityInstanceState.REVIEW_NOT_NEEDED.value
+    assert res["activity_instance"]["status"] == "Final"
+    assert res["activity_instance"]["topic_code"] == updated_tc
+    assert res["latest_activity_instance"] is None

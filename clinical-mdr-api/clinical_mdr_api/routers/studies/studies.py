@@ -1242,7 +1242,12 @@ def patch_soa_preferences(
 def get_complexity_score(
     study_uid: Annotated[str, StudyUID],
     study_version_number: Annotated[
-        str | None, Query(description="Study Version Number", example="2.1")
+        str | None,
+        Query(
+            description="Study Version Number",
+            example="2.1",
+            alias="study_value_version",
+        ),
     ] = None,
 ) -> float:
     service = ComplexityScoreService()

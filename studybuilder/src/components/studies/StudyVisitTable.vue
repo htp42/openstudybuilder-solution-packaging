@@ -541,7 +541,7 @@ import { useEpochsStore } from '@/stores/studies-epochs'
 import { inject, ref, watch, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const roles = inject('roles')
 const { t } = useI18n()
 const epochsStore = useEpochsStore()
@@ -947,7 +947,7 @@ onMounted(() => {
   terms.getTermsByCodelist('contactModes').then((resp) => {
     contactModes.value = resp.data.items
   })
-  terms.getTermsCodelist('timepointReferences').then((resp) => {
+  terms.getTermsByCodelist('timepointReferences').then((resp) => {
     timeReferences.value = resp.data.items
   })
   codelists.getTermsByCodelist('repeatingVisitFrequency').then((resp) => {
@@ -1048,7 +1048,7 @@ function saveVisit(item) {
     })
     .then(() => {
       tableRef.value.filterTable()
-      eventBusEmit('notification', { msg: t('StudyVisitForm.update_success') })
+      notificationHub.add({ msg: t('StudyVisitForm.update_success') })
       itemsDisabled.value = false
     })
 }
@@ -1069,7 +1069,7 @@ async function openDuplicateForm(item) {
       studyUid: studiesGeneralStore.selectedStudy.uid,
       input: newVisit,
     })
-    eventBusEmit('notification', {
+    notificationHub.add({
       msg: t('StudyVisitForm.visit_duplicated'),
     })
     tableRef.value.filterTable()
@@ -1133,7 +1133,7 @@ async function deleteVisit(item) {
     studyVisitUid: item.uid,
   })
   tableLoading.value = false
-  eventBusEmit('notification', { msg: t('StudyVisitTable.delete_success') })
+  notificationHub.add({ msg: t('StudyVisitTable.delete_success') })
   tableRef.value.filterTable()
 }
 

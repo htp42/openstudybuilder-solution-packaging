@@ -290,3 +290,150 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         Given The test study '/activities/list' page is opened
         And The user exports the data in 'EXCEL' format
         Then The study specific 'StudyActivities' file is downloaded in 'xlsx' format
+
+    Scenario: User must be presented with 'red bell' when activity group has been updated
+        And [API] Study Activity is created and approved
+        And [API] Get SoA Group 'BIOMARKERS' id
+        And [API] Activity is added to the study
+        And The test study '/activities/list' page is opened
+        And The Study Activity is found
+        And The red alert badge is not present
+        When The activity group is updated for that study activity
+        And The test study '/activities/list' page is opened
+        And The Study Activity is found
+        Then The red alert badge is present
+
+    @manual_test
+    Scenario: User must be presented with 'red bell' when activity subgroup has been updated
+        Given [API] Study Activity is created and approved
+        And [API] Get SoA Group 'BIOMARKERS' id
+        And [API] Activity with two subgroups available is added to the study
+        And The test study '/activities/list' page is opened
+        And The Study Activity is found
+        And The red alert badge is not present
+        When The activity subgroup is updated for that study activity
+        And The test study '/activities/list' page is opened
+        And The Study Activity is found
+        Then The red alert badge is present
+
+    Scenario: User must be presented with 'red bell' when activity name has been updated
+        And [API] Study Activity is created and approved
+        And [API] Get SoA Group 'BIOMARKERS' id
+        And [API] Activity is added to the study
+        And The test study '/activities/list' page is opened
+        And The Study Activity is found
+        And The red alert badge is not present
+        When The activity name is updated for that study activity
+        And The test study '/activities/list' page is opened
+        And The Study Activity is found
+        Then The red alert badge is present
+
+    Scenario: User must be able to accept activity updates
+        And [API] Study Activity is created and approved
+        And [API] Get SoA Group 'BIOMARKERS' id
+        And [API] Activity is added to the study
+        When The activity name is updated for that study activity
+        And The test study '/activities/list' page is opened
+        And The Study Activity is found
+        And The user accepts the changes
+        And The Study Activity is found
+        Then The changes are applied in the study activity
+        Then The yellow alert badge is not present
+        Then The red alert badge is not present
+
+    Scenario: User must be able to decline activity updates
+        And [API] Study Activity is created and approved
+        And [API] Get SoA Group 'BIOMARKERS' id
+        And [API] Activity is added to the study
+        When The activity name is updated for that study activity
+        And The test study '/activities/list' page is opened
+        And The Study Activity is found
+        And The user declines the changes
+        Then The yellow alert badge is present
+
+    Scenario: Yellow exclamation mark must be removed when activity changes has been accepted
+        And [API] Study Activity is created and approved
+        And [API] Get SoA Group 'BIOMARKERS' id
+        And [API] Activity is added to the study
+        When The activity name is updated for that study activity
+        And The test study '/activities/list' page is opened
+        And The Study Activity is found
+        And The user declines the changes
+        Then The yellow alert badge is present
+        When The user accepts the changes
+        And The Study Activity is found
+        Then The changes are applied in the study activity
+        Then The yellow alert badge is not present
+        Then The red alert badge is not present
+
+    Scenario: User must be able to filter by redbell status
+        And [API] Study Activity is created and approved
+        And [API] Get SoA Group 'BIOMARKERS' id
+        And [API] Activity is added to the study
+        When The activity name is updated for that study activity
+        And The test study '/activities/list' page is opened
+        When The user filters the table by red alert status
+        Then The activities with red alert are present 
+
+    Scenario: User must be able to filter by yellow alert status
+        And [API] Study Activity is created and approved
+        And [API] Get SoA Group 'BIOMARKERS' id
+        And [API] Activity is added to the study
+        When The activity name is updated for that study activity
+        And The test study '/activities/list' page is opened
+        And The Study Activity is found
+        And The user declines the changes
+        And The test study '/activities/list' page is opened
+        When The user filters the table by yellow alert status
+        Then The activities with yellow alert are present 
+
+    @manual_test       
+    Scenario: User must be able to see which activity name is present in detailed soa
+        And [API] Study Activity is created and approved
+        And [API] Get SoA Group 'BIOMARKERS' id
+        And [API] Activity is added to the study
+        When The activity name is updated for that study activity
+        And The test study '/activities/list' page is opened
+        And The Study Activity is found
+        And The user opens bulk review changes window
+        Then The icon indicates which activity name is present in detailed soa
+
+    Scenario: User must be able to see which activity group is present in detailed soa
+        And [API] Study Activity is created and approved
+        And [API] Get SoA Group 'BIOMARKERS' id
+        And [API] Activity is added to the study
+        When The activity group is updated for that study activity
+        And The test study '/activities/list' page is opened
+        And The Study Activity is found
+        And The user opens bulk review changes window
+        Then The icon indicates which activity group is present in detailed soa
+
+    @manual_test
+    Scenario: User must be able to see which activity subgroup is present in detailed soa
+        Given The study activity exists for selected study
+        And The test study '/activities/list' page is opened
+        When The activity has been updated
+        And The user opens changes review window for that activity
+        Then The icon indicates which activity subgroup is present in detailed soa
+
+    @manual_test
+    Scenario: User must be able to select group when previously linked group has been removed (multiple groups assigned)
+        And [API] Study Activity is created and approved
+        And [API] Get SoA Group 'BIOMARKERS' id
+        And [API] Activity is added to the study
+        When The activity group is removed from that activity
+        And The test study '/activities/list' page is opened
+        And The Study Activity is found
+        And The user selects new activity group and accepts
+        Then The the changes are applied to the activity
+
+    Scenario: User must be presented with 'Decline' option when activity status has changed to retired
+        And [API] Study Activity is created and approved
+        And [API] Get SoA Group 'BIOMARKERS' id
+        And [API] Activity is added to the study
+        When The activity has been retired
+        And The test study '/activities/list' page is opened
+        And The Study Activity is found
+        And The user opens changes review window for that activity
+        And The 'Decline and keep' button is present
+        

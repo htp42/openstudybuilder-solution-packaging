@@ -146,7 +146,7 @@ export default {
     SimpleFormDialog,
     YesNoField,
   },
-  inject: ['eventBusEmit', 'formRules'],
+  inject: ['notificationHub', 'formRules'],
   props: {
     initialData: {
       type: Object,
@@ -236,6 +236,7 @@ export default {
     },
     close() {
       this.$emit('close')
+      this.notificationHub.clearErrors()
       this.$refs.observer.resetValidation()
     },
     prepareRequestPayload() {
@@ -285,6 +286,8 @@ export default {
       }
     },
     async submit() {
+      this.notificationHub.clearErrors()
+
       const data = this.prepareRequestPayload()
       try {
         const parentUid = this.studiesGeneralStore.selectedStudy
@@ -297,7 +300,7 @@ export default {
           parentUid
         )
         this.$emit('updated', data)
-        this.eventBusEmit('notification', {
+        this.notificationHub.add({
           msg: this.$t('StudyDefineForm.update_success'),
         })
         this.close()

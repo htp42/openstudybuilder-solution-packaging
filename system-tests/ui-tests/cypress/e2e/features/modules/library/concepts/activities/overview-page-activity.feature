@@ -69,7 +69,7 @@ Feature: Library - Concepts - Activities - Activity Overview Page
         Then The linked activity instance is found in the Acivity Instances table with status 'Final' and version '1.0'
         And The free text search field should be displayed in the 'Activity instances' table
         And Activity instance is expanded by clicking chevron button
-        And The previous version of linked activity instance is found in the Acivity Instances table with status 'Draft' and version '0.1'
+        And The previous version of linked activity instance is found in the Acivity Instances table in row 2 with status 'Draft' and version '0.1'
 
     Scenario: [History] Verify that the activity group overview page displays correctly
         When I click on the history button
@@ -89,7 +89,7 @@ Feature: Library - Concepts - Activities - Activity Overview Page
         Then The linked activity instance is found in the Acivity Instances table with status 'Final' and version '1.0'
         And User waits for 1 seconds
         And Activity instance is expanded by clicking chevron button
-        And The previous version of linked activity instance is found in the Acivity Instances table with status 'Draft' and version '0.1'
+        And The previous version of linked activity instance is found in the Acivity Instances table in row 2 with status 'Draft' and version '0.1'
 
     Scenario: [Edit][1.1] Edit the activity
         When I click 'New version' button
@@ -97,7 +97,7 @@ Feature: Library - Concepts - Activities - Activity Overview Page
         And The linked activity instance is found in the Acivity Instances table with status 'Final' and version '1.0'
         And Activity instance is expanded by clicking chevron button
         And User waits for 1 seconds
-        And The previous version of linked activity instance is found in the Acivity Instances table with status 'Draft' and version '0.1'
+        And The previous version of linked activity instance is found in the Acivity Instances table in row 2 with status 'Draft' and version '0.1'
         When I click 'Edit' button 
         And Activity name is changed
         And Form save button is clicked
@@ -109,7 +109,9 @@ Feature: Library - Concepts - Activities - Activity Overview Page
         And The status displayed on the summary has value 'Final' and version is '2.0'
         And The linked activity instance is found in the Acivity Instances table with status 'Final' and version '2.0'
         And Activity instance is expanded by clicking chevron button
-        Then The previous version of linked activity instance is found in the Acivity Instances table with status 'Draft' and version '1.2'
+        And User waits for 1 seconds
+        Then The previous version of linked activity instance is found in the Acivity Instances table in row 2 with status 'Final' and version '1.0'
+        And The previous version of linked activity instance is found in the Acivity Instances table in row 3 with status 'Draft' and version '0.1'
 
     Scenario: [Edit][2.1] Edit the activity with draft instance
         When I click 'New version' button

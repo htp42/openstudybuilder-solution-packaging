@@ -130,7 +130,7 @@ export default {
     HistoryTable,
     YamlViewer,
   },
-  inject: ['eventBusEmit'],
+  inject: ['notificationHub'],
   props: {
     itemUid: {
       type: String,
@@ -311,7 +311,7 @@ export default {
     },
     async inactivateItem() {
       await activities.inactivate(this.itemUid, this.source)
-      this.eventBusEmit('notification', {
+      this.notificationHub.add({
         msg: this.$t(`ActivitiesTable.inactivate_${this.source}_success`),
         type: 'success',
       })
@@ -320,7 +320,7 @@ export default {
     },
     async reactivateItem() {
       await activities.reactivate(this.itemUid, this.source)
-      this.eventBusEmit('notification', {
+      this.notificationHub.add({
         msg: this.$t(`ActivitiesTable.reactivate_${this.source}_success`),
         type: 'success',
       })
@@ -329,7 +329,7 @@ export default {
     },
     deleteItem() {
       activities.delete(this.itemUid, this.source).then(() => {
-        this.eventBusEmit('notification', {
+        this.notificationHub.add({
           msg: this.$t(`ActivitiesTable.delete_${this.source}_success`),
           type: 'success',
         })
@@ -338,20 +338,45 @@ export default {
     },
     async approveItem() {
       const options = {}
-      if (this.source === 'activities') {
+      if (
+        ['activity-groups', 'activity-sub-groups', 'activities'].indexOf(
+          this.source
+        ) !== -1
+      ) {
         options.cascade_edit_and_approve = true
       }
-      await activities.approve(this.itemUid, this.source, options)
-      this.eventBusEmit('notification', {
-        msg: this.$t(`ActivitiesTable.approve_${this.source}_success`),
-        type: 'success',
-      })
-      this.navigateToVersion(this.item, null)
-      await this.fetchItem()
+      activities
+        .approve(this.itemUid, this.source, options)
+        .then(async (resp) => {
+          if (this.source === 'activity-sub-groups') {
+            if (resp.data.was_cascade_update_performed) {
+              this.notificationHub.add({
+                msg: this.$t(
+                  `ActivitiesTable.approve_activity-sub-groups_success_cascade`
+                ),
+                type: 'success',
+              })
+            } else {
+              this.notificationHub.add({
+                msg: this.$t(
+                  `ActivitiesTable.approve_activity-sub-groups_success_no_cascade`
+                ),
+                type: 'warning',
+              })
+            }
+          } else {
+            this.notificationHub.add({
+              msg: this.$t(`ActivitiesTable.approve_${this.source}_success`),
+              type: 'success',
+            })
+          }
+          this.navigateToVersion(this.item, null)
+          await this.fetchItem()
+        })
     },
     async newItemVersion() {
       await activities.newVersion(this.itemUid, this.source)
-      this.eventBusEmit('notification', {
+      this.notificationHub.add({
         msg: this.$t('_global.new_version_success'),
         type: 'success',
       })

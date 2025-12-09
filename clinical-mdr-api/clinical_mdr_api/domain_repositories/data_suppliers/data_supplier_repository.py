@@ -51,12 +51,12 @@ class DataSupplierRepository(  # type: ignore[misc]
             "has_latest_value",
             "has_library",
             Path(
-                value="has_latest_value__has_type__has_selected_term",
+                value="has_latest_value__has_data_supplier_type__has_selected_term",
                 optional=True,
                 include_rels_in_return=False,
             ),
             Path(
-                value="has_latest_value__has_type__has_selected_term__has_name_root__has_latest_value",
+                value="has_latest_value__has_data_supplier_type__has_selected_term__has_name_root__has_latest_value",
                 optional=True,
                 include_rels_in_return=False,
             ),
@@ -104,17 +104,15 @@ class DataSupplierRepository(  # type: ignore[misc]
         value: DataSupplierValue,
         **_kwargs,
     ) -> _AggregateRootType:
-        supplier_type_uid = value.has_type.single().has_selected_term.single().uid
-        supplier_origin_source_uid = None
-        if supplier_origin_source := value.has_origin_source.get_or_none():
-            supplier_origin_source_uid = (
-                supplier_origin_source.has_selected_term.single().uid
-            )
-        supplier_origin_type_uid = None
-        if supplier_origin_type := value.has_origin_type.get_or_none():
-            supplier_origin_type_uid = (
-                supplier_origin_type.has_selected_term.single().uid
-            )
+        supplier_type_uid = (
+            value.has_data_supplier_type.single().has_selected_term.single().uid
+        )
+        origin_source_uid = None
+        if origin_source := value.has_origin_source.get_or_none():
+            origin_source_uid = origin_source.has_selected_term.single().uid
+        origin_type_uid = None
+        if origin_type := value.has_origin_type.get_or_none():
+            origin_type_uid = origin_type.has_selected_term.single().uid
 
         return DataSupplierAR.from_repository_values(
             uid=root.uid,
@@ -123,10 +121,10 @@ class DataSupplierRepository(  # type: ignore[misc]
                 order=value.order,
                 description=value.description,
                 supplier_type_uid=supplier_type_uid,
-                supplier_origin_source_uid=supplier_origin_source_uid,
-                supplier_origin_type_uid=supplier_origin_type_uid,
-                supplier_api_base_url=value.supplier_api_base_url,
-                supplier_ui_base_url=value.supplier_ui_base_url,
+                origin_source_uid=origin_source_uid,
+                origin_type_uid=origin_type_uid,
+                api_base_url=value.api_base_url,
+                ui_base_url=value.ui_base_url,
             ),
             library=LibraryVO.from_input_values_2(
                 library.name, lambda _: library.is_editable
@@ -136,28 +134,23 @@ class DataSupplierRepository(  # type: ignore[misc]
 
     def _has_data_changed(self, ar: DataSupplierAR, value: DataSupplierValue) -> bool:
         supplier_type_uid = None
-        if supplier_type := value.has_type.get_or_none():
+        if supplier_type := value.has_data_supplier_type.get_or_none():
             supplier_type_uid = supplier_type.has_selected_term.single().uid
-        supplier_origin_source_uid = None
-        if supplier_origin_source := value.has_origin_source.get_or_none():
-            supplier_origin_source_uid = (
-                supplier_origin_source.has_selected_term.single().uid
-            )
-        supplier_origin_type_uid = None
-        if supplier_origin_type := value.has_origin_type.get_or_none():
-            supplier_origin_type_uid = (
-                supplier_origin_type.has_selected_term.single().uid
-            )
+        origin_source_uid = None
+        if origin_source := value.has_origin_source.get_or_none():
+            origin_source_uid = origin_source.has_selected_term.single().uid
+        origin_type_uid = None
+        if origin_type := value.has_origin_type.get_or_none():
+            origin_type_uid = origin_type.has_selected_term.single().uid
         return (
             ar.data_supplier_vo.name != value.name
             or ar.data_supplier_vo.order != value.order
             or ar.data_supplier_vo.description != value.description
             or ar.data_supplier_vo.supplier_type_uid != supplier_type_uid
-            or ar.data_supplier_vo.supplier_origin_source_uid
-            != supplier_origin_source_uid
-            or ar.data_supplier_vo.supplier_origin_type_uid != supplier_origin_type_uid
-            or ar.data_supplier_vo.supplier_api_base_url != value.supplier_api_base_url
-            or ar.data_supplier_vo.supplier_ui_base_url != value.supplier_ui_base_url
+            or ar.data_supplier_vo.origin_source_uid != origin_source_uid
+            or ar.data_supplier_vo.origin_type_uid != origin_type_uid
+            or ar.data_supplier_vo.api_base_url != value.api_base_url
+            or ar.data_supplier_vo.ui_base_url != value.ui_base_url
         )
 
     def _get_or_create_value(
@@ -184,55 +177,55 @@ class DataSupplierRepository(  # type: ignore[misc]
             name=ar.data_supplier_vo.name,
             order=ar.data_supplier_vo.order,
             description=ar.data_supplier_vo.description,
-            supplier_api_base_url=ar.data_supplier_vo.supplier_api_base_url,
-            supplier_ui_base_url=ar.data_supplier_vo.supplier_ui_base_url,
+            api_base_url=ar.data_supplier_vo.api_base_url,
+            ui_base_url=ar.data_supplier_vo.ui_base_url,
         )
 
         self._db_save_node(new_value)
 
         if ar.data_supplier_vo.supplier_type_uid:
-            supplier_origin_source = CTTermRoot.nodes.get_or_none(
+            origin_source = CTTermRoot.nodes.get_or_none(
                 uid=ar.data_supplier_vo.supplier_type_uid
             )
-            if supplier_origin_source is None:
+            if origin_source is None:
                 raise ValueError(
                     f"CTTerm with UID '{ar.data_supplier_vo.supplier_type_uid}' not found"
                 )
             selected_term_node = (
                 CTCodelistAttributesRepository().get_or_create_selected_term(
-                    supplier_origin_source,
+                    origin_source,
                     codelist_submission_value=settings.data_supplier_type_cl_submval,
                 )
             )
-            new_value.has_type.connect(selected_term_node)
+            new_value.has_data_supplier_type.connect(selected_term_node)
 
-        if ar.data_supplier_vo.supplier_origin_source_uid:
-            supplier_origin_source = CTTermRoot.nodes.get_or_none(
-                uid=ar.data_supplier_vo.supplier_origin_source_uid
+        if ar.data_supplier_vo.origin_source_uid:
+            origin_source = CTTermRoot.nodes.get_or_none(
+                uid=ar.data_supplier_vo.origin_source_uid
             )
-            if supplier_origin_source is None:
+            if origin_source is None:
                 raise ValueError(
-                    f"CTTerm with UID '{ar.data_supplier_vo.supplier_origin_source_uid}' not found"
+                    f"CTTerm with UID '{ar.data_supplier_vo.origin_source_uid}' not found"
                 )
             selected_term_node = (
                 CTCodelistAttributesRepository().get_or_create_selected_term(
-                    supplier_origin_source,
+                    origin_source,
                     codelist_submission_value=settings.origin_source_cl_submval,
                 )
             )
             new_value.has_origin_source.connect(selected_term_node)
 
-        if ar.data_supplier_vo.supplier_origin_type_uid:
-            supplier_origin_type = CTTermRoot.nodes.get_or_none(
-                uid=ar.data_supplier_vo.supplier_origin_type_uid
+        if ar.data_supplier_vo.origin_type_uid:
+            origin_type = CTTermRoot.nodes.get_or_none(
+                uid=ar.data_supplier_vo.origin_type_uid
             )
-            if supplier_origin_type is None:
+            if origin_type is None:
                 raise ValueError(
-                    f"CTTerm with UID '{ar.data_supplier_vo.supplier_origin_type_uid}' not found"
+                    f"CTTerm with UID '{ar.data_supplier_vo.origin_type_uid}' not found"
                 )
             selected_term_node = (
                 CTCodelistAttributesRepository().get_or_create_selected_term(
-                    supplier_origin_type,
+                    origin_type,
                     codelist_submission_value=settings.origin_type_cl_submval,
                 )
             )

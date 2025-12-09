@@ -179,10 +179,9 @@ watch(
 
 watch(
   () => props.dataDomain,
-  (value) => {
-    if (value && codelist.value) {
-      fetchTerms(codelist.value)
-    }
+  () => {
+    codelist.value = null
+    fetchCodelists()
   }
 )
 

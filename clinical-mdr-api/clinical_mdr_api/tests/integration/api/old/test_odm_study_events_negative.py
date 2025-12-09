@@ -159,7 +159,7 @@ def test_inactivate_odm_study_event(api_client):
 
     assert res["end_date"] is None
     assert res["status"] == "Retired"
-    assert res["version"] == "1.0"
+    assert res["version"] == "2.0"
     assert res["author_username"] == "unknown-user@example.com"
     assert res["change_description"] == "Inactivated version"
     assert res["uid"] == "OdmStudyEvent_000001"

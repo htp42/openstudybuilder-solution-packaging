@@ -53,7 +53,7 @@ import ProjectForm from '@/components/library/ProjectForm.vue'
 import filteringParameters from '@/utils/filteringParameters'
 
 const { t } = useI18n()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const roles = inject('roles')
 
 const actions = [
@@ -121,7 +121,7 @@ async function deleteProject(item) {
     await confirm.value.open(t('Projects.confirm_delete', { project }), options)
   ) {
     await projects.delete(item.uid)
-    eventBusEmit('notification', {
+    notificationHub.add({
       msg: t('Projects.delete_success'),
       type: 'success',
     })

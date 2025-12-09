@@ -1,7 +1,7 @@
 <template>
   <StepperForm
     ref="stepper"
-    :title="title"
+    :title="$t('ActivityTable.handle_placeholder_request')"
     :steps="steps"
     :form-observer-getter="getObserver"
     :help-items="helpItems"
@@ -171,11 +171,18 @@
               :rules="[formRules.required]"
             />
             <v-row>
-              <v-col>
+              <v-col cols="3">
                 <v-checkbox
                   v-model="form.is_data_collected"
                   :label="$t('ActivityForms.is_data_collected')"
                   data-cy="sponsorform-datacollected-checkbox"
+                />
+              </v-col>
+              <v-col>
+                <v-checkbox
+                  v-model="form.is_multiple_selection_allowed"
+                  :label="$t('ActivityForms.multiple_instances')"
+                  data-cy="sponsorform-multipleselection-checkbox"
                 />
               </v-col>
             </v-row>
@@ -286,7 +293,7 @@ export default {
     SentenceCaseNameField,
     RejectActivityRequestForm,
   },
-  inject: ['eventBusEmit', 'formRules'],
+  inject: ['notificationHub', 'formRules'],
   props: {
     editedActivity: {
       type: Object,
@@ -393,10 +400,12 @@ export default {
     },
     close() {
       this.$emit('close')
+      this.notificationHub.clearErrors()
       this.form = { activity_groupings: [{}] }
       this.$refs.stepper.reset()
     },
     async submit() {
+      this.notificationHub.clearErrors()
       this.form.library_name = libConstants.LIBRARY_SPONSOR
       this.form.activity_request_uid = this.editedActivity.uid
       if (this.subgroup) {
@@ -410,8 +419,9 @@ export default {
       }
       activities.createFromActivityRequest(this.form).then(
         () => {
-          this.eventBusEmit('warning', {
+          this.notificationHub.add({
             msg: this.$t('ActivityFormsRequested.new_concept_warning'),
+            type: 'warning',
           })
           this.close()
           this.$refs.stepper.loading = false

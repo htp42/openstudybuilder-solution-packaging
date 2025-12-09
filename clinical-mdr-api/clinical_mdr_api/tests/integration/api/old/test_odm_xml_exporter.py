@@ -33,7 +33,10 @@ from clinical_mdr_api.tests.integration.utils.data_library import (
     STARTUP_ODM_XML_EXPORTER,
     STARTUP_UNIT_DEFINITIONS,
 )
-from clinical_mdr_api.tests.utils.checks import assert_response_status_code
+from clinical_mdr_api.tests.utils.checks import (
+    assert_response_content_type,
+    assert_response_status_code,
+)
 from clinical_mdr_api.tests.utils.utils import xml_diff
 
 CONTENT_TYPE = "application/xml"
@@ -66,8 +69,10 @@ def test_data():
 
 def test_get_odm_xml_form(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/xmls/export?target_uids=odm_form1&target_type=form&stylesheet=file.xsl&allowed_namespaces=*",
+        "concepts/odms/metadata/xmls/export?target_uids=odm_form1&target_type=form&stylesheet=blank&allowed_namespaces=*",
     )
+    assert_response_status_code(response, 200)
+    assert_response_content_type(response, CONTENT_TYPE)
 
     expected_xml = ET.fromstring(export_form)
     actual_xml = ET.fromstring(response.content)
@@ -75,17 +80,17 @@ def test_get_odm_xml_form(api_client):
     expected_xml.set("FileOID", actual_xml.attrib["FileOID"])
     expected_xml.set("CreationDateTime", actual_xml.attrib["CreationDateTime"])
 
-    assert '<?xml-stylesheet type="text/xsl" href="file.xsl"?>' in response.text
-    assert_response_status_code(response, 200)
-    assert response.headers.get("content-type") == CONTENT_TYPE
+    assert '<?xml-stylesheet type="text/xsl" href="blank"?>' in response.text
 
     xml_diff(expected_xml, actual_xml)
 
 
 def test_get_odm_xml_forms(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/xmls/export?target_uids=odm_form1&target_uids=odm_form2&target_type=form&stylesheet=file.xsl&allowed_namespaces=*",
+        "concepts/odms/metadata/xmls/export?target_uids=odm_form1&target_uids=odm_form2&target_type=form&stylesheet=blank&allowed_namespaces=*",
     )
+    assert_response_status_code(response, 200)
+    assert_response_content_type(response, CONTENT_TYPE)
 
     expected_xml = ET.fromstring(export_forms)
     actual_xml = ET.fromstring(response.content)
@@ -93,17 +98,17 @@ def test_get_odm_xml_forms(api_client):
     expected_xml.set("FileOID", actual_xml.attrib["FileOID"])
     expected_xml.set("CreationDateTime", actual_xml.attrib["CreationDateTime"])
 
-    assert '<?xml-stylesheet type="text/xsl" href="file.xsl"?>' in response.text
-    assert_response_status_code(response, 200)
-    assert response.headers.get("content-type") == CONTENT_TYPE
+    assert '<?xml-stylesheet type="text/xsl" href="blank"?>' in response.text
 
     xml_diff(expected_xml, actual_xml)
 
 
 def test_get_odm_xml_item_group(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/xmls/export?target_uids=odm_item_group1&target_type=item_group&stylesheet=file.xsl&allowed_namespaces=*",
+        "concepts/odms/metadata/xmls/export?target_uids=odm_item_group1&target_type=item_group&stylesheet=blank&allowed_namespaces=*",
     )
+    assert_response_status_code(response, 200)
+    assert_response_content_type(response, CONTENT_TYPE)
 
     expected_xml = ET.fromstring(export_item_group)
     actual_xml = ET.fromstring(response.content)
@@ -111,17 +116,17 @@ def test_get_odm_xml_item_group(api_client):
     expected_xml.set("FileOID", actual_xml.attrib["FileOID"])
     expected_xml.set("CreationDateTime", actual_xml.attrib["CreationDateTime"])
 
-    assert '<?xml-stylesheet type="text/xsl" href="file.xsl"?>' in response.text
-    assert_response_status_code(response, 200)
-    assert response.headers.get("content-type") == CONTENT_TYPE
+    assert '<?xml-stylesheet type="text/xsl" href="blank"?>' in response.text
 
     xml_diff(expected_xml, actual_xml)
 
 
 def test_get_odm_xml_item(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/xmls/export?target_uids=odm_item1&target_type=item&stylesheet=file.xsl&allowed_namespaces=*",
+        "concepts/odms/metadata/xmls/export?target_uids=odm_item1&target_type=item&stylesheet=blank&allowed_namespaces=*",
     )
+    assert_response_status_code(response, 200)
+    assert_response_content_type(response, CONTENT_TYPE)
 
     expected_xml = ET.fromstring(export_item)
     actual_xml = ET.fromstring(response.content)
@@ -129,9 +134,7 @@ def test_get_odm_xml_item(api_client):
     expected_xml.set("FileOID", actual_xml.attrib["FileOID"])
     expected_xml.set("CreationDateTime", actual_xml.attrib["CreationDateTime"])
 
-    assert '<?xml-stylesheet type="text/xsl" href="file.xsl"?>' in response.text
-    assert_response_status_code(response, 200)
-    assert response.headers.get("content-type") == CONTENT_TYPE
+    assert '<?xml-stylesheet type="text/xsl" href="blank"?>' in response.text
 
     xml_diff(expected_xml, actual_xml)
 
@@ -140,14 +143,13 @@ def test_get_odm_xml_with_allowed_namespaces(api_client):
     response = api_client.post(
         "concepts/odms/metadata/xmls/export?target_uids=odm_form1&target_type=form&allowed_namespaces=prefix",
     )
+    assert_response_status_code(response, 200)
+    assert_response_content_type(response, CONTENT_TYPE)
 
     expected_xml = ET.fromstring(export_with_namespace)
     actual_xml = ET.fromstring(response.content)
     expected_xml.set("FileOID", actual_xml.attrib["FileOID"])
     expected_xml.set("CreationDateTime", actual_xml.attrib["CreationDateTime"])
-
-    assert_response_status_code(response, 200)
-    assert response.headers.get("content-type") == CONTENT_TYPE
 
     xml_diff(expected_xml, actual_xml)
 
@@ -172,15 +174,14 @@ def test_get_odm_xml_with_mapper_csv(api_client):
             )
         },
     )
+    assert_response_status_code(response, 200)
+    assert_response_content_type(response, CONTENT_TYPE)
 
     expected_xml = ET.fromstring(export_with_csv)
     actual_xml = ET.fromstring(response.content)
 
     expected_xml.set("FileOID", actual_xml.attrib["FileOID"])
     expected_xml.set("CreationDateTime", actual_xml.attrib["CreationDateTime"])
-
-    assert_response_status_code(response, 200)
-    assert response.headers.get("content-type") == CONTENT_TYPE
 
     xml_diff(expected_xml, actual_xml)
 
@@ -189,9 +190,8 @@ def test_get_odm_xml_pdf_version(api_client):
     response = api_client.post(
         "concepts/odms/metadata/xmls/export?target_type=form&target_uids=odm_form1&pdf=true&stylesheet=blank"
     )
-
     assert_response_status_code(response, 200)
-    assert response.headers.get("content-type") == "application/pdf"
+    assert_response_content_type(response, "application/pdf")
 
 
 def test_throw_exception_if_target_type_is_not_supported(api_client):

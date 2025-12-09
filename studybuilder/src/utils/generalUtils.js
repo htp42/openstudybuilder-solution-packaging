@@ -18,19 +18,31 @@ function extractStudyUidFromLocalStorage() {
   }
 }
 
-export function getAppEnv() {
+function getAppEnvVariable() {
   const $config = inject('$config')
   const { APP_ENV } = $config
 
   if (!APP_ENV) return ''
 
-  let appEnv = APP_ENV.toUpperCase()
+  return APP_ENV.toUpperCase()
+}
+
+export function getAppEnv() {
+  const appEnv = getAppEnvVariable()
 
   if (appEnv.startsWith('PRD')) return ''
 
   const env = appEnv.startsWith('EDU') ? appEnv : appEnv.split(' ', 2)[0]
 
   return env
+}
+
+export function isPrd() {
+  const appEnv = getAppEnvVariable()
+
+  if (!appEnv) return false
+
+  return appEnv.toUpperCase().startsWith('PRD')
 }
 
 export default {

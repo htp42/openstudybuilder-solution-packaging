@@ -12,6 +12,7 @@
   "scripts": {
     "docs:dev": "vuepress dev docs",
     "docs:build": "vuepress build docs",
-    "update-config": "node scripts/update-config.js"
+    "update-config": "node scripts/update-config.js",
+    "build-sbom": "python3 assbom.py --yarn --append sbom-append.md --level 2 --output sbom.md"
   }
 }

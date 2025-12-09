@@ -1214,3 +1214,250 @@ def test_get_activities_headers(api_client, field_name, search_string):
         assert len(response.json()) >= 1
         for res in response.json():
             assert str(search_string).lower() in str(res).lower()
+
+
+def test_cascade_edit_activities(api_client):
+    # ==== Create activity and activity instance ====
+    activity = TestUtils.create_activity(
+        name="Cascade Activity",
+        activity_subgroups=[activity_subgroup.uid],
+        activity_groups=[activity_group.uid],
+        approve=True,
+    )
+    activity_instance = TestUtils.create_activity_instance(
+        name="Cascade Activity Instance",
+        activity_instance_class_uid=activity_instance_classes[0].uid,
+        name_sentence_case="cascade activity instance",
+        nci_concept_id="C-1234",
+        topic_code="cascade activity instance tc",
+        activities=[activity.uid],
+        activity_subgroups=[activity_subgroup.uid],
+        activity_groups=[activity_group.uid],
+        activity_items=[activity_items[0]],
+        approve=True,
+    )
+    response = api_client.get(
+        f"/concepts/activities/activity-instances/{activity_instance.uid}"
+    )
+
+    res = response.json()
+    assert_response_status_code(response, 200)
+    assert res["name"] == "Cascade Activity Instance"
+    assert len(res["activity_groupings"]) == 1
+    assert res["activity_groupings"][0]["activity"]["uid"] == activity.uid
+    assert res["activity_groupings"][0]["activity"]["name"] == activity.name
+    assert (
+        res["activity_groupings"][0]["activity_subgroup"]["uid"]
+        == activity_subgroup.uid
+    )
+    assert (
+        res["activity_groupings"][0]["activity_subgroup"]["name"]
+        == activity_subgroup.name
+    )
+    assert res["activity_groupings"][0]["activity_group"]["uid"] == activity_group.uid
+    assert res["activity_groupings"][0]["activity_group"]["name"] == activity_group.name
+
+    assert res["version"] == "1.0"
+    assert res["status"] == "Final"
+
+    # ==== Update activity with cascade edit&approve, instance should be updated also ====
+
+    # Create new version of activity
+    response = api_client.post(
+        f"/concepts/activities/activities/{activity.uid}/versions",
+        json={},
+    )
+    assert_response_status_code(response, 201)
+
+    # Update the activity
+    activity_group_xyz = TestUtils.create_activity_group(name="activity_group xyz")
+    activity_subgroup_xyz = TestUtils.create_activity_subgroup(
+        name="activity_subgroup xyz", activity_groups=[activity_group_xyz.uid]
+    )
+    response = api_client.put(
+        f"/concepts/activities/activities/{activity.uid}",
+        json={
+            "name": "Edited Cascade Activity 1",
+            "name_sentence_case": "edited cascade activity 1",
+            "change_description": "test cascade edit",
+            "library_name": activity.library_name,
+            "is_data_collected": True,
+            "activity_groupings": [
+                {
+                    "activity_group_uid": activity_group.uid,
+                    "activity_subgroup_uid": activity_subgroup.uid,
+                },
+                {
+                    "activity_group_uid": activity_group_xyz.uid,
+                    "activity_subgroup_uid": activity_subgroup_xyz.uid,
+                },
+            ],
+        },
+    )
+    assert_response_status_code(response, 200)
+
+    # Approve the activity with cascade_edit_and_approve set to True
+    response = api_client.post(
+        f"/concepts/activities/activities/{activity.uid}/approvals",
+        params={"cascade_edit_and_approve": True},
+    )
+    assert_response_status_code(response, 201)
+
+    # Assert number of activity groupings in the instance
+    response = api_client.get(
+        f"/concepts/activities/activity-instances/{activity_instance.uid}"
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert len(res["activity_groupings"]) == 1
+
+    # Update the activity by adding new activity groupings
+    api_client.post(f"/concepts/activities/activities/{activity.uid}/versions")
+    activity_group_zxy = TestUtils.create_activity_group(name="activity_group zyx")
+    activity_subgroup_zxy = TestUtils.create_activity_subgroup(
+        name="activity_subgroup zyx", activity_groups=[activity_group_zxy.uid]
+    )
+    response = api_client.put(
+        f"/concepts/activities/activities/{activity.uid}",
+        json={
+            "name": "Edited Cascade Activity 2",
+            "name_sentence_case": "edited cascade activity 2",
+            "change_description": "test cascade edit",
+            "library_name": activity.library_name,
+            "is_data_collected": True,
+            "activity_groupings": [
+                {
+                    "activity_group_uid": activity_group.uid,
+                    "activity_subgroup_uid": activity_subgroup.uid,
+                },
+                {
+                    "activity_group_uid": activity_group_xyz.uid,
+                    "activity_subgroup_uid": activity_subgroup_xyz.uid,
+                },
+                {
+                    "activity_group_uid": activity_group_zxy.uid,
+                    "activity_subgroup_uid": activity_subgroup_zxy.uid,
+                },
+            ],
+        },
+    )
+    assert_response_status_code(response, 200)
+
+    # Approve the activity with cascade_edit_and_approve set to True
+    response = api_client.post(
+        f"/concepts/activities/activities/{activity.uid}/approvals",
+        params={"cascade_edit_and_approve": True},
+    )
+    assert_response_status_code(response, 201)
+
+    # Get the instance and assert that it was updated
+    response = api_client.get(
+        f"/concepts/activities/activity-instances/{activity_instance.uid}"
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert len(res["activity_groupings"]) == 1
+    assert res["version"] == "3.0"
+    assert res["status"] == "Final"
+
+    # Update the activity by removing activity grouping
+    api_client.post(f"/concepts/activities/activities/{activity.uid}/versions")
+    response = api_client.put(
+        f"/concepts/activities/activities/{activity.uid}",
+        json={
+            "name": "Edited Cascade Activity 3",
+            "name_sentence_case": "edited cascade activity 3",
+            "change_description": "test cascade edit",
+            "library_name": activity.library_name,
+            "is_data_collected": True,
+            "activity_groupings": [
+                {
+                    "activity_group_uid": activity_group_xyz.uid,
+                    "activity_subgroup_uid": activity_subgroup_xyz.uid,
+                },
+                {
+                    "activity_group_uid": activity_group_zxy.uid,
+                    "activity_subgroup_uid": activity_subgroup_zxy.uid,
+                },
+            ],
+        },
+    )
+    assert_response_status_code(response, 200)
+
+    # Approve the activity with cascade_edit_and_approve set to True
+    response = api_client.post(
+        f"/concepts/activities/activities/{activity.uid}/approvals",
+        params={"cascade_edit_and_approve": True},
+    )
+    assert_response_status_code(response, 201)
+
+    # Get the instance and assert that it was updated
+    response = api_client.get(
+        f"/concepts/activities/activity-instances/{activity_instance.uid}"
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert len(res["activity_groupings"]) == 1
+    assert res["version"] == "3.0"
+    assert res["status"] == "Final"
+
+    # Get the instance versions and assert that there is one new version created.
+    # There should be a new final version 2.0 that links to activity version 2.0
+    response = api_client.get(
+        f"/concepts/activities/activity-instances/{activity_instance.uid}/versions"
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    unchanged_draft = TestUtils._get_version_from_list(res, "1.1")
+    updated_draft = TestUtils._get_version_from_list(res, "1.2")
+    new_final = TestUtils._get_version_from_list(res, "2.0")
+    latest_new_final = TestUtils._get_version_from_list(res, "3.0")
+
+    assert unchanged_draft is None
+    assert updated_draft is None
+    assert (
+        new_final["activity_groupings"][0]["activity"]["name"]
+        == "Edited Cascade Activity 1"
+    )
+    assert (
+        latest_new_final["activity_groupings"][0]["activity"]["name"]
+        == "Edited Cascade Activity 2"
+    )
+
+    # ==== Update activity without cascade edit&approve, instance should NOT be updated ====
+
+    # Create new version of activity
+    response = api_client.post(
+        f"/concepts/activities/activities/{activity.uid}/versions",
+        json={},
+    )
+    assert_response_status_code(response, 201)
+
+    # Patch the activity
+    response = api_client.put(
+        f"/concepts/activities/activities/{activity.uid}",
+        json={
+            "name": "Edited Cascade Activity 4",
+            "name_sentence_case": "edited cascade activity 4",
+            "change_description": "test cascade edit again",
+            "library_name": activity.library_name,
+        },
+    )
+    assert_response_status_code(response, 200)
+
+    # Approve the activity with cascade_edit_and_approve set to False
+    response = api_client.post(
+        f"/concepts/activities/activities/{activity.uid}/approvals",
+        params={"cascade_edit_and_approve": False},
+    )
+    assert_response_status_code(response, 201)
+
+    # Get the instance and assert that it was not updated
+    response = api_client.get(
+        f"/concepts/activities/activity-instances/{activity_instance.uid}"
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+
+    assert res["version"] == "3.0"
+    assert res["status"] == "Final"

@@ -125,7 +125,7 @@ export default {
   components: {
     SimpleFormDialog,
   },
-  inject: ['eventBusEmit', 'formRules'],
+  inject: ['notificationHub', 'formRules'],
   props: {
     editedBranchArm: {
       type: Object,
@@ -220,6 +220,8 @@ export default {
       }
     },
     async create() {
+      this.notificationHub.clearErrors()
+
       let armNumberOfSubjects = 0
       ;(
         await arms.getAllBranchesForArm(
@@ -246,7 +248,7 @@ export default {
           )
         ) {
           arms.createBranchArm(this.selectedStudy.uid, this.form).then(() => {
-            this.eventBusEmit('notification', {
+            this.notificationHub.add({
               msg: this.$t('StudyBranchArms.branch_created'),
             })
             this.close()
@@ -254,7 +256,7 @@ export default {
         }
       } else {
         arms.createBranchArm(this.selectedStudy.uid, this.form).then(() => {
-          this.eventBusEmit('notification', {
+          this.notificationHub.add({
             msg: this.$t('StudyBranchArms.branch_created'),
           })
           this.close()
@@ -263,6 +265,8 @@ export default {
       this.$refs.form.working = false
     },
     async edit() {
+      this.notificationHub.clearErrors()
+
       let armNumberOfSubjects = 0
       ;(
         await arms.getAllBranchesForArm(
@@ -298,7 +302,7 @@ export default {
               this.form
             )
             .then(() => {
-              this.eventBusEmit('notification', {
+              this.notificationHub.add({
                 msg: this.$t('StudyBranchArms.branch_updated'),
               })
               this.close()
@@ -312,7 +316,7 @@ export default {
             this.form
           )
           .then(() => {
-            this.eventBusEmit('notification', {
+            this.notificationHub.add({
               msg: this.$t('StudyBranchArms.branch_updated'),
             })
             this.close()
@@ -321,6 +325,7 @@ export default {
       this.$refs.form.working = false
     },
     close() {
+      this.notificationHub.clearErrors()
       this.form = {}
       this.formStore.reset()
       this.branchCodeEnable = false

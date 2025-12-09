@@ -102,7 +102,7 @@ import libConstants from '@/constants/libraries'
 import { useFormStore } from '@/stores/form'
 
 const { t } = useI18n()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const formRules = inject('formRules')
 const props = defineProps({
   activeSubstanceUid: {
@@ -145,6 +145,7 @@ watch(
 
 function close() {
   emit('close')
+  notificationHub.clearErrors()
   form.value = {}
 }
 
@@ -164,26 +165,30 @@ async function add(data) {
   data.library_name = libConstants.LIBRARY_SPONSOR
   await activeSubstances.create(data)
   emit('created')
-  eventBusEmit('notification', {
+  notificationHub.add({
     msg: t('ActiveSubstanceForm.add_success'),
     type: 'success',
   })
 }
 async function update(data) {
+  notificationHub.clearErrors()
+
   if (formStore.isEmpty || formStore.isEqual(form.value)) {
     close()
-    eventBusEmit('notification', { type: 'info', msg: t('_global.no_changes') })
+    notificationHub.add({ type: 'info', msg: t('_global.no_changes') })
     return
   }
   data.change_description = t('_global.work_in_progress')
   await activeSubstances.update(props.activeSubstanceUid, data)
   emit('updated')
-  eventBusEmit('notification', {
+  notificationHub.add({
     msg: t('ActiveSubstanceForm.update_success'),
     type: 'success',
   })
 }
 async function submit() {
+  notificationHub.clearErrors()
+
   const data = { ...form.value }
   try {
     if (!props.activeSubstanceUid) {

@@ -362,6 +362,14 @@ export default {
       `studies/${studyUid}/study-activity-instances/${instanceUid}`
     )
   },
+  getBaselineVisitsForStudyActivityInstance(
+    studyUid,
+    studyActivityInstanceUid
+  ) {
+    return repository.get(
+      `studies/${studyUid}/study-visits-for-activity-instance/${studyActivityInstanceUid}`
+    )
+  },
   getStudyActivityInstances(studyUid, params) {
     return repository.get(`studies/${studyUid}/study-activity-instances`, {
       params,
@@ -375,6 +383,18 @@ export default {
   updateStudyActivityInstance(studyUid, instanceUid, data) {
     return repository.patch(
       `studies/${studyUid}/study-activity-instances/${instanceUid}`,
+      data
+    )
+  },
+  batchUpdateStudyActivities(studyUid, data) {
+    return repository.post(
+      `studies/${studyUid}/study-activities/changes-review/batch`,
+      data
+    )
+  },
+  batchUpdateStudyActivityInstances(studyUid, data) {
+    return repository.post(
+      `studies/${studyUid}/study-activity-instances/changes-review/batch`,
       data
     )
   },
@@ -932,5 +952,58 @@ export default {
   },
   getComplexityScore(studyUid) {
     return repository.get(`${resource}/${studyUid}/complexity-score`)
+  },
+  // Study Data Suppliers
+  getAllStudyDataSuppliers(params) {
+    return repository.get('study-data-suppliers', { params })
+  },
+  getAllStudyDataSuppliersHeaders(params) {
+    return repository.get('study-data-suppliers/headers', { params })
+  },
+  getStudyDataSuppliers(studyUid, params) {
+    return repository.get(`studies/${studyUid}/study-data-suppliers`, {
+      params,
+    })
+  },
+  getStudyDataSuppliersHeaders(studyUid, params) {
+    return repository.get(`studies/${studyUid}/study-data-suppliers/headers`, {
+      params,
+    })
+  },
+  getStudyDataSupplier(studyUid, studyDataSupplierUid) {
+    return repository.get(
+      `studies/${studyUid}/study-data-suppliers/${studyDataSupplierUid}`
+    )
+  },
+  getStudyDataSuppliersAuditTrail(studyUid) {
+    return repository.get(
+      `studies/${studyUid}/study-data-suppliers/audit-trail`
+    )
+  },
+  getStudyDataSupplierAuditTrail(studyUid, studyDataSupplierUid) {
+    return repository.get(
+      `studies/${studyUid}/study-data-suppliers/${studyDataSupplierUid}/audit-trail`
+    )
+  },
+  createStudyDataSupplier(studyUid, data) {
+    return repository.post(`studies/${studyUid}/study-data-suppliers`, data)
+  },
+  updateStudyDataSupplier(studyUid, studyDataSupplierUid, data) {
+    return repository.put(
+      `studies/${studyUid}/study-data-suppliers/${studyDataSupplierUid}`,
+      data
+    )
+  },
+  updateStudyDataSupplierOrder(studyUid, studyDataSupplierUid, order) {
+    const data = { new_order: order }
+    return repository.patch(
+      `studies/${studyUid}/study-data-suppliers/${studyDataSupplierUid}/order`,
+      data
+    )
+  },
+  deleteStudyDataSupplier(studyUid, studyDataSupplierUid) {
+    return repository.delete(
+      `studies/${studyUid}/study-data-suppliers/${studyDataSupplierUid}`
+    )
   },
 }

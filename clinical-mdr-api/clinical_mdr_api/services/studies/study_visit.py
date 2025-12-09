@@ -7,6 +7,7 @@ from neomodel import Q, db
 from clinical_mdr_api.domain_repositories._utils.helpers import (
     acquire_write_lock_study_value,
 )
+from clinical_mdr_api.domain_repositories.models._utils import ListDistinct
 from clinical_mdr_api.domain_repositories.models.study_visit import (
     StudyVisit as StudyVisitNeoModel,
 )
@@ -68,9 +69,6 @@ from clinical_mdr_api.domains.study_selections.study_visit import (
     VisitGroupFormat,
 )
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryVO
-from clinical_mdr_api.models.controlled_terminologies.ct_term import (
-    SimpleCTTermNameWithConflictFlag,
-)
 from clinical_mdr_api.models.study_selections.study_selection import (
     StudyActivityScheduleCreateInput,
 )
@@ -88,6 +86,7 @@ from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services._utils import (
     calculate_diffs,
+    ensure_transaction,
     service_level_generic_filtering,
     service_level_generic_header_filtering,
 )
@@ -251,6 +250,27 @@ class StudyVisitService(StudySelectionMixin):
             ],
             key=lambda visit: int(visit.visit_name.split()[1]),
         )
+
+    def get_study_visits_for_specific_activity_instance(
+        self, study_uid: str, study_activity_instance_uid: str
+    ) -> list[SimpleStudyVisit]:
+        return [
+            SimpleStudyVisit.model_validate(sv_node)
+            for sv_node in ListDistinct(
+                StudyVisitNeoModel.nodes.fetch_relations(
+                    "has_visit_name__has_latest_value",
+                    "has_visit_type__has_selected_term__has_name_root__has_latest_value",
+                )
+                .filter(
+                    has_study_visit__latest_value__uid=study_uid,  # Visit in study
+                    has_study_activity_schedule__study_value__latest_value__uid=study_uid,  # With schedule in study
+                    has_study_activity_schedule__study_activity__has_study_activity__latest_value__uid=study_uid,  # With activity in study
+                    has_study_activity_schedule__study_activity__study_activity_has_study_activity_instance__uid=study_activity_instance_uid,  # And activity is parent of instance
+                )
+                .order_by("uid")
+                .resolve_subgraph()
+            ).distinct()
+        ]
 
     @staticmethod
     @trace_calls
@@ -1142,29 +1162,39 @@ class StudyVisitService(StudySelectionMixin):
             visit_timereference = self.study_visit_time_references_by_uid.get(
                 timepoint.visit_timereference.term_uid
             )
-            timepoint.visit_timereference = visit_timereference
-        epoch_ar = self._repos.ct_term_name_repository.find_by_uid(
-            visit.epoch.epoch.term_uid
-        )
-        visit.epoch_connector.epoch = SimpleCTTermNameWithConflictFlag.from_ct_term_ar(
-            epoch_ar
-        )
-        visit.visit_type = self.study_visit_types_by_uid.get(visit.visit_type.term_uid)
-        visit.visit_contact_mode = self.study_visit_contact_modes_by_uid.get(
+            if visit_timereference is not None:
+                timepoint.visit_timereference = visit_timereference
+
+        epoch = self.study_epoch_epochs_by_uid.get(visit.epoch.epoch.term_uid)
+        if epoch is not None:
+            visit.epoch_connector.epoch = epoch
+
+        visit_type = self.study_visit_types_by_uid.get(visit.visit_type.term_uid)
+        if visit_type is not None:
+            visit.visit_type = visit_type
+
+        visit_contact_mode = self.study_visit_contact_modes_by_uid.get(
             visit.visit_contact_mode.term_uid
         )
+        if visit_contact_mode is not None:
+            visit.visit_contact_mode = visit_contact_mode
+
         epoch_allocation_uid = getattr(visit.epoch_allocation, "term_uid", None)
         if epoch_allocation_uid:
-            visit.epoch_allocation = self.study_visit_epoch_allocations_by_uid.get(
+            epoch_allocation = self.study_visit_epoch_allocations_by_uid.get(
                 epoch_allocation_uid
             )
+            if epoch_allocation is not None:
+                visit.epoch_allocation = epoch_allocation
+
         repeating_frequency_uid = getattr(visit.repeating_frequency, "term_uid", None)
         if repeating_frequency_uid:
-            visit.repeating_frequency = (
-                self.study_visit_repeating_frequencies_by_uid.get(
-                    repeating_frequency_uid
-                )
+            repeating_frequency = self.study_visit_repeating_frequencies_by_uid.get(
+                repeating_frequency_uid
             )
+            if repeating_frequency is not None:
+                visit.repeating_frequency = repeating_frequency
+
         return visit
 
     @db.transaction
@@ -1256,7 +1286,7 @@ class StudyVisitService(StudySelectionMixin):
         self.amend_study_visit_vo(new_study_visit)
         return StudyVisit.transform_to_response_model(new_study_visit)
 
-    @db.transaction
+    @ensure_transaction(db)
     def delete(self, study_uid: str, study_visit_uid: str):
         study_visits = self.repo.find_all_visits_by_study_uid(study_uid)
         timeline = TimelineAR(study_uid=study_uid, _visits=study_visits)
@@ -1302,10 +1332,9 @@ class StudyVisitService(StudySelectionMixin):
             study_uid=study_uid, study_visit_uid=study_visit.uid
         )
         for study_activity_schedule in study_activity_schedules:
-            self._repos.study_activity_schedule_repository.delete(
+            schedules_service.delete(
                 study_uid,
                 study_activity_schedule.study_activity_schedule_uid,
-                self.author,
             )
 
         study_visit.delete()

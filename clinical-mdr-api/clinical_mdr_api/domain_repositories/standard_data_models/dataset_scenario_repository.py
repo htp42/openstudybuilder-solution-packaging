@@ -29,8 +29,9 @@ class DatasetScenarioRepository(StandardDataModelRepository):
             uid_filter = f"{{uid: '{uid}'}}"
         return f"""MATCH (standard_root:{standard_data_model_label} {uid_filter})-[:HAS_INSTANCE]->
                 (standard_value:{standard_data_model_value_label})<-[has_dataset_scenario:HAS_DATASET_SCENARIO]-
-                (dataset_value:DatasetInstance)<-[:HAS_DATASET]-(data_model_ig_value:DataModelIGValue)
-                <-[:HAS_VERSION]-(data_model_ig_root:DataModelIGRoot)"""
+                (dataset_instance:DatasetInstance)<-[:HAS_DATASET]-(data_model_ig_value:DataModelIGValue)
+                <-[:HAS_VERSION]-(data_model_ig_root:DataModelIGRoot)
+                MATCH (dataset_root:Dataset)-[:HAS_INSTANCE]->(dataset_instance)"""
 
     def create_query_filter_statement(self, **kwargs) -> tuple[str, dict[Any, Any]]:
         (
@@ -88,7 +89,7 @@ class DatasetScenarioRepository(StandardDataModelRepository):
         WITH *,
             standard_value.label AS label,
             head([(standard_root)<-[:HAS_DATASET_SCENARIO]-(catalogue:DataModelCatalogue) | catalogue.name]) AS catalogue_name,
-            {ordinal:has_dataset_scenario.ordinal, name:dataset_value.label} AS dataset,
+            {ordinal:has_dataset_scenario.ordinal, uid:dataset_root.uid} AS dataset,
             apoc.coll.toSet([(standard_value)<-[:HAS_DATASET_SCENARIO]-
                 (:DatasetInstance)<-[:HAS_DATASET]-(data_model_ig_value:DataModelIGValue) 
                 | data_model_ig_value.name]) AS data_model_ig_names

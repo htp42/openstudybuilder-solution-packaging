@@ -5,13 +5,26 @@ Feature: Studies - Define Study - Study Structure - Study Visits - Special Visit
 
     Background: User is logged in and study has been selected
         Given The user is logged in
-        And The study with uid 'Study_000003' is selected
+        When Get study 'CDISC DEV-9880' uid
+        And Select study with uid saved in previous step
+
+    Scenario: [Test data] User prepares the study data
         And [API] The epoch with type 'Pre Treatment' and subtype 'Run-in' exists in selected study
+        And [API] Global Anchor visit within epoch 'Run-in' exists
+        And [API] Visits group 'V2-V4' is removed
+        And [API] Visits group 'V2,V3,V4' is removed
+        And [API] Visits group 'V1,V2' is removed
+        And [API] Visits group 'V2,V3' is removed
+        And [API] Study vists uids are fetched for selected study
+        When [API] Study visits in selected study are cleaned-up
+        And [API] The static visit data is fetched
+        And The study visits uid array is cleared
         And [API] Global Anchor visit within epoch 'Run-in' exists
 
     Scenario: [Create][Special visit] User must be able to create special visit for given epoch
-        Given The '/studies/Study_000003/study_structure/visits' page is opened
+        When The page 'study_structure/visits' is opened for selected study
         And User waits for epochs to load
+        And User waits for 1 seconds
         When Add visit button is clicked
         And Visit scheduling type is selected as 'SPECIAL_VISIT'
         And Form continue button is clicked
@@ -38,8 +51,9 @@ Feature: Studies - Define Study - Study Structure - Study Visits - Special Visit
         And Study visit class is 'Special visit' and the timing is empty
 
     Scenario: [Create][Discontinuation visit] User must be able to create discontinuation special visit for given epoch
-        Given The '/studies/Study_000003/study_structure/visits' page is opened
+        When The page 'study_structure/visits' is opened for selected study
         And User waits for epochs to load
+        And User waits for 1 seconds
         When Add visit button is clicked
         And Visit scheduling type is selected as 'SPECIAL_VISIT'
         And Form continue button is clicked
@@ -55,8 +69,9 @@ Feature: Studies - Define Study - Study Structure - Study Visits - Special Visit
 
     @BUG_ID:2844670
     Scenario: [EDIT][Special visit] User must be able to edit special visit
-        Given The '/studies/Study_000003/study_structure/visits' page is opened
+        When The page 'study_structure/visits' is opened for selected study
         And User waits for epochs to load
+        And User waits for 1 seconds
         When User searches for 'V1B'
         And The 'Edit' option is clicked from the three dot menu list
         And Form continue button is clicked

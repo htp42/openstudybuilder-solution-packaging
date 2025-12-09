@@ -113,7 +113,7 @@ export default {
     StudyStatusForm,
     ActionsMenu,
   },
-  inject: ['eventBusEmit'],
+  inject: ['notificationHub'],
   setup() {
     const accessGuard = useAccessGuard()
     const studiesGeneralStore = useStudiesGeneralStore()
@@ -231,7 +231,7 @@ export default {
         this.studiesGeneralStore.selectedStudy.uid
       )
       await this.studiesGeneralStore.selectStudy(resp.data)
-      this.eventBusEmit('notification', {
+      this.notificationHub.add({
         msg: this.$t('StudyStatusTable.unlock_success'),
         type: 'success',
       })

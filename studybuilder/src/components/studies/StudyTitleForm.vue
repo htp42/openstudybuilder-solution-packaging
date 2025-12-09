@@ -92,7 +92,7 @@ export default {
   components: {
     ConfirmDialog,
   },
-  inject: ['eventBusEmit', 'formRules'],
+  inject: ['notificationHub', 'formRules'],
   props: {
     description: {
       type: Object,
@@ -169,6 +169,7 @@ export default {
   },
   methods: {
     async close() {
+      this.notificationHub.clearErrors()
       if (_isEqual(this.form, this.description)) {
         this.$emit('close')
         return
@@ -197,8 +198,11 @@ export default {
     async submit() {
       const { valid } = await this.$refs.observer.validate()
       if (!valid) return
+
+      this.notificationHub.clearErrors()
+
       if (_isEqual(this.form, this.description)) {
-        this.eventBusEmit('notification', {
+        this.notificationHub.add({
           msg: this.$t('_global.no_changes'),
           type: 'info',
         })
@@ -209,7 +213,7 @@ export default {
       try {
         await study.updateStudyDescription(this.selectedStudy.uid, this.form)
         this.$emit('updated')
-        this.eventBusEmit('notification', {
+        this.notificationHub.add({
           msg: this.$t('StudyTitleForm.update_success'),
         })
         this.$emit('close')

@@ -86,19 +86,19 @@ Feature: Studies - Define Study - Study Structure - Manually Defined Study Arms
         Given The study for testing manually defined study structure is selected
         When The study 'arms' page is opened for that study
         When The two study arms are defined with the same name
-        Then The system displays the message "Data validation error: Value 'UV1' in field Arm name is not unique for the study."
+        Then The system displays the message "Value 'UV1' in field Arm name is not unique for the study."
 
     Scenario: [Create][Uniqueness check][Short Name] User must not be able to create two Arms within one study using the same Arm short name
         Given The study for testing manually defined study structure is selected
         When The study 'arms' page is opened for that study
         When The two study arms are defined with the same short name
-        Then The system displays the message "Data validation error: Value 'UV2' in field Arm short name is not unique for the study."
+        Then The system displays the message "Value 'UV2' in field Arm short name is not unique for the study."
 
     Scenario: [Create][Uniqueness check][Randomisation group] User must not be able to create two Arms within one study using the same Arm randomisation group
         Given The study for testing manually defined study structure is selected
         When The study 'arms' page is opened for that study
         When The two study arms are defined with the same randomisation group
-        Then The system displays the message "Data validation error: Value 'UV3' in field Arm Randomization code is not unique for the study."
+        Then The system displays the message "Value 'UV3' in field Arm Randomization code is not unique for the study."
 
     Scenario: [Create][Mandatory fields] User must not be able to use text longer than 20 characters for the Study Arm Arm Code field in the Study Arms form
         Given The study for testing manually defined study structure is selected

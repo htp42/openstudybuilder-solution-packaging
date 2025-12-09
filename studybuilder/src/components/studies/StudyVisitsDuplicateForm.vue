@@ -42,7 +42,7 @@ import { useEpochsStore } from '@/stores/studies-epochs'
 import visitConstants from '@/constants/visits'
 
 const { t } = useI18n()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const formRules = inject('formRules')
 const props = defineProps({
   studyVisit: {
@@ -75,6 +75,8 @@ watch(
 )
 
 async function submit() {
+  notificationHub.clearErrors()
+
   try {
     formRef.value.working = true
     // FIXME: Replaced structuredClone as a quickfix because it never returns for some reason...
@@ -114,7 +116,7 @@ async function submit() {
       studyUid: studiesGeneralStore.selectedStudy.uid,
       input: newVisit,
     })
-    eventBusEmit('notification', {
+    notificationHub.add({
       msg: t('StudyVisitForm.visit_duplicated'),
     })
     close()
@@ -124,6 +126,7 @@ async function submit() {
 }
 
 function close() {
+  notificationHub.clearErrors()
   form.value = {}
   observer.value.reset()
   emit('close')

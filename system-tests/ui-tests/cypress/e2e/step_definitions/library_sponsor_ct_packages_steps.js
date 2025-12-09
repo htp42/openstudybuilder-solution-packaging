@@ -1,7 +1,7 @@
 const { When, Then } = require("@badeball/cypress-cucumber-preprocessor");
 import { getCurrentDateYYYYMMDD } from "../../support/helper_functions";
 
-let today_date = getCurrentDateYYYYMMDD()
+let today_date = getCurrentDateYYYYMMDD(), availablePackage
 
 When('The Create First One button is pressed on the Sponsor CT Package page', () => {
     cy.get('.v-card-text > .v-btn').click()
@@ -17,12 +17,15 @@ Then('The table presents created Sponsor CT Package', () => {
     cy.get('[data-cy="timeline-date"]').should('contain', today_date)
 })
 
+When('[API] User fetches first available package on ADAM CT', () => cy.getAvailablePackageName('SDTM+CT').then(packageName => availablePackage = packageName))
+
+When('[API] User creates a package if it doesn not exists', () => cy.createCTPackage(availablePackage))
+
 When('Sponsor CT Package is created for the same date as already existing one', () => {
-    cy.createCTPackage('SDTM__CT__2014-12-19')
     cy.waitForTable()
     cy.get('.mdi-plus').click()
     startSponsorCTPackageCreation()
-    cy.contains('SDTM CT 2014-12-19').click()
+    cy.contains(availablePackage.replaceAll('__', ' ')).click()
     cy.clickButton('save-button')
 })
 

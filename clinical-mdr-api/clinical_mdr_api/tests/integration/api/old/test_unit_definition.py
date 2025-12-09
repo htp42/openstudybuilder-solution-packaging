@@ -1645,7 +1645,7 @@ def test_post_versions_on_retired_fail(api_client):
     res = response.json()
 
     assert res["type"] == "BusinessLogicException"
-    assert res["message"] == "Cannot create new Draft version"
+    assert res["message"] == "New draft version can be created only for FINAL versions."
 
 
 def test_approve_retired_fail(api_client):
@@ -1654,7 +1654,7 @@ def test_approve_retired_fail(api_client):
     res = response.json()
 
     assert res["type"] == "BusinessLogicException"
-    assert res["message"] == "Only DRAFT version can be approved."
+    assert res["message"] == "The object isn't in draft status."
 
 
 def test_patch_retired_fail(api_client):

@@ -87,7 +87,7 @@ def test_adding_objective_wrong_parameter(api_client):
     }
     response = api_client.post("/objectives", json=data)
 
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
 
     res = response.json()
 

@@ -58,7 +58,7 @@ import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
 import { useFormStore } from '@/stores/form'
 
 const { t } = useI18n()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const formRules = inject('formRules')
 const props = defineProps({
   modelValue: {
@@ -114,12 +114,16 @@ async function cancel() {
 
 function close() {
   emit('close')
+  notificationHub.clearErrors()
   formStore.reset()
   form.value.change_description = ''
 }
 
 async function submit() {
   const { valid } = await observer.value.validate()
+
+  notificationHub.clearErrors()
+
   if (!valid) return
   working.value = true
   try {
@@ -128,7 +132,7 @@ async function submit() {
       form.value
     )
     emit('update:modelValue', resp.data)
-    eventBusEmit('notification', {
+    notificationHub.add({
       msg: t('CodelistTermNamesForm.update_success'),
     })
     close()

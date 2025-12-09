@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from time import time
 from typing import Any
 from xml.dom.minidom import Document
+from xml.sax.saxutils import quoteattr
 
 from fastapi import UploadFile
 from lxml import etree
@@ -124,11 +125,12 @@ class OdmXmlExporterService:
         if self.stylesheet:
             self.xml_document.appendChild(
                 self.xml_document.createProcessingInstruction(
-                    "xml-stylesheet", f'type="text/xsl" href="{stylesheet}"'
+                    "xml-stylesheet",
+                    f'type="text/xsl" href={quoteattr(self.stylesheet)}',
                 )
             )
 
-    def get_odm_document(self):
+    def get_odm_document(self) -> bytes:
         """
         Gets an ODM XML document and applies a mapper file to it.
 

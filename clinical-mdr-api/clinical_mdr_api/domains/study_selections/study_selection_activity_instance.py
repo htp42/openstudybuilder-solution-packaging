@@ -3,6 +3,7 @@ from dataclasses import dataclass, replace
 from enum import Enum
 from typing import Callable
 
+from clinical_mdr_api.domains.enums import LibraryItemStatus
 from clinical_mdr_api.domains.study_selections import study_selection_base
 from clinical_mdr_api.services.user_info import UserInfoService
 from clinical_mdr_api.utils import normalize_string
@@ -10,11 +11,12 @@ from common.exceptions import AlreadyExistsException, ValidationException
 
 
 class StudyActivityInstanceState(Enum):
-    MISSING_SELECTION = "Missing selection"
-    REQUIRED = "Required"
-    DEFAULTED = "Defaulted"
-    SUGGESTION = "Suggestion"
-    NOT_REQUIRED = "Not required"
+    REVIEW_NOT_NEEDED = "Review not needed"
+    REVIEW_NEEDED = "Review needed"
+    REVIEWED = "Reviewed"
+    ADD_INSTANCE = "Add instance"
+    REMOVE_INSTANCE = "Remove instance"
+    NOT_APPLICABLE = "Not applicable"
 
 
 @dataclass(frozen=True)
@@ -26,6 +28,14 @@ class StudySelectionActivityInstanceVO(study_selection_base.StudySelectionBaseVO
 
     study_uid: str
     study_activity_uid: str
+    # StudyActivityInstance properties
+    is_reviewed: bool
+    is_instance_removal_needed: bool
+    study_activity_instance_baseline_visits: list[dict[str, str]] | None
+    show_activity_instance_in_protocol_flowchart: bool
+    keep_old_version: bool
+    keep_old_version_date: datetime.datetime | None
+    is_important: bool
     # Activity properties
     activity_uid: str
     activity_name: str | None
@@ -42,10 +52,9 @@ class StudySelectionActivityInstanceVO(study_selection_base.StudySelectionBaseVO
     activity_instance_test_name_code: str | None
     activity_instance_standard_unit: str | None
     activity_instance_version: str | None
+    activity_instance_status: LibraryItemStatus | None
     activity_instance_is_default_selected_for_activity: bool
     activity_instance_is_required_for_activity: bool
-    show_activity_instance_in_protocol_flowchart: bool
-    keep_old_version: bool
     # ActivityInstance properties
     latest_activity_instance_uid: str | None
     latest_activity_instance_name: str | None
@@ -53,11 +62,12 @@ class StudySelectionActivityInstanceVO(study_selection_base.StudySelectionBaseVO
     latest_activity_instance_class_uid: str | None
     latest_activity_instance_class_name: str | None
     latest_activity_instance_version: str | None
+    latest_activity_instance_status: LibraryItemStatus | None
+    latest_activity_instance_date: datetime.datetime | None
     # Study selection Versioning
     start_date: datetime.datetime
     author_id: str
     author_username: str | None = None
-    activity_version: str | None = None
     accepted_version: bool = False
     # StudyActivity groupings
     study_activity_subgroup_uid: str | None = None
@@ -78,10 +88,16 @@ class StudySelectionActivityInstanceVO(study_selection_base.StudySelectionBaseVO
         author_id: str,
         study_activity_uid: str,
         activity_uid: str,
+        is_reviewed: bool = False,
+        is_instance_removal_needed: bool = False,
+        study_activity_instance_baseline_visits: list[dict[str, str]] | None = None,
+        show_activity_instance_in_protocol_flowchart: bool = False,
+        keep_old_version: bool = False,
+        keep_old_version_date: datetime.datetime | None = None,
+        is_important: bool = False,
         activity_name: str | None = None,
         activity_library_name: str | None = None,
         activity_is_data_collected: bool = False,
-        activity_version: str | None = None,
         activity_instance_uid: str | None = None,
         activity_instance_name: str | None = None,
         activity_instance_topic_code: str | None = None,
@@ -92,16 +108,17 @@ class StudySelectionActivityInstanceVO(study_selection_base.StudySelectionBaseVO
         activity_instance_test_name_code: str | None = None,
         activity_instance_standard_unit: str | None = None,
         activity_instance_version: str | None = None,
+        activity_instance_status: LibraryItemStatus | None = None,
         activity_instance_is_default_selected_for_activity: bool = False,
         activity_instance_is_required_for_activity: bool = False,
-        show_activity_instance_in_protocol_flowchart: bool = False,
-        keep_old_version: bool = False,
         latest_activity_instance_uid: str | None = None,
         latest_activity_instance_name: str | None = None,
         latest_activity_instance_topic_code: str | None = None,
         latest_activity_instance_class_uid: str | None = None,
         latest_activity_instance_class_name: str | None = None,
         latest_activity_instance_version: str | None = None,
+        latest_activity_instance_status: LibraryItemStatus | None = None,
+        latest_activity_instance_date: datetime.datetime | None = None,
         author_username: str | None = None,
         start_date: datetime.datetime | None = None,
         accepted_version: bool = False,
@@ -125,7 +142,14 @@ class StudySelectionActivityInstanceVO(study_selection_base.StudySelectionBaseVO
 
         return cls(
             study_uid=normalize_string(study_uid),
+            is_reviewed=is_reviewed,
+            is_instance_removal_needed=is_instance_removal_needed,
             study_activity_uid=normalize_string(study_activity_uid),
+            study_activity_instance_baseline_visits=study_activity_instance_baseline_visits,
+            show_activity_instance_in_protocol_flowchart=show_activity_instance_in_protocol_flowchart,
+            keep_old_version=keep_old_version,
+            keep_old_version_date=keep_old_version_date,
+            is_important=is_important,
             activity_instance_uid=normalize_string(activity_instance_uid),
             activity_instance_name=normalize_string(activity_instance_name),
             activity_instance_topic_code=normalize_string(activity_instance_topic_code),
@@ -142,15 +166,13 @@ class StudySelectionActivityInstanceVO(study_selection_base.StudySelectionBaseVO
                 activity_instance_standard_unit
             ),
             activity_instance_version=normalize_string(activity_instance_version),
+            activity_instance_status=activity_instance_status,
             activity_instance_is_default_selected_for_activity=activity_instance_is_default_selected_for_activity,
             activity_instance_is_required_for_activity=activity_instance_is_required_for_activity,
             activity_uid=normalize_string(activity_uid),
             activity_name=normalize_string(activity_name),
             activity_library_name=normalize_string(activity_library_name),
             activity_is_data_collected=activity_is_data_collected,
-            activity_version=normalize_string(activity_version),
-            show_activity_instance_in_protocol_flowchart=show_activity_instance_in_protocol_flowchart,
-            keep_old_version=keep_old_version,
             latest_activity_instance_uid=normalize_string(latest_activity_instance_uid),
             latest_activity_instance_name=normalize_string(
                 latest_activity_instance_name
@@ -167,6 +189,8 @@ class StudySelectionActivityInstanceVO(study_selection_base.StudySelectionBaseVO
             latest_activity_instance_version=normalize_string(
                 latest_activity_instance_version
             ),
+            latest_activity_instance_status=latest_activity_instance_status,
+            latest_activity_instance_date=latest_activity_instance_date,
             start_date=start_date,
             study_selection_uid=normalize_string(study_selection_uid),
             author_id=normalize_string(author_id),
@@ -202,8 +226,18 @@ class StudySelectionActivityInstanceVO(study_selection_base.StudySelectionBaseVO
     def update_version(self, activity_instance_version: str):
         return replace(self, activity_instance_version=activity_instance_version)
 
-    def update_keep_old_version(self, keep_old_version: bool):
-        return replace(self, keep_old_version=keep_old_version)
+    def update_keep_old_version_and_is_reviewed(
+        self,
+        keep_old_version: bool,
+        is_reviewed: bool,
+        keep_old_version_date: datetime.datetime | None = None,
+    ):
+        return replace(
+            self,
+            keep_old_version=keep_old_version,
+            is_reviewed=is_reviewed,
+            keep_old_version_date=keep_old_version_date,
+        )
 
 
 @dataclass

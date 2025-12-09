@@ -179,7 +179,10 @@ class ObjectiveRepositoryConcurrencyTest(unittest.TestCase):
                 concurrent_operation=self.new_version_with_save,
                 main_operation_after=self.save_object,
             )
-        self.assertEqual("Cannot create new Draft version", message.exception.msg)
+        self.assertEqual(
+            "New draft version can be created only for FINAL versions.",
+            message.exception.msg,
+        )
 
     def test_new_version_aborted_on_reactivate(self):
         self.set_up_base_graph_for_objectives()

@@ -373,6 +373,17 @@ export const useAppStore = defineStore('app', {
                 },
                 studyRequired: true,
               },
+              {
+                title: i18n.t(
+                  'Sidebar.study.data_suppliers',
+                  'Study Data Suppliers'
+                ),
+                url: {
+                  name: 'StudyDataSuppliers',
+                  params: { study_id: studyId },
+                },
+                studyRequired: true,
+              },
             ],
           },
           {

@@ -38,6 +38,7 @@ from clinical_mdr_api.services.syntax_instances.activity_instructions import (
 )
 from common import exceptions
 from common.auth.user import user
+from common.telemetry import trace_calls
 
 
 class StudyActivityInstructionService(StudySelectionMixin):
@@ -128,6 +129,7 @@ class StudyActivityInstructionService(StudySelectionMixin):
 
         return study_activity_instruction_response_model
 
+    @trace_calls(args=[1, 2], kwargs=["study_uid", "study_activity_uid"])
     def get_all_study_instructions_for_specific_study_activity(
         self, study_uid: str, study_activity_uid: str
     ) -> list[StudyActivityInstruction]:

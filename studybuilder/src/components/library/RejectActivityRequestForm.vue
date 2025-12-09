@@ -49,7 +49,7 @@ export default {
   components: {
     SimpleFormDialog,
   },
-  inject: ['eventBusEmit', 'formRules'],
+  inject: ['notificationHub', 'formRules'],
   props: {
     activityUid: {
       type: String,
@@ -71,10 +71,12 @@ export default {
   },
   methods: {
     submit() {
+      this.notificationHub.clearErrors()
+
       activities
         .rejectActivityRequest(this.activityUid, this.form)
         .then(() => {
-          this.eventBusEmit('notification', {
+          this.notificationHub.add({
             msg: this.$t('ActivityFormsRequested.activity_rejected'),
           })
           this.close()
@@ -89,6 +91,7 @@ export default {
     },
     close() {
       this.$emit('close')
+      this.notificationHub.clearErrors()
       this.form = {}
     },
   },

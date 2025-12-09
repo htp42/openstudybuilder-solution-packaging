@@ -121,7 +121,7 @@ Feature: Manage ODM Item Groups in Clinical MDR API
 
     Scenario: User cannot create an ODM item group without an English description
         When the user sends a request to create an ODM item group without an English description
-        Then the response status code must be 422
+        Then the response status code must be 400
         And the response must include the message "At least one description must be in English ('eng' or 'en')."
     Test Coverage:
         | TestFile                                                    | TestID                                                                          |

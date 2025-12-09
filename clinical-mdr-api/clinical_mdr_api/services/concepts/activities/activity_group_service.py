@@ -8,6 +8,10 @@ from clinical_mdr_api.domains.concepts.activities.activity_group import (
     ActivityGroupAR,
     ActivityGroupVO,
 )
+from clinical_mdr_api.domains.concepts.activities.activity_sub_group import (
+    SimpleActivityGroupVO,
+)
+from clinical_mdr_api.domains.enums import LibraryItemStatus
 from clinical_mdr_api.models.concepts.activities.activity_group import (
     ActivityGroup,
     ActivityGroupCreateInput,
@@ -17,8 +21,14 @@ from clinical_mdr_api.models.concepts.activities.activity_group import (
     ActivityGroupVersion,
     SimpleSubGroup,
 )
+from clinical_mdr_api.models.concepts.activities.activity_sub_group import (
+    ActivitySubGroupEditInput,
+)
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.services.concepts import constants
+from clinical_mdr_api.services.concepts.activities.activity_sub_group_service import (
+    ActivitySubGroupService,
+)
 from clinical_mdr_api.services.concepts.concept_generic_service import (
     ConceptGenericService,
 )
@@ -273,3 +283,72 @@ class ActivityGroupService(ConceptGenericService[ActivityGroupAR]):
                 result["activities"].append(activity_entry)
 
         return result
+
+    def cascade_edit_and_approve(self, item: ActivityGroupAR):
+        last_final_version = f"{item.item_metadata.major_version-1}.0"
+
+        linked_activity_subgroups = self._repos.activity_group_repository.get_linked_upgradable_activity_subgroups(
+            uid=item.uid, version=last_final_version
+        )
+        if linked_activity_subgroups is None:
+            return
+        self.batch_cascade_update(linked_activity_subgroups=linked_activity_subgroups)
+
+    def batch_cascade_update(self, linked_activity_subgroups: dict[str, Any]):
+        activity_subgroup_service = ActivitySubGroupService()
+        activity_subgroup_uids = [
+            activity_subgroup["uid"]
+            for activity_subgroup in linked_activity_subgroups.get(
+                "activity_subgroups", []
+            )
+        ]
+        if activity_subgroup_uids:
+            self._repos.activity_subgroup_repository.lock_objects(
+                uids=activity_subgroup_uids
+            )
+            activity_subgroup_ars, _ = (
+                self._repos.activity_subgroup_repository.find_all(
+                    uids=activity_subgroup_uids,
+                )
+            )
+
+            for activity_subgroup in activity_subgroup_ars:
+                # Only process FINAL status subgroups - skip DRAFT subgroups entirely
+                if (
+                    activity_subgroup.item_metadata.status.value
+                    != LibraryItemStatus.FINAL.value
+                ):
+                    continue
+
+                activity_groups: list[SimpleActivityGroupVO] = (
+                    activity_subgroup.concept_vo.activity_groups
+                )
+
+                if not activity_groups:
+                    # No matching groupings found, skip this subgroup
+                    continue
+
+                # For FINAL subgroups: create new version, edit, and approve
+                activity_subgroup.create_new_version(author_id=self.author_id)
+
+                edit_input = ActivitySubGroupEditInput(
+                    change_description="Cascade edit",
+                    activity_groups=[
+                        ag.activity_group_uid
+                        for ag in activity_subgroup.concept_vo.activity_groups
+                    ],
+                    name=activity_subgroup.concept_vo.name,
+                    name_sentence_case=activity_subgroup.concept_vo.name_sentence_case,
+                    library_name=activity_subgroup.library.name,
+                )
+                activity_subgroup = activity_subgroup_service._edit_aggregate(
+                    item=activity_subgroup,
+                    concept_edit_input=edit_input,
+                    perform_validation=False,
+                )
+
+                activity_subgroup.approve(author_id=self.author_id)
+                self._repos.activity_subgroup_repository.copy_activity_subgroup_and_recreate_activity_groupings(
+                    activity_subgroup, author_id=self.author_id
+                )
+                activity_subgroup_service.cascade_edit_and_approve(activity_subgroup)

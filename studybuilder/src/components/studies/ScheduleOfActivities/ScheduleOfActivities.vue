@@ -1023,7 +1023,7 @@ import { useFeatureFlagsStore } from '@/stores/feature-flags'
 
 const featureFlagsStore = useFeatureFlagsStore()
 const { t } = useI18n()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const roles = inject('roles')
 const studiesGeneralStore = useStudiesGeneralStore()
 const footnotesStore = useFootnotesStore()
@@ -1367,7 +1367,7 @@ async function removeActivity(activity) {
   study
     .deleteStudyActivity(studiesGeneralStore.selectedStudy.uid, activity.uid)
     .then(() => {
-      eventBusEmit('notification', {
+      notificationHub.add({
         type: 'success',
         msg: t('DetailedFlowchart.remove_activity_success'),
       })
@@ -1396,6 +1396,7 @@ function exchangeStudyActivity(item) {
 }
 
 function closeActivityForm() {
+  notificationHub.clearErrors()
   selectedStudyActivity.value = null
   activityExchangeMode.value = false
   flowchartActivityOrder.value = null
@@ -1433,6 +1434,7 @@ function editStudyActivity(item) {
 }
 
 function closeEditForm() {
+  notificationHub.clearErrors()
   showActivityEditForm.value = false
   showDraftedActivityEditForm.value = false
   selectedStudyActivity.value = null
@@ -1446,6 +1448,7 @@ function openRemoveFootnoteForm(ele, rowUid) {
 }
 
 function closeRemoveFootnoteForm() {
+  notificationHub.clearErrors()
   fetchFootnotes()
   removeItemUid.value = null
   showRemoveFootnoteForm.value = false
@@ -1589,6 +1592,8 @@ function removeElementForFootnote(uid) {
 }
 
 function saveElementsForFootnote() {
+  notificationHub.clearErrors()
+
   if (activeFootnote.value) {
     footnoteUpdateLoading.value = true
     study
@@ -1601,7 +1606,7 @@ function saveElementsForFootnote() {
         footnoteUpdateLoading.value = false
         disableFootnoteMode()
         loadSoaContent(true)
-        eventBusEmit('notification', {
+        notificationHub.add({
           msg: t('StudyFootnoteEditForm.update_success'),
         })
       })
@@ -1611,6 +1616,7 @@ function saveElementsForFootnote() {
 }
 
 function closeFootnoteForm() {
+  notificationHub.clearErrors()
   showFootnoteForm.value = false
   disableFootnoteMode()
 }
@@ -1774,6 +1780,8 @@ function updateGroupedSchedule(value, studyActivityUid, studyVisitCell) {
 }
 
 function updateSchedule(value, studyActivityUid, studyVisitCell) {
+  notificationHub.clearErrors()
+
   complexityScoreLoading.value = true
   if (studyVisitCell.refs.length > 1) {
     updateGroupedSchedule(value, studyActivityUid, studyVisitCell)
@@ -1813,7 +1821,7 @@ function updateSchedule(value, studyActivityUid, studyVisitCell) {
 async function openBatchEditForm() {
   localStorage.setItem('refresh-activities', true)
   if (!studyActivitySelection.value.length) {
-    eventBusEmit('notification', {
+    notificationHub.add({
       type: 'warning',
       msg: t('DetailedFlowchart.batch_edit_no_selection'),
     })
@@ -1831,7 +1839,7 @@ function unselectItem(item) {
 async function batchRemoveStudyActivities() {
   localStorage.setItem('refresh-activities', true)
   if (!studyActivitySelection.value.length) {
-    eventBusEmit('notification', {
+    notificationHub.add({
       type: 'warning',
       msg: t('DetailedFlowchart.batch_remove_no_selection'),
     })
@@ -1861,7 +1869,7 @@ async function batchRemoveStudyActivities() {
   study
     .studyActivityBatchOperations(studiesGeneralStore.selectedStudy.uid, data)
     .then(() => {
-      eventBusEmit('notification', {
+      notificationHub.add({
         msg: t('DetailedFlowchart.remove_success', {
           activities: studyActivitySelection.value.length,
         }),
@@ -2035,7 +2043,7 @@ function groupSelectedVisits() {
         if (err.response.data.type !== 'BusinessLogicException') {
           showCollapsibleGroupForm.value = true
         } else {
-          eventBusEmit('notification', {
+          notificationHub.add({
             msg: err.response.data.message,
             type: 'error',
           })
@@ -2049,7 +2057,7 @@ function closeCollapsibleVisitGroupForm() {
 }
 
 function collapsibleVisitGroupCreated() {
-  eventBusEmit('notification', {
+  notificationHub.add({
     msg: t('CollapsibleVisitGroupForm.creation_success'),
   })
   loadSoaContent(true)

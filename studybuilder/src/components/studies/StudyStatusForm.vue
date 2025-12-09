@@ -41,7 +41,7 @@ export default {
   components: {
     SimpleFormDialog,
   },
-  inject: ['eventBusEmit', 'formRules'],
+  inject: ['notificationHub', 'formRules'],
   props: {
     action: {
       type: String,
@@ -109,18 +109,21 @@ export default {
   },
   methods: {
     close() {
+      this.notificationHub.clearErrors()
       this.form = {}
       this.$refs.observer.reset()
       this.$emit('close')
     },
     async submit() {
+      this.notificationHub.clearErrors()
+
       try {
         if (this.action === 'release') {
           await api.releaseStudy(
             this.studiesGeneralStore.selectedStudy.uid,
             this.form
           )
-          this.eventBusEmit('notification', {
+          this.notificationHub.add({
             msg: this.$t('StudyStatusForm.release_success'),
             type: 'success',
           })
@@ -130,7 +133,7 @@ export default {
             this.form
           )
           await this.studiesGeneralStore.selectStudy(resp.data)
-          this.eventBusEmit('notification', {
+          this.notificationHub.add({
             msg: this.$t('StudyStatusForm.lock_success'),
             type: 'success',
           })

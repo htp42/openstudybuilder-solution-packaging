@@ -133,7 +133,7 @@ export default {
   components: {
     SimpleFormDialog,
   },
-  inject: ['eventBusEmit', 'formRules'],
+  inject: ['notificationHub', 'formRules'],
   props: {
     editedCohort: {
       type: Object,
@@ -217,6 +217,8 @@ export default {
       return result || this.$t('StudyCohorts.number_of_subjects_exceeds')
     },
     async submit() {
+      this.notificationHub.clearErrors()
+
       if (Object.keys(this.editedCohort).length !== 0) {
         this.edit()
       } else {
@@ -226,7 +228,7 @@ export default {
     async create() {
       arms.createCohort(this.selectedStudy.uid, this.form).then(
         () => {
-          this.eventBusEmit('notification', {
+          this.notificationHub.add({
             msg: this.$t('StudyCohorts.cohort_created'),
           })
           this.close()
@@ -245,7 +247,7 @@ export default {
         )
         .then(
           () => {
-            this.eventBusEmit('notification', {
+            this.notificationHub.add({
               msg: this.$t('StudyCohorts.cohort_updated'),
             })
             this.close()
@@ -256,6 +258,7 @@ export default {
         )
     },
     close() {
+      this.notificationHub.clearErrors()
       this.form = {}
       this.formStore.reset()
       this.$refs.observer.reset()
