@@ -1,10 +1,10 @@
 import { activityName } from "./library_activities_steps";
-import { activity_uid, subgroup_uid, group_uid } from "../../support/api_requests/library_activities";
+import { activity_uid, subgroup_uid, group_uid, group_name } from "../../support/api_requests/library_activities";
 import { getCurrentStudyId } from "./../../support/helper_functions";
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
 
-export let activity_activity
-let activity_placeholder_name, activity_library, activity_soa_group, activity_group, activity_sub_group, edit_placeholder_name, current_study
+export let activity_activity, current_activity_uid
+let activity_placeholder_name, activity_library, activity_soa_group, activity_group, activity_sub_group, edit_placeholder_name, current_study, new_activity_name
 
 When('Study activity add button is clicked', () => cy.clickButton('add-study-activity'))
 
@@ -63,7 +63,7 @@ Then('The edited Study Activity data is reflected within the Study Activity tabl
 
 When('Activity from studies is selected', () => cy.get('[data-cy="select-from-studies"] input').check())
 
-When('Activity from library is selected', () => cy.get('[data-cy="select-from-library"] input').check({force: true}))
+When('Activity from library is selected', () => cy.get('[data-cy="select-from-library"] input').check({ force: true }))
 
 When('Activity from placeholder is selected', () => cy.get('[data-cy="create-placeholder"] input').check())
 
@@ -85,7 +85,7 @@ When('The user tries to go further in activity placeholder creation without SoA 
 })
 
 Then('The validation appears and Create Activity form stays on SoA group selection', () => {
-    cy.get('.v-snackbar__content').should('contain', 'Every selected Activity needs SoA Group')
+    cy.get('.v-alert').should('contain', 'Every selected Activity needs SoA Group')
     cy.get('[data-cy="flowchart-group"]').should('be.visible')
 })
 
@@ -103,7 +103,7 @@ Then('The study activity table is displaying updated value for data collection',
 })
 
 Then('Warning that {string} {string} can not be added to the study is displayed', (status, item) => {
-    cy.get('.v-snackbar__content').should('contain', `has status ${status}. Only Final ${item} can be added to a study.`)
+    cy.get('.v-alert').should('contain', `has status ${status}. Only Final ${item} can be added to a study.`)
 })
 
 When('The existing activity request is selected', () => cy.get('[data-cy="select-activity"] input').check())
@@ -154,7 +154,154 @@ Then('[API] All Activities are deleted from study', () => {
 
 Then('[API] Get SoA Group {string} id', (name) => cy.getSoaGroupUid(name))
 
-Then('[API] Activity is added to the study', () => cy.addActivityToStudy(Cypress.env('TEST_STUDY_UID'), activity_uid, group_uid, subgroup_uid))
+Then('[API] Activity is added to the study', () => {
+    cy.addActivityToStudy(Cypress.env('TEST_STUDY_UID'), activity_uid, group_uid, subgroup_uid).then((response) => {
+        activity_activity = response.body[0].content.activity.name
+        current_activity_uid = response.body[0].content.activity.uid
+    })
+})
+
+When('The activity has been retired', () => {
+    cy.inactivateActivity(current_activity_uid)
+})
+
+Then('[API] Activity with two subgroups available is added to the study', () => {
+    cy.createGroup()
+    cy.approveGroup()
+    cy.createSubGroup()
+    cy.approveSubGroup()
+    cy.addActivityToStudy(Cypress.env('TEST_STUDY_UID'), activity_uid, group_uid, subgroup_uid).then((response) => {
+        activity_activity = response.body[0].content.activity.name
+        current_activity_uid = response.body[0].content.activity.uid
+    })
+    cy.createSubGroup()
+    cy.approveSubGroup()
+    cy.createSubGroup()
+    cy.approveSubGroup()
+    cy.createSubGroup()
+    cy.approveSubGroup()
+})
+
+When('The activity group is updated for that study activity', () => {
+    cy.activityNewVersion(current_activity_uid)
+    cy.visit(`library/activities/activities/${current_activity_uid}/overview`)
+    cy.get('[title="Edit"]').click()
+    cy.selectFirstVSelect('activityform-activity-group-dropdown')
+    cy.selectFirstVSelect('activityform-activity-subgroup-dropdown')
+    cy.clickButton('save-button')
+})
+
+When('The activity subgroup is updated for that study activity', () => {
+    cy.activityNewVersion(current_activity_uid)
+    cy.visit(`library/activities/activities/${current_activity_uid}/overview`)
+    cy.get('[title="Edit"]').click()
+    cy.selectLastVSelect('activityform-activity-subgroup-dropdown')
+    cy.clickButton('save-button')
+})
+
+When('The activity name is updated for that study activity', () => {
+    cy.activityNewVersion(current_activity_uid)
+    cy.visit(`library/activities/activities/${current_activity_uid}/overview`)
+    cy.get('[title="Edit"]').click()
+    cy.fillInput('activityform-activity-name-field', new_activity_name = `NewName${Date.now()}`)
+    cy.clickButton('save-button')
+})
+
+When('The user accepts the changes', () => {
+    cy.get('[data-cy="data-table"]').within(() => {
+        cy.get('.mdi-dots-vertical').filter(':visible').click()
+    })
+    cy.clickButton('Update activity version')
+    cy.contains('button', 'Accept').click()
+    activity_activity = new_activity_name
+})
+
+When('The user declines the changes', () => {
+    cy.get('[data-cy="data-table"]').within(() => {
+        cy.get('.mdi-dots-vertical').filter(':visible').click()
+    })
+    cy.clickButton('Update activity version')
+    cy.contains('button', 'Decline').click()
+})
+
+When('The user opens bulk review changes window', () => {
+    cy.contains('Review activity updates').click()
+})
+
+Then('The changes are applied in the study activity', () => {
+    cy.tableContains(activity_activity)
+})
+
+When('The user filters the table by red alert status', () => {
+    cy.get('[value="updated"]').click()
+})
+
+When('The user filters the table by yellow alert status', () => {
+    cy.get('[value="reviewed"]').click()
+})
+
+Then('The activities with red alert are present', () => {
+    cy.waitForTable()
+    cy.get('tbody').within(() => {
+        cy.get('tr').each($row => {
+            cy.wrap($row).within(() => {
+                cy.get('.mdi-alert-circle-outline').should('exist')
+            })
+        })
+    })
+})
+
+Then('The activities with yellow alert are present', () => {
+    cy.waitForTable()
+    cy.get('tbody').within(() => {
+        cy.get('tr').each($row => {
+            cy.wrap($row).within(() => {
+                cy.get('.mdi-alert-outline').should('exist')
+            })
+        })
+    })
+})
+
+Then('The icon indicates which activity group is present in detailed soa', () => {
+    cy.get('[data-cy="form-body"]').within(() => {
+        cy.contains('.v-data-table__td', group_name).within(() => {
+            cy.get('.mdi-eye-outline').should('exist')
+        })
+    })
+})
+
+Then('The icon indicates which activity name is present in detailed soa', () => {
+    cy.get('[data-cy="form-body"]').within(() => {
+        cy.contains('.v-data-table__td', new_activity_name).within(() => {
+            cy.get('.mdi-eye-outline').should('exist')
+        })
+    })
+})
+
+When('The user opens changes review window for that activity', () => {
+    cy.get('[data-cy="data-table"]').within(() => {
+        cy.get('.mdi-dots-vertical').filter(':visible').click()
+    })
+    cy.clickButton('Update activity version')
+})
+
+When('The activity group is removed from that activity', () => {
+    cy.visit(`library/activities/activities/${current_activity_uid}/overview`)
+
+})
+
+When('The user selects new activity group and accepts', () => {
+    cy.get('[data-cy="data-table"]').within(() => {
+        cy.get('.mdi-dots-vertical').filter(':visible').click()
+    })
+    cy.clickButton('Update activity version')
+
+})
+
+When('The activity group has been retired and has no replacement', () => {
+    cy.inactivateGroup(group_uid)
+    cy.wait(3000)
+})
 
 function getActivityData(rowIndex, getSoAGroupValue) {
     cy.getCellValueInPopUp(rowIndex, 'Library').then((text) => activity_library = text)

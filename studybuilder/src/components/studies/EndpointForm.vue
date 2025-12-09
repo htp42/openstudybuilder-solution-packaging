@@ -457,7 +457,7 @@ export default {
     NNTemplateInputField,
     StudySelectionTable,
   },
-  inject: ['eventBusEmit', 'formRules'],
+  inject: ['notificationHub', 'formRules'],
   props: {
     currentStudyEndpoints: {
       type: Array,
@@ -760,7 +760,7 @@ export default {
         this.endpointTemplateForm.name.length > 254 &&
         !this.endpointTitleWarning
       ) {
-        this.eventBusEmit('notification', {
+        this.notificationHub.add({
           msg: this.$t('StudyEndpointForm.endpoint_title_warning'),
           type: 'warning',
         })
@@ -783,6 +783,7 @@ export default {
     },
     close() {
       this.$emit('close')
+      this.notificationHub.clearErrors()
       this.form = this.getInitialForm()
       this.endpointTemplateForm = {}
       this.creationMode = 'template'
@@ -839,11 +840,13 @@ export default {
       return resp.data.endpoint.name
     },
     async submit() {
+      this.notificationHub.clearErrors()
+
       let args = null
 
       if (this.creationMode === 'template') {
         if (!this.selectedTemplates.length) {
-          this.eventBusEmit('notification', {
+          this.notificationHub.add({
             msg: this.$t('EligibilityCriteriaForm.no_template_error'),
             type: 'error',
           })
@@ -886,7 +889,7 @@ export default {
         }
       }
       this.$emit('added')
-      this.eventBusEmit('notification', {
+      this.notificationHub.add({
         msg: this.$t('StudyEndpointForm.endpoint_added'),
       })
       this.close()
@@ -1008,7 +1011,7 @@ export default {
         if (this.selectLater || this.form.study_objective) {
           return true
         }
-        this.eventBusEmit('notification', {
+        this.notificationHub.add({
           type: 'error',
           msg: this.$t('StudyEndpointForm.select_objective'),
         })

@@ -1,9 +1,10 @@
 # RESTful API endpoints used by consumers that want to extract data from StudyBuilder
 # pylint: disable=invalid-name
 # pylint: disable=redefined-builtin
+from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Path, Query, Request
+from fastapi import APIRouter, Path, Query, Request, Response
 
 from common.auth import rbac
 from common.auth.dependencies import security
@@ -26,12 +27,6 @@ router = APIRouter()
     tags=["[V1] Studies"],
     dependencies=[security, rbac.STUDY_READ],
     status_code=200,
-    responses={
-        400: {
-            "model": ErrorResponse,
-            "description": "Invalid request",
-        },
-    },
 )
 def get_studies(
     request: Request,
@@ -82,10 +77,6 @@ def get_studies(
     dependencies=[security, rbac.STUDY_READ],
     status_code=200,
     responses={
-        400: {
-            "model": ErrorResponse,
-            "description": "Invalid request",
-        },
         404: {
             "model": ErrorResponse,
             "description": "Item not found",
@@ -117,18 +108,24 @@ def get_study_visits(
         study_version_number=study_version_number,
     )
 
-    study_visits = DB.get_study_visits(
+    # We need to retrieve all study visits to correctly assign `visit_order` and `visit_number` to each visit after timeline generation
+    study_visits_all = DB.get_study_visits(
         study_uid=uid,
         sort_by=sort_by,
         sort_order=sort_order,
-        page_size=page_size,
-        page_number=page_number,
+        page_size=1000000,
+        page_number=1,
         study_version_number=study_version_number,
     )
-    items = [models.StudyVisit.from_input(study_visit) for study_visit in study_visits]
-    # Generate timeline to assign visit_order for all study visits
-    BaseTimelineAR(study_uid=uid, _visits=items)._generate_timeline()
+    items_all = [
+        models.StudyVisit.from_input(study_visit) for study_visit in study_visits_all
+    ]
 
+    # Generate timeline to assign `visit_order` and `visit_number` to all study visits
+    BaseTimelineAR(study_uid=uid, _visits=items_all)._generate_timeline()
+
+    # Return the requested page of study visits
+    items = items_all[(page_number - 1) * page_size : page_number * page_size]
     return PaginatedResponseWithStudyVersion.from_input(
         request=request,
         study_version=study_version,
@@ -148,10 +145,6 @@ def get_study_visits(
     dependencies=[security, rbac.STUDY_READ],
     status_code=200,
     responses={
-        400: {
-            "model": ErrorResponse,
-            "description": "Invalid request",
-        },
         404: {
             "model": ErrorResponse,
             "description": "Item not found",
@@ -214,10 +207,6 @@ def get_study_activities(
     dependencies=[security, rbac.STUDY_READ],
     status_code=200,
     responses={
-        400: {
-            "model": ErrorResponse,
-            "description": "Invalid request",
-        },
         404: {
             "model": ErrorResponse,
             "description": "Item not found",
@@ -280,10 +269,6 @@ def get_study_activity_instances(
     dependencies=[security, rbac.STUDY_READ],
     status_code=200,
     responses={
-        400: {
-            "model": ErrorResponse,
-            "description": "Invalid request",
-        },
         404: {
             "model": ErrorResponse,
             "description": "Item not found",
@@ -347,10 +332,6 @@ def get_study_detailed_soa(
     dependencies=[security, rbac.STUDY_READ],
     status_code=200,
     responses={
-        400: {
-            "model": ErrorResponse,
-            "description": "Invalid request",
-        },
         404: {
             "model": ErrorResponse,
             "description": "Item not found",
@@ -414,10 +395,6 @@ def get_study_operational_soa(
     dependencies=[security, rbac.LIBRARY_READ],
     status_code=200,
     responses={
-        400: {
-            "model": ErrorResponse,
-            "description": "Invalid request",
-        },
         404: {
             "model": ErrorResponse,
             "description": "Item not found",
@@ -473,10 +450,6 @@ def get_library_activities(
     dependencies=[security, rbac.LIBRARY_READ],
     status_code=200,
     responses={
-        400: {
-            "model": ErrorResponse,
-            "description": "Invalid request",
-        },
         404: {
             "model": ErrorResponse,
             "description": "Item not found",
@@ -539,10 +512,6 @@ def get_library_activity_instances(
     dependencies=[security, rbac.STUDY_READ],
     status_code=200,
     responses={
-        400: {
-            "model": ErrorResponse,
-            "description": "Invalid request",
-        },
         404: {
             "model": ErrorResponse,
             "description": "Item not found",
@@ -561,9 +530,10 @@ def get_papillons_soa(
     study_version_number: Annotated[
         str | None, Query(description="Study Version Number, for example `2.1`")
     ] = None,
-    datetime: Annotated[
+    date_time: Annotated[
         str | None,
         Query(
+            alias="datetime",
             description="If specified, study data with latest released version of specified datetime is returned. "
             "format in YYYY-MM-DDThh:mm:ssZ. ",
         ),
@@ -573,8 +543,100 @@ def get_papillons_soa(
         project=project,
         study_number=study_number,
         subpart=subpart,
-        datetime=datetime,
+        date_time=date_time,
         study_version_number=study_version_number,
     )
 
     return models.PapillonsSoA.from_input(papilons_soa_res)
+
+
+# GET endpoint to retrieve study audit trail
+@router.get(
+    "/studies/audit-trail",
+    tags=["[V1] Audit trail"],
+    dependencies=[security, rbac.STUDY_READ],
+    status_code=200,
+    responses={
+        200: {
+            "content": {"text/csv": {}},
+            "description": "CSV of study audit trail data",
+        },
+    },
+)
+# pylint: disable=dangerous-default-value
+def get_studies_audit_trail(
+    from_ts: Annotated[
+        datetime,
+        Query(
+            description="Start timestamp in ISO format with timezone, e.g. 2024-01-01T00:00:00Z"
+        ),
+    ] = datetime.fromisoformat("2024-01-01T00:00:00Z"),
+    to_ts: Annotated[
+        datetime,
+        Query(
+            description="End timestamp in ISO format with timezone, e.g. 2024-01-05T00:00:00Z"
+        ),
+    ] = datetime.fromisoformat("2024-01-05T00:00:00Z"),
+    study_id: Annotated[
+        str | None,
+        Query(
+            description="Filter by study ID (case-insensitive partial match), for example `NN1234-5678`."
+        ),
+    ] = None,
+    entity_type: Annotated[
+        models.StudyAuditTrailEntity | None,
+        Query(description="Filter by entity type, for example `StudyActivity`."),
+    ] = None,
+    exclude_study_ids: Annotated[
+        list[str] | None,
+        Query(
+            description="List of study IDs to exclude (case-insensitive partial match), for example `CDISC DEV`."
+        ),
+    ] = ["CDISC DEV"],
+    page_number: Annotated[int, Query(ge=1)] = 1,
+) -> Response:
+    """
+    Returns study audit trail entries between `from_ts` timestamp (including) and `to_ts` timestamp (excluding).
+
+    The audit trail is returned in CSV format with the following columns:
+      - **ts**: Timestamp of the action
+      - **study_uid**: Study UID
+      - **study_id**: Study ID
+      - **action**: Action performed (Create, Edit, Delete)
+      - **entity_uid**: UID of the entity affected by the action
+      - **entity_type**: Type (i.e node labels) of the entity affected by the action (*StudyVisit*, *StudyActivity*, etc..). Multiple labels are separated by '**|**' character.
+      - **changed_properties**: List of properties that were changed during the Edit action
+
+    Audit trail can be filtered by:
+      - `study_id` - returns study audit trail entries for the specified study ID (case-insensitive partial match)
+      - `entity_type` - returns study audit trail entries for the specified entity type (e.g. *StudyActivity*)
+      - `exclude_study_ids` - returns audit trail without the specified study IDs (case-insensitive partial match)
+
+    Note: the maximum number of rows returned is limited to 10.000.
+    """
+
+    audit_trail = DB.get_studies_audit_trail(
+        from_ts=from_ts,
+        to_ts=to_ts,
+        study_id=study_id,
+        entity_type=entity_type,
+        exclude_study_ids=exclude_study_ids,
+        page_number=page_number,
+    )
+
+    # Convert audit trail to CSV format
+    keys = [
+        "ts",
+        "study_uid",
+        "study_id",
+        "action",
+        "entity_uid",
+        "entity_type",
+        "changed_properties",
+    ]
+    csv_output = ",".join(keys) + "\n"
+    for entry in audit_trail:
+        csv_output += ",".join(str(entry[key]) for key in keys)
+        csv_output += "\n"
+
+    return Response(content=csv_output, media_type="text/csv")

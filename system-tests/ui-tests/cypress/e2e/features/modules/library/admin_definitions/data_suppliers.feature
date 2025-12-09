@@ -4,6 +4,7 @@ Feature: Library - Admin Definitions - Data Suppliers
 
     Background:
         Given The user is logged in
+        And The '/library/data-suppliers' page is opened 
 
     @smoke_test
     Scenario: [Navigation] User must be able to navigate to the Data Suppliers page
@@ -12,7 +13,6 @@ Feature: Library - Admin Definitions - Data Suppliers
         Then The current URL is '/library/data-suppliers'
 
     Scenario: [Table][Options] User must be able to see table with correct options
-        Given The '/library/data-suppliers' page is opened 
         Then A table is visible with following options
             | options                                                         |
             | Add Data Supplier                                               |
@@ -22,44 +22,40 @@ Feature: Library - Admin Definitions - Data Suppliers
             | search-field                                                    |
 
     Scenario: [Table][Columns][Names] User must be able to see the columns list on the main page as below
-        Given The '/library/data-suppliers' page is opened 
         Then A table is visible with following headers
-            | headers            |
-            | Name               |
-            | Description        |
-            | Order              |
-            | API base URL       |
-            | UI base URL        |
-            | Type               |
-            | Origin Source      |
-            | Origin Type        |
-            | Modified           |
-            | Change description |
-            | Version            |
-            | Status             |
+            | headers               |
+            | Name                  |
+            | Description           |
+            | Order                 |
+            | API base URL          |
+            | UI base URL           |
+            | Default Supplier Type |
+            | Origin Source         |
+            | Origin Type           |
+            | Modified              |
+            | Change description    |
+            | Version               |
+            | Status                |
 
     Scenario: [Create][Postive case] User must be able to create a new data supplier
-        Given The '/library/data-suppliers' page is opened
         And User waits for table to load
         When The 'add-data-supplier' button is clicked
         When The user defines data supplier name, type, description, order, api url, frontend url, origin source and origin type
         And Form save button is clicked
         And The data supplier is found
-        Then The data supplier is created successfully
+        Then The data supplier data is visible in the table
         Then The item has status 'Final' and version '1.0'
 
     Scenario: [Edit][Postive case]User must be able to edit the data supplier
-        Given The '/library/data-suppliers' page is opened  
         And User waits for table to load
         And The data supplier is found
         And The 'Edit' option is clicked from the three dot menu list
         When The user edits data supplier name, type, description, order, api url, frontend url, origin source and origin type
         And Form save button is clicked
-        Then The data supplier is updated successfully
+        Then The data supplier data is visible in the table
         Then The item has status 'Final' and version '2.0'
 
     Scenario: [Edit][State][Postive case] User must be able to inactivate and reactivate data supplier
-        Given The '/library/data-suppliers' page is opened  
         And User waits for table to load
         And The data supplier is found
         And The 'Inactivate' option is clicked from the three dot menu list
@@ -68,7 +64,6 @@ Feature: Library - Admin Definitions - Data Suppliers
         Then The item has status 'Final' and version '2.0'
 
     Scenario: [Read][History] User must be able to check change history of data supplier
-        Given The '/library/data-suppliers' page is opened
         And User waits for table to load
         And The data supplier is found
         When The user intercepts version history request

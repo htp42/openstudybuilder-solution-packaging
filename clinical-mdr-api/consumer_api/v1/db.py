@@ -1,7 +1,9 @@
 # pylint: disable=invalid-name
 # pylint: disable=redefined-builtin
+from datetime import datetime
 from typing import Any
 
+from common.config import settings
 from common.exceptions import NotFoundException, ValidationException
 from common.utils import validate_page_number_and_page_size
 from consumer_api.shared.common import (
@@ -46,12 +48,12 @@ def get_base_query_for_study_root_and_value_with_study_id(
 
 
 def get_latest_version_from_datetime(
-    project: str, study_number: str, datetime: str, subpart: str | None
+    project: str, study_number: str, date_time: str, subpart: str | None
 ) -> str:
     params = {
         "project": project,
         "study_number": study_number,
-        "datetime": datetime,
+        "datetime": date_time,
         "subpart": subpart,
     }
     full_query = "MATCH (study_root:StudyRoot)-[hv:HAS_VERSION {status:'RELEASED'}]->"
@@ -69,7 +71,7 @@ def get_latest_version_from_datetime(
 
     NotFoundException.raise_if_not(
         res,
-        msg=f"Study has no RELEASED version before {datetime}.",
+        msg=f"Study has no RELEASED version before {date_time}.",
     )
 
     return res[0]["version"]
@@ -432,7 +434,6 @@ def get_study_detailed_soa(
             head([(study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(:StudyActivityGroup)-[:HAS_SELECTED_ACTIVITY_GROUP]->(activity_group_value:ActivityGroupValue) | activity_group_value]) AS activity_group,
             head([(study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(:StudySoAGroup)-[:HAS_FLOWCHART_GROUP]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(term_name_value:CTTermNameValue) | term_name_value]) AS term_name_value,
             head([(study_epoch)-[:HAS_EPOCH]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]-(epoch_term:CTTermNameValue) | epoch_term.name]) AS epoch_name
-        ORDER BY study_activity.order, study_visit.visit_number
 
         RETURN DISTINCT
             study_root.uid AS study_uid,
@@ -452,7 +453,11 @@ def get_study_detailed_soa(
     full_query = " ".join(
         [
             base_query,
-            db_sort_clause(sort_by.value, sort_order.value),
+            db_sort_clause(
+                sort_by.value,
+                sort_order.value,
+                secondary_sort_fields="soa_group_name, activity_group_name, activity_subgroup_name,activity_uid, study_activity_uid, visit_short_name",
+            ),
             db_pagination_clause(page_size, page_number),
         ]
     )
@@ -490,7 +495,6 @@ def get_study_operational_soa(
             head([(study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(:StudyActivityGroup)-[:HAS_SELECTED_ACTIVITY_GROUP]->(activity_group_value:ActivityGroupValue)<-[:LATEST]-(activity_group_root:ActivityGroupRoot) | { uid: activity_group_root.uid, name: activity_group_value.name }]) as activity_group,
             head([(study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(:StudySoAGroup)-[:HAS_FLOWCHART_GROUP]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(term_name_value:CTTermNameValue) | term_name_value]) as term_name_value,
             head([(study_epoch)-[:HAS_EPOCH]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]-(epoch_term:CTTermNameValue) | epoch_term.name]) as epoch_name
-        ORDER BY study_activity.order, study_visit.visit_number
 
         RETURN DISTINCT
             study_root.uid AS study_uid,
@@ -521,7 +525,11 @@ def get_study_operational_soa(
     full_query = " ".join(
         [
             base_query,
-            db_sort_clause(sort_by.value, sort_order.value),
+            db_sort_clause(
+                sort_by.value,
+                sort_order.value,
+                secondary_sort_fields="visit_uid, soa_group_name, activity_group_uid, activity_subgroup_uid, activity_uid, study_activity_uid, activity_instance_uid",
+            ),
             db_pagination_clause(page_size, page_number),
         ]
     )
@@ -738,14 +746,14 @@ def get_papillons_soa(
     project: str,
     study_number: str,
     subpart: str | None = None,
-    datetime: str | None = None,
+    date_time: str | None = None,
     study_version_number: str | None = None,
 ) -> dict[str, Any]:
-    if datetime:
+    if date_time:
         study_version_number = get_latest_version_from_datetime(
             project=project,
             study_number=study_number,
-            datetime=datetime,
+            date_time=date_time,
             subpart=subpart,
         )
     api_version = "v1"
@@ -755,38 +763,44 @@ def get_papillons_soa(
         "subpart": subpart,
         "study_version_number": study_version_number,
         "api_version": api_version,
-        "specified_dt": datetime,
+        "specified_dt": date_time,
     }
     full_query = get_base_query_for_study_root_and_value_with_study_id(
         study_version_number=study_version_number, subpart=subpart
     )
     full_query += """
-        match (study_value)-[:HAS_STUDY_ACTIVITY]->(study_activity:StudyActivity)
-        match (study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_INSTANCE]->(study_activity_instance:StudyActivityInstance)-[:HAS_SELECTED_ACTIVITY_INSTANCE]->(activity_instance_value:ActivityInstanceValue)
-        match (study_value)-[:HAS_STUDY_ACTIVITY_INSTANCE]->(study_activity_instance)
-        optional match (study_activity)-[:STUDY_ACTIVITY_HAS_SCHEDULE]->(study_activity_schedule:StudyActivitySchedule)
-        optional match (study_value)-[:HAS_STUDY_VISIT]->(study_visit:StudyVisit)-[:STUDY_VISIT_HAS_SCHEDULE]->(study_activity_schedule)
-        optional match (study_value)-[:HAS_STUDY_ACTIVITY_SCHEDULE]->(study_activity_schedule)
+        MATCH (study_value)-[:HAS_STUDY_ACTIVITY]->(study_activity:StudyActivity)
+        MATCH (study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_INSTANCE]->(study_activity_instance:StudyActivityInstance)-[:HAS_SELECTED_ACTIVITY_INSTANCE]->(activity_instance_value:ActivityInstanceValue)
+        MATCH (study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(soa_group:StudySoAGroup)-[:HAS_FLOWCHART_GROUP]->(cttc:CTTermContext)-[:HAS_SELECTED_TERM]->(soa_group_term:CTTermRoot)-[:HAS_NAME_ROOT]->(cttnr:CTTermNameRoot)-[:LATEST_FINAL]->(soa_group_term_value:CTTermNameValue)
+        MATCH (study_value)-[:HAS_STUDY_ACTIVITY_INSTANCE]->(study_activity_instance)
+        OPTIONAL MATCH (study_activity)-[:STUDY_ACTIVITY_HAS_SCHEDULE]->(study_activity_schedule:StudyActivitySchedule)<-[:HAS_STUDY_ACTIVITY_SCHEDULE]-(study_value)
+        OPTIONAL MATCH (study_value)-[:HAS_STUDY_VISIT]->(study_visit:StudyVisit)-[:STUDY_VISIT_HAS_SCHEDULE]->(study_activity_schedule)
+        OPTIONAL MATCH (study_activity_instance)-[:HAS_BASELINE]->(baseline_visit:StudyVisit)
         WITH
-            study_value, rel, activity_instance_value, study_visit, study_activity, study_activity_schedule
-            order by toInteger(study_visit.unique_visit_number)
- 
-        WHERE NOT (study_visit)--(:Delete) AND NOT (study_activity_schedule)--(:Delete) AND NOT (study_activity)--(:Delete)
-        WITH
-            study_value, rel, activity_instance_value,
-            {topic_cd:activity_instance_value.topic_code,
-            visits: collect(distinct study_visit.unique_visit_number)} AS activities
+            study_value, rel, study_activity_instance, activity_instance_value, study_visit, study_activity, study_activity_schedule, soa_group_term_value, baseline_visit
+            order by toInteger(study_visit.unique_visit_number), toInteger(baseline_visit.unique_visit_number)
 
-        return 
-        study_value.study_id_prefix  AS project,
-        study_value.study_number     AS study_number,
+        WHERE NOT (study_visit)--(:Delete) AND NOT (baseline_visit)--(:Delete) AND NOT (study_activity_schedule)--(:Delete)
+        AND NOT (study_activity)--(:Delete) AND NOT (study_activity_instance)--(:Delete)
+        AND NOT (soa_group)-[:BEFORE]-(:StudyAction)
+        WITH
+            study_value, rel, study_activity_instance, activity_instance_value, soa_group_term_value,
+            {topic_cd: activity_instance_value.topic_code,
+            soa_grp: collect(DISTINCT soa_group_term_value.name),
+            important: study_activity_instance.is_important,
+            baseline_visits: collect(DISTINCT baseline_visit.unique_visit_number),
+            visits: collect(DISTINCT study_visit.unique_visit_number)} AS activities
+
+        RETURN 
+        study_value.study_id_prefix             AS project,
+        study_value.study_number                AS study_number,
         study_value.study_subpart_acronym       AS subpart,
         COALESCE(study_value.study_id_prefix,"") + '-' + COALESCE(study_value.study_number ,"") + COALESCE(study_value.study_subpart_acronym ,"") AS full_study_id,
-        $api_version                 AS api_version,
-        rel.version           AS study_version,
-        $specified_dt                AS specified_dt,
-        toString(datetime())                   AS fetch_dt,
-        collect(activities)          AS SoA
+        $api_version                            AS api_version,
+        rel.version                             AS study_version,
+        $specified_dt                           AS specified_dt,
+        toString(datetime())                    AS fetch_dt,
+        collect(activities)                     AS soa
         """
     res = query(full_query, params)
 
@@ -796,3 +810,73 @@ def get_papillons_soa(
     )
     ValidationException.raise_if(len(res) > 1, msg="Too many results.")
     return res[0]
+
+
+def get_studies_audit_trail(
+    from_ts: datetime,
+    to_ts: datetime,
+    study_id: str | None,
+    entity_type: models.StudyAuditTrailEntity | None = None,
+    exclude_study_ids: list[str] | None = None,
+    page_number: int = 1,
+) -> list[dict[Any, Any]]:
+    validate_page_number_and_page_size(
+        page_number, settings.consumer_api_audit_trail_max_rows
+    )
+    params = {"from_ts": from_ts.isoformat(), "to_ts": to_ts.isoformat()}
+
+    filters = []
+    if study_id:
+        params["study_id"] = study_id.upper().strip()
+        filters.append("toUpper(study_id) CONTAINS $study_id")
+
+    if entity_type:
+        params["entity_type"] = entity_type.value.strip()
+        filters.append("$entity_type IN entity_labels")
+
+    if exclude_study_ids:
+        for idx, sid in enumerate(exclude_study_ids):
+            if sid.upper().strip():
+                params[f"exclude_study_ids_{idx}"] = sid.upper().strip()
+                filters.append(f"NOT study_id CONTAINS $exclude_study_ids_{idx}")
+
+    base_query = f"""
+        MATCH (sa:StudyAction)-[:AFTER]->(obj_after)
+        OPTIONAL MATCH (sa)-[:BEFORE]->(obj_before)
+        MATCH (sa)-[:AUDIT_TRAIL]-(sr:StudyRoot)-[:LATEST]->(sv:StudyValue)
+        WHERE sa.date >= datetime($from_ts) AND sa.date < datetime($to_ts)
+        
+        WITH DISTINCT
+            sa.date AS ts,
+            sr.uid AS study_uid,
+            CASE sv.subpart_id
+                WHEN IS NULL THEN toUpper(COALESCE(sv.study_id_prefix, '') + "-" + COALESCE(sv.study_number, ''))
+                ELSE toUpper(COALESCE(sv.study_id_prefix, '') + "-" + COALESCE(sv.study_number, '')) + "-" + sv.subpart_id
+            END AS study_id,
+            [label IN labels(sa) WHERE label <> 'StudyAction'][0] as action,
+            obj_after.uid as entity_uid,
+            labels(obj_after) as entity_labels,
+            [key IN keys(obj_after) WHERE obj_after[key] <> obj_before[key]] AS changed_properties
+            
+        { 'WHERE ' + ' AND '.join(filters) if filters else ''}
+
+        RETURN DISTINCT
+            ts,
+            study_uid,
+            study_id,
+            action,
+            entity_uid,
+            apoc.text.join(entity_labels, '|') AS entity_type,
+            changed_properties
+        ORDER BY ts ASC
+        """
+
+    full_query = " ".join(
+        [
+            base_query,
+            db_pagination_clause(
+                settings.consumer_api_audit_trail_max_rows, page_number
+            ),
+        ]
+    )
+    return query(full_query, params)

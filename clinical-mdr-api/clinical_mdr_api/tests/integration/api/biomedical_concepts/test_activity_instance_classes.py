@@ -708,7 +708,7 @@ def test_get_activity_instance_class_datasets(api_client):
     )
     assert class_mapping["datasets"] == [dataset_for_parent.uid]
 
-    # Finally, make sure that toggling off sponsor datasets works
+    # Make sure that toggling off sponsor datasets works
     response = api_client.get(
         f"activity-instance-classes/model-mappings/datasets?activity_instance_class_uid={child_instance_class_uid}",
     )
@@ -720,6 +720,42 @@ def test_get_activity_instance_class_datasets(api_client):
         dataset_for_parent.uid,
         dataset.uid,
         sponsor_dataset.uid,
+    ]
+
+    # Test that filtering by IG works
+    # Adding the default IG as filter should not change the results
+    response = api_client.get(
+        f"activity-instance-classes/model-mappings/datasets?activity_instance_class_uid={child_instance_class_uid}&ig_uid={data_model_ig.uid}",
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert len(res) == 1
+    class_mapping = next((d for d in res if d["uid"] == child_instance_class_uid), None)
+    assert class_mapping["datasets"] == [
+        dataset_for_parent.uid,
+        dataset.uid,
+        sponsor_dataset.uid,
+    ]
+
+    # Filtering on a different one should return no results
+    response = api_client.get(
+        f"activity-instance-classes/model-mappings/datasets?activity_instance_class_uid={child_instance_class_uid}&ig_uid=Whatever",
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert len(res) == 0
+
+    # Combine filters
+    response = api_client.get(
+        f"activity-instance-classes/model-mappings/datasets?activity_instance_class_uid={child_instance_class_uid}&ig_uid={data_model_ig.uid}&include_sponsor=false",
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert len(res) == 1
+    class_mapping = next((d for d in res if d["uid"] == child_instance_class_uid), None)
+    assert class_mapping["datasets"] == [
+        dataset_for_parent.uid,
+        dataset.uid,
     ]
 
 

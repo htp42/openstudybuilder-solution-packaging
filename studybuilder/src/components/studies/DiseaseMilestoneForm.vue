@@ -52,7 +52,7 @@ export default {
   components: {
     SimpleFormDialog,
   },
-  inject: ['eventBusEmit', 'formRules'],
+  inject: ['notificationHub', 'formRules'],
   props: {
     diseaseMilestone: {
       type: Object,
@@ -108,10 +108,13 @@ export default {
   methods: {
     close() {
       this.$emit('close')
+      this.notificationHub.clearErrors()
       this.form = {}
       this.$refs.observer.reset()
     },
     async submit() {
+      this.notificationHub.clearErrors()
+
       const data = { ...this.form }
       data.study_uid = this.selectedStudy.uid
       if (data.repetition_indicator === undefined) {
@@ -121,7 +124,7 @@ export default {
         study.createStudyDiseaseMilestone(this.selectedStudy.uid, data).then(
           () => {
             this.$refs.form.working = false
-            this.eventBusEmit('notification', {
+            this.notificationHub.add({
               msg: this.$t('DiseaseMilestoneForm.add_success'),
             })
             this.close()
@@ -140,7 +143,7 @@ export default {
           .then(
             () => {
               this.$refs.form.working = false
-              this.eventBusEmit('notification', {
+              this.notificationHub.add({
                 msg: this.$t('DiseaseMilestoneForm.update_success'),
               })
               this.close()

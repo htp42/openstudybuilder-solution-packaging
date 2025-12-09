@@ -226,7 +226,7 @@ export default {
     CrfApprovalSummaryConfirmDialog,
     CrfNewVersionSummaryConfirmDialog,
   },
-  inject: ['eventBusEmit'],
+  inject: ['notificationHub'],
   props: {
     parentForm: {
       type: Object,
@@ -333,17 +333,21 @@ export default {
       ) {
         this.loading = true
 
-        crfs.newVersion('item-groups', item.uid).then((resp) => {
-          if (this.parentForm.status === statuses.DRAFT) {
-            this.updateItemGroup(resp.data)
-          }
+        crfs
+          .newVersion('item-groups', item.uid)
+          .then((resp) => {
+            if (this.parentForm.status === statuses.DRAFT) {
+              this.updateItemGroup(resp.data)
+            }
 
-          this.expandAll(item)
-          this.loading = false
-          this.eventBusEmit('notification', {
-            msg: this.$t('_global.new_version_success'),
+            this.expandAll(item)
+            this.notificationHub.add({
+              msg: this.$t('_global.new_version_success'),
+            })
           })
-        })
+          .finally(() => {
+            this.loading = false
+          })
       }
     },
     async approve(item) {
@@ -357,15 +361,19 @@ export default {
       ) {
         this.loading = true
 
-        crfs.approve('item-groups', item.uid).then((resp) => {
-          this.updateItemGroup(resp.data)
+        crfs
+          .approve('item-groups', item.uid)
+          .then((resp) => {
+            this.updateItemGroup(resp.data)
 
-          this.expandAll(item)
-          this.loading = false
-          this.eventBusEmit('notification', {
-            msg: this.$t('CRFItemGroups.approved'),
+            this.expandAll(item)
+            this.notificationHub.add({
+              msg: this.$t('CRFItemGroups.approved'),
+            })
           })
-        })
+          .finally(() => {
+            this.loading = false
+          })
       }
     },
     updateItemGroupItem(affectedItemGroup, updatedItem) {

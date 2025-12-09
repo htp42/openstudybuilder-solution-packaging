@@ -132,7 +132,7 @@ export default {
     NNTable,
     ElementsDropdownList,
   },
-  inject: ['eventBusEmit'],
+  inject: ['notificationHub'],
   setup() {
     const studiesGeneralStore = useStudiesGeneralStore()
     const epochsStore = useEpochsStore()
@@ -290,7 +290,7 @@ export default {
             this.editMode = false
             arms.getAllStudyCells(this.selectedStudy.uid).then((resp) => {
               this.cells = resp
-              this.eventBusEmit('notification', {
+              this.notificationHub.add({
                 msg: this.$t('DesignMatrix.matrix_updated'),
               })
               this.editLoading = false

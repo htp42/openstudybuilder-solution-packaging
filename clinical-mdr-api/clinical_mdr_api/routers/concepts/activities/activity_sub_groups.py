@@ -255,10 +255,10 @@ def get_distinct_values_for_header(
 @router.get(
     "/activity-sub-groups/{activity_subgroup_uid}",
     dependencies=[security, rbac.LIBRARY_READ],
-    summary="Get details on a specific activity sub group (in a specific version)",
+    summary="Get details on a specific activity subgroup (in a specific version)",
     description="""
 State before:
- - an activity sub group with uid must exist.
+ - an activity subgroup with uid must exist.
 
 Business logic:
  - If parameter at_specified_date_time is specified then the latest/newest representation of the concept at this point in time is returned. The point in time needs to be specified in ISO 8601 format including the timezone, e.g.: '2020-10-31T16:00:00+02:00' for October 31, 2020 at 4pm in UTC+2 timezone. If the timezone is ommitted, UTC�0 is assumed.
@@ -307,7 +307,7 @@ Possible errors:
         403: _generic_descriptions.ERROR_403,
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The activity sub group with the specified 'activity_subgroup_uid' wasn't found.",
+            "description": "Not Found - The activity subgroup with the specified 'activity_subgroup_uid' wasn't found.",
         },
     },
 )
@@ -555,14 +555,14 @@ def get_cosmos_activity_subgroup_overview(
 @router.post(
     "/activity-sub-groups",
     dependencies=[security, rbac.LIBRARY_WRITE],
-    summary="Creates new activity sub group.",
+    summary="Creates new activity subgroup.",
     description="""
 State before:
  - The specified library allows creation of concepts (the 'is_editable' property of the library needs to be true).
  - The specified CT term uids must exist, and the term names are in a final state.
 
 Business logic:
- - New node is created for the activity sub group with the set properties.
+ - New node is created for the activity subgroup with the set properties.
  - relationships to specified control terminology are created (as in the model).
  - relationships to specified activity parent are created (as in the model)
  - The status of the new created version will be automatically set to 'Draft'.
@@ -580,7 +580,7 @@ Possible errors:
     responses={
         403: _generic_descriptions.ERROR_403,
         201: {
-            "description": "Created - The activity sub group was successfully created."
+            "description": "Created - The activity subgroup was successfully created."
         },
         400: {
             "model": ErrorResponse,
@@ -600,19 +600,19 @@ def create(
 @router.put(
     "/activity-sub-groups/{activity_subgroup_uid}",
     dependencies=[security, rbac.LIBRARY_WRITE],
-    summary="Update activity sub group",
+    summary="Update activity subgroup",
     description="""
 State before:
- - uid must exist and activity sub group must exist in status draft.
- - The activity sub group must belongs to a library that allows deleting (the 'is_editable' property of the library needs to be true).
+ - uid must exist and activity subgroup must exist in status draft.
+ - The activity subgroup must belongs to a library that allows deleting (the 'is_editable' property of the library needs to be true).
 
 Business logic:
- - If activity sub group exist in status draft then attributes are updated.
+ - If activity subgroup exist in status draft then attributes are updated.
  - If links to CT are selected or updated then relationships are made to CTTermRoots.
-- If the linked activity sub group is updated, the relationships are updated to point to the activity sub group value node.
+- If the linked activity subgroup is updated, the relationships are updated to point to the activity subgroup value node.
 
 State after:
- - attributes are updated for the activity sub group.
+ - attributes are updated for the activity subgroup.
  - Audit trail entry must be made with update of attributes.
 
 Possible errors:
@@ -626,13 +626,13 @@ Possible errors:
         400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
-            "- The activity sub group is not in draft status.\n"
-            "- The activity sub group had been in 'Final' status before.\n"
+            "- The activity subgroup is not in draft status.\n"
+            "- The activity subgroup had been in 'Final' status before.\n"
             "- The library doesn't allow to edit draft versions.\n",
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The activity sub group with the specified 'activity_subgroup_uid' wasn't found.",
+            "description": "Not Found - The activity subgroup with the specified 'activity_subgroup_uid' wasn't found.",
         },
     },
 )
@@ -651,13 +651,13 @@ def edit(
 @router.post(
     "/activity-sub-groups/{activity_subgroup_uid}/versions",
     dependencies=[security, rbac.LIBRARY_WRITE],
-    summary=" Create a new version of activity sub group",
+    summary=" Create a new version of activity subgroup",
     description="""
 State before:
- - uid must exist and the activity sub group must be in status Final.
+ - uid must exist and the activity subgroup must be in status Final.
 
 Business logic:
-- The activity sub group is changed to a draft state.
+- The activity subgroup is changed to a draft state.
 
 State after:
  - ActivitySubGroup changed status to Draft and assigned a new minor version number.
@@ -678,8 +678,8 @@ Possible errors:
         404: {
             "model": ErrorResponse,
             "description": "Not Found - Reasons include e.g.: \n"
-            "- The activity sub group is not in final status.\n"
-            "- The activity sub group with the specified 'activity_subgroup_uid' could not be found.",
+            "- The activity subgroup is not in final status.\n"
+            "- The activity subgroup with the specified 'activity_subgroup_uid' could not be found.",
         },
     },
 )
@@ -693,19 +693,21 @@ def new_version(
 @router.post(
     "/activity-sub-groups/{activity_subgroup_uid}/approvals",
     dependencies=[security, rbac.LIBRARY_WRITE],
-    summary="Approve draft version of activity sub group",
+    summary="Approve draft version of activity subgroup",
     description="""
 State before:
- - uid must exist and activity sub group must be in status Draft.
+ - uid must exist and activity subgroup must be in status Draft.
 
 Business logic:
  - The latest 'Draft' version will remain the same as before.
  - The status of the new approved version will be automatically set to 'Final'.
  - The 'version' property of the new version will be automatically set to the version of the latest 'Final' version increased by +1.0.
  - The 'change_description' property will be set automatically 'Approved version'.
+ - If cascade_edit_and_approve is set to True, all activities that are linked to the latest 'Final' version of this activity subgroup
+   are updated to link to the newly approved activity subgroup, and then approved.
 
 State after:
- - Activity sub group changed status to Final and assigned a new major version number.
+ - Activity subgroup changed status to Final and assigned a new major version number.
  - Audit trail entry must be made with action of approving to new Final version.
 
 Possible errors:
@@ -718,29 +720,34 @@ Possible errors:
         400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
-            "- The activity sub group is not in draft status.\n"
-            "- The library doesn't allow to approve activity sub group.\n",
+            "- The activity subgroup is not in draft status.\n"
+            "- The library doesn't allow to approve activity subgroup.\n",
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The activity sub group with the specified 'activity_subgroup_uid' wasn't found.",
+            "description": "Not Found - The activity subgroup with the specified 'activity_subgroup_uid' wasn't found.",
         },
     },
 )
 def approve(
     activity_subgroup_uid: Annotated[str, ActivitySubGroupUID],
+    cascade_edit_and_approve: Annotated[
+        bool, Query(description="Approve all linked activities")
+    ] = False,
 ) -> ActivitySubGroup:
     activity_subgroup_service = ActivitySubGroupService()
-    return activity_subgroup_service.approve(uid=activity_subgroup_uid)
+    return activity_subgroup_service.approve(
+        uid=activity_subgroup_uid, cascade_edit_and_approve=cascade_edit_and_approve
+    )
 
 
 @router.delete(
     "/activity-sub-groups/{activity_subgroup_uid}/activations",
     dependencies=[security, rbac.LIBRARY_WRITE],
-    summary=" Inactivate final version of activity sub group",
+    summary=" Inactivate final version of activity subgroup",
     description="""
 State before:
- - uid must exist and activity sub group must be in status Final.
+ - uid must exist and activity subgroup must be in status Final.
 
 Business logic:
  - The latest 'Final' version will remain the same as before.
@@ -749,7 +756,7 @@ Business logic:
  - The 'version' property will remain the same as before.
 
 State after:
- - Activity sub group changed status to Retired.
+ - Activity subgroup changed status to Retired.
  - Audit trail entry must be made with action of inactivating to retired version.
 
 Possible errors:
@@ -762,11 +769,11 @@ Possible errors:
         400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
-            "- The activity sub group is not in final status.",
+            "- The activity subgroup is not in final status.",
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The activity sub group with the specified 'activity_subgroup_uid' could not be found.",
+            "description": "Not Found - The activity subgroup with the specified 'activity_subgroup_uid' could not be found.",
         },
     },
 )
@@ -780,10 +787,10 @@ def inactivate(
 @router.post(
     "/activity-sub-groups/{activity_subgroup_uid}/activations",
     dependencies=[security, rbac.LIBRARY_WRITE],
-    summary="Reactivate retired version of a activity sub group",
+    summary="Reactivate retired version of a activity subgroup",
     description="""
 State before:
- - uid must exist and activity sub group must be in status Retired.
+ - uid must exist and activity subgroup must be in status Retired.
 
 Business logic:
  - The latest 'Retired' version will remain the same as before.
@@ -792,7 +799,7 @@ Business logic:
  - The 'version' property will remain the same as before.
 
 State after:
- - Activity sub group changed status to Final.
+ - Activity subgroup changed status to Final.
  - An audit trail entry must be made with action of reactivating to final version.
 
 Possible errors:
@@ -805,11 +812,11 @@ Possible errors:
         400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
-            "- The activity sub group is not in retired status.",
+            "- The activity subgroup is not in retired status.",
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The activity sub group with the specified 'activity_subgroup_uid' could not be found.",
+            "description": "Not Found - The activity subgroup with the specified 'activity_subgroup_uid' could not be found.",
         },
     },
 )
@@ -823,7 +830,7 @@ def reactivate(
 @router.delete(
     "/activity-sub-groups/{activity_subgroup_uid}",
     dependencies=[security, rbac.LIBRARY_WRITE],
-    summary="Delete draft version of activity sub group",
+    summary="Delete draft version of activity subgroup",
     description="""
 State before:
  - uid must exist
@@ -834,7 +841,7 @@ Business logic:
  - The draft concept is deleted.
 
 State after:
- - Activity sub group is successfully deleted.
+ - Activity subgroup is successfully deleted.
 
 Possible errors:
  - Invalid uid or status not Draft or exist in version 1.0 or above (previously been approved) or not in an editable library.
@@ -843,18 +850,18 @@ Possible errors:
     responses={
         403: _generic_descriptions.ERROR_403,
         204: {
-            "description": "No Content - The activity sub group was successfully deleted."
+            "description": "No Content - The activity subgroup was successfully deleted."
         },
         400: {
             "model": ErrorResponse,
             "description": "Forbidden - Reasons include e.g.: \n"
-            "- The activity sub group is not in draft status.\n"
-            "- The activity sub group was already in final state or is in use.\n"
-            "- The library doesn't allow to delete activity sub group.",
+            "- The activity subgroup is not in draft status.\n"
+            "- The activity subgroup was already in final state or is in use.\n"
+            "- The library doesn't allow to delete activity subgroup.",
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - An activity sub group with the specified 'activity_subgroup_uid' could not be found.",
+            "description": "Not Found - An activity subgroup with the specified 'activity_subgroup_uid' could not be found.",
         },
     },
 )

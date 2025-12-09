@@ -221,7 +221,7 @@ export default {
     HorizontalStepperForm,
     NNTable,
   },
-  inject: ['eventBusEmit', 'formRules'],
+  inject: ['notificationHub', 'formRules'],
   emits: ['close'],
   setup() {
     const formStore = useFormStore()
@@ -297,7 +297,7 @@ export default {
     method(value) {
       this.steps = value === 'select' ? this.selectSteps : this.createSteps
       if (value === 'select') {
-        this.eventBusEmit('notification', {
+        this.notificationHub.add({
           msg: this.$t('StudySubparts.select_warning'),
           type: 'warning',
           timeout: 15000,
@@ -362,7 +362,7 @@ export default {
         return true
       }
       if (this.method === 'select' && _isEmpty(this.selectedSubstudy)) {
-        this.eventBusEmit('notification', {
+        this.notificationHub.add({
           msg: this.$t('StudySubparts.select_study_warning'),
           type: 'info',
         })
@@ -375,6 +375,7 @@ export default {
     },
     close() {
       this.$emit('close')
+      this.notificationHub.clearErrors()
       this.method = 'create'
       this.steps = this.selectSteps
       this.form = {}
@@ -384,6 +385,8 @@ export default {
       this.$refs.stepper.loading = false
     },
     submit() {
+      this.notificationHub.clearErrors()
+
       if (this.method === 'select') {
         this.selectedSubstudy.study_parent_part_uid = this.selectedStudy.uid
         this.selectedSubstudy.current_metadata.identification_metadata.description =
@@ -393,7 +396,7 @@ export default {
         studies
           .updateStudy(this.selectedSubstudy.uid, this.selectedSubstudy)
           .then(() => {
-            this.eventBusEmit('notification', {
+            this.notificationHub.add({
               msg: this.$t('StudySubparts.subpart_created'),
             })
             this.$refs.stepper.loading = false
@@ -404,7 +407,7 @@ export default {
           this.selectedStudy.current_metadata.identification_metadata.project_number
         this.form.study_parent_part_uid = this.selectedStudy.uid
         this.addStudy(this.form).then(() => {
-          this.eventBusEmit('notification', {
+          this.notificationHub.add({
             msg: this.$t('StudySubparts.subpart_created'),
           })
           this.close()

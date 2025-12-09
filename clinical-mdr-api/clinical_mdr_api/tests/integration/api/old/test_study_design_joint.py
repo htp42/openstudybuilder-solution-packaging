@@ -673,7 +673,7 @@ def test_patch_specific_try_to_patch_the_studyarm_of_a_studybrancharm_that_has_s
         json=data,
     )
 
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
 
     res = response.json()
 

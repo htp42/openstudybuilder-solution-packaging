@@ -1,6 +1,6 @@
 import dataclasses
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Callable, Mapping, Sequence
 
 from fastapi import status
@@ -8,6 +8,10 @@ from neomodel import db
 
 from clinical_mdr_api.domain_repositories.concepts.activities.activity_repository import (
     ActivityRepository,
+)
+from clinical_mdr_api.domain_repositories.models.activities import (
+    ActivityInstanceRoot,
+    ActivityInstanceValue,
 )
 from clinical_mdr_api.domain_repositories.study_selections.study_activity_repository import (
     SelectionHistory,
@@ -58,6 +62,8 @@ from clinical_mdr_api.models.study_selections.study_selection import (
     StudySelectionActivityInput,
     StudySelectionActivityInSoACreateInput,
     StudySelectionActivityRequestEditInput,
+    StudySelectionActivityReviewBatchInput,
+    StudySelectionReviewAction,
     StudySoAEditBatchInput,
     StudySoAEditBatchOutput,
     UpdateActivityPlaceholderToSponsorActivity,
@@ -102,6 +108,7 @@ from common.exceptions import (
     NotFoundException,
     ValidationException,
 )
+from common.telemetry import trace_block, trace_calls
 
 
 class StudyActivitySelectionService(
@@ -281,23 +288,29 @@ class StudyActivitySelectionService(
                     for_update=True,
                 )
             )
+
+            is_soa_group_update_needed = False
             for new_order, study_soa_group_selection in enumerate(
                 study_soa_group_aggregate.study_objects_selection, start=1
             ):
                 reordered_study_soa_group_selection = dataclasses.replace(
                     study_soa_group_selection, order=new_order
                 )
+                if study_soa_group_selection.order != new_order:
+                    is_soa_group_update_needed = True
                 study_soa_group_aggregate.update_selection(
                     updated_study_object_selection=reordered_study_soa_group_selection,
                     object_exist_callback=self._repos.activity_subgroup_repository.final_concept_exists,
                     ct_term_level_exist_callback=self._repos.ct_term_name_repository.term_specific_exists_by_uid,
                 )
+            # if some StudySoAGroup order was changed
+            if is_soa_group_update_needed:
+                study_soa_group_aggregate.validate()
+                # sync with DB and save the update
+                self._repos.study_soa_group_repository.save(
+                    study_soa_group_aggregate, self.author
+                )
 
-            study_soa_group_aggregate.validate()
-            # sync with DB and save the update
-            self._repos.study_soa_group_repository.save(
-                study_soa_group_aggregate, self.author
-            )
             # If previous StudyActivity was assigned with some StudyActivitySubGroup
             # The past StudyActivitySubGroup orders should be updated
             if previous_selection.study_activity_subgroup_uid:
@@ -306,6 +319,7 @@ class StudyActivitySelectionService(
                     for_update=True,
                     study_activity_group_uid=previous_selection.study_activity_group_uid,
                 )
+                is_study_activity_subgroup_update_needed = False
                 for new_order, study_activity_subgroup_selection in enumerate(
                     study_activity_subgroup_aggregate.study_objects_selection, start=1
                 ):
@@ -317,13 +331,16 @@ class StudyActivitySelectionService(
                         object_exist_callback=self._repos.activity_subgroup_repository.final_concept_exists,
                         ct_term_level_exist_callback=self._repos.ct_term_name_repository.term_specific_exists_by_uid,
                     )
-                assert study_activity_subgroup_aggregate is not None
+                    if study_activity_subgroup_selection.order != new_order:
+                        is_study_activity_subgroup_update_needed = True
+                # if some StudyActivitySubGroup order was changed
+                if is_study_activity_subgroup_update_needed:
+                    study_activity_subgroup_aggregate.validate()
+                    # sync with DB and save the update
+                    self._repos.study_activity_subgroup_repository.save(
+                        study_activity_subgroup_aggregate, self.author
+                    )
 
-                study_activity_subgroup_aggregate.validate()
-                # sync with DB and save the update
-                self._repos.study_activity_subgroup_repository.save(
-                    study_activity_subgroup_aggregate, self.author
-                )
             # If previous StudyActivitySelection was assigned with some StudyActivityGroup
             # The past StudyActivityGroup orders should be updated
             if previous_selection.study_activity_group_uid:
@@ -334,6 +351,7 @@ class StudyActivitySelectionService(
                         study_soa_group_uid=previous_selection.study_soa_group_uid,
                     )
                 )
+                is_study_activity_group_update_needed = False
                 for new_order, study_activity_group_selection in enumerate(
                     study_activity_group_aggregate.study_objects_selection, start=1
                 ):
@@ -345,13 +363,15 @@ class StudyActivitySelectionService(
                         object_exist_callback=self._repos.activity_group_repository.final_concept_exists,
                         ct_term_level_exist_callback=self._repos.ct_term_name_repository.term_specific_exists_by_uid,
                     )
-                assert study_activity_group_aggregate is not None
-
-                study_activity_group_aggregate.validate()
-                # sync with DB and save the update
-                self._repos.study_activity_group_repository.save(
-                    study_activity_group_aggregate, self.author
-                )
+                    if study_activity_group_selection.order != new_order:
+                        is_study_activity_group_update_needed = True
+                # if some StudyActivityGroup order was changed
+                if is_study_activity_group_update_needed:
+                    study_activity_group_aggregate.validate()
+                    # sync with DB and save the update
+                    self._repos.study_activity_group_repository.save(
+                        study_activity_group_aggregate, self.author
+                    )
         else:
             # let the aggregate update the value object
             selection_aggregate.update_selection(
@@ -456,6 +476,7 @@ class StudyActivitySelectionService(
         self,
         study_selection: StudySelectionActivityAR | None,
         study_value_version: str | None = None,
+        **kwargs,
     ) -> list[StudySelectionActivity]:
         if study_selection is None:
             return []
@@ -463,9 +484,11 @@ class StudyActivitySelectionService(
         activity_versions_by_uid: dict[str, list[ActivityForStudyActivity]] = (
             defaultdict(list)
         )
-
+        filter_out_retired_groupings = kwargs.get("filter_out_retired_groupings", False)
         for activity in self._get_linked_activities(
-            study_selection.study_objects_selection
+            # filter_out_retired_groupings removes Activity Group/Subgroup pair if any of these is Retired
+            study_selection.study_objects_selection,
+            filter_out_retired_groupings=filter_out_retired_groupings,
         ):
             activity_versions_by_uid[activity.uid].append(
                 ActivityForStudyActivity.from_activity_ar_objects(
@@ -509,7 +532,6 @@ class StudyActivitySelectionService(
             )
         return result
 
-    @db.transaction
     def get_all_selection_audit_trail(self, study_uid: str) -> list[BaseModel]:
         repos = self._repos
         try:
@@ -1010,31 +1032,44 @@ class StudyActivitySelectionService(
         self, study_uid: str, study_activity_selection: StudySelectionActivityVO
     ):
         # Find ActivityInstances linked to the ActivityGroupings referenced by StudyActivity
-        related_activity_instances = self._repos.activity_instance_repository.get_all_activity_instances_for_activity_grouping(
+        related_activity_instances: list[
+            tuple[ActivityInstanceRoot, ActivityInstanceValue]
+        ] = self._repos.activity_instance_repository.get_all_activity_instances_for_activity_grouping(
             activity_uid=study_activity_selection.activity_uid,
             activity_subgroup_uid=study_activity_selection.activity_subgroup_uid or "",
             activity_group_uid=study_activity_selection.activity_group_uid or "",
             filter_by_boolean_flags=True,
         )
-        linked_activity_instances = []
-        for activity_instance in related_activity_instances:
-            if activity_instance.uid not in linked_activity_instances:
-                linked_activity_instances.append(activity_instance.uid)
+
+        linked_activity_instances: dict[str | None, bool] = {}
+        for (
+            activity_instance_root,
+            activity_instance_value,
+        ) in related_activity_instances:
+            linked_activity_instances.setdefault(
+                activity_instance_root.uid,
+                activity_instance_value.is_required_for_activity,
+            )
 
         # If there is no ActivityInstances linked to selected Activity
         # we create a 'placeholder' StudyActivityInstance that can link to ActivityInstance later
         if len(linked_activity_instances) == 0:
-            linked_activity_instances.append(None)
-        for activity_instance_uid in linked_activity_instances:
+            linked_activity_instances[None] = False
+
+        for (
+            activity_instance_uid,
+            is_required_for_activity,
+        ) in linked_activity_instances.items():
             activity_instance_selection = StudySelectionActivityInstanceVO.from_input_values(
                 study_uid=study_uid,
                 author_id=self.author,
+                study_activity_uid=study_activity_selection.study_selection_uid,
                 activity_instance_uid=activity_instance_uid,
                 activity_uid=study_activity_selection.activity_uid,
                 activity_subgroup_uid=study_activity_selection.activity_subgroup_uid,
                 activity_group_uid=study_activity_selection.activity_group_uid,
-                study_activity_uid=study_activity_selection.study_selection_uid,
                 generate_uid_callback=self._repos.study_activity_instance_repository.generate_uid,
+                is_reviewed=is_required_for_activity,
             )  # add VO to aggregate
 
             study_activity_instance_aggregate = (
@@ -1215,6 +1250,7 @@ class StudyActivitySelectionService(
             repos.close()
 
     @ensure_transaction(db)
+    @trace_calls(args=[1, 2], kwargs=["study_uid", "study_selection_uid"])
     def delete_selection(self, study_uid: str, study_selection_uid: str):
         # StudyActivitySchedule and StudyActivityInstruction Services for cascade delete if any
         study_activity_schedules_service = StudyActivityScheduleService()
@@ -1231,103 +1267,114 @@ class StudyActivitySelectionService(
             )
 
             # Remove related Study activity schedules
-            study_activity_schedules = study_activity_schedules_service.get_all_schedules_for_specific_activity(
-                study_uid=study_uid, study_activity_uid=study_selection_uid
-            )
-            for study_activity_schedule in study_activity_schedules:
-                self._repos.study_activity_schedule_repository.delete(
-                    study_uid,
-                    study_activity_schedule.study_activity_schedule_uid,
-                    self.author,
+            with trace_block("Removing related study activity schedules"):
+                study_activity_schedules = study_activity_schedules_service.get_all_schedules_for_specific_activity(
+                    study_uid=study_uid, study_activity_uid=study_selection_uid
                 )
+                for study_activity_schedule in study_activity_schedules:
+                    self._repos.study_activity_schedule_repository.delete(
+                        study_uid,
+                        study_activity_schedule.study_activity_schedule_uid,
+                        self.author,
+                    )
 
             # Remove related Study activity instructions
-            study_activity_instructions = study_activity_instructions_service.get_all_study_instructions_for_specific_study_activity(
-                study_uid=study_uid, study_activity_uid=study_selection_uid
-            )
-            for study_activity_instruction in study_activity_instructions:
-                if study_activity_instruction.study_activity_instruction_uid is None:
-                    raise BusinessLogicException(
-                        msg="Study Activity Instruction UID is must be provided."
-                    )
-
-                self._repos.study_activity_instruction_repository.delete(
-                    study_uid,
-                    study_activity_instruction.study_activity_instruction_uid,
-                    self.author,
+            with trace_block("Removing related study activity instructions"):
+                study_activity_instructions = study_activity_instructions_service.get_all_study_instructions_for_specific_study_activity(
+                    study_uid=study_uid, study_activity_uid=study_selection_uid
                 )
+                for study_activity_instruction in study_activity_instructions:
+                    if (
+                        study_activity_instruction.study_activity_instruction_uid
+                        is None
+                    ):
+                        raise BusinessLogicException(
+                            msg="Study Activity Instruction UID is must be provided."
+                        )
+
+                    self._repos.study_activity_instruction_repository.delete(
+                        study_uid,
+                        study_activity_instruction.study_activity_instruction_uid,
+                        self.author,
+                    )
 
             # Remove related Study activity subgroups
-            study_activity_subgroups = repos.study_activity_subgroup_repository.get_all_study_activity_subgroups_for_study_activity(
-                study_uid=study_uid, study_activity_uid=study_selection_uid
-            )
-            for study_activity_subgroup in study_activity_subgroups:
-                # delete study activity subgroup
-                study_activity_subgroup_ar, _ = (
-                    study_activity_subgroup_service._find_ar_to_patch(
-                        study_uid=study_uid,
-                        study_selection_uid=study_activity_subgroup.uid,
+            with trace_block("Removing related study activity subgroups"):
+                study_activity_subgroups = repos.study_activity_subgroup_repository.get_all_study_activity_subgroups_for_study_activity(
+                    study_uid=study_uid, study_activity_uid=study_selection_uid
+                )
+                for study_activity_subgroup in study_activity_subgroups:
+                    # delete study activity subgroup
+                    study_activity_subgroup_ar, _ = (
+                        study_activity_subgroup_service._find_ar_to_patch(
+                            study_uid=study_uid,
+                            study_selection_uid=study_activity_subgroup.uid,
+                        )
                     )
-                )
-                study_activity_subgroup_ar.remove_object_selection(
-                    study_activity_subgroup.uid
-                )
-                repos.study_activity_subgroup_repository.save(
-                    study_activity_subgroup_ar, self.author
-                )
+                    study_activity_subgroup_ar.remove_object_selection(
+                        study_activity_subgroup.uid
+                    )
+                    repos.study_activity_subgroup_repository.save(
+                        study_activity_subgroup_ar, self.author
+                    )
 
             # Remove related Study activity groups
-            study_activity_groups = repos.study_activity_group_repository.get_all_study_activity_groups_for_study_activity(
-                study_uid=study_uid, study_activity_uid=study_selection_uid
-            )
-            for study_activity_group in study_activity_groups:
-                # delete study activity group
-                study_activity_group_ar, _ = (
-                    study_activity_group_service._find_ar_to_patch(
-                        study_uid=study_uid,
-                        study_selection_uid=study_activity_group.uid,
+            with trace_block("Removing related study activity groups"):
+                study_activity_groups = repos.study_activity_group_repository.get_all_study_activity_groups_for_study_activity(
+                    study_uid=study_uid, study_activity_uid=study_selection_uid
+                )
+                for study_activity_group in study_activity_groups:
+                    # delete study activity group
+                    study_activity_group_ar, _ = (
+                        study_activity_group_service._find_ar_to_patch(
+                            study_uid=study_uid,
+                            study_selection_uid=study_activity_group.uid,
+                        )
                     )
-                )
-                study_activity_group_ar.remove_object_selection(
-                    study_activity_group.uid
-                )
-                repos.study_activity_group_repository.save(
-                    study_activity_group_ar, self.author
-                )
+                    study_activity_group_ar.remove_object_selection(
+                        study_activity_group.uid
+                    )
+                    repos.study_activity_group_repository.save(
+                        study_activity_group_ar, self.author
+                    )
 
             # Remove related Study soa groups
-            study_soa_groups = repos.study_soa_group_repository.get_all_study_soa_groups_for_study_activity(
-                study_uid=study_uid, study_activity_uid=study_selection_uid
-            )
-            for study_soa_group in study_soa_groups:
-                # delete study soa group
-                study_soa_group_ar, _ = study_soa_group_service._find_ar_to_patch(
-                    study_uid=study_uid, study_selection_uid=study_soa_group.uid
+            with trace_block("Removing related study soa-groups"):
+                study_soa_groups = repos.study_soa_group_repository.get_all_study_soa_groups_for_study_activity(
+                    study_uid=study_uid, study_activity_uid=study_selection_uid
                 )
-                study_soa_group_ar.remove_object_selection(study_soa_group.uid)
-                repos.study_soa_group_repository.save(study_soa_group_ar, self.author)
+                for study_soa_group in study_soa_groups:
+                    # delete study soa group
+                    study_soa_group_ar, _ = study_soa_group_service._find_ar_to_patch(
+                        study_uid=study_uid, study_selection_uid=study_soa_group.uid
+                    )
+                    study_soa_group_ar.remove_object_selection(study_soa_group.uid)
+                    repos.study_soa_group_repository.save(
+                        study_soa_group_ar, self.author
+                    )
 
             # Remove related Study activity instances
-            study_activity_instances = repos.study_activity_instance_repository.get_all_study_activity_instances_for_study_activity(
-                study_uid=study_uid, study_activity_uid=study_selection_uid
-            )
-            for study_activity_instance in study_activity_instances:
-                # delete study activity instance
-                (
-                    study_activity_instance_ar,
-                    _,
-                    _,
-                ) = self._get_specific_activity_instance_selection_by_uids(
-                    study_uid=study_uid,
-                    study_selection_uid=study_activity_instance.uid,
-                    for_update=True,
+            with trace_block("Removing related study activity instances"):
+                study_activity_instances = repos.study_activity_instance_repository.get_all_study_activity_instances_for_study_activity(
+                    study_uid=study_uid, study_activity_uid=study_selection_uid
                 )
-                study_activity_instance_ar.remove_object_selection(
-                    study_activity_instance.uid
-                )
-                repos.study_activity_instance_repository.save(
-                    study_activity_instance_ar, self.author
-                )
+                for study_activity_instance in study_activity_instances:
+                    # delete study activity instance
+                    (
+                        study_activity_instance_ar,
+                        _,
+                        _,
+                    ) = self._get_specific_activity_instance_selection_by_uids(
+                        study_uid=study_uid,
+                        study_selection_uid=study_activity_instance.uid,
+                        for_update=True,
+                    )
+                    study_activity_instance_ar.remove_object_selection(
+                        study_activity_instance.uid
+                    )
+                    repos.study_activity_instance_repository.save(
+                        study_activity_instance_ar, self.author
+                    )
 
             # remove the connection
             assert selection_aggregate is not None
@@ -1574,7 +1621,9 @@ class StudyActivitySelectionService(
             activity_group_uid=None,
             activity_subgroup_uid=None,
         )
-
+        keep_old_version_date = None
+        if request_object.keep_old_version is True:
+            keep_old_version_date = datetime.now(timezone.utc)
         # fill the missing from the inputs
         fill_missing_values_in_base_model_from_reference_base_model(
             base_model_with_missing_values=request_object,
@@ -1647,6 +1696,7 @@ class StudyActivitySelectionService(
             activity_group_name=activity_group_name,
             show_activity_in_protocol_flowchart=request_object.show_activity_in_protocol_flowchart,
             keep_old_version=request_object.keep_old_version,
+            keep_old_version_date=keep_old_version_date,
             author_id=user().id(),
             author_username=user().username,
             activity_library_name=current_object.activity_library_name,
@@ -1686,6 +1736,50 @@ class StudyActivitySelectionService(
                         )
                 else:
                     raise MethodNotAllowedException(method=operation.method)
+                results.append(
+                    StudySelectionActivityBatchOutput(
+                        response_code=response_code,
+                        content=item,
+                    )
+                )
+            except MDRApiBaseException as error:
+                results.append(
+                    StudySelectionActivityBatchOutput.model_construct(
+                        response_code=error.status_code,
+                        content=BatchErrorResponse(message=str(error)),
+                    )
+                )
+        return results
+
+    @ensure_transaction(db)
+    def handle_review_changes(
+        self,
+        study_uid: str,
+        operations: list[StudySelectionActivityReviewBatchInput],
+    ) -> list[StudySelectionActivityBatchOutput]:
+        results = []
+        for operation in operations:
+            item = None
+            try:
+                if operation.action == StudySelectionReviewAction.ACCEPT:
+                    item = self.update_selection_to_latest_version(
+                        study_uid=study_uid,
+                        study_selection_uid=operation.uid,
+                        sync_latest_version_input=StudyActivitySyncLatestVersionInput(
+                            activity_group_uid=operation.content.activity_group_uid,
+                            activity_subgroup_uid=operation.content.activity_subgroup_uid,
+                        ),
+                    )
+                    response_code = status.HTTP_200_OK
+                elif operation.action == StudySelectionReviewAction.DECLINE:
+                    self.patch_selection(
+                        study_uid=study_uid,
+                        study_selection_uid=operation.uid,
+                        selection_update_input=operation.content,
+                    )
+                    response_code = status.HTTP_204_NO_CONTENT
+                else:
+                    raise MethodNotAllowedException(method=operation.action)
                 results.append(
                     StudySelectionActivityBatchOutput(
                         response_code=response_code,
@@ -1769,7 +1863,7 @@ class StudyActivitySelectionService(
                 )
         return results
 
-    @db.transaction
+    @ensure_transaction(db)
     def update_activity_request_with_sponsor_activity(
         self,
         study_uid: str,
@@ -1834,12 +1928,12 @@ class StudyActivitySelectionService(
         ]
         return all_detailed_history
 
-    @db.transaction
+    @ensure_transaction(db)
     def update_selection_to_latest_version(
         self,
         study_uid: str,
         study_selection_uid: str,
-        sync_latest_version_input: StudyActivitySyncLatestVersionInput,
+        sync_latest_version_input: StudyActivitySyncLatestVersionInput | None,
     ):
         selection_ar: StudySelectionActivityAR
         current_selection: StudySelectionActivityVO
@@ -1862,13 +1956,15 @@ class StudyActivitySelectionService(
         )
         # When we sync to latest version it means we clear keep_old_version flag as user
         # decided to update to latest version
-        selection = selection.update_keep_old_version(keep_old_version=False)
+        selection = selection.update_keep_old_version(
+            keep_old_version=False, keep_old_version_date=None
+        )
 
         # update StudyActivityGroup
         study_activity_group_uid = selection.study_activity_group_uid
         is_study_activity_group_changed: bool = False
         sync_activity_group_version: bool = False
-        if sync_latest_version_input.activity_group_uid:
+        if sync_latest_version_input and sync_latest_version_input.activity_group_uid:
             latest_activity_group_name = (
                 self._repos.activity_group_repository.get_latest_concept_name(
                     uid=sync_latest_version_input.activity_group_uid
@@ -1903,7 +1999,10 @@ class StudyActivitySelectionService(
             )
 
         sync_activity_subgroup_version: bool = False
-        if sync_latest_version_input.activity_subgroup_uid:
+        if (
+            sync_latest_version_input
+            and sync_latest_version_input.activity_subgroup_uid
+        ):
             latest_activity_subgroup_name = (
                 self._repos.activity_subgroup_repository.get_latest_concept_name(
                     uid=sync_latest_version_input.activity_subgroup_uid
@@ -1919,6 +2018,10 @@ class StudyActivitySelectionService(
             sync_latest_version_input
             and sync_latest_version_input.activity_subgroup_uid
         ) or is_study_activity_group_changed:
+            if sync_latest_version_input is None:
+                raise ValidationException(
+                    "Sync latest version input can't be None at this point"
+                )
             (
                 activity_subgroup_uid,
                 _,

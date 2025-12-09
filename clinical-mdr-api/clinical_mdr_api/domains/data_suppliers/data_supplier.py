@@ -21,10 +21,10 @@ class DataSupplierVO:
     order: int | None
     supplier_type_uid: str
     description: str | None
-    supplier_origin_source_uid: str | None
-    supplier_origin_type_uid: str | None
-    supplier_api_base_url: str | None
-    supplier_ui_base_url: str | None
+    origin_source_uid: str | None
+    origin_type_uid: str | None
+    api_base_url: str | None
+    ui_base_url: str | None
 
     @classmethod
     def from_repository_values(
@@ -33,20 +33,20 @@ class DataSupplierVO:
         order: int | None,
         supplier_type_uid: str,
         description: str | None,
-        supplier_origin_source_uid: str | None,
-        supplier_origin_type_uid: str | None,
-        supplier_api_base_url: str | None,
-        supplier_ui_base_url: str | None,
+        origin_source_uid: str | None,
+        origin_type_uid: str | None,
+        api_base_url: str | None,
+        ui_base_url: str | None,
     ) -> Self:
         data_supplier_vo = cls(
             name=name,
             order=order,
             description=description,
             supplier_type_uid=supplier_type_uid,
-            supplier_origin_source_uid=supplier_origin_source_uid,
-            supplier_origin_type_uid=supplier_origin_type_uid,
-            supplier_api_base_url=supplier_api_base_url,
-            supplier_ui_base_url=supplier_ui_base_url,
+            origin_source_uid=origin_source_uid,
+            origin_type_uid=origin_type_uid,
+            api_base_url=api_base_url,
+            ui_base_url=ui_base_url,
         )
 
         return data_supplier_vo
@@ -71,15 +71,15 @@ class DataSupplierVO:
         )
 
         BusinessLogicException.raise_if(
-            self.supplier_origin_type_uid is not None
-            and not ct_term_exists_by_uid_callback(self.supplier_origin_type_uid),
-            msg=f"Supplier Origin Type with UID '{self.supplier_origin_type_uid}' does not exist.",
+            self.origin_type_uid is not None
+            and not ct_term_exists_by_uid_callback(self.origin_type_uid),
+            msg=f"Supplier Origin Type with UID '{self.origin_type_uid}' does not exist.",
         )
 
         BusinessLogicException.raise_if(
-            self.supplier_origin_source_uid is not None
-            and not ct_term_exists_by_uid_callback(self.supplier_origin_source_uid),
-            msg=f"Supplier Origin Source with UID '{self.supplier_origin_source_uid}' does not exist.",
+            self.origin_source_uid is not None
+            and not ct_term_exists_by_uid_callback(self.origin_source_uid),
+            msg=f"Supplier Origin Source with UID '{self.origin_source_uid}' does not exist.",
         )
 
 

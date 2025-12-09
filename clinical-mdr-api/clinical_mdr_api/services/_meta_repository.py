@@ -207,6 +207,9 @@ from clinical_mdr_api.domain_repositories.study_selections.study_compound_reposi
 from clinical_mdr_api.domain_repositories.study_selections.study_criteria_repository import (
     StudySelectionCriteriaRepository,
 )
+from clinical_mdr_api.domain_repositories.study_selections.study_data_supplier_repository import (
+    StudyDataSupplierRepository,
+)
 from clinical_mdr_api.domain_repositories.study_selections.study_design_cell_repository import (
     StudyDesignCellRepository,
 )
@@ -294,6 +297,7 @@ from clinical_mdr_api.domain_repositories.syntax_templates.objective_template_re
 from clinical_mdr_api.domain_repositories.syntax_templates.timeframe_template_repository import (
     TimeframeTemplateRepository,
 )
+from clinical_mdr_api.domain_repositories.user_repository import UserRepository
 
 
 # pylint: disable=too-many-public-methods
@@ -647,6 +651,10 @@ class MetaRepository:
         return ClinicalProgrammeRepository()
 
     @property
+    def study_data_supplier_repository(self) -> StudyDataSupplierRepository:
+        return StudyDataSupplierRepository()
+
+    @property
     def study_objective_repository(self) -> StudySelectionObjectiveRepository:
         return StudySelectionObjectiveRepository()
 
@@ -763,3 +771,7 @@ class MetaRepository:
     @property
     def study_source_variable_repository(self) -> StudySourceVariableRepository:
         return StudySourceVariableRepository()
+
+    @property
+    def user_repository(self) -> UserRepository:
+        return UserRepository()

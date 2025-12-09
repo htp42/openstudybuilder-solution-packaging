@@ -129,7 +129,7 @@ const props = defineProps({
 })
 
 const { t } = useI18n()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const formRules = inject('formRules')
 const emit = defineEmits(['close', 'updated'])
 const studiesManageStore = useStudiesManageStore()
@@ -179,6 +179,7 @@ onMounted(() => {
 })
 
 async function close() {
+  notificationHub.clearErrors()
   if (!formStore.isEqual(form.value)) {
     const options = {
       type: 'warning',
@@ -213,13 +214,13 @@ async function addStudy() {
   const data = JSON.parse(JSON.stringify(form.value))
   data.project_number = project.value.project_number
   const resp = await studiesManageStore.addStudy(data)
-  eventBusEmit('notification', { msg: t('StudyForm.add_success') })
+  notificationHub.add({ msg: t('StudyForm.add_success') })
   await studiesGeneralStore.selectStudy(resp.data, true)
 }
 
 function updateStudy() {
   if (formStore.isEqual(form.value)) {
-    eventBusEmit('notification', { msg: t('_global.no_changes'), type: 'info' })
+    notificationHub.add({ msg: t('_global.no_changes'), type: 'info' })
     return
   }
   const data = JSON.parse(JSON.stringify(form.value))
@@ -234,7 +235,7 @@ function updateStudy() {
         studiesGeneralStore.selectStudy(resp.data)
       }
       emit('updated', resp.data)
-      eventBusEmit('notification', { msg: t('StudyForm.update_success') })
+      notificationHub.add({ msg: t('StudyForm.update_success') })
     })
 }
 
@@ -243,6 +244,8 @@ function getNumberTranslationContext() {
 }
 
 async function submit() {
+  notificationHub.clearErrors()
+
   try {
     if (!props.editedStudy) {
       await addStudy()

@@ -59,7 +59,7 @@ export default {
   components: {
     HelpButtonWithPanels,
   },
-  inject: ['formRules', 'eventBusEmit'],
+  inject: ['formRules', 'notificationHub'],
   props: {
     modelValue: {
       type: Object,
@@ -98,6 +98,7 @@ export default {
   methods: {
     close() {
       this.$emit('close')
+      this.notificationHub.clearErrors()
       this.form.change_description = ''
     },
     setSentenceCase() {
@@ -108,8 +109,10 @@ export default {
     },
     async submit() {
       const { valid } = await this.$refs.observer.validate()
-
       if (!valid) return
+
+      this.notificationHub.clearErrors()
+
       this.working = true
       try {
         let resp = await controlledTerminology.updateCodelistTermNames(
@@ -120,7 +123,7 @@ export default {
           this.modelValue.term_uid
         )
         this.$emit('update:modelValue', resp.data)
-        this.eventBusEmit('notification', {
+        this.notificationHub.add({
           msg: this.$t('CodelistTermNamesForm.update_success'),
         })
         this.close()

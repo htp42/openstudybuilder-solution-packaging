@@ -121,7 +121,7 @@ export default {
   components: {
     SimpleFormDialog,
   },
-  inject: ['eventBusEmit', 'formRules'],
+  inject: ['notificationHub', 'formRules'],
   props: {
     editedArm: {
       type: Object,
@@ -206,6 +206,8 @@ export default {
       return Object.keys(this.editedArm).length !== 0
     },
     async submit() {
+      this.notificationHub.clearErrors()
+
       if (Object.keys(this.editedArm).length !== 0) {
         this.edit()
       } else {
@@ -215,7 +217,7 @@ export default {
     create() {
       arms.create(this.selectedStudy.uid, this.form).then(
         () => {
-          this.eventBusEmit('notification', {
+          this.notificationHub.add({
             msg: this.$t('StudyArmsForm.arm_created'),
           })
           this.close()
@@ -228,7 +230,7 @@ export default {
     edit() {
       arms.edit(this.selectedStudy.uid, this.form, this.editedArm.arm_uid).then(
         () => {
-          this.eventBusEmit('notification', {
+          this.notificationHub.add({
             msg: this.$t('StudyArmsForm.arm_updated'),
           })
           this.close()
@@ -239,6 +241,7 @@ export default {
       )
     },
     close() {
+      this.notificationHub.clearErrors()
       this.form = {}
       this.armCodeEnable = false
       this.$refs.observer.reset()

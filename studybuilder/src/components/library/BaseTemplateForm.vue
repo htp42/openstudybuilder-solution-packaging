@@ -94,7 +94,7 @@ import statuses from '@/constants/statuses'
 import templateParameterTypes from '@/api/templateParameterTypes'
 import templatesApi from '@/api/templates'
 
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const formRules = inject('formRules')
 const props = defineProps({
   objectType: {
@@ -197,6 +197,7 @@ watch(
 )
 
 function close() {
+  notificationHub.clearErrors()
   form.value = {}
   stepper.value.reset()
   steps.value = createModeSteps
@@ -260,17 +261,21 @@ function prepareIndexingPayload() {
 }
 
 async function addTemplate() {
+  notificationHub.clearErrors()
+
   const data = { ...form.value }
 
   await preparePayload(data, true)
   await api.create(data)
   emit('templateAdded')
-  eventBusEmit('notification', {
+  notificationHub.add({
     msg: t(`${translationKey.value}TemplateForm.add_success`),
   })
 }
 
 async function updateTemplate() {
+  notificationHub.clearErrors()
+
   const data = {
     ...form.value,
     indication_uids: form.value.indications
@@ -295,16 +300,18 @@ async function updateTemplate() {
   }
   emit('templateUpdated', template)
   const key = `${translationKey.value}TemplateForm.update_success`
-  eventBusEmit('notification', { msg: t(key) })
+  notificationHub.add({ msg: t(key) })
 }
 
 function verifySyntax() {
+  notificationHub.clearErrors()
+
   if (!form.value.name) {
     return
   }
   const data = { name: form.value.name }
   api.preValidate(data).then(() => {
-    eventBusEmit('notification', { msg: t('_global.valid_syntax') })
+    notificationHub.add({ msg: t('_global.valid_syntax') })
   })
 }
 

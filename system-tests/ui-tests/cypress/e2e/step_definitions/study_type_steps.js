@@ -53,10 +53,6 @@ Then('The Confirmed response minimum duration field is disabled', () => {
     cy.get('[data-cy="duration-unit"] input').should('be.disabled')
 })
 
-Given('Another study with study type defined exists', () => {
-    cy.request(Cypress.env('API') + '/studies/Study_000002?include_sections=high_level_study_design').as('copyData')
-})
-
 When('The study type is partially defined', () => {
     cy.nullStudyType(Cypress.env('TEST_STUDY_UID'))
     cy.wait(5000)

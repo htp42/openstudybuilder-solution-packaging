@@ -152,12 +152,13 @@
         </v-row>
         <v-row>
           <v-col>
-            <v-text-field
+            <v-number-input
               v-model="form.conversion_factor_to_master"
               :label="$t('UnitForm.conversion_factor')"
               data-cy="unit-conversion-factor"
               density="compact"
               clearable
+              precision="5"
             />
           </v-col>
         </v-row>
@@ -192,7 +193,7 @@ import StudybuilderUCUMField from '@/components/tools/StudybuilderUCUMField.vue'
 import { useUnitsStore } from '@/stores/units'
 import { useI18n } from 'vue-i18n'
 
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const formRules = inject('formRules')
 const { t } = useI18n()
 const formRef = ref()
@@ -305,10 +306,13 @@ async function cancel() {
 
 function close() {
   emit('close')
+  notificationHub.clearErrors()
   form.value = getInitialForm()
 }
 
 async function submit() {
+  notificationHub.clearErrors()
+
   if (form.value.ucum && form.value.ucum.term_uid) {
     form.value.ucum = form.value.ucum.term_uid
   }
@@ -321,16 +325,16 @@ async function submit() {
         uid: props.unit.uid,
         data: form.value,
       }
-      unitsStore.updateUnit(data)
-      eventBusEmit('notification', { msg: t('UnitForm.update_success') })
+      await unitsStore.updateUnit(data)
+      notificationHub.add({ msg: t('UnitForm.update_success') })
       close()
     } finally {
       formRef.value.working = false
     }
   } else {
     try {
-      unitsStore.addUnit(form.value)
-      eventBusEmit('notification', { msg: t('UnitForm.add_success') })
+      await unitsStore.addUnit(form.value)
+      notificationHub.add({ msg: t('UnitForm.add_success') })
       close()
     } finally {
       formRef.value.working = false

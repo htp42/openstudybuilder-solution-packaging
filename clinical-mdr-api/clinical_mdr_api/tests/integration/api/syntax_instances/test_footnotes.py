@@ -812,13 +812,13 @@ def test_cannot_update_footnote_without_change_description(api_client):
     res = response.json()
     log.info("Didn't Update Footnote: %s", res)
 
-    assert_response_status_code(response, 422)
-    assert res["detail"] == [
+    assert_response_status_code(response, 400)
+    assert res["details"] == [
         {
-            "type": "missing",
-            "loc": ["body", "change_description"],
+            "error_code": "missing",
+            "field": ["body", "change_description"],
             "msg": "Field required",
-            "input": {"name": "Default name with [TextValue]", "parameter_terms": []},
+            "ctx": {},
         }
     ]
 
@@ -867,7 +867,7 @@ def test_cannot_add_wrong_parameters(
     res = response.json()
     log.info("Didn't change Footnote parameters: %s", res)
 
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
     assert (
         res["message"]
         == "One or more of the specified template parameters can not be found."

@@ -4,7 +4,7 @@
       <v-select
         ref="mainSelect"
         v-model="selectCollection"
-        :items="collections.concat(filteredOutCollections)"
+        :items="availableSelectCollections"
         :item-title="(item) => item?.name || $t('CRFTree.show_all')"
         :item-value="(item) => item?.uid || null"
         class="ms-4 mt-4"
@@ -220,7 +220,7 @@ export default {
     CrfFormForm,
     ConfirmDialog,
   },
-  inject: ['eventBusEmit'],
+  inject: ['notificationHub'],
   data() {
     return {
       headers: [
@@ -291,18 +291,16 @@ export default {
       selectCollection: {},
     }
   },
+  computed: {
+    availableSelectCollections() {
+      return [...this.collections, ...this.filteredOutCollections].sort(
+        (a, b) => a.name.localeCompare(b.name)
+      )
+    },
+  },
   watch: {
     selectCollection(val) {
-      if (isEmpty(val)) {
-        this.collections = this.collections.concat(this.filteredOutCollections)
-        this.filteredOutCollections = []
-      } else {
-        this.collections = this.collections.concat(this.filteredOutCollections)
-        this.filteredOutCollections = this.collections.filter(
-          (c) => c.uid !== val
-        )
-        this.collections = this.collections.filter((c) => c.uid === val)
-      }
+      this.updateCollectionView(val)
     },
   },
   created() {
@@ -312,6 +310,22 @@ export default {
     this.getCollections()
   },
   methods: {
+    updateCollectionView(collection) {
+      if (isEmpty(collection)) {
+        this.collections = [...this.collections, ...this.filteredOutCollections]
+        this.filteredOutCollections = []
+        return
+      }
+
+      const allCollections = [
+        ...this.collections,
+        ...this.filteredOutCollections,
+      ]
+      this.collections = allCollections.filter((c) => c.uid === collection)
+      this.filteredOutCollections = allCollections.filter(
+        (c) => c.uid !== collection
+      )
+    },
     async newVersion(item) {
       this.expanded = this.expanded.filter((e) => e !== item.name)
 
@@ -323,17 +337,21 @@ export default {
       ) {
         this.loading = true
 
-        crfs.newVersion('study-events', item.uid).then((resp) => {
-          this.collections = this.collections.map((c) =>
-            c.uid === resp.data.uid ? { ...c, ...resp.data } : c
-          )
+        crfs
+          .newVersion('study-events', item.uid)
+          .then((resp) => {
+            this.collections = this.collections.map((c) =>
+              c.uid === resp.data.uid ? { ...c, ...resp.data } : c
+            )
 
-          this.expandAll(item)
-          this.loading = false
-          this.eventBusEmit('notification', {
-            msg: this.$t('_global.new_version_success'),
+            this.expandAll(item)
+            this.notificationHub.add({
+              msg: this.$t('_global.new_version_success'),
+            })
           })
-        })
+          .finally(() => {
+            this.loading = false
+          })
       }
     },
     updateCollectionForm(affectedCollection, updatedForm) {
@@ -353,12 +371,14 @@ export default {
       this.$refs.mainSelect?.blur()
     },
     async getCollections(options) {
+      options = { ...options, sortBy: [{ key: 'name', order: 'asc' }] }
       const params = filteringParameters.prepareParameters(options, null, null)
       if (!params) {
         params.total_count = true
       }
       return crfs.get('study-events', { params }).then((resp) => {
         this.collections = resp.data.items
+        this.updateCollectionView(this.selectCollection)
         this.totalCollections = resp.data.total
       })
     },
@@ -445,20 +465,24 @@ export default {
       ) {
         this.loading = true
 
-        await crfs.approve('study-events', item.uid).then((resp) => {
-          this.collections = this.collections.map((collection) => {
-            if (collection.uid === resp.data.uid) {
-              return { ...collection, ...resp.data }
-            }
-            return collection
-          })
+        await crfs
+          .approve('study-events', item.uid)
+          .then((resp) => {
+            this.collections = this.collections.map((collection) => {
+              if (collection.uid === resp.data.uid) {
+                return { ...collection, ...resp.data }
+              }
+              return collection
+            })
 
-          this.loading = false
-          this.eventBusEmit('notification', {
-            msg: this.$t('CRFCollections.approved'),
+            this.notificationHub.add({
+              msg: this.$t('CRFCollections.approved'),
+            })
+            this.expandAll(item)
           })
-          this.expandAll(item)
-        })
+          .finally(() => {
+            this.loading = false
+          })
       }
     },
     async newVersionAll(item) {
@@ -488,8 +512,13 @@ export default {
               return collection
             })
 
-            this.loading = false
+            this.notificationHub.add({
+              msg: this.$t('CRFCollections.new_version_all'),
+            })
             this.expandAll(item)
+          })
+          .finally(() => {
+            this.loading = false
           })
       }
     },

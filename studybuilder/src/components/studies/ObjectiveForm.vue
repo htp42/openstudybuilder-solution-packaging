@@ -277,7 +277,7 @@ import { useStudiesGeneralStore } from '@/stores/studies-general'
 import { useStudiesObjectivesStore } from '@/stores/studies-objectives'
 
 const { t } = useI18n()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const formRules = inject('formRules')
 
 const props = defineProps({
@@ -425,6 +425,7 @@ onMounted(() => {
 })
 
 function close() {
+  notificationHub.clearErrors()
   creationMode.value = 'template'
   form.value = {}
   templateForm.value = {}
@@ -544,7 +545,7 @@ async function extraStepValidation(step) {
       form.value.objective_template === undefined ||
       form.value.objective_template === null
     ) {
-      eventBusEmit('notification', {
+      notificationHub.add({
         msg: t('StudyObjectiveForm.template_not_selected'),
         type: 'error',
       })
@@ -582,11 +583,13 @@ async function extraStepValidation(step) {
 }
 
 async function submit() {
+  notificationHub.clearErrors()
+
   let args = null
 
   if (creationMode.value === 'template') {
     if (!selectedTemplates.value.length) {
-      eventBusEmit('notification', {
+      notificationHub.add({
         msg: t('EligibilityCriteriaForm.no_template_error'),
         type: 'error',
       })
@@ -631,7 +634,7 @@ async function submit() {
     }
   }
   emit('added')
-  eventBusEmit('notification', { msg: t('StudyObjectiveForm.objective_added') })
+  notificationHub.add({ msg: t('StudyObjectiveForm.objective_added') })
   close()
 }
 </script>

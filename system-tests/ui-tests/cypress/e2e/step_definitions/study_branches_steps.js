@@ -11,7 +11,7 @@ Given('A study without Study Arms has been selected', () => cy.selectTestStudy('
 
 Given('The first available arm is selected for the branch', () => cy.selectFirstVSelect('study-arm'))
 
-Then('The option to create branch is not visible', () => cy.get('[data-cy="add-study-branch-arm"]').should('not.exist'))
+Then('The option to create branch arm is not visible', () => cy.get('[data-cy="add-study-branch-arm"]').should('not.exist'))
 
 When('Add branch button is clicked', () => cy.clickButton('add-study-branch-arm'))
 

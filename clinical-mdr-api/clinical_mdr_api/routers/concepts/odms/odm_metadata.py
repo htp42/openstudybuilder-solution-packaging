@@ -1,6 +1,5 @@
 import re
 from datetime import datetime
-from io import BytesIO
 from typing import Annotated
 from urllib.parse import quote
 
@@ -85,6 +84,10 @@ def get_descriptions(
             description=_generic_descriptions.PAGE_SIZE,
         ),
     ] = settings.default_page_size,
+    exclude_english: Annotated[
+        bool,
+        Query(description="Exclude English descriptions (excludes `en` and `eng`)."),
+    ] = False,
     search: Annotated[
         str | None,
         Query(
@@ -93,7 +96,10 @@ def get_descriptions(
     ] = None,
 ) -> CustomPage:
     descriptions, total = get_odm_descriptions(
-        page_size=page_size, page_number=page_number, search=search
+        page_size=page_size,
+        page_number=page_number,
+        search=search,
+        exclude_english=exclude_english,
     )
 
     return CustomPage(items=descriptions, size=page_size, page=page_number, total=total)
@@ -166,12 +172,19 @@ def get_odm_document(
         ),
     ] = None,
     version: Annotated[
-        str | None, Query(description="Get a specific version of the ODM element")
+        str | None,
+        Query(
+            description="Get a specific version of the ODM element",
+            regex="^$|^\\d+\\.\\d+$",
+        ),
     ] = None,
     pdf: Annotated[
         bool, Query(description="Whether or not to export the ODM as a PDF.")
     ] = False,
-    stylesheet: str | None = None,
+    stylesheet: Annotated[
+        str | None,
+        Query(description="Name of the ODM XML Stylesheet.", pattern="^[a-zA-Z0-9-]+$"),
+    ] = None,
     mapper_file: Annotated[
         UploadFile | None, File(description=MAPPER_DESCRIPTION)
     ] = None,
@@ -187,33 +200,26 @@ def get_odm_document(
         stylesheet,
         mapper_file,
     )
-    rs = odm_xml_export_service.get_odm_document()
-
-    safe_filename = quote(f"CRF - {datetime.now()}.pdf", safe="")
+    content = odm_xml_export_service.get_odm_document()
 
     if pdf:
-        buffer_io = BytesIO()
-        buffer_io.write(rs)
-        pdf_bytes = buffer_io.getvalue()
-        buffer_io.close()
         return Response(
-            pdf_bytes,
+            content,
             headers={
-                "Content-Disposition": f'attachment; filename="{safe_filename}"',
+                "Content-Disposition": f'attachment; filename="{datetime.now().strftime('CRF %Y%m%d %H%M%S.pdf')}"',
+                "X-Content-Type-Options": "nosniff",
+                "Content-Security-Policy": "default-src 'none'",
             },
             media_type="application/pdf",
         )
 
-    safe_filename = quote(
-        f"odm_export_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xml", safe=""
-    )
-
     return Response(
-        content=rs,
+        content=content,
         media_type="application/xml",
         headers={
-            "Content-Disposition": f'attachment; filename="{safe_filename}"',
+            "Content-Disposition": f'attachment; filename="{datetime.now().strftime('odm_export_%Y%m%d_%H%M%S.xml')}"',
             "X-Content-Type-Options": "nosniff",
+            "Content-Security-Policy": "default-src 'none'",
         },
     )
 

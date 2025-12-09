@@ -54,7 +54,7 @@ const props = defineProps({
 })
 const emit = defineEmits(['close', 'created'])
 const { t } = useI18n()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const formRules = inject('formRules')
 
 const catalogues = ref([])
@@ -64,6 +64,7 @@ const packages = ref([])
 const selectedCatalogue = ref(null)
 
 function close() {
+  notificationHub.clearErrors()
   formRef.value.resetValidation()
   form.value = {}
   emit('close')
@@ -74,13 +75,16 @@ async function submit() {
   if (!valid) {
     return
   }
+
+  notificationHub.clearErrors()
+
   const today = new Date()
   const data = {
     ...form.value,
     effective_date: today.toISOString().split('T')[0],
   }
   controlledTerminologyApi.createSponsorPackage(data).then(() => {
-    eventBusEmit('notification', {
+    notificationHub.add({
       msg: t('SponsorCTPackageForm.creation_success'),
     })
     emit('created')

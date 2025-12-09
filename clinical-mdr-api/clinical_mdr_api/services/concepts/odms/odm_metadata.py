@@ -1,5 +1,8 @@
+from typing import Any
+
 from neomodel import db
 
+from clinical_mdr_api.domains.concepts.utils import EN_LANGUAGE, ENG_LANGUAGE
 from common.utils import get_db_result_as_dict, validate_max_skip_clause
 
 
@@ -9,6 +12,7 @@ def _query(
     page_size: int,
     page_number: int,
     search: str | None,
+    exclude: dict[str, list[Any]] | None = None,
 ) -> tuple[list[dict[str, str]], int]:
     """
     Generic query function to get paginated results from a given node.
@@ -20,25 +24,35 @@ def _query(
     :param search: Search term to filter results
     :return: Tuple of list of results and total count
     """
+    if exclude is None:
+        exclude = {}
+
     validate_max_skip_clause(page_number=page_number, page_size=page_size)
 
-    params: dict[str, str | int] = {
+    params: dict[str, list[Any] | str | int] = {
         "skip": page_size * (page_number - 1),
         "limit": page_size,
     }
 
     where_stmt = ""
 
-    for key in fields:
-        if search is None:
-            continue
+    if search is not None and search.strip() != "":
+        for key in fields:
+            if where_stmt:
+                where_stmt += f"OR toLower(n.{key}) CONTAINS ${key} "
+                params[key] = search.casefold()
+            else:
+                where_stmt += f"WHERE (toLower(n.{key}) CONTAINS ${key} "
+                params[key] = search.casefold()
+        where_stmt += ") "
 
+    for key, value in exclude.items():
         if where_stmt:
-            where_stmt += f"OR toLower(n.{key}) CONTAINS ${key} "
-            params[key] = search.casefold()
+            where_stmt += f"AND (NOT n.{key} IN ${key}) "
+            params[key] = value
         else:
-            where_stmt += f"WHERE toLower(n.{key}) CONTAINS ${key} "
-            params[key] = search.casefold()
+            where_stmt += f"WHERE NOT n.{key} IN ${key} "
+            params[key] = value
 
     results, columns = db.cypher_query(
         f"""
@@ -74,12 +88,12 @@ def get_odm_aliases(
 
 
 def get_odm_descriptions(
-    page_size: int, page_number: int, search: str | None
+    page_size: int, page_number: int, search: str | None, exclude_english: bool = False
 ) -> tuple[list[dict[str, str]], int]:
     """
     Get all ODM Descriptions.
 
-    :param page_size: Number of items per page
+    :param page_size: Number of items per page∂
     :param page_number: Page number
     :param search: Search term to filter results
     :return: List of ODM Descriptions
@@ -91,6 +105,7 @@ def get_odm_descriptions(
         page_size,
         page_number,
         search,
+        {"language": [ENG_LANGUAGE, EN_LANGUAGE]} if exclude_english else None,
     )
 
 

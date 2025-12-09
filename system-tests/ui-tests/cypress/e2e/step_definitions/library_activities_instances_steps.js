@@ -74,6 +74,10 @@ When('[API] Activity Instance in status Final with Final group, subgroup and act
     cy.getActivityInstanceNameByUid().then(name => activityInstance = name)
 })
 
+When('[API] Activity Instance is created and approved', () => { cy.createActivityInstance(), cy.approveActivityInstance()})
+
+When('[API] Get class uid for activity instance creation', () => cy.getClassUid())
+
 Then('The edit form displays text {string}', (message) => cy.get('.v-alert').should('contain', message))
 
 Then('User waits for activity instance to be {string}', (action) => {

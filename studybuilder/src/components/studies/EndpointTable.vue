@@ -216,7 +216,7 @@ import { useI18n } from 'vue-i18n'
 import { useDragAndDrop } from '@formkit/drag-and-drop/vue'
 
 const { t } = useI18n()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const roles = inject('roles')
 const studiesGeneralStore = useStudiesGeneralStore()
 const studiesEndpointsStore = useStudiesEndpointsStore()
@@ -442,7 +442,7 @@ async function updateTimeframeVersion(item) {
     studiesEndpointsStore
       .updateStudyEndpointTimeframeLatestVersion(args)
       .then(() => {
-        eventBusEmit('notification', {
+        notificationHub.add({
           msg: t('StudyObjectivesTable.update_version_successful'),
         })
       })
@@ -502,7 +502,7 @@ async function updateEndpointVersion(item) {
     studiesEndpointsStore
       .updateStudyEndpointEndpointLatestVersion(args)
       .then(() => {
-        eventBusEmit('notification', {
+        notificationHub.add({
           msg: t('StudyEndpointsTable.update_version_successful'),
         })
       })
@@ -561,7 +561,7 @@ async function deleteEndpoint(studyEndpoint) {
         studyEndpointUid: studyEndpoint.study_endpoint_uid,
       })
       .then(() => {
-        eventBusEmit('notification', {
+        notificationHub.add({
           msg: t('StudyEndpointsTable.delete_success'),
         })
         table.value.filterTable()

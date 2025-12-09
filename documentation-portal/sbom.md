@@ -1,3 +1,9 @@
-No third-party licenses to include for this component. Created with [Vuepress](https://github.com/vuejs/vuepress)
+
+## Installed packages
+
+No third-party packages were installed in the runtime environment.
+
+Created with [VuePress](https://github.com/vuejs/vuepress).
+
 
 

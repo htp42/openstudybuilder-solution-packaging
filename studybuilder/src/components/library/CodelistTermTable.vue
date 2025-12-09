@@ -111,7 +111,7 @@ import { useAccessGuard } from '@/composables/accessGuard'
 const { t } = useI18n()
 const router = useRouter()
 const accessGuard = useAccessGuard()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const roles = inject('roles')
 const props = defineProps({
   codelistUid: {
@@ -284,7 +284,7 @@ function removeTerm(term) {
     .removeTermFromCodelist(props.codelistUid, term.term_uid)
     .then(() => {
       fetchTerms()
-      eventBusEmit('notification', {
+      notificationHub.add({
         msg: t('CodelistTermCreationForm.remove_success'),
       })
     })
@@ -295,7 +295,7 @@ function closeForm() {
 }
 function goToTerm(term) {
   editTerm(term)
-  eventBusEmit('notification', {
+  notificationHub.add({
     msg: t('CodelistTermCreationForm.add_success'),
   })
 }

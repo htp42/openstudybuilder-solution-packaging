@@ -93,7 +93,7 @@ export default {
   components: {
     SimpleFormDialog,
   },
-  inject: ['eventBusEmit', 'formRules'],
+  inject: ['notificationHub', 'formRules'],
   props: {
     editedTerm: {
       type: Object,
@@ -177,6 +177,7 @@ export default {
       }
     },
     close() {
+      this.notificationHub.clearErrors()
       this.form = {}
       this.$refs.form.working = false
       this.formStore.reset()
@@ -190,10 +191,12 @@ export default {
       }
     },
     edit() {
+      this.notificationHub.clearErrors()
+
       const data = JSON.parse(JSON.stringify(this.form))
       dictionaries.edit(this.editedTerm.term_uid, data).then(
         () => {
-          this.eventBusEmit('notification', {
+          this.notificationHub.add({
             msg: this.$t('DictionaryTermForm.update_success'),
           })
           this.$emit('save')
@@ -205,12 +208,14 @@ export default {
       )
     },
     async create() {
+      this.notificationHub.clearErrors()
+
       this.form.library_name = this.dictionaryName
       this.form.codelist_uid = this.editedTermCategory
       const data = JSON.parse(JSON.stringify(this.form))
       dictionaries.create(data).then(
         () => {
-          this.eventBusEmit('notification', {
+          this.notificationHub.add({
             msg: this.$t('DictionaryTermForm.create_success'),
           })
           this.$emit('save')

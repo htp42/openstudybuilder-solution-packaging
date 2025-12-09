@@ -10,6 +10,9 @@ const STUDY_LOCKED = 'LOCKED'
 const COMMENT_STATUS_ACTIVE = 'ACTIVE'
 const COMMENT_STATUS_RESOLVED = 'RESOLVED'
 
+const ACCEPT = 'Accept'
+const DECLINE = 'Decline'
+
 export default {
   LATEST,
   DRAFT,
@@ -21,4 +24,6 @@ export default {
   COMMENT_STATUS_ACTIVE,
   COMMENT_STATUS_RESOLVED,
   SUGGESTION,
+  ACCEPT,
+  DECLINE,
 }

@@ -10,7 +10,8 @@ Cypress.Commands.add('clickButton', (button, optionForce = true) => {
 
 Cypress.Commands.add('clickFormActionButton', (action) => {
     cy.get(`.v-card-actions [data-cy="${action.toLowerCase()}-button"]`).click({ force: true })
-    cy.wait(1500)
+    cy.get(`.v-card-actions [data-cy="${action.toLowerCase()}-button"] .v-progress-circular`, { timeout: 30000 }).should('not.exist') 
+    if (action != 'save') cy.wait(1500)
 })
 
 Cypress.Commands.add('clickByIndex', (button, index, optionForce = true) => {

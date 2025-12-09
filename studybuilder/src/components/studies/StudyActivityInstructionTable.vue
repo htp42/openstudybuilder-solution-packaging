@@ -253,7 +253,7 @@ export default {
     StudyActivityInstructionBatchEditForm,
     StudyActivityInstructionBatchForm,
   },
-  inject: ['eventBusEmit'],
+  inject: ['notificationHub'],
   setup() {
     const accessGuard = useAccessGuard()
     const studiesGeneralStore = useStudiesGeneralStore()
@@ -384,7 +384,7 @@ export default {
             delete this.instructionsPerStudyActivity[
               studyActivity.study_activity_uid
             ]
-            this.eventBusEmit('notification', {
+            this.notificationHub.add({
               type: 'success',
               msg: this.$t('StudyActivityInstructionTable.delete_success'),
             })
@@ -401,7 +401,7 @@ export default {
     },
     openBatchForm() {
       if (!this.currentSelection.length) {
-        this.eventBusEmit('notification', {
+        this.notificationHub.add({
           type: 'warning',
           msg: this.$t('StudyActivityInstructionTable.batch_no_selection'),
         })

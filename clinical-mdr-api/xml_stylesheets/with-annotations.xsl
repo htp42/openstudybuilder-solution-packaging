@@ -243,7 +243,7 @@
             </div>
             <div class="col-sm-6 text-right">
               <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="collapse" data-bs-target=".sponsor" onclick="toggleButtonColor(this)">Design notes</button>&#160;
-              <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="collapse" data-bs-target=".help" onclick="toggleButtonColor(this)">Implementation notes</button>&#160;
+              <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="collapse" data-bs-target=".help" onclick="toggleButtonColor(this)">Completion Instructions</button>&#160;
               <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="collapse" data-bs-target=".Cdash" onclick="toggleButtonColor(this)">Cdash</button>&#160;
               <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="collapse" data-bs-target=".Sdtm" onclick="toggleButtonColor(this)">SDTM</button>&#160;
               <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="collapse" data-bs-target=".TopicCode" onclick="toggleButtonColor(this)">TopicCode</button>&#160;
@@ -729,9 +729,9 @@
                         </xsl:when>
                       </xsl:choose>
                       <xsl:choose>
-                        <xsl:when test="./Alias/@Context = 'ImplementationNotes'">
+                        <xsl:when test="./Alias/@Context = 'CompletionInstructions'">
                           <div class="alert alert-danger d-flex" role="alert">
-                            <xsl:for-each select="./Alias[@Context = 'ImplementationNotes']">
+                            <xsl:for-each select="./Alias[@Context = 'CompletionInstructions']">
                               <span class="material-symbols-outlined">emergency_home</span>&#160;
                               <xsl:value-of disable-output-escaping="yes" select="./@Name" />
                             </xsl:for-each>

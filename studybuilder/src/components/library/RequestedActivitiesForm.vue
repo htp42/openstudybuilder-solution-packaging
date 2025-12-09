@@ -130,7 +130,7 @@ export default {
     SimpleFormDialog,
     SentenceCaseNameField,
   },
-  inject: ['eventBusEmit', 'formRules'],
+  inject: ['notificationHub', 'formRules'],
   props: {
     editedActivity: {
       type: Object,
@@ -222,17 +222,20 @@ export default {
     },
     close() {
       this.$emit('close')
+      this.notificationHub.clearErrors()
       this.form = { activity_groupings: [{}] }
       this.formStore.reset()
       this.$refs.observer.reset()
     },
     async submit() {
+      this.notificationHub.clearErrors()
+
       this.form.library_name = libConstants.LIBRARY_REQUESTED
       this.form.is_request_final = true
       if (!this.isEdit) {
         activities.create(this.form, 'activities').then(
           () => {
-            this.eventBusEmit('notification', {
+            this.notificationHub.add({
               msg: this.$t('ActivityForms.activity_created'),
             })
             this.close()
@@ -246,7 +249,7 @@ export default {
           .update(this.editedActivity.uid, this.form, {}, 'activities')
           .then(
             () => {
-              this.eventBusEmit('notification', {
+              this.notificationHub.add({
                 msg: this.$t('ActivityForms.activity_updated'),
               })
               this.close()

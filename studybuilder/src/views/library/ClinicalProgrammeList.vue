@@ -53,7 +53,7 @@ import ClinicalProgrammeForm from '@/components/library/ClinicalProgrammeForm.vu
 import filteringParameters from '@/utils/filteringParameters'
 
 const { t } = useI18n()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const roles = inject('roles')
 
 const actions = [
@@ -121,7 +121,7 @@ async function deleteProgramme(item) {
     )
   ) {
     await programmes.delete(item.uid)
-    eventBusEmit('notification', {
+    notificationHub.add({
       msg: t('ClinicalProgrammes.delete_success'),
       type: 'success',
     })

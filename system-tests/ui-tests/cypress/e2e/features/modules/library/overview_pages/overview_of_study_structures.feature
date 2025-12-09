@@ -16,16 +16,16 @@ Feature: Library - Overview Pages - Study Structures
     Scenario: [Table][Columns][Names] User must be able to see the columns list on the main page as below
         Given The '/library/overviews/study_structures' page is opened
         Then A table is visible with following headers
-            | headers                     |
-            | No of arms                  |
-            | No of pre-treatment epochs  |
-            | No of treatment epochs      |
-            | No of post-treatment epochs |
-            | No of no-treatment epochs   |
-            | No of no-treatment elements |
-            | No of treatment elements    |
-            | Cohorts in study            |
-            | Study ID(s)                 |
+            | headers               |
+            | Arms                  |
+            | Pre-treatment epochs  |
+            | Treatment epochs      |
+            | Post-treatment epochs |
+            | No-treatment epochs   |
+            | No-treatment elements |
+            | Treatment elements    |
+            | Cohorts?              |
+            | Study ID(s)           |
 
     Scenario Outline: [Table][Filtering] User must be able to filter the table by text fields
         Given The '/library/overviews/study_structures' page is opened
@@ -33,16 +33,16 @@ Feature: Library - Overview Pages - Study Structures
         Then The table is filtered correctly
 
         Examples:
-            | name                        |
-            | No of arms                  |
-            | No of pre-treatment epochs  |
-            | No of treatment epochs      |
-            | No of post-treatment epochs |
-            | No of no-treatment epochs   |
-            | No of no-treatment elements |
-            | No of treatment elements    |
-            | Cohorts in study            |
-            | Study ID(s)                 |
+            | name                  |
+            | Arms                  |
+            | Pre-treatment epochs  |
+            | Treatment epochs      |
+            | Post-treatment epochs |
+            | No-treatment epochs   |
+            | No-treatment elements |
+            | Treatment elements    |
+            | Cohorts?              |
+            | Study ID(s)           |
 
     @manual_test
     # to be implemented later after API test complete

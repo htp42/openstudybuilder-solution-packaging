@@ -122,6 +122,11 @@ export default {
   getCodelistTerms(params) {
     return repository.get(`${resource}/terms`, { params })
   },
+  getCodelistTermsByCodelistUid(codelistUid, params) {
+    return repository.get(`${resource}/codelists/${codelistUid}/terms`, {
+      params,
+    })
+  },
   getCodelistTermsNames(params) {
     return repository.get(`${resource}/terms/names`, { params })
   },

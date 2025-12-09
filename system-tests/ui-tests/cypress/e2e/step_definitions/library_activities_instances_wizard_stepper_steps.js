@@ -22,6 +22,8 @@ When("The {string} is selected from the Activity instance class field", name => 
 
 When("First value is selected from the Data domain field", () => selectFirstDataDomain())
 
+When('Customize toggle is turn on', () => cy.get('input[aria-label="Customize"]').check())
+
 When("Value {string} is selected for {int} Activity item class field", (value, index) => selectOptionalActivityItemClass(index, value))
 
 When("The first Activity item class is selected", () => selectFirstActivityItemClass())
@@ -106,6 +108,7 @@ function createInstance(uniqueName, uniqueTopicCode) {
     requiredTabSelection('Activity instance', 'CategoricFindings')
     selectFirstDataDomain()
     cy.clickFormActionButton('continue')
+    cy.get('input[aria-label="Customize"]').check()
     fillField('ADaM parameter', 'ADAM')
     fillField('Topic code', topicCode)
     fillField('Activity instance name', instanceName)

@@ -150,7 +150,10 @@ class ActivityInstanceService(ConceptGenericService[ActivityInstanceAR]):
         )
 
     def _edit_aggregate(
-        self, item: ActivityInstanceAR, concept_edit_input: ActivityInstanceEditInput
+        self,
+        item: ActivityInstanceAR,
+        concept_edit_input: ActivityInstanceEditInput,
+        perform_validation: bool = True,
     ) -> ActivityInstanceAR:
         fields_set = concept_edit_input.model_fields_set
         if "activity_groupings" in fields_set:
@@ -289,6 +292,7 @@ class ActivityInstanceService(ConceptGenericService[ActivityInstanceAR]):
             find_activity_item_class_by_uid_callback=self._repos.activity_item_class_repository.find_by_uid_2,
             find_activity_instance_class_by_uid_callback=self._repos.activity_instance_class_repository.find_by_uid_2,
             get_dimension_names_by_unit_definition_uids=self._repos.unit_definition_repository.get_dimension_names_by_unit_definition_uids,
+            perform_validation=perform_validation,
         )
         return item
 

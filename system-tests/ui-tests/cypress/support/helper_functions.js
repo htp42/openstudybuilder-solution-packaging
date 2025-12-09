@@ -1,3 +1,8 @@
+export const generateShortUniqueName = (prefix) => {
+    const timestamp = Date.now().toString(36)
+    return `${prefix}${timestamp}`
+}
+
 export function stringToBoolean(value) {
   switch (value) {
     case true:

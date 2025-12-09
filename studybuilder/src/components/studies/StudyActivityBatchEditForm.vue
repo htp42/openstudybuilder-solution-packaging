@@ -46,7 +46,7 @@ export default {
   components: {
     StudyActivitySelectionBaseForm,
   },
-  inject: ['eventBusEmit'],
+  inject: ['notificationHub'],
   props: {
     selection: {
       type: Array,
@@ -75,6 +75,7 @@ export default {
   },
   methods: {
     close() {
+      this.notificationHub.clearErrors()
       this.form = {}
       this.$emit('close')
     },
@@ -82,6 +83,8 @@ export default {
       this.$emit('remove', item)
     },
     async submit() {
+      this.notificationHub.clearErrors()
+
       const data = []
       if (this.form.deleteSelection) {
         for (const item of this.selection) {
@@ -114,7 +117,7 @@ export default {
         study
           .studyActivityBatchOperations(this.selectedStudy.uid, data)
           .then(() => {
-            this.eventBusEmit('notification', {
+            this.notificationHub.add({
               type: 'success',
               msg: this.$t('StudyActivityBatchEditForm.update_success'),
             })

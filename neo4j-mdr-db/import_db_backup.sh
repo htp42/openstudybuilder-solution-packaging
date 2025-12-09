@@ -30,8 +30,7 @@ echo "- Checking that database $DBNAME exists"
 DBLISTING=$(docker exec "$1" /var/lib/neo4j/bin/cypher-shell -d system -u "$NEO4J_MDR_AUTH_USER" -p "$NEO4J_MDR_AUTH_PASSWORD" -a "neo4j://localhost:$NEO4J_MDR_BOLT_PORT" "SHOW DATABASE \`$DBNAME\` YIELD *")
 if [ -z "$DBLISTING" ]
 then
-	echo "Error, database $DBNAME does not exist"
-	exit 1
+	docker exec "$1" /var/lib/neo4j/bin/cypher-shell -d system -u "$NEO4J_MDR_AUTH_USER" -p "$NEO4J_MDR_AUTH_PASSWORD" -a "neo4j://localhost:$NEO4J_MDR_BOLT_PORT" "CREATE DATABASE \`$DBNAME\`"
 fi
 
 echo "- Stop database"

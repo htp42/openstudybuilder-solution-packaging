@@ -10,6 +10,7 @@
       variant="outlined"
       rounded="lg"
       density="compact"
+      autocomplete="off"
       clearable
       :loading="loading"
       @update:model-value="autoPopulateAcronym"
@@ -25,6 +26,7 @@
       variant="outlined"
       rounded="lg"
       density="compact"
+      autocomplete="off"
       clearable
       :loading="loading"
       @update:model-value="autoPopulateId"

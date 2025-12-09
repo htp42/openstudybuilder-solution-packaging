@@ -152,7 +152,7 @@ export default {
   components: {
     SimpleFormDialog,
   },
-  inject: ['eventBusEmit', 'formRules'],
+  inject: ['notificationHub', 'formRules'],
   props: {
     studyEpoch: {
       type: Object,
@@ -248,6 +248,7 @@ export default {
     },
     close() {
       this.$emit('close')
+      this.notificationHub.clearErrors()
       this.form = {}
       this.colorHash = null
       this.$refs.observer.reset()
@@ -325,6 +326,8 @@ export default {
       }
     },
     async submit() {
+      this.notificationHub.clearErrors()
+
       try {
         if (!this.studyEpoch) {
           await this.addObject()
@@ -349,7 +352,7 @@ export default {
         input: data,
       }).then(() => {
         this.fetchStudyEpochs({ studyUid: this.selectedStudy.uid })
-        this.eventBusEmit('notification', {
+        this.notificationHub.add({
           msg: this.$t('StudyEpochForm.add_success'),
         })
       })
@@ -370,7 +373,7 @@ export default {
         input: data,
       }).then(() => {
         this.fetchStudyEpochs({ studyUid: this.selectedStudy.uid })
-        this.eventBusEmit('notification', {
+        this.notificationHub.add({
           msg: this.$t('StudyEpochForm.update_success'),
         })
       })

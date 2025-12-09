@@ -83,7 +83,7 @@ import StatusChip from '@/components/tools/StatusChip.vue'
 import { useAccessGuard } from '@/composables/accessGuard'
 import filteringParameters from '@/utils/filteringParameters'
 
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const roles = inject('roles')
 const { t } = useI18n()
 
@@ -228,7 +228,7 @@ function editCompound(item) {
 function approveCompound(item) {
   compoundsApi.approve(item.uid).then(() => {
     fetchItems()
-    eventBusEmit('notification', {
+    notificationHub.add({
       msg: t('CompoundTable.approve_success'),
       type: 'success',
     })
@@ -245,7 +245,7 @@ async function deleteCompound(item) {
   ) {
     await compoundsApi.deleteObject(item.uid)
     fetchItems()
-    eventBusEmit('notification', {
+    notificationHub.add({
       msg: t('CompoundTable.delete_success'),
       type: 'success',
     })
@@ -254,7 +254,7 @@ async function deleteCompound(item) {
 function createNewVersion(item) {
   compoundsApi.newVersion(item.uid).then(() => {
     fetchItems()
-    eventBusEmit('notification', {
+    notificationHub.add({
       msg: t('CompoundTable.new_version_success'),
       type: 'success',
     })
@@ -263,7 +263,7 @@ function createNewVersion(item) {
 function inactivateCompound(item) {
   compoundsApi.inactivate(item.uid).then(() => {
     fetchItems()
-    eventBusEmit('notification', {
+    notificationHub.add({
       msg: t('CompoundTable.inactivate_success'),
       type: 'success',
     })
@@ -272,7 +272,7 @@ function inactivateCompound(item) {
 function reactivateCompound(item) {
   compoundsApi.reactivate(item.uid).then(() => {
     fetchItems()
-    eventBusEmit('notification', {
+    notificationHub.add({
       msg: t('CompoundTable.reactivate_success'),
       type: 'success',
     })

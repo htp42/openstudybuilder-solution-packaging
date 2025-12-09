@@ -301,7 +301,7 @@ import pharmaceuticalProducts from '@/api/concepts/pharmaceuticalProducts'
 import compoundAliases from '@/api/concepts/compoundAliases'
 
 const { t } = useI18n()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const formRules = inject('formRules')
 const props = defineProps({
   studyCompoundDosingUid: {
@@ -416,6 +416,7 @@ onMounted(() => {
 
 function close() {
   emit('close')
+  notificationHub.clearErrors()
   form.value = {}
   stepper.value.reset()
 }
@@ -445,6 +446,8 @@ function getObserver(step) {
   return compoundDosingForm.value
 }
 async function submit() {
+  notificationHub.clearErrors()
+
   const data = { ...form.value }
   data.study_element_uid = data.study_element.element_uid
   delete data.study_element
@@ -469,7 +472,7 @@ async function submit() {
 
   try {
     await studiesCompoundsStore[action](args)
-    eventBusEmit('notification', {
+    notificationHub.add({
       msg: t(`StudyCompoundDosingForm.${notification}`),
     })
     close()

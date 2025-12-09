@@ -105,7 +105,7 @@ class ActivityGroupRepository(ConceptGenericRepository[ActivityGroupAR]):
         (
             filter_statements_from_concept,
             filter_query_parameters,
-        ) = super().create_query_filter_statement(library=library)
+        ) = super().create_query_filter_statement(library=library, **kwargs)
         filter_parameters = []
         if kwargs.get("activity_subgroup_names") is not None:
             activity_subgroup_names = kwargs.get("activity_subgroup_names")
@@ -365,3 +365,60 @@ class ActivityGroupRepository(ConceptGenericRepository[ActivityGroupAR]):
         subgroups = [dict(result[0]) for result in results] if results else []
 
         return {"subgroups": subgroups, "total": total}
+
+    def get_linked_upgradable_activity_subgroups(
+        self, uid: str, version: str | None = None
+    ) -> dict[Any, Any] | None:
+        # Get "upgradable" linked activity subgroups.
+        # These are the subgroup values that have no end date,
+        # meaning that the linked value is the latest version of the subgroup.
+        params = {"uid": uid}
+        if version:
+            params["version"] = version
+            match = """
+                MATCH (activity_group_root:ActivityGroupRoot {uid:$uid})-[hv:HAS_VERSION {version:$version}]->(activity_group_value:ActivityGroupValue)
+                WITH DISTINCT activity_group_root, activity_group_value
+                """
+        else:
+            match = """
+                MATCH (activity_group_root:ActivityGroupRoot {uid:$uid})-[:LATEST]->(activity_group_value:ActivityGroupValue)
+                """
+
+        query = (
+            match
+            + """
+        MATCH (activity_group_value)<-[:IN_GROUP]-(activity_valid_group:ActivityValidGroup)<-[:HAS_GROUP]-
+            (activity_subgroup_value:ActivitySubGroupValue)<-[aihv:HAS_VERSION]-(activity_subgroup_root:ActivitySubGroupRoot)
+        MATCH (activity_subgroup_root)-[:LATEST]->(:ActivitySubGroupValue)-[:HAS_GROUP]->(:ActivityValidGroup)-[:IN_GROUP]->(:ActivityGroupValue)<-[:HAS_VERSION]-(agr:ActivityGroupRoot)
+        WITH DISTINCT activity_subgroup_root, activity_subgroup_value, aihv, COLLECT(DISTINCT agr.uid) AS activity_groups
+        WHERE aihv.end_date IS NULL AND NOT EXISTS ((activity_subgroup_value)<--(:DeletedActivitySubGroupRoot))
+        WITH *,
+            {
+                library_name: head([(library)-[:CONTAINS_CONCEPT]->(activity_subgroup_root) | library.name]),
+                uid: activity_subgroup_root.uid,
+                version: 
+                    {
+                        major_version: toInteger(split(aihv.version,'.')[0]),
+                        minor_version: toInteger(split(aihv.version,'.')[1]),
+                        status:aihv.status
+                    },
+                name:activity_subgroup_value.name,
+                name_sentence_case:activity_subgroup_value.name_sentence_case,
+                activity_groups: activity_groups
+            } AS activity_subgroup ORDER BY activity_subgroup.uid, activity_subgroup.name
+        RETURN
+            collect(activity_subgroup) as activity_subgroups
+        """
+        )
+        result_array, attribute_names = db.cypher_query(query=query, params=params)
+        if len(result_array) == 0:
+            return None
+        BusinessLogicException.raise_if(
+            len(result_array) > 1,
+            msg=f"The linked subgroups query returned broken data: {result_array}",
+        )
+        instances = result_array[0]
+        instances_dict = {}
+        for instances_prop, attribute_name in zip(instances, attribute_names):
+            instances_dict[attribute_name] = instances_prop
+        return instances_dict

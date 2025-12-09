@@ -87,7 +87,7 @@ export default {
     NNTable,
     StatusChip,
   },
-  inject: ['eventBusEmit'],
+  inject: ['notificationHub'],
   props: {
     tabClickedAt: {
       type: Number,
@@ -245,7 +245,7 @@ export default {
     approveItem(item) {
       activeSubstances.approve(item.uid).then(() => {
         this.fetchItems()
-        this.eventBusEmit('notification', {
+        this.notificationHub.add({
           msg: this.$t('ActiveSubstanceTable.approve_success'),
           type: 'success',
         })
@@ -262,7 +262,7 @@ export default {
       ) {
         await activeSubstances.deleteObject(item.uid)
         this.fetchItems()
-        this.eventBusEmit('notification', {
+        this.notificationHub.add({
           msg: this.$t('ActiveSubstanceTable.delete_success'),
           type: 'success',
         })
@@ -271,7 +271,7 @@ export default {
     createNewVersion(item) {
       activeSubstances.newVersion(item.uid).then(() => {
         this.fetchItems()
-        this.eventBusEmit('notification', {
+        this.notificationHub.add({
           msg: this.$t('ActiveSubstanceTable.new_version_success'),
           type: 'success',
         })
@@ -280,7 +280,7 @@ export default {
     inactivateItem(item) {
       activeSubstances.inactivate(item.uid).then(() => {
         this.fetchItems()
-        this.eventBusEmit('notification', {
+        this.notificationHub.add({
           msg: this.$t('ActiveSubstanceTable.inactivate_success'),
           type: 'success',
         })
@@ -289,7 +289,7 @@ export default {
     reactivateItem(item) {
       activeSubstances.reactivate(item.uid).then(() => {
         this.fetchItems()
-        this.eventBusEmit('notification', {
+        this.notificationHub.add({
           msg: this.$t('ActiveSubstanceTable.reactivate_success'),
           type: 'success',
         })

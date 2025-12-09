@@ -85,7 +85,7 @@ async def validate_token(token: Annotated[str, Depends(oauth_scheme)]):
     persist_user(user_info=user())
 
 
-def dummy_user_auth():
+def dummy_user_auth(user_id: str = "unknown-user"):
     """
     Sets context Auth object with dummy data.
 
@@ -96,7 +96,7 @@ def dummy_user_auth():
         Any exceptions raised during token validation.
     """
 
-    context["auth"] = dummy_auth_object(dummy_access_token_claims())
+    context["auth"] = dummy_auth_object(dummy_access_token_claims(user_id=user_id))
     persist_user(user_info=user())
 
 
@@ -132,16 +132,16 @@ else:
             pass
 
 
-def dummy_user(roles: set[str] | None = None) -> User:
+def dummy_user(roles: set[str] | None = None, user_id: str = "unknown-user") -> User:
     """Returns User object with dummy data"""
 
     return User(
         sub="xyz",
-        azp="unknown-user",
-        oid="unknown-user",
+        azp=user_id,
+        oid=user_id,
         name="John Smith",
-        username="unknown-user@example.com",
-        email="unknown-user@example.com",
+        username=f"{user_id}@example.com",
+        email=f"{user_id}@example.com",
         roles=roles
         or {
             "Admin.Read",
@@ -154,13 +154,10 @@ def dummy_user(roles: set[str] | None = None) -> User:
     )
 
 
-def dummy_access_token_claims(fake_user_id: str | None = None) -> AccessTokenClaims:
+def dummy_access_token_claims(user_id: str = "unknown-user") -> AccessTokenClaims:
     """Returns AccessTokenClaims with dummy user data"""
 
-    fake_user = dummy_user()
-
-    if fake_user_id:
-        fake_user.email = f"{fake_user_id}@example.com"
+    fake_user = dummy_user(user_id=user_id)
 
     return AccessTokenClaims(
         oid=fake_user.oid,

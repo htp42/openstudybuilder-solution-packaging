@@ -162,7 +162,7 @@ export default {
     ConfirmDialog,
     CrfNewVersionSummaryConfirmDialog,
   },
-  inject: ['eventBusEmit'],
+  inject: ['notificationHub'],
   props: {
     elementProp: {
       type: Object,
@@ -340,7 +340,7 @@ export default {
       crfs.approve('items', item.uid).then(() => {
         this.$refs.table.filterTable()
 
-        this.eventBusEmit('notification', {
+        this.notificationHub.add({
           msg: this.$t('CRFItems.approved'),
         })
       })
@@ -358,7 +358,7 @@ export default {
         agreeLabel: this.$t('_global.continue'),
       }
       if (
-        relationships > 0 &&
+        relationships < 1 ||
         (await this.$refs.confirm.open(
           `${this.$t('CRFItems.delete_warning', { count: relationships })}`,
           options
@@ -366,21 +366,29 @@ export default {
       ) {
         crfs.delete('items', item.uid).then(() => {
           this.$refs.table.filterTable()
-        })
-      } else if (relationships === 0) {
-        crfs.delete('items', item.uid).then(() => {
-          this.$refs.table.filterTable()
+
+          this.notificationHub.add({
+            msg: this.$t('CRFItems.deleted'),
+          })
         })
       }
     },
     inactivate(item) {
       crfs.inactivate('items', item.uid).then(() => {
         this.$refs.table.filterTable()
+
+        this.notificationHub.add({
+          msg: this.$t('CRFItems.inactivated'),
+        })
       })
     },
     reactivate(item) {
       crfs.reactivate('items', item.uid).then(() => {
         this.$refs.table.filterTable()
+
+        this.notificationHub.add({
+          msg: this.$t('CRFItems.reactivated'),
+        })
       })
     },
     async newVersion(item) {
@@ -393,7 +401,7 @@ export default {
         crfs.newVersion('items', item.uid).then(() => {
           this.$refs.table.filterTable()
 
-          this.eventBusEmit('notification', {
+          this.notificationHub.add({
             msg: this.$t('_global.new_version_success'),
           })
         })

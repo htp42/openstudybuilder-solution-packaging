@@ -86,8 +86,10 @@ Feature: Library - Concepts - Units (part 2)
         And The 'Edit' option is clicked from the three dot menu list
         Then A form for unit edition is opened
         When Conversion factor to master is filled with text value
+        Then Conversion factor to master field is empty
         And Form save button is clicked
-        And The pop up displays 'Data validation error'
+        And Unit is found
+        Then Concersion factor to master is empty in the unit table
 
     Scenario: [Create][Non-numeric conversion factor] Verify Error for Non-Numeric Conversion Factor to Master for New Unit
         Given The '/library/units' page is opened
@@ -95,6 +97,7 @@ Feature: Library - Concepts - Units (part 2)
         Then A form for unit creation is opened
         When Unit mandatory data is filled in
         And Conversion factor to master is filled with text value
+        Then Conversion factor to master field is empty
         And Form save button is clicked
-        And The pop up displays 'Data validation error'
-        And The unit is not saved
+        And Unit is found
+        Then Concersion factor to master is empty in the unit table

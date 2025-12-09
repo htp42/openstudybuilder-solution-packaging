@@ -165,6 +165,7 @@
           :data-domain="step2Form.data_domain"
           adam-specific
           class="mb-4 w-50"
+          @update:model-value="updateAIFields"
         >
           <template v-if="!props.activityInstanceUid" #append>
             <v-btn
@@ -188,13 +189,22 @@
         >
           {{ $t('ActivityInstanceForm.add_activity_item_class') }}
         </v-btn>
-        <div class="dialog-title my-4">
+        <div class="d-flex align-center dialog-title my-4">
           {{ $t('ActivityInstanceForm.step3_second_title') }}
           <v-btn
             icon="mdi-refresh"
             variant="flat"
             :title="$t('ActivityInstanceForm.refresh_title')"
             @click="sendPreviewRequest"
+          />
+
+          <v-switch
+            v-model="allowManualEdit"
+            :label="$t('ActivityInstanceForm.allow_manual_edit')"
+            color="primary"
+            class="ml-4"
+            hide-details
+            @update:model-value="onAllowManualEditChange"
           />
         </div>
         <div class="d-flex w-50">
@@ -204,6 +214,8 @@
             variant="outlined"
             density="compact"
             class="mr-4"
+            :disabled="!allowManualEdit"
+            :loading="loadingPreview"
             :rules="[formRules.required]"
           />
           <v-text-field
@@ -212,6 +224,8 @@
             variant="outlined"
             density="compact"
             class="mr-4"
+            :disabled="!allowManualEdit"
+            :loading="loadingPreview"
             :rules="[
               formRules.required,
               (value) => formRules.sameAs(value, step3Form.name),
@@ -231,6 +245,8 @@
             variant="outlined"
             density="compact"
             class="mr-4"
+            :disabled="!allowManualEdit"
+            :loading="loadingPreview"
             :rules="[formRules.required]"
           />
           <v-text-field
@@ -239,6 +255,8 @@
             variant="outlined"
             density="compact"
             class="mr-4"
+            :disabled="!allowManualEdit"
+            :loading="loadingPreview"
             :rules="[formRules.required]"
           />
           <v-text-field
@@ -280,6 +298,7 @@
             item-value="term_uid"
             variant="outlined"
             density="compact"
+            clearable
           />
           <v-select
             v-model="step4Form.data_subcategory"
@@ -290,6 +309,7 @@
             variant="outlined"
             density="compact"
             class="ml-4"
+            clearable
           />
         </div>
         <v-alert
@@ -391,6 +411,7 @@
 import { computed, inject, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import _debounce from 'lodash/debounce'
 import ActivityItemClassField from './ActivityItemClassField.vue'
 import HorizontalStepperForm from '@/components/tools/HorizontalStepperForm.vue'
 import NNTable from '@/components/tools/NNTable.vue'
@@ -415,17 +436,19 @@ const props = defineProps({
 
 const router = useRouter()
 const { t } = useI18n()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const formRules = inject('formRules')
 
 const activityInstanceClasses = ref([])
 const activities = ref([])
 const activityInstance = ref(null)
+const allowManualEdit = ref(false)
 const dataCategories = ref([])
 const dataDomainCTTermUid = ref(null)
 const dataSubcategories = ref([])
 const datasets = ref([])
 const loadingActivityInstances = ref(false)
+const loadingPreview = ref(false)
 const step2Form = ref({})
 const step3Form = ref({})
 const step4Form = ref({})
@@ -488,10 +511,23 @@ const mandatoryActivityItemClasses = computed(() => {
   return result
 })
 
+// List of activity item classes that should not be proposed to end users
+const activityItemClassExceptions = computed(() => {
+  const exceptions = ['domain']
+  if (categoryAic.value) {
+    exceptions.push(categoryAic.value.name)
+  }
+  if (subcategoryAic.value) {
+    exceptions.push(subcategoryAic.value.name)
+  }
+  return exceptions
+})
+
 const optionalActivityItemClasses = computed(() => {
   return filteredActivityItemClasses.value.filter(
     (item) =>
       !item.mandatory &&
+      !activityItemClassExceptions.value.includes(item.name) &&
       step3Form.value.activityItems.find(
         (selection) => selection.activity_item_class_uid === item.uid
       ) === undefined
@@ -501,7 +537,7 @@ const otherAvailableActivityItemClasses = computed(() => {
   return filteredActivityItemClasses.value.filter(
     (item) =>
       !item.mandatory &&
-      item.name !== 'domain' &&
+      !activityItemClassExceptions.value.includes(item.name) &&
       step3Form.value.activityItems.find(
         (selection) => selection.activity_item_class_uid === item.uid
       ) === undefined &&
@@ -547,6 +583,16 @@ watch(showMolecularWeight, (value) => {
     delete step2Form.value.molecular_weight
   }
 })
+
+watch(
+  () => step3Form.value.is_research_lab,
+  () => {
+    // Refresh preview when is_research_lab changes, but only if toggle is off
+    if (!allowManualEdit.value && !activityInstance.value) {
+      sendPreviewRequestDebounced()
+    }
+  }
+)
 
 const categoryAic = computed(() => {
   const aicName = step2Form.value.activity_instance_class?.name
@@ -627,6 +673,7 @@ function fetchActivities(filters, options, filtersUpdated) {
     newfilters.status = { v: [statuses.FINAL] }
     params.filters = newfilters
   }
+  params.filters.is_data_collected = { v: [true] }
   if (params.filters['activity_groupings.activity_group_name']) {
     params.activity_group_names = []
     params.filters['activity_groupings.activity_group_name'].v.forEach(
@@ -706,7 +753,9 @@ async function fetchActivityItemClasses(activityInstanceClass) {
 }
 
 async function fetchDatasets(activityInstanceClassUid) {
-  const params = {}
+  const params = {
+    ig_uid: 'SDTMIG',
+  }
   if (activityInstanceClassUid) {
     params.activity_instance_class_uid = activityInstanceClassUid
   }
@@ -769,6 +818,9 @@ function addOptionalActivityItemClass() {
 
 function removeOptionalActivityItemClass(index) {
   step3Form.value.activityItems.splice(index, 1)
+  if (!allowManualEdit.value) {
+    sendPreviewRequest()
+  }
 }
 
 function addDataSpecActivityItemClass() {
@@ -800,6 +852,7 @@ function showInstances(item) {
 
 function close() {
   emit('close')
+  notificationHub.clearErrors()
 }
 
 function getObserver(step) {
@@ -814,7 +867,7 @@ function getObserver(step) {
 
 function extraStepValidation(step) {
   if (step === 1 && !selectedActivity.value) {
-    eventBusEmit('notification', {
+    notificationHub.add({
       msg: t('ActivityInstanceForm.activity_not_selected'),
       type: 'error',
     })
@@ -826,10 +879,11 @@ function extraStepValidation(step) {
 async function prepareCreationPayload(forPreview) {
   const [activityGroupUid, activitySubgroupUid, activityUid] =
     selectedActivity.value.split('|')
-  const activityItems = step2Form.value.activityItems.concat(
-    step3Form.value.activityItems,
-    step4Form.value.activityItems
-  )
+  const activityItems = [
+    ...step2Form.value.activityItems,
+    ...step3Form.value.activityItems,
+    ...step4Form.value.activityItems,
+  ].filter((item) => item && item.activity_item_class_uid)
 
   function addActivityItem(uid, codelistUid, term_uids) {
     const ct_terms = term_uids.map((term_uid) => {
@@ -854,35 +908,25 @@ async function prepareCreationPayload(forPreview) {
   }
 
   if (step4Form.value.data_category) {
-    const uid = otherAvailableActivityItemClasses.value.find(
-      (item) =>
-        item.name ===
-        activityItemClassesConstants.categoryActivityItemClasses[
-          step2Form.value.activity_instance_class.name
-        ]
-    ).uid
     const resp = await codelistsApi.getAll({
       filters: { 'attributes.submission_value': { v: ['FINDCAT'] } },
     })
     if (resp.data.items.length) {
       const codelistUid = resp.data.items[0].codelist_uid
-      addActivityItem(uid, codelistUid, [step4Form.value.data_category])
+      addActivityItem(categoryAic.value.uid, codelistUid, [
+        step4Form.value.data_category,
+      ])
     }
   }
   if (step4Form.value.data_subcategory) {
-    const uid = otherAvailableActivityItemClasses.value.find(
-      (item) =>
-        item.name ===
-        activityItemClassesConstants.subcategoryActivityItemClasses[
-          step2Form.value.activity_instance_class.name
-        ]
-    ).uid
     const resp = await codelistsApi.getAll({
       filters: { 'attributes.submission_value': { v: ['FINDSCAT'] } },
     })
     if (resp.data.items.length) {
       const codelistUid = resp.data.items[0].codelist_uid
-      addActivityItem(uid, codelistUid, [step4Form.value.data_subcategory])
+      addActivityItem(subcategoryAic.value.uid, codelistUid, [
+        step4Form.value.data_subcategory,
+      ])
     }
   }
   if (domainAic.value && dataDomainCTTermUid.value) {
@@ -926,17 +970,62 @@ async function prepareCreationPayload(forPreview) {
 }
 
 async function sendPreviewRequest() {
+  if (allowManualEdit.value) {
+    return
+  }
+  loadingPreview.value = true
   const payload = await prepareCreationPayload(true)
   const resp = await activitiesApi.getPreview(payload, 'activity-instances')
   step3Form.value.name = resp.data.name
   step3Form.value.name_sentence_case = resp.data.name_sentence_case
   step3Form.value.topic_code = resp.data.topic_code
   step3Form.value.adam_param_code = resp.data.adam_param_code
+  loadingPreview.value = false
+}
+
+const sendPreviewRequestDebounced = _debounce(sendPreviewRequest, 300)
+
+function onAllowManualEditChange(value) {
+  if (!value) {
+    sendPreviewRequest()
+  }
+}
+
+async function updateAIFields(value) {
+  if (value.ct_terms.length || value.unit_definition_uids.length) {
+    await sendPreviewRequestDebounced()
+  }
 }
 
 async function initStep(step) {
-  if (step === 3 && !step3Form.value.name && !activityInstance.value) {
-    await sendPreviewRequest()
+  if (step === 3) {
+    // Check if required fields have been selected (param/paramcd)
+    const hasRequiredFields =
+      // Check test value (test_code/test_name)
+      testValue.value ||
+      // Check activity items with ct_terms, ct_term_uids, or unit_definition_uids
+      step2Form.value.activityItems?.some(
+        (item) =>
+          item &&
+          (item.ct_terms?.length > 0 ||
+            item.ct_term_uids?.length > 0 ||
+            item.unit_definition_uids?.length > 0)
+      )
+
+    // Refresh preview if:
+    // 1. Toggle is off (allowManualEdit is false)
+    // 2. Required fields have been selected
+    // 3. if Wizard stepper for creating an instance Form (activityInstance.value is null)
+    if (
+      !allowManualEdit.value &&
+      hasRequiredFields &&
+      !activityInstance.value
+    ) {
+      await sendPreviewRequest()
+    } else if (!step3Form.value.name && !activityInstance.value) {
+      // Fallback to original behavior if no required fields selected yet
+      await sendPreviewRequest()
+    }
   } else if (step === 4) {
     let resp
     if (categoryAic.value) {
@@ -955,10 +1044,12 @@ async function initStep(step) {
 }
 
 async function submit() {
+  notificationHub.clearErrors()
+
   const payload = await prepareCreationPayload()
   try {
     const resp = await activitiesApi.create(payload, 'activity-instances')
-    eventBusEmit('notification', {
+    notificationHub.add({
       msg: t('ActivityInstanceForm.add_success'),
     })
     router.push({

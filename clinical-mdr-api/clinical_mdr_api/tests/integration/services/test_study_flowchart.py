@@ -1675,6 +1675,8 @@ def _to_list_of_dicts(items: Sequence[pydantic.BaseModel]) -> list[dict[str, Any
                 "study_activity_group": {"order": True},
                 "study_soa_group": {"order": True},
                 "study_version": True,
+                "is_activity_updated": True,
+                "is_activity_instance_updated": True,
             },
         )
         for item in items

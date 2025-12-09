@@ -51,7 +51,7 @@ export default {
   components: {
     StudySelectionEditForm,
   },
-  inject: ['eventBusEmit'],
+  inject: ['notificationHub'],
   props: {
     studyObjective: {
       type: Object,
@@ -121,6 +121,8 @@ export default {
       return resp.data.objective.name
     },
     async submit(newTemplate, form, parameters) {
+      this.notificationHub.clearErrors()
+
       const data = formUtils.getDifferences(this.originalForm, form)
 
       if (newTemplate) {
@@ -134,7 +136,7 @@ export default {
         }
       }
       if (_isEmpty(data)) {
-        this.eventBusEmit('notification', {
+        this.notificationHub.add({
           msg: this.$t('_global.no_changes'),
           type: 'info',
         })
@@ -154,7 +156,7 @@ export default {
       }
       this.updateStudyObjective(args)
         .then(() => {
-          this.eventBusEmit('notification', {
+          this.notificationHub.add({
             msg: this.$t('StudyObjectiveEditForm.objective_updated'),
           })
           this.$emit('updated')

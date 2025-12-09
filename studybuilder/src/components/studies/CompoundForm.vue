@@ -324,7 +324,7 @@ export default {
     NotApplicableField,
     YesNoField,
   },
-  inject: ['eventBusEmit', 'formRules'],
+  inject: ['notificationHub', 'formRules'],
   props: {
     studyCompound: {
       type: Object,
@@ -567,6 +567,7 @@ export default {
   methods: {
     close() {
       this.$emit('close')
+      this.notificationHub.clearErrors()
       this.form = this.getInitialForm()
       this.$refs.stepper.reset()
       this.$refs.naField.reset()
@@ -626,6 +627,8 @@ export default {
       return labels.length ? labels.join(' ') : '-'
     },
     async submit() {
+      this.notificationHub.clearErrors()
+
       const data = JSON.parse(JSON.stringify(this.form))
       data.type_of_treatment_uid = data.type_of_treatment.term_uid
       delete data.type_of_treatment
@@ -662,7 +665,7 @@ export default {
       }
       try {
         await this.studiesCompoundsStore[action](args)
-        this.eventBusEmit('notification', {
+        this.notificationHub.add({
           msg: this.$t(`StudyCompoundForm.${notification}`),
         })
         if (event) {

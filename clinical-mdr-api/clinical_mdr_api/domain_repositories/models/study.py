@@ -37,6 +37,7 @@ from clinical_mdr_api.domain_repositories.models.study_selections import (
     StudyCompound,
     StudyCompoundDosing,
     StudyCriteria,
+    StudyDataSupplier,
     StudyDesignCell,
     StudyElement,
     StudyEndpoint,
@@ -83,6 +84,12 @@ class StudyValue(ClinicalMdrNode, AuditTrailMixin):
         StudyBooleanField, "HAS_BOOLEAN_FIELD", model=ClinicalMdrRel
     )
 
+    has_study_data_supplier = RelationshipTo(
+        StudyDataSupplier,
+        "HAS_STUDY_DATA_SUPPLIER",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrMore,
+    )
     has_study_objective = RelationshipTo(
         StudyObjective,
         "HAS_STUDY_OBJECTIVE",

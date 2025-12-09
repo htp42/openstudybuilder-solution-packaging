@@ -35,13 +35,16 @@ def query(
     if params is None:
         params = {}
 
-    rows, columns = db.cypher_query(
-        query=cypher_query,
-        params=params,
-        handle_unique=handle_unique,
-        retry_on_session_expire=retry_on_session_expire,
-        resolve_objects=resolve_objects,
-    )
+    try:
+        rows, columns = db.cypher_query(
+            query=cypher_query,
+            params=params,
+            handle_unique=handle_unique,
+            retry_on_session_expire=retry_on_session_expire,
+            resolve_objects=resolve_objects,
+        )
+    except Exception as e:
+        raise ValidationException(msg=f"Database query failed: {e.message}") from e
 
     if to_dict_list:
         return [get_db_result_as_dict(row, columns) for row in rows]
@@ -68,16 +71,26 @@ def db_pagination_clause(page_size: int, page_number: int) -> str:
 
 
 def db_sort_clause(
-    sort_by: str, sort_order: str = "ASC", sort_by_type: SortByType = SortByType.STRING
+    sort_by: str,
+    sort_order: str = "ASC",
+    sort_by_type: SortByType = SortByType.STRING,
+    secondary_sort_fields: str = "uid",
 ) -> str:
     # Ensure Cypher injection would not be exploitable even if sort_by keys were not checked
     if not filter_sort_valid_keys_re.fullmatch(sort_by):
         raise ValidationException(msg=f"Invalid sorting key: {sort_by}")
 
     if sort_by_type == SortByType.NUMBER:
-        return f"ORDER BY toFloat({sort_by}) {sort_order}"
+        primary_sort = f"toFloat({sort_by}) {sort_order}"
+    else:
+        primary_sort = f"toLower(toString({sort_by})) {sort_order}"
 
-    return f"ORDER BY toLower(toString({sort_by})) {sort_order}"
+    # Add hash of all relevant properties as secondary sort for consistent ordering
+    if secondary_sort_fields:
+        secondary_sort = f"apoc.util.md5([{secondary_sort_fields}]) ASC"
+        return f"ORDER BY {primary_sort}, {secondary_sort}"
+
+    return f"ORDER BY {primary_sort}"
 
 
 def get_api_version() -> str:

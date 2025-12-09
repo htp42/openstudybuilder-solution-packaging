@@ -1,6 +1,7 @@
 import logging
 
 from cachetools import TTLCache, cached
+from neo4j.exceptions import Forbidden
 from neomodel.sync_.core import db
 from starlette_context import context
 
@@ -28,8 +29,7 @@ def persist_user(user_info: User):
     """Persists user information in the database."""
 
     log.info("Persisting user %s", user_info)
-    db.cypher_query(
-        query="""
+    query = """
         MERGE (u:User {user_id: $id})
         ON CREATE
             SET u.created = datetime(),
@@ -47,17 +47,23 @@ def persist_user(user_info: User):
                 u.name = $name,
                 u.email = $email,
                 u.roles = $roles
-        """,
-        params={
-            "id": user_info.id(),
-            "oid": user_info.oid,
-            "azp": user_info.azp,
-            "username": user_info.username,
-            "name": user_info.name,
-            "email": user_info.email,
-            "roles": list(user_info.roles),
-        },
-    )
+        """
+    params = {
+        "id": user_info.id(),
+        "oid": user_info.oid,
+        "azp": user_info.azp,
+        "username": user_info.username,
+        "name": user_info.name,
+        "email": user_info.email,
+        "roles": list(user_info.roles),
+    }
+    try:
+        db.cypher_query(
+            query=query,
+            params=params,
+        )
+    except Forbidden as e:
+        log.error("Error persisting user %s: %s", user_info, e)
 
 
 def clear_users_cache():

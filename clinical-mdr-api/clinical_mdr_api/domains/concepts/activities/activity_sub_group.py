@@ -22,13 +22,15 @@ class ActivitySubGroupVO(ConceptVO):
     The ActivitySubGroupVO acts as the value object for a single ActivitySubGroup aggregate
     """
 
+    name: str
+    name_sentence_case: str
     activity_groups: list[SimpleActivityGroupVO]
 
     @classmethod
     def from_repository_values(
         cls,
         name: str,
-        name_sentence_case: str | None,
+        name_sentence_case: str,
         definition: str | None,
         abbreviation: str | None,
         activity_groups: list[SimpleActivityGroupVO],
@@ -138,16 +140,18 @@ class ActivitySubGroupAR(ConceptARBase):
             [str, str], bool
         ] = lambda x, y: True,
         activity_group_exists: Callable[[str], bool] = lambda _: True,
+        perform_validation: bool = True,
     ) -> None:
         """
         Creates a new draft version for the object.
         """
-        concept_vo.validate(
-            activity_subgroup_exists_by_name_callback=concept_exists_by_library_and_name_callback,
-            activity_group_exists=activity_group_exists,
-            previous_name=self.name,
-            library_name=self.library.name,
-        )
+        if perform_validation:
+            concept_vo.validate(
+                activity_subgroup_exists_by_name_callback=concept_exists_by_library_and_name_callback,
+                activity_group_exists=activity_group_exists,
+                previous_name=self.name,
+                library_name=self.library.name,
+            )
         if self._concept_vo != concept_vo:
             super()._edit_draft(
                 change_description=change_description, author_id=author_id

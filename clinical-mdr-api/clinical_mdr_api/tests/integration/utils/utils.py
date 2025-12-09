@@ -741,9 +741,9 @@ class TestUtils:
         return val if val else cls.random_str(length, prefix)
 
     @classmethod
-    def create_dummy_user(cls):
+    def create_dummy_user(cls, user_id: str = "unknown-user"):
         clear_users_cache()
-        dummy_user_auth()
+        dummy_user_auth(user_id=user_id)
 
     # region Syntax Templates
     @classmethod
@@ -849,10 +849,10 @@ class TestUtils:
         supplier_type_uid: str,
         order: int = 999999,
         description: str | None = None,
-        supplier_api_base_url: str | None = None,
-        supplier_ui_base_url: str | None = None,
-        supplier_origin_source_uid: str | None = None,
-        supplier_origin_type_uid: str | None = None,
+        api_base_url: str | None = None,
+        ui_base_url: str | None = None,
+        origin_source_uid: str | None = None,
+        origin_type_uid: str | None = None,
         library_name: str = LIBRARY_NAME,
     ) -> DataSupplier:
         service: DataSupplierService = DataSupplierService()
@@ -860,11 +860,11 @@ class TestUtils:
             name=cls.random_if_none(name, prefix="name-"),
             order=order,
             description=description,
-            supplier_api_base_url=supplier_api_base_url,
-            supplier_ui_base_url=supplier_ui_base_url,
+            api_base_url=api_base_url,
+            ui_base_url=ui_base_url,
             supplier_type_uid=supplier_type_uid,
-            supplier_origin_source_uid=supplier_origin_source_uid,
-            supplier_origin_type_uid=supplier_origin_type_uid,
+            origin_source_uid=origin_source_uid,
+            origin_type_uid=origin_type_uid,
             library_name=library_name,
         )
 
@@ -1751,7 +1751,7 @@ class TestUtils:
                 library_name=library_name,
             )
         )
-        result: ActivityItemClass = service.create(item_input=activity_item_class_input)  # type: ignore[assignment]
+        result: ActivityItemClass = service.create(concept_input=activity_item_class_input)  # type: ignore[assignment]
         if approve and result.uid is not None:
             service.approve(result.uid)
         return result
@@ -4259,3 +4259,10 @@ class TestUtils:
             unit_definition_uid=unit_definition_uid,
             for_protocol_soa=for_protocol_soa,
         )
+
+    @staticmethod
+    def _get_version_from_list(versions, version):
+        for v in versions:
+            if v["version"] == version:
+                return v
+        return None

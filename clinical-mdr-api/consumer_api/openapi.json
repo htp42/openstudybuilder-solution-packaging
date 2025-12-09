@@ -3,7 +3,7 @@
   "info": {
     "title": "StudyBuilder Consumer API",
     "description": "\n## NOTICE\n\nThis license information is applicable to the swagger documentation of the clinical-mdr-api, that is the openapi.json.\n\n## License Terms (MIT)\n\nCopyright (C) 2025 Novo Nordisk A/S, Danish company registration no. 24256790\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n\n## Licenses and Acknowledgements for Incorporated Software\n\nThis component contains software licensed under different licenses when compiled, please refer to the third-party-licenses.md file for further information and full license texts.\n\n## Authentication\n\nSupports OAuth2 [Authorization Code Flow](https://datatracker.ietf.org/doc/html/rfc6749#section-4.1),\nat paths described in the OpenID Connect Discovery metadata document (whose URL is defined by the `OAUTH_METADATA_URL` environment variable).\n\nMicrosoft Identity Platform documentation can be read \n([here](https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-auth-code-flow)).\n",
-    "version": "0.1.90"
+    "version": "0.1.99"
   },
   "paths": {
     "/": {
@@ -269,21 +269,11 @@
             }
           },
           "400": {
-            "description": "Invalid request",
+            "description": "Bad Request",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -391,16 +381,6 @@
               }
             }
           },
-          "400": {
-            "description": "Invalid request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
           "404": {
             "description": "Item not found",
             "content": {
@@ -411,12 +391,12 @@
               }
             }
           },
-          "422": {
-            "description": "Validation Error",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -524,16 +504,6 @@
               }
             }
           },
-          "400": {
-            "description": "Invalid request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
           "404": {
             "description": "Item not found",
             "content": {
@@ -544,12 +514,12 @@
               }
             }
           },
-          "422": {
-            "description": "Validation Error",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -657,16 +627,6 @@
               }
             }
           },
-          "400": {
-            "description": "Invalid request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
           "404": {
             "description": "Item not found",
             "content": {
@@ -677,12 +637,12 @@
               }
             }
           },
-          "422": {
-            "description": "Validation Error",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -790,16 +750,6 @@
               }
             }
           },
-          "400": {
-            "description": "Invalid request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
           "404": {
             "description": "Item not found",
             "content": {
@@ -810,12 +760,12 @@
               }
             }
           },
-          "422": {
-            "description": "Validation Error",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -923,16 +873,6 @@
               }
             }
           },
-          "400": {
-            "description": "Invalid request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
           "404": {
             "description": "Item not found",
             "content": {
@@ -943,12 +883,12 @@
               }
             }
           },
-          "422": {
-            "description": "Validation Error",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -1058,16 +998,6 @@
               }
             }
           },
-          "400": {
-            "description": "Invalid request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
           "404": {
             "description": "Item not found",
             "content": {
@@ -1078,12 +1008,12 @@
               }
             }
           },
-          "422": {
-            "description": "Validation Error",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -1211,16 +1141,6 @@
               }
             }
           },
-          "400": {
-            "description": "Invalid request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
           "404": {
             "description": "Item not found",
             "content": {
@@ -1231,12 +1151,12 @@
               }
             }
           },
-          "422": {
-            "description": "Validation Error",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -1348,16 +1268,6 @@
               }
             }
           },
-          "400": {
-            "description": "Invalid request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
           "404": {
             "description": "Item not found",
             "content": {
@@ -1368,12 +1278,150 @@
               }
             }
           },
-          "422": {
-            "description": "Validation Error",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/studies/audit-trail": {
+      "get": {
+        "tags": [
+          "[V1] Audit trail"
+        ],
+        "summary": "Get Studies Audit Trail",
+        "description": "Returns study audit trail entries between `from_ts` timestamp (including) and `to_ts` timestamp (excluding).\n\nThe audit trail is returned in CSV format with the following columns:\n  - **ts**: Timestamp of the action\n  - **study_uid**: Study UID\n  - **study_id**: Study ID\n  - **action**: Action performed (Create, Edit, Delete)\n  - **entity_uid**: UID of the entity affected by the action\n  - **entity_type**: Type (i.e node labels) of the entity affected by the action (*StudyVisit*, *StudyActivity*, etc..). Multiple labels are separated by '**|**' character.\n  - **changed_properties**: List of properties that were changed during the Edit action\n\nAudit trail can be filtered by:\n  - `study_id` - returns study audit trail entries for the specified study ID (case-insensitive partial match)\n  - `entity_type` - returns study audit trail entries for the specified entity type (e.g. *StudyActivity*)\n  - `exclude_study_ids` - returns audit trail without the specified study IDs (case-insensitive partial match)\n\nNote: the maximum number of rows returned is limited to 10.000.",
+        "operationId": "get_studies_audit_trail_v1_studies_audit_trail_get",
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          },
+          {
+            "BearerJwtAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "from_ts",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Start timestamp in ISO format with timezone, e.g. 2024-01-01T00:00:00Z",
+              "default": "2024-01-01T00:00:00Z",
+              "title": "From Ts"
+            },
+            "description": "Start timestamp in ISO format with timezone, e.g. 2024-01-01T00:00:00Z"
+          },
+          {
+            "name": "to_ts",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "description": "End timestamp in ISO format with timezone, e.g. 2024-01-05T00:00:00Z",
+              "default": "2024-01-05T00:00:00Z",
+              "title": "To Ts"
+            },
+            "description": "End timestamp in ISO format with timezone, e.g. 2024-01-05T00:00:00Z"
+          },
+          {
+            "name": "study_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by study ID (case-insensitive partial match), for example `NN1234-5678`.",
+              "title": "Study Id"
+            },
+            "description": "Filter by study ID (case-insensitive partial match), for example `NN1234-5678`."
+          },
+          {
+            "name": "entity_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/StudyAuditTrailEntity"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by entity type, for example `StudyActivity`.",
+              "title": "Entity Type"
+            },
+            "description": "Filter by entity type, for example `StudyActivity`."
+          },
+          {
+            "name": "exclude_study_ids",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "List of study IDs to exclude (case-insensitive partial match), for example `CDISC DEV`.",
+              "default": [
+                "CDISC DEV"
+              ],
+              "title": "Exclude Study Ids"
+            },
+            "description": "List of study IDs to exclude (case-insensitive partial match), for example `CDISC DEV`."
+          },
+          {
+            "name": "page_number",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page Number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CSV of study audit trail data",
+            "content": {
+              "application/json": {
+                "schema": {}
+              },
+              "text/csv": {}
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -1530,40 +1578,42 @@
       },
       "ErrorResponse": {
         "properties": {
-          "type": {
-            "type": "string",
-            "title": "Type",
-            "description": "Exception class."
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "description": "More information about the error."
-          },
           "time": {
             "type": "string",
             "format": "date-time",
-            "title": "Time",
-            "description": "The point in time when the error occurred."
+            "title": "Time"
           },
           "path": {
             "type": "string",
-            "title": "Path",
-            "description": "The url/path of the request."
+            "title": "Path"
           },
           "method": {
             "type": "string",
-            "title": "Method",
-            "description": "The HTTP method of the request."
+            "title": "Method"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "details": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationDetail"
+            },
+            "type": "array",
+            "title": "Details"
           }
         },
         "type": "object",
         "required": [
-          "type",
-          "message",
           "time",
           "path",
-          "method"
+          "method",
+          "type",
+          "message"
         ],
         "title": "ErrorResponse"
       },
@@ -2270,7 +2320,7 @@
             "title": "Fetch Dt",
             "description": "Datetime when the data is fetched."
           },
-          "SoA": {
+          "soa": {
             "anyOf": [
               {
                 "items": {
@@ -2283,7 +2333,7 @@
               }
             ],
             "title": "Soa",
-            "description": "Scheduled activities"
+            "description": "Schedule of activities"
           }
         },
         "type": "object",
@@ -2296,7 +2346,7 @@
           "study_version",
           "specified_dt",
           "fetch_dt",
-          "SoA"
+          "soa"
         ],
         "title": "PapillonsSoA"
       },
@@ -2305,7 +2355,28 @@
           "topic_cd": {
             "type": "string",
             "title": "Topic Cd",
-            "description": "Topic code"
+            "description": "Topic code linked to the activity instance."
+          },
+          "important": {
+            "type": "boolean",
+            "title": "Important",
+            "description": "Indication for if the activity instance is considered important."
+          },
+          "baseline_visits": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Baseline Visits",
+            "description": "Lists of visits which is considered baseline for the activity instance."
+          },
+          "soa_grp": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Soa Grp",
+            "description": "SoA group the activity instance belongs to."
           },
           "visits": {
             "items": {
@@ -2313,12 +2384,15 @@
             },
             "type": "array",
             "title": "Visits",
-            "description": "Lists of visits which the activity was assessed."
+            "description": "Lists of visits which the activity instance was assessed."
           }
         },
         "type": "object",
         "required": [
           "topic_cd",
+          "important",
+          "baseline_visits",
+          "soa_grp",
           "visits"
         ],
         "title": "PapillonsSoAItem"
@@ -2726,6 +2800,41 @@
           "selection_uid"
         ],
         "title": "StudyActivitySubgroup"
+      },
+      "StudyAuditTrailEntity": {
+        "type": "string",
+        "enum": [
+          "StudyActivity",
+          "StudyActivityInstance",
+          "StudyActivityGroup",
+          "StudyActivitySubGroup",
+          "StudyActivitySchedule",
+          "StudySoAGroup",
+          "StudySoAFootnote",
+          "StudyObjective",
+          "StudyEndpoint",
+          "StudyCriteria",
+          "StudyArm",
+          "StudyBranchArm",
+          "StudyEpoch",
+          "StudyCohort",
+          "StudyDesignCell",
+          "StudyDesignClass",
+          "StudyElement",
+          "StudyField",
+          "StudyArrayField",
+          "StudyBooleanField",
+          "StudyIntField",
+          "StudyProjectField",
+          "StudyTextField",
+          "StudyTimeField",
+          "StudySelection",
+          "StudyStandardVersion",
+          "StudyValue",
+          "StudyVisit",
+          "TemplateParameterTermRoot"
+        ],
+        "title": "StudyAuditTrailEntity"
       },
       "StudyDetailedSoA": {
         "properties": {
@@ -3558,6 +3667,43 @@
           "build_id"
         ],
         "title": "SystemInformation"
+      },
+      "ValidationDetail": {
+        "properties": {
+          "error_code": {
+            "type": "string",
+            "title": "Error Code"
+          },
+          "field": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Field"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Msg"
+          },
+          "ctx": {
+            "title": "Ctx"
+          }
+        },
+        "type": "object",
+        "required": [
+          "error_code",
+          "field",
+          "msg",
+          "ctx"
+        ],
+        "title": "ValidationDetail"
       },
       "ValidationError": {
         "properties": {

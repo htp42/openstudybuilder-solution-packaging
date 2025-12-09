@@ -158,7 +158,7 @@ import study from '@/api/study'
 const studiesGeneralStore = useStudiesGeneralStore()
 const emit = defineEmits(['close'])
 const { t } = useI18n()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 
 const props = defineProps({
   activity: {
@@ -177,6 +177,8 @@ const title = computed(() => {
 const loading = ref(false)
 
 function submit() {
+  notificationHub.clearErrors()
+
   loading.value = true
   const data = {
     activity_group_uid:
@@ -194,7 +196,7 @@ function submit() {
       )
       .then(() => {
         loading.value = false
-        eventBusEmit('notification', {
+        notificationHub.add({
           type: 'success',
           msg: t('StudyActivityUpdateForms.update_success'),
         })
@@ -209,7 +211,7 @@ function submit() {
       )
       .then(() => {
         loading.value = false
-        eventBusEmit('notification', {
+        notificationHub.add({
           type: 'success',
           msg: t('StudyActivityUpdateForms.update_success'),
         })
@@ -220,6 +222,7 @@ function submit() {
 
 function close() {
   emit('close')
+  notificationHub.clearErrors()
 }
 
 async function declineAndRemove() {
@@ -231,7 +234,7 @@ async function declineAndRemove() {
     )
     .then(() => {
       loading.value = false
-      eventBusEmit('notification', {
+      notificationHub.add({
         type: 'success',
         msg: t('StudyActivityUpdateForms.remove_success'),
       })
@@ -251,7 +254,7 @@ async function declineAndKeep() {
     )
     .then(() => {
       loading.value = false
-      eventBusEmit('notification', {
+      notificationHub.add({
         type: 'success',
         msg: t('StudyActivityUpdateForms.decline_success'),
       })

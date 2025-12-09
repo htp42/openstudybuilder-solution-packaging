@@ -361,7 +361,7 @@ def test_inactivating_a_specific_odm_study_event(api_client):
     assert res["display_in_tree"] is True
     assert res["end_date"] is None
     assert res["status"] == "Retired"
-    assert res["version"] == "1.0"
+    assert res["version"] == "2.0"
     assert res["change_description"] == "Inactivated version"
     assert res["author_username"] == "unknown-user@example.com"
     assert res["forms"] == [
@@ -397,7 +397,7 @@ def test_reactivating_a_specific_odm_study_event(api_client):
     assert res["display_in_tree"] is True
     assert res["end_date"] is None
     assert res["status"] == "Final"
-    assert res["version"] == "1.0"
+    assert res["version"] == "3.0"
     assert res["change_description"] == "Reactivated version"
     assert res["author_username"] == "unknown-user@example.com"
     assert res["forms"] == [
@@ -433,7 +433,7 @@ def test_creating_a_new_odm_study_event_version(api_client):
     assert res["display_in_tree"] is True
     assert res["end_date"] is None
     assert res["status"] == "Draft"
-    assert res["version"] == "1.1"
+    assert res["version"] == "3.1"
     assert res["change_description"] == "New draft created"
     assert res["author_username"] == "unknown-user@example.com"
     assert res["forms"] == [

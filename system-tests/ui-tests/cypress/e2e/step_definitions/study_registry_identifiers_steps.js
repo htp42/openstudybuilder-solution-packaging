@@ -1,8 +1,10 @@
+import { getCurrStudyUid } from '../../support/helper_functions'
+
 const { When, Then } = require("@badeball/cypress-cucumber-preprocessor");
 
 When('The identifiers are set with following data', (dataTable) => {
     //null on all
-    cy.nullRegistryIdentifiersForStudy()
+    cy.nullRegistryIdentifiersForStudy(getCurrStudyUid())
     cy.waitForTable()
     cy.clickButton('edit-content')
     cy.wait(1000)
@@ -14,7 +16,7 @@ When('The identifiers are set with following data', (dataTable) => {
 
 When('The not applicable is checked for all identifiers', (dataTable) => {
     //null on all
-    cy.nullRegistryIdentifiersForStudy()
+    cy.nullRegistryIdentifiersForStudy(getCurrStudyUid())
     cy.waitForTable()
     cy.clickButton('edit-content')
     cy.wait(1000)

@@ -978,18 +978,18 @@ def test_negative_create_medicinal_product_wrong_links(api_client):
     del payload["compound_alias_uid"]
     response = api_client.post(BASE_URL, data=json.dumps(payload), headers=HEADERS)
 
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
     res = response.json()
-    assert res["detail"][0]["type"] == "missing"
-    assert res["detail"][0]["loc"] == ["body", "compound_alias_uid"]
-    assert res["detail"][0]["msg"] == "Field required"
+    assert res["details"][0]["error_code"] == "missing"
+    assert res["details"][0]["field"] == ["body", "compound_alias_uid"]
+    assert res["details"][0]["msg"] == "Field required"
     # Try to create study compound with missing medicinal product uid
     payload = copy.deepcopy(CREATE_STUDY_COMPOUND_PAYLOAD_OK)
     del payload["medicinal_product_uid"]
     response = api_client.post(BASE_URL, data=json.dumps(payload), headers=HEADERS)
 
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
     res = response.json()
-    assert res["detail"][0]["type"] == "missing"
-    assert res["detail"][0]["loc"] == ["body", "medicinal_product_uid"]
-    assert res["detail"][0]["msg"] == "Field required"
+    assert res["details"][0]["error_code"] == "missing"
+    assert res["details"][0]["field"] == ["body", "medicinal_product_uid"]
+    assert res["details"][0]["msg"] == "Field required"

@@ -1,4 +1,4 @@
-@REQ_ID:1074260 @pending_implementation
+@REQ_ID:1074260
 Feature: Studies - Define Study - Study Data Specifications - Study Activity Instances
 
     As a system user,
@@ -9,235 +9,668 @@ Feature: Studies - Define Study - Study Data Specifications - Study Activity Ins
         Given The user is logged in
         And A test study is selected
 
-    Scenario: User must be able to navigate to Study Activity Instance page using side menu
-        Given The '/studies' page is opened
-        When The 'Data Specification' submenu is clicked in the 'Define Study' section
-        Then The current URL is '/data_specification/activity_instances'
-        And the tab 'Study Activity Instances' is displayed
+    Scenario: [Test data] User creates test data via API
+        And [API] All Activities are deleted from study
+        And [API] Get SoA Group 'INFORMED CONSENT' id
+        And [API] Get class uid for activity instance creation
+        And [API] Group and subgroup are created and approved to be used for activity creation
+        And [API] Activity with data collection set to 1 and 'FirstActivity' included in the name is created and approved
+        And [API] Activity Instance is created and approved
+        And [API] Activity is added to the study
+        And [API] Activity with data collection set to 1 and 'SecondActivity' included in the name is created and approved
+        And [API] Activity Instance is created and approved
+        And [API] Activity is added to the study
+        And [API] Activity with data collection set to 1 and 'MissingInstance' included in the name is created and approved
+        And [API] Activity is added to the study
+        And [API] Activity with data collection set to 0 and 'NoDataCollection' included in the name is created and approved
+        And [API] Activity is added to the study
 
-    # Note, not all columns are implemented in current release, columns for next release is marked by a comment tag
-    Scenario: User must be able to see the Study Activity Instances table with State/Action options listed
-        Given The test study '/data_specification/activity_instances' page is opened
+    @smoke_test
+    Scenario: [Navigation] User must be able to navigate to Study Data Specification page for selected study when using side menu
+        And The '/studies' page is opened
+        When The 'Data Specifications' submenu is clicked in the 'Define Study' section
+        Then The current URL is '/data_specifications/instances'
+
+    @smoke_test
+    Scenario: [Table][Columns][Names] User must be able to see the Study Activity Instances table with options listed in this scenario
+        Given The test study '/data_specifications/instances' page is opened
+        Then A table is visible with following headers
+            | headers           |
+            | Library           |
+            | SoA group         |
+            | Activity group    |
+            | Activity subgroup |
+            | Activity          |
+            | Data collection   |
+            | Activity instance |
+            | Topic code        |
+            | Test name         |
+            | Specimen          |
+            | Standard unit     |
+            | State/Actions     |
+            | ADaM param code   |
+            | Important         |
+
+    Scenario: [Table][Columns][Visibility] User must be able to use column selection option for Study Activity Instances table
+        Given The test study '/data_specifications/instances' page is opened
+        When The first column is selected from Select Columns option for table with actions
+        Then The table contain only selected column and actions column
+
+    Scenario: [Table][Options] User must be able to see the Study Activity Instances table with options listed in the scenario
+        Given The test study '/data_specifications/instances' page is opened
         Then A table is visible with following options
-            # Note, this page do not have an add study activity instances, as all study activities and related study activity instances is listed, and instances is added via edit
             | options                                                         |
             | Filters                                                         |
             | Columns                                                         |
             | Export                                                          |
             | Show version history                                            |
             | Add select boxes to table to allow selection of rows for export |
-        And A table is visible with following headers
-            | headers           |
-            | #                 |
-            | Library           |
-            | SoA group         |
-            | Activity group    |
-            | Activity subgroup |
-            | Activity          |
-            | Data Collection   |
-            | Activity instance |
-            | Topic Code        |
-            #| SDTM domain         |
-            # 'State/Action' will cover a classification, is described below as well as in API specification.
-            | State/Actions     |
-        And The following columns available to be displayed
-            # Details is a concatination of a number of attributes and related ActivityItems, will be described below
-            #| Details             |
-            | ADaM Param code |
-    #| Activity concept ID |
-    #| Instance concept ID |
-    #| Required            |
-    #| Default             |
-    #| Multiple selection  |
-    #| Legacy              |
-    # Instance Class is the relationship to ActivityInstaceClass node
-    #| Instance class      |
-    # The following columns is based on relationship for ActivityItemClass, via ActivityItem, to CTTerms/Concepts
-    #| Test code           |
-    #| Test name           |
-    #| Unit dimension      |
-    #| Standard Unit       |
-    #| Specimen            |
-    #| Modified            |
-    #| Modified by         |
 
-    # The table list all combinations of study activities and study activity insrances.
-    # One row is presentated for all selected study activity instances and the related study activity related to data collection.
-    # If study activity is not related to data collection it will be listed with the state describing it is not related to data collection.
-    # If no activity instance is selected for an study activity then the row is displayed for the study activity with blank activity instance columns.
-    # If multiple selections is possible, and addisional selections can be made - then a row for the study activity with blank activity instance columns is available to support additional selections.
-    # If no additional selections is possible, no extra row with blank activity instance columns should be listed.
-
-    Scenario: User must be able to use column selection option
-        Given The test study '/data_specification/activity_instances' page is opened
-        When The first column is selected from Select Columns option for table with actions
-        Then The table contain only selected column and actions column
-
-    Scenario: User must be able to see the Study Activities without any related Study Activity Instances
-        Given The test study '/data_specification/activity_instances' page is opened
-        When Study Activities exists without any related Study Activity Instances
-        Then these Study Activities is included in the table with values for the following columns
-            | column | header            |
-            | 1      | #                 |
-            | 2      | Library           |
-            | 3      | SoA group         |
-            | 4      | Activity group    |
-            | 5      | Activity subgroup |
-            | 6      | Activity          |
-            | 7      | Data Collection   |
-            | 12     | State/Actions     |
-        #| 21     | Modified          |
-        #| 22     | Modified by       |
-        And all other columns contains no content
-
-    ### Add more scenarios to cover the listings....
-
-    @BUG_ID:2775624
-    Scenario Outline: [Table][Filtering] User must be able to filter the table by text fields
-        Given The 'studies/Study_000001/data_specification/activity_instances' page is opened
+    Scenario Outline: [Table][Filtering] User must be able to filter the Study Activity Instances table by text fields
+        Given The test study '/data_specifications/instances' page is opened
         When The user filters field '<name>'
         Then The table is filtered correctly
-
         Examples:
-            | name              |
-            | Activity          |
-            | Activity instance |
-            | State/Actions     |
+        | name               |
+        | Library           |
+        | SoA group         |
+        | Activity group    |
+        | Activity subgroup |
+        | Activity          |
+        | Data collection   |
+        | Activity instance |
+        | Topic code        |
+        #| Test name         |
+        #| Specimen          |
+        #| Standard unit     |
+        | State/Actions     |
+        | ADaM param code   |
+        | Important         |
 
+    Scenario: [Mark as Important][Data collection - no][Instance not applicable] User must not be able to use Mark as Important option if Study Activity has data collection set to No
+        Given The test study '/data_specifications/instances' page is opened
+        And User searches for 'NoDataCollection'
+        When The item actions button is clicked
+        Then 'Mark as important' action is not available
 
+    Scenario: [Mark as Important][Data collection - yes][Missing Instance] User must not be able to use Mark Important option if Study Activity has data collection set to Yes, but no Activity Instance is linked to it
+        Given The test study '/data_specifications/instances' page is opened
+        And User searches for 'MissingInstance'
+        When The item actions button is clicked
+        Then 'Mark as important' action is not available
 
-    Scenario Outline: State/Actions must be displayed for all study activities and related study activity instances
-        Given The test study '/data_specification/activity_instances' page is opened
-        When the table of Activity Instances is displayed including the column 'State/Actions'
-        Then the the row values for 'State/Actions' must be as <State Action Value> depending on the <Rule> rules for the Study Activity Instance
-        Then the the row values for 'Actions' must list <Action> depending on the value of the status of Activity Instance in Library and Boolean attributes according to <Rule>
-        And an <Indicator> is displayed next to the row action icon
-        Examples:
-            | Indicator            | Higllight colour | State/Action                                         | Rule                                                                                                                         |
-            |                      | Green            | Required                                             | Activity Instance is required_for_activity and currently selected for the Activity                                           |
-            |                      | Green            | Defaulted                                            | Activity Instance is default_for_activity and currently selected for the Activity                                            |
-            |                      | Green            | Defaulted                                            | Activity Instance is the only available instance within the grouping combination for related Activity and currently selected |
-            | Red exclamation mark | Red              | Add missing selection                                | No Activity Instance has been selected for Activity related to data collection                                               |
-            | Red exclamation mark | Red              | Add missing selection or add reason for deviation... | Required Activity Instance for Activity has not been selected                                                                |
-            |                      | Yellow           | Add optional selection if relevant                   | Additional optional Activity Instances can be made as this Activity support multiple selections                              |
-            | Red exclamation mark | Red              | Multiple selections, Remove selection                | Multiple Activity Instances has been selected for Activity requiring a single selection                                      |
-            |                      | Green            | No data collection                                   | Activity is marked with 'No' for data collection and no Activity Instance can be related                                     |
-            | Red bell             | Yellow           | Use new available version                            | Activity Instance is available in a newer version than currently selected, and user has not selected to use old version      |
-            | Grey bell            | Yellow           | Keep old version or use new available version        | Activity Instance is available in a newer version than currently selected, and user has selected to use old version          |
-            | Red bell             | Yellow           | Retired, change selection                            | Activity Instance is retired                                                                                                 |
-            | Grey bell            | Yellow           | Retired, keep retired version                        | Activity Instance is retired but user has selected to keep reference to retired version                                      |
+    Scenario: [Mark as Important][Data collection - yes][Linked Instance] User must be able to see that by default Study Activity Instance, linked to the Study Activity with data collection set to Yes, is marked as not Important
+        Given The test study '/data_specifications/instances' page is opened
+        And User searches for 'FirstActivity'
+        Then Important is set to empty string in the Study Activity Instance table
 
+    Scenario: [Mark as Important][Data collection - yes][Linked Instance] User must be able to mark Study Activity Instance as Important if linked Study Activity data collection is set to Yes
+        Given The test study '/data_specifications/instances' page is opened
+        And User searches for 'FirstActivity'
+        Then The 'Mark as Important' option is clicked from the three dot menu list
+        Then The pop up displays 'Study Activity Instance marked as important'
+        And Important is set to 'Yes' in the Study Activity Instance table
 
-    # Version only for State
-    #Scenario Outline: State must be displayed as combination of Activity Instance Boolean attributes and current selections of study activity instances
-    #    Given The test study '/data_specification/activity_instances' page is opened
-    #    When the table of Activity Instances is displayed including the column 'State'
-    #    Then the the row values for 'State' must be as <State> depending on the value of the Activity Instance Boolean attributes and current selections of study activity instances
-    #    Examples:
-    #        | Indicator            | State                             | Rule                                                                                                                         |
-    #        |                      | Required                          | Activity Instance is required_for_activity and currently selected for the Activity                                           |
-    #        |                      | Defaulted                         | Activity Instance is default_for_activity and currently selected for the Activity                                            |
-    #        |                      | Defaulted                         | Activity Instance is the only available instance within the grouping combination for related Activity and currently selected |
-    #        | Red exclamation mark | Missing selection                 | No Activity Instance has been selected for Activity related to data collection                                               |
-    #        | Red exclamation mark | Missing selection                 | Required Activity Instance for Activity has not been selected                                                                |
-    #        |                      | Add selection                     | Additional optional Activity Instances can be made as this Activity support multiple selections                              |
-    #        | Red exclamation mark | Multiple selections not supported | Multiple Activity Instances has been selected for Activity requiring a single selection                                      |
-    #        |                      | No data collection                | Activity is marked with 'No' for data collection and no Activity Instance can be related                                     |
-    #        | Red bell             | New version available             | Activity Instance is available in a newer version than currently selected, and user has not selected to use old version      |
-    #        | Grey bell            | New version available             | Activity Instance is available in a newer version than currently selected, and user has selected to use old version          |
-    #        | Red bell             | Activity is retired               | Activity Instance is retired                                                                                                 |
+    Scenario: [Mark as Important][Multiple Important Instances] User must be able to mark more than one Study Activity Instance as Important
+        Given The test study '/data_specifications/instances' page is opened
+        And User searches for 'SecondActivity'
+        Then The 'Mark as Important' option is clicked from the three dot menu list
+        Then The pop up displays 'Study Activity Instance marked as important'
+        And Important is set to 'Yes' in the Study Activity Instance table
+    
+    Scenario: [Unmark as Important][Data collection - yes][Linked Instance] User must be able to unmark Study Activity Instance as Important if linked Study Activity data collection is set to Yes and Importat is set to Yes
+        Given The test study '/data_specifications/instances' page is opened
+        And User searches for 'FirstActivity'
+        Then The 'Unmark as Important' option is clicked from the three dot menu list
+        Then The pop up displays 'Study Activity Instance unmarked as important'
+        And Important is set to empty string in the Study Activity Instance table
 
+    Scenario: User must be able to selected one activity instance for study activity and save without review
+        And [API] Study Activity is created and approved
+        And [API] Get SoA Group 'INFORMED CONSENT' id
+        And [API] Activity is added to the study
+        And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
+        When The test study '/data_specifications/instances' page is opened
+        When The Study Activity is found
+        And The 'Edit Activity - Instance relationship' option is clicked from the three dot menu list
+        And The user selects activity instance
+        And The 'cancel-button' button is clicked
+        Then The activity state is 'Add instance'
 
-    # Version only for Actions
-    #Scenario Outline: Actions must be displayed based on Activity Instance status and rules related to Boolean variables
-    #    Given The test study '/data_specification/activity_instances' page is opened
-    #    When the table of Activity Instances is displayed including the column 'Actions'
-    #    Then the the row values for 'Actions' must list <Action> depending on the value of the status of Activity Instance in Library and Boolean attributes according to <Rule>
-    #    And an <Indicator> is displayed next to the row action icon
-    #        | Indicator            | Action           | Rule                                                                                                                         |
-    #        |                      |                  | Activity Instance is required_for_activity and currently selected for the Activity                                           |
-    #        |                      |                  | Activity Instance is default_for_activity and currently selected for the Activity                                            |
-    #        |                      |                  | Activity Instance is the only available instance within the grouping combination for related Activity and currently selected |
-    #        | Red exclamation mark | Add selection    | No Activity Instance has been selected for Activity related to data collection                                               |
-    #        | Red exclamation mark | Add selection    | Required Activity Instance for Activity has not been selected                                                                |
-    #        |                      | Add selection    | Additional optional Activity Instances can be made as this Activity support multiple selections                              |
-    #        | Red exclamation mark | Remove selection | Multiple Activity Instances has been selected for Activity requiring a single selection                                      |
-    #        |                      |                  | Activity is marked with 'No' for data collection and no Activity Instance can be related                                     |
-    #        | Red bell             | Use new version  | Activity Instance is available in a newer version than currently selected, and user has not selected to use old version      |
-    #        | Grey bell            | Use new version  | Activity Instance is available in a newer version than currently selected, and user has selected to use old version          |
-    #        | Red bell             | Change selection | Activity Instance is retired                                                                                                 |
+    Scenario: User must be able to selected one activity instance for study activity and save as reviewed
+        And [API] Study Activity is created and approved
+        And [API] Get SoA Group 'INFORMED CONSENT' id
+        And [API] Activity is added to the study
+        And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
+        When The test study '/data_specifications/instances' page is opened
+        When The Study Activity is found
+        And The 'Edit Activity - Instance relationship' option is clicked from the three dot menu list
+        And The user selects activity instance
+        And The 'Save as reviewed' is clicked during review
+        Then The activity state is 'Reviewed'
 
+    Scenario: User must be able to selected multiple activity instances for study activity save without review
+        And [API] Study Activity is created and approved
+        And [API] Get SoA Group 'INFORMED CONSENT' id
+        And [API] Activity is added to the study
+        And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
+        And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
+        And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
+        When The test study '/data_specifications/instances' page is opened
+        When The Study Activity is found
+        And The 'Edit Activity - Instance relationship' option is clicked from the three dot menu list
+        And The user selects multiple activity instances
+        And The 'cancel-button' button is clicked
+        Then The activity state is 'Add instance'
 
+    Scenario: User must be able to selected multiple activity instances for study activity and save as reviewed
+        And [API] Study Activity is created and approved
+        And [API] Get SoA Group 'INFORMED CONSENT' id
+        And [API] Activity is added to the study
+        And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
+        And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
+        And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
+        When The test study '/data_specifications/instances' page is opened
+        When The Study Activity is found
+        And The 'Edit Activity - Instance relationship' option is clicked from the three dot menu list
+        And The user selects multiple activity instances
+        And The 'Save as reviewed' is clicked during review
+        Then The activity state is 'Reviewed'
+        # And The instance is linked to that activity
 
-    # Old version - we will not use
-    #Scenario Outline: Type must be displayed as combination of Activity Instance Boolean attributes
-    #    Given The test study '/data_specification/activity_instances' page is opened
-    #    When the table of Activity Instances is displayed including the column 'Type'
-    #    Then the the row values for 'Type' must be as <Type Value> depending on the value of the Activity Instance Boolean attributes
-    #    Examples:
-    #        | required_for_activity | default_for_activity | legacy_usage | Type Value |
-    #        | True                  | *                    | False        | Required   |
-    #        | False                 | True                 | False        | Default    |
-    #        | *                     | *                    | True         | Legacy     |
+    Scenario: User must be able to delete one of multiple activity instances from selected study activity
+        And [API] Study Activity is created and approved
+        And [API] Get SoA Group 'INFORMED CONSENT' id
+        And [API] Activity is added to the study
+        And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
+        And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
+        And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
+        When The test study '/data_specifications/instances' page is opened
+        When The Study Activity is found
+        And The 'Edit Activity - Instance relationship' option is clicked from the three dot menu list
+        And The user selects multiple activity instances
+        And The 'save-button' button is clicked
+        And The user removes the additional activities
+        Then The pop up displays 'Study Activity Instance deleted'
 
-    # Old version - we will not use
-    #Scenario Outline: Actions must be displayed based on Activity Instance status and rules related to Boolean variables
-    #    Given The test study '/data_specification/activity_instances' page is opened
-    #    When the table of Activity Instances is displayed including the column 'Actions'
-    #    Then the the row values for 'Actions' must list <Action> depending on the value of the status of Activity Instance in Library and Boolean attributes according to <Rule>
-    #    And an <Indicator> is displayed next to the row action icon
-    #    Examples:
-    #        | Indicator            | Action           | Rule                                                                                                                    |
-    #        | Red bell             | Use new version  | Activity Instance is available in a newer version than currently selected, and user has not selected to use old version |
-    #        | Grey bell            | Use new version  | Activity Instance is available in a newer version than currently selected, and user has selected to use old version     |
-    #        | Red bell             | Change selection | Activity Instance is retired                                                                                            |
-    #        | Red exclamation mark | Add selection    | No Activity Instance has been made for Activity related to data collection                                              |
-    #        | Red exclamation mark | Add selection    | Required Activity Instance for Activity has not been selected                                                           |
-    #        | Red exclamation mark | Remove selection | Multiple Activity Instances has been selected for Activity requiring a single selection                                 |
+    Scenario: User must be presented with 'Not applicable' for every non-data collection study activity
+        And [API] No data collection Study Activity is created and approved
+        And [API] Get SoA Group 'INFORMED CONSENT' id
+        And [API] Activity is added to the study
+        When The test study '/data_specifications/instances' page is opened
+        When The Study Activity is found
+        Then The activity state is 'Not applicable'
 
+    @pending_implementation
+    Scenario: User must be presented with 'Review needed' when activity instace selected for study activity are in undefined state
+        Given The study activity in undefined state is presented in the study
+        When The test study '/data_specifications/instances' page is opened
+        Then The activity state is 'Review needed'
 
-    # Keep in E2E
-    #Scenario Outline: Details must be displayed based on Activity Instance and selected information from Activity Items
-    #    Given The test study '/data_specification/activity_instances' page is opened
-    #    When the table of Activity Instances is displayed including the column 'Details'
-    #    Then the the row values for 'Details' must list <Detail Label> and <Detail Value> depending on the <Detail Source> value of the status of Activity Instance and selected related Activity Items in the Library
-    #    Examples:
-    #        | Detail Label    | Detail Value                     | Detail Source                                                             |
-    #        | Class           | ActivityInstanceClass.name       | ActivityInstanceClass                                                     |
-    #        | Topic code      | ActivityInstance.topic_code      | ActivityInstanceClass                                                     |
-    #        | ADaM param code | ActivityInstance.adam_param_code | ActivityInstanceClass                                                     |
-    #        | SDTM test name  | CTTerm.name_submission_value     | ActivityItem related CTTerm for ActivityItemClass 'test_name_code'        |
-    #        | SDTM test code  | CTTerm.code_submission_value     | ActivityItem related CTTerm for ActivityItemClass 'test_name_code'        |
-    #        | SDTM domain     | CTTerm.code_submission_value     | ActivityItem related CTTerm for ActivityItemClass 'domain'                |
-    #        | Unit dimension  | CTTerm.sponsor_name              | ActivityItem related CTTerm for ActivityItemClass 'unit_dimension'        |
-    #        | Standard unit   | UnitDefinition.name              | ActivityItem related UnitDefinition for ActivityItemClass 'standard_unit' |
-    #        | Specimen        | CTTerm.sponsor_name              | ActivityItem related CTTerm for ActivityItemClass 'specimen'              |
+    Scenario: User must be presented with 'Review needed' when activity instace selected for study activity are in default state
+        And [API] Study Activity is created and approved
+        And [API] Get SoA Group 'INFORMED CONSENT' id
+        And [API] Activity is added to the study
+        And The activity instance with data-sharing set to 'false', required for activity set to 'true' and default for activity set to 'true' exists
+        When The test study '/data_specifications/instances' page is opened
+        When The Study Activity is found
+        And The 'Edit Activity - Instance relationship' option is clicked from the three dot menu list
+        And The user selects activity instance
+        And The 'Save as reviewed' is clicked during review
+        Then The activity state is 'Review needed'
 
-    ### End of section potentially for API
-    ######################################
+    Scenario: User must be presented with 'Review not needed' when activity instance selected for study activity is mandatory
+        And [API] Study Activity is created and approved
+        And [API] Get SoA Group 'INFORMED CONSENT' id
+        And [API] Activity is added to the study
+        And The activity instance with data-sharing set to 'false', required for activity set to 'true' and default for activity set to 'false' exists
+        When The test study '/data_specifications/instances' page is opened
+        When The Study Activity is found
+        And The 'Edit Activity - Instance relationship' option is clicked from the three dot menu list
+        And The user selects activity instance
+        And The 'Save as reviewed' is clicked during review
+        Then The activity state is 'Review not needed'
 
+    Scenario: User must be presented with 'Add instance' when study activity is not linked to any activity instance
+        And [API] Study Activity is created and approved
+        And [API] Get SoA Group 'INFORMED CONSENT' id
+        And [API] Activity is added to the study
+        And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
+        When The test study '/data_specifications/instances' page is opened
+        When The Study Activity is found
+        Then The activity state is 'Add instance'
 
-    Scenario: User must be able to edit a Study Activity Instance selections for a Study Activity
-        Given The test study '/data_specification/activity_instances' page is opened
-        When The Study Activity and related Study Activity Instances is edited
-        Then The edited Study Activity Instance selections is reflected within the Study Activity Instance table
+    Scenario: User must be presented with 'Remove instance' when study activity has more linked activity instances than allowed for that study activity
+        And [API] Study Activity with no mutliple instances allowed is created and approved
+        And [API] Get SoA Group 'INFORMED CONSENT' id
+        And [API] Activity is added to the study
+        And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
+        And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
+        And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
+        When The test study '/data_specifications/instances' page is opened
+        When The Study Activity is found
+        And The 'Edit Activity - Instance relationship' option is clicked from the three dot menu list
+        And The user selects multiple activity instances
+        And The 'Save as reviewed' is clicked during review
+        Then The activity state is 'Remove instance'
 
-    Scenario: User must be able to read change history of Study Activity Instances
-        Given The test study '/data_specification/activity_instances' page is opened
-        When The user opens page level version history
-        Then The user is presented with version history of the output containing timestamp and username
+    Scenario: Reviewed checkbox must be disabled for activity in 'Not applicable' state
+        And [API] No data collection Study Activity is created and approved
+        And [API] Get SoA Group 'INFORMED CONSENT' id
+        And [API] Activity is added to the study
+        When The test study '/data_specifications/instances' page is opened
+        When The Study Activity is found
+        Then The activity state is 'Not applicable'
+        And The reviewed checkbox is disabled 
 
-    Scenario: User must be able to read change history of selected Study Activity Instance
-        Given The test study '/data_specification/activity_instances' page is opened
-        When The user clicks on History for particular Study Activity Instance row
-        Then The user is presented with history of changes for that Study Activity Instance
-        And The history contains timestamps and usernames
+    Scenario: Reviewed checkbox must be disabled for activity in 'Add instance' state
+        And [API] Study Activity is created and approved
+        And [API] Get SoA Group 'INFORMED CONSENT' id
+        And [API] Activity is added to the study
+        And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
+        When The test study '/data_specifications/instances' page is opened
+        When The Study Activity is found
+        Then The activity state is 'Add instance'
+        And The reviewed checkbox is disabled 
 
+    Scenario: Reviewed checkbox must be disabled for activity in 'Remove instance' state
+        And [API] Study Activity with no mutliple instances allowed is created and approved
+        And [API] Get SoA Group 'INFORMED CONSENT' id
+        And [API] Activity is added to the study
+        And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
+        And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
+        And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
+        When The test study '/data_specifications/instances' page is opened
+        When The Study Activity is found
+        And The 'Edit Activity - Instance relationship' option is clicked from the three dot menu list
+        And The user selects multiple activity instances
+        And The 'Save as reviewed' is clicked during review
+        And The reviewed checkbox is disabled 
 
-### Additional notes for things not yet covered in Gherkin specs
-# No fitering for 'Details' column - but filtering can be made for the individual specific columns
-# Enable filtring on <blanks>/<null>
-# Process for selecting new version of Activity Instance
-# Process for accepting old version of Activity Instance
-# Process of removing selection of retired Activity Instance
-# Define Review Workflow process, and a way to 'sign-off' / 'soft-lock' Study Activity Instances
+    Scenario: User must be able to review study activity in 'Review needed' state
+        And [API] Study Activity is created and approved
+        And [API] Get SoA Group 'INFORMED CONSENT' id
+        And [API] Activity is added to the study
+        And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
+        When The test study '/data_specifications/instances' page is opened
+        And The Study Activity is found
+        And The 'Edit Activity - Instance relationship' option is clicked from the three dot menu list
+        And The user selects activity instance
+        And The 'save-button' button is clicked
+        Then The activity state is 'Review needed'
+        When The user checks the review checkbox
+        Then The activity state is 'Reviewed'
+    
+    Scenario: Study activity must be marked as 'Reviewed' by default when in 'Review Not Needed' state
+        And [API] Study Activity is created and approved
+        And [API] Get SoA Group 'INFORMED CONSENT' id
+        And [API] Activity is added to the study
+        And The activity instance with data-sharing set to 'false', required for activity set to 'true' and default for activity set to 'false' exists
+        When The test study '/data_specifications/instances' page is opened
+        When The Study Activity is found
+        And The 'Edit Activity - Instance relationship' option is clicked from the three dot menu list
+        And The user selects activity instance
+        And The 'Save as reviewed' is clicked during review
+        Then The activity state is 'Review not needed'
+        And The review checkbox is marked as true
+
+    Scenario: Study activity must be put into 'Review needed' state when user unchecks 'Reviewed' checkbox for activity in 'Review not needed' state
+        And [API] Study Activity is created and approved
+        And [API] Get SoA Group 'INFORMED CONSENT' id
+        And [API] Activity is added to the study
+        And The activity instance with data-sharing set to 'false', required for activity set to 'true' and default for activity set to 'false' exists
+        When The test study '/data_specifications/instances' page is opened
+        When The Study Activity is found
+        And The 'Edit Activity - Instance relationship' option is clicked from the three dot menu list
+        And The user selects activity instance
+        And The 'Save as reviewed' is clicked during review
+        Then The activity state is 'Review not needed'
+        And The user unchecks the review checkbox
+        Then The activity state is 'Review needed'
+
+    Scenario: Study activity must be put into 'Review needed' state when user unchecks 'Reviewed' checkbox for activity in 'Reviewed' state
+        And [API] Study Activity is created and approved
+        And [API] Get SoA Group 'INFORMED CONSENT' id
+        And [API] Activity is added to the study
+        And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
+        When The test study '/data_specifications/instances' page is opened
+        When The Study Activity is found
+        And The 'Edit Activity - Instance relationship' option is clicked from the three dot menu list
+        And The user selects activity instance
+        And The 'Save as reviewed' is clicked during review
+        Then The activity state is 'Reviewed'
+        And The user unchecks the review checkbox
+        Then The activity state is 'Review needed'
+
+    @pending_implementation
+    Scenario: Study activity must be set as 'Review needed' after too many instances has been removed and undefined was true
+        Given The study activity with multiple activity instances and undefined state is present in selected study
+        When The test study '/data_specifications/instances' page is opened
+        And The user clicks 'Edit' for that activity
+        And The user removes all activity instances selection
+        Then The activity state is 'Review needed'
+
+    @pending_implementation
+    Scenario: Study activity must be set as 'Review needed' after too many instances has been removed and was set as default instance
+        Given The default state study activity with multiple activity instances is present in selected study
+        When The test study '/data_specifications/instances' page is opened
+        And The user clicks 'Edit' for that activity
+        And The user removes all activity instances selection
+        Then The activity state is 'Review needed'
+
+    @pending_implementation
+    Scenario: Study activity must be set as 'Review not needed' after too many instances has been removed and mandatory was true
+        Given The mandatory study activity with multiple activity instances is present in selected study
+        When The test study '/data_specifications/instances' page is opened
+        And The user clicks 'Edit' for that activity
+        And The user removes all activity instances selection
+        Then The activity state is 'Review needed'
+
+    @pending_implementation
+    Scenario: Study activity must be set as 'Review needed' after necessary instance has been added and undefined was true
+        Given The study activity without activity instances and undefined status is present in selected study
+        When The test study '/data_specifications/instances' page is opened
+        And The user clicks 'Edit' for that activity
+        And The user selects activity instance
+        Then The activity state is 'Review needed'
+
+    @pending_implementation
+    Scenario: Study activity must be set as 'Review needed' after necessary instance has been added and was in default state
+        And [API] Study Activity is created and approved
+        And [API] Get SoA Group 'INFORMED CONSENT' id
+        And [API] Activity is added to the study
+        And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'true' exists
+        When The test study '/data_specifications/instances' page is opened
+        When The Study Activity is found
+        And The 'Edit Activity - Instance relationship' option is clicked from the three dot menu list
+        And The user selects activity instance
+        And The 'Save as reviewed' is clicked during review
+        Then The activity state is 'Review needed'
+
+    Scenario: Study activity must be set as 'Review not needed' after necessary instance has been added and mandatory was true
+        And [API] Study Activity is created and approved
+        And [API] Get SoA Group 'INFORMED CONSENT' id
+        And [API] Activity is added to the study
+        And The activity instance with data-sharing set to 'false', required for activity set to 'true' and default for activity set to 'false' exists
+        When The test study '/data_specifications/instances' page is opened
+        When The Study Activity is found
+        And The 'Edit Activity - Instance relationship' option is clicked from the three dot menu list
+        And The user selects activity instance
+        And The 'Save as reviewed' is clicked during review
+        Then The activity state is 'Review not needed'
+
+    Scenario: User must not be presented with 'Save as reviewed' when activity instances has not been selected
+        And [API] Study Activity is created and approved
+        And [API] Get SoA Group 'INFORMED CONSENT' id
+        And [API] Activity is added to the study
+        And The activity instance with data-sharing set to 'false', required for activity set to 'true' and default for activity set to 'false' exists
+        When The test study '/data_specifications/instances' page is opened
+        When The Study Activity is found
+        And The 'Edit Activity - Instance relationship' option is clicked from the three dot menu list
+        Then The button 'Save as reviewed' is not present
+
+    @pending_implementation
+    Scenario: User must not be presented with 'Save as reviewed' when activity has 'Remove instance' status
+        Given The study activity in 'Remove instance' state exists for the study
+        When The test study '/data_specifications/instances' page is opened
+        And The user clicks 'Edit' for that activity
+        Then The button 'Save as reviewed' is not present
+
+    Scenario: User must not be presented with 'Save as reviewed' for activity in state 'Not applicable'
+        And [API] No data collection Study Activity is created and approved
+        And [API] Get SoA Group 'INFORMED CONSENT' id
+        And [API] Activity is added to the study
+        When The test study '/data_specifications/instances' page is opened
+        When The Study Activity is found
+        Then The activity state is 'Not applicable'
+        And The 'Edit Activity - Instance relationship' option is clicked from the three dot menu list
+        Then The button 'Save as reviewed' is not present
+
+    Scenario: User must be presented with red exclamation mark icon when a change has occured for instance name
+        And [API] Study Activity is created and approved
+        And [API] Get SoA Group 'INFORMED CONSENT' id
+        And [API] Activity is added to the study
+        And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
+        When The test study '/data_specifications/instances' page is opened
+        And The Study Activity is found
+        And The 'Edit Activity - Instance relationship' option is clicked from the three dot menu list
+        And The user selects activity instance
+        And The 'Save as reviewed' is clicked during review
+        And The activity instace name is updated
+        When The test study '/data_specifications/instances' page is opened
+        And The Study Activity is found
+        Then The red alert badge is present
+
+    Scenario: User must be presented with red exclamation mark icon when a change has occured for instance class
+        And [API] Study Activity is created and approved
+        And [API] Get SoA Group 'INFORMED CONSENT' id
+        And [API] Activity is added to the study
+        And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
+        When The test study '/data_specifications/instances' page is opened
+        And The Study Activity is found
+        And The 'Edit Activity - Instance relationship' option is clicked from the three dot menu list
+        And The user selects activity instance
+        And The 'Save as reviewed' is clicked during review
+        And The activity instace class is updated
+        When The test study '/data_specifications/instances' page is opened
+        And The Study Activity is found
+        Then The red alert badge is present
+
+    Scenario: User must be presented with red exclamation mark icon when a change has occured for instance topic code
+        And [API] Study Activity is created and approved
+        And [API] Get SoA Group 'INFORMED CONSENT' id
+        And [API] Activity is added to the study
+        And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
+        When The test study '/data_specifications/instances' page is opened
+        And The Study Activity is found
+        And The 'Edit Activity - Instance relationship' option is clicked from the three dot menu list
+        And The user selects activity instance
+        And The 'Save as reviewed' is clicked during review
+        And The activity instace topic code is updated
+        When The test study '/data_specifications/instances' page is opened
+        And The Study Activity is found
+        Then The red alert badge is present
+        
+    Scenario: User must be presented with yellow exclamation mark when study activity updates has been declined
+        And [API] Study Activity is created and approved
+        And [API] Get SoA Group 'INFORMED CONSENT' id
+        And [API] Activity is added to the study
+        And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
+        When The test study '/data_specifications/instances' page is opened
+        And The Study Activity is found
+        And The 'Edit Activity - Instance relationship' option is clicked from the three dot menu list
+        And The user selects activity instance
+        And The 'Save as reviewed' is clicked during review
+        And The activity instace name is updated
+        When The test study '/data_specifications/instances' page is opened
+        And The Study Activity is found
+        And The user declines the activity instance changes
+        Then The yellow alert badge is present
+
+    Scenario: Red exclamation mark must be removed when study activity updates has been accepted 
+        And [API] Study Activity is created and approved
+        And [API] Get SoA Group 'INFORMED CONSENT' id
+        And [API] Activity is added to the study
+        And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
+        When The test study '/data_specifications/instances' page is opened
+        And The Study Activity is found
+        And The 'Edit Activity - Instance relationship' option is clicked from the three dot menu list
+        And The user selects activity instance
+        And The 'Save as reviewed' is clicked during review
+        And The activity instace name is updated
+        When The test study '/data_specifications/instances' page is opened
+        And The Study Activity is found
+        And The user accepts the activity instance changes
+        Then The red alert badge is not present
+
+    Scenario: Study activity is set to 'Review needed' when a change has occured for instance name
+        And [API] Study Activity is created and approved
+        And [API] Get SoA Group 'INFORMED CONSENT' id
+        And [API] Activity is added to the study
+        And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
+        When The test study '/data_specifications/instances' page is opened
+        And The Study Activity is found
+        And The 'Edit Activity - Instance relationship' option is clicked from the three dot menu list
+        And The user selects activity instance
+        And The 'Save as reviewed' is clicked during review
+        And The activity instace name is updated
+        When The test study '/data_specifications/instances' page is opened
+        And The Study Activity is found
+        Then The activity state is 'Review needed'
+
+    Scenario: Study activity is set to 'Review needed' when a change has occured for instance class
+        And [API] Study Activity is created and approved
+        And [API] Get SoA Group 'INFORMED CONSENT' id
+        And [API] Activity is added to the study
+        And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
+        When The test study '/data_specifications/instances' page is opened
+        And The Study Activity is found
+        And The 'Edit Activity - Instance relationship' option is clicked from the three dot menu list
+        And The user selects activity instance
+        And The 'Save as reviewed' is clicked during review
+        And The activity instace class is updated
+        When The test study '/data_specifications/instances' page is opened
+        And The Study Activity is found
+        Then The activity state is 'Review needed'
+
+    Scenario: Study activity is set to 'Review needed' when a change has occured for instance topic code
+        And [API] Study Activity is created and approved
+        And [API] Get SoA Group 'INFORMED CONSENT' id
+        And [API] Activity is added to the study
+        And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
+        When The test study '/data_specifications/instances' page is opened
+        And The Study Activity is found
+        And The 'Edit Activity - Instance relationship' option is clicked from the three dot menu list
+        And The user selects activity instance
+        And The 'Save as reviewed' is clicked during review
+        And The activity instace topic code is updated
+        When The test study '/data_specifications/instances' page is opened
+        And The Study Activity is found
+        Then The activity state is 'Review needed'
+
+    Scenario: Study activity is set to 'Review needed' when the instance has been retired
+        And [API] Study Activity is created and approved
+        And [API] Get SoA Group 'INFORMED CONSENT' id
+        And [API] Activity is added to the study
+        And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
+        When The test study '/data_specifications/instances' page is opened
+        And The Study Activity is found
+        And The 'Edit Activity - Instance relationship' option is clicked from the three dot menu list
+        And The user selects activity instance
+        And The 'Save as reviewed' is clicked during review
+        And The activity instace has been retired
+        When The test study '/data_specifications/instances' page is opened
+        And The Study Activity is found
+        Then The activity state is 'Review needed'
+
+    Scenario: User must be able to mark study as 'Reviewed' when accepting all changes to instance
+        And [API] Study Activity is created and approved
+        And [API] Get SoA Group 'INFORMED CONSENT' id
+        And [API] Activity is added to the study
+        And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
+        When The test study '/data_specifications/instances' page is opened
+        And The Study Activity is found
+        And The 'Edit Activity - Instance relationship' option is clicked from the three dot menu list
+        And The user selects activity instance
+        And The 'Save as reviewed' is clicked during review
+        And The activity instace name is updated
+        When The test study '/data_specifications/instances' page is opened
+        And The Study Activity is found
+        And The user accepts the activity instance changes
+        Then The red alert badge is not present
+        Then The activity state is 'Reviewed'
+
+    @pending_implementation
+    Scenario: User must be able to review instance updates
+        Given The study activity with linked activity instance exists for the study
+        And The activity instance has been edited
+        When The test study '/data_specifications/instances' page is opened
+        And The user opens the review instance updates view
+        Then The changes are presented to the user
+
+    @pending_implementation
+    Scenario: Bulk action - User must be able to mark study as 'Reviewed' when accepting all changes to instance
+        Given The study activity with linked activity instance exists for the study
+        And The activity instance topic code has been edited
+        When The test study '/data_specifications/instances' page is opened
+        And The user accepts the changes
+        Then The activity state is 'Reviewed'
+
+    @pending_implementation
+    Scenario: Bulk action - User must be able to review instance updates
+        Given The study activity with linked activity instance exists for the study
+        And The activity instance has been edited
+        When The test study '/data_specifications/instances' page is opened
+        And The user opens the review instance updates view
+        Then The changes are presented to the user
+
+    @pending_implementation
+    Scenario: Bulk action - User must not be presented with review instance updates when no updates are present
+        Given The study activity with linked activity instance exists for the study
+        And The activity instance has not been edited
+        When The test study '/data_specifications/instances' page is opened
+        Then The 'Review instance changes' nbtton is not present
+
+    @pending_implementation
+    Scenario: Bulk action - User must be presented with 'accept' button when instance name has been updated
+        Given The study activity with linked activity instance exists for the study
+        And The activity instance name has been edited
+        When The test study '/data_specifications/instances' page is opened
+        And The user accepts the changes
+        Then The changes are applied to study activity
+
+    @pending_implementation
+    Scenario: Bulk action - User must be presented with 'accept' button when instance class has been updated
+        Given The study activity with linked activity instance exists for the study
+        And The activity instance class has been edited
+        When The test study '/data_specifications/instances' page is opened
+        And The user accepts the changes
+        Then The changes are applied to study activity
+
+    @pending_implementation
+    Scenario: Bulk action - User must be presented with 'accept' button when instance topic code has been updated
+        Given The study activity with linked activity instance exists for the study
+        And The activity instance topic code has been edited
+        When The test study '/data_specifications/instances' page is opened
+        And The user accepts the changes
+        Then The changes are applied to study activity
+
+    @pending_implementation
+    Scenario: Bulk action - User must be presented with 'declined' button when instance name has been updated
+        Given The study activity with linked activity instance exists for the study
+        And The activity instance name has been edited
+        When The test study '/data_specifications/instances' page is opened
+        And The user declines the changes
+        Then The changes are not applied to study activity
+
+    @pending_implementation
+    Scenario: Bulk action - User must be presented with 'declined' button when instance class has been updated
+        Given The study activity with linked activity instance exists for the study
+        And The activity instance class has been edited
+        When The test study '/data_specifications/instances' page is opened
+        And The user declines the changes
+        Then The changes are not applied to study activity
+
+    @pending_implementation
+    Scenario: Bulk action - User must be presented with 'declined' button when instance topic code has been updated
+        Given The study activity with linked activity instance exists for the study
+        And The activity instance topic code has been edited
+        When The test study '/data_specifications/instances' page is opened
+        And The user declines the changes
+        Then The changes are not applied to study activity
+
+    @pending_implementation
+    Scenario: Bulk action - User must be presented with 'decline' button when instance is retired
+        Given The study activity with linked activity instance exists for the study
+        And The activity instance has been retired
+        When The test study '/data_specifications/instances' page is opened
+        And The user declines the changes
+        Then The changes are not applied to study activity
+
+    @pending_implementation
+    Scenario: Bulk action - User must not be presented with 'accept' button when instance is retired
+        Given The study activity with linked activity instance exists for the study
+        And The activity instance has been retired
+        When The test study '/data_specifications/instances' page is opened
+        And The user accepts the changes
+        Then The changes are applied to study activity

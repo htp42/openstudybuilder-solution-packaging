@@ -121,14 +121,16 @@ Feature: Library - Concepts - Activities - Activity Groups
         When The 'Approve' option is clicked from the three dot menu list
         Then The item has status 'Final' and version '1.0'
 
-    @pending_implementation
-    Scenario: Activity subgroups and activity instances must remain linked to activity group when activity group has been edited
-        Given The '/library/activities/activity-groups' page is opened
-        And The activity group with linked activity instances and activity subgroups exist
-        And The activity group is edited
-        And The Activity group is approved
+    Scenario: [Linking] Activity subgroups must remain linked to activity group when activity group has been edited
+        And [API] Study Activity is created and approved
+        And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
+        And The current activity group is edited
+        And Form save button is clicked
+        And The status displayed on the summary has value 'Draft' and version is '1.2'
+        And User waits for linked 'Activity subgroups' table data to load
+        And I click 'Approve' button
+        And The status displayed on the summary has value 'Final' and version is '2.0'
         Then The activity subgroups previously linked to that group remain linked
-        Then The activity instances previously linked to that group remain linked
 
     Scenario: [Actions][Delete] User must be able to Delete the intial created version of the activity group
         And [API] Activity group in status Draft exists

@@ -87,7 +87,7 @@ import api from '@/api/study.js'
 
 const { t } = useI18n()
 const studiesGeneralStore = useStudiesGeneralStore()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const roles = inject('roles')
 
 const confirm = ref()
@@ -220,7 +220,7 @@ async function deleteItem(item) {
       item.uid
     )
     fetchItems()
-    eventBusEmit('notification', {
+    notificationHub.add({
       msg: t('CTStandardVersionsTable.delete_success'),
     })
   }

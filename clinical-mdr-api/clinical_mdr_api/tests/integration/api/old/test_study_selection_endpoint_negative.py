@@ -73,7 +73,7 @@ def test_adding_selection_endpoint_units_are_missing_a_separator(api_client):
     }
     response = api_client.post("/studies/study_root/study-endpoints", json=data)
 
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
 
     res = response.json()
 
@@ -91,7 +91,7 @@ def test_adding_selection_endpoint_units_having_a_separator_but_no_units(api_cli
     }
     response = api_client.post("/studies/study_root/study-endpoints", json=data)
 
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
 
     res = response.json()
 

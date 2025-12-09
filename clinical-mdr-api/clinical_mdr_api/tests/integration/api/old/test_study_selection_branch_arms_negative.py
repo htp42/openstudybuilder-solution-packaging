@@ -299,7 +299,7 @@ def test_adding_selection2(api_client):
 
     res = response.json()
 
-    assert response.status_code == 422
+    assert response.status_code == 400
     assert res["type"] == "ValidationException"
     assert (
         res["message"]

@@ -1168,7 +1168,7 @@ def test_inactivating_a_specific_odm_form(api_client):
     assert res["repeating"] == "Yes"
     assert res["end_date"] is None
     assert res["status"] == "Retired"
-    assert res["version"] == "1.0"
+    assert res["version"] == "2.0"
     assert res["change_description"] == "Inactivated version"
     assert res["author_username"] == "unknown-user@example.com"
     assert res["descriptions"] == [
@@ -1252,7 +1252,7 @@ def test_reactivating_a_specific_odm_form(api_client):
     assert res["repeating"] == "Yes"
     assert res["end_date"] is None
     assert res["status"] == "Final"
-    assert res["version"] == "1.0"
+    assert res["version"] == "3.0"
     assert res["change_description"] == "Reactivated version"
     assert res["author_username"] == "unknown-user@example.com"
     assert res["descriptions"] == [
@@ -1336,7 +1336,7 @@ def test_creating_a_new_odm_form_version(api_client):
     assert res["repeating"] == "Yes"
     assert res["end_date"] is None
     assert res["status"] == "Draft"
-    assert res["version"] == "1.1"
+    assert res["version"] == "3.1"
     assert res["change_description"] == "New draft created"
     assert res["author_username"] == "unknown-user@example.com"
     assert res["descriptions"] == [
@@ -1569,7 +1569,7 @@ def test_updating_an_existing_odm_form_with_relations(api_client):
     assert res["repeating"] == "Yes"
     assert res["end_date"] is None
     assert res["status"] == "Draft"
-    assert res["version"] == "1.2"
+    assert res["version"] == "3.2"
     assert res["change_description"] == "repeating changed to Yes"
     assert res["author_username"] == "unknown-user@example.com"
     assert res["descriptions"] == [
@@ -1705,7 +1705,7 @@ def test_add_the_odm_form_to_the_odm_study_event(api_client):
         {
             "uid": "OdmForm_000001",
             "name": "name1",
-            "version": "1.2",
+            "version": "3.2",
             "order_number": 1,
             "mandatory": "Yes",
             "locked": "No",

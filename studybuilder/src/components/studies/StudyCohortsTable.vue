@@ -164,7 +164,7 @@ import { escapeHTML, sanitizeHTML } from '@/utils/sanitize'
 import cohortConstants from '@/constants/cohorts'
 
 const { t } = useI18n()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const roles = inject('roles')
 const studiesGeneralStore = useStudiesGeneralStore()
 const accessGuard = useAccessGuard()
@@ -365,7 +365,7 @@ function deleteCohort(item) {
     )
     .then(() => {
       table.value.filterTable()
-      eventBusEmit('notification', {
+      notificationHub.add({
         msg: t('StudyCohorts.cohort_deleted'),
       })
     })

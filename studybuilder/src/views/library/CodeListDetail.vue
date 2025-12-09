@@ -338,7 +338,7 @@ import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
 
 const { t } = useI18n()
 const accessGuard = useAccessGuard()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const appStore = useAppStore()
 const route = useRoute()
 const router = useRouter()
@@ -437,7 +437,7 @@ function createNewSponsorValuesVersion() {
     .newCodelistNamesVersion(codelistNames.value.codelist_uid)
     .then((resp) => {
       codelistNames.value = resp.data
-      eventBusEmit('notification', {
+      notificationHub.add({
         msg: t('CodeListDetail.new_version_success'),
       })
     })
@@ -447,7 +447,7 @@ function approveSponsorValues() {
     .approveCodelistNames(codelistNames.value.codelist_uid)
     .then((resp) => {
       codelistNames.value = resp.data
-      eventBusEmit('notification', {
+      notificationHub.add({
         msg: t('CodeListDetail.sponsor_values_approve_success'),
       })
     })
@@ -469,7 +469,7 @@ function createNewAttributesVersion() {
     .newCodelistAttributesVersion(attributes.value.codelist_uid)
     .then((resp) => {
       attributes.value = resp.data
-      eventBusEmit('notification', {
+      notificationHub.add({
         msg: t('CodeListDetail.new_attributes_version_success'),
       })
     })
@@ -479,7 +479,7 @@ function approveAttributes() {
     .approveCodelistAttributes(attributes.value.codelist_uid)
     .then((resp) => {
       attributes.value = resp.data
-      eventBusEmit('notification', {
+      notificationHub.add({
         msg: t('CodeListDetail.attributes_approve_success'),
       })
     })
@@ -545,7 +545,7 @@ async function openRemovePairedCodelistForm(cl) {
       .updatePairedCodelists(route.params.codelist_id, data)
       .then(() => {
         fetchPairedCodelists()
-        eventBusEmit('notification', {
+        notificationHub.add({
           msg: t('CodeListDetail.remove_paired_codelist_success'),
         })
       })

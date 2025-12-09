@@ -112,11 +112,13 @@ class ActivityInstanceClassService(NeomodelExtGenericService[ActivityInstanceCla
     def get_mapped_datasets(
         self,
         activity_instance_class_uid: str | None = None,
+        ig_uid: str | None = None,
         include_sponsor: bool = True,
     ) -> list[ActivityInstanceClassWithDataset]:
         mapped_datasets = (
             self._repos.activity_instance_class_repository.get_mapped_datasets(
                 activity_instance_class_uid=activity_instance_class_uid,
+                ig_uid=ig_uid,
                 include_sponsor=include_sponsor,
             )
         )

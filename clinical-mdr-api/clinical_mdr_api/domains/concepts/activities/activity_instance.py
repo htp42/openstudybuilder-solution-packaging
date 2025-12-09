@@ -353,6 +353,32 @@ class ActivityInstanceVO(ConceptVO):
             msg=f"Activity Instance Class with UID '{self.activity_instance_class_uid}' doesn't exist.",
         )
 
+        # Validate that all mandatory Activity Item Classes for the selected
+        # Activity Instance Class are present in the create input
+        # Disabled for now as it is very restrictive.
+        # Might be re-enabled in the future, possibly in some modified way.
+        # required_item_class_uids = {
+        #     rel.uid
+        #     for rel in activity_instance_class.activity_instance_class_vo.activity_item_classes
+        #     if rel.mandatory
+        # }
+        # selected_item_class_uids = {
+        #     activity_item.activity_item_class_uid
+        #     for activity_item in self.activity_items
+        # }
+        # missing_required_uids = required_item_class_uids.difference(
+        #     selected_item_class_uids
+        # )
+
+        # BusinessLogicException.raise_if(
+        #     len(missing_required_uids) > 0,
+        #     msg=(
+        #         "The following mandatory Activity Item Classes must be selected for "
+        #         f"Activity Instance Class '{self.activity_instance_class_uid}': "
+        #         + ", ".join(sorted(missing_required_uids))
+        #     ),
+        # )
+
         unit_dimension_names = get_dimension_names_by_unit_definition_uids(
             [
                 unit.uid
@@ -515,27 +541,29 @@ class ActivityInstanceAR(ConceptARBase):
         get_dimension_names_by_unit_definition_uids: Callable[
             [list[str]], list[str]
         ] = lambda _: [],
+        perform_validation: bool = True,
     ) -> None:
         """
         Creates a new draft version for the object.
         """
-        concept_vo.validate(
-            get_final_activity_value_by_uid_callback=get_final_activity_value_by_uid_callback,
-            activity_subgroup_exists=activity_subgroup_exists,
-            activity_group_exists=activity_group_exists,
-            ct_term_exists_by_uid_callback=ct_term_exists_by_uid_callback,
-            unit_definition_exists_by_uid_callback=unit_definition_exists_by_uid_callback,
-            find_activity_item_class_by_uid_callback=find_activity_item_class_by_uid_callback,
-            find_activity_instance_class_by_uid_callback=find_activity_instance_class_by_uid_callback,
-            get_odm_form_by_uid_callback=get_odm_form_by_uid_callback,
-            get_odm_item_group_by_uid_callback=get_odm_item_group_by_uid_callback,
-            get_odm_item_by_uid_callback=get_odm_item_by_uid_callback,
-            get_dimension_names_by_unit_definition_uids=get_dimension_names_by_unit_definition_uids,
-            activity_instance_exists_by_property_value=concept_exists_by_library_and_property_value_callback,
-            previous_name=self.name,
-            previous_topic_code=self._concept_vo.topic_code,
-            library_name=self.library.name,
-        )
+        if perform_validation:
+            concept_vo.validate(
+                get_final_activity_value_by_uid_callback=get_final_activity_value_by_uid_callback,
+                activity_subgroup_exists=activity_subgroup_exists,
+                activity_group_exists=activity_group_exists,
+                ct_term_exists_by_uid_callback=ct_term_exists_by_uid_callback,
+                unit_definition_exists_by_uid_callback=unit_definition_exists_by_uid_callback,
+                find_activity_item_class_by_uid_callback=find_activity_item_class_by_uid_callback,
+                find_activity_instance_class_by_uid_callback=find_activity_instance_class_by_uid_callback,
+                get_odm_form_by_uid_callback=get_odm_form_by_uid_callback,
+                get_odm_item_group_by_uid_callback=get_odm_item_group_by_uid_callback,
+                get_odm_item_by_uid_callback=get_odm_item_by_uid_callback,
+                get_dimension_names_by_unit_definition_uids=get_dimension_names_by_unit_definition_uids,
+                activity_instance_exists_by_property_value=concept_exists_by_library_and_property_value_callback,
+                previous_name=self.name,
+                previous_topic_code=self._concept_vo.topic_code,
+                library_name=self.library.name,
+            )
         if self._concept_vo != concept_vo:
             super()._edit_draft(
                 change_description=change_description, author_id=author_id

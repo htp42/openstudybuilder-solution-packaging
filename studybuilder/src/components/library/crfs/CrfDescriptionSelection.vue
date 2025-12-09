@@ -71,19 +71,6 @@
       <v-col>
         <div>
           <QuillEditor
-            v-model:content="inputDesc.instruction"
-            content-type="html"
-            :toolbar="customToolbar"
-            :read-only="props.disabled"
-            :placeholder="
-              inputDesc.instruction ? '' : t('CRFDescriptions.instruction')
-            "
-          />
-        </div>
-      </v-col>
-      <v-col>
-        <div>
-          <QuillEditor
             v-model:content="inputDesc.sponsor_instruction"
             content-type="html"
             :toolbar="customToolbar"
@@ -92,6 +79,19 @@
               inputDesc.sponsor_instruction
                 ? ''
                 : t('CRFDescriptions.sponsor_instruction')
+            "
+          />
+        </div>
+      </v-col>
+      <v-col>
+        <div>
+          <QuillEditor
+            v-model:content="inputDesc.instruction"
+            content-type="html"
+            :toolbar="customToolbar"
+            :read-only="props.disabled"
+            :placeholder="
+              inputDesc.instruction ? '' : t('CRFDescriptions.instruction')
             "
           />
         </div>
@@ -126,10 +126,10 @@
           <template #[`item.description`]="{ value }">
             <span v-html="sanitizeHTML(value)"></span>
           </template>
-          <template #[`item.sponsor_instruction`]="{ value }">
+          <template #[`item.instruction`]="{ value }">
             <span v-html="sanitizeHTML(value)"></span>
           </template>
-          <template #[`item.instruction`]="{ value }">
+          <template #[`item.sponsor_instruction`]="{ value }">
             <span v-html="sanitizeHTML(value)"></span>
           </template>
         </NNTable>
@@ -168,11 +168,11 @@ const headers = computed(() => [
   { title: t('CRFDescriptions.language'), key: 'language', width: '10%' },
   { title: t('CRFDescriptions.name'), key: 'name' },
   { title: t('CRFDescriptions.description'), key: 'description' },
-  { title: t('CRFDescriptions.instruction'), key: 'instruction' },
   {
     title: t('CRFDescriptions.sponsor_instruction'),
     key: 'sponsor_instruction',
   },
+  { title: t('CRFDescriptions.instruction'), key: 'instruction' },
 ])
 
 const customToolbar = ref([
@@ -204,23 +204,21 @@ onMounted(() => {
 })
 
 const getDescriptions = (filters, options, filtersUpdated) => {
-  if (!props.disabled) {
+  if (props.disabled) {
+    descriptions.value = [...modelValue.value]
+  } else {
     const params = filteringParameters.prepareParameters(
       options,
       null,
       filtersUpdated
     )
     params.search = options.search
+    params.exclude_english = true
     crfs.getDescriptions(params).then((resp) => {
-      descriptions.value = resp.data.items.filter(
-        (item) => item.language.toLowerCase() !== parameters.ENG
-      )
-
+      descriptions.value = resp.data.items
       total.value =
         resp.data.total - (resp.data.items.length - descriptions.value.length)
     })
-  } else {
-    descriptions.value = [...modelValue.value]
   }
 }
 

@@ -75,7 +75,7 @@ function fillGroupData() {
 function saveGroup(action = 'created') {
     cy.intercept('/api/concepts/activities/activity-groups?page_number=1&*').as('getData')
     cy.clickButton('save-button')
-    cy.get('.v-snackbar__content').contains(`Group ${action}`).should('be.visible');
+    cy.get('.v-alert').contains(`Group ${action}`).should('be.visible');
     cy.wait('@getData', {timeout: 20000})
 }
 

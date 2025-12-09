@@ -21,6 +21,38 @@ class SortByStudies(Enum):
     NUMBER = "number"
 
 
+class StudyAuditTrailEntity(Enum):
+    STUDY_ACTIVITY = "StudyActivity"
+    STUDY_ACTIVITY_INSTANCE = "StudyActivityInstance"
+    STUDY_ACTIVITY_GROUP = "StudyActivityGroup"
+    STUDY_ACTIVITY_SUBGROUP = "StudyActivitySubGroup"
+    STUDY_ACTIVITY_SCHEDULE = "StudyActivitySchedule"
+    STUDY_SOA_GROUP = "StudySoAGroup"
+    STUDY_SOA_FOOTNOTE = "StudySoAFootnote"
+    STUDY_OBJECTIVE = "StudyObjective"
+    STUDY_ENDPOINT = "StudyEndpoint"
+    STUDY_CRITERIA = "StudyCriteria"
+    STUDY_ARM = "StudyArm"
+    STUDY_BRANCH_ARM = "StudyBranchArm"
+    STUDY_EPOCH = "StudyEpoch"
+    STUDY_COHORT = "StudyCohort"
+    STUDY_DESIGN_CELL = "StudyDesignCell"
+    STUDY_DESIGN_CLASS = "StudyDesignClass"
+    STUDY_ELEMENT = "StudyElement"
+    STUDY_FIELD = "StudyField"
+    STUDY_ARRAY_FIELD = "StudyArrayField"
+    STUDY_BOOLEAN_FIELD = "StudyBooleanField"
+    STUDY_INT_FIELD = "StudyIntField"
+    STUDY_PROJECT_FIELD = "StudyProjectField"
+    STUDY_TEXT_FIELD = "StudyTextField"
+    STUDY_TIME_FIELD = "StudyTimeField"
+    STUDY_SELECTION = "StudySelection"
+    STUDY_STANDARD_VERSION = "StudyStandardVersion"
+    STUDY_VALUE = "StudyValue"
+    STUDY_VISIT = "StudyVisit"
+    TEMPLATE_PARAMETER_TERM_ROOT = "TemplateParameterTermRoot"
+
+
 class Study(BaseModel):
     class StudyVersion(BaseModel):
         version_status: Annotated[
@@ -813,25 +845,43 @@ class PapillonsStudyMetaDataBase(BaseModel):
 
 
 class PapillonsSoAItem(BaseModel):
-    topic_cd: Annotated[str, Field(description="Topic code")]
+    topic_cd: Annotated[
+        str, Field(description="Topic code linked to the activity instance.")
+    ]
+    important: Annotated[
+        bool,
+        Field(
+            description="Indication for if the activity instance is considered important."
+        ),
+    ]
+    baseline_visits: Annotated[
+        list[str],
+        Field(
+            description="Lists of visits which is considered baseline for the activity instance."
+        ),
+    ]
+    soa_grp: Annotated[
+        list[str], Field(description="SoA group the activity instance belongs to.")
+    ]
     visits: Annotated[
-        list[str], Field(description="Lists of visits which the activity was assessed.")
+        list[str],
+        Field(description="Lists of visits which the activity instance was assessed."),
     ]
 
-    # TODO: The below should be added when the data points are implemented
-    # baseline_visits: Annotated[list[str], Field(description="Lists of visits which is considered baseline for the activity.")]
-    # Important: Annotated[bool, Field(description="Indication for if the activity is considered important.")]
     @classmethod
     def from_input(cls, val: dict[str, Any]):
         return cls(
             topic_cd=val["topic_cd"],
+            important=(False if not val["important"] else val["important"]),
+            baseline_visits=val["baseline_visits"],
+            soa_grp=val["soa_grp"],
             visits=val["visits"],
         )
 
 
 class PapillonsSoA(PapillonsStudyMetaDataBase):
-    SoA: Annotated[
-        list[PapillonsSoAItem] | None, Field(description="Scheduled activities")
+    soa: Annotated[
+        list[PapillonsSoAItem] | None, Field(description="Schedule of activities")
     ]
 
     @classmethod
@@ -845,5 +895,5 @@ class PapillonsSoA(PapillonsStudyMetaDataBase):
             study_version=val["study_version"],
             specified_dt=val["specified_dt"],
             fetch_dt=val["fetch_dt"],
-            SoA=[PapillonsSoAItem.from_input(n) for n in val["SoA"]],
+            soa=[PapillonsSoAItem.from_input(n) for n in val["soa"]],
         )

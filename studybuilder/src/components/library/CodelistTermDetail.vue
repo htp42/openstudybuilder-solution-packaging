@@ -591,7 +591,7 @@
         :term-uid="termUid"
         :term-name="termNames.sponsor_preferred_name"
         :submission-values="listSubmissionValues()"
-        @close="showAddToCodelistForm = false"
+        @close="closeAddToCodelistForm()"
       />
     </v-dialog>
     <v-dialog
@@ -647,7 +647,7 @@ export default {
     ConfirmDialog,
     AddParentTermForm,
   },
-  inject: ['eventBusEmit'],
+  inject: ['notificationHub'],
   props: {
     termUid: {
       type: String,
@@ -740,7 +740,7 @@ export default {
         .newCodelistTermNamesVersion(this.termNames.term_uid)
         .then((resp) => {
           this.termNames = resp.data
-          this.eventBusEmit('notification', {
+          this.notificationHub.add({
             msg: this.$t('CodelistTermDetail.new_names_version_success'),
           })
         })
@@ -750,7 +750,7 @@ export default {
         .approveCodelistTermNames(this.termNames.term_uid)
         .then((resp) => {
           this.termNames = resp.data
-          this.eventBusEmit('notification', {
+          this.notificationHub.add({
             msg: this.$t('CodelistTermDetail.approve_names_success'),
           })
         })
@@ -760,7 +760,7 @@ export default {
         .inactivateCodelistTermNames(this.termNames.term_uid)
         .then((resp) => {
           this.termNames = resp.data
-          this.eventBusEmit('notification', {
+          this.notificationHub.add({
             msg: this.$t('CodelistTermDetail.inactivate_names_success'),
           })
         })
@@ -770,7 +770,7 @@ export default {
         .reactivateCodelistTermNames(this.termNames.term_uid)
         .then((resp) => {
           this.termNames = resp.data
-          this.eventBusEmit('notification', {
+          this.notificationHub.add({
             msg: this.$t('CodelistTermDetail.reactivate_names_success'),
           })
         })
@@ -780,7 +780,7 @@ export default {
         .deleteCodelistTermNames(this.termNames.term_uid)
         .then(() => {
           this.fetchTermNames()
-          this.eventBusEmit('notification', {
+          this.notificationHub.add({
             msg: this.$t('CodelistTermDetail.delete_names_success'),
           })
         })
@@ -797,7 +797,7 @@ export default {
         .newCodelistTermAttributesVersion(this.termAttributes.term_uid)
         .then((resp) => {
           this.termAttributes = resp.data
-          this.eventBusEmit('notification', {
+          this.notificationHub.add({
             msg: this.$t('CodelistTermDetail.new_attributes_version_success'),
           })
         })
@@ -807,7 +807,7 @@ export default {
         .approveCodelistTermAttributes(this.termAttributes.term_uid)
         .then((resp) => {
           this.termAttributes = resp.data
-          this.eventBusEmit('notification', {
+          this.notificationHub.add({
             msg: this.$t('CodelistTermDetail.approve_attributes_success'),
           })
         })
@@ -817,7 +817,7 @@ export default {
         .inactivateCodelistTermAttributes(this.termAttributes.term_uid)
         .then((resp) => {
           this.termAttributes = resp.data
-          this.eventBusEmit('notification', {
+          this.notificationHub.add({
             msg: this.$t('CodelistTermDetail.inactivate_attributes_success'),
           })
         })
@@ -827,7 +827,7 @@ export default {
         .reactivateCodelistTermAttributes(this.termAttributes.term_uid)
         .then((resp) => {
           this.termAttributes = resp.data
-          this.eventBusEmit('notification', {
+          this.notificationHub.add({
             msg: this.$t('CodelistTermDetail.reactivate_attributes_success'),
           })
         })
@@ -837,7 +837,7 @@ export default {
         .deleteCodelistTermAttributes(this.termNames.term_uid)
         .then(() => {
           this.fetchTermAttributes()
-          this.eventBusEmit('notification', {
+          this.notificationHub.add({
             msg: this.$t('CodelistTermDetail.delete_attributes_success'),
           })
         })
@@ -847,7 +847,7 @@ export default {
         name: 'CodelistTermDetail',
         params: { term_id: term.term_uid },
       })
-      this.eventBusEmit('notification', {
+      this.notificationHub.add({
         msg: this.$t('CodelistTermCreationForm.add_success'),
       })
     },
@@ -923,7 +923,7 @@ export default {
           )
           .then(() => {
             this.fetchTermParents()
-            this.eventBusEmit('notification', {
+            this.notificationHub.add({
               msg: this.$t('CodelistTermDetail.remove_parent_success'),
             })
           })
@@ -949,7 +949,7 @@ export default {
           )
           .then(() => {
             this.fetchTermParents()
-            this.eventBusEmit('notification', {
+            this.notificationHub.add({
               msg: this.$t('CodelistTermDetail.remove_child_success'),
             })
           })
@@ -962,6 +962,10 @@ export default {
     closeAddChildForm() {
       this.showAddChildForm = false
       this.fetchTermParents()
+    },
+    closeAddToCodelistForm() {
+      this.showAddToCodelistForm = false
+      this.fetchTermCodelists()
     },
   },
 }

@@ -11,7 +11,12 @@ from clinical_mdr_api.domains.concepts.activities.activity_sub_group import (
     ActivitySubGroupVO,
     SimpleActivityGroupVO,
 )
-from clinical_mdr_api.models.concepts.activities.activity import SimpleActivity
+from clinical_mdr_api.domains.enums import LibraryItemStatus
+from clinical_mdr_api.models.concepts.activities.activity import (
+    ActivityEditInput,
+    ActivityGrouping,
+    SimpleActivity,
+)
 from clinical_mdr_api.models.concepts.activities.activity_sub_group import (
     ActivityGroup,
     ActivitySubGroup,
@@ -21,7 +26,8 @@ from clinical_mdr_api.models.concepts.activities.activity_sub_group import (
     ActivitySubGroupOverview,
     ActivitySubGroupVersion,
 )
-from clinical_mdr_api.models.utils import CustomPage, GenericFilteringReturn
+from clinical_mdr_api.models.utils import BaseModel, CustomPage, GenericFilteringReturn
+from clinical_mdr_api.services._utils import ensure_transaction
 from clinical_mdr_api.services.concepts.activities.activity_service import (
     ActivityService,
 )
@@ -39,11 +45,14 @@ class ActivitySubGroupService(ConceptGenericService[ActivitySubGroupAR]):
     version_class = ActivitySubGroupVersion
 
     def _transform_aggregate_root_to_pydantic_model(
-        self, item_ar: ActivitySubGroupAR
+        self,
+        item_ar: ActivitySubGroupAR,
+        was_cascade_update_performed: bool | None = None,
     ) -> ActivitySubGroup:
         return ActivitySubGroup.from_activity_ar(
             activity_subgroup_ar=item_ar,
             find_activity_by_uid=self._repos.activity_group_repository.find_by_uid_2,
+            was_cascade_update_performed=was_cascade_update_performed,
         )
 
     def _create_aggregate_root(
@@ -75,6 +84,7 @@ class ActivitySubGroupService(ConceptGenericService[ActivitySubGroupAR]):
         self,
         item: ActivitySubGroupAR,
         concept_edit_input: ActivitySubGroupEditInput,
+        perform_validation: bool = True,
     ) -> ActivitySubGroupAR:
         activity_groups = (
             [
@@ -96,6 +106,7 @@ class ActivitySubGroupService(ConceptGenericService[ActivitySubGroupAR]):
             ),
             concept_exists_by_library_and_name_callback=self._repos.activity_subgroup_repository.latest_concept_in_library_exists_by_name,
             activity_group_exists=self._repos.activity_group_repository.final_concept_exists,
+            perform_validation=perform_validation,
         )
         return item
 
@@ -348,3 +359,109 @@ class ActivitySubGroupService(ConceptGenericService[ActivitySubGroupAR]):
             raise exceptions.BusinessLogicException(
                 f"Error getting COSMoS subgroup overview for {subgroup_uid}: {str(e)}"
             ) from e
+
+    def cascade_edit_and_approve(self, item: ActivitySubGroupAR):
+        last_final_version = f"{item.item_metadata.major_version-1}.0"
+
+        linked_activities = (
+            self._repos.activity_subgroup_repository.get_linked_upgradable_activities(
+                uid=item.uid, version=last_final_version
+            )
+        )
+        if linked_activities is None:
+            return False
+
+        activity_groups_before_subgroup_update = self._repos.activity_subgroup_repository.get_activity_group_uids_linked_by_subgroup_in_specific_version(
+            activity_subgroup_uid=item.uid, version=last_final_version
+        )
+        removed_activity_groups = set(activity_groups_before_subgroup_update) - {
+            ag.activity_group_uid for ag in item.concept_vo.activity_groups
+        }
+        if removed_activity_groups:
+            for activity in linked_activities.get("activities", []):
+                for grouping in activity["activity_groupings"]:
+                    # If any of the activity's groupings reference a removed activity group, skip Activity cascade update
+                    if grouping["activity_group_uid"] in removed_activity_groups:
+                        return False
+
+        was_cascade_update_performed = self.batch_cascade_update(
+            linked_activities=linked_activities
+        )
+        return was_cascade_update_performed
+
+    def batch_cascade_update(self, linked_activities: dict[str, Any]):
+        activity_service = ActivityService()
+        activity_uids = [
+            activity["uid"] for activity in linked_activities.get("activities", [])
+        ]
+        if activity_uids:
+            self._repos.activity_repository.lock_objects(uids=activity_uids)
+            activity_ars, _ = self._repos.activity_repository.find_all(
+                uids=activity_uids,
+            )
+
+            for activity in activity_ars:
+                # Only process FINAL status activities - skip DRAFT activities entirely
+                if activity.item_metadata.status.value != LibraryItemStatus.FINAL.value:
+                    continue
+
+                activity_groupings: list[ActivityGrouping] | None = []
+                for grouping in activity.concept_vo.activity_groupings:
+                    grp = {
+                        "activity_group_uid": grouping.activity_group_uid,
+                        "activity_subgroup_uid": grouping.activity_subgroup_uid,
+                    }
+                    activity_groupings.append(ActivityGrouping(**grp))
+                if not activity_groupings:
+                    # No matching groupings found, skip this activity
+                    continue
+
+                # For FINAL activities: create new version, edit, and approve
+                activity.create_new_version(author_id=self.author_id)
+
+                edit_input = ActivityEditInput(
+                    name=activity.concept_vo.name,
+                    name_sentence_case=activity.concept_vo.name_sentence_case,
+                    activity_groupings=activity_groupings,
+                    definition=activity.concept_vo.definition,
+                    abbreviation=activity.concept_vo.abbreviation,
+                    nci_concept_id=activity.concept_vo.nci_concept_id,
+                    nci_concept_name=activity.concept_vo.nci_concept_name,
+                    synonyms=activity.concept_vo.synonyms,
+                    request_rationale=activity.concept_vo.request_rationale,
+                    is_request_final=activity.concept_vo.is_request_final,
+                    is_data_collected=activity.concept_vo.is_data_collected,
+                    is_multiple_selection_allowed=activity.concept_vo.is_multiple_selection_allowed,
+                    library_name=activity.library.name,
+                    change_description="Cascade edit",
+                )
+                activity = activity_service._edit_aggregate(
+                    item=activity,
+                    concept_edit_input=edit_input,
+                    perform_validation=False,
+                )
+
+                activity.approve(author_id=self.author_id)
+                self._repos.activity_repository.copy_activity_and_recreate_activity_groupings(
+                    activity, author_id=self.author_id
+                )
+                activity_service.cascade_edit_and_approve(activity)
+        return True
+
+    @ensure_transaction(db)
+    def approve(
+        self, uid: str, cascade_edit_and_approve: bool = False, ignore_exc: bool = False
+    ) -> BaseModel:
+        item = self._find_by_uid_or_raise_not_found(uid, for_update=True)
+        try:
+            item.approve(author_id=self.author_id)
+            self.repository.save(item)
+        except exceptions.BusinessLogicException as exc:
+            if not ignore_exc or exc.msg != "The object isn't in draft status.":
+                raise
+        was_cascade_update_performed = None
+        if cascade_edit_and_approve:
+            was_cascade_update_performed = self.cascade_edit_and_approve(item)
+        return self._transform_aggregate_root_to_pydantic_model(
+            item, was_cascade_update_performed=was_cascade_update_performed
+        )

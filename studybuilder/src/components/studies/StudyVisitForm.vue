@@ -514,7 +514,7 @@ import { inject, ref, watch, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { sanitizeHTML } from '@/utils/sanitize'
 
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const formRules = inject('formRules')
 const { t } = useI18n()
 const emit = defineEmits(['close', 'refresh'])
@@ -887,6 +887,7 @@ function getObserver(step) {
 }
 function close() {
   emit('close')
+  notificationHub.clearErrors()
   form.value = getInitialFormContent()
   stepperRef.value.reset()
 }
@@ -913,6 +914,9 @@ async function submit() {
   if (!valid) {
     return
   }
+
+  notificationHub.clearErrors()
+
   try {
     if (!props.studyVisit) {
       await addObject()
@@ -957,7 +961,7 @@ async function addObject() {
     input: data,
   })
   emit('refresh')
-  eventBusEmit('notification', { msg: t('StudyVisitForm.add_success') })
+  notificationHub.add({ msg: t('StudyVisitForm.add_success') })
 }
 async function updateObject() {
   const data = JSON.parse(JSON.stringify(form.value))
@@ -971,7 +975,7 @@ async function updateObject() {
     input: data,
   })
   emit('refresh')
-  eventBusEmit('notification', { msg: t('StudyVisitForm.update_success') })
+  notificationHub.add({ msg: t('StudyVisitForm.update_success') })
 }
 function getVisitPreview() {
   if (props.studyVisit) {
@@ -1145,7 +1149,7 @@ function callbacks() {
 }
 function onTabChange(number) {
   if (number === 3 && globalAnchorVisit.value === null) {
-    eventBusEmit('notification', {
+    notificationHub.add({
       msg: t('StudyVisitForm.no_anchor_visit'),
       type: 'warning',
     })

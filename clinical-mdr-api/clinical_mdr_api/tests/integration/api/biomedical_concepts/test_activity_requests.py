@@ -617,7 +617,7 @@ def test_update_activity_request_to_sponsor_in_study_activity(api_client):
     ), "There should be exactly just one StudyActivityInstance created when Request is substituted to the Sponsor Activity"
     created_sai = created_sai[0]
     assert created_sai["study_activity_uid"] == study_activity.study_activity_uid
-    assert created_sai["state"] == StudyActivityInstanceState.MISSING_SELECTION.value
+    assert created_sai["state"] == StudyActivityInstanceState.ADD_INSTANCE.value
 
 
 def test_edit_study_activity_request(api_client):

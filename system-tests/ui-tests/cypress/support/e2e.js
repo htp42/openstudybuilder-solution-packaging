@@ -43,5 +43,7 @@ before(function() {
     cy.createAndSetMainTestStudy('9876')
     cy.createTestStudy('9877', 'Study structure testing')
     cy.createTestStudy('9878', 'Manual structure testing')
-
+    cy.createTestStudy('9879', 'Additional study for testing')
+    cy.createTestStudy('9880', 'Study visits testing')
+    cy.createTestStudy('9881', 'Empty study')
 });

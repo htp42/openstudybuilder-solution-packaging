@@ -105,6 +105,11 @@ class StudySelectionActivityRepository(
             author_username=selection["author_username"],
             accepted_version=acv,
             keep_old_version=selection["keep_old_version"],
+            keep_old_version_date=(
+                convert_to_datetime(value=selection.get("keep_old_version_date"))
+                if selection.get("keep_old_version_date")
+                else None
+            ),
         )
 
     def _additional_match(self) -> str:
@@ -241,7 +246,8 @@ class StudySelectionActivityRepository(
                 COALESCE(head([(user:User)-[*0]-() WHERE user.user_id=sac.author_id | user.username]), sac.author_id) AS author_username,
                 hv_ver.version AS activity_version,
                 lib.name as activity_library_name,
-                coalesce(sa.keep_old_version, false) AS keep_old_version
+                coalesce(sa.keep_old_version, false) AS keep_old_version,
+                sa.keep_old_version_date AS keep_old_version_date
             """
 
     def get_selection_history(
@@ -382,6 +388,7 @@ class StudySelectionActivityRepository(
             order=order,
             show_activity_in_protocol_flowchart=selection.show_activity_in_protocol_flowchart,
             keep_old_version=selection.keep_old_version,
+            keep_old_version_date=selection.keep_old_version_date,
         )
         study_activity_selection_node.uid = selection.study_selection_uid
         study_activity_selection_node.accepted_version = selection.accepted_version

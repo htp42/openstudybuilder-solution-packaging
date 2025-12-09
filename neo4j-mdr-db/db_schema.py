@@ -35,6 +35,7 @@ INDEXES = [
     ("CTCodelistAttributesValue", "concept_id"),
     ("CTCodelistAttributesValue", "code_submission_value"),
     ("CTCodelistNameValue", "name"),
+    ("CTTermAttributesValue", "concept_id"),
     ("CTTermNameValue", "name"),
     ("CTCodelistTerm", "submission_value"),
     ("DictionaryCodelistValue", "name"),
@@ -116,6 +117,10 @@ INDEXES = [
     ("FootnotePreInstanceValue", "name"),
     ("OdmVendorElementValue", "name"),
     ("StudySourceVariable", "uid"),
+    ("DataSupplierRoot", "uid"),
+    ("OdmAliasRoot", "uid"),
+    ("OdmDescriptionRoot", "uid"),
+    ("DataSupplierValue", "name"),
 ]
 
 # array of text indexes to create [label, property]

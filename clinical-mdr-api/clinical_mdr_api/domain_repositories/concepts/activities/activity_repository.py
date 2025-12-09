@@ -1,3 +1,4 @@
+import datetime
 from typing import Any
 
 from neomodel import db
@@ -86,13 +87,13 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
         self, input_dict: dict[str, Any]
     ) -> ActivityAR:
         major, minor = input_dict["version"].split(".")
-        return ActivityAR.from_repository_values(
+        activity_ar = ActivityAR.from_repository_values(
             uid=input_dict["uid"],
             concept_vo=ActivityVO.from_repository_values(
                 nci_concept_id=input_dict.get("nci_concept_id"),
                 nci_concept_name=input_dict.get("nci_concept_name"),
                 name=input_dict["name"],
-                name_sentence_case=input_dict.get("name_sentence_case"),
+                name_sentence_case=input_dict["name_sentence_case"],
                 synonyms=input_dict.get("synonyms") or [],
                 definition=input_dict.get("definition"),
                 abbreviation=input_dict.get("abbreviation"),
@@ -147,6 +148,7 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
                 minor_version=int(minor),
             ),
         )
+        return activity_ar
 
     def _create_ar(
         self,
@@ -160,9 +162,21 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
         **kwargs,
     ) -> ActivityAR:
         activity_groupings = []
+        filter_out_retired_groupings = kwargs.get("filter_out_retired_groupings")
         for activity_grouping in activity_root["activity_groupings"]:
             activity_group = activity_grouping["activity_group"]
+            activity_group_status = activity_group.get("status")
             activity_subgroup = activity_grouping["activity_subgroup"]
+            activity_subgroup_status = activity_subgroup.get("status")
+
+            # filter_out_retired_groupings removes Activity Group/Subgroup pair if any of these is Retired
+            if (
+                LibraryItemStatus.RETIRED.value
+                in (activity_subgroup_status, activity_group_status)
+                and filter_out_retired_groupings
+            ):
+                continue
+
             activity_groupings.append(
                 ActivityGroupingVO(
                     activity_group_uid=activity_group.get("uid"),
@@ -356,7 +370,7 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
         (
             filter_statements_from_concept,
             filter_query_parameters,
-        ) = super().create_query_filter_statement(library=library)
+        ) = super().create_query_filter_statement(library=library, **kwargs)
         filter_parameters = []
         activity_subgroup_uid = kwargs.get("activity_subgroup_uid")
         activity_group_uid = kwargs.get("activity_group_uid")
@@ -551,6 +565,67 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
             or are_props_changed
             or subgroups_updated
         )
+
+    def copy_activity_and_recreate_activity_groupings(
+        self, activity: ActivityAR, author_id: str
+    ) -> None:
+        query = """
+            MATCH (concept_root:ActivityRoot {uid:$activity_uid})-[status_relationship:LATEST]->(concept_value:ActivityValue)
+            CALL apoc.refactor.cloneNodes([concept_value])
+            YIELD input, output, error"""
+        merge_query = f"""
+            MERGE (concept_root)-[:LATEST]->(output)
+            MERGE (concept_root)-[:LATEST_{activity.item_metadata.status.value.upper()}]->(output)
+            MERGE (concept_root)-[new_has_version:HAS_VERSION]->(output)"""
+        query += self._update_versioning_relationship_query(
+            status=activity.item_metadata.status.value, merge_query=merge_query
+        )
+        query += """
+
+            WITH library, concept_root, concept_value, output
+            OPTIONAL MATCH (concept_value)-[:REPLACED_BY_ACTIVITY]->(replaced_by_activity:ActivityRoot)
+            WITH library, concept_root, replaced_by_activity, output
+            CALL apoc.do.case([
+                replaced_by_activity IS NOT NULL,
+                'MERGE (output)-[:REPLACED_BY_ACTIVITY]->(replaced_by_activity) RETURN output'
+            ],
+            '',
+            {
+                replaced_by_activity: replaced_by_activity,
+                output: output
+            })
+            YIELD value
+            UNWIND range(0, size($activity_group_uids)-1) AS idx
+            CREATE (activity_grouping:ActivityGrouping)
+            WITH library, concept_root, output, activity_grouping, idx
+            MATCH (activity_valid_group:ActivityValidGroup)-[:IN_GROUP]->(:ActivityGroupValue)<-[:LATEST]-(:ActivityGroupRoot {uid:$activity_group_uids[idx]})
+            MATCH (activity_valid_group)<-[:HAS_GROUP]-(:ActivitySubGroupValue)<-[:LATEST]-(:ActivitySubGroupRoot {uid:$activity_subgroup_uids[idx]})
+            WITH library, concept_root, output, activity_grouping, activity_valid_group
+            MERGE (output)-[:HAS_GROUPING]->(activity_grouping)-[:IN_SUBGROUP]->(activity_valid_group)
+            RETURN concept_root, output, library
+        """
+
+        created_node, _ = db.cypher_query(
+            query,
+            params={
+                "activity_uid": activity.uid,
+                "new_status": activity.item_metadata.status.value,
+                "new_version": activity.item_metadata.version,
+                "start_date": datetime.datetime.now(datetime.timezone.utc),
+                "change_description": "Copying previous ActivityValue node and updating ActivityGrouping nodes",
+                "author_id": author_id,
+                "activity_subgroup_uids": [
+                    activity.activity_subgroup_uid
+                    for activity in activity.concept_vo.activity_groupings
+                ],
+                "activity_group_uids": [
+                    activity.activity_group_uid
+                    for activity in activity.concept_vo.activity_groupings
+                ],
+            },
+        )
+        if len(created_node) > 0:
+            ActivityGrouping.generate_node_uids_if_not_present()
 
     @classmethod
     def format_filter_sort_keys(cls, key: str) -> str:

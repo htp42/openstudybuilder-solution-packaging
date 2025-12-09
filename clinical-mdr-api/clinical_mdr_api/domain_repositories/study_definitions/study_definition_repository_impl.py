@@ -86,6 +86,7 @@ from common.utils import convert_to_datetime
 
 MAINTAIN_RELATIONSHIPS_FOR_NEW_STUDY_VALUE = {
     "belongs_to_study_parent_part",
+    "has_study_data_supplier",
     "has_study_activity",
     "has_study_activity_group",
     "has_study_activity_instance",

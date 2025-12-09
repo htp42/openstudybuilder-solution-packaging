@@ -161,7 +161,7 @@ export default {
     YesNoField,
     MultipleSelect,
   },
-  inject: ['eventBusEmit'],
+  inject: ['notificationHub'],
   props: {
     initialData: {
       type: Object,
@@ -250,6 +250,7 @@ export default {
     },
     close() {
       this.$emit('close')
+      this.notificationHub.clearErrors()
       this.formStore.reset()
       this.$refs.observer.resetValidation()
     },
@@ -301,6 +302,8 @@ export default {
       return data
     },
     async submit() {
+      this.notificationHub.clearErrors()
+
       const data = this.prepareRequestPayload()
       try {
         await this.studiesManageStore.updateStudyIntervention(
@@ -308,7 +311,7 @@ export default {
           data
         )
         this.$emit('updated', data)
-        this.eventBusEmit('notification', {
+        this.notificationHub.add({
           msg: this.$t('StudyInterventionTypeForm.update_success'),
         })
         this.close()

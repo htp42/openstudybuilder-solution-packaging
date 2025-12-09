@@ -632,12 +632,12 @@ def test_endpoints_with_invalid_time_unit(
         path.format_map({"study_uid": soa_test_data.study.uid}),
         params={"time_unit": time_unit},
     )
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
     assert_json_response(response)
     payload = response.json()
-    assert (detail := payload["detail"][0])
-    assert detail["msg"]
-    assert detail["loc"] == ["query", "time_unit"]
+    assert (error := payload["details"][0])
+    assert error["msg"]
+    assert error["field"] == ["query", "time_unit"]
 
 
 @pytest.fixture(scope="module")

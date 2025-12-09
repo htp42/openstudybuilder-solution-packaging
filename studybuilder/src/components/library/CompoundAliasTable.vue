@@ -98,7 +98,7 @@ export default {
     NNTable,
     StatusChip,
   },
-  inject: ['eventBusEmit'],
+  inject: ['notificationHub'],
   props: {
     tabClickedAt: {
       type: Number,
@@ -254,7 +254,7 @@ export default {
     approveItem(item) {
       compoundAliases.approve(item.uid).then(() => {
         this.fetchItems()
-        this.eventBusEmit('notification', {
+        this.notificationHub.add({
           msg: this.$t('CompoundAliasTable.approve_success'),
           type: 'success',
         })
@@ -271,7 +271,7 @@ export default {
       ) {
         await compoundAliases.deleteObject(item.uid)
         this.fetchItems()
-        this.eventBusEmit('notification', {
+        this.notificationHub.add({
           msg: this.$t('CompoundAliasTable.delete_success'),
           type: 'success',
         })
@@ -280,7 +280,7 @@ export default {
     createNewVersion(item) {
       compoundAliases.newVersion(item.uid).then(() => {
         this.fetchItems()
-        this.eventBusEmit('notification', {
+        this.notificationHub.add({
           msg: this.$t('CompoundAliasTable.new_version_success'),
           type: 'success',
         })
@@ -289,7 +289,7 @@ export default {
     inactivateItem(item) {
       compoundAliases.inactivate(item.uid).then(() => {
         this.fetchItems()
-        this.eventBusEmit('notification', {
+        this.notificationHub.add({
           msg: this.$t('CompoundAliasTable.inactivate_success'),
           type: 'success',
         })
@@ -298,7 +298,7 @@ export default {
     reactivateItem(item) {
       compoundAliases.reactivate(item.uid).then(() => {
         this.fetchItems()
-        this.eventBusEmit('notification', {
+        this.notificationHub.add({
           msg: this.$t('CompoundAliasTable.reactivate_success'),
           type: 'success',
         })

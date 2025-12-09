@@ -343,9 +343,9 @@ export default {
           return
         } finally {
           this.savingTemplate = false
+          this.editTemplate = false
         }
       }
-      this.editTemplate = false
     },
     showParametersFromObject(object) {
       this.apiEndpoint.getObjectParameters(object.uid).then((resp) => {

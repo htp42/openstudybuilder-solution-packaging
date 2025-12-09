@@ -167,7 +167,7 @@ import { computed, inject, onMounted, ref, watch } from 'vue'
 import { useDragAndDrop } from '@formkit/drag-and-drop/vue'
 
 const { t } = useI18n()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const roles = inject('roles')
 const emit = defineEmits(['updated'])
 const studiesGeneralStore = useStudiesGeneralStore()
@@ -359,12 +359,12 @@ async function updateVersion(item) {
     studiesObjectivesStore
       .updateStudyObjectiveLatestVersion(args)
       .then(() => {
-        eventBusEmit('notification', {
+        notificationHub.add({
           msg: t('StudyObjectivesTable.update_version_successful'),
         })
       })
       .catch((error) => {
-        eventBusEmit('notification', {
+        notificationHub.add({
           type: 'error',
           msg: error.response.data.message,
         })
@@ -379,7 +379,7 @@ async function updateVersion(item) {
       .updateStudyObjectiveAcceptVersion(args)
       .then(() => {})
       .catch((error) => {
-        eventBusEmit('notification', {
+        notificationHub.add({
           type: 'error',
           msg: error.response.data.message,
         })
@@ -416,7 +416,7 @@ async function deleteObjective(studyObjective) {
       })
       .then(() => {
         table.value.filterTable()
-        eventBusEmit('notification', {
+        notificationHub.add({
           msg: t('StudyObjectivesTable.delete_objective_success'),
         })
       })

@@ -76,7 +76,7 @@ const props = defineProps({
 })
 
 const { t } = useI18n()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const emit = defineEmits(['close'])
 const studiesGeneralStore = useStudiesGeneralStore()
 
@@ -111,6 +111,8 @@ function initForm(subpart) {
 }
 
 function submit() {
+  notificationHub.clearErrors()
+
   payload.study_parent_part_uid = studiesGeneralStore.selectedStudy.uid
   payload.current_metadata.identification_metadata.description =
     form.value.description
@@ -123,7 +125,7 @@ function submit() {
   delete payload.current_metadata.identification_metadata.registry_identifiers
   studies.updateStudy(payload.uid, payload).then(
     () => {
-      eventBusEmit('notification', { msg: t('StudySubparts.subpart_edited') })
+      notificationHub.add({ msg: t('StudySubparts.subpart_edited') })
       formRef.value.working = false
       cancel()
     },
@@ -135,5 +137,6 @@ function submit() {
 
 function cancel() {
   emit('close')
+  notificationHub.clearErrors()
 }
 </script>

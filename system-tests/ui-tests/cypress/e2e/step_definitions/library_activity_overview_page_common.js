@@ -73,7 +73,7 @@ Given('The linked subgroup is found in the Groups table with status {string} and
 })
 
 Given('The new linked subgroup is found in the Groups table with status {string} and version {string}', (status, version) => {
-    verifyLinkedItem('Activity subgroups', secondSubgroup, status, version)
+    verifyLinkedItem('Activity subgroups', secondSubgroup, status, version, 1)
 })
 
 Given('The linked activity is found in the Acivities table with status {string} and version {string}', (status, version) => {
@@ -84,8 +84,8 @@ Given('The linked activity instance is found in the Acivity Instances table with
     verifyLinkedItem('Activity instances', instanceName, status, version)
 })
 
-Given('The previous version of linked activity instance is found in the Acivity Instances table with status {string} and version {string}', (status, version) => {
-    verifyLinkedItem('Activity instances', instanceName, status, version, 2)
+Given('The previous version of linked activity instance is found in the Acivity Instances table in row {int} with status {string} and version {string}', (index, status, version) => {
+    verifyLinkedItem('Activity instances', instanceName, status, version, index)
 })
 
 Given('User waits for linked {string} table data to load', (tableName) => {

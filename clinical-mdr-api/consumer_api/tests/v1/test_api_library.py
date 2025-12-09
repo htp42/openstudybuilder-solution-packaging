@@ -322,25 +322,25 @@ def test_get_library_activities_filtering(api_client):
 
 def test_get_library_activities_invalid_pagination_params(api_client):
     response = api_client.get(f"{BASE_URL}/library/activities?page_size=0")
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
     assert (
-        response.json()["detail"][0]["msg"]
+        response.json()["details"][0]["msg"]
         == "Input should be greater than or equal to 1"
     )
 
     response = api_client.get(
         f"{BASE_URL}/studies?page_size={settings.max_page_size + 1}"
     )
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
     assert (
-        response.json()["detail"][0]["msg"]
+        response.json()["details"][0]["msg"]
         == "Input should be less than or equal to 1000"
     )
 
     response = api_client.get(
         f"{BASE_URL}/studies?page_number={settings.max_int_neo4j + 1}&page_size=1"
     )
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
     assert (
         response.json()["message"]
         == f"(page_number * page_size) value cannot be bigger than {settings.max_int_neo4j}"
@@ -538,25 +538,25 @@ def test_get_library_activity_instances_filtering(api_client):
 
 def test_get_library_activity_instances_invalid_pagination_params(api_client):
     response = api_client.get(f"{BASE_URL}/library/activity-instances?page_size=0")
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
     assert (
-        response.json()["detail"][0]["msg"]
+        response.json()["details"][0]["msg"]
         == "Input should be greater than or equal to 1"
     )
 
     response = api_client.get(
         f"{BASE_URL}/studies?page_size={settings.max_page_size + 1}"
     )
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
     assert (
-        response.json()["detail"][0]["msg"]
+        response.json()["details"][0]["msg"]
         == "Input should be less than or equal to 1000"
     )
 
     response = api_client.get(
         f"{BASE_URL}/studies?page_number={settings.max_int_neo4j + 1}&page_size=1"
     )
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
     assert (
         response.json()["message"]
         == f"(page_number * page_size) value cannot be bigger than {settings.max_int_neo4j}"

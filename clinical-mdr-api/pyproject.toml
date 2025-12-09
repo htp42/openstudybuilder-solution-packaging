@@ -44,7 +44,7 @@ max-branches = 50
 max-locals = 50
 max-public-methods = 81
 max-returns = 9
-max-statements = 150
+max-statements = 300
 
 [tool.pylint.'REFACTORING']
 max-nested-blocks = 10

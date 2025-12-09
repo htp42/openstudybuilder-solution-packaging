@@ -39,10 +39,25 @@
               :color="action.iconColorFunc(item)"
               :icon="action.icon"
             />
+            <v-icon
+              v-else-if="typeof action.iconColor === 'function'"
+              :color="action.iconColor(item)"
+              :icon="action.icon"
+            />
             <v-icon v-else :icon="action.icon" color="nnBaseBlue" />
           </template>
-          <v-list-item-title :data-cy="action.label">
-            {{ action.label }}
+          <v-list-item-title
+            :data-cy="
+              typeof action.label === 'function'
+                ? action.label(item)
+                : action.label
+            "
+          >
+            {{
+              typeof action.label === 'function'
+                ? action.label(item)
+                : action.label
+            }}
           </v-list-item-title>
         </v-list-item>
       </template>

@@ -212,7 +212,7 @@ import filteringParameters from '@/utils/filteringParameters'
 import { escapeHTML } from '@/utils/sanitize'
 
 const { t } = useI18n()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const formRules = inject('formRules')
 const props = defineProps({
   catalogueNames: {
@@ -328,6 +328,7 @@ onMounted(() => {
 
 function close() {
   emit('close')
+  notificationHub.clearErrors()
   createNewTerm.value = true
   form.value = {}
   stepper.value.reset()
@@ -361,6 +362,8 @@ function getObserver(step) {
   return undefined
 }
 async function submit() {
+  notificationHub.clearErrors()
+
   if (createNewTerm.value) {
     const data = {
       catalogue_names: props.catalogueNames,
@@ -381,7 +384,7 @@ async function submit() {
     }
     try {
       const resp = await controlledTerminology.createCodelistTerm(data)
-      eventBusEmit('notification', {
+      notificationHub.add({
         msg: t('CodelistTermCreationForm.add_success'),
       })
       emit('created', resp.data)
@@ -391,7 +394,7 @@ async function submit() {
     }
   } else {
     if (!form.value.length) {
-      eventBusEmit('notification', {
+      notificationHub.add({
         msg: t('CodelistTermCreationForm.no_selection'),
         type: 'error',
       })
@@ -402,7 +405,7 @@ async function submit() {
     for (const term of form.value) {
       await controlledTerminology.addTermToCodelist(codelistUid, term)
     }
-    eventBusEmit('notification', {
+    notificationHub.add({
       msg: t('CodelistTermCreationForm.add_success'),
     })
     close()

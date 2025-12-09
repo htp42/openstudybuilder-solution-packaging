@@ -64,7 +64,11 @@ const headers = [
     key: 'treatment_elements',
   },
   { title: t('StudyStructuresOverview.cohorts'), key: 'cohorts_in_study' },
-  { title: t('StudyStructuresOverview.study_ids'), key: 'study_ids' },
+  {
+    title: t('StudyStructuresOverview.study_ids'),
+    key: 'study_ids',
+    width: '600px',
+  },
 ]
 
 function fetchStructures(filters, options, filtersUpdated) {
@@ -76,7 +80,10 @@ function fetchStructures(filters, options, filtersUpdated) {
   studyApi.getStructureOverview(params).then((resp) => {
     items.value = resp.data.items.map((elm) => ({
       ...elm,
-      study_ids: elm.study_ids.map(escapeHTML).join(',<br>'),
+      study_ids: elm.study_ids
+        .map(escapeHTML)
+        .map((x) => `<span style="white-space: nowrap;">${x}</span>`)
+        .join(', '),
     }))
     total.value = resp.data.total
   })

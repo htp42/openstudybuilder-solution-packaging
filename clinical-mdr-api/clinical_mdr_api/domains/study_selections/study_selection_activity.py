@@ -44,6 +44,7 @@ class StudySelectionActivityVO(study_selection_base.StudySelectionBaseVO):
     author_username: str | None = None
     accepted_version: bool = False
     activity_name: str | None = None
+    keep_old_version_date: datetime.datetime | None = None
 
     @classmethod
     def from_input_values(
@@ -77,6 +78,7 @@ class StudySelectionActivityVO(study_selection_base.StudySelectionBaseVO):
         activity_name: str | None = None,
         generate_uid_callback: Callable[[], str] = lambda: "",
         keep_old_version: bool = False,
+        keep_old_version_date: datetime.datetime | None = None,
     ):
         if study_selection_uid is None:
             study_selection_uid = generate_uid_callback()
@@ -117,6 +119,7 @@ class StudySelectionActivityVO(study_selection_base.StudySelectionBaseVO):
             ),
             accepted_version=accepted_version,
             keep_old_version=keep_old_version,
+            keep_old_version_date=keep_old_version_date,
         )
 
     def validate(
@@ -137,8 +140,16 @@ class StudySelectionActivityVO(study_selection_base.StudySelectionBaseVO):
     def update_version(self, activity_version: str):
         return replace(self, activity_version=activity_version)
 
-    def update_keep_old_version(self, keep_old_version: bool):
-        return replace(self, keep_old_version=keep_old_version)
+    def update_keep_old_version(
+        self,
+        keep_old_version: bool,
+        keep_old_version_date: datetime.datetime | None = None,
+    ):
+        return replace(
+            self,
+            keep_old_version=keep_old_version,
+            keep_old_version_date=keep_old_version_date,
+        )
 
     def update_activity_group(
         self, activity_group_uid: str, study_activity_group_uid: str

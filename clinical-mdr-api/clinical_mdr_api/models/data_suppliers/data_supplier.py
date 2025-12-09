@@ -21,7 +21,7 @@ class DataSupplierTypeTerm(BaseModel):
         str | None,
         Field(
             json_schema_extra={
-                "source": "has_latest_value.has_type.has_selected_term.uid",
+                "source": "has_latest_value.has_data_supplier_type.has_selected_term.uid",
                 "nullable": True,
             }
         ),
@@ -30,7 +30,7 @@ class DataSupplierTypeTerm(BaseModel):
         str | None,
         Field(
             json_schema_extra={
-                "source": "has_latest_value.has_type.has_selected_term.has_name_root.has_latest_value.name",
+                "source": "has_latest_value.has_data_supplier_type.has_selected_term.has_name_root.has_latest_value.name",
                 "nullable": True,
             },
         ),
@@ -107,24 +107,22 @@ class DataSupplier(VersionProperties):
         Field(json_schema_extra={"source": "has_latest_value.order", "nullable": True}),
     ] = None
     supplier_type: Annotated[DataSupplierTypeTerm, Field()]
-    supplier_origin_source: Annotated[DataSupplierOriginSourceTerm | None, Field()] = (
-        None
-    )
-    supplier_origin_type: Annotated[DataSupplierOriginTypeTerm | None, Field()] = None
-    supplier_api_base_url: Annotated[
+    origin_source: Annotated[DataSupplierOriginSourceTerm | None, Field()] = None
+    origin_type: Annotated[DataSupplierOriginTypeTerm | None, Field()] = None
+    api_base_url: Annotated[
         str | None,
         Field(
             json_schema_extra={
-                "source": "has_latest_value.supplier_api_base_url",
+                "source": "has_latest_value.api_base_url",
                 "nullable": True,
             }
         ),
     ] = None
-    supplier_ui_base_url: Annotated[
+    ui_base_url: Annotated[
         str | None,
         Field(
             json_schema_extra={
-                "source": "has_latest_value.supplier_ui_base_url",
+                "source": "has_latest_value.ui_base_url",
                 "nullable": True,
             }
         ),
@@ -153,16 +151,14 @@ class DataSupplier(VersionProperties):
         supplier_type = find_term_by_uid(
             data_supplier_ar.data_supplier_vo.supplier_type_uid
         )
-        supplier_origin_source = (
-            find_term_by_uid(
-                data_supplier_ar.data_supplier_vo.supplier_origin_source_uid
-            )
-            if data_supplier_ar.data_supplier_vo.supplier_origin_source_uid is not None
+        origin_source = (
+            find_term_by_uid(data_supplier_ar.data_supplier_vo.origin_source_uid)
+            if data_supplier_ar.data_supplier_vo.origin_source_uid is not None
             else None
         )
-        supplier_origin_type = (
-            find_term_by_uid(data_supplier_ar.data_supplier_vo.supplier_origin_type_uid)
-            if data_supplier_ar.data_supplier_vo.supplier_origin_type_uid is not None
+        origin_type = (
+            find_term_by_uid(data_supplier_ar.data_supplier_vo.origin_type_uid)
+            if data_supplier_ar.data_supplier_vo.origin_type_uid is not None
             else None
         )
 
@@ -170,22 +166,22 @@ class DataSupplier(VersionProperties):
             uid=data_supplier_ar.uid,
             name=data_supplier_ar.name,
             order=data_supplier_ar.data_supplier_vo.order,
+            api_base_url=data_supplier_ar.data_supplier_vo.api_base_url,
+            ui_base_url=data_supplier_ar.data_supplier_vo.ui_base_url,
             description=data_supplier_ar.data_supplier_vo.description,
             supplier_type=(
                 DataSupplierTypeTerm(uid=supplier_type.uid, name=supplier_type.name)
             ),
-            supplier_origin_source=(
+            origin_source=(
                 DataSupplierOriginSourceTerm(
-                    uid=supplier_origin_source.uid, name=supplier_origin_source.name
+                    uid=origin_source.uid, name=origin_source.name
                 )
-                if supplier_origin_source
+                if origin_source
                 else None
             ),
-            supplier_origin_type=(
-                DataSupplierOriginTypeTerm(
-                    uid=supplier_origin_type.uid, name=supplier_origin_type.name
-                )
-                if supplier_origin_type
+            origin_type=(
+                DataSupplierOriginTypeTerm(uid=origin_type.uid, name=origin_type.name)
+                if origin_type
                 else None
             ),
             library_name=Library.from_library_vo(data_supplier_ar.library).name,
@@ -223,10 +219,10 @@ class DataSupplierInput(InputModel):
     order: Annotated[int, Field()] = 999999
     supplier_type_uid: Annotated[str, Field(min_length=1)]
     description: Annotated[str | None, Field(min_length=1)]
-    supplier_api_base_url: Annotated[str | None, Field(min_length=1)]
-    supplier_ui_base_url: Annotated[str | None, Field(min_length=1)]
-    supplier_origin_source_uid: Annotated[str | None, Field(min_length=1)]
-    supplier_origin_type_uid: Annotated[str | None, Field(min_length=1)]
+    api_base_url: Annotated[str | None, Field(min_length=1)]
+    ui_base_url: Annotated[str | None, Field(min_length=1)]
+    origin_source_uid: Annotated[str | None, Field(min_length=1)]
+    origin_type_uid: Annotated[str | None, Field(min_length=1)]
     library_name: Annotated[str, Field(min_length=1)] = "Sponsor"
 
 

@@ -21,7 +21,7 @@ Feature: Library - Data Collection Standards - CRF Builder - Items
             | OID                  |
             | Name                 |
             | Description          |
-            | Implementation Notes |
+            | Design Notes         |
             | Type                 |
             | Length               |
             | SDS Var Name         |
@@ -75,13 +75,13 @@ Feature: Library - Data Collection Standards - CRF Builder - Items
         Given The '/library/crf-builder/items' page is opened
        And Created CRF Item is found
         When The 'Inactivate' option is clicked from the three dot menu list
-        And The item has status 'Retired' and version '1.0'
+        And The item has status 'Retired' and version '2.0'
 
     Scenario: [Actions][Reactivate] User must be able to reactivate currently retired Item
         Given The '/library/crf-builder/items' page is opened
         And Created CRF Item is found
         When The 'Reactivate' option is clicked from the three dot menu list
-        And The item has status 'Final' and version '1.0'
+        And The item has status 'Final' and version '3.0'
 
     Scenario: [Actions][New version] User must be able to create a new version of an Item
         Given The '/library/crf-builder/items' page is opened
@@ -89,11 +89,11 @@ Feature: Library - Data Collection Standards - CRF Builder - Items
         When The 'New version' option is clicked from the three dot menu list
         Then The New version popup window is displayed
         When Action is confirmed by clicking continue
-        Then The item has status 'Draft' and version '1.1'
+        Then The item has status 'Draft' and version '3.1'
 
     Scenario: [Actions][Delete] User must be able to delete CRF Item in draft status
-        Given The '/library/crf-builder/items' page is opened
         And [API] The CRF Item in draft status exists
+        Given The '/library/crf-builder/items' page is opened
         And Created CRF Item is found
         When The 'Delete' option is clicked from the three dot menu list
         Then The CRF Item is no longer available

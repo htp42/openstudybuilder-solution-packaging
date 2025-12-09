@@ -222,7 +222,7 @@ def test_get_study_by_uid(api_client):
             "exclude_sections": ["non-existent section"],
         },
     )
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
 
 
 def test_get_study_fields_audit_trail(api_client):
@@ -269,7 +269,7 @@ def test_get_study_fields_audit_trail(api_client):
         f"/studies/{created_study.uid}/fields-audit-trail",
         params={"exclude_sections": ["non-existent section"]},
     )
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
 
     response = api_client.patch(
         f"/studies/{created_study.uid}",
@@ -2002,7 +2002,7 @@ def test_cannot_add_a_study_subpart_without_study_subpart_acronym(
             "current_metadata": {"identification_metadata": {}},
         },
     )
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
     res = response.json()
 
     assert res["type"] == "ValidationException"
@@ -3053,6 +3053,15 @@ def test_get_studies_list(api_client):
 def test_get_study_complexity_score(api_client):
     response = api_client.get(f"/studies/{study.uid}/complexity-score")
     assert_response_status_code(response, 200)
-    res = response.json()
-    assert isinstance(res, float)
-    assert res >= 0
+    res_latest = response.json()
+    assert isinstance(res_latest, float)
+    assert res_latest >= 0
+
+    response = api_client.get(
+        f"/studies/{study.uid}/complexity-score",
+        params={"study_value_version": "1"},
+    )
+    assert_response_status_code(response, 200)
+    res_version_1 = response.json()
+    assert isinstance(res_version_1, float)
+    assert res_version_1 >= 0

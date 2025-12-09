@@ -69,7 +69,7 @@ import controlledTerminology from '@/api/controlledTerminology'
 import HelpButtonWithPanels from '@/components/tools/HelpButtonWithPanels.vue'
 
 const formRules = inject('formRules')
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 
 const props = defineProps({
   termUid: {
@@ -129,11 +129,15 @@ watch(
 
 function close() {
   emit('close')
+  notificationHub.clearErrors()
 }
 
 async function submit() {
   const { valid } = await observer.value.validate()
   if (!valid) return
+
+  notificationHub.clearErrors()
+
   working.value = true
   try {
     const orderData = {
@@ -145,7 +149,7 @@ async function submit() {
       props.termUid,
       orderData
     )
-    eventBusEmit('notification', {
+    notificationHub.add({
       msg: t('CodelistTermOrderSubmvalForm.update_success'),
     })
     close()

@@ -275,7 +275,7 @@ def test_batch_operations(api_client):
             },
         ],
     )
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
     res = response.json()
     assert (
         res["message"]

@@ -128,7 +128,7 @@ export default {
     ConfirmDialog,
     CrfApprovalSummaryConfirmDialog,
   },
-  inject: ['eventBusEmit', 'formRules'],
+  inject: ['notificationHub', 'formRules'],
   props: {
     selectedCollection: {
       type: Object,
@@ -237,7 +237,7 @@ export default {
           this.$emit('updateCollection', resp.data)
           this.readOnly = false
 
-          this.eventBusEmit('notification', {
+          this.notificationHub.add({
             msg: this.$t('_global.new_version_success'),
           })
         })
@@ -256,7 +256,7 @@ export default {
             this.readOnly = true
             this.close()
 
-            this.eventBusEmit('notification', {
+            this.notificationHub.add({
               msg: this.$t('CRFCollections.approved'),
             })
           })
@@ -265,6 +265,9 @@ export default {
     async submit() {
       const { valid } = await this.$refs.observer.validate()
       if (!valid) return
+
+      this.notificationHub.clearErrors()
+
       if (this.form.effective_date) {
         this.form.effective_date = this.formatDate(this.form.effective_date)
       }
@@ -274,7 +277,7 @@ export default {
       if (this.isEdit()) {
         crfs.updateCollection(this.form, this.selectedCollection.uid).then(
           () => {
-            this.eventBusEmit('notification', {
+            this.notificationHub.add({
               msg: this.$t('CRFCollections.updated'),
             })
             this.close()
@@ -286,7 +289,7 @@ export default {
       } else {
         crfs.createCollection(this.form).then(
           () => {
-            this.eventBusEmit('notification', {
+            this.notificationHub.add({
               msg: this.$t('CRFCollections.created'),
             })
             this.close()
@@ -320,6 +323,7 @@ export default {
       }
     },
     close() {
+      this.notificationHub.clearErrors()
       this.form = {}
       this.$refs.observer.reset()
       this.$emit('close')

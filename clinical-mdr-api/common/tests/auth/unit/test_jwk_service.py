@@ -253,7 +253,7 @@ async def test_token_not_before(jwk_service, jwk_good_key):
 async def test_token_invalid_audience(jwk_service, jwk_good_key):
     claims = mk_claims(audience="pink-panther")
     token = mk_jwt(claims, jwk_good_key)
-    with pytest.raises(authlib.jose.errors.InvalidClaimError, match='"aud"'):
+    with pytest.raises(authlib.jose.errors.InvalidClaimError, match=r"\baud\b"):
         await jwk_service.validate_jwt(token)
 
 
@@ -261,5 +261,5 @@ async def test_token_invalid_audience(jwk_service, jwk_good_key):
 async def test_token_invalid_issuer(jwk_service, jwk_good_key):
     claims = mk_claims(issuer="pink-panther-social-club")
     token = mk_jwt(claims, jwk_good_key)
-    with pytest.raises(authlib.jose.errors.InvalidClaimError, match='"iss"'):
+    with pytest.raises(authlib.jose.errors.InvalidClaimError, match=r"\biss\b"):
         await jwk_service.validate_jwt(token)

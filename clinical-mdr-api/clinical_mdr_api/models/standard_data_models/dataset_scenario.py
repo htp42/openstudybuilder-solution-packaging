@@ -21,7 +21,7 @@ class DatasetScenario(BaseModel):
             catalogue_name=input_dict["catalogue_name"],
             dataset=SimpleDataset(
                 ordinal=input_dict.get("dataset").get("ordinal"),
-                name=input_dict.get("dataset").get("name"),
+                uid=input_dict.get("dataset").get("uid"),
             ),
             data_model_ig_names=input_dict["data_model_ig_names"],
         )

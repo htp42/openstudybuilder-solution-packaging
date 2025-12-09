@@ -329,7 +329,7 @@ export default {
     StudySelectionTable,
     QuillEditor,
   },
-  inject: ['eventBusEmit', 'formRules'],
+  inject: ['notificationHub', 'formRules'],
   props: {
     criteriaType: {
       type: Object,
@@ -510,6 +510,7 @@ export default {
     },
     close() {
       this.$emit('close')
+      this.notificationHub.clearErrors()
       this.$refs.stepper.reset()
       this.steps = this.getInitialSteps()
       this.creationMode = 'template'
@@ -644,10 +645,12 @@ export default {
       return true
     },
     async submit() {
+      this.notificationHub.clearErrors()
+
       if (this.creationMode !== 'scratch') {
         if (this.creationMode === 'template') {
           if (!this.selectedCriteria.length) {
-            this.eventBusEmit('notification', {
+            this.notificationHub.add({
               msg: this.$t('EligibilityCriteriaForm.no_template_error'),
               type: 'error',
             })
@@ -669,7 +672,7 @@ export default {
           await study.batchCreateStudyCriteria(this.selectedStudy.uid, data)
         } else {
           if (!this.selectedCriteria.length) {
-            this.eventBusEmit('notification', {
+            this.notificationHub.add({
               msg: this.$t('EligibilityCriteriaForm.no_criteria_error'),
               type: 'error',
             })
@@ -708,7 +711,7 @@ export default {
         }
         await study.createStudyCriteria(this.selectedStudy.uid, data)
       }
-      this.eventBusEmit('notification', {
+      this.notificationHub.add({
         type: 'success',
         msg: this.$t('EligibilityCriteriaForm.add_success'),
       })

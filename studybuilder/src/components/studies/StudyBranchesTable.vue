@@ -176,7 +176,7 @@ import { escapeHTML, sanitizeHTML } from '@/utils/sanitize'
 import cohortConstants from '@/constants/cohorts'
 
 const { t } = useI18n()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const roles = inject('roles')
 const studiesGeneralStore = useStudiesGeneralStore()
 const accessGuard = useAccessGuard()
@@ -400,7 +400,7 @@ async function deleteBranchArm(item) {
       )
       .then(() => {
         table.value.filterTable()
-        eventBusEmit('notification', {
+        notificationHub.add({
           msg: t('StudyBranchArms.branch_deleted'),
         })
       })
@@ -417,7 +417,7 @@ async function deleteBranchArm(item) {
       )
       .then(() => {
         table.value.filterTable()
-        eventBusEmit('notification', {
+        notificationHub.add({
           msg: t('StudyBranchArms.branch_deleted'),
         })
       })

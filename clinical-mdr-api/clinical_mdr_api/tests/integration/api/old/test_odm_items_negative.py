@@ -629,7 +629,7 @@ def test_cannot_create_a_new_odm_item_without_an_english_description(api_client)
     }
     response = api_client.post("concepts/odms/items", json=data)
 
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
 
     res = response.json()
 
@@ -842,7 +842,7 @@ def test_inactivate_odm_item(api_client):
     assert res["comment"] == "comment1"
     assert res["end_date"] is None
     assert res["status"] == "Retired"
-    assert res["version"] == "1.0"
+    assert res["version"] == "2.0"
     assert res["change_description"] == "Inactivated version"
     assert res["author_username"] == "unknown-user@example.com"
     assert res["descriptions"] == [
@@ -970,30 +970,20 @@ def test_cannot_provide_non_null_length_when_datatype_is_not_string_text_integer
     }
     response = api_client.post("concepts/odms/items", json=data)
 
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
 
     res = response.json()
 
-    assert res == {
-        "detail": [
-            {
-                "ctx": {
-                    "error": {},
-                },
-                "input": {
-                    "datatype": "date",
-                    "length": 11,
-                    "library_name": "Sponsor",
-                    "name": "name",
-                    "significant_digits": 11,
-                },
-                "loc": ["body"],
-                "msg": "Value error, When datatype is not 'text', 'string', 'integer' or "
-                "'float', length must be null.",
-                "type": "value_error",
+    assert res["details"] == [
+        {
+            "ctx": {
+                "error": {},
             },
-        ],
-    }
+            "field": ["body"],
+            "msg": "Value error, When datatype is not 'text', 'string', 'integer' or 'float', length must be null.",
+            "error_code": "value_error",
+        },
+    ]
 
 
 def test_cannot_provide_null_length_when_datatype_is_string_or_text(api_client):
@@ -1006,29 +996,20 @@ def test_cannot_provide_null_length_when_datatype_is_string_or_text(api_client):
     }
     response = api_client.post("concepts/odms/items", json=data)
 
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
 
     res = response.json()
 
-    assert res == {
-        "detail": [
-            {
-                "ctx": {
-                    "error": {},
-                },
-                "input": {
-                    "datatype": "text",
-                    "length": None,
-                    "library_name": "Sponsor",
-                    "name": "name",
-                    "significant_digits": 11,
-                },
-                "loc": ["body"],
-                "msg": "Value error, When datatype is 'text' or 'string', length must be provided.",
-                "type": "value_error",
+    assert res["details"] == [
+        {
+            "ctx": {
+                "error": {},
             },
-        ],
-    }
+            "field": ["body"],
+            "msg": "Value error, When datatype is 'text' or 'string', length must be provided.",
+            "error_code": "value_error",
+        },
+    ]
 
 
 def test_cannot_provide_only_one_of_length_or_significant_digits_when_datatype_is_float_both_must_either_be_provided_or_null(
@@ -1043,26 +1024,17 @@ def test_cannot_provide_only_one_of_length_or_significant_digits_when_datatype_i
     }
     response = api_client.post("concepts/odms/items", json=data)
 
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
 
     res = response.json()
 
-    assert res == {
-        "detail": [
-            {
-                "ctx": {
-                    "error": {},
-                },
-                "input": {
-                    "datatype": "float",
-                    "length": None,
-                    "library_name": "Sponsor",
-                    "name": "name",
-                    "significant_digits": 11,
-                },
-                "loc": ["body"],
-                "msg": "Value error, When datatype is 'float', both length and significant_digits must be provided together, or both must be null.",
-                "type": "value_error",
+    assert res["details"] == [
+        {
+            "ctx": {
+                "error": {},
             },
-        ],
-    }
+            "field": ["body"],
+            "msg": "Value error, When datatype is 'float', both length and significant_digits must be provided together, or both must be null.",
+            "error_code": "value_error",
+        },
+    ]

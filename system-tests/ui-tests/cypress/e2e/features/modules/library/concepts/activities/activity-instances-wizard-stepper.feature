@@ -22,7 +22,7 @@ Feature: Library - Concepts - Activities - Activity instances - new wizard stepp
         And Form continue button is clicked
         Then The Activity Instance Wizard Stepper 'PARAM/PARAMCD' page is displayed
         And Automatically assigned activity instance name is saved
-        And Topic code is changed to the unique one
+        #And Topic code is changed to the unique one
         And Form continue button is clicked
         Then The Activity Instance Wizard Stepper 'Data specification' page is displayed
         And Form save button is clicked
@@ -43,9 +43,10 @@ Feature: Library - Concepts - Activities - Activity instances - new wizard stepp
         And The 'CategoricFindings' is selected from the Activity instance class field
         And First value is selected from the Data domain field
         And Form continue button is clicked
+        And Customize toggle is turn on
         And Field 'ADaM parameter' is filled with value 'ADAM'
         And Automatically assigned activity instance name is saved
-        And Topic code is changed to the unique one
+        #And Topic code is changed to the unique one
         And Form continue button is clicked
         And Form save button is clicked
         Then The current URL is '/overview'
@@ -64,9 +65,10 @@ Feature: Library - Concepts - Activities - Activity instances - new wizard stepp
         And The 'TextualFindings' is selected from the Activity instance class field
         And First value is selected from the Data domain field
         And Form continue button is clicked
+        And Customize toggle is turn on
         And Field 'ADaM parameter' is filled with value 'ADAM'
         And Automatically assigned activity instance name is saved
-        And Topic code is changed to the unique one
+        #And Topic code is changed to the unique one
         And Form continue button is clicked
         And Form save button is clicked
         Then The current URL is '/overview'
@@ -86,9 +88,10 @@ Feature: Library - Concepts - Activities - Activity instances - new wizard stepp
         And The 'CategoricFindings' is selected from the Activity instance class field
         And First value is selected from the Data domain field
         And Form continue button is clicked
+        And Customize toggle is turn on
         And Field 'ADaM parameter' is filled with value 'ADAM'
         And Automatically assigned activity instance name is saved
-        And Topic code is changed to the unique one
+        #And Topic code is changed to the unique one
         And Form continue button is clicked
         And Form save button is clicked
         Then The current URL is '/overview'
@@ -122,6 +125,7 @@ Feature: Library - Concepts - Activities - Activity instances - new wizard stepp
         And The 'CategoricFindings' is selected from the Activity instance class field
         And First value is selected from the Data domain field
         And Form continue button is clicked
+        And Customize toggle is turn on
         And Mandatory field 'Activity instance name' is cleared
         And Mandatory field 'Sentence case name' is cleared
         And Mandatory field 'Topic code' is cleared
@@ -140,6 +144,7 @@ Feature: Library - Concepts - Activities - Activity instances - new wizard stepp
         And The 'CategoricFindings' is selected from the Activity instance class field
         And First value is selected from the Data domain field
         And Form continue button is clicked
+        And Customize toggle is turn on
         And Field 'ADaM parameter' is filled with value 'ADAM'
         And Add activity item class button is clicked
         And The first Activity item class is selected
@@ -155,6 +160,7 @@ Feature: Library - Concepts - Activities - Activity instances - new wizard stepp
         And The 'CategoricFindings' is selected from the Activity instance class field
         And First value is selected from the Data domain field
         And Form continue button is clicked
+        And Customize toggle is turn on
         And Field 'ADaM parameter' is filled with value 'ADAM'
         And Form continue button is clicked
         And Add activity item class button is clicked
@@ -171,6 +177,7 @@ Feature: Library - Concepts - Activities - Activity instances - new wizard stepp
         And The 'CategoricFindings' is selected from the Activity instance class field
         And First value is selected from the Data domain field
         And Form continue button is clicked
+        And Customize toggle is turn on
         And Field 'ADaM parameter' is filled with value 'ADAM'
         And Mandatory field 'Activity instance name' is cleared
         And Mandatory field 'Sentence case name' is cleared
@@ -228,9 +235,10 @@ Feature: Library - Concepts - Activities - Activity instances - new wizard stepp
         And The 'CategoricFindings' is selected from the Activity instance class field
         And The 'LB' is selected from the Activity instance domain field
         And Form continue button is clicked
+        And Customize toggle is turn on
         And Field 'ADaM parameter' is filled with value 'ADAM'
         And Automatically assigned activity instance name is saved
-        And Topic code is changed to the unique one
+        #And Topic code is changed to the unique one
         And Add activity item class button is clicked
         Then Value 'analysis_method' is selected for 0 Activity item class field
         And Add activity item class button is clicked
@@ -251,9 +259,10 @@ Feature: Library - Concepts - Activities - Activity instances - new wizard stepp
         And The 'CategoricFindings' is selected from the Activity instance class field
         And First value is selected from the Data domain field
         And Form continue button is clicked
+        And Customize toggle is turn on
         And Field 'ADaM parameter' is filled with value 'ADAM'
         And Automatically assigned activity instance name is saved
-        And Topic code is changed to the unique one
+        #And Topic code is changed to the unique one
         And Form continue button is clicked
         When Fullscreen wizard is closed by clicking cancel button
         And Action is confirmed by clicking continue

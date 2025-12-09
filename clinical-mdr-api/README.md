@@ -197,16 +197,16 @@ E.g.
 During processing of http requests, different types errors may be detected and reported to consumers. 
 Broadly speaking, they fall into the following categories:
 
-1. Validation errors detected and reported by the Pydantic library (an underlying component of FastAPI), resulting in HTTP response status `422`. Pydantic will perform validation of query/path/body fields based on the validation rules we specify for each of these fields, instead of us raising explicit exceptions in our code.
-   - Example guides on how to use Pydantic validation of query/path/body fields:
-     - https://fastapi.tiangolo.com/tutorial/query-params-str-validations/
-     - https://fastapi.tiangolo.com/tutorial/path-params-numeric-validations/
-     - https://fastapi.tiangolo.com/tutorial/body-fields/
-   - Example response when required fields in the POST payload are not supplied:
-
+1. Validation errors raised by pydantic or our code when our business rules or additional validation constraints are unmet, resulting in HTTP response status `400`.
+   - Example response when API consumer tries to create an entity with the same name as the name of an already existing entity of same type:
       ```
       {
-        "detail": [
+        "time": "2023-05-16T07:33:40.888526",
+        "path": "http://localhost:8000/libraries",
+        "method": "POST"
+        "type": "ValidationException",
+        "message": "Request failed due to validation errors",
+        "errors": [
           {
             "loc": [
               "body",
@@ -235,27 +235,15 @@ Broadly speaking, they fall into the following categories:
       }
       ``` 
 
-1. Validation errors raised by our code when our business rules or additional validation constraints (not handled by Pydantic) are unmet, resulting in HTTP response status `400`.
-   - Example response when API consumer tries to create an entity with the same name as the name of an already existing entity of same type:
-      ```
-      {
-        "type": "ValidationException",
-        "message": "Library 'SNOMED' already exists",
-        "time": "2023-05-16T07:33:40.888526",
-        "path": "http://localhost:8000/libraries",
-        "method": "POST"
-      }
-      ``` 
-
 1. "Not found" errors raised by our code when a referenced entity does not exist, resulting in HTTP response status `404`. 
    - Example response:
       ```
       {
-        "type": "NotFoundException",
-        "message": "CompoundAR with uid XYZ does not exist or there's no version with requested status or version number.",
         "time": "2023-05-16T07:34:43.330141",
         "path": "http://localhost:8000/concepts/compounds/XYZ",
         "method": "GET"
+        "type": "NotFoundException",
+        "message": "CompoundAR with uid XYZ does not exist or there's no version with requested status or version number.",
       }
       ``` 
 

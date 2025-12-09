@@ -154,7 +154,7 @@ import statuses from '@/constants/statuses'
 import NumericValueWithUnitField from '@/components/tools/NumericValueWithUnitField.vue'
 import SimpleFormDialog from '@/components/tools/SimpleFormDialog.vue'
 
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const formRules = inject('formRules')
 const { t } = useI18n()
 const { createNumericValues } = useNumericValues()
@@ -234,24 +234,29 @@ function loadMedicinalProduct(uid) {
 
 function close() {
   emit('close')
+  notificationHub.clearErrors()
   form.value = getInitialForm()
 }
 
 async function addProduct(data) {
+  notificationHub.clearErrors()
+
   data.library_name = libConstants.LIBRARY_SPONSOR
   await api.create(data)
   emit('created')
-  eventBusEmit('notification', {
+  notificationHub.add({
     msg: t('MedicinalProductForm.add_success'),
     type: 'success',
   })
 }
 
 async function updateProduct(data) {
+  notificationHub.clearErrors()
+
   data.change_description = t('_global.work_in_progress')
   await api.update(props.medicinalProductUid, data)
   emit('updated')
-  eventBusEmit('notification', {
+  notificationHub.add({
     msg: t('MedicinalProductForm.update_success'),
     type: 'success',
   })

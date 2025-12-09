@@ -65,7 +65,7 @@ import filteringParameters from '@/utils/filteringParameters'
 import _debounce from 'lodash/debounce'
 
 const { t } = useI18n()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const props = defineProps({
   codelistUid: {
     type: String,
@@ -111,6 +111,7 @@ onMounted(() => {
 
 function close() {
   emit('close')
+  notificationHub.clearErrors()
   stepper.value.reset()
 }
 function getInitialSteps() {
@@ -129,10 +130,12 @@ function getObserver() {
   return undefined
 }
 async function submit() {
+  notificationHub.clearErrors()
+
   const data = {}
   data[`paired_${pairType.value}_codelist_uid`] = selectedCodelist.value
   await controlledTerminology.updatePairedCodelists(props.codelistUid, data)
-  eventBusEmit('notification', {
+  notificationHub.add({
     msg: t('CodelistAddPairedForm.add_success'),
   })
   close()

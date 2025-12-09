@@ -61,6 +61,21 @@ Feature: Library - Concepts - Activities - Activities - Basic Scope
         And User sets status filter to 'all'
         When The Add activity button is clicked
         And The activity form is filled with all data
+        #TODO And The 'Multiple instance allowed' checkbox is set to true by default
+        And Form save button is clicked
+        Then Message confiriming activity creation is displayed
+        And User waits for activity filter request to finish
+        And Activity is searched for and found
+        And The newly added activity is visible in the table
+        And The item has status 'Draft' and version '0.1'
+
+    @pending_implementation
+    Scenario: [Create][Positive case] User must be able to add a new activity with no multiple instances allowed
+        And The '/library/activities/activities' page is opened
+        And User sets status filter to 'all'
+        When The Add activity button is clicked
+        And The activity form is filled with all data
+        And The 'Multiple instance allowed' checkbox is set to 'false' by user
         And Form save button is clicked
         Then Message confiriming activity creation is displayed
         And User waits for activity filter request to finish

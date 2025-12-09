@@ -326,7 +326,7 @@ def test_patch_soa_preferences_invalid_input(
     response = api_client.patch(
         f"/studies/{dummy_study.uid}/soa-preferences", json=soa_preferences_update
     )
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
     assert_json_response(response)
 
 

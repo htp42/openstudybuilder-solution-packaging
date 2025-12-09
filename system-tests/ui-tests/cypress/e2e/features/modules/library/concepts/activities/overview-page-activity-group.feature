@@ -66,7 +66,7 @@ Feature: Library - Concepts - Activities - Activity Group Overview Page
     Scenario: [Approve] Approve the Group
         When I click 'Approve' button
         Then The status displayed on the summary has value 'Final' and version is '2.0'
-        And The Activity subgroups table is empty
+        And The linked subgroup is found in the Groups table with status 'Final' and version '2.0'
 
     Scenario: [Edit][2.1] Edit the Group
         When I click 'New version' button
@@ -77,7 +77,7 @@ Feature: Library - Concepts - Activities - Activity Group Overview Page
         And The status displayed on the summary has value 'Draft' and version is '2.2'
         When I click 'Approve' button
         And The status displayed on the summary has value 'Final' and version is '3.0'
-        And The Activity subgroups table is empty
+        And The linked subgroup is found in the Groups table with status 'Final' and version '3.0'
   
     Scenario: [Linking][New subgroup] Verify that the activities group overview page can link to the correct subgroup with different versions
         When The '/library/activities/activity-subgroups' page is opened
@@ -87,9 +87,12 @@ Feature: Library - Concepts - Activities - Activity Group Overview Page
         And Overview page for group created via API is opened
         And Group overview page is opened
         When Version '2.0' is selected from the Version dropdown list
+        And The status displayed on the summary has value 'Final' and version is '2.0'
+        Then The linked subgroup is found in the Groups table with status 'Final' and version '2.0'
+        When Version '3.0' is selected from the Version dropdown list
         And The status displayed on the summary has value 'Final' and version is '3.0'
         Then The new linked subgroup is found in the Groups table with status 'Draft' and version '0.1'
-        And The Activity subgroup created via API is not available in the table
+        And The linked subgroup is found in the Groups table with status 'Final' and version '3.0'
 
     Scenario: [Table][Search][Negative case] User must be able to search not existing subgroup and table will be correctly filtered
         When User searches for non-existing item in 'Activity subgroups' table

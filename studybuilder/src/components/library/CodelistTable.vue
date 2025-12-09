@@ -175,7 +175,7 @@ import { useAccessGuard } from '@/composables/accessGuard'
 import { useTermsStore } from '@/stores/library-terms'
 import _debounce from 'lodash/debounce'
 
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const roles = inject('roles')
 const props = defineProps({
   catalogue: {
@@ -391,7 +391,7 @@ function goToCodelist(codelist) {
       codelist_id: codelist.codelist_uid,
     },
   })
-  eventBusEmit('notification', { msg: t('CodelistCreationForm.add_success') })
+  notificationHub.add({ msg: t('CodelistCreationForm.add_success') })
 }
 
 function openCodelistDetail(codelist) {

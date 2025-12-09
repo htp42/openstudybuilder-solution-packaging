@@ -184,16 +184,15 @@ def test_cannot_create_a_new_odm_vendor_attribute_with_invalid_regex(api_client)
     }
     response = api_client.post("concepts/odms/vendor-attributes", json=data)
 
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
 
     res = response.json()
 
-    assert res["detail"] == [
+    assert res["details"] == [
         {
-            "type": "value_error",
-            "loc": ["body", "value_regex"],
+            "error_code": "value_error",
+            "field": ["body", "value_regex"],
             "msg": "Value error, Provided regex value '(*'*(!'' for field 'value_regex' is invalid.",
-            "input": "(*'*(!'",
             "ctx": {"error": {}},
         }
     ]

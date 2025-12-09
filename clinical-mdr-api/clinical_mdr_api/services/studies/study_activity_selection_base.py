@@ -241,7 +241,9 @@ class StudyActivitySelectionBaseService(
                 ):
                     activity_selection_ar.study_objects_selection = filtered_items
                     filtered_items = self._transform_all_to_response_model(
-                        activity_selection_ar, study_value_version=study_value_version
+                        activity_selection_ar,
+                        study_value_version=study_value_version,
+                        **kwargs,
                     )
                 else:
                     return filtered_items
@@ -250,7 +252,9 @@ class StudyActivitySelectionBaseService(
             # Fall back to full generic filtering
             return service_level_generic_filtering(
                 items=self._transform_all_to_response_model(
-                    activity_selection_ar, study_value_version=study_value_version
+                    activity_selection_ar,
+                    study_value_version=study_value_version,
+                    **kwargs,
                 ),
                 filter_by=filter_by,
                 filter_operator=filter_operator,
@@ -321,6 +325,7 @@ class StudyActivitySelectionBaseService(
             terms_at_specific_datetime=terms_at_specific_datetime,
         )
 
+    @trace_calls(args=[1, 2], kwargs=["study_uid", "study_selection_uid"])
     def _find_ar_to_patch(
         self, study_uid: str, study_selection_uid: str
     ) -> tuple[_AggregateRootType, _VOType]:
@@ -485,6 +490,7 @@ class StudyActivitySelectionBaseService(
     def _get_linked_activities(
         self,
         selection_vos: Iterable[StudySelectionBaseVO],
+        filter_out_retired_groupings: bool = False,
     ) -> list[ActivityAR]:
         version_specific_uids = defaultdict(set)
 
@@ -500,4 +506,5 @@ class StudyActivitySelectionBaseService(
         return self._repos.activity_repository.get_all_optimized(
             version_specific_uids=version_specific_uids,
             include_retired_versions=True,
+            filter_out_retired_groupings=filter_out_retired_groupings,
         )[0]

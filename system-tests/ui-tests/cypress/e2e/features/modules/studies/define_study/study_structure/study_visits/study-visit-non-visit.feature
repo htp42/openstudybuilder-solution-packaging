@@ -5,11 +5,12 @@ Feature: Studies - Define Study - Study Structure - Study Visits - Non Visit
 
     Background: User is logged in and study has been selected
         Given The user is logged in
-        And The study with uid 'Study_000003' is selected
+        When Get study 'CDISC DEV-9880' uid
+        And Select study with uid saved in previous step
         And [API] The epoch with type 'Pre Treatment' and subtype 'Run-in' exists in selected study
 
     Scenario: [Create][Non visit] User must be able to create non visit for given study
-        Given The '/studies/Study_000003/study_structure/visits' page is opened
+        When The page 'study_structure/visits' is opened for selected study
         And User waits for epochs to load
         When Add visit button is clicked
         And Visit scheduling type is selected as 'NON_VISIT'
@@ -23,7 +24,7 @@ Feature: Studies - Define Study - Study Structure - Study Visits - Non Visit
 
     @BUG_ID:2776541
     Scenario: [EDIT][Special visit] User must not be able to edit non visit number
-        Given The '/studies/Study_000003/study_structure/visits' page is opened
+        When The page 'study_structure/visits' is opened for selected study
         When User searches for 'Non-visit'
         And The 'Edit' option is clicked from the three dot menu list
         And Form continue button is clicked

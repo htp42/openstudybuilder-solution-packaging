@@ -72,14 +72,14 @@ function getItemLabel(item) {
   if (typeof item === 'string') {
     return t(item)
   }
-  return t(item.key)
+  return t(item.key, item.context ? item.context() : {})
 }
 
 function getItemHelp(item) {
   if (typeof item === 'string') {
     return t(`_help.${item}`)
   }
-  return t(`_help.${item.key}`, item.context())
+  return t(`_help.${item.key}`, item.context ? item.context() : {})
 }
 </script>
 <style>

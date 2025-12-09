@@ -28,12 +28,19 @@ Feature: Library - Data Collection Standards - CRF Versioning
     Background: User must be logged in
         Given The user is logged in
 
-    Scenario: Verify that the Edit of a Draft child element will impact the parent element in Draft status
-        Given [API] A CRF Collection in status Draft exists linking a child Form, Item Group, and Item in Status Draft
+    Scenario: [Draft Parent][Edit Child] User must after editing a CRF child element for a CRF parent element in Draft see the parent CRF element refer to the this latest CRF child version on the CRF Tree page.   
+        Given [API] A CRF Collection is created
+        And [API] A CRF Form is created
+        And [API] CRF Item Group is created
+        And [API] CRF Item is created
+        And [API] CRF Form is linked to the collection
+        And [API] CRF Item Group is linked to the form
+        And [API] CRF Item is linked to the group
         And The '/library/crf-builder/forms' page is opened
         When I search for the existed form
         And The 'Edit' option is clicked from the three dot menu list
         And I update the form and click on the Save button
+        And Form save button is clicked
         Then The item has status 'Draft' and version '0.2'
         When The '/library/crf-builder/item-groups' page is opened
         And I search for the existed item group
@@ -45,6 +52,7 @@ Feature: Library - Data Collection Standards - CRF Versioning
         And I search for the existed item
         When The 'Edit' option is clicked from the three dot menu list
         And I update the item and click on the Save button
+        And Form save button is clicked
         Then The item has status 'Draft' and version '0.2'
         When The '/library/crf-builder/crf-tree' page is opened
         Then All the parent elements should refer to version '0.2' and status 'Draft' of the linked child elements
@@ -52,20 +60,15 @@ Feature: Library - Data Collection Standards - CRF Versioning
         # Then the 'Note, the following CRF Collections have references to this Form, Item Group, or Items, and if updates are saved this will apply to these CRF collections:' notification is presented to the user
         # And the list of affected CRF Collections are listed
 
-    Scenario: Verify that the Approve of a Draft parent element will approve all child elements in Final status
-        Given [API] A CRF Collection in status Draft exists linking a child Form, Item Group, and Item in Status Draft
-        And The '/library/crf-builder/collections' page is opened
-        When I search for the existed collection
-        And The 'Approve' option is clicked from the three dot menu list
-        Then The approval popup window is displayed
-        And All the child elements should displayed in the notification page
-        When Action is confirmed by clicking continue
-        And The item has status 'Final' and version '1.0'
-        When The '/library/crf-builder/crf-tree' page is opened
-        Then All the parent elements should refer to version '1.0' and status 'Final' of the linked child elements
-
-    Scenario: Verify that the New Version of a Final child element will impact the parent element in Draft status
-        Given [API] A CRF Collection in status Draft exists linking a child Form, Item Group, and Item in Status Final
+    Scenario: [Draft Parent][New version Child] User must after creating new version of CRF child element for a CRF parent element in Draft see the parent CRF element refer to the this latest CRF child version on the CRF Tree page.  
+        Given [API] A CRF Collection is created
+        And [API] A CRF Form is created
+        And [API] CRF Item Group is created
+        And [API] CRF Item is created
+        And [API] CRF Form is linked to the collection
+        And [API] CRF Item Group is linked to the form
+        And [API] CRF Item is linked to the group
+        And [API] CRF Form is approved
         And The '/library/crf-builder/forms' page is opened
         When I search for the existed form
         And The 'New version' option is clicked from the three dot menu list
@@ -87,8 +90,65 @@ Feature: Library - Data Collection Standards - CRF Versioning
         When The '/library/crf-builder/crf-tree' page is opened
         Then All the parent elements should refer to version '1.1' and status 'Draft' of the linked child elements
 
-    Scenario: Verify that the New Version of a Final child element will not impact the parent element in Final status
-        Given [API] A CRF Collection in status Final exists linking a child Form, Item Group, and Item in Status Final
+    Scenario: Approve of a Draft CRF Library parent element will approve all child CRF Library elements to Final status
+        Given [API] A CRF Collection is created
+        And [API] A CRF Form is created
+        And [API] CRF Item Group is created
+        And [API] CRF Item is created
+        And [API] CRF Form is linked to the collection
+        And [API] CRF Item Group is linked to the form
+        And [API] CRF Item is linked to the group
+        And The '/library/crf-builder/collections' page is opened
+        When I search for the existed collection
+        And The 'Approve' option is clicked from the three dot menu list
+        Then The approval popup window is displayed
+        And All the child elements should displayed in the notification page
+        When Action is confirmed by clicking continue
+        And The item has status 'Final' and version '1.0'
+        When The '/library/crf-builder/crf-tree' page is opened
+        Then All the parent elements should refer to version '1.0' and status 'Final' of the linked child elements
+
+     Scenario: [Final Parent][Edit Child] User must after editing a CRF child element for a CRF parent element in Final see the parent CRF element refer to the old CRF child version on the CRF Tree page.  
+        Given [API] A CRF Collection is created
+        And [API] A CRF Form is created
+        And [API] CRF Item Group is created
+        And [API] CRF Item is created
+        And [API] CRF Form is linked to the collection
+        And [API] CRF Item Group is linked to the form
+        And [API] CRF Item is linked to the group
+        And The '/library/crf-builder/forms' page is opened
+        When I search for the existed form
+        And The 'Edit' option is clicked from the three dot menu list
+        And I update the form and click on the Save button
+        And Form save button is clicked
+        Then The item has status 'Draft' and version '0.2'
+        When The '/library/crf-builder/item-groups' page is opened
+        And I search for the existed item group
+        When The 'Edit' option is clicked from the three dot menu list
+        And I update the item group and click on the Save button
+        And Form save button is clicked
+        Then The item has status 'Draft' and version '0.2'
+        When The '/library/crf-builder/items' page is opened
+        And I search for the existed item
+        When The 'Edit' option is clicked from the three dot menu list
+        And I update the item and click on the Save button
+        And Form save button is clicked
+        Then The item has status 'Draft' and version '0.2'
+        When The '/library/crf-builder/crf-tree' page is opened
+        Then All the parent elements should refer to version '1.0' and status 'Final' of the linked child elements
+        # Notification for editing action is under discussion
+        # Then the 'Note, the following CRF Collections have references to this Form, Item Group, or Items, and if updates are saved this will apply to these CRF collections:' notification is presented to the user
+        # And the list of affected CRF Collections are listed
+
+    Scenario: [Final Parent][New version Child] User must after creating new version of CRF child element for a CRF parent element in Final see the parent CRF element refer to the old CRF child version on the CRF Tree page.  
+        Given [API] A CRF Collection is created
+        And [API] A CRF Form is created
+        And [API] CRF Item Group is created
+        And [API] CRF Item is created
+        And [API] CRF Form is linked to the collection
+        And [API] CRF Item Group is linked to the form
+        And [API] CRF Item is linked to the group
+        And [API] CRF Collection is approved
         And The '/library/crf-builder/forms' page is opened
         When I search for the existed form
         And The 'New version' option is clicked from the three dot menu list
@@ -110,47 +170,47 @@ Feature: Library - Data Collection Standards - CRF Versioning
         When The '/library/crf-builder/crf-tree' page is opened
         Then All the parent elements should refer to version '1.0' and status 'Final' of the linked child elements
 
+    Scenario: [Final Parent][Approve Child] User must after approving a CRF child element for a CRF parent element in Final see the parent CRF element refer to the old CRF child version on the CRF Tree page. 
+        Given [API] A CRF Collection is created
+        And [API] A CRF Form is created
+        And [API] CRF Form is linked to the collection
+        And [API] CRF Collection is approved
+        And The '/library/crf-builder/forms' page is opened
+        When I search for the existed form
+        And The 'New version' option is clicked from the three dot menu list
+        Then The New version popup window is displayed
+        When Action is confirmed by clicking continue
+        Then The item has status 'Draft' and version '1.1'
+        When The 'Approve' option is clicked from the three dot menu list
+        Then The approval popup window is displayed
+        And No child elements should displayed in the notification page
+        When Action is confirmed by clicking continue
+        Then The item has status 'Final' and version '2.0'
+        When The '/library/crf-builder/crf-tree' page is opened 
+        Then Collection still link to the previous old version and Final status of the linked Form
 
-@manual_test
-    Scenario: Verify that the Edit of a Draft child element will not impact the parent element in Final status
-        Given [API] A CRF Collection in status Final exists linking a child Form, Item Group, and Item in Status Draft
-        When I click on 'Edit' option from the three dot menu for the Form
-        And I update the Form and click on the Save button
-        Then The Form is in Draft status and a new version is created
+    Scenario: [Final Parent][New version Parent] User must after creating new version of CRF parent element in Final see the parent CRF element refer to the latest CRF child version on the CRF Tree page. 
+        Given [API] A CRF Collection is created
+        And [API] A CRF Form is created
+        And [API] CRF Form is linked to the collection
+        And [API] CRF Collection is approved
+        And The '/library/crf-builder/forms' page is opened
+        When I search for the existed form
+        And The 'New version' option is clicked from the three dot menu list
+        Then The New version popup window is displayed
+        When Action is confirmed by clicking continue
+        Then The item has status 'Draft' and version '1.1'
         When The '/library/crf-builder/crf-tree' page is opened 
-        Then CRF Collection should still link to the old version of the linked Form
-        When I approve the Form and make the Item Group be in Status Draft
-        Then The Form is in status Final, and the Item Group is in Status Draft
-        When I click on 'Edit' option from the three dot menu for the Item Group
-        And I update the Item Group and click on the Save button
-        Then The Item Group is in Draft status and a new version is created
-        When The '/library/crf-builder/crf-tree' page is opened 
-        Then CRF Form should still link to the old version of the linked Item Group
-        When I approve the Item Group and make the Item be in Status Draft
-        Then The Item Group is in status Final, and the child Item is in Status Draft
-        When I click on 'Edit' option from the three dot menu for the Item
-        And I update the Item and click on the Save button
-        Then The Item is in Draft status and a new version is created
+        Then Collection still link to the previous old version and Final status of the linked Form
+        When The '/library/crf-builder/collections' page is opened
+        And I search for the existed collection
+        When The 'New version' option is clicked from the three dot menu list
+        Then The item has status 'Draft' and version '1.1'
         When The '/library/crf-builder/crf-tree' page is opened
-        Then Item Group should still link to the old version of the linked Item
-        # Notification for editing action is under discussion
-        # Then the 'Note, the following CRF Collections have references to this Form, Item Group, or Items, and if updates are saved this will apply to these CRF collections:' notification is presented to the user
-        # And the list of affected CRF Collections are listed
+        Then Collection should refer to the latest version and status of the child elements
 
 @manual_test
-    Scenario: Verify that the Approve of a Draft element will not impact either the parent nor child element in Final status
-        Given A CRF Collection in status Final exists linking a Draft Form, a Final Item Group, and a Final Item
-        When I click on 'Approve' option from the three dot menu for the Form
-        Then The 'Approving the element will approve the following child elements' notification is displayed
-        And 'No child items will be affected.' text should be displayed in the notification page
-        When I click on 'APPROVE FORM' button 
-        Then The Form is approved
-        When The '/library/crf-builder/crf-tree' page is opened 
-        Then CRF Collection should still link to the old version of the linked Form
-        And The linked Item Group and Item are still in Final status
-
-@manual_test
-    Scenario: Verify that the Inactive of a Final child element will impact the parent element in Draft status
+    Scenario: [Draft Parent][Inactive Child] User must after inactive CRF child element for a CRF parent element in Draft see the parent CRF element refer to the new CRF child version on the CRF Tree page.
         Given A CRF Collection in status Draft exists linking a Form, an Item Group, and an Item in Status Final
         When I click on 'Inactive' option from the three dot menu for the Form
         Then The Form is in Retired status
@@ -159,7 +219,7 @@ Feature: Library - Data Collection Standards - CRF Versioning
         # All scenarios related to CRF forms, Item Groups, and Items can be repeated for the Inactivate action
 
 @manual_test
-    Scenario: Verify that the Inactive of a Final child element will not impact the parent element in Final status
+    Scenario: [Final Parent][Inactive Child] User must after inactive CRF child element for a CRF parent element in Final see the parent CRF element refer to the old CRF child version on the CRF Tree page.
         Given A CRF Collection in status Final exists linking a Form in Status Final
         When I click on 'Inactive' option from the three dot menu for the Form
         Then The Form is in Retired status
@@ -168,8 +228,8 @@ Feature: Library - Data Collection Standards - CRF Versioning
         # All scenarios related to CRF forms, Item Groups, and Items can be repeated for the Inactivate action
 
 @manual_test
-    Scenario: Verify that the Reactivate of a Retired child element will impact the parent element in Draft status
-        Given A CRF Collection in status Retired exists linking a Form in Status Final
+    Scenario: [Draft Parent][Reactive Child] User must after reactive CRF child element for a CRF parent element in Draft see the parent CRF element refer to the new CRF child version on the CRF Tree page.
+        Given A CRF Collection in status Draft exists linking a Form in Status Retired
         When I click on 'Reactivate' option from the three dot menu for the Form
         Then The Form is in Final status
         When The '/library/crf-builder/crf-tree' page is opened 
@@ -177,8 +237,8 @@ Feature: Library - Data Collection Standards - CRF Versioning
         # All scenarios related to CRF forms, Item Groups, and Items can be repeated for the Reactivate action
 
 @manual_test
-    Scenario: Verify that the Reactivate of a Retired child element will not impact the parent element in Final status
-        Given A CRF Collection in status Retired exists linking a Form in Status Final
+    Scenario: [Final Parent][Reactive Child] User must after reactive CRF child element for a CRF parent element in Final see the parent CRF element refer to the old CRF child version on the CRF Tree page.
+        Given A CRF Collection in status Final exists linking a Form in Status Retired
         When I click on 'Reactivate' option from the three dot menu for the Form
         Then The Form is in Final status
         When The '/library/crf-builder/crf-tree' page is opened 

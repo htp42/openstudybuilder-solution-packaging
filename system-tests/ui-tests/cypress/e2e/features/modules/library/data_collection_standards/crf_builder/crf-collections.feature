@@ -73,23 +73,23 @@ Feature: Library - Data Collection Standards - CRF Builder - CRF Collections
         Given The '/library/crf-builder/collections' page is opened
         And Created CRF Collection is found
         When The 'Inactivate' option is clicked from the three dot menu list
-        Then The item has status 'Retired' and version '1.0'
+        Then The item has status 'Retired' and version '2.0'
 
     Scenario: [Actions][Reactivate] User must be able to reactivate CRF Collection in retired status
         Given The '/library/crf-builder/collections' page is opened
         And Created CRF Collection is found
         When The 'Reactivate' option is clicked from the three dot menu list
-        Then The item has status 'Final' and version '1.0'
+        Then The item has status 'Final' and version '3.0'
 
-    Scenario: [Actions][Approve] User must be able to create new version of currently approved CRF Collection
+    Scenario: [Actions][New version] User must be able to create new version of currently approved CRF Collection
         Given The '/library/crf-builder/collections' page is opened
         And Created CRF Collection is found
         When The 'New version' option is clicked from the three dot menu list
-        Then The item has status 'Draft' and version '1.1'
+        Then The item has status 'Draft' and version '3.1'
 
     Scenario: [Actions][Delete] User must be able to delete CRF Collection in draft status
-        Given The '/library/crf-builder/collections' page is opened
         And [API] The CRF Collection in draft status exists
+        Given The '/library/crf-builder/collections' page is opened
         And Created CRF Collection is found
         When The 'Delete' option is clicked from the three dot menu list
         Then The CRF Collection is no longer available

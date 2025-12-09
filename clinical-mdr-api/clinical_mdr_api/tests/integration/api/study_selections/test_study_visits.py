@@ -448,7 +448,7 @@ def test_manually_defined_visit(api_client):
         json=datadict,
     )
     res = response.json()
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
     assert (
         res["message"]
         == "Values 777.0 in field visit number and 7777 in field unique visit number are not defined in chronological order by study visit timing"
@@ -470,7 +470,7 @@ def test_manually_defined_visit(api_client):
         json=datadict,
     )
     res = response.json()
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
     assert res["message"] == "Field visit name - Visit 5 is not unique for the Study"
 
     # successful post on the uniqueness check for visit name, visit short name, visit number and unique visit number
@@ -512,7 +512,7 @@ def test_manually_defined_visit(api_client):
     )
     # Then The system displays the message "Value \"test value\" in field "<study visit field>" is not unique for the study"
     res = response.json()
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
     error_msg = "Fields visit number - 11.0 and unique visit number - 1100 and visit name - Manually defined visit name"
     error_msg += " and visit short name - Manually defined visit short name are not unique for the Study"
     assert res["message"] == error_msg
@@ -537,7 +537,7 @@ def test_manually_defined_visit(api_client):
 
     # Then The system displays the message "Value \"test value\" in field "<study visit field>" is not unique for the study"
     res = response.json()
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
     assert (
         res["message"]
         == "Fields visit number - 2.0 and unique visit number - 200 and visit name - Visit 2 and visit short name - V2 are not unique for the Study"
@@ -704,7 +704,7 @@ def test_non_manually_defined_visit(api_client):
 
     # Then The system displays the message "Value \"test value\" in field "<study visit field>" is not unique for the study
     # as a manually defined value exist. Change the manually defined value before this visit can be defined."
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
     res = response.json()
     error_msg = "Fields visit number - 2 and unique visit number - 200 and visit name - Visit 2 and visit short name - V2 are not unique"
     error_msg += " for the Study as a manually defined value exists. Change the manually defined value before this visit can be defined."
@@ -822,7 +822,7 @@ def test_manually_defined_visit_in_chronological_order_by_visit_timing(api_clien
     # Then The system displays the message "Value \"test visit number\" in field visit number
     #  is not defined in chronological order by study visit timing"
     res = response.json()
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
     assert (
         res["message"]
         == "Value 11.0 in field visit number is not defined in chronological order by study visit timing"
@@ -851,7 +851,7 @@ def test_manually_defined_visit_in_chronological_order_by_visit_timing(api_clien
     # Then The system displays the message "Value \"test visit number\" in field visit number
     #  is not defined in chronological order by study visit timing"
     res = response.json()
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
     assert (
         res["message"]
         == "Value 1.5 in field visit number is not defined in chronological order by study visit timing"
@@ -906,7 +906,7 @@ def test_manually_defined_visit_in_chronological_order_by_visit_timing(api_clien
     # Then The system displays the message "Value \"test visit number\" in field unique visit number
     #  is not defined in chronological order by study visit timing"
     res = response.json()
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
     assert (
         res["message"]
         == "Value 600 in field unique visit number is not defined in chronological order by study visit timing"
@@ -935,7 +935,7 @@ def test_manually_defined_visit_in_chronological_order_by_visit_timing(api_clien
     # Then The system displays the message "Value \"test visit number\" in field unique visit number
     #  is not defined in chronological order by study visit timing"
     res = response.json()
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
     assert (
         res["message"]
         == "Value 150 in field unique visit number is not defined in chronological order by study visit timing"

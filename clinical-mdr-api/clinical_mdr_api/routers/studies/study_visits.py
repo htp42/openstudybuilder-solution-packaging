@@ -697,6 +697,33 @@ def get_anchor_visits_for_special_visit(
     )
 
 
+@router.get(
+    "/studies/{study_uid}/study-visits-for-activity-instance/{study_activity_instance_uid}",
+    dependencies=[security, rbac.STUDY_READ],
+    summary="List all study visits where study activity instance is currently scheduled",
+    response_model_exclude_unset=True,
+    status_code=200,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - there is no study activity instance with the given uid.",
+        },
+    },
+)
+def get_study_visits_for_specific_activity_instance(
+    study_uid: Annotated[str, studyUID],
+    study_activity_instance_uid: Annotated[
+        str, Path(description="The unique id of the study activity instance.")
+    ],
+) -> list[SimpleStudyVisit]:
+    service = StudyVisitService(study_uid=study_uid)
+    return service.get_study_visits_for_specific_activity_instance(
+        study_uid=study_uid,
+        study_activity_instance_uid=study_activity_instance_uid,
+    )
+
+
 @router.post(
     "/studies/{study_uid}/consecutive-visit-groups",
     dependencies=[security, rbac.STUDY_WRITE],

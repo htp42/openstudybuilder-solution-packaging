@@ -87,7 +87,7 @@ Feature: Library - Concepts - Activities - Activity Subgroup Overview Page
     Scenario: [Approve] Approve the SubGroup
         When I click 'Approve' button
         Then The status displayed on the summary has value 'Final' and version is '2.0'
-        And The Activities table is empty
+        And The linked activity is found in the Acivities table with status 'Final' and version '2.0'
         And The linked group is found in the Groups table with status 'Final' and version '1.0'
 
     Scenario: [Table][Search][Negative case] User must be able to search not existing group and table will be correctly filtered

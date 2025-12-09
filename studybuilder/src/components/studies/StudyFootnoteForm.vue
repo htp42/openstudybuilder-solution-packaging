@@ -295,7 +295,7 @@ export default {
     ParameterValueSelector,
     StudySelectionTable,
   },
-  inject: ['eventBusEmit', 'formRules'],
+  inject: ['notificationHub', 'formRules'],
   props: {
     currentStudyFootnotes: {
       type: Array,
@@ -491,6 +491,7 @@ export default {
   },
   methods: {
     close() {
+      this.notificationHub.clearErrors()
       this.creationMode = 'template'
       this.form = {}
       this.templateForm = {}
@@ -624,7 +625,7 @@ export default {
           this.form.footnote_template === undefined ||
           this.form.footnote_template === null
         ) {
-          this.eventBusEmit('notification', {
+          this.notificationHub.add({
             msg: this.$t('StudyFootnoteForm.template_not_selected'),
             type: 'error',
           })
@@ -675,10 +676,12 @@ export default {
       return resp.data.footnote.name
     },
     async submit() {
+      this.notificationHub.clearErrors()
+
       let args = null
       if (this.creationMode === 'template') {
         if (!this.selectedTemplates.length) {
-          this.eventBusEmit('notification', {
+          this.notificationHub.add({
             msg: this.$t('EligibilityCriteriaForm.no_template_error'),
             type: 'error',
           })
@@ -724,7 +727,7 @@ export default {
         }
       }
       this.$emit('added')
-      this.eventBusEmit('notification', {
+      this.notificationHub.add({
         msg: this.$t('StudyFootnoteForm.footnote_added'),
       })
       this.close()

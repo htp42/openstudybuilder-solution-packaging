@@ -128,7 +128,7 @@ export default {
     CrfTreeReorderButtons,
     CrfNewVersionSummaryConfirmDialog,
   },
-  inject: ['eventBusEmit'],
+  inject: ['notificationHub'],
   props: {
     parentItemGroup: {
       type: Object,
@@ -217,29 +217,37 @@ export default {
       ) {
         this.loading = true
 
-        crfs.newVersion('items', item.uid).then((resp) => {
-          if (this.parentItemGroup.status === statuses.DRAFT) {
-            this.updateItem(resp.data)
-          }
+        crfs
+          .newVersion('items', item.uid)
+          .then((resp) => {
+            if (this.parentItemGroup.status === statuses.DRAFT) {
+              this.updateItem(resp.data)
+            }
 
-          this.loading = false
-          this.eventBusEmit('notification', {
-            msg: this.$t('_global.new_version_success'),
+            this.notificationHub.add({
+              msg: this.$t('_global.new_version_success'),
+            })
           })
-        })
+          .finally(() => {
+            this.loading = false
+          })
       }
     },
     async approve(item) {
       this.loading = true
 
-      crfs.approve('items', item.uid).then((resp) => {
-        this.updateItem(resp.data)
+      crfs
+        .approve('items', item.uid)
+        .then((resp) => {
+          this.updateItem(resp.data)
 
-        this.loading = false
-        this.eventBusEmit('notification', {
-          msg: this.$t('CRFItems.approved'),
+          this.notificationHub.add({
+            msg: this.$t('CRFItems.approved'),
+          })
         })
-      })
+        .finally(() => {
+          this.loading = false
+        })
     },
     async fetchItems() {
       this.loading = true

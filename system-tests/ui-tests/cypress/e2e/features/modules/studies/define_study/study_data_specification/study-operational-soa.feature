@@ -21,7 +21,7 @@ Feature: Studies - Define Study - Study Data Specifications - Operational SoA
 
     @smoke_test
     Scenario: [Table][Columns][Names] User must be able to see the Operational SoA matrix table with options listed in this scenario
-        Given The '/studies/Study_000004/data_specifications/operational' page is opened
+        Given The test study '/data_specifications/operational' page is opened
         Then expand table and Show SoA groups is available on the page
         And A table is visible with following headers
             | headers             |

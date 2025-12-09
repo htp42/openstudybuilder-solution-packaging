@@ -264,14 +264,22 @@ rand: str
 studies: list[models.Study]
 total_studies: int = 25
 study_visits: list[models.StudyVisit]
-total_study_visits: int = 25
 study_activities: list[models.StudyActivity]
 study_activity_instances: list[models.StudyActivityInstance]
-total_study_activities: int = 25
-study_detailed_soas: list[dict[Any, Any]]
-total_study_detailed_soa: int = 25
-study_operational_soas: list[dict[Any, Any]]
-total_study_operational_soa: int = 25
+
+total_study_visits_version_1: int = 25
+total_study_visits_version_latest: int = 26
+total_study_activities_version_1: int = 25
+total_study_activities_version_latest: int = 26
+total_study_detailed_soa_version_1: int = 25
+total_study_detailed_soa_version_latest: int = 26
+total_study_operational_soa_version_1: int = 25
+total_study_operational_soa_version_latest: int = 26
+
+study_detailed_soas_version_1: list[dict[Any, Any]]
+study_detailed_soas_version_latest: list[dict[Any, Any]]
+study_operational_soas_version_1: list[dict[Any, Any]]
+study_operational_soas_version_latest: list[dict[Any, Any]]
 
 
 @pytest.fixture(scope="module")
@@ -292,8 +300,10 @@ def test_data(api_client):
     global studies
     global study_visits
     global study_activities
-    global study_detailed_soas
-    global study_operational_soas
+    global study_detailed_soas_version_1
+    global study_operational_soas_version_1
+    global study_detailed_soas_version_latest
+    global study_operational_soas_version_latest
 
     activity_instance_class = TestUtils.create_activity_instance_class(
         name="Randomized activity instance class"
@@ -308,7 +318,7 @@ def test_data(api_client):
 
     visit_to_create = generate_default_input_data_for_visit().copy()
     study_visits = []
-    for _idx in range(0, total_study_visits):
+    for _idx in range(0, total_study_visits_version_1):
         visit_to_create.update({"time_value": _idx})
         study_visits.append(
             TestUtils.create_study_visit(  # type: ignore[arg-type]
@@ -361,38 +371,17 @@ def test_data(api_client):
 
     study_activities = []
 
-    for idx in range(0, total_study_activities):
-        activity = TestUtils.create_activity(
-            f"Activity {str(idx + 1).zfill(2)}",
-            activity_groups=[activity_group_uid],
-            activity_subgroups=[activity_subgroup_uid],
-        )
-
-        activity_instance = TestUtils.create_activity_instance(
-            name=f"Activity instance {idx}",
-            activity_instance_class_uid=activity_instance_class.uid,  # type: ignore[arg-type]
-            name_sentence_case=f"activity instance {idx}",
-            topic_code=f"randomized activity instance topic code {idx}",
-            adam_param_code=f"randomized adam_param_code {idx}",
-            is_required_for_activity=True,
-            activities=[activity.uid],
-            activity_subgroups=[activity_subgroup_uid],
-            activity_groups=[activity_group_uid],
-            activity_items=[],
-        )
-
-        study_activity = TestUtils.create_study_activity(
+    for idx in range(0, total_study_activities_version_1):
+        _add_study_activity(
             study_uid=studies[0].uid,
-            soa_group_term_uid=soa_group_term.term_uid,
-            activity_uid=activity.uid,
+            idx=idx,
             activity_group_uid=activity_group_uid,
             activity_subgroup_uid=activity_subgroup_uid,
-            activity_instance_uid=activity_instance.uid,
+            soa_group_term_uid=soa_group_term.term_uid,
+            activity_instance_class_uid=activity_instance_class.uid,
         )
 
-        study_activities.append(study_activity)  # type: ignore[arg-type]
-
-    for idx in range(0, total_study_operational_soa):
+    for idx in range(0, total_study_operational_soa_version_1):
         TestUtils.create_study_activity_schedule(
             study_uid=studies[0].uid,
             study_visit_uid=study_visits[idx].uid,
@@ -400,12 +389,12 @@ def test_data(api_client):
         )
 
     study_flowchart_service = StudyFlowchartService()
-    study_detailed_soas = study_flowchart_service.download_detailed_soa_content(
-        studies[0].uid
+    study_detailed_soas_version_1 = (
+        study_flowchart_service.download_detailed_soa_content(studies[0].uid)
     )
 
-    study_operational_soas = study_flowchart_service.download_operational_soa_content(
-        studies[0].uid
+    study_operational_soas_version_1 = (
+        study_flowchart_service.download_operational_soa_content(studies[0].uid)
     )
 
     TestUtils.create_library(name="UCUM", is_editable=True)
@@ -417,6 +406,40 @@ def test_data(api_client):
     study_service = StudyService()
     study_service.lock(uid=studies[0].uid, change_description="locking it")
     study_service.unlock(uid=studies[0].uid)
+
+    # Add one more visit and activity to the latest draft version of the study
+    visit_to_create.update({"time_value": total_study_visits_version_1})
+    study_visits.append(
+        TestUtils.create_study_visit(  # type: ignore[arg-type]
+            study_uid=studies[0].uid,
+            study_epoch_uid=study_epoch.uid,
+            **visit_to_create,
+        )
+    )
+
+    _add_study_activity(
+        study_uid=studies[0].uid,
+        idx=total_study_activities_version_1,
+        activity_group_uid=activity_group_uid,
+        activity_subgroup_uid=activity_subgroup_uid,
+        soa_group_term_uid=soa_group_term.term_uid,
+        activity_instance_class_uid=activity_instance_class.uid,
+    )
+
+    TestUtils.create_study_activity_schedule(
+        study_uid=studies[0].uid,
+        study_visit_uid=study_visits[len(study_visits) - 1].uid,
+        study_activity_uid=study_activities[
+            len(study_activities) - 1
+        ].study_activity_uid,
+    )
+
+    study_detailed_soas_version_latest = (
+        study_flowchart_service.download_detailed_soa_content(studies[0].uid)
+    )
+    study_operational_soas_version_latest = (
+        study_flowchart_service.download_operational_soa_content(studies[0].uid)
+    )
 
 
 def test_get_studies(api_client):
@@ -552,25 +575,25 @@ def test_get_studies_filtering(api_client):
 
 def test_get_studies_invalid_pagination_params(api_client):
     response = api_client.get(f"{BASE_URL}/studies?page_size=0")
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
     assert (
-        response.json()["detail"][0]["msg"]
+        response.json()["details"][0]["msg"]
         == "Input should be greater than or equal to 1"
     )
 
     response = api_client.get(
         f"{BASE_URL}/studies?page_size={settings.max_page_size + 1}"
     )
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
     assert (
-        response.json()["detail"][0]["msg"]
+        response.json()["details"][0]["msg"]
         == "Input should be less than or equal to 1000"
     )
 
     response = api_client.get(
         f"{BASE_URL}/studies?page_number={settings.max_int_neo4j + 1}&page_size=1"
     )
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
     assert (
         response.json()["message"]
         == f"(page_number * page_size) value cannot be bigger than {settings.max_int_neo4j}"
@@ -603,7 +626,7 @@ def test_get_study_visits_pagination_sorting(api_client):
     assert_response_status_code(response, 200)
     res = response.json()
     TestUtils.assert_paginated_response_shape_ok(res)
-    assert len(res["items"]) == 25
+    assert len(res["items"]) == total_study_visits_version_latest
     TestUtils.assert_sort_order(res["items"], "uid", False)
 
     # Non-default page size
@@ -643,7 +666,7 @@ def test_get_study_visits_pagination_sorting(api_client):
     assert_response_status_code(response, 200)
     res = response.json()
     TestUtils.assert_paginated_response_shape_ok(res)
-    assert len(res["items"]) == 25
+    assert len(res["items"]) == total_study_visits_version_latest
     TestUtils.assert_sort_order(res["items"], "visit_name", True)
 
 
@@ -661,10 +684,39 @@ def test_get_study_visits_all(api_client, page_size):
         response = api_client.get(response.json()["next"])
         all_fetched_study_visits.extend(response.json()["items"])
 
-    assert len(all_fetched_study_visits) == total_study_visits
+    assert len(all_fetched_study_visits) == total_study_visits_version_latest
     assert {study_visit["uid"] for study_visit in all_fetched_study_visits} == {
         study_visit.uid for study_visit in study_visits
     }
+
+    TestUtils.assert_sort_order(all_fetched_study_visits, "uid", False)
+
+
+@pytest.mark.parametrize("study_version_number", [None, 1])
+def test_get_study_visits_all_specific_study_version(api_client, study_version_number):
+    all_fetched_study_visits = []
+    expected_fetched_count = (
+        total_study_visits_version_1
+        if study_version_number == 1
+        else total_study_visits_version_latest
+    )
+
+    params = (
+        {"study_version_number": study_version_number}
+        if study_version_number is not None
+        else {}
+    )
+    response = api_client.get(
+        f"{BASE_URL}/studies/{studies[0].uid}/study-visits", params=params
+    )
+    all_fetched_study_visits.extend(response.json()["items"])
+
+    while response.json()["items"]:
+        # Fetch the next page until no items are returned
+        response = api_client.get(response.json()["next"])
+        all_fetched_study_visits.extend(response.json()["items"])
+
+    assert len(all_fetched_study_visits) == expected_fetched_count
 
     TestUtils.assert_sort_order(all_fetched_study_visits, "uid", False)
 
@@ -696,7 +748,7 @@ def test_get_study_activities_pagination_sorting(api_client):
     assert_response_status_code(response, 200)
     res = response.json()
     TestUtils.assert_paginated_response_shape_ok(res)
-    assert len(res["items"]) == 25
+    assert len(res["items"]) == total_study_activities_version_latest
     TestUtils.assert_sort_order(res["items"], "uid", False)
 
     # Non-default page size
@@ -736,7 +788,7 @@ def test_get_study_activities_pagination_sorting(api_client):
     assert_response_status_code(response, 200)
     res = response.json()
     TestUtils.assert_paginated_response_shape_ok(res)
-    assert len(res["items"]) == 25
+    assert len(res["items"]) == total_study_activities_version_latest
     TestUtils.assert_sort_order(res["items"], "activity_name", True)
 
 
@@ -754,10 +806,41 @@ def test_get_study_activities_all(api_client, page_size):
         response = api_client.get(response.json()["next"])
         all_fetched_study_activities.extend(response.json()["items"])
 
-    assert len(all_fetched_study_activities) == total_study_activities
+    assert len(all_fetched_study_activities) == total_study_activities_version_latest
     assert {
         study_activity["uid"] for study_activity in all_fetched_study_activities
     } == {study_activity.study_activity_uid for study_activity in study_activities}
+
+    TestUtils.assert_sort_order(all_fetched_study_activities, "uid", False)
+
+
+@pytest.mark.parametrize("study_version_number", [None, 1])
+def test_get_study_activities_all_specific_study_version(
+    api_client, study_version_number
+):
+    all_fetched_study_activities = []
+    expected_fetched_count = (
+        total_study_activities_version_1
+        if study_version_number == 1
+        else total_study_activities_version_latest
+    )
+
+    params = (
+        {"study_version_number": study_version_number}
+        if study_version_number is not None
+        else {}
+    )
+    response = api_client.get(
+        f"{BASE_URL}/studies/{studies[0].uid}/study-activities", params=params
+    )
+    all_fetched_study_activities.extend(response.json()["items"])
+
+    while response.json()["items"]:
+        # Fetch the next page until no items are returned
+        response = api_client.get(response.json()["next"])
+        all_fetched_study_activities.extend(response.json()["items"])
+
+    assert len(all_fetched_study_activities) == expected_fetched_count
 
     TestUtils.assert_sort_order(all_fetched_study_activities, "uid", False)
 
@@ -813,7 +896,7 @@ def test_get_study_activity_instances_pagination_sorting(api_client):
     assert_response_status_code(response, 200)
     res = response.json()
     TestUtils.assert_paginated_response_shape_ok(res)
-    assert len(res["items"]) == 25
+    assert len(res["items"]) == total_study_activities_version_latest
     TestUtils.assert_sort_order(res["items"], "uid", False)
 
     # Non-default page size
@@ -853,7 +936,7 @@ def test_get_study_activity_instances_pagination_sorting(api_client):
     assert_response_status_code(response, 200)
     res = response.json()
     TestUtils.assert_paginated_response_shape_ok(res)
-    assert len(res["items"]) == 25
+    assert len(res["items"]) == total_study_activities_version_latest
     TestUtils.assert_sort_order(res["items"], "activity.name", True)
 
 
@@ -871,12 +954,43 @@ def test_get_study_activity_instances_all(api_client, page_size):
         response = api_client.get(response.json()["next"])
         all_fetched_study_activity_instances.extend(response.json()["items"])
 
-    assert len(all_fetched_study_activity_instances) == total_study_activities
+    assert (
+        len(all_fetched_study_activity_instances)
+        == total_study_activities_version_latest
+    )
     assert {
         study_activity_instance["activity"]["uid"]
         for study_activity_instance in all_fetched_study_activity_instances
     } == {study_activity.activity.uid for study_activity in study_activities}
 
+    TestUtils.assert_sort_order(all_fetched_study_activity_instances, "uid", False)
+
+
+@pytest.mark.parametrize("study_version_number", [None, 1])
+def test_get_study_activity_instances_all_specific_study_version(
+    api_client, study_version_number
+):
+    all_fetched_study_activity_instances = []
+    expected_fetched_count = (
+        total_study_activities_version_1
+        if study_version_number == 1
+        else total_study_activities_version_latest
+    )
+    params = (
+        {"study_version_number": study_version_number}
+        if study_version_number is not None
+        else {}
+    )
+    response = api_client.get(
+        f"{BASE_URL}/studies/{studies[0].uid}/study-activity-instances", params=params
+    )
+    all_fetched_study_activity_instances.extend(response.json()["items"])
+    while response.json()["items"]:
+        # Fetch the next page until no items are returned
+        response = api_client.get(response.json()["next"])
+        all_fetched_study_activity_instances.extend(response.json()["items"])
+
+    assert len(all_fetched_study_activity_instances) == expected_fetched_count
     TestUtils.assert_sort_order(all_fetched_study_activity_instances, "uid", False)
 
 
@@ -892,7 +1006,7 @@ def test_get_study_detailed_soa(api_client):
         )
 
     # Default page size is 100
-    for idx, study_detailed_soa in enumerate(study_detailed_soas):
+    for idx, study_detailed_soa in enumerate(study_detailed_soas_version_latest):
         if idx < 100:
             assert any(
                 item["activity_name"] == study_detailed_soa["activity"]
@@ -906,7 +1020,7 @@ def test_get_study_detailed_soa_pagination_sorting(api_client):
     assert_response_status_code(response, 200)
     res = response.json()
     TestUtils.assert_paginated_response_shape_ok(res)
-    assert len(res["items"]) == 25
+    assert len(res["items"]) == total_study_detailed_soa_version_latest
     TestUtils.assert_sort_order(res["items"], "activity_name", False)
 
     # Non-default page size
@@ -946,7 +1060,7 @@ def test_get_study_detailed_soa_pagination_sorting(api_client):
     assert_response_status_code(response, 200)
     res = response.json()
     TestUtils.assert_paginated_response_shape_ok(res)
-    assert len(res["items"]) == 25
+    assert len(res["items"]) == total_study_detailed_soa_version_latest
     TestUtils.assert_sort_order(res["items"], "epoch_name", True)
 
 
@@ -964,11 +1078,47 @@ def test_get_study_detailed_soa_all(api_client, page_size):
         response = api_client.get(response.json()["next"])
         all_fetched_study_detailed_soas.extend(response.json()["items"])
 
-    assert len(all_fetched_study_detailed_soas) == total_study_detailed_soa
+    assert (
+        len(all_fetched_study_detailed_soas) == total_study_detailed_soa_version_latest
+    )
     assert {
         study_detailed_soa["activity_name"]
         for study_detailed_soa in all_fetched_study_detailed_soas
-    } == {study_detailed_soa["activity"] for study_detailed_soa in study_detailed_soas}
+    } == {
+        study_detailed_soa["activity"]
+        for study_detailed_soa in study_detailed_soas_version_latest
+    }
+
+    TestUtils.assert_sort_order(all_fetched_study_detailed_soas, "activity_name", False)
+
+
+@pytest.mark.parametrize("study_version_number", [None, 1])
+def test_get_study_detailed_soa_all_specific_study_version(
+    api_client, study_version_number
+):
+    all_fetched_study_detailed_soas = []
+    expected_fetched_count = (
+        total_study_detailed_soa_version_1
+        if study_version_number == 1
+        else total_study_detailed_soa_version_latest
+    )
+
+    params = (
+        {"study_version_number": study_version_number}
+        if study_version_number is not None
+        else {}
+    )
+    response = api_client.get(
+        f"{BASE_URL}/studies/{studies[0].uid}/detailed-soa", params=params
+    )
+    all_fetched_study_detailed_soas.extend(response.json()["items"])
+
+    while response.json()["items"]:
+        # Fetch the next page until no items are returned
+        response = api_client.get(response.json()["next"])
+        all_fetched_study_detailed_soas.extend(response.json()["items"])
+
+    assert len(all_fetched_study_detailed_soas) == expected_fetched_count
 
     TestUtils.assert_sort_order(all_fetched_study_detailed_soas, "activity_name", False)
 
@@ -988,7 +1138,7 @@ def test_get_study_operational_soa(api_client):
         )
 
     # Default page size is 100
-    for idx, study_operational_soa in enumerate(study_operational_soas):
+    for idx, study_operational_soa in enumerate(study_operational_soas_version_latest):
         if idx < 100:
             assert any(
                 item["activity_name"] == study_operational_soa["activity"]
@@ -1002,7 +1152,7 @@ def test_get_study_operational_soa_pagination_sorting(api_client):
     assert_response_status_code(response, 200)
     res = response.json()
     TestUtils.assert_paginated_response_shape_ok(res)
-    assert len(res["items"]) == 25
+    assert len(res["items"]) == total_study_operational_soa_version_latest
     TestUtils.assert_sort_order(res["items"], "activity_name", False)
 
     # Non-default page size
@@ -1042,7 +1192,7 @@ def test_get_study_operational_soa_pagination_sorting(api_client):
     assert_response_status_code(response, 200)
     res = response.json()
     TestUtils.assert_paginated_response_shape_ok(res)
-    assert len(res["items"]) == 25
+    assert len(res["items"]) == total_study_operational_soa_version_latest
     TestUtils.assert_sort_order(res["items"], "visit_uid", True)
 
 
@@ -1060,14 +1210,50 @@ def test_get_study_operational_soa_all(api_client, page_size):
         response = api_client.get(response.json()["next"])
         all_fetched_study_operational_soas.extend(response.json()["items"])
 
-    assert len(all_fetched_study_operational_soas) == total_study_operational_soa
+    assert (
+        len(all_fetched_study_operational_soas)
+        == total_study_operational_soa_version_latest
+    )
     assert {
         study_operational_soa["activity_name"]
         for study_operational_soa in all_fetched_study_operational_soas
     } == {
         study_operational_soa["activity"]
-        for study_operational_soa in study_operational_soas
+        for study_operational_soa in study_operational_soas_version_latest
     }
+
+    TestUtils.assert_sort_order(
+        all_fetched_study_operational_soas, "activity_name", False
+    )
+
+
+@pytest.mark.parametrize("study_version_number", [None, 1])
+def test_get_study_operational_soa_all_specific_study_version(
+    api_client, study_version_number
+):
+    all_fetched_study_operational_soas = []
+    expected_fetched_count = (
+        total_study_operational_soa_version_1
+        if study_version_number == 1
+        else total_study_operational_soa_version_latest
+    )
+
+    params = (
+        {"study_version_number": study_version_number}
+        if study_version_number is not None
+        else {}
+    )
+    response = api_client.get(
+        f"{BASE_URL}/studies/{studies[0].uid}/operational-soa", params=params
+    )
+    all_fetched_study_operational_soas.extend(response.json()["items"])
+
+    while response.json()["items"]:
+        # Fetch the next page until no items are returned
+        response = api_client.get(response.json()["next"])
+        all_fetched_study_operational_soas.extend(response.json()["items"])
+
+    assert len(all_fetched_study_operational_soas) == expected_fetched_count
 
     TestUtils.assert_sort_order(
         all_fetched_study_operational_soas, "activity_name", False
@@ -1083,4 +1269,45 @@ def test_get_papillons_soa(api_client):
     )
     assert_response_status_code(response, 200)
     res = response.json()
-    assert len(res["SoA"]) == 25
+    assert len(res["soa"]) == 25
+
+
+def _add_study_activity(
+    study_uid: str,
+    idx: int,
+    activity_group_uid: str,
+    activity_subgroup_uid: str,
+    soa_group_term_uid: str,
+    activity_instance_class_uid: str | None,
+) -> models.StudyActivity:
+    activity = TestUtils.create_activity(
+        f"Activity {str(idx + 1).zfill(2)}",
+        activity_groups=[activity_group_uid],
+        activity_subgroups=[activity_subgroup_uid],
+    )
+
+    activity_instance = TestUtils.create_activity_instance(
+        name=f"Activity instance {idx}",
+        activity_instance_class_uid=activity_instance_class_uid,  # type: ignore[arg-type]
+        name_sentence_case=f"activity instance {idx}",
+        topic_code=f"randomized activity instance topic code {idx}",
+        adam_param_code=f"randomized adam_param_code {idx}",
+        is_required_for_activity=True,
+        activities=[activity.uid],
+        activity_subgroups=[activity_subgroup_uid],
+        activity_groups=[activity_group_uid],
+        activity_items=[],
+    )
+
+    study_activity = TestUtils.create_study_activity(
+        study_uid=study_uid,
+        soa_group_term_uid=soa_group_term_uid,
+        activity_uid=activity.uid,
+        activity_group_uid=activity_group_uid,
+        activity_subgroup_uid=activity_subgroup_uid,
+        activity_instance_uid=activity_instance.uid,
+    )
+
+    study_activities.append(study_activity)  # type: ignore[arg-type]
+
+    return study_activity

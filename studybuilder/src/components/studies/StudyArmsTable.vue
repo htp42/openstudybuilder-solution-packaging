@@ -145,7 +145,7 @@ import { useDragAndDrop } from '@formkit/drag-and-drop/vue'
 import cohortConstants from '@/constants/cohorts'
 
 const { t } = useI18n()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const roles = inject('roles')
 const studiesGeneralStore = useStudiesGeneralStore()
 const accessGuard = useAccessGuard()
@@ -353,7 +353,7 @@ async function deleteArm(item) {
     armsApi
       .delete(studiesGeneralStore.selectedStudy.uid, item.arm_uid)
       .then(() => {
-        eventBusEmit('notification', {
+        notificationHub.add({
           msg: t('StudyArmsTable.arm_deleted'),
         })
         table.value.filterTable()
@@ -367,7 +367,7 @@ async function deleteArm(item) {
     armsApi
       .delete(studiesGeneralStore.selectedStudy.uid, item.arm_uid)
       .then(() => {
-        eventBusEmit('notification', {
+        notificationHub.add({
           msg: t('StudyArmsTable.arm_deleted'),
         })
         table.value.filterTable()

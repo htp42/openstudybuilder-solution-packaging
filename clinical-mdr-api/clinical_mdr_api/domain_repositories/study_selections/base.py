@@ -8,6 +8,7 @@ from clinical_mdr_api.domain_repositories.models.study_audit_trail import (
     Edit,
 )
 from common.exceptions import NotFoundException
+from common.telemetry import trace_calls
 
 
 @dataclass
@@ -76,6 +77,7 @@ class StudySelectionRepository:
         """Must be defined by subclasses."""
         raise NotImplementedError
 
+    @trace_calls(args=[1, 2], kwargs=["study_uid", "selection_uid"])
     def delete(self, study_uid: str, selection_uid: str, author_id: str) -> None:
         study_root_node = StudyRoot.nodes.get_or_none(uid=study_uid)
 

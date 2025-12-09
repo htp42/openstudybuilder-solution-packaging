@@ -67,7 +67,7 @@ def test_patch_non_matching_sentence_case(api_client):
     }
     response = api_client.patch("/ct/terms/term_root_draft/names", json=data)
 
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
 
     res = response.json()
 

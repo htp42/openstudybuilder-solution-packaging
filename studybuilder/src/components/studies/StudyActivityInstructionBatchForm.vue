@@ -266,7 +266,7 @@ export default {
     StudyActivitySelectionTable,
     StudySelectionTable,
   },
-  inject: ['eventBusEmit', 'formRules'],
+  inject: ['notificationHub', 'formRules'],
   props: {
     studyActivities: {
       type: Array,
@@ -474,6 +474,7 @@ export default {
   },
   methods: {
     close() {
+      this.notificationHub.clearErrors()
       this.creationMode = 'select'
       this.$refs.stepper.reset()
       this.$emit('close')
@@ -640,6 +641,8 @@ export default {
       return true
     },
     async submit() {
+      this.notificationHub.clearErrors()
+
       const operations = []
       if (this.creationMode === 'template' || this.creationMode === 'scratch') {
         for (const studyActivity of this.studyActivities) {
@@ -684,7 +687,7 @@ export default {
         operations
       )
       this.$emit('added')
-      this.eventBusEmit('notification', {
+      this.notificationHub.add({
         msg: this.$t('StudyActivityInstructionBatchForm.add_success'),
       })
       this.close()

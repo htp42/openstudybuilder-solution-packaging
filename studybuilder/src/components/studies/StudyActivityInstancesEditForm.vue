@@ -42,8 +42,47 @@
               {{ getActivityState(item) }}
             </div>
           </template>
+          <template #[`item.important`]="{ item }">
+            <v-checkbox
+              v-model="importantMap[item.uid]"
+              hide-details
+              density="compact"
+              color="primary"
+            >
+              <template v-if="importantMap[item.uid]" #label>
+                {{ $t('_global.yes') }}
+              </template>
+            </v-checkbox>
+          </template>
+          <template #[`item.baseline_visits`]="{ item }">
+            <v-select
+              v-model="baselineVisitMap[item.uid]"
+              :items="availableBaselineVisits"
+              item-value="uid"
+              item-title="visit_name"
+              density="compact"
+              variant="outlined"
+              multiple
+            />
+          </template>
         </v-data-table>
       </v-card>
+    </template>
+    <template #actions>
+      <v-btn
+        :disabled="
+          selected.length === 0 ||
+          editedActivity.state === instancesActions.REMOVE
+        "
+        variant="outlined"
+        rounded
+        class="mr-2"
+        elevation="0"
+        color="success"
+        @click="setMultipleActivityInstances(true)"
+      >
+        {{ $t('StudyActivityInstances.save_reviewed') }}
+      </v-btn>
     </template>
   </SimpleFormDialog>
 </template>
@@ -59,8 +98,9 @@ import activities from '@/api/activities'
 import _isEmpty from 'lodash/isEmpty'
 import study from '@/api/study'
 import { escapeHTML, sanitizeHTML } from '@/utils/sanitize'
+import instancesActions from '@/constants/instancesActions'
 
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const { t } = useI18n()
 const props = defineProps({
   open: Boolean,
@@ -79,11 +119,18 @@ const headers = [
   { title: t('StudyActivityInstances.instance'), key: 'name' },
   { title: t('StudyActivityInstances.details'), key: 'details' },
   { title: t('StudyActivityInstances.state'), key: 'state' },
+  { title: t('StudyActivityInstances.important'), key: 'important' },
+  { title: t('StudyActivityInstances.baseline_flags'), key: 'baseline_visits' },
 ]
 
+const availableBaselineVisits = ref([])
 const instances = ref([])
 const selected = ref([])
 const selectedHolder = ref([])
+const importantMap = ref({})
+const baselineVisitMap = ref({})
+const importantMapHolder = ref({})
+const baselineVisitMapHolder = ref({})
 const form = ref()
 
 const getActivityPath = computed(() => {
@@ -121,16 +168,33 @@ async function getAvailableInstances() {
     }
     await activities.get(params, 'activity-instances').then((resp) => {
       instances.value = transformInstances(resp.data.items)
+      // Initialize importantMap
+      importantMap.value = {}
+      instances.value.forEach((instance) => {
+        importantMap.value[instance.uid] = false
+      })
+      // If editing existing activity instance, set its important status
       if (props.editedActivity.activity_instance) {
-        selected.value.push(
-          instances.value.find(
-            (instance) =>
-              instance.uid === props.editedActivity.activity_instance.uid
-          ).uid
+        const selectedInstance = instances.value.find(
+          (instance) =>
+            instance.uid === props.editedActivity.activity_instance.uid
         )
+        if (selectedInstance) {
+          selected.value.push(selectedInstance.uid)
+          importantMap.value[selectedInstance.uid] =
+            props.editedActivity.is_important || false
+          if (props.editedActivity.baseline_visits?.length) {
+            baselineVisitMap.value[selectedInstance.uid] =
+              props.editedActivity.baseline_visits.map((item) => item.uid)
+          }
+        }
       }
     })
     selectedHolder.value = JSON.parse(JSON.stringify(selected.value))
+    importantMapHolder.value = JSON.parse(JSON.stringify(importantMap.value))
+    baselineVisitMapHolder.value = JSON.parse(
+      JSON.stringify(baselineVisitMap.value)
+    )
     if (instances.value.length > 1) {
       const par = {
         filters: {
@@ -148,6 +212,14 @@ async function getAvailableInstances() {
           )
         })
     }
+    study
+      .getBaselineVisitsForStudyActivityInstance(
+        props.editedActivity.study_uid,
+        props.editedActivity.study_activity_instance_uid
+      )
+      .then((resp) => {
+        availableBaselineVisits.value = resp.data
+      })
   }
 }
 function transformInstances(instances) {
@@ -199,26 +271,47 @@ function submit() {
     console.error(error)
   }
 }
-function setMultipleActivityInstances() {
+function setMultipleActivityInstances(is_reviewed = false) {
+  notificationHub.clearErrors()
   const data = []
+
   if (_isEmpty(selected.value) && !_isEmpty(selectedHolder.value)) {
     data.push({
       method: 'PATCH',
       content: {
+        is_reviewed: is_reviewed,
         activity_instance_uid: null,
         study_activity_uid: props.editedActivity.study_activity_uid,
         study_activity_instance_uid:
           props.editedActivity.study_activity_instance_uid,
+        is_important: false,
+        baseline_visit_uids: [],
       },
     })
   } else if (selected.value.includes(selectedHolder.value[0])) {
+    data.push({
+      method: 'PATCH',
+      content: {
+        is_reviewed: is_reviewed,
+        activity_instance_uid: selectedHolder.value[0],
+        study_activity_uid: props.editedActivity.study_activity_uid,
+        study_activity_instance_uid:
+          props.editedActivity.study_activity_instance_uid,
+        is_important: importantMap.value[selectedHolder.value[0]] || false,
+        baseline_visit_uids:
+          baselineVisitMap.value[selectedHolder.value[0]] || [],
+      },
+    })
     selected.value.splice(selected.value.indexOf(selectedHolder.value[0]), 1)
     selected.value.forEach((value) => {
       data.push({
         method: 'POST',
         content: {
+          is_reviewed: is_reviewed,
           activity_instance_uid: value,
           study_activity_uid: props.editedActivity.study_activity_uid,
+          is_important: importantMap.value[value] || false,
+          baseline_visit_uids: baselineVisitMap.value[value] || [],
         },
       })
     })
@@ -227,8 +320,12 @@ function setMultipleActivityInstances() {
       let placeholder = {
         method: index === 0 ? 'PATCH' : 'POST',
         content: {
+          is_reviewed: is_reviewed,
           activity_instance_uid: selected.value[index],
           study_activity_uid: props.editedActivity.study_activity_uid,
+          is_important: importantMap.value[selected.value[index]] || false,
+          baseline_visit_uids:
+            baselineVisitMap.value[selected.value[index]] || [],
         },
       }
       if (index === 0) {
@@ -247,7 +344,7 @@ function setMultipleActivityInstances() {
     .batchSelectStudyActivityInstances(selectedStudy.value.uid, data)
     .then(
       () => {
-        eventBusEmit('notification', {
+        notificationHub.add({
           msg: t('StudyActivityInstances.instance_created'),
           type: 'success',
         })
@@ -259,8 +356,13 @@ function setMultipleActivityInstances() {
     )
 }
 function close() {
+  notificationHub.clearErrors()
   instances.value = []
   selected.value = []
+  importantMap.value = {}
+  importantMapHolder.value = {}
+  baselineVisitMap.value = {}
+  baselineVisitMapHolder.value = {}
   emit('close')
 }
 </script>

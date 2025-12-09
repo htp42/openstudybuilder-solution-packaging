@@ -17,13 +17,20 @@ from clinical_mdr_api.domain_repositories.models.study_selections import (
     StudyActivityInstance,
     StudySelection,
 )
+from clinical_mdr_api.domain_repositories.models.study_visit import StudyVisit
 from clinical_mdr_api.domain_repositories.study_selections.study_activity_base_repository import (
     StudySelectionActivityBaseRepository,
 )
+from clinical_mdr_api.domain_repositories.study_selections.study_activity_schedule_repository import (
+    StudyActivityScheduleRepository,
+)
+from clinical_mdr_api.domains.enums import LibraryItemStatus
 from clinical_mdr_api.domains.study_selections.study_selection_activity_instance import (
     StudySelectionActivityInstanceAR,
     StudySelectionActivityInstanceVO,
 )
+from clinical_mdr_api.models.study_selections.study_visit import SimpleStudyVisit
+from common.exceptions import BusinessLogicException, NotFoundException
 from common.utils import convert_to_datetime
 
 
@@ -38,7 +45,6 @@ class SelectionHistory:
     activity_name: str | None
     activity_library_name: str | None
     activity_is_data_collected: bool
-    activity_version: str
     # ActivityInstance properties
     activity_instance_uid: str | None
     activity_instance_name: str | None
@@ -50,6 +56,7 @@ class SelectionHistory:
     activity_instance_test_name_code: str | None
     activity_instance_standard_unit: str | None
     activity_instance_version: str | None
+    activity_instance_status: LibraryItemStatus | None
     activity_instance_is_default_selected_for_activity: bool
     activity_instance_is_required_for_activity: bool
     # StudyActivityGroupings
@@ -63,6 +70,8 @@ class SelectionHistory:
     soa_group_term_uid: str | None
     soa_group_term_name: str | None
     show_activity_instance_in_protocol_flowchart: bool
+    is_important: bool
+    baseline_visits: list[SimpleStudyVisit] | None
     author_id: str
     change_type: str
     start_date: datetime.datetime
@@ -103,8 +112,11 @@ class StudySelectionActivityInstanceRepository(
     def _create_value_object_from_repository(
         self, selection: dict[Any, Any], acv: bool
     ) -> StudySelectionActivityInstanceVO:
+        baseline_visits = selection.get("baseline_visits") or []
         activity = selection.get("activity") or {}
         activity_instance = selection.get("activity_instance") or {}
+        activity_instance_uid = activity_instance.get("uid")
+        activity_instance_version = activity_instance.get("version")
         (
             activity_instance_specimen,
             activity_instance_test_name_code,
@@ -117,19 +129,44 @@ class StudySelectionActivityInstanceRepository(
         latest_activity_instance_class = (
             latest_activity_instance.get("activity_instance_class") or {}
         )
+        latest_activity_instance_version = latest_activity_instance.get("version")
+
         study_activity_subgroup = selection.get("study_activity_subgroup") or {}
         study_activity_group = selection.get("study_activity_group") or {}
         study_soa_group = selection.get("study_soa_group") or {}
         return StudySelectionActivityInstanceVO.from_input_values(
             study_uid=selection["study_uid"],
             study_selection_uid=selection["study_selection_uid"],
+            is_reviewed=selection["is_reviewed"],
+            is_instance_removal_needed=activity.get(
+                "is_instance_removal_needed", False
+            ),
             study_activity_uid=selection["study_activity_uid"],
+            study_activity_instance_baseline_visits=(
+                [
+                    {
+                        "uid": baseline_visit.get("uid"),
+                        "visit_name": baseline_visit.get("visit_name"),
+                        "visit_type_name": baseline_visit.get("visit_type_name"),
+                    }
+                    for baseline_visit in baseline_visits
+                ]
+            ),
+            show_activity_instance_in_protocol_flowchart=selection[
+                "show_activity_instance_in_protocol_flowchart"
+            ],
+            keep_old_version=selection["keep_old_version"],
+            keep_old_version_date=(
+                convert_to_datetime(value=selection.get("keep_old_version_date"))
+                if selection.get("keep_old_version_date")
+                else None
+            ),
+            is_important=selection.get("is_important", False),
             activity_uid=activity["uid"],
             activity_name=activity.get("name"),
             activity_library_name=activity.get("library_name"),
             activity_is_data_collected=activity.get("is_data_collected") or False,
-            activity_version=activity.get("version"),
-            activity_instance_uid=activity_instance.get("uid"),
+            activity_instance_uid=activity_instance_uid,
             activity_instance_name=activity_instance.get("name"),
             activity_instance_topic_code=activity_instance.get("topic_code"),
             activity_instance_adam_param_code=activity_instance.get("adam_param_code"),
@@ -138,7 +175,12 @@ class StudySelectionActivityInstanceRepository(
             activity_instance_standard_unit=activity_instance_standard_unit,
             activity_instance_class_uid=activity_instance_class.get("uid"),
             activity_instance_class_name=activity_instance_class.get("name"),
-            activity_instance_version=activity_instance.get("version"),
+            activity_instance_version=activity_instance_version,
+            activity_instance_status=(
+                LibraryItemStatus(activity_instance.get("status"))
+                if activity_instance_uid
+                else None
+            ),
             activity_instance_is_default_selected_for_activity=activity_instance.get(
                 "is_default_selected_for_activity"
             )
@@ -147,10 +189,6 @@ class StudySelectionActivityInstanceRepository(
                 "is_required_for_activity"
             )
             or False,
-            show_activity_instance_in_protocol_flowchart=selection[
-                "show_activity_instance_in_protocol_flowchart"
-            ],
-            keep_old_version=selection["keep_old_version"],
             latest_activity_instance_uid=latest_activity_instance.get("uid"),
             latest_activity_instance_name=latest_activity_instance.get("name"),
             latest_activity_instance_topic_code=latest_activity_instance.get(
@@ -162,7 +200,13 @@ class StudySelectionActivityInstanceRepository(
             latest_activity_instance_class_name=latest_activity_instance_class.get(
                 "name"
             ),
-            latest_activity_instance_version=latest_activity_instance.get("version"),
+            latest_activity_instance_version=latest_activity_instance_version,
+            latest_activity_instance_status=(
+                LibraryItemStatus(latest_activity_instance.get("status"))
+                if latest_activity_instance_version
+                else None
+            ),
+            latest_activity_instance_date=latest_activity_instance.get("date"),
             start_date=convert_to_datetime(value=selection["start_date"]),
             author_id=selection["author_id"],
             author_username=selection["author_username"],
@@ -198,10 +242,10 @@ class StudySelectionActivityInstanceRepository(
             CALL {
                 WITH sa
                 OPTIONAL MATCH (sa)-[:HAS_SELECTED_ACTIVITY_INSTANCE]->(aiv:ActivityInstanceValue)<-[ver:HAS_VERSION]-(air:ActivityInstanceRoot)
-                WHERE ver.status IN ['Final', 'Retired']
+                WHERE ver.status IN ['Final']
                 RETURN
                     {
-                        uid:air.uid, name: aiv.name, topic_code: aiv.topic_code, adam_param_code:aiv.adam_param_code, version: ver.version,
+                        uid:air.uid, name: aiv.name, topic_code: aiv.topic_code, adam_param_code:aiv.adam_param_code, version: ver.version, status: ver.status,
                         is_default_selected_for_activity: coalesce(aiv.is_default_selected_for_activity, false), 
                         is_required_for_activity: coalesce(aiv.is_required_for_activity, false),
                         activity_instance_class: head([(aiv)-[:ACTIVITY_INSTANCE_CLASS]->(activity_instance_class_root:ActivityInstanceClassRoot)-[:LATEST]->(activity_instance_class_value:ActivityInstanceClassValue)
@@ -212,23 +256,25 @@ class StudySelectionActivityInstanceRepository(
                             WHERE activity_item_class_value.name IN ['specimen', 'test_name_code', 'standard_unit']
                                 | {
                                     activity_item_class_name: activity_item_class_value.name,
-                                    ct_terms: [(activity_item)-[:HAS_CT_TERM]->(term_root:CTTermRoot)-[:HAS_NAME_ROOT]->(term_name_root:CTTermNameRoot)-[:LATEST]->(term_name_value:CTTermNameValue) | term_name_value.name],
-                                    unit_definitions: [(activity_item)-[:HAS_UNIT_DEFINITION]->(unit_definition_root:UnitDefinitionRoot)-[:LATEST]->(unit_definition_value:UnitDefinitionValue)-[:HAS_CT_DIMENSION]-(:CTTermRoot)-[:HAS_NAME_ROOT]->(CTTermNamesRoot)-[:LATEST]->(dimension_value:CTTermNameValue) | unit_definition_value.name]
+                                    ct_terms: [(activity_item)-[:HAS_CT_TERM]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(term_name_value:CTTermNameValue) | term_name_value.name],
+                                    unit_definitions: [(activity_item)-[:HAS_UNIT_DEFINITION]->(:UnitDefinitionRoot)-[:LATEST]->(unit_definition_value:UnitDefinitionValue) | unit_definition_value.name]
                                 }
                         ]
                     } as activity_instance,
                     air as air,
-                    aiv as aiv
+                    aiv as aiv,
+                    ver as selected_ver
                 ORDER BY ver.start_date DESC
                 LIMIT 1
             }
             CALL {
-                WITH air, aiv
-                OPTIONAL MATCH (latest_aiv:ActivityInstanceValue)<-[ver:HAS_VERSION]-(air)
-                WHERE ver.status = 'Final' AND (air)-[:LATEST]->(latest_aiv) and latest_aiv<>aiv
-                RETURN 
+                WITH air, aiv, selected_ver
+                OPTIONAL MATCH (air)-[:LATEST]->(latest_aiv:ActivityInstanceValue)
+                OPTIONAL MATCH (air)-[ver:HAS_VERSION]->(latest_aiv)
+                WHERE ver.end_date IS NULL AND ver<>selected_ver
+                RETURN
                     {
-                        uid:air.uid, name: latest_aiv.name, topic_code: latest_aiv.topic_code, version: ver.version,
+                        uid:air.uid, name: latest_aiv.name, topic_code: latest_aiv.topic_code, version: ver.version, status: ver.status, date: ver.start_date,
                         activity_instance_class: head([(latest_aiv)-[:ACTIVITY_INSTANCE_CLASS]->(activity_instance_class_root:ActivityInstanceClassRoot)-[:LATEST]->(activity_instance_class_value:ActivityInstanceClassValue)
                             | {uid:activity_instance_class_root.uid, name:activity_instance_class_value.name}])
                     } as latest_activity_instance
@@ -241,13 +287,33 @@ class StudySelectionActivityInstanceRepository(
                 WHERE ver.status IN ['Final', 'Retired']
                 RETURN 
                     {
-                        uid:ar.uid, name: av.name, library_name: library.name, is_data_collected: av.is_data_collected, version: ver.version
+                        uid:ar.uid, name: av.name, library_name: library.name, is_data_collected: av.is_data_collected,
+                        is_instance_removal_needed: 
+                        CASE WHEN 
+                            size(apoc.coll.toSet([(study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_INSTANCE]->(sai:StudyActivityInstance) 
+                                WHERE NOT (sai)-[:BEFORE]-() AND NOT (sai)-[:AFTER]-(:Delete:StudyAction) | sai.uid])) > 1
+                            AND av.is_multiple_selection_allowed = false
+                            THEN TRUE
+                            ELSE FALSE
+                        END
                     }
                  as activity
                 ORDER BY ver.start_date DESC
                 LIMIT 1
             }
-            WITH sr, sv, sa, study_activity, activity, activity_instance, latest_activity_instance
+            CALL {
+                WITH sa, sv
+                OPTIONAL MATCH (sa)-[:HAS_BASELINE]->(baseline_visit:StudyVisit)<-[:HAS_STUDY_VISIT]-(sv)
+                OPTIONAL MATCH (baseline_visit)-[:HAS_VISIT_NAME]->(visit_name_root:VisitNameRoot)-[:LATEST]->(visit_name_value:VisitNameValue)
+                OPTIONAL MATCH (baseline_visit)-[:HAS_VISIT_TYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(visit_type_root:CTTermRoot)-[:HAS_NAME_ROOT]-(:CTTermNameRoot)-[:LATEST]->(visit_type_value:CTTermNameValue)
+                WITH CASE WHEN baseline_visit IS NOT NULL THEN {
+                    uid: baseline_visit.uid,
+                    visit_name: visit_name_value.name,
+                    visit_type_name: visit_type_value.name
+                } ELSE NULL END as baseline_visit
+                RETURN baseline_visit
+            }
+            WITH sr, sv, sa, study_activity, activity, activity_instance, latest_activity_instance, collect(baseline_visit) as baseline_visits
         """
 
     def _filter_clause(self, query_parameters: dict[Any, Any], **kwargs) -> str:
@@ -298,8 +364,11 @@ class StudySelectionActivityInstanceRepository(
         return """RETURN DISTINCT
                 sr.uid AS study_uid,
                 sa.uid AS study_selection_uid,
+                coalesce(sa.is_reviewed, false) AS is_reviewed,
                 coalesce(sa.show_activity_instance_in_protocol_flowchart, false) AS show_activity_instance_in_protocol_flowchart,
                 coalesce(sa.keep_old_version, false) AS keep_old_version,
+                sa.keep_old_version_date AS keep_old_version_date,
+                coalesce(sa.is_important, false) AS is_important,
                 study_activity.uid AS study_activity_uid,
                 activity,
                 activity_instance,
@@ -328,12 +397,12 @@ class StudySelectionActivityInstanceRepository(
                         soa_group_name: flowchart_value.name,
                         order: study_soa_group_selection.order
                     }]) AS study_soa_group,
+                baseline_visits,
                 sac.date AS start_date,
                 sac.author_id AS author_id,
                 COALESCE(head([(user:User)-[*0]-() WHERE user.user_id=sac.author_id | user.username]), sac.author_id) AS author_username,
-                study_activity.order AS study_activity_order,
-                sa.order AS study_activity_instance_order
-                ORDER BY study_soa_group.order, study_activity_group.order, study_activity_subgroup.order, study_activity_order, study_activity_instance_order
+                study_activity.order AS study_activity_order
+                ORDER BY study_soa_group.order, study_activity_group.order, study_activity_subgroup.order, study_activity_order, activity_instance.name
         """
 
     def get_selection_history(
@@ -360,7 +429,6 @@ class StudySelectionActivityInstanceRepository(
             study_activity_uid=selection["study_activity_uid"],
             activity_uid=activity.get("uid"),
             activity_name=activity.get("name"),
-            activity_version=activity.get("version"),
             activity_library_name=activity.get("library_name"),
             activity_is_data_collected=activity.get("is_data_collected") or False,
             activity_instance_uid=activity_instance.get("uid"),
@@ -373,6 +441,11 @@ class StudySelectionActivityInstanceRepository(
             activity_instance_class_uid=activity_instance_class.get("uid"),
             activity_instance_class_name=activity_instance_class.get("name"),
             activity_instance_version=activity_instance.get("version"),
+            activity_instance_status=(
+                LibraryItemStatus(activity_instance.get("status"))
+                if activity_instance.get("uid")
+                else None
+            ),
             activity_instance_is_default_selected_for_activity=activity_instance.get(
                 "is_default_selected_for_activity"
             )
@@ -398,6 +471,19 @@ class StudySelectionActivityInstanceRepository(
             show_activity_instance_in_protocol_flowchart=selection[
                 "show_activity_instance_in_protocol_flowchart"
             ],
+            is_important=selection.get("is_important", False),
+            baseline_visits=(
+                [
+                    SimpleStudyVisit(
+                        uid=baseline_visit.get("uid"),
+                        visit_name=baseline_visit.get("visit_name"),
+                        visit_type_name=baseline_visit.get("visit_type_name"),
+                    )
+                    for baseline_visit in (selection.get("baseline_visits"))
+                ]
+                if selection.get("baseline_visits")
+                else None
+            ),
             end_date=end_date,
         )
 
@@ -418,7 +504,6 @@ class StudySelectionActivityInstanceRepository(
 
                     WITH DISTINCT all_sa
                     ORDER BY all_sa.uid ASC
-                    //MATCH (study_activity:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_INSTANCE]->(all_sa)
                     WITH all_sa
                     // Get latest available version of given StudyActivity linked to StudyActivityInstance
                     CALL {
@@ -432,10 +517,10 @@ class StudySelectionActivityInstanceRepository(
                     CALL {
                         WITH all_sa
                         OPTIONAL MATCH (all_sa)-[:HAS_SELECTED_ACTIVITY_INSTANCE]->(aiv:ActivityInstanceValue)<-[ver:HAS_VERSION]-(air:ActivityInstanceRoot)
-                        WHERE ver.status IN ['Final', 'Retired']
+                        WHERE ver.status IN ['Final']
                         RETURN
                             {
-                                uid:air.uid, name: aiv.name, topic_code: aiv.topic_code, adam_param_code:aiv.adam_param_code, version: ver.version,
+                                uid:air.uid, name: aiv.name, topic_code: aiv.topic_code, adam_param_code:aiv.adam_param_code, version: ver.version, status: ver.status,
                                 is_default_selected_for_activity: coalesce(aiv.is_default_selected_for_activity, false), 
                                 is_required_for_activity: coalesce(aiv.is_required_for_activity, false),
                                 activity_instance_class: head([(aiv)-[:ACTIVITY_INSTANCE_CLASS]->(activity_instance_class_root:ActivityInstanceClassRoot)-[:LATEST]->(activity_instance_class_value:ActivityInstanceClassValue)
@@ -446,8 +531,8 @@ class StudySelectionActivityInstanceRepository(
                                     WHERE activity_item_class_value.name IN ['specimen', 'test_name_code', 'standard_unit']
                                         | {
                                             activity_item_class_name: activity_item_class_value.name,
-                                            ct_terms: [(activity_item)-[:HAS_CT_TERM]->(term_root:CTTermRoot)-[:HAS_NAME_ROOT]->(term_name_root:CTTermNameRoot)-[:LATEST]->(term_name_value:CTTermNameValue) | term_name_value.name],
-                                            unit_definitions: [(activity_item)-[:HAS_UNIT_DEFINITION]->(unit_definition_root:UnitDefinitionRoot)-[:LATEST]->(unit_definition_value:UnitDefinitionValue)-[:HAS_CT_DIMENSION]-(:CTTermRoot)-[:HAS_NAME_ROOT]->(CTTermNamesRoot)-[:LATEST]->(dimension_value:CTTermNameValue) | unit_definition_value.name]
+                                            ct_terms: [(activity_item)-[:HAS_CT_TERM]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(term_name_value:CTTermNameValue) | term_name_value.name],
+                                            unit_definitions: [(activity_item)-[:HAS_UNIT_DEFINITION]->(unit_definition_root:UnitDefinitionRoot)-[:LATEST]->(unit_definition_value:UnitDefinitionValue) | unit_definition_value.name]
                                         }
                                 ]
                             } as activity_instance,
@@ -462,15 +547,28 @@ class StudySelectionActivityInstanceRepository(
                         WHERE ver.status IN ['Final', 'Retired']
                         RETURN 
                             {
-                                uid:ar.uid, name: av.name, library_name: library.name, is_data_collected: av.is_data_collected, version: ver.version
+                                uid:ar.uid, name: av.name, library_name: library.name, is_data_collected: av.is_data_collected
                             }
                         as activity
                         ORDER BY ver.start_date DESC
                         LIMIT 1
                     }
+                    CALL {
+                        WITH all_sa
+                        OPTIONAL MATCH (all_sa)-[:HAS_BASELINE]->(baseline_visit:StudyVisit)
+                        OPTIONAL MATCH (baseline_visit)-[:HAS_VISIT_NAME]->(visit_name_root:VisitNameRoot)-[:LATEST]->(visit_name_value:VisitNameValue)
+                        OPTIONAL MATCH (baseline_visit)-[:HAS_VISIT_TYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(visit_type_root:CTTermRoot)-[:HAS_NAME_ROOT]-(:CTTermNameRoot)-[:LATEST]->(visit_type_value:CTTermNameValue)
+                        WITH baseline_visit.uid AS baseline_visit_uid, CASE WHEN baseline_visit IS NOT NULL THEN {
+                            uid: baseline_visit.uid,
+                            visit_name: visit_name_value.name,
+                            visit_type_name: visit_type_value.name
+                        } ELSE NULL END as baseline_visit
+                        WITH baseline_visit_uid, head(collect(baseline_visit)) as baseline_visit
+                        RETURN baseline_visit
+                    }
                     MATCH (all_sa)<-[:AFTER]-(asa:StudyAction)
                     OPTIONAL MATCH (all_sa)<-[:BEFORE]-(bsa:StudyAction)
-                    WITH all_sa, study_activity, activity, activity_instance, asa, bsa
+                    WITH all_sa, study_activity, activity, activity_instance, asa, bsa, collect(baseline_visit) as baseline_visits
                     
                     ORDER BY all_sa.uid, asa.date DESC
                     RETURN
@@ -500,10 +598,12 @@ class StudySelectionActivityInstanceRepository(
                                 soa_group_name: flowchart_value.name
                             }]) AS study_soa_group,
                         coalesce(all_sa.show_activity_instance_in_protocol_flowchart, false) AS show_activity_instance_in_protocol_flowchart,
+                        coalesce(all_sa.is_important, false) AS is_important,
                         asa.date AS start_date,
                         asa.author_id AS author_id,
                         labels(asa) AS change_type,
-                        bsa.date AS end_date
+                        bsa.date AS end_date,
+                        baseline_visits
                     """
         return audit_trail_cypher
 
@@ -528,6 +628,9 @@ class StudySelectionActivityInstanceRepository(
             uid=selection.study_selection_uid,
             show_activity_instance_in_protocol_flowchart=selection.show_activity_instance_in_protocol_flowchart,
             keep_old_version=selection.keep_old_version,
+            keep_old_version_date=selection.keep_old_version_date,
+            is_reviewed=selection.is_reviewed,
+            is_important=selection.is_important,
             accepted_version=selection.accepted_version,
         )
         study_activity_instance_selection_node.save()
@@ -567,14 +670,44 @@ class StudySelectionActivityInstanceRepository(
             study_activity_node
         )
 
+        # Handle baseline visit relationships
+        for baseline_visit in selection.study_activity_instance_baseline_visits or []:
+            baseline_visit_uid = baseline_visit["uid"]
+            baseline_visit_node = latest_study_value_node.has_study_visit.get_or_none(
+                uid=baseline_visit_uid
+            )
+            NotFoundException.raise_if(
+                baseline_visit_node is None,
+                "Study Visit",
+                baseline_visit_uid,
+            )
+
+            # Validate that the StudyVisit corresponds to a current StudyActivitySchedule
+            # for the parent StudyActivity
+            schedule_repository = StudyActivityScheduleRepository()
+            schedules = (
+                schedule_repository.find_schedule_for_study_visit_and_study_activity(
+                    study_uid=selection.study_uid,
+                    study_activity_uid=selection.study_activity_uid,
+                    study_visit_uid=baseline_visit_uid,
+                )
+            )
+            BusinessLogicException.raise_if(
+                not schedules or len(schedules) == 0,
+                msg=f"The Study Visit with UID '{baseline_visit_uid}' does not correspond to a current StudyActivitySchedule for the parent StudyActivity with UID '{selection.study_activity_uid}'.",
+            )
+
+            # Connect baseline visit relationship
+            study_activity_instance_selection_node.has_baseline.connect(
+                baseline_visit_node
+            )
+
         if last_study_selection_node:
             manage_previous_connected_study_selection_relationships(
                 previous_item=last_study_selection_node,
                 study_value_node=latest_study_value_node,
                 new_item=study_activity_instance_selection_node,
-                exclude_study_selection_relationships=[
-                    StudyActivity,
-                ],
+                exclude_study_selection_relationships=[StudyActivity, StudyVisit],
             )
 
     def generate_uid(self) -> str:
@@ -591,6 +724,20 @@ class StudySelectionActivityInstanceRepository(
                 has_study_activity_instance__latest_value__uid=study_uid,
                 study_activity_has_study_activity_instance__has_study_activity__latest_value__uid=study_uid,
                 study_activity_has_study_activity_instance__uid=study_activity_uid,
+            )
+            .has(has_before=False)
+            .resolve_subgraph()
+        ).distinct()
+        return study_activity_instances
+
+    def get_all_study_activity_instances_impacted_by_schedule_deletion(
+        self, study_uid: str, schedule_uid: str
+    ) -> list[StudyActivityInstance]:
+        study_activity_instances = ListDistinct(
+            StudyActivityInstance.nodes.filter(
+                has_study_activity_instance__latest_value__uid=study_uid,  # Verify instance is currently selected by study
+                study_activity_has_study_activity_instance__study_activity_schedule__uid=schedule_uid,  # Verify instance is associated with the schedule through activity
+                has_baseline__has_study_activity_schedule__uid=schedule_uid,  # Verify instance has the schedule's visit as a baseline
             )
             .has(has_before=False)
             .resolve_subgraph()

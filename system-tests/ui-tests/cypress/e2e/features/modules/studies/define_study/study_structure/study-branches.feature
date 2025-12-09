@@ -51,13 +51,12 @@ Feature: Studies - Define Study - Study Structure - Manually Defined Study Branc
         When The first column is selected from Select Columns option for table with actions
         Then The table contain only selected column and actions column
 
-    Scenario: [Create][Pre-condition] User must be informed that no Study Arms are available
-        And The '/studies/Study_000004/study_structure/branches' page is opened
+    Scenario: [Create][Pre-condition][No Arms] User must be informed that no Study Arms are available
+        When Get study 'CDISC DEV-9880' uid
+        And Select study with uid saved in previous step
+        When The page 'study_structure/branches' is opened for selected study
         Then The table display the note "No data available - Create Study Arm first"
-
-    Scenario: [Create][No Arms] User must be able to create a new study arm when creating a branch for study without arms
-        And The '/studies/Study_000004/study_structure/branches' page is opened
-        When The option to create branch is not visible
+        And The option to create branch arm is not visible
 
     @smoke_test
     Scenario: [Create][Existing Arm] User must be able to create a new study arm branch for existing arm

@@ -1,4 +1,4 @@
-export let group_uid, subgroup_uid, activity_uid, activityInstance_uid
+export let group_uid, subgroup_uid, activity_uid, activityInstance_uid, group_name
 let groups_uids = []
 let class_uid, requestedActivity_uid
 const activityInstanceClassUrl = '/activity-instance-classes'
@@ -20,29 +20,36 @@ const approveActivitySubGroupUrl = (subgroup_uid) => `${activitySubGroupUrl}/${s
 const activateActivityUrl = (activity_uid) => `${activityUrl}/${activity_uid}/activations`
 const activateActivityInstanceUrl = (activityInstance_uid) => `${activityInstanceUrl}/${activityInstance_uid}/activations`
 const activateActivityGroupUrl = (group_uid) => `${activityGroupUrl}/${group_uid}/activations`
-const activateActivitySubGroupUrl = (subgroup_uid) =>`${activitySubGroupUrl}/${subgroup_uid}/activations`
-const newVersionActivityUrl = (activity_uid) =>`${activityUrl}/${activity_uid}/versions`
-const newVersionActivityInstanceUrl = (activityInstance_uid) =>`${activityInstanceUrl}/${activityInstance_uid}/versions`
-const newVersionActivityGroupUrl = (group_uid) =>`${activityGroupUrl}/${group_uid}/versions`
-const newVersionActivitySubGroupUrl = (subgroup_uid) =>`${activitySubGroupUrl}/${subgroup_uid}/versions`
+const activateActivitySubGroupUrl = (subgroup_uid) => `${activitySubGroupUrl}/${subgroup_uid}/activations`
+const newVersionActivityUrl = (activity_uid) => `${activityUrl}/${activity_uid}/versions`
+const newVersionActivityInstanceUrl = (activityInstance_uid) => `${activityInstanceUrl}/${activityInstance_uid}/versions`
+const newVersionActivityGroupUrl = (group_uid) => `${activityGroupUrl}/${group_uid}/versions`
+const newVersionActivitySubGroupUrl = (subgroup_uid) => `${activitySubGroupUrl}/${subgroup_uid}/versions`
 
-Cypress.Commands.add('createActivity', (customName = '') => {
-    cy.sendPostRequest(activityUrl, createActivityBody(customName)).then(response => activity_uid = response.body.uid)
+Cypress.Commands.add('createActivity', (customName = '', isDataCollected = true, isMultipleSelectionAllowed = true) => {
+    cy.sendPostRequest(activityUrl, createActivityBody(customName, isDataCollected, isMultipleSelectionAllowed)).then(response => activity_uid = response.body.uid)
 })
 
-Cypress.Commands.add('createActivityInstance', (customName = '') => {
-    cy.sendPostRequest(activityInstanceUrl, createActivityInstanceBody(customName)).then(response => activityInstance_uid = response.body.uid)
+
+Cypress.Commands.add('createActivityInstance', (customName = '', isDataSharing = false, isRequiredForActivity = false, isDefaultForActivity = false) => {
+    cy.sendPostRequest(activityInstanceUrl, createActivityInstanceBody(customName, isDataSharing, isRequiredForActivity, isDefaultForActivity)).then((response) => {
+        activityInstance_uid = response.body.uid
+
+    })
 })
 
 Cypress.Commands.add('createGroup', (customName = '') => {
-    cy.sendPostRequest(activityGroupUrl, createGroupBody(customName)).then(response => group_uid = response.body.uid)
+    cy.sendPostRequest(activityGroupUrl, createGroupBody(customName)).then((response) => {
+        group_uid = response.body.uid
+        group_name = response.body.name
+    })
 })
 
 Cypress.Commands.add('createTwoGroups', () => {
     cy.sendPostRequest(activityGroupUrl, createGroupBody()).then(response => groups_uids.push(response.body.uid)).then(() => {
         cy.sendPostRequest(activityGroupUrl, createGroupBody()).then(response => groups_uids.push(response.body.uid))
     })
-})    
+})
 
 Cypress.Commands.add('createSubGroup', (customName = '') => {
     cy.sendPostRequest(activitySubGroupUrl, createSubGroupBody(customName, group_uid)).then(response => subgroup_uid = response.body.uid)
@@ -114,6 +121,7 @@ Cypress.Commands.add('getName', (url) => cy.sendGetRequest(url).then((response) 
 
 Cypress.Commands.add('getFinalGroupUid', () => cy.sendGetRequest(finalActivityGroupUrl).then((response) => { group_uid = response.body.items[0].uid }))
 
+
 Cypress.Commands.add('getFinalSubGroupUid', () => {
     cy.sendGetRequest(finalActivitySubGroupUrl).then((response) => {
         subgroup_uid = response.body.items
@@ -123,8 +131,7 @@ Cypress.Commands.add('getFinalSubGroupUid', () => {
     })
 })
 
-
-const createActivityBody = (customName = '') => {
+const createActivityBody = (customName = '', isDataCollected = true, isMultipleSelectionAllowed = true) => {
     const name = customName === '' ? `API_Activity${Date.now()}` : customName
     return {
         abbreviation: "abb",
@@ -135,7 +142,10 @@ const createActivityBody = (customName = '') => {
             }
         ],
         definition: "def",
-        is_data_collected: true,
+        nci_concept_id: "nci id",
+        nci_concept_name: "nci name",
+        is_data_collected: isDataCollected,
+        is_multiple_selection_allowed: isMultipleSelectionAllowed,
         library_name: "Sponsor",
         name: name,
         name_sentence_case: name.toLowerCase(),
@@ -143,24 +153,28 @@ const createActivityBody = (customName = '') => {
     }
 }
 
-const createActivityInstanceBody = (customName = '') => {
+const createActivityInstanceBody = (customName = '', isDataSharing = false, isRequiredForActivity = false, isDefaultForActivity = false) => {
     const name = customName === '' ? `API_ActivityInstance${Date.now()}` : customName
     return {
         activity_groupings: [
-          {
-            activity_uid: activity_uid,
-            activity_group_uid: group_uid,
-            activity_subgroup_uid: subgroup_uid
-          }
+            {
+                activity_uid: activity_uid,
+                activity_group_uid: group_uid,
+                activity_subgroup_uid: subgroup_uid
+            }
         ],
         activity_instance_class_uid: class_uid,
         name: name,
         name_sentence_case: name.toLowerCase(),
         topic_code: `${Date.now()}`,
+        adam_param_code: `${Date.now()}`,
+        is_data_sharing: isDataSharing,
+        is_default_selected_for_activity: isDefaultForActivity,
+        is_required_for_activity: isRequiredForActivity,
         definition: "api",
         library_name: "Sponsor",
         activities: [null]
-      }
+    }
 }
 
 const createGroupBody = (customName = '') => {
@@ -200,10 +214,10 @@ const createRequestedActivityBody = (customName = '') => {
     const name = customName === '' ? `API_RequestedActivity${Date.now()}` : customName
     return {
         activity_groupings: [
-          {
-            activity_group_uid: group_uid,
-            activity_subgroup_uid: subgroup_uid
-          }
+            {
+                activity_group_uid: group_uid,
+                activity_subgroup_uid: subgroup_uid
+            }
         ],
         name: name,
         name_sentence_case: name.toLowerCase(),

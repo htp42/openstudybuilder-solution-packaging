@@ -125,7 +125,7 @@ import SystemAnnouncement from '@/components/tools/SystemAnnouncement.vue'
 import constants from '@/constants/notifications'
 import notificationsApi from '@/api/notifications'
 
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const formRules = inject('formRules')
 const { t } = useI18n()
 
@@ -196,7 +196,7 @@ async function submit() {
   } finally {
     loading.value = false
   }
-  eventBusEmit('notification', { msg: t(notification), type: 'success' })
+  notificationHub.add({ msg: t(notification), type: 'success' })
 }
 
 notificationsApi.get().then((resp) => {

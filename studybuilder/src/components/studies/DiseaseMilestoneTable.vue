@@ -119,7 +119,7 @@ const [parent, diseaseMilestones] = useDragAndDrop([], {
 })
 
 const { t } = useI18n()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const roles = inject('roles')
 const studiesGeneralStore = useStudiesGeneralStore()
 const accessGuard = useAccessGuard()
@@ -244,7 +244,7 @@ async function deleteDiseaseMilestone(item) {
       item.uid
     )
     .then(() => {
-      eventBusEmit('notification', {
+      notificationHub.add({
         msg: t('DiseaseMilestoneTable.delete_success'),
       })
       table.value.filterTable()

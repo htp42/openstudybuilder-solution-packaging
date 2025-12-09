@@ -1,5 +1,6 @@
 import re
 from datetime import datetime
+from enum import Enum
 from typing import (
     Annotated,
     Any,
@@ -52,7 +53,11 @@ from clinical_mdr_api.domains.concepts.unit_definitions.unit_definition import (
 from clinical_mdr_api.domains.controlled_terminologies.ct_codelist_term import (
     CTSimpleCodelistTermAR,
 )
-from clinical_mdr_api.domains.enums import StudyDesignClassEnum, StudySourceVariableEnum
+from clinical_mdr_api.domains.enums import (
+    LibraryItemStatus,
+    StudyDesignClassEnum,
+    StudySourceVariableEnum,
+)
 from clinical_mdr_api.domains.study_selections.study_activity_instruction import (
     StudyActivityInstructionVO,
 )
@@ -127,6 +132,7 @@ from clinical_mdr_api.models.controlled_terminologies.ct_term import (
 from clinical_mdr_api.models.controlled_terminologies.ct_term_name import CTTermName
 from clinical_mdr_api.models.error import BatchErrorResponse
 from clinical_mdr_api.models.study_selections.duration import DurationJsonModel
+from clinical_mdr_api.models.study_selections.study_visit import SimpleStudyVisit
 from clinical_mdr_api.models.syntax_instances.activity_instruction import (
     ActivityInstructionCreateInput,
 )
@@ -280,6 +286,59 @@ class StudySelection(BaseModel):
                     template_parameter,
                     object_to_clear.name,
                 )
+
+
+# Study data supplier
+
+
+class StudySelectionDataSupplier(BaseModel):
+    study_uid: Annotated[
+        str | None,
+        Field(description=STUDY_UID_DESC, json_schema_extra={"nullable": True}),
+    ]
+    study_version: Annotated[
+        str | None,
+        Field(
+            description="Study version number, if specified, otherwise None.",
+            json_schema_extra={"nullable": True},
+        ),
+    ] = None
+    study_data_supplier_uid: Annotated[str, Field()]
+    study_data_supplier_order: Annotated[
+        int | None, Field(json_schema_extra={"nullable": True})
+    ] = None
+    study_data_supplier_type: Annotated[
+        SimpleCodelistTermModel | None, Field(json_schema_extra={"nullable": True})
+    ] = None
+    data_supplier_uid: Annotated[str, Field()]
+    name: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
+    description: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
+        None
+    )
+    order: Annotated[int | None, Field(json_schema_extra={"nullable": True})] = None
+    api_base_url: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
+        None
+    )
+    ui_base_url: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
+        None
+    )
+    start_date: Annotated[datetime, Field(description=START_DATE_DESC)]
+    author_username: Annotated[
+        str | None,
+        Field(description=AUTHOR_FIELD_DESC, json_schema_extra={"nullable": True}),
+    ] = None
+    end_date: Annotated[datetime | None, END_DATE_FIELD] = None
+    status: Annotated[str | None, STATUS_FIELD] = None
+    change_type: Annotated[str | None, CHANGE_TYPE_FIELD] = None
+
+
+class StudySelectionDataSupplierInput(PostInputModel):
+    data_supplier_uid: Annotated[str, Field()]
+    study_data_supplier_type_uid: Annotated[str | None, Field()] = None
+
+
+class StudySelectionDataSupplierNewOrder(PatchInputModel):
+    new_order: Annotated[int, Field(gt=0, lt=settings.max_int_neo4j)]
 
 
 # Study objectives
@@ -2114,6 +2173,12 @@ class StudySelectionActivity(StudySelectionActivityCore):
             json_schema_extra={"nullable": True},
         ),
     ] = None
+    is_activity_updated: Annotated[
+        bool,
+        Field(
+            description="Denotes if some important property (name or activity groupings) of inner Activity was updated",
+        ),
+    ] = False
 
     @classmethod
     def from_study_selection_activity_vo_and_order(
@@ -2154,7 +2219,35 @@ class StudySelectionActivity(StudySelectionActivityCore):
             get_by_uid_callback=get_activity_by_uid_callback,
             get_by_uid_version_callback=get_activity_by_uid_version_callback,
         )
-
+        is_activity_updated = False
+        if latest_activity and selected_activity:
+            is_activity_updated = (
+                latest_activity.name != selected_activity.name
+                # ActivityGroup used by StudyActivity was changed or removed from latest Activity groupings
+                or study_selection.activity_group_name
+                not in {
+                    ag.activity_group_name for ag in latest_activity.activity_groupings
+                }
+                # ActivitySubGroup used by StudyActivity was changed or removed from latest Activity groupings
+                or study_selection.activity_subgroup_name
+                not in {
+                    ag.activity_subgroup_name
+                    for ag in latest_activity.activity_groupings
+                }
+                or (latest_activity.status not in (selected_activity.status, "Draft"))
+            )
+        keep_old_version = study_selection.keep_old_version
+        keep_old_version_date = study_selection.keep_old_version_date
+        # If user decided to keep old version but there is new version of latest activity instance created after decision to keep old version
+        # the keep old version flag should be cleared to show the user new available version
+        if (
+            keep_old_version
+            and keep_old_version_date
+            and latest_activity
+            and latest_activity.start_date
+            and latest_activity.start_date > keep_old_version_date
+        ):
+            keep_old_version = False
         return cls(
             study_activity_uid=study_selection.study_selection_uid,
             study_activity_subgroup=SimpleStudyActivitySubGroup(
@@ -2177,12 +2270,13 @@ class StudySelectionActivity(StudySelectionActivityCore):
             ),
             activity=selected_activity,
             latest_activity=latest_activity,
+            is_activity_updated=is_activity_updated,
             order=study_selection.order,
             show_activity_group_in_protocol_flowchart=study_selection.show_activity_group_in_protocol_flowchart,
             show_activity_subgroup_in_protocol_flowchart=study_selection.show_activity_subgroup_in_protocol_flowchart,
             show_activity_in_protocol_flowchart=study_selection.show_activity_in_protocol_flowchart,
             show_soa_group_in_protocol_flowchart=study_selection.show_soa_group_in_protocol_flowchart,
-            keep_old_version=study_selection.keep_old_version,
+            keep_old_version=keep_old_version,
             accepted_version=accepted_version,
             study_uid=study_uid,
             study_version=(
@@ -2437,6 +2531,20 @@ class StudyActivitySyncLatestVersionInput(BaseModel):
     activity_subgroup_uid: Annotated[str | None, Field()] = None
 
 
+class StudySelectionReviewAction(Enum):
+    ACCEPT = "Accept"
+    DECLINE = "Decline"
+
+
+class StudySelectionActivityReviewBatchInput(BatchInputModel):
+    action: Annotated[StudySelectionReviewAction, Field()]
+    uid: Annotated[str, Field(description="UID of the Study Activity to update")]
+    content: Annotated[
+        StudySelectionActivityInput | StudyActivitySyncLatestVersionInput,
+        Field(),
+    ]
+
+
 #
 # Study Activity Instance
 #
@@ -2502,20 +2610,6 @@ class CompactActivityInstance(BaseModel):
         CompactActivityInstanceClass,
         Field(description="The uid and the name of the linked activity instance class"),
     ]
-    class_uid: Annotated[
-        str | None,
-        Field(
-            description="Activity instance class UID",
-            json_schema_extra={"nullable": True},
-        ),
-    ] = None
-    class_name: Annotated[
-        str | None,
-        Field(
-            description="Activity instance class name",
-            json_schema_extra={"nullable": True},
-        ),
-    ] = None
     specimen: Annotated[
         str | None,
         Field(
@@ -2541,6 +2635,13 @@ class CompactActivityInstance(BaseModel):
         str | None,
         Field(
             description="Activity instance version",
+            json_schema_extra={"nullable": True},
+        ),
+    ] = None
+    status: Annotated[
+        str | None,
+        Field(
+            description="Activity instance status",
             json_schema_extra={"nullable": True},
         ),
     ] = None
@@ -2577,6 +2678,7 @@ class CompactActivityInstance(BaseModel):
             test_name_code=study_activity_instance_vo.activity_instance_test_name_code,
             standard_unit=study_activity_instance_vo.activity_instance_standard_unit,
             version=study_activity_instance_vo.activity_instance_version,
+            status=study_activity_instance_vo.activity_instance_status.value,
             is_default_selected_for_activity=study_activity_instance_vo.activity_instance_is_default_selected_for_activity,
             is_required_for_activity=study_activity_instance_vo.activity_instance_is_required_for_activity,
         )
@@ -2590,10 +2692,11 @@ class CompactActivityInstance(BaseModel):
             name=study_activity_instance_vo.latest_activity_instance_name,
             topic_code=study_activity_instance_vo.latest_activity_instance_topic_code,
             activity_instance_class=CompactActivityInstanceClass(
-                uid=study_activity_instance_vo.activity_instance_class_uid,
-                name=study_activity_instance_vo.activity_instance_class_name,
+                uid=study_activity_instance_vo.latest_activity_instance_class_uid,
+                name=study_activity_instance_vo.latest_activity_instance_class_name,
             ),
             version=study_activity_instance_vo.latest_activity_instance_version,
+            status=study_activity_instance_vo.latest_activity_instance_status.value,
         )
 
 
@@ -2610,6 +2713,12 @@ class StudySelectionActivityInstance(BaseModel):
         bool,
         Field(
             description="Boolean indicating that someone has not updated to latest version of ActivityInstance but reviewed the changes ",
+        ),
+    ] = False
+    is_important: Annotated[
+        bool,
+        Field(
+            description="Boolean indicating whether this activity instance is marked as important",
         ),
     ] = False
     study_activity_instance_uid: Annotated[
@@ -2636,6 +2745,19 @@ class StudySelectionActivityInstance(BaseModel):
     activity_instance: Annotated[
         CompactActivityInstance | None, Field(json_schema_extra={"nullable": True})
     ] = None
+    latest_activity_instance: Annotated[
+        CompactActivityInstance | None,
+        Field(
+            description="Latest version of activity instace selected for study.",
+            json_schema_extra={"nullable": True},
+        ),
+    ] = None
+    is_activity_instance_updated: Annotated[
+        bool,
+        Field(
+            description="Denotes if some important property (activity_instance_class, name or topic code) of inner Activity Instance was updated",
+        ),
+    ] = False
     start_date: Annotated[
         datetime | None,
         Field(description=START_DATE_DESC, json_schema_extra={"nullable": True}),
@@ -2651,19 +2773,27 @@ class StudySelectionActivityInstance(BaseModel):
     end_date: Annotated[datetime | None, END_DATE_FIELD] = None
     status: Annotated[str | None, STATUS_FIELD] = None
     change_type: Annotated[str | None, CHANGE_TYPE_FIELD] = None
-    latest_activity_instance: Annotated[
-        CompactActivityInstance | None,
-        Field(
-            description="Latest version of activity instace selected for study.",
-            json_schema_extra={"nullable": True},
-        ),
+    state: Annotated[
+        StudyActivityInstanceState | None, Field(json_schema_extra={"nullable": True})
     ] = None
-    state: Annotated[StudyActivityInstanceState, Field()]
+    is_reviewed: Annotated[
+        bool,
+        Field(
+            description="Denotes if given StudyActivityInstance was reviewed by user",
+        ),
+    ] = False
     study_activity_subgroup: Annotated[SimpleStudyActivitySubGroup | None, Field()] = (
         None
     )
     study_activity_group: Annotated[SimpleStudyActivityGroup | None, Field()] = None
     study_soa_group: Annotated[SimpleStudySoAGroup | None, Field()] = None
+    baseline_visits: Annotated[
+        list[SimpleStudyVisit] | None,
+        Field(
+            description="Baseline visits for this study activity instance",
+            json_schema_extra={"nullable": True},
+        ),
+    ] = None
     order: Annotated[int | None, Field()] = None
 
     @classmethod
@@ -2671,16 +2801,25 @@ class StudySelectionActivityInstance(BaseModel):
         cls,
         activity: CompactActivity,
         activity_instance: CompactActivityInstance | None,
+        study_selection: StudySelectionActivityInstanceVO,
+        keep_old_version: bool = False,
+        is_activity_instance_updated: bool = False,
     ) -> StudyActivityInstanceState:
         if activity.is_data_collected:
             if activity_instance:
+                if study_selection.is_instance_removal_needed:
+                    return StudyActivityInstanceState.REMOVE_INSTANCE
+                if not study_selection.is_reviewed:
+                    return StudyActivityInstanceState.REVIEW_NEEDED
+                if (
+                    not study_selection.is_reviewed or is_activity_instance_updated
+                ) and not keep_old_version:
+                    return StudyActivityInstanceState.REVIEW_NEEDED
                 if activity_instance.is_required_for_activity:
-                    return StudyActivityInstanceState.REQUIRED
-                if activity_instance.is_default_selected_for_activity:
-                    return StudyActivityInstanceState.DEFAULTED
-                return StudyActivityInstanceState.SUGGESTION
-            return StudyActivityInstanceState.MISSING_SELECTION
-        return StudyActivityInstanceState.NOT_REQUIRED
+                    return StudyActivityInstanceState.REVIEW_NOT_NEEDED
+                return StudyActivityInstanceState.REVIEWED
+            return StudyActivityInstanceState.ADD_INSTANCE
+        return StudyActivityInstanceState.NOT_APPLICABLE
 
     @classmethod
     def from_study_selection_history(
@@ -2703,6 +2842,8 @@ class StudySelectionActivityInstance(BaseModel):
             study_activity_instance_uid=study_selection_history.study_selection_uid,
             study_activity_uid=study_selection_history.study_activity_uid,
             show_activity_instance_in_protocol_flowchart=study_selection_history.show_activity_instance_in_protocol_flowchart,
+            is_important=study_selection_history.is_important,
+            baseline_visits=study_selection_history.baseline_visits,
             start_date=study_selection_history.start_date,
             activity=activity,
             activity_instance=activity_instance,
@@ -2740,9 +2881,6 @@ class StudySelectionActivityInstance(BaseModel):
             author_username=UserInfoService.get_author_username_from_id(
                 study_selection_history.author_id
             ),
-            state=cls._get_state_out_of_activity_and_activity_instance(
-                activity=activity, activity_instance=activity_instance
-            ),
         )
 
     @classmethod
@@ -2762,28 +2900,67 @@ class StudySelectionActivityInstance(BaseModel):
             if study_selection.activity_instance_uid
             else None
         )
+        latest_activity_instance: CompactActivityInstance | None = None
+        if study_selection.latest_activity_instance_version and (
+            study_selection.latest_activity_instance_version
+            != study_selection.activity_instance_version
+            or study_selection.latest_activity_instance_status
+            != study_selection.activity_instance_status
+        ):
+            latest_activity_instance = CompactActivityInstance.latest_activity_instance_from_study_activity_instance_vo(
+                study_activity_instance_vo=study_selection
+            )
 
+        is_activity_instance_updated = False
+        if latest_activity_instance and selected_activity_instance:
+            is_activity_instance_updated = (
+                latest_activity_instance.name != selected_activity_instance.name
+                or latest_activity_instance.activity_instance_class.uid
+                != selected_activity_instance.activity_instance_class.uid
+                or latest_activity_instance.topic_code
+                != selected_activity_instance.topic_code
+                or (
+                    latest_activity_instance.status
+                    not in (selected_activity_instance.status, "Draft")
+                )
+            )
+
+        keep_old_version = study_selection.keep_old_version
+        keep_old_version_date = study_selection.keep_old_version_date
+        latest_activity_instance_date = study_selection.latest_activity_instance_date
+        # If user decided to keep old version but there is new version of latest activity instance created after decision to keep old version
+        # the keep old version flag should be cleared to show the user new available version
+        if (
+            keep_old_version
+            and keep_old_version_date
+            and latest_activity_instance_date
+            and latest_activity_instance_date > keep_old_version_date
+        ):
+            keep_old_version = False
+        # Clear is_reviewed checkbox if new red bell appears and keep_old_version is not selected
+        is_reviewed: bool = study_selection.is_reviewed
+        if is_activity_instance_updated and not keep_old_version:
+            is_reviewed = False
         return cls(
             study_activity_instance_uid=study_selection.study_selection_uid,
             study_activity_uid=study_selection.study_activity_uid,
+            is_reviewed=is_reviewed,
             activity=selected_activity,
             activity_instance=selected_activity_instance,
-            latest_activity_instance=(
-                CompactActivityInstance.latest_activity_instance_from_study_activity_instance_vo(
-                    study_activity_instance_vo=study_selection
-                )
-                if study_selection.latest_activity_instance_version
-                and study_selection.activity_instance_version
-                != study_selection.latest_activity_instance_version
-                else None
-            ),
+            latest_activity_instance=latest_activity_instance,
+            is_activity_instance_updated=is_activity_instance_updated,
             show_activity_instance_in_protocol_flowchart=study_selection.show_activity_instance_in_protocol_flowchart,
-            keep_old_version=study_selection.keep_old_version,
+            keep_old_version=keep_old_version,
+            is_important=study_selection.is_important,
             study_uid=study_uid,
             start_date=study_selection.start_date,
             author_username=study_selection.author_username,
             state=cls._get_state_out_of_activity_and_activity_instance(
-                activity=selected_activity, activity_instance=selected_activity_instance
+                activity=selected_activity,
+                activity_instance=selected_activity_instance,
+                study_selection=study_selection,
+                keep_old_version=keep_old_version,
+                is_activity_instance_updated=is_activity_instance_updated,
             ),
             study_activity_subgroup=(
                 SimpleStudyActivitySubGroup(
@@ -2814,6 +2991,20 @@ class StudySelectionActivityInstance(BaseModel):
                 and study_selection.soa_group_term_name
                 else None
             ),
+            baseline_visits=(
+                [
+                    SimpleStudyVisit(
+                        uid=baseline_visit["uid"],
+                        visit_name=baseline_visit["visit_name"],
+                        visit_type_name=baseline_visit["visit_type_name"],
+                    )
+                    for baseline_visit in (
+                        study_selection.study_activity_instance_baseline_visits or []
+                    )
+                ]
+                if study_selection.study_activity_instance_baseline_visits
+                else None
+            ),
         )
 
 
@@ -2823,6 +3014,14 @@ class StudySelectionActivityInstanceCreateInput(PostInputModel):
     show_activity_instance_in_protocol_flowchart: Annotated[
         bool, SHOW_ACTIVITY_INSTANCE_IN_PROTOCOL_FLOWCHART_FIELD
     ] = False
+    is_reviewed: Annotated[
+        bool,
+        Field(
+            description="Denotes if given StudyActivityInstance was reviewed by user",
+        ),
+    ] = False
+    is_important: Annotated[bool, Field()] = False
+    baseline_visit_uids: Annotated[list[str] | None, Field()] = None
 
 
 class StudySelectionActivityInstanceEditInput(PatchInputModel):
@@ -2832,12 +3031,28 @@ class StudySelectionActivityInstanceEditInput(PatchInputModel):
         bool, SHOW_ACTIVITY_INSTANCE_IN_PROTOCOL_FLOWCHART_FIELD
     ] = False
     keep_old_version: Annotated[bool, Field()] = False
+    is_reviewed: Annotated[
+        bool,
+        Field(
+            description="Denotes if given StudyActivityInstance was reviewed by user",
+        ),
+    ] = False
+    is_important: Annotated[bool, Field()] = False
+    baseline_visit_uids: Annotated[list[str] | None, Field()] = None
 
 
 class StudySelectionActivityInstanceBatchEditInput(InputModel):
     activity_instance_uid: Annotated[str | None, Field()] = None
     study_activity_instance_uid: Annotated[str, Field()]
     study_activity_uid: Annotated[str, Field()]
+    is_reviewed: Annotated[
+        bool,
+        Field(
+            description="Denotes if given StudyActivityInstance was reviewed by user",
+        ),
+    ] = False
+    is_important: Annotated[bool, Field()] = False
+    baseline_visit_uids: Annotated[list[str] | None, Field()] = None
 
 
 class StudySelectionActivityInstanceBatchInput(BatchInputModel):
@@ -2852,6 +3067,15 @@ class StudySelectionActivityInstanceBatchOutput(BaseModel):
     response_code: Annotated[int, RESPONSE_CODE_FIELD]
     content: Annotated[
         StudySelectionActivityInstance | None | BatchErrorResponse, Field()
+    ]
+
+
+class StudySelectionActivityInstanceReviewBatchInput(BatchInputModel):
+    action: Annotated[StudySelectionReviewAction, Field()]
+    uid: Annotated[str, Field(description="UID of the Study Activity to update")]
+    content: Annotated[
+        StudySelectionActivityInstanceEditInput | None,
+        Field(),
     ]
 
 
@@ -3175,8 +3399,10 @@ class StudyDesignCell(BaseModel):
             study_element_name=design_cell_vo.study_element_name or "",
             transition_rule=design_cell_vo.transition_rule,
             start_date=design_cell_vo.start_date,
-            author_username=UserInfoService.get_author_username_from_id(
-                design_cell_vo.author_id
+            author_username=(
+                UserInfoService.get_author_username_from_id(design_cell_vo.author_id)
+                if design_cell_vo.author_username is None and design_cell_vo.author_id
+                else design_cell_vo.author_username
             ),
             order=design_cell_vo.order,
         )
@@ -5137,11 +5363,14 @@ def _find_versions(
             latest_version,
             msg=f"Preloaded {uid} not found.",
         )
-
     elif get_by_uid_callback:
         latest_version = get_by_uid_callback(uid)
 
-    if latest_version and latest_version.version == version:
+    if (
+        latest_version
+        and latest_version.version == version
+        and latest_version.status != LibraryItemStatus.RETIRED.value
+    ):
         selected_version = latest_version
         latest_version = None
 
@@ -5151,6 +5380,7 @@ def _find_versions(
                 activity
                 for activity in versions_by_uid[uid]
                 if activity.version == version
+                and activity.status == LibraryItemStatus.FINAL.value
             ),
             None,
         )

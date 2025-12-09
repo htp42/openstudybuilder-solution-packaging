@@ -68,6 +68,10 @@ When('Conversion factor to master is filled with numeric value', () => fillConve
 
 When('Conversion factor to master is filled with text value', () => fillConversionFactor('Test'))
 
+When('Conversion factor to master field is empty', () => cy.get('[data-cy="unit-conversion-factor"]').should('have.value', ''))
+
+When('Concersion factor to master is empty in the unit table', () => cy.checkRowByIndex(0, 'Conversion factor to master', ''))
+
 When('[API] Unit in status Draft exists', () => createUnitViaApi())
 
 When('[API] Unit is approved', () => cy.approveUnit())

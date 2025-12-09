@@ -45,10 +45,12 @@ class StudyActivityGroupService(
     ):
         pass
 
+    # pylint: disable=unused-argument
     def _transform_all_to_response_model(
         self,
         study_selection: StudySelectionActivityGroupAR | None,
         study_value_version: str | None = None,
+        **kwargs,
     ) -> list[StudyActivityGroup]:
         if study_selection is None:
             return []

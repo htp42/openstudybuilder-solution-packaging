@@ -57,7 +57,7 @@ const props = defineProps({
   open: Boolean,
 })
 const emit = defineEmits(['close', 'updated'])
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const studiesGeneralStore = useStudiesGeneralStore()
 const studiesManageStore = useStudiesManageStore()
 
@@ -119,6 +119,7 @@ function nullValueSet(identifier) {
 
 function close() {
   emit('close')
+  notificationHub.clearErrors()
   form.value = JSON.parse(JSON.stringify(props.identifiers))
   observer.value.resetValidation()
 }
@@ -139,8 +140,10 @@ async function cancel() {
 }
 
 async function submit() {
+  notificationHub.clearErrors()
+
   if (_isEqual(props.identifiers, form.value)) {
-    eventBusEmit('notification', {
+    notificationHub.add({
       msg: i18n.t('_global.no_changes'),
       type: 'info',
     })
@@ -156,7 +159,7 @@ async function submit() {
       data
     )
     emit('updated', form.value)
-    eventBusEmit('notification', {
+    notificationHub.add({
       msg: i18n.t('RegistryIdentifiersForm.update_success'),
     })
     close()

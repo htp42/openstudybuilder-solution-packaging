@@ -1,5 +1,6 @@
 import datetime
 from dataclasses import dataclass
+from textwrap import dedent
 
 from neomodel import db
 from neomodel.sync_.match import Collect, Last, Optional
@@ -24,10 +25,14 @@ from clinical_mdr_api.domain_repositories.models.study_audit_trail import (
 )
 from clinical_mdr_api.domain_repositories.models.study_epoch import StudyEpoch
 from clinical_mdr_api.domain_repositories.models.study_selections import StudyDesignCell
+from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import (
+    StudyStatus,
+)
 from clinical_mdr_api.domains.study_selections.study_design_cell import (
     StudyDesignCellVO,
 )
 from common import exceptions
+from common.telemetry import trace_calls
 from common.utils import convert_to_datetime
 
 STUDY_VALUE_VERSION_QUALIFIER = "study_value__has_version|version"
@@ -87,40 +92,63 @@ class StudyDesignCellRepository:
             study_uid=study_uid, design_cell=unique_design_cells[0]
         )
 
+    @trace_calls
     def find_all_design_cells_by_study(
         self,
         study_uid: str,
         study_value_version: str | None = None,
     ) -> list[StudyDesignCellVO]:
-        if study_value_version:
-            filters = {
-                STUDY_VALUE_VERSION_QUALIFIER: study_value_version,
-                STUDY_VALUE_UID_QUALIFIER: study_uid,
-            }
-        else:
-            filters = {STUDY_VALUE_LATEST_UID_QUALIFIER: study_uid}
-        all_design_cells = [
-            self._from_repository_values(
-                study_uid=study_uid,
-                design_cell=sas_node,
-                study_value_version=study_value_version,
-            )
-            for sas_node in ListDistinct(
-                StudyDesignCell.nodes.fetch_relations(
-                    "study_epoch__has_epoch__has_selected_term__has_name_root__has_latest_value",
-                    "has_after__audit_trail",
-                    "study_epoch__study_value",
-                    "study_element__study_value",
-                    Optional("study_arm__study_value"),
-                    Optional("study_branch_arm__study_value"),
-                )
-                .filter(**filters)
-                .order_by("order")
-                .resolve_subgraph()
-            ).distinct()
-        ]
-        return all_design_cells
+        params = {
+            "study_uid": study_uid,
+            "study_version": study_value_version,
+            "study_status": StudyStatus.RELEASED.value,
+        }
 
+        if study_value_version:
+            query = [
+                "MATCH (sr:StudyRoot {uid: $study_uid})-[:HAS_VERSION {status: $study_status, version: $study_version}]->(sv:StudyValue)"
+            ]
+        else:
+            query = [
+                "MATCH (sr:StudyRoot {uid: $study_uid})-[:LATEST]->(sv:StudyValue)"
+            ]
+
+        query.append(
+            dedent(
+                """
+            MATCH (sv)-[:HAS_STUDY_DESIGN_CELL]->(sdc:StudyDesignCell)<-[:AFTER]-(study_action:StudyAction)
+            MATCH (sdc)<-[:STUDY_EPOCH_HAS_DESIGN_CELL]-(sep:StudyEpoch)<-[:HAS_STUDY_EPOCH]-(sv)
+            MATCH (sep)-[:HAS_EPOCH]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(epoch_term_root:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST_FINAL]->(epoch_name:CTTermNameValue)
+            MATCH (sdc)<-[:STUDY_ELEMENT_HAS_DESIGN_CELL]-(sel:StudyElement)<-[:HAS_STUDY_ELEMENT]-(sv)
+            OPTIONAL MATCH (sdc)<-[:STUDY_ARM_HAS_DESIGN_CELL]-(sarm:StudyArm)<-[:HAS_STUDY_ARM]-(sv)
+            OPTIONAL MATCH (sdc)<-[:STUDY_BRANCH_ARM_HAS_DESIGN_CELL]-(sbarm:StudyBranchArm)<-[:HAS_STUDY_BRANCH_ARM]-(sv)
+            RETURN DISTINCT sdc {
+                uid: sdc.uid,
+                study_uid: sr.uid,
+                order: sdc.order,
+                study_arm_uid: sarm.uid,
+                study_arm_name: sarm.name,
+                study_branch_arm_uid: sbarm.uid,
+                study_branch_arm_name: sbarm.name,
+                study_epoch_uid: sep.uid,
+                study_epoch_name: epoch_name.name,
+                study_element_uid: sel.uid,
+                study_element_name: sel.name,
+                transition_rule: sdc.transition_rule,
+                start_date: toString(study_action.date),
+                author_id: study_action.author_id,
+                author_username: coalesce(head([(user:User)-[*0]-() WHERE user.user_id=study_action.author_id | user.username]), study_action.author_id)
+            } AS vo
+            ORDER BY vo.order
+        """
+            )
+        )
+
+        results, _ = db.cypher_query("\n".join(query), params=params)
+
+        return [StudyDesignCellVO(**result[0]) for result in results]
+
+    @trace_calls
     def _from_repository_values(
         self,
         study_uid: str,
@@ -207,6 +235,7 @@ class StudyDesignCellRepository:
         return outbound_node
 
     # pylint: disable=unused-argument
+    @trace_calls
     def save(
         self,
         design_cell_vo: StudyDesignCellVO,

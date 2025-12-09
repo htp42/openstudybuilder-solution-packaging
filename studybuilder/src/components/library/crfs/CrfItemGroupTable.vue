@@ -166,7 +166,7 @@ export default {
     CrfApprovalSummaryConfirmDialog,
     CrfNewVersionSummaryConfirmDialog,
   },
-  inject: ['eventBusEmit'],
+  inject: ['notificationHub'],
   props: {
     elementProp: {
       type: Object,
@@ -352,7 +352,7 @@ export default {
         agreeLabel: this.$t('_global.continue'),
       }
       if (
-        relationships > 0 &&
+        relationships < 1 ||
         (await this.$refs.confirm.open(
           `${this.$t('CRFItemGroups.delete_warning', { count: relationships })}`,
           options
@@ -360,10 +360,10 @@ export default {
       ) {
         crfs.delete('item-groups', item.uid).then(() => {
           this.getItemGroups()
-        })
-      } else if (relationships === 0) {
-        crfs.delete('item-groups', item.uid).then(() => {
-          this.getItemGroups()
+
+          this.notificationHub.add({
+            msg: this.$t('CRFItemGroups.deleted'),
+          })
         })
       }
     },
@@ -377,7 +377,7 @@ export default {
         crfs.approve('item-groups', item.uid).then(() => {
           this.$refs.table.filterTable()
 
-          this.eventBusEmit('notification', {
+          this.notificationHub.add({
             msg: this.$t('CRFItemGroups.approved'),
           })
         })
@@ -386,11 +386,19 @@ export default {
     inactivate(item) {
       crfs.inactivate('item-groups', item.uid).then(() => {
         this.$refs.table.filterTable()
+
+        this.notificationHub.add({
+          msg: this.$t('CRFItemGroups.inactivated'),
+        })
       })
     },
     reactivate(item) {
       crfs.reactivate('item-groups', item.uid).then(() => {
         this.$refs.table.filterTable()
+
+        this.notificationHub.add({
+          msg: this.$t('CRFItemGroups.reactivated'),
+        })
       })
     },
     async newVersion(item) {
@@ -403,7 +411,7 @@ export default {
         crfs.newVersion('item-groups', item.uid).then(() => {
           this.$refs.table.filterTable()
 
-          this.eventBusEmit('notification', {
+          this.notificationHub.add({
             msg: this.$t('_global.new_version_success'),
           })
         })

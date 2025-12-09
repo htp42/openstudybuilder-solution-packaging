@@ -23,3 +23,5 @@ nosetests.xml
 .pytest_cache/
 cover/
 reports/
+
+assbom.py

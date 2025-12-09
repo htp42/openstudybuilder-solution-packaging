@@ -150,7 +150,7 @@ import { useAccessGuard } from '@/composables/accessGuard'
 import { i18n } from '@/plugins/i18n'
 
 const { t } = useI18n()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const roles = inject('roles')
 const props = defineProps({
   urlPrefix: {
@@ -407,7 +407,7 @@ async function approveTemplate(template) {
     // Temporary workaround for Activity Templates, will be deleted after backend instantiations activities implement
     const resp = await api.approveCascade(template.uid, false)
     updateTemplate(resp.data, template.status)
-    eventBusEmit('notification', {
+    notificationHub.add({
       msg: t(props.translationType + '.approve_success'),
     })
   } else {
@@ -419,14 +419,14 @@ async function approveTemplate(template) {
           ? '.approve_pre_instance_success'
           : '.approve_success')
     )
-    eventBusEmit('notification', { msg })
+    notificationHub.add({ msg })
   }
   emit('refresh')
 }
 function inactivateTemplate(template) {
   api.inactivate(template.uid).then((resp) => {
     updateTemplate(resp.data, template.status)
-    eventBusEmit('notification', {
+    notificationHub.add({
       msg: t(
         props.translationType +
           (props.preInstanceMode
@@ -440,7 +440,7 @@ function inactivateTemplate(template) {
 function reactivateTemplate(template) {
   api.reactivate(template.uid).then((resp) => {
     updateTemplate(resp.data, template.status)
-    eventBusEmit('notification', {
+    notificationHub.add({
       msg: t(
         props.translationType +
           (props.preInstanceMode
@@ -456,7 +456,7 @@ function deleteTemplate(template) {
     const key = props.preInstanceMode
       ? `${props.translationType}.delete_pre_instance_success`
       : `${props.translationType}.delete_success`
-    eventBusEmit('notification', { msg: t(key) })
+    notificationHub.add({ msg: t(key) })
     tableRef.value.filterTable()
   })
 }
@@ -524,7 +524,7 @@ async function createNewVersion(template) {
   }
   api.createNewVersion(template.uid, data).then((resp) => {
     updateTemplate(resp.data, template.status)
-    eventBusEmit('notification', {
+    notificationHub.add({
       msg: t(props.translationType + '.new_version_success'),
     })
   })
@@ -542,7 +542,7 @@ function duplicatePreInstance(item) {
     props.prepareDuplicatePayloadFunc(data, item)
   }
   api.create(item.template_uid, data).then(() => {
-    eventBusEmit('notification', {
+    notificationHub.add({
       msg: t(props.translationType + '.duplicate_success'),
     })
     filter()

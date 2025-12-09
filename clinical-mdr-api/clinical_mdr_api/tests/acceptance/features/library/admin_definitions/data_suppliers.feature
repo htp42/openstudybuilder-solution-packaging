@@ -15,10 +15,10 @@ Feature: Manage Library Admin definitions for Data Suppliers in Clinical MDR API
             | description               |
             | order                     |
             | supplier_type             |
-            | supplier_origin_source    |
-            | supplier_origin_type      |
-            | supplier_api_base_url     |
-            | supplier_ui_base_url      |
+            | origin_source             |
+            | origin_type               |
+            | api_base_url              |
+            | ui_base_url               |
             | library_name              |
             | possible_actions          |
             | version                   |

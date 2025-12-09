@@ -1169,13 +1169,13 @@ def test_cannot_update_activity_instruction_template_without_change_description(
     res = response.json()
     log.info("Didn't Update Activity Instruction Template: %s", res)
 
-    assert_response_status_code(response, 422)
-    assert res["detail"] == [
+    assert_response_status_code(response, 400)
+    assert res["details"] == [
         {
-            "type": "missing",
-            "loc": ["body", "change_description"],
+            "error_code": "missing",
+            "field": ["body", "change_description"],
             "msg": "Field required",
-            "input": {"name": "Default name with [TextValue]"},
+            "ctx": {},
         }
     ]
 
@@ -1221,7 +1221,7 @@ def test_pre_validate_invalid_activity_instruction_template_name(api_client):
     res = response.json()
     log.info("Pre Validated Criteria Template name: %s", res)
 
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
     assert res["message"] == f"Template string syntax incorrect: {data['name']}"
 
     data = {"name": "Lacking closing bracket ["}
@@ -1229,7 +1229,7 @@ def test_pre_validate_invalid_activity_instruction_template_name(api_client):
     res = response.json()
     log.info("Pre Validated Activity Instruction Template name: %s", res)
 
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
     assert res["message"] == f"Template string syntax incorrect: {data['name']}"
 
     data = {"name": " "}
@@ -1237,18 +1237,15 @@ def test_pre_validate_invalid_activity_instruction_template_name(api_client):
     res = response.json()
     log.info("Pre Validated Activity Instruction Template name: %s", res)
 
-    assert_response_status_code(response, 422)
-    assert res == {
-        "detail": [
-            {
-                "type": "string_too_short",
-                "loc": ["body", "name"],
-                "msg": "String should have at least 1 character",
-                "input": "",
-                "ctx": {"min_length": 1},
-            }
-        ]
-    }
+    assert_response_status_code(response, 400)
+    assert res["details"] == [
+        {
+            "error_code": "string_too_short",
+            "field": ["body", "name"],
+            "msg": "String should have at least 1 character",
+            "ctx": {"min_length": 1},
+        }
+    ]
 
 
 @pytest.mark.parametrize(

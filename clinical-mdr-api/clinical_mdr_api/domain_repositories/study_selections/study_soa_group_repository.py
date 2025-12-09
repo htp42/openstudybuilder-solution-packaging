@@ -28,6 +28,7 @@ from clinical_mdr_api.domains.study_selections.study_soa_group_selection import 
 )
 from clinical_mdr_api.utils import unpack_list_of_lists
 from common.config import settings
+from common.telemetry import trace_calls
 from common.utils import convert_to_datetime
 
 
@@ -233,6 +234,7 @@ class StudySoAGroupRepository(StudySelectionActivityBaseRepository[StudySoAGroup
         # But nothing needs to be done in this one
         pass
 
+    @trace_calls(args=[1, 2], kwargs=["study_uid", "study_activity_uid"])
     def get_all_study_soa_groups_for_study_activity(
         self, study_uid: str, study_activity_uid
     ) -> list[StudySoAGroup]:

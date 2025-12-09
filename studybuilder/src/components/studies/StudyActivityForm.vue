@@ -507,7 +507,7 @@ import libConstants from '@/constants/libraries'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 import ChoiceField from '@/components/ui/ChoiceField.vue'
 
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const formRules = inject('formRules')
 const { t } = useI18n()
 const emit = defineEmits(['close', 'added'])
@@ -740,6 +740,7 @@ function switchTableItems() {
 
 function close() {
   emit('close')
+  notificationHub.clearErrors()
   selectedActivities.value = []
   currentFlowchartGroup.value = null
   creationMode.value = 'selectFromLibrary'
@@ -1183,6 +1184,9 @@ async function submit() {
       resetLoading.value += 1
       return
     }
+
+    notificationHub.clearErrors()
+
     if (
       _isEmpty(form.value.activity_groupings[0]) ||
       !form.value.activity_groupings[0].activity_group_uid
@@ -1217,7 +1221,7 @@ async function submit() {
     !selectedActivities.value.length &&
     creationMode.value !== 'createPlaceholder'
   ) {
-    eventBusEmit('notification', {
+    notificationHub.add({
       type: 'info',
       msg: t('StudyActivityForm.select_activities_info'),
     })
@@ -1231,7 +1235,7 @@ async function submit() {
     -1
   ) {
     if (sameGroup.value && !unifiedGroup.value) {
-      eventBusEmit('notification', {
+      notificationHub.add({
         type: 'info',
         msg: t('StudyActivityForm.soa_group_required_info'),
       })
@@ -1240,7 +1244,7 @@ async function submit() {
     } else if (!sameGroup.value) {
       for (const activity of selectedActivities.value) {
         if (!activity.flowchart_group) {
-          eventBusEmit('notification', {
+          notificationHub.add({
             type: 'info',
             msg: t('StudyActivityForm.soa_group_required_info'),
           })
@@ -1262,16 +1266,13 @@ async function submit() {
     return
   }
   if (errors.length) {
-    eventBusEmit('notification', {
-      type: 'error',
-      timeout: 10000,
-      title: t('_global.multi_error_title'),
-      msg: errors,
-    })
+    for (const error of errors) {
+      notificationHub.add({ type: 'error', msg: error })
+    }
   } else {
-    eventBusEmit('notification', {
+    notificationHub.add({
       type: 'success',
-      msg: successMessage,
+      msg: successMessage.value,
     })
   }
   emit('added')

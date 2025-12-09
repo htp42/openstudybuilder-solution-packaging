@@ -85,7 +85,7 @@ import { useStudiesCompoundsStore } from '@/stores/studies-compounds'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 
 const { t } = useI18n()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const roles = inject('roles')
 const accessGuard = useAccessGuard()
 const studiesCompoundsStore = useStudiesCompoundsStore()
@@ -209,7 +209,7 @@ async function deleteStudyCompound(studyCompound) {
       studyCompound.study_compound_uid
     )
     .then(() => {
-      eventBusEmit('notification', {
+      notificationHub.add({
         msg: t('StudyCompoundTable.delete_compound_success'),
       })
     })

@@ -146,7 +146,7 @@ def test_cannot_create_a_new_odm_condition_without_an_english_description(api_cl
     }
     response = api_client.post("concepts/odms/conditions", json=data)
 
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
 
     res = response.json()
 

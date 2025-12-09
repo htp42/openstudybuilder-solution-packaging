@@ -103,24 +103,24 @@ export default {
       }
     },
     exportPdf() {
-      crfs.getPdf(this.exportParams).then(
-        (resp) => {
+      crfs
+        .getPdf(this.exportParams)
+        .then((resp) => {
           exportLoader.downloadFile(
             resp.data,
             'application/pdf',
             this.getDownloadFileName()
           )
-          this.loading = false
           this.close()
-        },
-        () => {
+        })
+        .finally(() => {
           this.loading = false
-        }
-      )
+        })
     },
     exportHtml() {
-      crfs.getXml(this.exportParams).then(
-        async (resp) => {
+      crfs
+        .getXml(this.exportParams)
+        .then(async (resp) => {
           const parser = new DOMParser()
           const xml = parser.parseFromString(resp.data, 'application/xml')
           const xsltProcessor = new XSLTProcessor()
@@ -134,30 +134,27 @@ export default {
               'text/html',
               this.getDownloadFileName()
             )
-            this.loading = false
             this.close()
           })
-        },
-        () => {
+        })
+        .finally(() => {
           this.loading = false
-        }
-      )
+        })
     },
     exportXml() {
-      crfs.getXml(this.exportParams).then(
-        (resp) => {
+      crfs
+        .getXml(this.exportParams)
+        .then((resp) => {
           exportLoader.downloadFile(
             resp.data,
             'text/xml',
             this.getDownloadFileName()
           )
-          this.loading = false
           this.close()
-        },
-        () => {
+        })
+        .finally(() => {
           this.loading = false
-        }
-      )
+        })
     },
     setExportParams() {
       this.exportParams.target_uid = this.item.uid

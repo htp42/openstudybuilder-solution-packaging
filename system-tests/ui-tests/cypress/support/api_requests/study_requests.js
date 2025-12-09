@@ -46,10 +46,10 @@ Cypress.Commands.add('createTestStudy', (study_number, study_acronym_set) => {
   })
 })
 
-Cypress.Commands.add('nullRegistryIdentifiersForStudy', () => {
+Cypress.Commands.add('nullRegistryIdentifiersForStudy', (study_uid) => {
   cy.request({
     method: 'PATCH',
-    url: Cypress.env('API') + '/studies/Study_000001',
+    url: Cypress.env('API') + `/studies/${study_uid}`,
     body: {
       current_metadata: {
         identification_metadata: {

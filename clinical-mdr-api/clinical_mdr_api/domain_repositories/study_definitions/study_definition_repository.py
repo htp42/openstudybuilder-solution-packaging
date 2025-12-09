@@ -283,17 +283,40 @@ RETURN
 
         # COPY NODES AND OUTBOUND RELATIONSHIPS
         query = f"""
-WITH $study_src_uid as study_src, $study_target_uid as study_target, $to_copy_labels as to_copy_labels
-with study_src, study_target, apoc.text.join(to_copy_labels, '|') AS to_copy_labels_text
+WITH 
+    $study_src_uid as study_src, 
+    $study_target_uid as study_target, 
+    $to_copy_labels as to_copy_labels
+with 
+    study_src, 
+    study_target, 
+    apoc.text.join(to_copy_labels, '|') AS to_copy_labels_text
 
-MATCH (sr_src:StudyRoot)-[:LATEST]->(sv_src:StudyValue)
-    WHERE sr_src.uid = study_src
-MATCH (sr_target:StudyRoot)-[:LATEST]->(sv_target:StudyValue)
-    WHERE sr_target.uid = study_target
-
+MATCH 
+    (sr_src:StudyRoot)-[:LATEST]->
+    (sv_src:StudyValue)
+    WHERE 
+        sr_src.uid = study_src
+MATCH 
+    (sr_target:StudyRoot)-[:LATEST]->
+    (sv_target:StudyValue)
+    WHERE 
+        sr_target.uid = study_target
 
 CALL apoc.cypher.run("
-    MATCH path = ((sr_src)-[:AUDIT_TRAIL]->(saction_src:StudyAction)--(selection_src:StudySelection&(" + to_copy_labels_text + "))<--(sv_src))
+    MATCH 
+        (selection_src:StudySelection&(" + to_copy_labels_text + "))<-[sv_has_selection]-
+        (sv_src)
+    MATCH 
+        (sr_src)-[audit_trail:AUDIT_TRAIL]->
+        (saction_src:StudyAction)-[saction_selection:AFTER]->
+        (selection_src)
+    MATCH path = (
+            (sr_src)-[audit_trail]->
+            (saction_src)-[saction_selection]-
+            (selection_src)<-[sv_has_selection]-
+            (sv_src)
+        )
         WHERE {exclusions}
     return sr_src, sv_src,collect(path) as paths ", 
 {{sr_src:sr_src, sv_src:sv_src }})

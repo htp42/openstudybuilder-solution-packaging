@@ -1,0 +1,18 @@
+NAME,DESCRIPTION,ORDER,API_BASE_URL,UI_BASE_URL,TYPE_TERM_SPONSOR_NAME,ORIGIN_SOURCE_TERM_SPONSOR_NAME,ORIGIN_TYPE_TERM_SPONSOR_NAME,is_retired
+GREAT,,1,,,EDC System,Investigator,Collected Value,
+SUPER,,2,,,EDC System,Investigator,Collected Value,
+AWESOME,,3,,,EDC System,Investigator,Collected Value,
+FANTASTIC,,4,,,EDC System,Investigator,Collected Value,
+AMAZING,,5,,,EDC System,Investigator,Collected Value,
+VALUABLE,ePRO,1,,,eCOA Data Exchange Files,Study Subject,Collected Value,
+PRECISE,eObsRO,2,,,eCOA Data Exchange Files,Study Subject,Collected Value,
+EFFECTIVE,,3,,,eCOA Data Exchange Files,Study Subject,Collected Value,1
+EFFICIENT,,4,,,eCOA Data Exchange Files,Study Subject,Collected Value,1
+POTENT,,6,,,eCOA Data Exchange Files,Study Subject,Collected Value,
+EPIC,,1,,,Lab Data Exchange Files,Vendor,Collected Value,
+CLEAR ,,2,,,Lab Data Exchange Files,Vendor,Collected Value,
+ELEGANT,,5,,,Lab Data Exchange Files,Vendor,Collected Value,
+CLASSY,,6,,,Lab Data Exchange Files,Vendor,Collected Value,
+ACCURATE,,3,,,Lab Data Exchange Files,Vendor,Collected Value,
+EDC SPONSOR,calculations within EDC (BMI),4,,,EDC System,Clinical Study Sponsor,Derived Value,
+ePRO SPONSOR,calculations within ePRO (questionnaire section scores),7,,,eCOA Data Exchange Files,Clinical Study Sponsor,Derived Value,

@@ -146,8 +146,7 @@ class ConceptGenericRepository(
                 concept_root,
                 concept_root.uid AS uid,
                 concept_value as concept_value,
-                library.name AS library_name,
-                library.is_editable AS is_library_editable,
+                library,
                 version_rel
                 CALL {{
                     WITH version_rel
@@ -166,8 +165,9 @@ class ConceptGenericRepository(
                 concept_value.definition AS definition,
                 concept_value.abbreviation AS abbreviation,
                 CASE WHEN concept_value:TemplateParameterTermValue THEN true ELSE false END AS template_parameter,
-                library_name,
-                is_library_editable,
+                library,
+                library.name AS library_name,
+                library.is_editable AS is_library_editable,
                 version_rel.start_date AS start_date,
                 version_rel.end_date AS end_date,
                 version_rel.status AS status,
@@ -237,11 +237,17 @@ class ConceptGenericRepository(
     ) -> tuple[str, dict[Any, Any]]:
         filter_parameters = []
         filter_query_parameters = {}
+        uids = kwargs.get("uids")
         if library:
             filter_by_library_name = """
             head([(library:Library)-[:CONTAINS_CONCEPT]->(concept_root) | library.name])=$library_name"""
             filter_parameters.append(filter_by_library_name)
             filter_query_parameters["library_name"] = library
+        if uids:
+            filter_by_uids = "concept_root.uid IN $uids"
+            filter_parameters.append(filter_by_uids)
+            filter_query_parameters["uids"] = uids
+
         filter_statements = " AND ".join(filter_parameters)
         filter_statements = (
             "WHERE " + filter_statements if len(filter_statements) > 0 else ""
@@ -279,6 +285,7 @@ class ConceptGenericRepository(
         filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
         return_all_versions: bool = False,
+        uids: list[str] | None = None,
         **kwargs,
     ) -> tuple[list[_AggregateRootType], int]:
         """
@@ -305,7 +312,7 @@ class ConceptGenericRepository(
         )
 
         filter_statements, filter_query_parameters = self.create_query_filter_statement(
-            library=library, **kwargs
+            library=library, uids=uids, **kwargs
         )
         self.filter_query_parameters = filter_query_parameters
         match_clause += filter_statements
@@ -332,7 +339,6 @@ class ConceptGenericRepository(
             query.parameters.update({"requested_version": kwargs["version"]})
 
         query.parameters.update(filter_query_parameters)
-
         result_array, attributes_names = query.execute()
 
         extracted_items = self._retrieve_concepts_from_cypher_res(
@@ -804,3 +810,33 @@ class ConceptGenericRepository(
                     },
                 )
                 TemplateParameterTermRoot.generate_node_uids_if_not_present()
+
+    def _update_versioning_relationship_query(
+        self, status: str, merge_query: str | None = None
+    ) -> str:
+        query = f"""
+            MATCH (library:Library)-[:CONTAINS_CONCEPT]->(concept_root)-[latest_has_version:HAS_VERSION]->(concept_value)
+            WHERE latest_has_version.end_date is null
+            MATCH (concept_root)-[latest_status_relationship:LATEST_{status.upper()}]->(:{self.value_class.__label__})
+            WITH *
+            """
+        if merge_query:
+            query += merge_query
+        else:
+            query += f"""
+            CREATE (concept_root)-[:LATEST]->(concept_value)
+            CREATE (concept_root)-[:LATEST_{status.upper()}]->(concept_value)
+            CREATE (concept_root)-[new_has_version:HAS_VERSION]->(concept_value)
+            """
+        query += """
+            SET new_has_version.start_date = $start_date
+            SET new_has_version.end_date = null
+            SET new_has_version.change_description = $change_description
+            SET new_has_version.version = $new_version
+            SET new_has_version.status = $new_status
+            SET new_has_version.author_id = $author_id
+            SET latest_has_version.end_date = $start_date
+            WITH *
+            DELETE status_relationship, latest_status_relationship
+        """
+        return query

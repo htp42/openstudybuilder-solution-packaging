@@ -59,7 +59,7 @@ Feature: Studies - Define Study - Study Properties - Study Type
         When The Confirmed response minimum duration NA option is selected
         Then The Confirmed response minimum duration field is disabled
 
-    @unstable_disabled
+    @pending_implementation
     Scenario: User must be able to copy the study type data from other existing study without overwriting the data
         Given The test study '/study_properties/type' page is opened
         And Another study with study type defined exists
@@ -68,7 +68,7 @@ Feature: Studies - Define Study - Study Properties - Study Type
         And The study type is copied from another study without overwriting
         Then Only the missing information is filled from another study in the study type form
 
-    @unstable_disabled
+    @pending_implementation
     Scenario: User must be able to copy the study type data from other existing study with overwriting the data
         Given The test study '/study_properties/type' page is opened
         And Another study with study type defined exists

@@ -3,7 +3,9 @@
 # Placed at the top to ensure logging is configured before anything else is loaded
 from typing import Any
 
+from fastapi.exceptions import RequestValidationError
 from opencensus.trace.print_exporter import PrintExporter
+from pydantic import ValidationError
 
 from common.config import settings
 from common.database import configure_database
@@ -24,7 +26,7 @@ import logging
 import os
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.middleware import Middleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -33,7 +35,6 @@ from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 from opencensus.ext.azure.trace_exporter import AzureExporter
 from opencensus.trace.samplers import AlwaysOnSampler
-from pydantic import ValidationError
 from starlette_context.middleware import RawContextMiddleware
 
 from common.auth.dependencies import security
@@ -156,10 +157,23 @@ Microsoft Identity Platform documentation can be read
 app.openapi_version = "3.0.2"
 
 
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exception: HTTPException):
+    """Returns an HTTP error code associated to given exception."""
+
+    await log_exception(request, exception)
+
+    ExceptionTracebackMiddleware.add_traceback_attributes(exception)
+
+    return JSONResponse(
+        status_code=exception.status_code,
+        content=jsonable_encoder(ErrorResponse(request, exception)),
+        headers=exception.headers,
+    )
+
+
 @app.exception_handler(MDRApiBaseException)
-async def consumer_api_exception_handler(
-    request: Request, exception: MDRApiBaseException
-):
+async def mdr_api_exception_handler(request: Request, exception: MDRApiBaseException):
     """Returns an HTTP error code associated to given exception."""
 
     await log_exception(request, exception)
@@ -174,12 +188,9 @@ async def consumer_api_exception_handler(
 
 
 @app.exception_handler(ValidationError)
-async def pydantic_validation_error_handler(
+async def handle_validation_error(
     request: Request, exception: ValidationError
-):
-    """Returns `400 Bad Request` http error status code in case Pydantic detects validation issues
-    with supplied payloads or parameters."""
-
+) -> JSONResponse:
     await log_exception(request, exception)
 
     ExceptionTracebackMiddleware.add_traceback_attributes(exception)
@@ -187,6 +198,22 @@ async def pydantic_validation_error_handler(
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
         content=jsonable_encoder(ErrorResponse(request, exception)),
+        headers={},
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def handle_request_validation_error(
+    request: Request, exception: RequestValidationError
+) -> JSONResponse:
+    await log_exception(request, exception)
+
+    ExceptionTracebackMiddleware.add_traceback_attributes(exception)
+
+    return JSONResponse(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        content=jsonable_encoder(ErrorResponse(request, exception)),
+        headers={},
     )
 
 
@@ -252,11 +279,14 @@ def custom_openapi():
                 endpoint_security.append({"BearerJwtAuth": []})
                 openapi_schema["paths"][path][method]["security"] = endpoint_security
 
-    # Add `400 Bad Request` error response to all endpoints
+    # Add `400 Bad Request` error response to all endpoints and remove 422
     for path, path_item in openapi_schema["paths"].items():
         for method, operation in path_item.items():
             if "responses" not in operation:
                 operation["responses"] = {}
+
+            operation["responses"].pop("422", None)
+
             if "400" not in operation["responses"]:
                 operation["responses"]["400"] = {
                     "description": "Bad Request",

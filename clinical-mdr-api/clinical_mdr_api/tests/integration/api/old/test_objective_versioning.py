@@ -211,15 +211,15 @@ def test_patching_aproved_objective_with_missing_field(api_client):
     data = {"name": "test{test-uid}", "parameter_terms": []}
     response = api_client.patch("/objectives/Objective_000001", json=data)
 
-    assert_response_status_code(response, 422)
+    assert_response_status_code(response, 400)
 
     res = response.json()
 
-    assert res["detail"] == [
+    assert res["details"] == [
         {
-            "type": "missing",
-            "loc": ["body", "change_description"],
+            "error_code": "missing",
+            "field": ["body", "change_description"],
             "msg": "Field required",
-            "input": {"name": "test{test-uid}", "parameter_terms": []},
+            "ctx": {},
         }
     ]

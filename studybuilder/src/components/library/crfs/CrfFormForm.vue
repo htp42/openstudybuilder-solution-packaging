@@ -227,7 +227,7 @@ export default {
     CrfApprovalSummaryConfirmDialog,
     CrfNewVersionSummaryConfirmDialog,
   },
-  inject: ['eventBusEmit', 'formRules'],
+  inject: ['notificationHub', 'formRules'],
   props: {
     selectedForm: {
       type: Object,
@@ -437,7 +437,7 @@ export default {
           this.readOnly = false
           this.getForm()
 
-          this.eventBusEmit('notification', {
+          this.notificationHub.add({
             msg: this.$t('_global.new_version_success'),
           })
         })
@@ -456,7 +456,7 @@ export default {
           this.close()
           this.getForm()
 
-          this.eventBusEmit('notification', {
+          this.notificationHub.add({
             msg: this.$t('CRFForms.approved'),
           })
         })
@@ -499,6 +499,7 @@ export default {
       return this.$refs[`observer_${step}`]
     },
     close() {
+      this.notificationHub.clearErrors()
       this.form = {
         oid: 'F.',
         repeating: 'No',
@@ -513,6 +514,8 @@ export default {
       this.$emit('close')
     },
     async submit() {
+      this.notificationHub.clearErrors()
+
       if (this.readOnly) {
         this.close()
         return
@@ -528,7 +531,7 @@ export default {
             .updateForm(this.form, this.selectedForm.uid)
             .then(async () => {
               await this.linkExtensions(this.selectedForm.uid)
-              this.eventBusEmit('notification', {
+              this.notificationHub.add({
                 msg: this.$t('CRFForms.form_updated'),
               })
               this.close()
@@ -536,7 +539,7 @@ export default {
         } else {
           await crfs.createForm(this.form).then(async (resp) => {
             await this.linkExtensions(resp.data.uid)
-            this.eventBusEmit('notification', {
+            this.notificationHub.add({
               msg: this.$t('CRFForms.form_created'),
             })
             this.$emit('linkForm', resp)

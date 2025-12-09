@@ -45,7 +45,7 @@ import { useStudiesGeneralStore } from '@/stores/studies-general'
 
 const { t } = useI18n()
 const router = useRouter()
-const eventBusEmit = inject('eventBusEmit')
+const notificationHub = inject('notificationHub')
 const studiesGeneralStore = useStudiesGeneralStore()
 const accessGuard = useAccessGuard()
 
@@ -103,7 +103,7 @@ async function deleteStudy() {
     )
   ) {
     await api.deleteStudy(studiesGeneralStore.selectedStudy.uid)
-    eventBusEmit('notification', {
+    notificationHub.add({
       msg: t('StudyStatusTable.delete_success'),
       type: 'success',
     })

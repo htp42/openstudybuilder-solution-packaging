@@ -63,7 +63,7 @@ export default {
   components: {
     StudyActivitySelectionBaseForm,
   },
-  inject: ['eventBusEmit', 'formRules'],
+  inject: ['notificationHub', 'formRules'],
   props: {
     selection: {
       type: Array,
@@ -118,6 +118,7 @@ export default {
   methods: {
     close() {
       this.$emit('close')
+      this.notificationHub.clearErrors()
       this.selectedVisitsGrouped = []
     },
     unselectItem(item) {
@@ -128,6 +129,9 @@ export default {
       if (!valid) {
         return
       }
+
+      this.notificationHub.clearErrors()
+
       this.$refs.baseForm.loading = true
       const data = []
       for (const item of this.selection) {
@@ -175,7 +179,7 @@ export default {
         .studyActivitySoaEditsBatchOperations(this.selectedStudy.uid, data)
         .then(
           () => {
-            this.eventBusEmit('notification', {
+            this.notificationHub.add({
               type: 'success',
               msg: this.$t('DetailedFlowchart.batch_update_success', {
                 number: this.selection.length,

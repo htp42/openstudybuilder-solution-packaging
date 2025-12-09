@@ -21,7 +21,7 @@ Feature: Library - Data Collection Standards - CRF Builder - Item Groups
             | OID                  |
             | Name                 |
             | Description          |
-            | Implementation Notes |
+            | Design Notes         |
             | Repeating            |
             | Version              |
             | Status               |
@@ -73,13 +73,13 @@ Feature: Library - Data Collection Standards - CRF Builder - Item Groups
         Given The '/library/crf-builder/item-groups' page is opened
         And Created CRF Item Group is found
         When The 'Inactivate' option is clicked from the three dot menu list
-        And The item has status 'Retired' and version '1.0'
+        And The item has status 'Retired' and version '2.0'
 
     Scenario: [Actions][Reactivate] User must be able to reactivate currently retired Item Group
         Given The '/library/crf-builder/item-groups' page is opened
         And Created CRF Item Group is found
         When The 'Reactivate' option is clicked from the three dot menu list
-        And The item has status 'Final' and version '1.0'
+        And The item has status 'Final' and version '3.0'
 
     Scenario: [Actions][New version] User must be able to create a new version of an Item Group
         Given The '/library/crf-builder/item-groups' page is opened
@@ -87,7 +87,7 @@ Feature: Library - Data Collection Standards - CRF Builder - Item Groups
         When The 'New version' option is clicked from the three dot menu list
         Then The New version popup window is displayed
         When Action is confirmed by clicking continue
-        And The item has status 'Draft' and version '1.1'
+        And The item has status 'Draft' and version '3.1'
 
     Scenario: [Actions][Delete] User must be able to delete CRF Item Group in draft status
         Given The '/library/crf-builder/item-groups' page is opened

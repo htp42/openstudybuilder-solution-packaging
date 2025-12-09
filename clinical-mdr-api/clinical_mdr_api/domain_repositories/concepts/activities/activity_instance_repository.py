@@ -1,3 +1,4 @@
+import datetime
 from typing import Any
 
 from neomodel import db
@@ -323,11 +324,76 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
         )
         return are_concept_properties_changed or are_props_changed or are_rels_changed
 
+    def copy_activity_instance_and_recreate_activity_groupings(
+        self, activity_instance: ActivityInstanceAR, author_id: str
+    ) -> None:
+        query = """
+            MATCH (concept_root:ActivityInstanceRoot {uid:$activity_instance_uid})-[status_relationship:LATEST]->(concept_value:ActivityInstanceValue)
+            CALL apoc.refactor.cloneNodes([concept_value])
+            YIELD input, output, error"""
+        merge_query = f"""
+            MERGE (concept_root)-[:LATEST]->(output)
+            MERGE (concept_root)-[:LATEST_{activity_instance.item_metadata.status.value.upper()}]->(output)
+            MERGE (concept_root)-[new_has_version:HAS_VERSION]->(output)"""
+        query += self._update_versioning_relationship_query(
+            status=activity_instance.item_metadata.status.value, merge_query=merge_query
+        )
+        query += """
+
+            WITH library, concept_root, concept_value, output
+            MATCH (concept_value)-[:ACTIVITY_INSTANCE_CLASS]->(activity_instance_class:ActivityInstanceClassRoot)
+            OPTIONAL MATCH (concept_value)-[:CONTAINS_ACTIVITY_ITEM]->(activity_item:ActivityItem)
+            WITH library, concept_root, activity_item, activity_instance_class, output
+            MERGE (output)-[:ACTIVITY_INSTANCE_CLASS]->(activity_instance_class)
+            WITH library, concept_root, output, activity_item
+            CALL apoc.do.case([
+                activity_item IS NOT NULL,
+                'MERGE (output)-[:CONTAINS_ACTIVITY_ITEM]->(activity_item) RETURN output'
+            ],
+            '',
+            {
+                activity_item: activity_item,
+                output: output
+            })
+            YIELD value
+            UNWIND range(0, size($activity_uids)-1) AS idx
+            MATCH (activity_grouping:ActivityGrouping)<-[:HAS_GROUPING]-(:ActivityValue)<-[:LATEST_FINAL]-(:ActivityRoot {uid:$activity_uids[idx]})
+            MATCH (activity_grouping)-[:IN_SUBGROUP]->(activity_valid_group:ActivityValidGroup)-[:IN_GROUP]->(:ActivityGroupValue)<-[:HAS_VERSION]-(:ActivityGroupRoot {uid:$activity_group_uids[idx]})
+            MATCH (activity_valid_group)<-[:HAS_GROUP]-(:ActivitySubGroupValue)<-[:HAS_VERSION]-(:ActivitySubGroupRoot {uid:$activity_subgroup_uids[idx]})
+            WITH library, concept_root, output, activity_grouping
+            MERGE (output)-[:HAS_ACTIVITY]->(activity_grouping)
+            RETURN concept_root, output, library
+        """
+
+        db.cypher_query(
+            query,
+            params={
+                "activity_instance_uid": activity_instance.uid,
+                "new_status": activity_instance.item_metadata.status.value,
+                "new_version": activity_instance.item_metadata.version,
+                "start_date": datetime.datetime.now(datetime.timezone.utc),
+                "change_description": "Copying previous ActivityInstanceValue node and updating ActivityGrouping nodes",
+                "author_id": author_id,
+                "activity_uids": [
+                    activity_instance.activity_uid
+                    for activity_instance in activity_instance.concept_vo.activity_groupings
+                ],
+                "activity_subgroup_uids": [
+                    activity_instance.activity_subgroup_uid
+                    for activity_instance in activity_instance.concept_vo.activity_groupings
+                ],
+                "activity_group_uids": [
+                    activity_instance.activity_group_uid
+                    for activity_instance in activity_instance.concept_vo.activity_groupings
+                ],
+            },
+        )
+
     def _create_aggregate_root_instance_from_cypher_result(
         self, input_dict: dict[str, Any]
     ) -> ActivityInstanceAR:
         major, minor = input_dict["version"].split(".")
-        return self.aggregate_class.from_repository_values(
+        activity_instance_ar = self.aggregate_class.from_repository_values(
             uid=input_dict["uid"],
             concept_vo=self.value_object_class.from_repository_values(
                 nci_concept_id=input_dict.get("nci_concept_id"),
@@ -478,6 +544,7 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
                 minor_version=int(minor),
             ),
         )
+        return activity_instance_ar
 
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
@@ -872,7 +939,7 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
         (
             filter_statements_from_concept,
             filter_query_parameters,
-        ) = super().create_query_filter_statement(library=library)
+        ) = super().create_query_filter_statement(library=library, **kwargs)
         filter_parameters = []
         if kwargs.get("activity_instance_names") is not None:
             activity_instance_names = kwargs.get("activity_instance_names")
@@ -1172,7 +1239,7 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
         activity_subgroup_uid: str,
         activity_group_uid: str,
         filter_by_boolean_flags: bool = False,
-    ) -> list[ActivityInstanceRoot]:
+    ) -> list[tuple[ActivityInstanceRoot, ActivityInstanceValue]]:
         query = """
             MATCH (activity_instance_root:ActivityInstanceRoot)-[:LATEST]->(activity_instance_value:ActivityInstanceValue)
             MATCH (activity_instance_root)-[:LATEST_FINAL]->(activity_instance_value)
@@ -1200,16 +1267,16 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
         all_instances = []
         for activity_instance in nodes:
             root: ActivityInstanceRoot = activity_instance[0]
-            all_instances.append(root)
             value: ActivityInstanceValue = activity_instance[1]
+            all_instances.append((root, value))
             if value.is_required_for_activity:
-                required_instances.append(root)
+                required_instances.append((root, value))
             elif (
                 value.is_default_selected_for_activity and len(defaulted_instances) == 0
             ):
-                defaulted_instances.append(root)
+                defaulted_instances.append((root, value))
             elif len(other_instances) == 0:
-                other_instances.append(root)
+                other_instances.append((root, value))
         if filter_by_boolean_flags:
             if required_instances:
                 return required_instances
