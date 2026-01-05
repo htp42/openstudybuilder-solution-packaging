@@ -1,9 +1,9 @@
 {
-  "openapi": "3.0.2",
+  "openapi": "3.1.0",
   "info": {
     "title": "StudyBuilder Consumer API",
     "description": "\n## NOTICE\n\nThis license information is applicable to the swagger documentation of the clinical-mdr-api, that is the openapi.json.\n\n## License Terms (MIT)\n\nCopyright (C) 2025 Novo Nordisk A/S, Danish company registration no. 24256790\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n\n## Licenses and Acknowledgements for Incorporated Software\n\nThis component contains software licensed under different licenses when compiled, please refer to the third-party-licenses.md file for further information and full license texts.\n\n## Authentication\n\nSupports OAuth2 [Authorization Code Flow](https://datatracker.ietf.org/doc/html/rfc6749#section-4.1),\nat paths described in the OpenID Connect Discovery metadata document (whose URL is defined by the `OAUTH_METADATA_URL` environment variable).\n\nMicrosoft Identity Platform documentation can be read \n([here](https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-auth-code-flow)).\n",
-    "version": "0.1.99"
+    "version": "0.1.105"
   },
   "paths": {
     "/": {
@@ -1297,7 +1297,7 @@
           "[V1] Audit trail"
         ],
         "summary": "Get Studies Audit Trail",
-        "description": "Returns study audit trail entries between `from_ts` timestamp (including) and `to_ts` timestamp (excluding).\n\nThe audit trail is returned in CSV format with the following columns:\n  - **ts**: Timestamp of the action\n  - **study_uid**: Study UID\n  - **study_id**: Study ID\n  - **action**: Action performed (Create, Edit, Delete)\n  - **entity_uid**: UID of the entity affected by the action\n  - **entity_type**: Type (i.e node labels) of the entity affected by the action (*StudyVisit*, *StudyActivity*, etc..). Multiple labels are separated by '**|**' character.\n  - **changed_properties**: List of properties that were changed during the Edit action\n\nAudit trail can be filtered by:\n  - `study_id` - returns study audit trail entries for the specified study ID (case-insensitive partial match)\n  - `entity_type` - returns study audit trail entries for the specified entity type (e.g. *StudyActivity*)\n  - `exclude_study_ids` - returns audit trail without the specified study IDs (case-insensitive partial match)\n\nNote: the maximum number of rows returned is limited to 10.000.",
+        "description": "Returns study audit trail entries between `from_ts` timestamp (including) and `to_ts` timestamp (excluding).\n\nThe audit trail is returned in CSV format with the following columns:\n  - **ts**: Timestamp of the action\n  - **study_uid**: Study UID\n  - **study_id**: Study ID\n  - **action**: Action performed (Create, Edit, Delete)\n  - **entity_uid**: UID of the entity affected by the action\n  - **entity_type**: Type (i.e node labels) of the entity affected by the action (*StudyVisit*, *StudyActivity*, etc..). Multiple labels are separated by '**|**' character.\n  - **changed_properties**: List of properties that were changed during the Edit action\n  - **author**: Hashed (MD5) value of the ID of a user that performed the action\n\nAudit trail can be filtered by:\n  - `study_id` - returns study audit trail entries for the specified study ID (case-insensitive partial match)\n  - `entity_type` - returns study audit trail entries for the specified entity type (e.g. *StudyActivity*)\n  - `exclude_study_ids` - returns audit trail without the specified study IDs (case-insensitive partial match)\n\nNote: the maximum number of rows returned is limited to 10.000.",
         "operationId": "get_studies_audit_trail_v1_studies_audit_trail_get",
         "security": [
           {
@@ -2848,6 +2848,11 @@
             "title": "Study Activity Uid",
             "description": "Study Activity UID"
           },
+          "visit_uid": {
+            "type": "string",
+            "title": "Visit Uid",
+            "description": "Study Visit UID"
+          },
           "visit_short_name": {
             "type": "string",
             "title": "Visit Short Name",
@@ -2894,6 +2899,19 @@
             "description": "NCI Concept Name",
             "nullable": true
           },
+          "activity_subgroup_uid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activity Subgroup Uid",
+            "description": "Activity Subgroup UID",
+            "nullable": true
+          },
           "activity_subgroup_name": {
             "anyOf": [
               {
@@ -2905,6 +2923,19 @@
             ],
             "title": "Activity Subgroup Name",
             "description": "Activity Subgroup Name",
+            "nullable": true
+          },
+          "activity_group_uid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activity Group Uid",
+            "description": "Activity Group UID",
             "nullable": true
           },
           "activity_group_name": {
@@ -2935,6 +2966,7 @@
         "required": [
           "study_uid",
           "study_activity_uid",
+          "visit_uid",
           "visit_short_name",
           "epoch_name",
           "activity_uid",

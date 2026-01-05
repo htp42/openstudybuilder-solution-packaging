@@ -357,7 +357,7 @@ class ActivitySubGroupService(ConceptGenericService[ActivitySubGroupAR]):
         except exceptions.BusinessLogicException as e:
             # Rethrow with more context if needed
             raise exceptions.BusinessLogicException(
-                f"Error getting COSMoS subgroup overview for {subgroup_uid}: {str(e)}"
+                msg=f"Error getting COSMoS subgroup overview for {subgroup_uid}: {str(e)}"
             ) from e
 
     def cascade_edit_and_approve(self, item: ActivitySubGroupAR):

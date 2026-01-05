@@ -221,6 +221,10 @@ Possible errors:
 )
 def get_activity_item_classes(
     activity_instance_class_uid: Annotated[str, ActivityInstanceClassUID],
+    ig_uid: Annotated[
+        str | None,
+        Query(description="Optionally, the uid of a specific DataModelIG, e.g. SDTMIG"),
+    ] = None,
     dataset_uid: Annotated[
         str | None,
         Query(
@@ -230,7 +234,7 @@ def get_activity_item_classes(
 ) -> list[CompactActivityItemClass]:
     service = ActivityItemClassService()
     return service.get_all_for_activity_instance_class(
-        activity_instance_class_uid, dataset_uid
+        activity_instance_class_uid, ig_uid, dataset_uid
     )
 
 

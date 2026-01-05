@@ -1344,15 +1344,34 @@ CALL {
     RETURN last(hvs) AS g_ver
 }
 CALL {
-    WITH agrp
-    MATCH (agrp)<-[:HAS_ACTIVITY]-(aiv:ActivityInstanceValue)<-[hv:HAS_VERSION]-(air:ActivityInstanceRoot)
-    WHERE NOT EXISTS((aiv)<--(:DeletedActivityInstanceRoot))
-    WITH aiv, hv, air
-    ORDER BY hv.start_date
-    WITH DISTINCT air, collect({aiv: aiv, version: hv.version}) AS aiv_versions
-    WITH air, last(aiv_versions) AS last_aiv_version
-    WITH DISTINCT last_aiv_version.aiv AS aiv, air, last_aiv_version.version AS instance_version
-    WITH {instance_name: aiv.name, instance_uid: air.uid, instance_version: instance_version} AS instance
+    WITH agrp, av, av_rel, ar
+    // Calculate the activity version's validity period end date
+    // This ensures we show the latest instance version active during this activity version's timeframe
+    OPTIONAL MATCH (ar)-[next_rel:HAS_VERSION]->(:ActivityValue)
+    WHERE toInteger(split(next_rel.version, '.')[0]) > toInteger(split(av_rel.version, '.')[0])
+       OR (toInteger(split(next_rel.version, '.')[0]) = toInteger(split(av_rel.version, '.')[0])
+           AND toInteger(split(next_rel.version, '.')[1]) > toInteger(split(av_rel.version, '.')[1]))
+    WITH agrp, av_rel, min(next_rel.start_date) as min_next_start_date
+    WITH agrp, COALESCE(av_rel.end_date, min_next_start_date, datetime()) as version_end_date
+
+    // Find unique instance roots that have any version linked to this grouping
+    MATCH (agrp)<-[:HAS_ACTIVITY]-(:ActivityInstanceValue)<-[:HAS_VERSION]-(air:ActivityInstanceRoot)
+    WHERE NOT EXISTS((air)<-[:DELETED_CONCEPT]-(:DeletedActivityInstanceRoot))
+    WITH DISTINCT air, version_end_date
+
+    // For each root, find the latest version that was active during the validity period
+    MATCH (air)-[hv:HAS_VERSION]->(aiv:ActivityInstanceValue)
+    WHERE hv.start_date <= version_end_date
+      AND NOT EXISTS((aiv)<--(:DeletedActivityInstanceRoot))
+    WITH air, aiv, hv
+    ORDER BY air.uid, hv.start_date DESC,
+             toInteger(split(hv.version, '.')[0]) DESC,
+             toInteger(split(hv.version, '.')[1]) DESC
+
+    // Group by root and take the first (latest) version
+    WITH air, collect({aiv: aiv, version: hv.version})[0] AS latest_version
+    WHERE latest_version IS NOT NULL
+    WITH {instance_name: latest_version.aiv.name, instance_uid: air.uid, instance_version: latest_version.version} AS instance
     RETURN collect(instance) AS activity_instances
 }
 RETURN
@@ -1528,7 +1547,9 @@ RETURN
 
             // 1b. Find the minimum start date of subsequent versions (if any)
             OPTIONAL MATCH (activity_root)-[next_rel:HAS_VERSION]->(:ActivityValue)
-            WHERE toFloat(next_rel.version) > toFloat($version) // Use parameter
+            WHERE toInteger(split(next_rel.version, '.')[0]) > toInteger(split($version, '.')[0])
+               OR (toInteger(split(next_rel.version, '.')[0]) = toInteger(split($version, '.')[0])
+                   AND toInteger(split(next_rel.version, '.')[1]) > toInteger(split($version, '.')[1]))
             WITH activity_value, av_rel, min(next_rel.start_date) as min_next_start_date // Grouping implicitly by activity_value, av_rel
 
             // 1c. Calculate the final version_end_date
@@ -1607,7 +1628,9 @@ RETURN
             WITH ai_root, aihv, ai_val, version_end_date
             WHERE aihv.start_date <= version_end_date
             WITH ai_root, aihv, ai_val, version_end_date // Pass rows for ordering
-            ORDER BY ai_root.uid, aihv.start_date DESC, toFloat(aihv.version) DESC
+            ORDER BY ai_root.uid, aihv.start_date DESC,
+                     toInteger(split(aihv.version, '.')[0]) DESC,
+                     toInteger(split(aihv.version, '.')[1]) DESC
 
             // 6. Collect the ordered versions per root
             WITH ai_root, version_end_date, collect({{rel: aihv, val: ai_val}}) as relevant_versions_sorted
@@ -1628,7 +1651,10 @@ RETURN
             OPTIONAL MATCH (ai_root)-[child_aihv:HAS_VERSION]->(child_ai_val:ActivityInstanceValue)
             WHERE child_aihv <> display_instance_map.rel AND
                   (child_aihv.start_date < display_instance_map.rel.start_date
-                   OR (child_aihv.start_date = display_instance_map.rel.start_date AND toFloat(child_aihv.version) < toFloat(display_instance_map.rel.version)))
+                   OR (child_aihv.start_date = display_instance_map.rel.start_date
+                       AND (toInteger(split(child_aihv.version, '.')[0]) < toInteger(split(display_instance_map.rel.version, '.')[0])
+                            OR (toInteger(split(child_aihv.version, '.')[0]) = toInteger(split(display_instance_map.rel.version, '.')[0])
+                                AND toInteger(split(child_aihv.version, '.')[1]) < toInteger(split(display_instance_map.rel.version, '.')[1])))))
             // *** NOTE: Add appropriate deletion check here if needed ***
 
             // 11. Get ActivityInstanceClass for children
@@ -1636,7 +1662,9 @@ RETURN
 
             // 12. Order children (newest first) and collect
             WITH ai_root, display_instance_map, library, aic_value, child_aihv, child_ai_val, child_aic_value
-            ORDER BY child_aihv.start_date DESC, toFloat(child_aihv.version) DESC
+            ORDER BY child_aihv.start_date DESC,
+                     toInteger(split(child_aihv.version, '.')[0]) DESC,
+                     toInteger(split(child_aihv.version, '.')[1]) DESC
             WITH ai_root, display_instance_map, library, aic_value, collect(
                 CASE WHEN child_aihv IS NULL THEN null ELSE {{
                     uid: ai_root.uid, version: child_aihv.version, status: child_aihv.status, name: child_ai_val.name,

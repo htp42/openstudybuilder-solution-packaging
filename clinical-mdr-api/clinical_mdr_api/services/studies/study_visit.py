@@ -3,6 +3,7 @@ import datetime
 from typing import Any
 
 from neomodel import Q, db
+from neomodel.sync_.match import Path
 
 from clinical_mdr_api.domain_repositories._utils.helpers import (
     acquire_write_lock_study_value,
@@ -257,17 +258,39 @@ class StudyVisitService(StudySelectionMixin):
         return [
             SimpleStudyVisit.model_validate(sv_node)
             for sv_node in ListDistinct(
-                StudyVisitNeoModel.nodes.fetch_relations(
-                    "has_visit_name__has_latest_value",
-                    "has_visit_type__has_selected_term__has_name_root__has_latest_value",
+                StudyVisitNeoModel.nodes.traverse(
+                    Path(
+                        "has_study_visit__latest_value",
+                        include_rels_in_return=False,
+                        include_nodes_in_return=True,  # Set to False when migrating to neomodel 6.x
+                    ),
+                    Path(
+                        "has_study_activity_schedule__study_value__latest_value",
+                        include_rels_in_return=False,
+                        include_nodes_in_return=False,
+                    ),
+                    Path(
+                        "has_study_activity_schedule__study_activity__study_activity_has_study_activity_instance",
+                        include_rels_in_return=False,
+                        include_nodes_in_return=False,
+                    ),
+                    Path(
+                        "has_visit_name__has_latest_value",
+                        include_rels_in_return=False,
+                    ),
+                    Path(
+                        "has_visit_type__has_selected_term__has_name_root__has_latest_value",
+                        include_rels_in_return=False,
+                    ),
                 )
+                .unique_variables("has_study_activity_schedule")
                 .filter(
                     has_study_visit__latest_value__uid=study_uid,  # Visit in study
                     has_study_activity_schedule__study_value__latest_value__uid=study_uid,  # With schedule in study
                     has_study_activity_schedule__study_activity__has_study_activity__latest_value__uid=study_uid,  # With activity in study
                     has_study_activity_schedule__study_activity__study_activity_has_study_activity_instance__uid=study_activity_instance_uid,  # And activity is parent of instance
                 )
-                .order_by("uid")
+                .order_by("visit_number")
                 .resolve_subgraph()
             ).distinct()
         ]
@@ -1299,7 +1322,7 @@ class StudyVisitService(StudySelectionMixin):
         else:
             if study_visit is None:
                 raise ValidationException(
-                    f"StudyVisit with UID '{study_visit_uid}' doesn't exist in Study '{study_uid}'",
+                    msg=f"StudyVisit with UID '{study_visit_uid}' doesn't exist in Study '{study_uid}'",
                 )
         group_name = (
             study_visit.study_visit_group.group_name

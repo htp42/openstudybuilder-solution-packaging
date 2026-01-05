@@ -35,7 +35,7 @@
               :items-per-page="instanceClassesItemsPerPage"
               :hide-export-button="false"
               :hide-default-switches="true"
-              :disable-filtering="false"
+              :disable-filtering="true"
               :hide-search-field="false"
               :modifiable-table="true"
               :no-padding="true"
@@ -217,7 +217,7 @@ function handleInstanceClassesOptions(options) {
 }
 
 // Handle filter for Activity Instance Classes table
-function handleInstanceClassFilter(filters, options) {
+function handleInstanceClassFilter(_filters, options) {
   // Handle both pagination and search
   if (options) {
     // Check for pagination changes

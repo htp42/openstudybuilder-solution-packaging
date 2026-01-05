@@ -262,6 +262,12 @@ def get_all_codelists(
             )
         ),
     ] = True,
+    ct_catalogue_name: Annotated[
+        str | None,
+        Query(
+            description="Optionally, the name of a CT Catalogue to filter Codelists."
+        ),
+    ] = None,
     sort_by: Annotated[
         Json | None, Query(description=_generic_descriptions.SORT_BY)
     ] = None,
@@ -294,6 +300,7 @@ def get_all_codelists(
         activity_item_class_uid=activity_item_class_uid,
         dataset_uid=dataset_uid,
         use_sponsor_model=use_sponsor_model,
+        ct_catalogue_name=ct_catalogue_name,
         sort_by=sort_by,
         page_number=page_number,
         page_size=page_size,

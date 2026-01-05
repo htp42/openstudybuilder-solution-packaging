@@ -44,10 +44,6 @@ export const useStudyDataSuppliersStore = defineStore('studyDataSuppliers', {
       return study.getStudyDataSupplier(studyUid, studyDataSupplierUid)
     },
 
-    async createStudyDataSupplier(studyUid, data) {
-      return study.createStudyDataSupplier(studyUid, data)
-    },
-
     async updateStudyDataSupplier(studyUid, studyDataSupplierUid, data) {
       return study.updateStudyDataSupplier(studyUid, studyDataSupplierUid, data)
     },
@@ -73,6 +69,10 @@ export const useStudyDataSuppliersStore = defineStore('studyDataSuppliers', {
         studyUid,
         studyDataSupplierUid
       )
+    },
+
+    async syncStudyDataSuppliers(studyUid, suppliers) {
+      return study.syncStudyDataSuppliers(studyUid, suppliers)
     },
   },
 })

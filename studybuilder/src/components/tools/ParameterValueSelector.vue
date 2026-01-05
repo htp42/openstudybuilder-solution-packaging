@@ -87,7 +87,6 @@
           <v-col cols="2">
             <v-btn
               icon
-              class="ml-4"
               :disabled="disabled"
               variant="text"
               @click="clearSelection(parameter)"
@@ -105,12 +104,18 @@
             parameter.name !== 'TextValue'
           "
         >
-          <v-col cols="8" class="pl-2">
+          <v-col cols="8">
             <v-select
               v-model="parameter.selectedSeparator"
               :label="$t('ParameterValueSelector.separator')"
               :items="separators"
+              variant="outlined"
+              bg-color="white"
+              color="nnBaseBlue"
+              base-color="nnBaseBlue"
+              rounded="lg"
               density="compact"
+              class="mt-n5"
               clearable
               :rules="[formRules.required]"
               :disabled="parameter.skip"

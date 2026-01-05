@@ -45,7 +45,6 @@
         <v-tooltip
           v-if="notificationHub.queue.value.some((n) => n.error)"
           location="start"
-          :text="t('NotificationPanel.copy_screenshot')"
           style="z-index: 99999 !important"
         >
           <template #activator="{ props: tooltipProps }">
@@ -72,12 +71,15 @@
               </v-fab-transition>
             </v-btn>
           </template>
+
+          <template #default>
+            <div v-html="t('NotificationPanel.copy_screenshot')"></div>
+          </template>
         </v-tooltip>
 
         <v-tooltip
           v-if="notificationHub.queue.value.filter((n) => n.error).length > 1"
           location="start"
-          :text="t('NotificationPanel.copy_all_error')"
           style="z-index: 99999 !important"
         >
           <template #activator="{ props: tooltipProps }">
@@ -101,6 +103,10 @@
                 <v-icon v-else>mdi-check</v-icon>
               </v-fab-transition>
             </v-btn>
+          </template>
+
+          <template #default>
+            <div v-html="t('NotificationPanel.copy_all_error')"></div>
           </template>
         </v-tooltip>
 

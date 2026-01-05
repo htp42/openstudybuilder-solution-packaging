@@ -7,7 +7,7 @@
     :headers="headers"
     :items="terms"
     :items-length="total"
-    export-data-url="ct/terms"
+    export-data-url="ct/codelists/terms"
     :export-data-url-params="exportUrlParams"
     export-object-label="Terms"
     class="mt-4"

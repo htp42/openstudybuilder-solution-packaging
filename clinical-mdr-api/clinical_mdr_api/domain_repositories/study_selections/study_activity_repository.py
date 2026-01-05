@@ -2,6 +2,9 @@ import datetime
 from dataclasses import dataclass
 from typing import Any
 
+from neomodel import db
+
+from clinical_mdr_api import utils
 from clinical_mdr_api.domain_repositories.generic_repository import (
     manage_previous_connected_study_selection_relationships,
 )
@@ -25,6 +28,7 @@ from clinical_mdr_api.domains.study_selections.study_selection_activity import (
     StudySelectionActivityAR,
     StudySelectionActivityVO,
 )
+from common.telemetry import trace_calls
 from common.utils import convert_to_datetime
 
 
@@ -112,7 +116,7 @@ class StudySelectionActivityRepository(
             ),
         )
 
-    def _additional_match(self) -> str:
+    def _additional_match(self, **kwargs) -> str:
         return """
             WITH sr, sv
             
@@ -443,6 +447,91 @@ class StudySelectionActivityRepository(
 
     def generate_uid(self) -> str:
         return StudyActivity.get_next_free_uid_and_increment_counter()
+
+    @trace_calls
+    def delete_related_study_activity_schedules(
+        self, study_uid: str, study_activity_uid: str, author_id: str
+    ) -> list[Any]:
+        """
+        Deletes all related study activity schedules for a given study activity,
+        by adding a DELETE action to their audit trail.
+        """
+        query = """
+            MATCH 
+                (sr:StudyRoot)-[:LATEST]->
+                (sv:StudyValue)-->
+                (s_activity:StudyActivity)-[:STUDY_ACTIVITY_HAS_SCHEDULE]->
+                (ss:StudyActivitySchedule)<-[:AFTER]-
+                (ss_action:StudyAction)
+                WHERE 
+                    s_activity.uid = $study_activity_uid
+                    AND
+                    sr.uid = $study_uid
+                    AND
+                    NOT EXISTS((sv)<-[:LATEST_LOCKED]-(sr))  
+
+            //  CLONE NODE
+            CALL apoc.refactor.cloneNodes(
+                [ss],
+                true //clone with relationships
+            ) 
+                YIELD input, output, error
+            
+            //GET input nodes
+            MATCH (ss_old) 
+                WHERE ID(ss_old)= input 
+            CREATE (new_saction:StudyAction)
+                SET new_saction:Delete
+                SET new_saction.date = datetime()
+                SET new_saction.author_id = $author_id
+            CREATE (new_saction)<-[:AUDIT_TRAIL]-(sr)
+
+            WITH ss_old,output, new_saction, sv
+
+            //DISCONNECT NEW NODE
+            MATCH 
+                (output)<-[output_saction:AFTER]-
+                (saction:StudyAction) // Delete from previous StudyAction, 
+                                        //as previous action shouldn't be connected to the new one
+            OPTIONAL MATCH 
+                (output)<-[output_sv]-
+                (:StudyValue)    // Delete StudyValue, because is being deleted
+            OPTIONAL MATCH 
+                (output)-[output_ss]-
+                (ss_outbound:StudySelection) //Drop all StudySelections relationships to NON AVAILABLE nodes
+                    WHERE NOT EXISTS ((ss_outbound)--(sv))
+
+            //DISCONNECT OLD NODE
+            OPTIONAL MATCH 
+                (ss_old)<-[ss_old_sv]-
+                (sv)  //From studyValue
+
+            //DISCONNECT NEW
+            DELETE output_saction
+            DELETE output_sv
+            DELETE output_ss
+        
+            MERGE 
+                (output)<-[:AFTER]-
+                (new_saction)
+            MERGE
+                (ss_old)<-[:BEFORE]-
+                (new_saction)
+
+            //DISCONNECT OLD NODE
+            DELETE ss_old_sv
+
+            RETURN DISTINCT output.uid
+        """
+        result = db.cypher_query(
+            query,
+            params={
+                "study_activity_uid": study_activity_uid,
+                "study_uid": study_uid,
+                "author_id": author_id,
+            },
+        )
+        return utils.db_result_to_list(result)
 
     def close(self) -> None:
         # Our repository guidelines state that repos should have a close method

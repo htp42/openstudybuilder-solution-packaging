@@ -132,15 +132,6 @@
                   />
                 </div>
               </template>
-              <template #toolbar-right>
-                <v-btn
-                  color="primary"
-                  prepend-icon="mdi-plus"
-                  @click="openAddDialog"
-                >
-                  {{ $t('StudyDataSuppliers.add_data_supplier') }}
-                </v-btn>
-              </template>
               <template #[`item.study_data_supplier_type`]="{ item }">
                 {{ item.study_data_supplier_type?.term_name || '-' }}
               </template>
@@ -214,14 +205,12 @@
       </v-window>
     </v-card>
 
-    <!-- Add/Edit Dialog -->
+    <!-- Edit Dialog -->
     <v-dialog v-model="dialog" max-width="800px" persistent>
       <v-card>
         <v-card-title>
           <span class="text-h5">{{
-            editMode
-              ? $t('StudyDataSuppliers.edit_dialog_title')
-              : $t('StudyDataSuppliers.add_dialog_title')
+            $t('StudyDataSuppliers.edit_dialog_title')
           }}</span>
         </v-card-title>
         <v-card-text>
@@ -331,7 +320,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
@@ -347,6 +336,7 @@ import filteringParameters from '@/utils/filteringParameters'
 
 const router = useRouter()
 const { t } = useI18n()
+const notificationHub = inject('notificationHub')
 const studiesGeneralStore = useStudiesGeneralStore()
 const dataSupplierStore = useStudyDataSuppliersStore()
 
@@ -359,7 +349,6 @@ const total = ref(0)
 const tableRef = ref(null)
 const showReorderMode = ref(false)
 const dialog = ref(false)
-const editMode = ref(false)
 const valid = ref(false)
 const form = ref(null)
 const auditDialog = ref(false)
@@ -487,19 +476,7 @@ const fetchDataSuppliers = async (filters, options, filtersUpdated) => {
   }
 }
 
-const openAddDialog = () => {
-  editMode.value = false
-  formData.value = {
-    study_data_supplier_uid: null,
-    data_supplier_uid: null,
-    study_data_supplier_type_uid: null,
-    study_data_supplier_order: 1,
-  }
-  dialog.value = true
-}
-
 const openEditDialog = async (item) => {
-  editMode.value = true
   try {
     // Fetch fresh data for the specific supplier
     const response = await dataSupplierStore.getStudyDataSupplier(
@@ -550,22 +527,17 @@ const handleSave = async () => {
       ),
     }
 
-    if (editMode.value) {
-      await dataSupplierStore.updateStudyDataSupplier(
-        studiesGeneralStore.studyUid,
-        formData.value.study_data_supplier_uid,
-        payload
-      )
-    } else {
-      await dataSupplierStore.createStudyDataSupplier(
-        studiesGeneralStore.studyUid,
-        payload
-      )
-    }
+    await dataSupplierStore.updateStudyDataSupplier(
+      studiesGeneralStore.studyUid,
+      formData.value.study_data_supplier_uid,
+      payload
+    )
 
+    notificationHub.add({ msg: t('StudyDataSuppliers.update_success') })
     closeDialog()
     await fetchDataSuppliers()
   } catch (error) {
+    // Backend validation errors (including duplicates) are shown via notification hub
     console.error('Error saving study data supplier:', error)
   }
 }

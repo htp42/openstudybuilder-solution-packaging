@@ -10,6 +10,12 @@
     @step-loaded="initStep"
     @save="submit"
   >
+    <template #header>
+      <v-alert v-if="selectedActivity" type="info" variant="tonal">
+        {{ $t('ActivityInstanceForm.selected_activity') }}
+        {{ selectedActivityName }}
+      </v-alert>
+    </template>
     <template #[`step.activities`]>
       <div class="dialog-title">
         {{ $t('ActivityInstanceForm.step1_long_title') }}
@@ -28,7 +34,7 @@
           hide-export-button
           no-padding
           column-data-resource="concepts/activities/activities"
-          item-value="uid"
+          :item-value="(item) => getFullActivityUid(item)"
           :modifiable-table="false"
           :headers="activitiesHeaders"
           :items="activities"
@@ -290,25 +296,19 @@
       </div>
       <v-form ref="step4FormRef">
         <div class="d-flex w-50">
-          <v-select
+          <SelectCTTermField
             v-model="step4Form.data_category"
             :label="$t('ActivityInstanceForm.data_category')"
-            :items="dataCategories"
+            codelist="findingCategoryDefinition"
             item-title="submission_value"
-            item-value="term_uid"
-            variant="outlined"
-            density="compact"
+            class="mr-4"
             clearable
           />
-          <v-select
+          <SelectCTTermField
             v-model="step4Form.data_subcategory"
             :label="$t('ActivityInstanceForm.data_subcategory')"
-            :items="dataSubcategories"
+            codelist="findingSubCategoryDefinition"
             item-title="submission_value"
-            item-value="term_uid"
-            variant="outlined"
-            density="compact"
-            class="ml-4"
             clearable
           />
         </div>
@@ -415,11 +415,11 @@ import _debounce from 'lodash/debounce'
 import ActivityItemClassField from './ActivityItemClassField.vue'
 import HorizontalStepperForm from '@/components/tools/HorizontalStepperForm.vue'
 import NNTable from '@/components/tools/NNTable.vue'
+import SelectCTTermField from '@/components/tools/SelectCTTermField.vue'
 import TestActivityItemClassField from './TestActivityItemClassField.vue'
 import activitiesApi from '@/api/activities'
 import activityInstanceClassesApi from '@/api/activityInstanceClasses'
 import codelistsApi from '@/api/controlledTerminology/codelists'
-import termsApi from '@/api/controlledTerminology/terms'
 import activityItemClassesConstants from '@/constants/activityItemClasses'
 import libraryConstants from '@/constants/libraries.js'
 import statuses from '@/constants/statuses.js'
@@ -443,9 +443,7 @@ const activityInstanceClasses = ref([])
 const activities = ref([])
 const activityInstance = ref(null)
 const allowManualEdit = ref(false)
-const dataCategories = ref([])
 const dataDomainCTTermUid = ref(null)
-const dataSubcategories = ref([])
 const datasets = ref([])
 const loadingActivityInstances = ref(false)
 const loadingPreview = ref(false)
@@ -492,6 +490,12 @@ const dataDomains = computed(() => {
     }
   }
   return Array.from(allValues.values())
+})
+
+const selectedActivityName = computed(() => {
+  if (!selectedActivity.value) return ''
+  const parts = selectedActivity.value.split('|')
+  return activities.value.find((item) => item.uid === parts[2]).name
 })
 
 const availableActivityItemClasses = ref([])
@@ -616,12 +620,12 @@ const activitiesHeaders = [
   {
     title: t('ActivityInstanceForm.activity_group'),
     key: 'activity_groupings.0.activity_group_name',
-    filteringName: 'activity_groupings.activity_group_name',
+    externalFilterSource: 'concepts/activities/activity-groups$name',
   },
   {
     title: t('ActivityInstanceForm.activity_subgroup'),
     key: 'activity_groupings.0.activity_subgroup_name',
-    filteringName: 'activity_groupings.activity_subgroup_name',
+    externalFilterSource: 'concepts/activities/activity-sub-groups$name',
   },
   {
     title: t('ActivityInstanceForm.activity_name'),
@@ -667,34 +671,32 @@ function fetchActivities(filters, options, filtersUpdated) {
     }
   }
   if (!params.filters) {
-    params.filters = { status: { v: [statuses.FINAL] } }
+    params.filters = {}
   } else {
-    const newfilters = JSON.parse(params.filters)
-    newfilters.status = { v: [statuses.FINAL] }
-    params.filters = newfilters
+    params.filters = JSON.parse(params.filters)
   }
+  params.filters.status = { v: [statuses.FINAL] }
+  params.filters.library_name = { v: [libraryConstants.LIBRARY_SPONSOR] }
   params.filters.is_data_collected = { v: [true] }
-  if (params.filters['activity_groupings.activity_group_name']) {
+  if (params.filters['activity_groupings.0.activity_group_name']) {
     params.activity_group_names = []
-    params.filters['activity_groupings.activity_group_name'].v.forEach(
+    params.filters['activity_groupings.0.activity_group_name'].v.forEach(
       (value) => {
         params.activity_group_names.push(value)
       }
     )
-    delete params.filters['activity_groupings.activity_group_name']
+    delete params.filters['activity_groupings.0.activity_group_name']
   }
-  if (params.filters['activity_groupings.activity_subgroup_name']) {
+  if (params.filters['activity_groupings.0.activity_subgroup_name']) {
     params.activity_subgroup_names = []
-    params.filters['activity_groupings.activity_subgroup_name'].v.forEach(
+    params.filters['activity_groupings.0.activity_subgroup_name'].v.forEach(
       (value) => {
         params.activity_subgroup_names.push(value)
       }
     )
-    delete params.filters['activity_groupings.activity_subgroup_name']
+    delete params.filters['activity_groupings.0.activity_subgroup_name']
   }
   params.group_by_groupings = false
-  activities.value = []
-  totalActivities.value = 0
   activitiesApi.get(params, 'activities').then((resp) => {
     activities.value = resp.data.items
     totalActivities.value = resp.data.total
@@ -714,7 +716,10 @@ async function fetchActivityItemClasses(activityInstanceClass) {
       const respFiltered =
         await activityInstanceClassesApi.getActivityItemClasses(
           activityInstanceClass.uid,
-          { dataset_uid: step2Form.value.data_domain }
+          {
+            dataset_uid: step2Form.value.data_domain,
+            ig_uid: 'SDTMIG',
+          }
         )
       filteredActivityItemClasses.value = respFiltered.data
     } else {
@@ -1025,20 +1030,6 @@ async function initStep(step) {
     } else if (!step3Form.value.name && !activityInstance.value) {
       // Fallback to original behavior if no required fields selected yet
       await sendPreviewRequest()
-    }
-  } else if (step === 4) {
-    let resp
-    if (categoryAic.value) {
-      resp = await termsApi.getTermsByCodelist('findingCategoryDefinition', {
-        page_size: 0,
-      })
-      dataCategories.value = resp.data.items
-    }
-    if (subcategoryAic.value) {
-      resp = await termsApi.getTermsByCodelist('findingSubCategoryDefinition', {
-        page_size: 0,
-      })
-      dataSubcategories.value = resp.data.items
     }
   }
 }

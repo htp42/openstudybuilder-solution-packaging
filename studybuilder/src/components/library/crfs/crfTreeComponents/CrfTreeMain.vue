@@ -61,14 +61,22 @@
               v-if="isExpanded(internalItem)"
               icon="mdi-chevron-down"
               variant="text"
-              @click="toggleExpand(internalItem)"
+              @click="doubleClick(toggleExpand, internalItem)"
             />
-            <v-btn
+            <v-tooltip
               v-else-if="item.forms.length > 0"
-              icon="mdi-chevron-right"
-              variant="text"
-              @click="toggleExpand(internalItem)"
-            />
+              location="top left"
+              :text="$t('CRFTree.double_click_expand')"
+            >
+              <template #activator="{ props }">
+                <v-btn
+                  v-bind="props"
+                  icon="mdi-chevron-right"
+                  variant="text"
+                  @click="doubleClick(toggleExpand, internalItem)"
+                />
+              </template>
+            </v-tooltip>
             <v-btn v-else variant="text" class="hide" icon />
             <ActionsMenu :actions="actions" :item="item" />
             <span class="ml-2">
@@ -289,6 +297,8 @@ export default {
       totalCollections: 0,
       loading: false,
       selectCollection: {},
+      doubleClickCounter: 0,
+      doubleClickTimer: null,
     }
   },
   computed: {
@@ -310,6 +320,21 @@ export default {
     this.getCollections()
   },
   methods: {
+    doubleClick(toggleExpand, item) {
+      this.doubleClickCounter++
+
+      if (this.doubleClickCounter === 1) {
+        this.doubleClickTimer = setTimeout(() => {
+          toggleExpand(item)
+          this.doubleClickCounter = 0
+          this.expandFormsForCollection = ''
+        }, 500)
+      } else {
+        this.expandAll(item.raw)
+        clearTimeout(this.doubleClickTimer)
+        this.doubleClickCounter = 0
+      }
+    },
     updateCollectionView(collection) {
       if (isEmpty(collection)) {
         this.collections = [...this.collections, ...this.filteredOutCollections]
@@ -528,6 +553,7 @@ export default {
 <style>
 .hide {
   opacity: 0;
+  cursor: default;
 }
 .header {
   background-color: rgb(var(--v-theme-tableGray)) !important;

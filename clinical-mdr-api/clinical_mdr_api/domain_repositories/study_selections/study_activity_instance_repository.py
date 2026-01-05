@@ -227,18 +227,39 @@ class StudySelectionActivityInstanceRepository(
     def _order_by_query(self):
         return """
             WITH DISTINCT *
-            MATCH (sa)<-[:AFTER]-(sac:StudyAction)
+            OPTIONAL MATCH (sa)<-[:AFTER]-(sac_instance:StudyAction)
+            OPTIONAL MATCH (study_activity)<-[:AFTER]-(sac_activity:StudyAction)
+            WITH *, COALESCE(sac_instance, sac_activity) AS sac
         """
 
     def _versioning_query(self) -> str:
         return ""
 
-    def _additional_match(self) -> str:
-        return """
+    def _additional_match(self, **kwargs) -> str:
+        include_placeholders = kwargs.get("include_placeholders", False)
+        # Base query to match study activities and their instances
+        base_query = """
             WITH sr, sv
-            MATCH (sv)-[:HAS_STUDY_ACTIVITY_INSTANCE]->(sa:StudyActivityInstance)
-                <-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_INSTANCE]-(study_activity:StudyActivity)<-[:HAS_STUDY_ACTIVITY]-(sv)
+            MATCH (sv)-[:HAS_STUDY_ACTIVITY]->(study_activity:StudyActivity)
+            WHERE NOT (study_activity)-[:BEFORE]-()
+            OPTIONAL MATCH (study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_INSTANCE]->(sa:StudyActivityInstance)
+                <-[:HAS_STUDY_ACTIVITY_INSTANCE]-(sv)
+            WHERE NOT (sa)-[:BEFORE]-()"""
+
+        if include_placeholders:
+            # Include placeholders: activities from 'Requested' library without a StudyActivityInstance
+            base_query += """
+            WITH sr, sv, sa, study_activity,
+                 head([(study_activity)-[:HAS_SELECTED_ACTIVITY]->(:ActivityValue)<-[:HAS_VERSION]-(:ActivityRoot)<-[:CONTAINS_CONCEPT]-(lib:Library) | lib.name]) as act_library_name
+            WHERE sa IS NOT NULL OR (sa IS NULL AND act_library_name = 'Requested')"""
+        else:
+            # Default: only return items with actual StudyActivityInstance nodes
+            base_query += """
             WITH sr, sv, sa, study_activity
+            WHERE sa IS NOT NULL"""
+
+        # Add the CALL blocks to fetch activity_instance, latest_activity_instance, activity, and baseline_visits
+        base_query += """
             CALL {
                 WITH sa
                 OPTIONAL MATCH (sa)-[:HAS_SELECTED_ACTIVITY_INSTANCE]->(aiv:ActivityInstanceValue)<-[ver:HAS_VERSION]-(air:ActivityInstanceRoot)
@@ -246,7 +267,7 @@ class StudySelectionActivityInstanceRepository(
                 RETURN
                     {
                         uid:air.uid, name: aiv.name, topic_code: aiv.topic_code, adam_param_code:aiv.adam_param_code, version: ver.version, status: ver.status,
-                        is_default_selected_for_activity: coalesce(aiv.is_default_selected_for_activity, false), 
+                        is_default_selected_for_activity: coalesce(aiv.is_default_selected_for_activity, false),
                         is_required_for_activity: coalesce(aiv.is_required_for_activity, false),
                         activity_instance_class: head([(aiv)-[:ACTIVITY_INSTANCE_CLASS]->(activity_instance_class_root:ActivityInstanceClassRoot)-[:LATEST]->(activity_instance_class_value:ActivityInstanceClassValue)
                             | {uid:activity_instance_class_root.uid, name:activity_instance_class_value.name}]),
@@ -285,12 +306,12 @@ class StudySelectionActivityInstanceRepository(
                 WITH study_activity
                 MATCH (study_activity)-[:HAS_SELECTED_ACTIVITY]->(av:ActivityValue)<-[ver:HAS_VERSION]-(ar:ActivityRoot)<-[:CONTAINS_CONCEPT]-(library:Library)
                 WHERE ver.status IN ['Final', 'Retired']
-                RETURN 
+                RETURN
                     {
                         uid:ar.uid, name: av.name, library_name: library.name, is_data_collected: av.is_data_collected,
-                        is_instance_removal_needed: 
-                        CASE WHEN 
-                            size(apoc.coll.toSet([(study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_INSTANCE]->(sai:StudyActivityInstance) 
+                        is_instance_removal_needed:
+                        CASE WHEN
+                            size(apoc.coll.toSet([(study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_INSTANCE]->(sai:StudyActivityInstance)
                                 WHERE NOT (sai)-[:BEFORE]-() AND NOT (sai)-[:AFTER]-(:Delete:StudyAction) | sai.uid])) > 1
                             AND av.is_multiple_selection_allowed = false
                             THEN TRUE
@@ -315,6 +336,7 @@ class StudySelectionActivityInstanceRepository(
             }
             WITH sr, sv, sa, study_activity, activity, activity_instance, latest_activity_instance, collect(baseline_visit) as baseline_visits
         """
+        return base_query
 
     def _filter_clause(self, query_parameters: dict[Any, Any], **kwargs) -> str:
         # Filter on Activity, ActivityGroup or ActivityGroupNames if provided as a specific filter

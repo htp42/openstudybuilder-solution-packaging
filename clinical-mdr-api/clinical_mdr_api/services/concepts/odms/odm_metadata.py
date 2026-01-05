@@ -1,3 +1,4 @@
+from textwrap import dedent
 from typing import Any
 
 from neomodel import db
@@ -54,19 +55,39 @@ def _query(
             where_stmt += f"WHERE NOT n.{key} IN ${key} "
             params[key] = value
 
+    exclude_old = """
+    MATCH (n)<--(value)<-[:LATEST]-(root)
+    WHERE any(
+        label IN labels(value)
+            WHERE label ENDS WITH 'Value'
+    )
+    AND any(
+        label IN labels(root)
+            WHERE NOT label STARTS WITH 'Deleted'
+            AND label ENDS WITH 'Root'
+            AND label <> 'ConceptRoot'
+    )
+    """
+
     results, columns = db.cypher_query(
-        f"""
+        dedent(
+            f"""
         MATCH (n:{node_name})
         {where_stmt}
-        RETURN {', '.join([f'n.{field} AS {field}' for field in fields])}
+        {exclude_old}
+        RETURN DISTINCT {', '.join([f'n.{field} AS {field}' for field in fields])}
         ORDER BY n.{fields[0]}
         SKIP $skip LIMIT $limit
-        """,
+        """
+        ),
         params=params,
     )
 
     total, _ = db.cypher_query(
-        f"MATCH (n:{node_name}) {where_stmt} RETURN COUNT(n) as total", params=params
+        dedent(
+            f"MATCH (n:{node_name}) {where_stmt} {exclude_old} RETURN COUNT(DISTINCT n) as total",
+        ),
+        params=params,
     )
 
     return [get_db_result_as_dict(result, columns) for result in results], total[0][0]

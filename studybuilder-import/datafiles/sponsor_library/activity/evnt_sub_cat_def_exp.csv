@@ -1,8 +1,8 @@
 CODELIST_SUBMVAL,TERM_SUBMVAL,SPONSOR_NAME,SPONSOR_NAME_SENTENCE_CASE,NCI_PREFERRED_NAME,ORDER,CONCEPT_ID,CATALOGUES,DEFINITION
-EVNTSCAT,ACQUIRED EVNT_SUB_CAT,Acquired,,,1,,,Acquired
-EVNTSCAT,ADVERSE EVENT EVNT_SUB_CAT,Adverse event,,,10,,,Adverse Event
-EVNTSCAT,CONGENITAL EVNT_SUB_CAT,Congenital,,,1,,,Congenital
-EVNTSCAT,PREDISPOSING FACTORS EVNT_SUB_CAT,Predisposing Factors,,,1,,,Predisposing Factors
-EVNTSCAT,PREMATURE DISCONTINUATION OF TRIAL PRODUCT EVNT_SUB_CAT,Trial Product Premature Discontinued,,,160,,,Premature discontinuation of trial product
-EVNTSCAT,RUN-IN FAILURE EVNT_SUB_CAT,Run-in Failure,,,1,,,Run-in failure
-EVNTSCAT,SCREENING FAILURE EVNT_SUB_CAT,Screening Failure,,,1,,,Screening Failure
+EVNTSCAT,ACQUIRED,Acquired,,,1,,,Acquired
+EVNTSCAT,ADVERSE EVENT,Adverse event,,,10,,,Adverse Event
+EVNTSCAT,CONGENITAL,Congenital,,,1,,,Congenital
+EVNTSCAT,PREDISPOSING FACTORS,Predisposing Factors,,,1,,,Predisposing Factors
+EVNTSCAT,PREMATURE DISCONTINUATION OF TRIAL PRODUCT,Trial Product Premature Discontinued,,,160,,,Premature discontinuation of trial product
+EVNTSCAT,RUN-IN FAILURE,Run-in Failure,,,1,,,Run-in failure
+EVNTSCAT,SCREENING FAILURE,Screening Failure,,,1,,,Screening Failure

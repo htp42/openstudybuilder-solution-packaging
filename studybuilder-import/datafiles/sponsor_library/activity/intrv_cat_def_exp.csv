@@ -1,40 +1,40 @@
 CODELIST_SUBMVAL,TERM_SUBMVAL,SPONSOR_NAME,SPONSOR_NAME_SENTENCE_CASE,NCI_PREFERRED_NAME,ORDER,CONCEPT_ID,CATALOGUES,DEFINITION
-INTVCAT,24 HOUR URINE COLLECTION INTRV_CAT,24 Hour Urine Collection,,,1,,,24 Hour Urine Collection
-INTVCAT,ADMINISTRATION OF NON-TRIAL PRODUCT INTRV_CAT,Administration of Non-Trial Product,,,10,,,Administration of Non-Trial Product
-INTVCAT,ADMINISTRATION OF TRIAL PRODUCT INTRV_CAT,Administration of Trial Product,,,10,,,"Administration of trial product"
-INTVCAT,ALCOHOL ABUSE INTRV_CAT,Alcohol Abuse,,,1,,,"The use of alcoholic beverages to excess, either on individual occasions (""binge drinking"") or as a regular practice. NCI"
-INTVCAT,ALCOHOL CONSUMPTION INTRV_CAT,Alcohol Consumption,,,1,,,Alcohol Consumption
-INTVCAT,ANTI-DIABETIC TREATMENT INTRV_CAT,Anti-Diabetic Treatment,,,1,,,Anti-Diabetic Treatment
-INTVCAT,BIOLOGICS INTRV_CAT,Biologics,,,20,,,"A biologic medical product, also known as a biological product, or more simply as a biologic or biological, is a medicinal product such as a vaccine, blood or blood component, allergenic, somatic cell, gene therapy, tissue, recombinant therapeutic protein, or living cells that are used as therapeutics to treat diseases.[1] Biologics are created by biologic processes, rather than being chemically synthesized (Wikipedia)."
-INTVCAT,BLOOD TRANSFUSION INTRV_CAT,Blood Transfusion,,,200,,,Blood Transfusion
-INTVCAT,CARBOHYDRATE INTAKE INTRV_CAT,Carbohydrate Intake,,,1,,,Carbohydrate Intake
-INTVCAT,CLAMP TERMINATION INTRV_CAT,Clamp Termination,,,1,,,Clamp Termination
-INTVCAT,CONCOMITANT MEDICATION INTRV_CAT,Concomitant Medication,,,34,,,Concomitant medication
-INTVCAT,DIABETES CONCOMITANT MEDICATION INTRV_CAT,Diabetes Concomitant Medication,,,1,,,"Category to used for the specific drug concomitant medication (diabetes)"
-INTVCAT,DIURETIC CONCOMITANT MEDICATION INTRV_CAT,Diuretic Concomitant Medication,,,1,,,Diuretic concomitant medication
-INTVCAT,DOSE AS REPORTED AS PART OF HYPO INTRV_CAT,Dose as Reported as Part of Hypo,,,1,,,Dose as reported as part of hypoglycaemic episode
-INTVCAT,DRUG ACCOUNTABILITY INTRV_CAT,Drug Accountability,,,46,,,Drug accountability
-INTVCAT,DRUG CONSUMPTION INTRV_CAT,Drug Consumption,,,1,,,Drug Consumption
-INTVCAT,FRUCTOSE AND GLUCOSE CHALLENGE INTRV_CAT,Fructose and Glucose challenge,,,1,,,"Category of Fructose and Glucose challenge - meal test"
-INTVCAT,GASTROINTESTINAL INVESTIGATIONS INTRV_CAT,Gastrointestinal Investigations,,,1,,,The investigations relating to the stomach and the intestines.
-INTVCAT,GENERAL INTRV_CAT,General,,,1,,,"General Category to be used for e.g. the non-drug specific concomittant medication"
-INTVCAT,GROWTH HORMONE CONCOMITANT MEDICATION INTRV_CAT,Growth Hormone Concomitant Medication,,,1,,,"Category to used for the specific drug concomitant medication (Growth hormone)"
-INTVCAT,HAEMOPHILIA CONCOMITANT MEDICATION INTRV_CAT,Haemophilia Concomitant Medication,,,1,,,"Category to used for the specific drug concomitant medication (haemophilia)"
-INTVCAT,HAEMOPHILIA TREATMENT AND BLEED HISTORY INTRV_CAT,Haemophilia Treatment and Bleed History,,,1,,,Haemophilia Treatment and Bleed History
-INTVCAT,HYPOGLYCAEMIC INDUCTION INTRV_CAT,Hypoglycaemic Induction,,,1,,,Hypoglycaemic Induction
-INTVCAT,INSULIN INTRV_CAT,Insulin,,,95,,,Insulin as intervention for compound dosing
-INTVCAT,INSULIN ANALOGUE INTRV_CAT,Insulin Analogue,,,90,,,Insulin Analogue
-INTVCAT,MEAL INTRV_CAT,Meal,,,140,,,Meal category primarily to be used for Procedure Agents data (AG).
-INTVCAT,MEAL TEST INTRV_CAT,Meal Test,,,140,,,"Meal Test"
-INTVCAT,NICOTINE INTRV_CAT,Nicotine Use,,,1,,,"No CDISC: Nicotine is a chemical compound that is present in tobacco and in Nicotine replacement products."
-INTVCAT,OAD INTRV_CAT,Oral Anti-diabetic Drug,,,115,,,OAD: Oral Anti-diabetic Drug
-INTVCAT,ORAL GLUCOSE TOLERANCE TEST INTRV_CAT,Oral Glucose Tolerance Test,,,1,,,Oral Glucose Tolerance Test
-INTVCAT,PAIN MEDICATION INTRV_CAT,Pain Medication,,,1,,,Pain Medication
-INTVCAT,PARKINSONS DISEASE INTRV_CAT,Parkinson's Disease,,,1,,,Parkinson's Disease
-INTVCAT,PREVENTIVE CARBOHYDRATE INTAKE INTRV_CAT,Preventive Carbohydrate Intake,,,170,,,Preventive Carbohydrate Intake
-INTVCAT,RESCUE MEDICATION INTRV_CAT,Rescue Medication,,,1,,,"Rescue medication"
-INTVCAT,SICKLE CELL DISEASE INTRV_CAT,Sickle Cell Disease,,,1,,,Sickle Cell Disease
-INTVCAT,SURGERY INTRV_CAT,Surgery,,,1,,,"Surgery"
-INTVCAT,TOBACCO INTRV_CAT,Tobacco Use,,,1,,,"No CDISC: Tobacco can be smoked in a cigarette, pipe, or cigar. It can be chewed (called smokeless tobacco or chewing tobacco) or sniffed through the nose (called snuff)."
-INTVCAT,VASO OCCLUSIVE CRISIS INTRV_CAT,Vaso Occlusive Crisis,,,1,,,Vaso Occlusive Crisis
-INTVCAT,WASHOUT MEDICATION INTRV_CAT,Washout Medication,,,1,,,Washout Medication
+INTVCAT,24 HOUR URINE COLLECTION,24 Hour Urine Collection,,,1,,,24 Hour Urine Collection
+INTVCAT,ADMINISTRATION OF NON-TRIAL PRODUCT,Administration of Non-Trial Product,,,10,,,Administration of Non-Trial Product
+INTVCAT,ADMINISTRATION OF TRIAL PRODUCT,Administration of Trial Product,,,10,,,"Administration of trial product"
+INTVCAT,ALCOHOL ABUSE,Alcohol Abuse,,,1,,,"The use of alcoholic beverages to excess, either on individual occasions (""binge drinking"") or as a regular practice. NCI"
+INTVCAT,ALCOHOL CONSUMPTION,Alcohol Consumption,,,1,,,Alcohol Consumption
+INTVCAT,ANTI-DIABETIC TREATMENT,Anti-Diabetic Treatment,,,1,,,Anti-Diabetic Treatment
+INTVCAT,BIOLOGICS,Biologics,,,20,,,"A biologic medical product, also known as a biological product, or more simply as a biologic or biological, is a medicinal product such as a vaccine, blood or blood component, allergenic, somatic cell, gene therapy, tissue, recombinant therapeutic protein, or living cells that are used as therapeutics to treat diseases.[1] Biologics are created by biologic processes, rather than being chemically synthesized (Wikipedia)."
+INTVCAT,BLOOD TRANSFUSION,Blood Transfusion,,,200,,,Blood Transfusion
+INTVCAT,CARBOHYDRATE INTAKE,Carbohydrate Intake,,,1,,,Carbohydrate Intake
+INTVCAT,CLAMP TERMINATION,Clamp Termination,,,1,,,Clamp Termination
+INTVCAT,CONCOMITANT MEDICATION,Concomitant Medication,,,34,,,Concomitant medication
+INTVCAT,DIABETES CONCOMITANT MEDICATION,Diabetes Concomitant Medication,,,1,,,"Category to used for the specific drug concomitant medication (diabetes)"
+INTVCAT,DIURETIC CONCOMITANT MEDICATION,Diuretic Concomitant Medication,,,1,,,Diuretic concomitant medication
+INTVCAT,DOSE AS REPORTED AS PART OF HYPO,Dose as Reported as Part of Hypo,,,1,,,Dose as reported as part of hypoglycaemic episode
+INTVCAT,DRUG ACCOUNTABILITY,Drug Accountability,,,46,,,Drug accountability
+INTVCAT,DRUG CONSUMPTION,Drug Consumption,,,1,,,Drug Consumption
+INTVCAT,FRUCTOSE AND GLUCOSE CHALLENGE,Fructose and Glucose challenge,,,1,,,"Category of Fructose and Glucose challenge - meal test"
+INTVCAT,GASTROINTESTINAL INVESTIGATIONS,Gastrointestinal Investigations,,,1,,,The investigations relating to the stomach and the intestines.
+INTVCAT,GENERAL,General,,,1,,,"General Category to be used for e.g. the non-drug specific concomittant medication"
+INTVCAT,GROWTH HORMONE CONCOMITANT MEDICATION,Growth Hormone Concomitant Medication,,,1,,,"Category to used for the specific drug concomitant medication (Growth hormone)"
+INTVCAT,HAEMOPHILIA CONCOMITANT MEDICATION,Haemophilia Concomitant Medication,,,1,,,"Category to used for the specific drug concomitant medication (haemophilia)"
+INTVCAT,HAEMOPHILIA TREATMENT AND BLEED HISTORY,Haemophilia Treatment and Bleed History,,,1,,,Haemophilia Treatment and Bleed History
+INTVCAT,HYPOGLYCAEMIC INDUCTION,Hypoglycaemic Induction,,,1,,,Hypoglycaemic Induction
+INTVCAT,INSULIN,Insulin,,,95,,,Insulin as intervention for compound dosing
+INTVCAT,INSULIN ANALOGUE,Insulin Analogue,,,90,,,Insulin Analogue
+INTVCAT,MEAL,Meal,,,140,,,Meal category primarily to be used for Procedure Agents data (AG).
+INTVCAT,MEAL TEST,Meal Test,,,140,,,"Meal Test"
+INTVCAT,NICOTINE,Nicotine Use,,,1,,,"No CDISC: Nicotine is a chemical compound that is present in tobacco and in Nicotine replacement products."
+INTVCAT,OAD,Oral Anti-diabetic Drug,,,115,,,OAD: Oral Anti-diabetic Drug
+INTVCAT,ORAL GLUCOSE TOLERANCE TEST,Oral Glucose Tolerance Test,,,1,,,Oral Glucose Tolerance Test
+INTVCAT,PAIN MEDICATION,Pain Medication,,,1,,,Pain Medication
+INTVCAT,PARKINSONS DISEASE,Parkinson's Disease,,,1,,,Parkinson's Disease
+INTVCAT,PREVENTIVE CARBOHYDRATE INTAKE,Preventive Carbohydrate Intake,,,170,,,Preventive Carbohydrate Intake
+INTVCAT,RESCUE MEDICATION,Rescue Medication,,,1,,,"Rescue medication"
+INTVCAT,SICKLE CELL DISEASE,Sickle Cell Disease,,,1,,,Sickle Cell Disease
+INTVCAT,SURGERY,Surgery,,,1,,,"Surgery"
+INTVCAT,TOBACCO,Tobacco Use,,,1,,,"No CDISC: Tobacco can be smoked in a cigarette, pipe, or cigar. It can be chewed (called smokeless tobacco or chewing tobacco) or sniffed through the nose (called snuff)."
+INTVCAT,VASO OCCLUSIVE CRISIS,Vaso Occlusive Crisis,,,1,,,Vaso Occlusive Crisis
+INTVCAT,WASHOUT MEDICATION,Washout Medication,,,1,,,Washout Medication

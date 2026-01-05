@@ -386,7 +386,11 @@ export default {
               }
             }
             currentSubGroup = index
-          } else if (row.cells[0].style === 'activity') {
+          } else if (
+            row.cells[0].style === 'activity' ||
+            row.cells[0].style === 'activityPlaceholder' ||
+            row.cells[0].style === 'activityPlaceholderSubmitted'
+          ) {
             if (!keepDisplayState) {
               this.rowsDisplayState[key] = {
                 value: false,
@@ -416,6 +420,12 @@ export default {
       if (cell.style === 'activity') {
         return 'activity'
       }
+      if (
+        cell.style === 'activityPlaceholder' ||
+        cell.style === 'activityPlaceholderSubmitted'
+      ) {
+        return 'activity'
+      }
       return 'activityInstance'
     },
     getSoaRowClasses(row) {
@@ -425,6 +435,12 @@ export default {
         }
         if (row.cells[0].style === 'group') {
           return 'group'
+        }
+        if (row.cells[0].style === 'activityPlaceholder') {
+          return 'bg-warning'
+        }
+        if (row.cells[0].style === 'activityPlaceholderSubmitted') {
+          return 'bg-yellow'
         }
       }
       return ''

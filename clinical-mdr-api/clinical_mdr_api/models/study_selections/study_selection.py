@@ -337,6 +337,19 @@ class StudySelectionDataSupplierInput(PostInputModel):
     study_data_supplier_type_uid: Annotated[str | None, Field()] = None
 
 
+class StudySelectionDataSupplierSyncInput(BaseModel):
+    """Input model for syncing study data suppliers.
+
+    Accepts a list of data suppliers to set for the study.
+    The API will validate all items, then create/delete as needed.
+    """
+
+    suppliers: Annotated[
+        list[StudySelectionDataSupplierInput],
+        Field(description="List of data suppliers to sync"),
+    ]
+
+
 class StudySelectionDataSupplierNewOrder(PatchInputModel):
     new_order: Annotated[int, Field(gt=0, lt=settings.max_int_neo4j)]
 
@@ -414,7 +427,7 @@ class StudySelectionObjectiveCore(StudySelection):
             objective_level = None
 
         if study_selection_history.objective_uid is None:
-            raise BusinessLogicException("Objective UID must be provided")
+            raise BusinessLogicException(msg="Objective UID must be provided")
 
         return cls(
             study_objective_uid=study_selection_history.study_selection_uid,
@@ -2563,6 +2576,10 @@ class CompactActivity(BaseModel):
     is_data_collected: Annotated[
         bool, Field(description="Specifies if Activity is meant for data collection")
     ]
+    is_request_final: Annotated[
+        bool,
+        Field(description="Specifies if the activity request has been submitted"),
+    ] = False
 
     @classmethod
     def activity_from_study_activity_instance_vo(
@@ -3153,12 +3170,12 @@ class StudyActivitySchedule(BaseModel):
     ) -> Self:
         if not schedule_vo.uid:
             raise BusinessLogicException(
-                "Study UID is required to create a StudyActivitySchedule instance."
+                msg="Study UID is required to create a StudyActivitySchedule instance."
             )
 
         if not schedule_vo.study_visit_uid:
             raise BusinessLogicException(
-                "Study visit UID is required to create a StudyActivitySchedule instance."
+                msg="Study visit UID is required to create a StudyActivitySchedule instance."
             )
 
         return cls(

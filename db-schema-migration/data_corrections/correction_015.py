@@ -46,8 +46,8 @@ def change_visit_window_unit_from_weeks_to_days_study_000137(db_driver, log, run
     ### Expected changes: 13 relationships removed and 13 relationships created.
     """
     log.info(
-            f"Run: {run_label}, Changing weeks visit window unit to days for all StudyVisits in Study_000137"
-        )
+        f"Run: {run_label}, Changing weeks visit window unit to days for all StudyVisits in Study_000137"
+    )
     query = """
     MATCH (days_root:UnitDefinitionRoot)-[:LATEST_FINAL]->(days_value:UnitDefinitionValue {name: 'days'})
     RETURN days_root.uid

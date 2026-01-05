@@ -307,6 +307,7 @@ function footnoteUpdateAborted(item) {
 function closeEditForm() {
   showEditForm.value = false
   selectedFootnote.value = null
+  table.value.filterTable()
 }
 
 function closeHistory() {

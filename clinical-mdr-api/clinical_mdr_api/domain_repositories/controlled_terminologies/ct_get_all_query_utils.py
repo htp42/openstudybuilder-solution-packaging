@@ -259,7 +259,7 @@ def create_term_codelist_vos_from_cypher_result(term_dict: dict[str, Any]) -> CT
             codelist_uid=cl["codelist_uid"],
             submission_value=cl["submission_value"],
             order=cl["order"],
-            library_name=cl["library"],
+            library_name=cl["library_name"],
             codelist_name=cl["codelist_name"],
             codelist_submission_value=cl["codelist_submission_value"],
             codelist_concept_id=cl["codelist_concept_id"],

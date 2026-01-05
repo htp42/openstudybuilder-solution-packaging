@@ -15,21 +15,24 @@
     export-data-url="activity-instance-classes"
     column-data-resource="activity-instance-classes"
     :modifiable-table="false"
+    class="fixed-layout"
   >
     <template #bottom />
     <template #item="{ item, internalItem, toggleExpand, isExpanded }">
       <tr class="level0">
-        <td width="5%" class="v-data-table__td">
+        <td class="cell-expand v-data-table__td">
           <v-btn
             v-if="isExpanded(internalItem)"
             icon="mdi-chevron-down"
             variant="text"
+            size="small"
             @click="toggleExpand(internalItem)"
           />
           <v-btn
             v-else
             icon="mdi-chevron-right"
             variant="text"
+            size="small"
             @click="toggleExpand(internalItem)"
           />
         </td>
@@ -50,22 +53,25 @@
             item-value="uid"
             show-expand
             :search="topTable.search"
+            class="fixed-layout"
           >
             <template #headers />
             <template #bottom />
             <template #item="{ item, internalItem, toggleExpand, isExpanded }">
               <tr class="level1">
-                <td width="5%" class="v-data-table__td">
+                <td class="v-data-table__td cell-expand">
                   <v-btn
                     v-if="isExpanded(internalItem)"
                     icon="mdi-chevron-down"
                     variant="text"
+                    size="small"
                     @click="toggleExpand(internalItem)"
                   />
                   <v-btn
                     v-else
                     icon="mdi-chevron-right"
                     variant="text"
+                    size="small"
                     @click="toggleExpand(internalItem)"
                   />
                 </td>
@@ -88,6 +94,7 @@
                     :items="getItemsForLevel(2, item.uid)"
                     item-value="uid"
                     show-expand
+                    class="fixed-layout"
                   >
                     <template #headers />
                     <template #bottom />
@@ -95,17 +102,19 @@
                       #item="{ item, internalItem, toggleExpand, isExpanded }"
                     >
                       <tr class="level2">
-                        <td width="5%" class="v-data-table__td">
+                        <td class="v-data-table__td cell-expand">
                           <v-btn
                             v-if="isExpanded(internalItem)"
                             icon="mdi-chevron-down"
                             variant="text"
+                            size="small"
                             @click="toggleExpand(internalItem)"
                           />
                           <v-btn
                             v-else
                             icon="mdi-chevron-right"
                             variant="text"
+                            size="small"
                             @click="toggleExpand(internalItem)"
                           />
                         </td>
@@ -130,6 +139,7 @@
                             :headers="headers"
                             :items="getItemsForLevel(3, item.uid)"
                             :show-expand="false"
+                            class="fixed-layout"
                           >
                             <template #headers />
                             <template #bottom />
@@ -219,51 +229,69 @@ const getRouteForItem = (item) => {
 }
 
 const headers = [
-  { key: 'data-table-expand', width: '5%', sortable: false },
+  {
+    key: 'data-table-expand',
+    sortable: false,
+    cellProps: { class: 'cell-expand' },
+    headerProps: { class: 'cell-expand' },
+  },
   {
     key: 'name',
     title: t('_global.name'),
-    width: '15%',
+    cellProps: { class: 'cell-name' },
+    headerProps: { class: 'cell-name' },
     align: 'start',
     sortable: false,
   },
   {
     key: 'definition',
     title: t('_global.definition'),
-    width: '20%',
+    cellProps: { class: 'cell-definition' },
+    headerProps: { class: 'cell-definition' },
     sortable: false,
   },
   {
     key: 'is_domain_specific',
     title: t('ActivityInstanceClassTable.domain_specific'),
-    width: '10%',
+    cellProps: { class: 'cell-common' },
+    headerProps: { class: 'cell-common' },
     sortable: false,
   },
   {
     key: 'library_name',
     title: t('_global.library'),
-    width: '10%',
+    cellProps: { class: 'cell-common' },
+    headerProps: { class: 'cell-common' },
     sortable: false,
   },
   {
     key: 'start_date',
     title: t('_global.modified'),
-    width: '10%',
+    cellProps: { class: 'cell-common' },
+    headerProps: { class: 'cell-common' },
     sortable: false,
   },
   {
     key: 'author_username',
     title: t('_global.modified_by'),
-    width: '10%',
+    cellProps: { class: 'cell-common' },
+    headerProps: { class: 'cell-common' },
     sortable: false,
   },
   {
     key: 'version',
     title: t('_global.version'),
-    width: '10%',
+    cellProps: { class: 'cell-common' },
+    headerProps: { class: 'cell-common' },
     sortable: false,
   },
-  { key: 'status', title: t('_global.status'), width: '10%', sortable: false },
+  {
+    key: 'status',
+    title: t('_global.status'),
+    cellProps: { class: 'cell-common' },
+    headerProps: { class: 'cell-common' },
+    sortable: false,
+  },
 ]
 
 const fetchAuditTrail = async (options) => {
@@ -284,5 +312,21 @@ items.value = resp.data.items
 }
 .level2 {
   background-color: rgb(var(--v-theme-nnSeaBlue200));
+}
+.fixed-layout table {
+  table-layout: fixed;
+  width: 100%;
+}
+.cell-expand {
+  width: 5% !important;
+}
+.cell-name {
+  width: 15%;
+}
+.cell-definition {
+  width: 20%;
+}
+.cell-common {
+  width: 10%;
 }
 </style>

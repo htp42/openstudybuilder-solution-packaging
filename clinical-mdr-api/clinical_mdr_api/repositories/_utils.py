@@ -22,7 +22,10 @@ from clinical_mdr_api.models.concepts.odms.odm_common_models import (
     OdmAliasModel,
     OdmDescriptionModel,
 )
-from clinical_mdr_api.models.controlled_terminologies.ct_term import SimpleTermModel
+from clinical_mdr_api.models.controlled_terminologies.ct_term import (
+    SimpleDictionaryTermModel,
+    SimpleTermModel,
+)
 from clinical_mdr_api.models.standard_data_models.sponsor_model import SponsorModelBase
 from common.exceptions import ValidationException
 from common.utils import (
@@ -846,6 +849,33 @@ class CypherQueryBuilder:
                                             # if field is an array of SimpleTermModels
                                             _predicates.append(
                                                 f"$wildcard_{index} IN [attr in {attribute} | toLower(attr.name)]"
+                                            )
+                                    # Wildcard filtering for SimpleDictionaryTermModel
+                                    elif (
+                                        get_field_type(attr_desc.annotation)
+                                        is SimpleDictionaryTermModel
+                                    ):
+                                        # name=$name_0 with name_0 defined in parameter objects
+                                        if self.format_filter_sort_keys:
+                                            attribute = self.format_filter_sort_keys(
+                                                attribute
+                                            )
+                                        if get_sub_fields(attr_desc) is None:
+                                            # if field is just SimpleDictionaryTermModel compare wildcard filter
+                                            # with `name` or `dictionary_id` property of SimpleDictionaryTermModel
+                                            _predicates.append(
+                                                f"toLower({attribute}.name){_parsed_operator}$wildcard_{index}"
+                                            )
+                                            _predicates.append(
+                                                f"toLower({attribute}.dictionary_id){_parsed_operator}$wildcard_{index}"
+                                            )
+                                        else:
+                                            # if field is an array of SimpleDictionaryTermModel
+                                            _predicates.append(
+                                                f"$wildcard_{index} IN [attr in {attribute} | toLower(attr.name)]"
+                                            )
+                                            _predicates.append(
+                                                f"$wildcard_{index} IN [attr in {attribute} | toLower(attr.dictionary_id)]"
                                             )
                                     elif (
                                         get_field_type(attr_desc.annotation)

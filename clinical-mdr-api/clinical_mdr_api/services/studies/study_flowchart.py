@@ -117,6 +117,10 @@ DOCX_STYLES = {
     "group": ("Table lvl 2", WD_STYLE_TYPE.PARAGRAPH),
     "subGroup": ("Table lvl 3", WD_STYLE_TYPE.PARAGRAPH),
     "activity": ("Table lvl 4", WD_STYLE_TYPE.PARAGRAPH),
+    "activityRequest": ("Table lvl 4", WD_STYLE_TYPE.PARAGRAPH),
+    "activityRequestFinal": ("Table lvl 4", WD_STYLE_TYPE.PARAGRAPH),
+    "activityPlaceholder": ("Table lvl 4", WD_STYLE_TYPE.PARAGRAPH),
+    "activityPlaceholderSubmitted": ("Table lvl 4", WD_STYLE_TYPE.PARAGRAPH),
     "activityInstance": ("Table lvl 4", WD_STYLE_TYPE.PARAGRAPH),
     "cell": ("Table Text", WD_STYLE_TYPE.PARAGRAPH),
     "footnote": ("Table Text", WD_STYLE_TYPE.PARAGRAPH),
@@ -132,6 +136,10 @@ OPERATIONAL_DOCX_STYLES = {
     "group": ("ActivityGroup", WD_STYLE_TYPE.PARAGRAPH),
     "subGroup": ("ActivitySubGroup", WD_STYLE_TYPE.PARAGRAPH),
     "activity": ("Table cell", WD_STYLE_TYPE.PARAGRAPH),
+    "activityRequest": ("Table cell", WD_STYLE_TYPE.PARAGRAPH),
+    "activityRequestFinal": ("Table cell", WD_STYLE_TYPE.PARAGRAPH),
+    "activityPlaceholder": ("Table cell", WD_STYLE_TYPE.PARAGRAPH),
+    "activityPlaceholderSubmitted": ("Table cell", WD_STYLE_TYPE.PARAGRAPH),
     "activityInstance": ("Table cell", WD_STYLE_TYPE.PARAGRAPH),
     "cell": ("Table cell", WD_STYLE_TYPE.PARAGRAPH),
     "activitySchedule": ("Table cell", WD_STYLE_TYPE.PARAGRAPH),
@@ -152,6 +160,10 @@ OPERATIONAL_XLSX_STYLES = {
     "group": "Heading 4",
     "subGroup": "Heading 4",
     "activity": "Heading 4",
+    "activityRequest": "Heading 4",
+    "activityRequestFinal": "Heading 4",
+    "activityPlaceholder": "Heading 4",
+    "activityPlaceholderSubmitted": "Heading 4",
     "topicCode": "Heading 4",
     "adamCode": "Heading 4",
     None: "Normal",
@@ -1726,9 +1738,24 @@ class StudyFlowchartService:
             StudySelectionActivity | StudySelectionActivityInstance
         ),
     ) -> TableCell:
+        is_placeholder = (
+            study_selection_activity.activity.library_name
+            == settings.requested_library_name
+        )
+        if is_placeholder:
+            is_submitted = getattr(
+                study_selection_activity.activity, "is_request_final", False
+            )
+            style = (
+                "activityPlaceholderSubmitted"
+                if is_submitted
+                else "activityPlaceholder"
+            )
+        else:
+            style = "activity"
         return TableCell(
             study_selection_activity.activity.name,
-            style="activity",
+            style=style,
             refs=[
                 Ref(
                     type_=SoAItemType.STUDY_ACTIVITY.value,

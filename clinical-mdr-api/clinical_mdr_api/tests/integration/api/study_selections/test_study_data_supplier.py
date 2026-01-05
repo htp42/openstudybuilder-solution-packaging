@@ -215,85 +215,124 @@ def test_get_empty_list_of_study_data_suppliers_of_specific_study(api_client):
 
 
 def test_create_data_supplier_of_specific_study(api_client):
-    response = api_client.post(
-        f"studies/{study.uid}/study-data-suppliers",
+    # First sync: add one supplier with explicit type
+    response = api_client.put(
+        f"studies/{study.uid}/study-data-suppliers/sync",
         json={
-            "data_supplier_uid": data_suppliers[0].uid,
-            "study_data_supplier_type_uid": None,
+            "suppliers": [
+                {
+                    "data_supplier_uid": data_suppliers[0].uid,
+                    "study_data_supplier_type_uid": supplier_type.term_uid,
+                },
+            ]
         },
     )
 
-    assert_response_status_code(response, 201)
+    assert_response_status_code(response, 200)
     rs = response.json()
-    assert rs["study_uid"] == study.uid
-    assert rs["study_version"] is None
-    assert rs["study_data_supplier_uid"] == "StudyDataSupplier_000001"
-    assert rs["study_data_supplier_order"] == 1
-    assert rs["data_supplier_uid"] == data_suppliers[0].uid
-    assert rs["name"] == data_suppliers[0].name
-    assert rs["description"] == data_suppliers[0].description
-    assert rs["order"] == data_suppliers[0].order
-    assert rs["api_base_url"] == data_suppliers[0].api_base_url
-    assert rs["ui_base_url"] == data_suppliers[0].ui_base_url
-    assert rs["study_data_supplier_type"]["term_uid"] == supplier_type.term_uid
-    assert rs["start_date"] is not None
-    assert rs["author_username"] == "unknown-user"
-    assert rs["end_date"] is None
-    assert rs["change_type"] == "Create"
+    assert len(rs) == 1
+    assert rs[0]["study_uid"] == study.uid
+    assert rs[0]["study_version"] is None
+    assert rs[0]["study_data_supplier_uid"] == "StudyDataSupplier_000001"
+    assert rs[0]["study_data_supplier_order"] == 1
+    assert rs[0]["data_supplier_uid"] == data_suppliers[0].uid
+    assert rs[0]["name"] == data_suppliers[0].name
+    assert rs[0]["description"] == data_suppliers[0].description
+    assert rs[0]["order"] == data_suppliers[0].order
+    assert rs[0]["api_base_url"] == data_suppliers[0].api_base_url
+    assert rs[0]["ui_base_url"] == data_suppliers[0].ui_base_url
+    assert rs[0]["study_data_supplier_type"]["term_uid"] == supplier_type.term_uid
+    assert rs[0]["start_date"] is not None
+    assert rs[0]["author_username"] == "unknown-user"
+    assert rs[0]["end_date"] is None
+    assert rs[0]["change_type"] == "Create"
 
-    response = api_client.post(
-        f"studies/{study.uid}/study-data-suppliers",
+    # Second sync: add another supplier with different type (keep existing one)
+    response = api_client.put(
+        f"studies/{study.uid}/study-data-suppliers/sync",
         json={
-            "data_supplier_uid": data_suppliers[0].uid,
-            "study_data_supplier_type_uid": supplier_type2.term_uid,
+            "suppliers": [
+                {
+                    "data_supplier_uid": data_suppliers[0].uid,
+                    "study_data_supplier_type_uid": supplier_type.term_uid,
+                },
+                {
+                    "data_supplier_uid": data_suppliers[0].uid,
+                    "study_data_supplier_type_uid": supplier_type2.term_uid,
+                },
+            ]
         },
     )
 
-    assert_response_status_code(response, 201)
+    assert_response_status_code(response, 200)
     rs = response.json()
-    assert rs["study_uid"] == study.uid
-    assert rs["study_version"] is None
-    assert rs["study_data_supplier_uid"] == "StudyDataSupplier_000002"
-    assert rs["study_data_supplier_order"] == 2
-    assert rs["data_supplier_uid"] == data_suppliers[0].uid
-    assert rs["name"] == data_suppliers[0].name
-    assert rs["description"] == data_suppliers[0].description
-    assert rs["order"] == data_suppliers[0].order
-    assert rs["api_base_url"] == data_suppliers[0].api_base_url
-    assert rs["ui_base_url"] == data_suppliers[0].ui_base_url
-    assert rs["study_data_supplier_type"]["term_uid"] == supplier_type2.term_uid
-    assert rs["start_date"] is not None
-    assert rs["author_username"] == "unknown-user"
-    assert rs["end_date"] is None
-    assert rs["change_type"] == "Create"
+    assert len(rs) == 2
+    # Find the newly created item (with supplier_type2)
+    new_item = next(
+        item
+        for item in rs
+        if item["study_data_supplier_type"]["term_uid"] == supplier_type2.term_uid
+    )
+    assert new_item["study_uid"] == study.uid
+    assert new_item["study_version"] is None
+    assert new_item["study_data_supplier_uid"] == "StudyDataSupplier_000002"
+    assert new_item["study_data_supplier_order"] == 2
+    assert new_item["data_supplier_uid"] == data_suppliers[0].uid
+    assert new_item["name"] == data_suppliers[0].name
+    assert new_item["description"] == data_suppliers[0].description
+    assert new_item["order"] == data_suppliers[0].order
+    assert new_item["api_base_url"] == data_suppliers[0].api_base_url
+    assert new_item["ui_base_url"] == data_suppliers[0].ui_base_url
+    assert new_item["start_date"] is not None
+    assert new_item["author_username"] == "unknown-user"
+    assert new_item["end_date"] is None
+    assert new_item["change_type"] == "Create"
 
 
 def test_delete_data_supplier_of_specific_study(api_client):
-    response = api_client.post(
-        f"studies/{study.uid}/study-data-suppliers",
+    # Sync to add a third supplier (keeping existing two)
+    response = api_client.put(
+        f"studies/{study.uid}/study-data-suppliers/sync",
         json={
-            "data_supplier_uid": data_suppliers[0].uid,
-            "study_data_supplier_type_uid": None,
+            "suppliers": [
+                {
+                    "data_supplier_uid": data_suppliers[0].uid,
+                    "study_data_supplier_type_uid": supplier_type.term_uid,
+                },
+                {
+                    "data_supplier_uid": data_suppliers[0].uid,
+                    "study_data_supplier_type_uid": supplier_type2.term_uid,
+                },
+                {
+                    "data_supplier_uid": data_suppliers[1].uid,
+                    "study_data_supplier_type_uid": supplier_type.term_uid,
+                },
+            ]
         },
     )
 
-    assert_response_status_code(response, 201)
+    assert_response_status_code(response, 200)
     rs = response.json()
-    assert rs["study_uid"] == study.uid
-    assert rs["study_version"] is None
-    assert rs["study_data_supplier_uid"] == "StudyDataSupplier_000003"
-    assert rs["study_data_supplier_order"] == 3
-    assert rs["data_supplier_uid"] == data_suppliers[0].uid
-    assert rs["name"] == data_suppliers[0].name
-    assert rs["description"] == data_suppliers[0].description
-    assert rs["order"] == data_suppliers[0].order
-    assert rs["api_base_url"] == data_suppliers[0].api_base_url
-    assert rs["ui_base_url"] == data_suppliers[0].ui_base_url
-    assert rs["study_data_supplier_type"]["term_uid"] == supplier_type.term_uid
-    assert rs["start_date"] is not None
-    assert rs["author_username"] == "unknown-user"
-    assert rs["end_date"] is None
-    assert rs["change_type"] == "Create"
+    assert len(rs) == 3
+    # Find the newly created item (data_suppliers[1])
+    new_item = next(
+        item for item in rs if item["data_supplier_uid"] == data_suppliers[1].uid
+    )
+    assert new_item["study_uid"] == study.uid
+    assert new_item["study_version"] is None
+    assert new_item["study_data_supplier_uid"] == "StudyDataSupplier_000003"
+    assert new_item["study_data_supplier_order"] == 3
+    assert new_item["data_supplier_uid"] == data_suppliers[1].uid
+    assert new_item["name"] == data_suppliers[1].name
+    assert new_item["description"] == data_suppliers[1].description
+    assert new_item["order"] == data_suppliers[1].order
+    assert new_item["api_base_url"] == data_suppliers[1].api_base_url
+    assert new_item["ui_base_url"] == data_suppliers[1].ui_base_url
+    assert new_item["study_data_supplier_type"]["term_uid"] == supplier_type.term_uid
+    assert new_item["start_date"] is not None
+    assert new_item["author_username"] == "unknown-user"
+    assert new_item["end_date"] is None
+    assert new_item["change_type"] == "Create"
 
     response = api_client.delete(
         f"studies/{study.uid}/study-data-suppliers/StudyDataSupplier_000003"
@@ -358,16 +397,17 @@ def test_get_audit_trail_of_study_data_suppliers_of_specific_study(api_client):
 
     assert_response_status_code(response, 200)
     rs = response.json()
+    # StudyDataSupplier_000003 was created with data_suppliers[1] then deleted
     assert rs[0]["study_uid"] == study.uid
     assert rs[0]["study_version"] is None
     assert rs[0]["study_data_supplier_uid"] == "StudyDataSupplier_000003"
     assert rs[0]["study_data_supplier_order"] == 3
-    assert rs[0]["data_supplier_uid"] == data_suppliers[0].uid
-    assert rs[0]["name"] == data_suppliers[0].name
-    assert rs[0]["description"] == data_suppliers[0].description
-    assert rs[0]["order"] == data_suppliers[0].order
-    assert rs[0]["api_base_url"] == data_suppliers[0].api_base_url
-    assert rs[0]["ui_base_url"] == data_suppliers[0].ui_base_url
+    assert rs[0]["data_supplier_uid"] == data_suppliers[1].uid
+    assert rs[0]["name"] == data_suppliers[1].name
+    assert rs[0]["description"] == data_suppliers[1].description
+    assert rs[0]["order"] == data_suppliers[1].order
+    assert rs[0]["api_base_url"] == data_suppliers[1].api_base_url
+    assert rs[0]["ui_base_url"] == data_suppliers[1].ui_base_url
     assert rs[0]["study_data_supplier_type"]["term_uid"] == supplier_type.term_uid
     assert rs[0]["start_date"] is not None
     assert rs[0]["author_username"] == "unknown-user"
@@ -378,12 +418,12 @@ def test_get_audit_trail_of_study_data_suppliers_of_specific_study(api_client):
     assert rs[1]["study_version"] is None
     assert rs[1]["study_data_supplier_uid"] == "StudyDataSupplier_000003"
     assert rs[1]["study_data_supplier_order"] == 3
-    assert rs[1]["data_supplier_uid"] == data_suppliers[0].uid
-    assert rs[1]["name"] == data_suppliers[0].name
-    assert rs[1]["description"] == data_suppliers[0].description
-    assert rs[1]["order"] == data_suppliers[0].order
-    assert rs[1]["api_base_url"] == data_suppliers[0].api_base_url
-    assert rs[1]["ui_base_url"] == data_suppliers[0].ui_base_url
+    assert rs[1]["data_supplier_uid"] == data_suppliers[1].uid
+    assert rs[1]["name"] == data_suppliers[1].name
+    assert rs[1]["description"] == data_suppliers[1].description
+    assert rs[1]["order"] == data_suppliers[1].order
+    assert rs[1]["api_base_url"] == data_suppliers[1].api_base_url
+    assert rs[1]["ui_base_url"] == data_suppliers[1].ui_base_url
     assert rs[1]["study_data_supplier_type"]["term_uid"] == supplier_type.term_uid
     assert rs[1]["start_date"] is not None
     assert rs[1]["author_username"] == "unknown-user"
@@ -697,15 +737,37 @@ def test_study_data_supplier_type_version_selecting_ct_package(api_client):
     response = api_client.post(f"/ct/terms/{supplier_type.term_uid}/names/approvals")
     assert_response_status_code(response, 201)
 
-    response = api_client.post(
-        f"/studies/{study.uid}/study-data-suppliers",
-        json={
+    # Get current suppliers first
+    current_response = api_client.get(f"studies/{study.uid}/study-data-suppliers")
+    current_suppliers = [
+        {
+            "data_supplier_uid": item["data_supplier_uid"],
+            "study_data_supplier_type_uid": item["study_data_supplier_type"][
+                "term_uid"
+            ],
+        }
+        for item in current_response.json()["items"]
+    ]
+    # Add the new supplier
+    current_suppliers.append(
+        {
             "data_supplier_uid": data_suppliers[0].uid,
             "study_data_supplier_type_uid": supplier_type.term_uid,
-        },
+        }
     )
-    res = response.json()
-    assert_response_status_code(response, 201)
+    response = api_client.put(
+        f"/studies/{study.uid}/study-data-suppliers/sync",
+        json={"suppliers": current_suppliers},
+    )
+    assert_response_status_code(response, 200)
+    res_list = response.json()
+    # Find the newly created item (with supplier_type)
+    res = next(
+        item
+        for item in res_list
+        if item["study_data_supplier_type"]["term_uid"] == supplier_type.term_uid
+        and item["change_type"] == "Create"
+    )
     assert res["study_data_supplier_type"]["term_name"] == new_ctterm_name
     study_selection_uid_study_standard_test = res["study_data_supplier_uid"]
 
@@ -775,16 +837,33 @@ def test_study_data_supplier_type_version_selecting_ct_package(api_client):
 
 
 def test_reordering_after_deleting_data_supplier_of_specific_study(api_client):
-    response = api_client.post(
-        f"studies/{study.uid}/study-data-suppliers",
-        json={
+    # Get current suppliers first
+    current_response = api_client.get(f"studies/{study.uid}/study-data-suppliers")
+    current_suppliers = [
+        {
+            "data_supplier_uid": item["data_supplier_uid"],
+            "study_data_supplier_type_uid": item["study_data_supplier_type"][
+                "term_uid"
+            ],
+        }
+        for item in current_response.json()["items"]
+    ]
+    # Add the new supplier
+    current_suppliers.append(
+        {
             "data_supplier_uid": data_suppliers[0].uid,
             "study_data_supplier_type_uid": None,
-        },
+        }
+    )
+    response = api_client.put(
+        f"studies/{study.uid}/study-data-suppliers/sync",
+        json={"suppliers": current_suppliers},
     )
 
-    assert_response_status_code(response, 201)
-    rs = response.json()
+    assert_response_status_code(response, 200)
+    rs_list = response.json()
+    # Find the newly created item
+    rs = next(item for item in rs_list if item["change_type"] == "Create")
     assert rs["study_uid"] == study.uid
     assert rs["study_version"] is None
     assert rs["study_data_supplier_uid"] == "StudyDataSupplier_000005"

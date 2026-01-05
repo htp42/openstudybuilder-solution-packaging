@@ -11,7 +11,9 @@
     <template #[`step.method`]>
       <v-radio-group v-model="method" color="primary">
         <v-radio :label="$t('StudySubparts.create_new')" value="create" />
-        <v-radio :label="$t('StudySubparts.add_existing')" value="select" />
+        <!-- Hidden for now due to the fact that creating a subpart from existing study removes that study.
+         This will be handled in a separate feature.
+        <v-radio :label="$t('StudySubparts.add_existing')" value="select" /> -->
       </v-radio-group>
     </template>
     <template #[`step.select`]="{ step }">

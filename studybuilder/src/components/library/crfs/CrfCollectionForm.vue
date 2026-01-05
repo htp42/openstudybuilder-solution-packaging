@@ -19,7 +19,7 @@
               density="compact"
               clearable
               class="mt-3"
-              :readonly="readOnly"
+              :disabled="isDisabled"
               :rules="[formRules.required]"
             />
           </v-col>
@@ -32,7 +32,7 @@
               data-cy="crf-collection-oid"
               density="compact"
               clearable
-              :readonly="readOnly"
+              :disabled="isDisabled"
             />
           </v-col>
         </v-row>
@@ -59,7 +59,7 @@
                 locale="en-in"
                 no-title
                 data-cy="crf-collection-effective-date-picker"
-                :readonly="readOnly"
+                :disabled="isDisabled"
                 @input="effectiveDateMenu = false"
               />
             </v-menu>
@@ -86,7 +86,7 @@
                 locale="en-in"
                 no-title
                 data-cy="crf-collection-retired-date-picker"
-                :readonly="readOnly"
+                :disabled="isDisabled"
                 @input="retiredDateMenu = false"
               />
             </v-menu>
@@ -94,7 +94,7 @@
         </v-row>
       </v-form>
     </template>
-    <template #actions>
+    <template v-if="checkPermission($roles.LIBRARY_WRITE)" #actions>
       <v-btn v-if="readOnly" class="primary mr-2" @click="newVersion">
         {{ $t('_global.new_version') }}
       </v-btn>
@@ -121,6 +121,7 @@ import crfs from '@/api/crfs'
 import _isEqual from 'lodash/isEqual'
 import statuses from '@/constants/statuses'
 import { useFormStore } from '@/stores/form'
+import { useAccessGuard } from '@/composables/accessGuard'
 
 export default {
   components: {
@@ -140,7 +141,10 @@ export default {
   emits: ['updateCollection', 'close'],
   setup() {
     const formStore = useFormStore()
+    const accessGuard = useAccessGuard()
+
     return {
+      checkPermission: accessGuard.checkPermission,
       formStore,
     }
   },
@@ -159,6 +163,9 @@ export default {
     }
   },
   computed: {
+    isDisabled() {
+      return this.readOnly || !this.checkPermission(this.$roles.LIBRARY_WRITE)
+    },
     title() {
       return this.isEdit()
         ? this.$t('CRFCollections.edit_collection') + ' - ' + this.form.name
@@ -263,6 +270,11 @@ export default {
       }
     },
     async submit() {
+      if (this.isDisabled) {
+        this.close()
+        return
+      }
+
       const { valid } = await this.$refs.observer.validate()
       if (!valid) return
 

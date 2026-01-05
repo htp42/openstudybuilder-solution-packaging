@@ -58,6 +58,7 @@
             <v-select
               v-model="baselineVisitMap[item.uid]"
               :items="availableBaselineVisits"
+              :loading="loadingBaselineVisits"
               item-value="uid"
               item-title="visit_name"
               density="compact"
@@ -132,6 +133,7 @@ const baselineVisitMap = ref({})
 const importantMapHolder = ref({})
 const baselineVisitMapHolder = ref({})
 const form = ref()
+const loadingBaselineVisits = ref(false)
 
 const getActivityPath = computed(() => {
   if (!_isEmpty(props.editedActivity)) {
@@ -212,14 +214,16 @@ async function getAvailableInstances() {
           )
         })
     }
-    study
-      .getBaselineVisitsForStudyActivityInstance(
+    loadingBaselineVisits.value = true
+    try {
+      const resp = await study.getBaselineVisitsForStudyActivityInstance(
         props.editedActivity.study_uid,
         props.editedActivity.study_activity_instance_uid
       )
-      .then((resp) => {
-        availableBaselineVisits.value = resp.data
-      })
+      availableBaselineVisits.value = resp.data
+    } finally {
+      loadingBaselineVisits.value = false
+    }
   }
 }
 function transformInstances(instances) {
@@ -363,6 +367,7 @@ function close() {
   importantMapHolder.value = {}
   baselineVisitMap.value = {}
   baselineVisitMapHolder.value = {}
+  availableBaselineVisits.value = []
   emit('close')
 }
 </script>

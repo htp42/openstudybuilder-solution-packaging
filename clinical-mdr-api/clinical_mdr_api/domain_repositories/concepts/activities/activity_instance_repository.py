@@ -894,7 +894,8 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
                         -[:HAS_NAME_ROOT]->(term_name_root:CTTermNameRoot)
                         -[:LATEST]->(term_name_value:CTTermNameValue)
                         MATCH (ct_term_context)-[:HAS_SELECTED_CODELIST]->(codelist_root:CTCodelistRoot)
-                        RETURN {uid: term_root.uid, name: term_name_value.name, codelist_uid: codelist_root.uid}
+                        MATCH (ct_codelist_term:CTCodelistTerm)-[:HAS_TERM_ROOT]->(term_root)
+                        RETURN {uid: term_root.uid, name: term_name_value.name, codelist_uid: codelist_root.uid, submission_value: ct_codelist_term.submission_value}
                     },
                     unit_definitions: [(activity_item)-[:HAS_UNIT_DEFINITION]->(unit_definition_root:UnitDefinitionRoot)-[:LATEST]->(unit_definition_value:UnitDefinitionValue)-[:HAS_CT_DIMENSION]-(:CTTermRoot)-[:HAS_NAME_ROOT]->(CTTermNamesRoot)-[:LATEST]->(dimension_value:CTTermNameValue) | {uid: unit_definition_root.uid, name: unit_definition_value.name, dimension_name: dimension_value.name}],
                     is_adam_param_specific: activity_item.is_adam_param_specific,
@@ -1129,7 +1130,8 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
                     -[:HAS_NAME_ROOT]->(term_name_root:CTTermNameRoot)
                     -[:LATEST]->(term_name_value:CTTermNameValue)
                     MATCH (ct_term_context)-[:HAS_SELECTED_CODELIST]->(codelist_root:CTCodelistRoot)
-                    RETURN {uid: term_root.uid, name: term_name_value.name, codelist_uid: codelist_root.uid}
+                    MATCH (ct_codelist_term:CTCodelistTerm)-[:HAS_TERM_ROOT]->(term_root)
+                    RETURN {uid: term_root.uid, name: term_name_value.name, codelist_uid: codelist_root.uid, submission_value: ct_codelist_term.submission_value}
                 },
                 unit_definitions: [
                     (activity_item)-[:HAS_UNIT_DEFINITION]->(unit_definition_root:UnitDefinitionRoot)-[:LATEST]->(unit_definition_value:UnitDefinitionValue)

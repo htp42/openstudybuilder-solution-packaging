@@ -5,6 +5,7 @@
       style="z-index: 9999; top: 5px; right: 5px"
     >
       <NotificationPanel />
+      <ScreenRecorder v-if="ENABLE_SCREEN_RECORDER === true" />
     </div>
 
     <TopBar
@@ -57,6 +58,7 @@ import SystemAnnouncement from '@/components/tools/SystemAnnouncement.vue'
 import { eventBus } from '@/plugins/eventBus'
 import notifications from '@/api/notifications'
 import NotificationPanel from './components/ui/notification/NotificationPanel.vue'
+import ScreenRecorder from './components/ui/ScreenRecorder.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -66,6 +68,8 @@ const theme = useTheme()
 const appStore = useAppStore()
 const authStore = useAuthStore()
 const notificationHub = inject('notificationHub')
+const $config = inject('$config')
+const { ENABLE_SCREEN_RECORDER } = $config
 
 const breadcrumbs = computed(() => appStore.breadcrumbs)
 const userData = computed(() => appStore.userData)

@@ -197,7 +197,7 @@ function getShortVersion() {
 }
 .tooltip {
   opacity: 0.95 !important;
-  background-color: lightgray !important;
+  background-color: rgb(var(--v-theme-nnTrueBlue)) !important;
   color: black;
   border: 1px solid #737373;
 }

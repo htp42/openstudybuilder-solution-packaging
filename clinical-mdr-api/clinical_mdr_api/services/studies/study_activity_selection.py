@@ -1253,7 +1253,6 @@ class StudyActivitySelectionService(
     @trace_calls(args=[1, 2], kwargs=["study_uid", "study_selection_uid"])
     def delete_selection(self, study_uid: str, study_selection_uid: str):
         # StudyActivitySchedule and StudyActivityInstruction Services for cascade delete if any
-        study_activity_schedules_service = StudyActivityScheduleService()
         study_activity_instructions_service = StudyActivityInstructionService()
         study_activity_group_service = StudyActivityGroupService()
         study_activity_subgroup_service = StudyActivitySubGroupService()
@@ -1268,15 +1267,11 @@ class StudyActivitySelectionService(
 
             # Remove related Study activity schedules
             with trace_block("Removing related study activity schedules"):
-                study_activity_schedules = study_activity_schedules_service.get_all_schedules_for_specific_activity(
-                    study_uid=study_uid, study_activity_uid=study_selection_uid
+                repos.study_activity_repository.delete_related_study_activity_schedules(
+                    study_uid=study_uid,
+                    study_activity_uid=study_selection_uid,
+                    author_id=self.author,
                 )
-                for study_activity_schedule in study_activity_schedules:
-                    self._repos.study_activity_schedule_repository.delete(
-                        study_uid,
-                        study_activity_schedule.study_activity_schedule_uid,
-                        self.author,
-                    )
 
             # Remove related Study activity instructions
             with trace_block("Removing related study activity instructions"):
@@ -1359,6 +1354,9 @@ class StudyActivitySelectionService(
                     study_uid=study_uid, study_activity_uid=study_selection_uid
                 )
                 for study_activity_instance in study_activity_instances:
+                    # Skip placeholders (they don't have a database node to delete)
+                    if study_activity_instance.uid is None:
+                        continue
                     # delete study activity instance
                     (
                         study_activity_instance_ar,
@@ -2020,7 +2018,7 @@ class StudyActivitySelectionService(
         ) or is_study_activity_group_changed:
             if sync_latest_version_input is None:
                 raise ValidationException(
-                    "Sync latest version input can't be None at this point"
+                    msg="Sync latest version input can't be None at this point"
                 )
             (
                 activity_subgroup_uid,

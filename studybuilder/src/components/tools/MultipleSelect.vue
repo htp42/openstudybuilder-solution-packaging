@@ -6,14 +6,21 @@
     multiple
     data-cy="autocomplete-input-field"
     clearable
+    variant="outlined"
+    bg-color="white"
+    color="nnBaseBlue"
+    base-color="nnBaseBlue"
+    rounded="lg"
+    density="compact"
+    autocomplete="off"
     hide-no-data
     @change="search = ''"
   >
     <template v-if="shorterPreview" #selection="{ index }">
       <div v-if="index === 0">
         <span>{{
-          value[0].name.length > 15
-            ? value[0].name.replace(/<\/?[^>]+(>)/g, '').substring(0, 15) +
+          value[0].name.length > 25
+            ? value[0].name.replace(/<\/?[^>]+(>)/g, '').substring(0, 25) +
               '...'
             : value[0].name.replace(/<\/?[^>]+(>)/g, '')
         }}</span>

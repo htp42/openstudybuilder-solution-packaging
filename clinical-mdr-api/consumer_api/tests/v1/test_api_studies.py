@@ -200,12 +200,15 @@ STUDY_ACTIVITY_INSTANCES_ACTIVITY_FIELDS_NOT_NULL = [
 STUDY_DETAILED_SOA_FIELDS_ALL = [
     "study_uid",
     "study_activity_uid",
+    "visit_uid",
     "visit_short_name",
     "epoch_name",
     "activity_uid",
     "activity_name",
     "activity_subgroup_name",
+    "activity_subgroup_uid",
     "activity_group_name",
+    "activity_group_uid",
     "soa_group_name",
     "is_data_collected",
     "activity_nci_concept_id",
@@ -217,6 +220,7 @@ STUDY_DETAILED_SOA_FIELDS_NOT_NULL = [
     "study_activity_uid",
     "activity_uid",
     "activity_name",
+    "visit_uid",
     "visit_short_name",
     "is_data_collected",
 ]

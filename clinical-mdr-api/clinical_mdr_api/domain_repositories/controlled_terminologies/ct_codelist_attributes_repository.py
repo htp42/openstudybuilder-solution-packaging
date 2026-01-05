@@ -247,7 +247,7 @@ class CTCodelistAttributesRepository(
             ct_catalogue_node = CTCatalogue.nodes.get_or_none(name=catalogue_name)
             if ct_catalogue_node is None:
                 raise BusinessLogicException(
-                    f"Catalogue with name {catalogue_name} does not exist."
+                    msg=f"Catalogue with name {catalogue_name} does not exist."
                 )
             ct_codelist_root_node.has_codelist.connect(ct_catalogue_node)
 

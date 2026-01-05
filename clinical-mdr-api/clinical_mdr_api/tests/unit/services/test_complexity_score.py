@@ -4,6 +4,7 @@ from clinical_mdr_api.models.complexity_score import ActivityBurden
 from clinical_mdr_api.services.studies.complexity_score import (
     ComplexityScoreService,
     SoaRow,
+    VisitsSummary,
 )
 
 # pylint: disable=redefined-outer-name
@@ -210,18 +211,37 @@ def soas():
     return [
         {
             "soa_rows": [],
+            "visits_summary": VisitsSummary(physical_visits=0, non_physical_visits=0),
             "expected_complexity": 3.65,
         },
         {
+            "soa_rows": [],
+            "visits_summary": VisitsSummary(physical_visits=2, non_physical_visits=0),
+            "expected_complexity": 4.41,
+        },
+        {
+            "soa_rows": [],
+            "visits_summary": VisitsSummary(physical_visits=0, non_physical_visits=2),
+            "expected_complexity": 5.25,
+        },
+        {
+            "soa_rows": [],
+            "visits_summary": VisitsSummary(physical_visits=1, non_physical_visits=2),
+            "expected_complexity": 5.63,
+        },
+        {
             "soa_rows": soa_1,
-            "expected_complexity": 11.59,
+            "visits_summary": VisitsSummary(physical_visits=3, non_physical_visits=2),
+            "expected_complexity": 12.39,
         },
         {
             "soa_rows": soa_2,
+            "visits_summary": VisitsSummary(physical_visits=3, non_physical_visits=2),
             "expected_complexity": 17.39,
         },
         {
             "soa_rows": soa_3,
+            "visits_summary": VisitsSummary(physical_visits=3, non_physical_visits=2),
             "expected_complexity": 15.39,
         },
     ]
@@ -264,8 +284,12 @@ def test_calculate_site_complexity_score(activity_burdens, soas):
 
     for row in soas:
         soa = row["soa_rows"]
+        visits_summary = row["visits_summary"]
 
-        # Mock the following two methods to return the soa and activity burden data as defined in fixtures
+        # Mock the following three methods to return the soa and activity burden data as defined in fixtures
+        service.get_visits_summary = (
+            lambda study_uid, study_version_number, visits_summary=visits_summary: visits_summary
+        )
         service.get_soa = lambda study_uid, study_version_number, soa_data=soa: soa_data
         service.get_activity_burdens = (
             lambda lite=True, burdens=activity_burdens: burdens

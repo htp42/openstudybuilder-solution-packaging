@@ -142,7 +142,10 @@ class ActivityInstance(ActivityBase):
             for term in activity_item.ct_terms:
                 ct_terms.append(
                     CompactCTTerm(
-                        uid=term.uid, name=term.name, codelist_uid=term.codelist_uid
+                        uid=term.uid,
+                        name=term.name,
+                        submission_value=term.submission_value,
+                        codelist_uid=term.codelist_uid,
                     )
                 )
             ct_terms.sort(key=lambda x: x.uid or "")
@@ -280,7 +283,11 @@ class ActivityInstance(ActivityBase):
 
             ct_terms = sorted(
                 [
-                    CompactCTTerm(uid=term.uid, name=term.name)
+                    CompactCTTerm(
+                        uid=term.uid,
+                        name=term.name,
+                        submission_value=term.submission_value,
+                    )
                     for term in activity_item.ct_terms
                 ],
                 key=lambda x: x.uid or "",
@@ -528,6 +535,7 @@ class ActivityInstanceOverview(BaseModel):
                         name=term.get("name"),
                         uid=term.get("uid"),
                         codelist_uid=term.get("codelist_uid"),
+                        submission_value=term.get("submission_value"),
                     )
                     for term in activity_item.get("ct_terms", {})
                 ],

@@ -9,6 +9,7 @@ from clinical_mdr_api.models.study_selections.study_selection import (
     StudySelectionDataSupplier,
     StudySelectionDataSupplierInput,
     StudySelectionDataSupplierNewOrder,
+    StudySelectionDataSupplierSyncInput,
 )
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository
@@ -202,6 +203,29 @@ class StudyDataSupplierSelectionService:
                 msg=f"DataSupplier with UID '{selection_input.data_supplier_uid}' doesn't exist."
             )
 
+        # Check if this (data_supplier, type) combination is already associated with the study
+        existing_suppliers = self.get_all_selections(
+            study_uid=study_uid, page_size=1000
+        )
+        for supplier in existing_suppliers.items:
+            existing_type_uid = (
+                supplier.study_data_supplier_type.term_uid
+                if supplier.study_data_supplier_type
+                else None
+            )
+            if (
+                supplier.data_supplier_uid == selection_input.data_supplier_uid
+                and existing_type_uid == selection_input.study_data_supplier_type_uid
+            ):
+                type_name = (
+                    supplier.study_data_supplier_type.term_name
+                    if supplier.study_data_supplier_type
+                    else "Unknown"
+                )
+                raise BusinessLogicException(
+                    msg=f"Data Supplier with Name '{supplier.name}' and Type '{type_name}' already exists."
+                )
+
         db_rs = self._repos.study_data_supplier_repository.create(
             study_uid, selection_input
         )
@@ -244,6 +268,30 @@ class StudyDataSupplierSelectionService:
             raise BusinessLogicException(
                 msg=f"DataSupplier with UID '{selection_input.data_supplier_uid}' doesn't exist."
             )
+
+        # Check if this (data_supplier, type) combination is already associated with the study (excluding current)
+        existing_suppliers = self.get_all_selections(
+            study_uid=study_uid, page_size=1000
+        )
+        for supplier in existing_suppliers.items:
+            existing_type_uid = (
+                supplier.study_data_supplier_type.term_uid
+                if supplier.study_data_supplier_type
+                else None
+            )
+            if (
+                supplier.data_supplier_uid == selection_input.data_supplier_uid
+                and existing_type_uid == selection_input.study_data_supplier_type_uid
+                and supplier.study_data_supplier_uid != study_data_supplier_uid
+            ):
+                type_name = (
+                    supplier.study_data_supplier_type.term_name
+                    if supplier.study_data_supplier_type
+                    else "Unknown"
+                )
+                raise BusinessLogicException(
+                    msg=f"Data Supplier with Name '{supplier.name}' and Type '{type_name}' already exists."
+                )
 
         db_rs = self._repos.study_data_supplier_repository.update(
             study_uid, study_data_supplier_uid, selection_input
@@ -318,3 +366,89 @@ class StudyDataSupplierSelectionService:
         )
 
         return StudySelectionDataSupplier(**rs)
+
+    @ensure_transaction(db)
+    def sync_selections(
+        self,
+        study_uid: str,
+        sync_input: StudySelectionDataSupplierSyncInput,
+    ) -> list[StudySelectionDataSupplier]:
+        """Sync study data suppliers to match the desired state.
+
+        Validates all inputs first - if duplicates are found, rejects the entire
+        request with an error. No changes are made unless all validation passes.
+
+        A duplicate is defined as the same (data_supplier_uid, study_data_supplier_type_uid)
+        combination appearing more than once. The same data supplier can appear multiple
+        times with different types.
+        """
+        # 1. Validate no duplicate (data_supplier_uid, type_uid) combinations in input
+        input_keys = [
+            (s.data_supplier_uid, s.study_data_supplier_type_uid)
+            for s in sync_input.suppliers
+        ]
+        if len(input_keys) != len(set(input_keys)):
+            seen = set()
+            for key in input_keys:
+                if key in seen:
+                    raise BusinessLogicException(
+                        msg=f"Duplicate data supplier '{key[0]}' with type '{key[1]}' in request."
+                    )
+                seen.add(key)
+
+        # 2. Validate all data suppliers exist - reject if any don't exist
+        for supplier_input in sync_input.suppliers:
+            if not self._repos.data_supplier_repository.exists_by(
+                "uid", supplier_input.data_supplier_uid, True
+            ):
+                raise BusinessLogicException(
+                    msg=f"DataSupplier with UID '{supplier_input.data_supplier_uid}' doesn't exist."
+                )
+
+        # 3. Get current state - key by (data_supplier_uid, type_uid)
+        existing = self.get_all_selections(study_uid=study_uid, page_size=1000)
+        existing_by_key = {
+            (
+                s.data_supplier_uid,
+                (
+                    s.study_data_supplier_type.term_uid
+                    if s.study_data_supplier_type
+                    else None
+                ),
+            ): s
+            for s in existing.items
+        }
+
+        # 4. Calculate diff based on (data_supplier_uid, type_uid) combinations
+        desired_keys = set(input_keys)
+        current_keys = set(existing_by_key.keys())
+
+        to_delete = current_keys - desired_keys
+        to_create = desired_keys - current_keys
+
+        # 5. Process deletes first
+        for key in to_delete:
+            study_ds = existing_by_key[key]
+            self._repos.study_data_supplier_repository.delete(
+                study_uid, study_ds.study_data_supplier_uid
+            )
+
+        # 6. Process creates
+        for supplier_input in sync_input.suppliers:
+            key = (
+                supplier_input.data_supplier_uid,
+                supplier_input.study_data_supplier_type_uid,
+            )
+            if key in to_create:
+                db_rs = self._repos.study_data_supplier_repository.create(
+                    study_uid, supplier_input
+                )
+                study_data_supplier_type_uid = (
+                    supplier_input.study_data_supplier_type_uid or db_rs[0][0][8]
+                )
+                self._repos.study_data_supplier_repository.connect_data_supplier_type(
+                    study_uid, study_data_supplier_type_uid, db_rs[0][0][0]
+                )
+
+        # 7. Return final state
+        return self.get_all_selections(study_uid=study_uid, page_size=1000).items

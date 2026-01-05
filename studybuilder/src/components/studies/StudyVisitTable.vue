@@ -158,7 +158,18 @@
         </router-link>
       </template>
       <template #[`item.study_epoch.sponsor_preferred_name`]="{ item }">
-        <CTTermDisplay :term="item.study_epoch" />
+        <div v-if="editMode">
+          <v-select
+            v-model="item.study_epoch_uid"
+            item-title="epoch_name"
+            item-value="uid"
+            :items="getFilteredPeriods(item)"
+            class="epochCellWidth"
+            :disabled="item.disabled && itemsDisabled"
+            @update:model-value="disableOthers(item)"
+          />
+        </div>
+        <CTTermDisplay v-else :term="item.study_epoch" />
       </template>
       <template #[`item.visit_type.sponsor_preferred_name`]="{ item }">
         <CTTermDisplay :term="item.visit_type" />
@@ -170,9 +181,12 @@
             :items="visitClasses"
             item-title="label"
             item-value="value"
+            class="cellWidth"
             density="compact"
             :disabled="item.disabled && itemsDisabled"
-            @update:model-value="disableOthers(item)"
+            @update:model-value="
+              (disableOthers(item), (item.study_epoch_uid = null))
+            "
           />
         </div>
         <div v-else>
@@ -186,6 +200,7 @@
             :items="visitSubClasses"
             item-title="label"
             item-value="value"
+            class="cellWidth"
             density="compact"
             :disabled="item.disabled && itemsDisabled"
             @update:model-value="disableOthers(item)"
@@ -225,33 +240,28 @@
           "
         >
           <v-row class="wideCellWidth">
-            <v-col cols="4">
-              <v-text-field
-                v-model="item.min_visit_window_value"
-                density="compact"
-                :disabled="item.disabled && itemsDisabled"
-                @input="disableOthers(item)"
-              />
-            </v-col>
-            <v-col cols="4">
-              <v-text-field
-                v-model="item.max_visit_window_value"
-                density="compact"
-                :disabled="item.disabled && itemsDisabled"
-                @input="disableOthers(item)"
-              />
-            </v-col>
-            <v-col cols="4">
-              <v-select
-                v-model="item.visit_window_unit_uid"
-                :items="epochsStore.studyTimeUnits"
-                item-title="name"
-                item-value="uid"
-                density="compact"
-                :disabled="item.disabled && itemsDisabled"
-                @update:model-value="disableOthers(item)"
-              />
-            </v-col>
+            <v-text-field
+              v-model="item.min_visit_window_value"
+              density="compact"
+              :disabled="item.disabled && itemsDisabled"
+              @input="disableOthers(item)"
+            />
+            <v-text-field
+              v-model="item.max_visit_window_value"
+              density="compact"
+              :disabled="item.disabled && itemsDisabled"
+              @input="disableOthers(item)"
+            />
+            <v-select
+              v-model="item.visit_window_unit_uid"
+              :items="epochsStore.studyTimeUnits"
+              item-title="name"
+              item-value="uid"
+              density="compact"
+              class="cellWidth"
+              :disabled="item.disabled && itemsDisabled"
+              @update:model-value="disableOthers(item)"
+            />
           </v-row>
         </div>
         <template
@@ -306,25 +316,23 @@
           "
         >
           <v-row class="cellWidth">
-            <v-col cols="6">
-              <v-text-field
-                v-model="item.time_value"
-                density="compact"
-                :disabled="item.disabled && itemsDisabled"
-                @input="disableOthers(item)"
-              />
-            </v-col>
-            <v-col cols="6">
-              <v-select
-                v-model="item.time_unit_uid"
-                :items="epochsStore.studyTimeUnits"
-                item-title="name"
-                item-value="uid"
-                density="compact"
-                :disabled="item.disabled && itemsDisabled"
-                @update:model-value="disableOthers(item)"
-              />
-            </v-col>
+            <v-text-field
+              v-model="item.time_value"
+              density="compact"
+              width="60px"
+              :disabled="item.disabled && itemsDisabled"
+              @input="disableOthers(item)"
+            />
+            <v-select
+              v-model="item.time_unit_uid"
+              :items="epochsStore.studyTimeUnits"
+              item-title="name"
+              item-value="uid"
+              density="compact"
+              class="cellWidth"
+              :disabled="item.disabled && itemsDisabled"
+              @update:model-value="disableOthers(item)"
+            />
           </v-row>
         </div>
         <div v-else>
@@ -400,15 +408,14 @@
       </template>
       <template #[`item.description`]="{ item }">
         <div v-if="editMode">
-          <v-row class="cellWidth">
-            <v-col>
-              <v-text-field
-                v-model="item.description"
-                density="compact"
-                :disabled="item.disabled && itemsDisabled"
-                @input="disableOthers(item)"
-              />
-            </v-col>
+          <v-row>
+            <v-text-field
+              v-model="item.description"
+              density="compact"
+              class="cellWidth"
+              :disabled="item.disabled && itemsDisabled"
+              @input="disableOthers(item)"
+            />
           </v-row>
         </div>
         <div v-else>
@@ -417,15 +424,14 @@
       </template>
       <template #[`item.start_rule`]="{ item }">
         <div v-if="editMode">
-          <v-row class="cellWidth">
-            <v-col>
-              <v-text-field
-                v-model="item.start_rule"
-                density="compact"
-                :disabled="item.disabled && itemsDisabled"
-                @input="disableOthers(item)"
-              />
-            </v-col>
+          <v-row>
+            <v-text-field
+              v-model="item.start_rule"
+              density="compact"
+              class="cellWidth"
+              :disabled="item.disabled && itemsDisabled"
+              @input="disableOthers(item)"
+            />
           </v-row>
         </div>
         <div v-else>
@@ -434,15 +440,14 @@
       </template>
       <template #[`item.end_rule`]="{ item }">
         <div v-if="editMode">
-          <v-row class="cellWidth">
-            <v-col>
-              <v-text-field
-                v-model="item.end_rule"
-                density="compact"
-                :disabled="item.disabled && itemsDisabled"
-                @input="disableOthers(item)"
-              />
-            </v-col>
+          <v-row>
+            <v-text-field
+              v-model="item.end_rule"
+              density="compact"
+              class="cellWidth"
+              :disabled="item.disabled && itemsDisabled"
+              @input="disableOthers(item)"
+            />
           </v-row>
         </div>
         <div v-else>
@@ -721,6 +726,10 @@ const defaultColumns = ref([
 ])
 const editHeaders = ref([
   { title: '', key: 'actions', width: '1%' },
+  {
+    title: t('StudyVisitForm.study_epoch'),
+    key: 'study_epoch.sponsor_preferred_name',
+  },
   { title: t('StudyVisitForm.visit_type'), key: 'visit_type_name' },
   { title: t('StudyVisitForm.soa_milestone'), key: 'is_soa_milestone' },
   { title: t('StudyVisitForm.visit_class'), key: 'visit_class' },
@@ -928,6 +937,28 @@ const studyVisitHistoryTitle = computed(() => {
   }
   return ''
 })
+
+function getFilteredPeriods(visit) {
+  try {
+    if (
+      visit.visit_class === visitConstants.CLASS_SPECIAL_VISIT ||
+      visit.visit_class === visitConstants.CLASS_SINGLE_VISIT ||
+      visit.visit_class === visitConstants.CLASS_MANUALLY_DEFINED_VISIT
+    ) {
+      return studyEpochs.value.filter(
+        (item) => item.epoch_name !== visitConstants.EPOCH_BASIC
+      )
+    }
+    if (studyEpochs.value) {
+      return studyEpochs.value.filter(
+        (item) => item.epoch_name === visitConstants.EPOCH_BASIC
+      )
+    }
+    return []
+  } catch (error) {
+    console.error(error)
+  }
+}
 
 watch(studyVisits, () => {
   getTimeLineVisits()
@@ -1281,9 +1312,12 @@ function updatePreferredTimeUnit(value) {
 
 <style scoped>
 .cellWidth {
-  width: 200px;
+  width: max-content;
 }
 .wideCellWidth {
-  width: 300px;
+  width: 310px;
+}
+.epochCellWidth {
+  width: 200px;
 }
 </style>

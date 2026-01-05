@@ -777,6 +777,23 @@ def test_get_activity_item_class_codelists(api_client):
     # term uids should be None, indicating that all terms of the codelist are available
     assert res["items"][0]["term_uids"] is None
 
+    # Fetch codelists with ct catalogue name filter
+    response = api_client.get(
+        f"/activity-item-classes/{activity_item_classes_all[0].uid}/datasets/{dataset.uid}/codelists?ct_catalogue_name=SDTM CT"
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert len(res["items"]) == 1
+    assert res["items"][0]["codelist_uid"] == "C66737"
+
+    # Fetch codelists with non-existent ct catalogue name filter
+    response = api_client.get(
+        f"/activity-item-classes/{activity_item_classes_all[0].uid}/datasets/{dataset.uid}/codelists?ct_catalogue_name=non-existent"
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert len(res["items"]) == 0
+
     # Now, test that sponsor models are properly used
     sponsor_model = TestUtils.create_sponsor_model(
         ig_uid=data_model_ig.uid,

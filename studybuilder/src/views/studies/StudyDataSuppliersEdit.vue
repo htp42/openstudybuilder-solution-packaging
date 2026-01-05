@@ -31,7 +31,7 @@
           <!-- Existing suppliers -->
           <div
             v-for="(supplier, index) in suppliers"
-            :key="supplier.study_data_supplier_uid || index"
+            :key="supplier.study_data_supplier_uid || supplier._tempId || index"
             class="d-flex align-center mb-3"
           >
             <div class="text-body-2 mr-4" style="min-width: 120px">
@@ -161,7 +161,6 @@ const studiesGeneralStore = useStudiesGeneralStore()
 const dataSupplierStore = useStudyDataSuppliersStore()
 
 const studyDataSuppliers = ref([])
-const originalStudyDataSuppliers = ref([])
 const dataSupplierTypes = ref([])
 const availableSuppliers = ref([])
 const saving = ref(false)
@@ -255,10 +254,6 @@ const fetchStudyDataSuppliers = async () => {
       total_count: true,
     })
     studyDataSuppliers.value = response.data.items || []
-    // Store original state for comparison
-    originalStudyDataSuppliers.value = JSON.parse(
-      JSON.stringify(response.data.items || [])
-    )
   } catch (error) {
     console.error('Error fetching study data suppliers:', error)
   }
@@ -273,12 +268,16 @@ const fetchAvailableSuppliers = async () => {
   }
 }
 
+// Counter for generating unique temp IDs for new suppliers
+let tempIdCounter = 0
+
 const addSupplier = (typeName) => {
   const typeData = dataSupplierTypes.value.find(
     (t) => (t.sponsor_preferred_name || t.term_name) === typeName
   )
 
   studyDataSuppliers.value.push({
+    _tempId: `temp_${++tempIdCounter}`, // Unique temp ID for removal tracking
     data_supplier_uid: null,
     study_data_supplier_type: {
       term_name: typeName,
@@ -293,11 +292,22 @@ const removeSupplier = (typeName, index) => {
   const suppliers = groupedSuppliers.value[typeName]
   const supplierToRemove = suppliers[index]
 
-  // Remove from the main array using object reference
-  const mainIndex = studyDataSuppliers.value.indexOf(supplierToRemove)
-  if (mainIndex > -1) {
-    studyDataSuppliers.value.splice(mainIndex, 1)
-  }
+  // Use filter to create a new array - ensures Vue reactivity triggers properly
+  studyDataSuppliers.value = studyDataSuppliers.value.filter((s) => {
+    // Keep all suppliers EXCEPT the one to remove
+    // Match by study_data_supplier_uid if it exists (existing supplier from DB)
+    if (supplierToRemove.study_data_supplier_uid) {
+      return (
+        s.study_data_supplier_uid !== supplierToRemove.study_data_supplier_uid
+      )
+    }
+    // For new suppliers, match by temp ID
+    if (supplierToRemove._tempId) {
+      return s._tempId !== supplierToRemove._tempId
+    }
+    // Fallback to object reference
+    return s !== supplierToRemove
+  })
 }
 
 const addUserDefinedSupplier = (typeName) => {
@@ -341,6 +351,7 @@ const handleSupplierDialogClose = async () => {
     )
 
     studyDataSuppliers.value.push({
+      _tempId: `temp_${++tempIdCounter}`,
       data_supplier_uid: newSupplier.uid,
       study_data_supplier_type: {
         term_name: pendingSupplierTypeName.value,
@@ -367,56 +378,22 @@ const handleContinue = async () => {
   saveError.value = null
 
   try {
-    // Process all suppliers (create, update, or delete)
-    // Note: Order is managed automatically by the backend based on creation sequence
-    // Manual reordering will be implemented in a future feature
-    for (const supplier of studyDataSuppliers.value) {
-      // Skip if no data supplier selected
-      if (!supplier.data_supplier_uid) {
-        continue
-      }
-
-      const payload = {
-        data_supplier_uid: supplier.data_supplier_uid,
+    // Build the list of suppliers to sync
+    // Only include items with a data_supplier_uid selected
+    const suppliers = studyDataSuppliers.value
+      .filter((s) => s.data_supplier_uid)
+      .map((s) => ({
+        data_supplier_uid: s.data_supplier_uid,
         study_data_supplier_type_uid:
-          supplier.study_data_supplier_type?.term_uid || null,
-      }
+          s.study_data_supplier_type?.term_uid || null,
+      }))
 
-      // Check if this is a new supplier or existing one
-      if (supplier.study_data_supplier_uid) {
-        // Existing supplier - update it (order remains unchanged)
-        await dataSupplierStore.updateStudyDataSupplier(
-          studiesGeneralStore.studyUid,
-          supplier.study_data_supplier_uid,
-          payload
-        )
-      } else {
-        // New supplier - create it (backend assigns order automatically)
-        await dataSupplierStore.createStudyDataSupplier(
-          studiesGeneralStore.studyUid,
-          payload
-        )
-      }
-    }
-
-    // Check for deleted suppliers
-    const currentUids = new Set(
-      studyDataSuppliers.value
-        .filter((s) => s.study_data_supplier_uid)
-        .map((s) => s.study_data_supplier_uid)
+    // Single API call - validates all inputs first, then syncs
+    // If duplicates found, rejects entire request with error
+    await dataSupplierStore.syncStudyDataSuppliers(
+      studiesGeneralStore.studyUid,
+      suppliers
     )
-
-    const deletedSuppliers = originalStudyDataSuppliers.value.filter(
-      (original) => !currentUids.has(original.study_data_supplier_uid)
-    )
-
-    // Delete removed suppliers
-    for (const supplier of deletedSuppliers) {
-      await dataSupplierStore.deleteStudyDataSupplier(
-        studiesGeneralStore.studyUid,
-        supplier.study_data_supplier_uid
-      )
-    }
 
     notificationHub.add({ msg: t('StudyDataSuppliers.update_success') })
 

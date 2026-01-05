@@ -1101,6 +1101,7 @@ ALL_ROUTES_METHODS_ROLES = (
     ("/dictionaries/substances", "POST", {"Library.Write"}),
     ("/dictionaries/substances/{dictionary_term_uid}", "GET", {"Library.Read"}),
     ("/dictionaries/substances", "GET", {"Library.Read"}),
+    ("/dictionaries/substances/headers", "GET", {"Library.Read"}),
     ("/dictionaries/substances/{dictionary_term_uid}", "PATCH", {"Library.Write"}),
     ("/template-parameters", "GET", {"Library.Read"}),
     ("/template-parameters/{name}/terms", "GET", {"Library.Read"}),
@@ -2592,7 +2593,7 @@ ALL_ROUTES_METHODS_ROLES = (
         {"Study.Read"},
     ),
     ("/studies/{study_uid}/study-data-suppliers/audit-trail", "GET", {"Study.Read"}),
-    ("/studies/{study_uid}/study-data-suppliers", "POST", {"Study.Write"}),
+    ("/studies/{study_uid}/study-data-suppliers/sync", "PUT", {"Study.Write"}),
     (
         "/studies/{study_uid}/study-data-suppliers/{study_data_supplier_uid}",
         "PUT",

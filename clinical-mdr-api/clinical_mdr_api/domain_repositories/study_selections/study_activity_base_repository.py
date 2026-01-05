@@ -36,7 +36,7 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
         raise NotImplementedError
 
     @abc.abstractmethod
-    def _additional_match(self):
+    def _additional_match(self, **kwargs):
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -159,7 +159,7 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
             query += " AND ".join(filter_list)
 
         # Then, match other things for instance Activity
-        query += self._additional_match()
+        query += self._additional_match(**kwargs)
 
         # Filter on extra parameters, for instance ActivityGroupNames
         query += self._filter_clause(query_parameters=query_parameters, **kwargs)
@@ -331,6 +331,9 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
 
         # loop through and remove selections
         for order, study_activity in selections_to_remove:
+            # Skip placeholders (they don't have a database node)
+            if study_activity.study_selection_uid is None:
+                continue
 
             if not (
                 study_selection.closure_from_other_ar

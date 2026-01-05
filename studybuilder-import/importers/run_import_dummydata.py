@@ -1408,7 +1408,9 @@ class DummyData(BaseImporter):
         self.create_activities()
         # self.create_activity_requests()
         self.create_activity_instance_classes()
-        self.create_activity_instances()
+        # instances are disabled until the method is updated
+        # to post instances with the mandatory activity items
+        # self.create_activity_instances()
         self.create_syntax_templates()
         self.create_studies()
         self.log.info("Done importing dummy data")

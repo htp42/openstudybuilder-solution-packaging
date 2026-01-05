@@ -85,9 +85,9 @@ async def validate_token(token: Annotated[str, Depends(oauth_scheme)]):
     persist_user(user_info=user())
 
 
-def dummy_user_auth(user_id: str = "unknown-user"):
+def dummy_user_test_auth(user_id: str = "unknown-user"):
     """
-    Sets context Auth object with dummy data.
+    Sets context Auth object with dummy data when running tests.
 
     Returns:
         None
@@ -97,6 +97,23 @@ def dummy_user_auth(user_id: str = "unknown-user"):
     """
 
     context["auth"] = dummy_auth_object(dummy_access_token_claims(user_id=user_id))
+    persist_user(user_info=user())
+
+
+def dummy_user_auth():
+    """
+    Sets context Auth object with dummy data when authentication is disabled.
+
+    Returns:
+        None
+
+    Raises:
+        Any exceptions raised during token validation.
+    """
+
+    context["auth"] = dummy_auth_object(
+        dummy_access_token_claims(user_id="unknown-user")
+    )
     persist_user(user_info=user())
 
 

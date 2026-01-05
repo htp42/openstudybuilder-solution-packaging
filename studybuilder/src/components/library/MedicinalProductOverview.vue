@@ -51,6 +51,7 @@
         </div>
       </div>
       <template v-if="medProductExpanded">
+        <v-progress-linear v-if="loading" color="primary" indeterminate />
         <v-card
           v-for="pharmaProduct in pharmaceuticalProducts"
           :key="pharmaProduct.uid"
@@ -169,7 +170,7 @@ const props = defineProps({
 const medProductExpanded = ref(false)
 const pharmaProductStates = ref({})
 const pharmaceuticalProducts = ref(null)
-
+const loading = ref(false)
 const doseValues = computed(() => {
   const result = props.product.dose_values
     .map((dose) => `${dose.value} ${dose.unit_label}`)
@@ -234,11 +235,13 @@ function getPharmaProductIngredients(pharmaProduct) {
 watch(medProductExpanded, async (value) => {
   if (value && !pharmaceuticalProducts.value) {
     pharmaceuticalProducts.value = []
+    loading.value = true
     for (const item of props.product.pharmaceutical_products) {
       const resp = await pharmaceuticalProductsApi.getObject(item.uid)
       pharmaceuticalProducts.value.push(resp.data)
       pharmaProductStates.value[resp.data.uid] = true
     }
+    loading.value = false
   }
 })
 </script>

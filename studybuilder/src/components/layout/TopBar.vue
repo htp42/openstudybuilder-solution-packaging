@@ -115,6 +115,16 @@
       </template>
       <v-list density="compact">
         <v-list-item
+          data-cy="topbar-api"
+          :href="$config.API_BASE_URL"
+          target="_blank"
+        >
+          <template #prepend>
+            <v-icon>mdi-script-text</v-icon>
+          </template>
+          <v-list-item-title>{{ $t('Topbar.api') }}</v-list-item-title>
+        </v-list-item>
+        <v-list-item
           data-cy="topbar-documentation-portal"
           :href="documentationPortalUrl"
           target="_blank"

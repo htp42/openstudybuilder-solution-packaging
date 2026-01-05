@@ -1,6 +1,7 @@
 from abc import abstractmethod
 from typing import Any, TypeVar
 
+from neo4j.time import DateTime
 from neomodel import NodeSet
 from neomodel.sync_.match import NodeNameResolver, RelationNameResolver
 from pydantic import BaseModel
@@ -17,7 +18,7 @@ from clinical_mdr_api.repositories._utils import (
     validate_filters_and_add_search_string,
     validate_sort_by_dict,
 )
-from common.utils import validate_page_number_and_page_size
+from common.utils import convert_to_datetime, validate_page_number_and_page_size
 
 # pylint: disable=invalid-name
 _StandardsReturnType = TypeVar("_StandardsReturnType")
@@ -136,6 +137,9 @@ class NeomodelExtBaseRepository:
         q_filters = merge_q_query_filters(q_filters, filter_operator=filter_operator)
         field = get_field(prop=field_name, model=self.return_model)
         field_path = get_field_path(prop=field_name, field=field)
+
+        field_name_alias = field_name.replace(".", "_")
+
         nodeset = self.root_class.nodes
         if "|" in field_path:
             path, prop = field_path.rsplit("|", 1)
@@ -156,7 +160,7 @@ class NeomodelExtBaseRepository:
             prop = field_path
         nodeset = nodeset.filter(*q_filters)[:page_size].intermediate_transform(
             {
-                field_name: {
+                field_name_alias: {
                     "source": source,
                     "source_prop": prop,
                     "include_in_return": True,
@@ -165,7 +169,14 @@ class NeomodelExtBaseRepository:
             distinct=True,
         )
         nodeset = self.extend_distinct_headers_query(nodeset)
-        return nodeset.all()
+
+        rs = nodeset.all()
+
+        for idx, node in enumerate(rs):
+            if isinstance(node, DateTime):
+                rs[idx] = convert_to_datetime(node)
+
+        return rs
 
 
 def _get_author_id(node) -> str:

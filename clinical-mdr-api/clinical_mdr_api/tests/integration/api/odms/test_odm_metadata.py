@@ -120,3 +120,274 @@ def test_get_formal_expressions(
     for item in data["items"]:
         for key, val in expected_result_prefix.items():
             assert item[key].startswith(val)
+
+
+def test_doesnt_return_aliases_that_are_only_connected_to_deleted_odms(api_client):
+    data = {
+        "library_name": "Sponsor",
+        "name": "to be deleted1",
+        "oid": "oid",
+        "sdtm_version": "0.1",
+        "repeating": "No",
+        "descriptions": [],
+        "aliases": [{"context": "connected to deleted", "name": "deleted"}],
+    }
+    response = api_client.post("concepts/odms/forms", json=data)
+    assert_response_status_code(response, 201)
+    rs = response.json()
+
+    response = api_client.get("/concepts/odms/metadata/aliases?page_size=1000")
+    assert_response_status_code(response, 200)
+    data = response.json()
+    assert any(item["context"] == "connected to deleted" for item in data["items"])
+    assert data["total"] == 2
+    assert len(data["items"]) == 2
+
+    response = api_client.delete(f"concepts/odms/forms/{rs["uid"]}")
+    assert_response_status_code(response, 204)
+
+    response = api_client.get("/concepts/odms/metadata/aliases?page_size=1000")
+    assert_response_status_code(response, 200)
+    data = response.json()
+    assert all(item["context"] != "connected to deleted" for item in data["items"])
+    assert data["total"] == 1
+    assert len(data["items"]) == 1
+
+
+def test_doesnt_return_descriptions_that_are_only_connected_to_deleted_odms(api_client):
+    data = {
+        "library_name": "Sponsor",
+        "name": "to be deleted2",
+        "oid": "oid",
+        "sdtm_version": "0.1",
+        "repeating": "No",
+        "descriptions": [
+            {
+                "name": "connected to deleted",
+                "language": "eng",
+                "description": "description",
+                "instruction": "instruction",
+                "sponsor_instruction": "sponsor_instruction",
+            }
+        ],
+        "aliases": [],
+    }
+    response = api_client.post("concepts/odms/forms", json=data)
+    assert_response_status_code(response, 201)
+    rs = response.json()
+
+    response = api_client.get("/concepts/odms/metadata/descriptions?page_size=1000")
+    assert_response_status_code(response, 200)
+    data = response.json()
+    assert any(item["name"] == "connected to deleted" for item in data["items"])
+    assert data["total"] == 2
+    assert len(data["items"]) == 2
+
+    response = api_client.delete(f"concepts/odms/forms/{rs["uid"]}")
+    assert_response_status_code(response, 204)
+
+    response = api_client.get("/concepts/odms/metadata/descriptions?page_size=1000")
+    assert_response_status_code(response, 200)
+    data = response.json()
+    assert all(item["name"] != "connected to deleted" for item in data["items"])
+    assert data["total"] == 1
+    assert len(data["items"]) == 1
+
+
+def test_doesnt_return_formal_expressions_that_are_only_connected_to_deleted_odms(
+    api_client,
+):
+    data = {
+        "library_name": "Sponsor",
+        "name": "to be deleted1",
+        "oid": "oid",
+        "formal_expressions": [
+            {"context": "connected to deleted", "expression": "expression"}
+        ],
+        "descriptions": [],
+        "aliases": [],
+    }
+    response = api_client.post("concepts/odms/conditions", json=data)
+    assert_response_status_code(response, 201)
+    rs = response.json()
+
+    response = api_client.get(
+        "/concepts/odms/metadata/formal-expressions?page_size=1000"
+    )
+    assert_response_status_code(response, 200)
+    data = response.json()
+    assert any(item["context"] == "connected to deleted" for item in data["items"])
+    assert data["total"] == 2
+    assert len(data["items"]) == 2
+
+    response = api_client.delete(f"concepts/odms/conditions/{rs["uid"]}")
+    assert_response_status_code(response, 204)
+
+    response = api_client.get(
+        "/concepts/odms/metadata/formal-expressions?page_size=1000"
+    )
+    assert_response_status_code(response, 200)
+    data = response.json()
+    assert all(item["context"] != "connected to deleted" for item in data["items"])
+    assert data["total"] == 1
+    assert len(data["items"]) == 1
+
+
+def test_doesnt_return_aliases_that_are_not_connected_to_latest_odms(api_client):
+    response = api_client.post(
+        "concepts/odms/forms",
+        json={
+            "library_name": "Sponsor",
+            "name": "to be updated1",
+            "oid": "oid",
+            "sdtm_version": "0.1",
+            "repeating": "No",
+            "descriptions": [],
+            "aliases": [{"context": "connected to be renamed", "name": "renaming"}],
+        },
+    )
+    assert_response_status_code(response, 201)
+    rs = response.json()
+
+    response = api_client.get("/concepts/odms/metadata/aliases?page_size=1000")
+    assert_response_status_code(response, 200)
+    data = response.json()
+    assert any(item["context"] == "connected to be renamed" for item in data["items"])
+    assert data["total"] == 2
+    assert len(data["items"]) == 2
+
+    response = api_client.patch(
+        f"concepts/odms/forms/{rs["uid"]}",
+        json={
+            "library_name": "Sponsor",
+            "name": "to be updated1",
+            "oid": "oid",
+            "sdtm_version": "0.1",
+            "repeating": "No",
+            "descriptions": [],
+            "aliases": [{"context": "done", "name": "renamed"}],
+            "change_description": "Updating alias",
+        },
+    )
+    assert_response_status_code(response, 200)
+
+    response = api_client.get("/concepts/odms/metadata/aliases?page_size=1000")
+    assert_response_status_code(response, 200)
+    data = response.json()
+    assert all(item["context"] != "connected to be renamed" for item in data["items"])
+    assert data["total"] == 2
+    assert len(data["items"]) == 2
+
+
+def test_doesnt_return_descriptions_that_are_not_connected_to_latest_odms(api_client):
+    response = api_client.post(
+        "concepts/odms/forms",
+        json={
+            "library_name": "Sponsor",
+            "name": "to be updated2",
+            "oid": "oid",
+            "sdtm_version": "0.1",
+            "repeating": "No",
+            "descriptions": [
+                {
+                    "name": "connected to be renamed",
+                    "language": "eng",
+                    "description": "description",
+                    "instruction": "instruction",
+                    "sponsor_instruction": "sponsor_instruction",
+                }
+            ],
+            "aliases": [],
+        },
+    )
+    assert_response_status_code(response, 201)
+    rs = response.json()
+
+    response = api_client.get("/concepts/odms/metadata/descriptions?page_size=1000")
+    assert_response_status_code(response, 200)
+    data = response.json()
+    assert any(item["name"] == "connected to be renamed" for item in data["items"])
+    assert data["total"] == 2
+    assert len(data["items"]) == 2
+
+    response = api_client.patch(
+        f"concepts/odms/forms/{rs["uid"]}",
+        json={
+            "library_name": "Sponsor",
+            "name": "to be updated2",
+            "oid": "oid",
+            "sdtm_version": "0.1",
+            "repeating": "No",
+            "descriptions": [
+                {
+                    "name": "renamed",
+                    "language": "eng",
+                    "description": "description",
+                    "instruction": "instruction",
+                    "sponsor_instruction": "sponsor_instruction",
+                }
+            ],
+            "aliases": [],
+            "change_description": "Updating description",
+        },
+    )
+    assert_response_status_code(response, 200)
+
+    response = api_client.get("/concepts/odms/metadata/descriptions?page_size=1000")
+    assert_response_status_code(response, 200)
+    data = response.json()
+    assert all(item["name"] != "connected to be renamed" for item in data["items"])
+    assert data["total"] == 2
+    assert len(data["items"]) == 2
+
+
+def test_doesnt_return_formal_expressions_that_are_not_connected_to_latest_odms(
+    api_client,
+):
+    response = api_client.post(
+        "concepts/odms/conditions",
+        json={
+            "library_name": "Sponsor",
+            "name": "to be renamed1",
+            "oid": "oid",
+            "formal_expressions": [
+                {"context": "connected to be renamed", "expression": "renaming"}
+            ],
+            "descriptions": [],
+            "aliases": [],
+        },
+    )
+    assert_response_status_code(response, 201)
+    rs = response.json()
+
+    response = api_client.get(
+        "/concepts/odms/metadata/formal-expressions?page_size=1000"
+    )
+    assert_response_status_code(response, 200)
+    data = response.json()
+    assert any(item["context"] == "connected to be renamed" for item in data["items"])
+    assert data["total"] == 2
+    assert len(data["items"]) == 2
+
+    response = api_client.patch(
+        f"concepts/odms/conditions/{rs["uid"]}",
+        json={
+            "library_name": "Sponsor",
+            "name": "to be renamed1",
+            "oid": "oid",
+            "formal_expressions": [{"context": "renamed", "expression": "done"}],
+            "descriptions": [],
+            "aliases": [],
+            "change_description": "Updating formal expression",
+        },
+    )
+    assert_response_status_code(response, 200)
+
+    response = api_client.get(
+        "/concepts/odms/metadata/formal-expressions?page_size=1000"
+    )
+    assert_response_status_code(response, 200)
+    data = response.json()
+    assert all(item["context"] != "connected to be renamed" for item in data["items"])
+    assert data["total"] == 2
+    assert len(data["items"]) == 2

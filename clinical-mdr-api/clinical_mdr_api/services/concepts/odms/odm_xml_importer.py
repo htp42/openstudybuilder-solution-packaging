@@ -904,7 +904,7 @@ class OdmXmlImporterService:
 
                 if not item_uid:
                     raise exceptions.BusinessLogicException(
-                        f"Item with OID '{item_ref.getAttribute('ItemOID')}' not found."
+                        msg=f"Item with OID '{item_ref.getAttribute('ItemOID')}' not found."
                     )
 
                 odm_item_group_items.append(
@@ -972,7 +972,7 @@ class OdmXmlImporterService:
 
                 if not item_group_uid:
                     raise exceptions.BusinessLogicException(
-                        f"ItemGroup with OID '{item_group_ref.getAttribute('ItemGroupOID')}' not found."
+                        msg=f"ItemGroup with OID '{item_group_ref.getAttribute('ItemGroupOID')}' not found."
                     )
 
                 odm_form_item_groups.append(

@@ -53,6 +53,10 @@ class StudyDesignClassService:
         )
         # If Study Design Class does not exist we should return Study Design Class defaulter to 'Manual' value
         if not study_design_class_node:
+            if study_value_version:
+                raise exceptions.NotFoundException(
+                    msg=f"The StudyDesignClass node for Study with UID '{study_uid}' and study value version '{study_value_version}' doesn't exist."
+                )
             return self.create(
                 study_uid=study_uid,
                 study_design_class_input=StudyDesignClassInput(

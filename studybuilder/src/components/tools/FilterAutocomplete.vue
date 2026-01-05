@@ -396,6 +396,7 @@ if (props.selectedData) {
   max-width: 300px !important;
 }
 .fixed-width {
+  width: 250px !important;
   max-width: 250px !important;
 }
 .items-font-size {

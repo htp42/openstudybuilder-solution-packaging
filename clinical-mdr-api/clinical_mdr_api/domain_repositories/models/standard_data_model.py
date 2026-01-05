@@ -35,6 +35,9 @@ class DataModelIGValue(VersionValue):
     name = StringProperty()
     description = StringProperty()
     version_number = StringProperty()
+    is_version_of = RelationshipFrom(
+        "DataModelIGRoot", "HAS_VERSION", model=ClinicalMdrRel
+    )
     implements = RelationshipTo(
         "DataModelValue", "IMPLEMENTS", model=ClinicalMdrRel, cardinality=One
     )

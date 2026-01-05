@@ -523,6 +523,7 @@ class SortByStudyDetailedSoA(Enum):
 class StudyDetailedSoA(BaseModel):
     study_uid: Annotated[str, Field(description="Study UID")]
     study_activity_uid: Annotated[str, Field(description="Study Activity UID")]
+    visit_uid: Annotated[str, Field(description="Study Visit UID")]
     visit_short_name: Annotated[str, Field(description="Study Visit Short Name")]
     epoch_name: Annotated[str, Field(description="Study Epoch Name")]
     activity_uid: Annotated[str, Field(description="Activity UID")]
@@ -535,12 +536,22 @@ class StudyDetailedSoA(BaseModel):
         str | None,
         Field(description="NCI Concept Name", json_schema_extra={"nullable": True}),
     ] = None
+    activity_subgroup_uid: Annotated[
+        str | None,
+        Field(
+            description="Activity Subgroup UID", json_schema_extra={"nullable": True}
+        ),
+    ] = None
     activity_subgroup_name: Annotated[
         str | None,
         Field(
             description="Activity Subgroup Name", json_schema_extra={"nullable": True}
         ),
     ]
+    activity_group_uid: Annotated[
+        str | None,
+        Field(description="Activity Group UID", json_schema_extra={"nullable": True}),
+    ] = None
     activity_group_name: Annotated[
         str | None,
         Field(description="Activity Group Name", json_schema_extra={"nullable": True}),
@@ -553,13 +564,16 @@ class StudyDetailedSoA(BaseModel):
         return cls(
             study_uid=val["study_uid"],
             study_activity_uid=val["study_activity_uid"],
+            visit_uid=val["visit_uid"],
             visit_short_name=str(val["visit_short_name"]),
             epoch_name=val["epoch_name"],
             activity_uid=val["activity_uid"],
             activity_name=val["activity_name"],
             activity_nci_concept_id=val.get("activity_nci_concept_id", None),
             activity_nci_concept_name=val.get("activity_nci_concept_name", None),
+            activity_subgroup_uid=val["activity_subgroup_uid"],
             activity_subgroup_name=val["activity_subgroup_name"],
+            activity_group_uid=val["activity_group_uid"],
             activity_group_name=val["activity_group_name"],
             soa_group_name=val["soa_group_name"],
             is_data_collected=val["is_data_collected"],

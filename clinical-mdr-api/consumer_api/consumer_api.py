@@ -153,9 +153,6 @@ Microsoft Identity Platform documentation can be read
 """,
 )
 
-# TODO: This is a temporary workaround as schemathesis doesnt support openapi 3.1.0 yet; this should be removed when schemathesis supports 3.1.0
-app.openapi_version = "3.0.2"
-
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exception: HTTPException):

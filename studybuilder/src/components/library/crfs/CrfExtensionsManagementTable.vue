@@ -354,5 +354,6 @@ async function getAttributes(params) {
 }
 .hide {
   opacity: 0;
+  cursor: default;
 }
 </style>
