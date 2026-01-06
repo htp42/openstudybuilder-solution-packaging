@@ -38,6 +38,7 @@
           :key="`content-${index}`"
           #[`item.${index+1}`]
         >
+          <slot name="header"></slot>
           <v-sheet
             elevation="0"
             class="ma-2 pa-4"

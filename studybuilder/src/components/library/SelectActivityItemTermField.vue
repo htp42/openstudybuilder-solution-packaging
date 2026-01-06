@@ -31,6 +31,7 @@
       variant="outlined"
       density="compact"
       hide-details
+      :multiple="props.multiple"
       :loading="loading"
     >
       <template #prepend-item>
@@ -79,6 +80,10 @@ const props = defineProps({
     type: String,
     default: 'title',
   },
+  multiple: {
+    type: Boolean,
+    default: false,
+  },
 })
 const codelist = defineModel('codelist', { type: String })
 const model = defineModel({ type: String })
@@ -126,7 +131,7 @@ const fetchCodelists = async () => {
     const resp = await activityItemClassesApi.getDatasetCodelists(
       props.activityItemClass.uid,
       props.dataDomain,
-      { page_size: 0 }
+      { page_size: 0, ct_catalogue_name: 'SDTM CT' }
     )
     codelists.value = resp.data.items
     if (codelists.value.length === 1) {

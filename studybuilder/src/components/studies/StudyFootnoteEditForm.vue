@@ -218,15 +218,22 @@ export default {
       } else {
         args.template = this.template
       }
-      await this.footnotesStore.updateStudyFootnote(args)
-      this.notificationHub.add({
-        msg: this.$t('StudyFootnoteEditForm.update_success'),
-      })
-      this.$emit('updated')
-      this.$refs.form.close()
+      try {
+        await this.footnotesStore.updateStudyFootnote(args)
+        this.notificationHub.add({
+          msg: this.$t('StudyFootnoteEditForm.update_success'),
+        })
+        this.$emit('updated')
+        this.$refs.form.close()
+      } catch (error) {
+        console.error('Error updating footnote:', error)
+      } finally {
+        this.$refs.form.$refs.form.working = false
+      }
     },
     close() {
       this.notificationHub.clearErrors()
+      this.editedObject = {}
       this.referencedSoAGroups = []
       this.referencedActivities = []
       this.referencedEpochsAndVisits = []

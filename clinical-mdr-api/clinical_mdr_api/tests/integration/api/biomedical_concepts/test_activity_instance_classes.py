@@ -895,7 +895,7 @@ def test_get_activity_item_classes_for_instance_class(api_client):
         },
     )
 
-    # List ActivityItemClasses without filtering on dataset
+    # List ActivityItemClasses without filtering on dataset or ig
     response = api_client.get(
         f"/activity-instance-classes/{child_instance_class_uid}/activity-item-classes"
     )
@@ -911,6 +911,19 @@ def test_get_activity_item_classes_for_instance_class(api_client):
     returned_names = [el["name"] for el in res]
     assert "mapped" in returned_names
     assert "parent mapped" in returned_names
+
+    # List ActivityItemClasses with ig filter
+    response = api_client.get(
+        f"/activity-instance-classes/{child_instance_class_uid}/activity-item-classes?ig_uid={data_model_ig.uid}"
+    )
+    res = response.json()
+    assert len(res) == 2
+
+    response = api_client.get(
+        f"/activity-instance-classes/{child_instance_class_uid}/activity-item-classes?ig_uid=non-existent"
+    )
+    res = response.json()
+    assert len(res) == 0
 
 
 def test_get_activity_instance_class_parent_overview(api_client: TestClient) -> None:

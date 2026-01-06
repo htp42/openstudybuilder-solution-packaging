@@ -397,9 +397,9 @@ class SoATestData:
     NUM_SOA_ROWS = 43
     NUM_ACTIVITY_REQUEST_ROWS = 3 + 3 + 3  # 3 activity requests with their groupings
     NUM_ACTIVITY_INSTANCES = 8
-    NUM_OPERATIONAL_SOA_ROWS = (
-        NUM_SOA_ROWS - NUM_ACTIVITY_REQUEST_ROWS + NUM_ACTIVITY_INSTANCES
-    )
+    # Placeholders (activity requests without instances) are not shown in operational SoA
+    # because they're filtered out in _build_flowchart_table when activity_instance is None
+    NUM_OPERATIONAL_SOA_ROWS = NUM_SOA_ROWS + NUM_ACTIVITY_INSTANCES
     NUM_OPERATIONAL_SOA_SCHEDULES = 9  # Mind that study-activities are scheduled, not study-activity-instances, there may be multiple instances per activity
     NUM_OPERATIONAL_SOA_CHECKMARKS = (
         15  # Visits are no longer grouped in operational SoA
@@ -1078,7 +1078,8 @@ class SoATestData:
         log.info(
             "fetched StudyActivityInstances: %s",
             ", ".join(
-                sai.study_activity_instance_uid for sai in study_activity_instances
+                sai.study_activity_instance_uid or "placeholder"
+                for sai in study_activity_instances
             ),
         )
 

@@ -69,6 +69,7 @@ from clinical_mdr_api.models.study_selections.study_selection import (
     StudySelectionDataSupplier,
     StudySelectionDataSupplierInput,
     StudySelectionDataSupplierNewOrder,
+    StudySelectionDataSupplierSyncInput,
     StudySelectionElement,
     StudySelectionElementCreateInput,
     StudySelectionElementInput,
@@ -442,23 +443,25 @@ def get_study_data_suppliers_audit_trail(
     return service.get_audit_trail(study_uid)
 
 
-@router.post(
-    "/studies/{study_uid}/study-data-suppliers",
+@router.put(
+    "/studies/{study_uid}/study-data-suppliers/sync",
     dependencies=[security, rbac.STUDY_WRITE],
-    summary="Creating a study data supplier selection based on the input data",
-    status_code=201,
+    summary="Sync study data suppliers to match the desired state",
+    description="""Accepts a list of data suppliers and syncs the study to match.
+    Validates all inputs first - if duplicates or invalid suppliers are found,
+    rejects the entire request with an error. No changes are made unless all validation passes.""",
+    status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
     },
 )
 @decorators.validate_if_study_is_not_locked("study_uid")
-def create_a_new_study_data_supplier_selection(
+def sync_study_data_suppliers(
     study_uid: Annotated[str, studyUID],
-    selection: Annotated[StudySelectionDataSupplierInput, Body()],
-) -> StudySelectionDataSupplier:
+    sync_input: Annotated[StudySelectionDataSupplierSyncInput, Body()],
+) -> list[StudySelectionDataSupplier]:
     service = StudyDataSupplierSelectionService()
-
-    return service.make_selection(study_uid=study_uid, selection_input=selection)
+    return service.sync_selections(study_uid=study_uid, sync_input=sync_input)
 
 
 @router.get(
@@ -3780,6 +3783,7 @@ def get_all_selected_activity_instances(
         filter_operator=FilterOperator.from_str(operator),
         sort_by=sort_by,
         study_value_version=study_value_version,
+        include_placeholders=True,
     )
     return CustomPage(
         items=all_items.items,

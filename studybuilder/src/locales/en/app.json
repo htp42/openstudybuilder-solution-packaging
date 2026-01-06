@@ -995,9 +995,9 @@
         "hide_panel": "Hide notifications",
         "show_panel": "Show notifications",
         "remove_notification": "Remove notification",
-        "copy_error": "Copy error to clipboard. Share it with the support team!",
-        "copy_all_error": "Copy all errors to clipboard. Share them with the support team!",
-        "copy_screenshot": "Take a screenshot and copy it to clipboard. Share it with the support team!"
+        "copy_error": "Copy error to clipboard.<br/>Share it with the support team!",
+        "copy_all_error": "Copy all errors to clipboard.<br/>Share them with the support team!",
+        "copy_screenshot": "Take a screenshot and copy it to clipboard.<br/>Share it with the support team!"
     },
     "Topbar": {
         "app_selector_title": "Choose a section",
@@ -1006,6 +1006,7 @@
         "documentation_portal": "Technical documentation",
         "user_guide": "User guides",
         "about": "About",
+        "api": "API Docs & Info",
         "need_help": "Need Help?",
         "enable_dark_theme": "Enable dark theme",
         "enable_light_theme": "Enable light theme",
@@ -1295,7 +1296,8 @@
         "history_name": "Data supplier name",
         "history_description": "Description",
         "history_modified": "Modified",
-        "history_modified_by": "Modified by"
+        "history_modified_by": "Modified by",
+        "duplicate_error": "Data supplier '{name}' is already added to this study"
     },
     "HomeView": {
         "title": "Welcome to the OpenStudyBuilder {env} application",
@@ -4194,6 +4196,7 @@
     "CRFTree": {
         "show_all": "Show all",
         "select": "Select Collection",
+        "double_click_expand": "Double click to expand all child items.",
         "reordering_not_allowed": "<p>You can only reorder elements when:<ul><li>their parent is in Draft status</li><li>there are at least two elements at the same level</li></ul></p>",
         "link": "Link",
         "collections": "Collections",
@@ -4906,7 +4909,8 @@
         "name_submission_value": "Name submission value",
         "activity_not_selected": "You must select an activity from the list",
         "codelist": "Codelist",
-        "allow_manual_edit": "Customize"
+        "allow_manual_edit": "Customize",
+        "selected_activity": "Selected activity:"
     },
     "ActivityInstancePreview": {
         "activity_instance_name": "Activity instance name",
@@ -5014,5 +5018,11 @@
         "admin_burdens_id": "Burden ID",
         "admin_burdens_site_burden": "Site burden",
         "admin_burdens_patient_burden": "Participant burden"
+    },
+    "Pagination": {
+        "rows_per_page": "Rows per page",
+        "of": "of",
+        "next_aria_label": "Go to next page",
+        "previous_aria_label": "Go to previous page"
     }
 }

@@ -120,7 +120,14 @@ const getAliases = (filters, options, filtersUpdated) => {
     )
     params.search = options.search
     crfs.getAliases(params).then((resp) => {
-      aliases.value = resp.data.items
+      aliases.value = [
+        ...modelValue.value,
+        ...resp.data.items.filter((alias) => {
+          return !modelValue.value.some(
+            (a) => a.context === alias.context && a.name === alias.name
+          )
+        }),
+      ]
       total.value = resp.data.total
     })
   }

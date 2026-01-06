@@ -74,7 +74,7 @@ class StudySoAGroupRepository(StudySelectionActivityBaseRepository[StudySoAGroup
     def _versioning_query(self) -> str:
         return ""
 
-    def _additional_match(self) -> str:
+    def _additional_match(self, **kwargs) -> str:
         return """
             WITH sr, sv
             

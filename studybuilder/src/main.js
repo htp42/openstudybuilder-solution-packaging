@@ -27,6 +27,7 @@ function prepareConfig(config) {
     'OAUTH_ENABLED',
     'OAUTH_RBAC_ENABLED',
     'APPINSIGHTS_DISABLE',
+    'ENABLE_SCREEN_RECORDER',
   ]) {
     const currentValue = config[field].toLowerCase()
     config[field] = trueValues.indexOf(currentValue) !== -1

@@ -381,7 +381,7 @@ const props = defineProps({
     default: () => [],
   },
   itemValue: {
-    type: String,
+    type: [String, Function],
     default: '',
   },
   hideDefaultSwitches: {

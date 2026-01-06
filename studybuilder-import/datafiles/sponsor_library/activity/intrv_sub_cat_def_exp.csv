@@ -1,6 +1,6 @@
 CODELIST_SUBMVAL,TERM_SUBMVAL,SPONSOR_NAME,SPONSOR_NAME_SENTENCE_CASE,NCI_PREFERRED_NAME,ORDER,CONCEPT_ID,CATALOGUES,DEFINITION
-INTVSCAT,BARIATRIC SURGERY INTRV_SUB_CAT,Bariatric Surgery,,,1,,,Bariatric surgery
-INTVSCAT,FIRST DOSE AFTER CROSSOVER INTRV_SUB_CAT,First Dose After Crossover,,,3,,,First dose after the crossover period
-INTVSCAT,KNEE SURGERY INTRV_SUB_CAT,Knee Surgery,,,1,,,Knee surgery
-INTVSCAT,LONG-ACTING INTRV_SUB_CAT,Long-acting,,,125,,,Long-acting
-INTVSCAT,SHORT-ACTING INTRV_SUB_CAT,Short-acting,,,190,,,Short-acting
+INTVSCAT,BARIATRIC SURGERY,Bariatric Surgery,,,1,,,Bariatric surgery
+INTVSCAT,FIRST DOSE AFTER CROSSOVER,First Dose After Crossover,,,3,,,First dose after the crossover period
+INTVSCAT,KNEE SURGERY,Knee Surgery,,,1,,,Knee surgery
+INTVSCAT,LONG-ACTING,Long-acting,,,125,,,Long-acting
+INTVSCAT,SHORT-ACTING,Short-acting,,,190,,,Short-acting

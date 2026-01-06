@@ -25,7 +25,7 @@
                 data-cy="item-group-name"
                 density="compact"
                 clearable
-                :disabled="readOnly"
+                :disabled="isDisabled"
                 :rules="[formRules.required]"
               />
             </v-col>
@@ -36,7 +36,7 @@
                 data-cy="item-group-oid"
                 density="compact"
                 clearable
-                :disabled="readOnly"
+                :disabled="isDisabled"
               />
             </v-col>
           </v-row>
@@ -46,7 +46,7 @@
                 v-model="form.repeating"
                 class="mt-2"
                 :label="$t('CRFItemGroups.repeating')"
-                :disabled="readOnly"
+                :disabled="isDisabled"
               >
                 <v-radio :label="$t('_global.yes')" value="Yes" />
                 <v-radio :label="$t('_global.no')" value="No" />
@@ -56,20 +56,12 @@
               <div class="subtitle-2">
                 {{ $t('_global.description') }}
               </div>
-              <div v-show="readOnly">
+              <div>
                 <QuillEditor
                   v-model:content="engDescription.description"
                   content-type="html"
                   :toolbar="customToolbar"
-                  :options="quillOptions"
-                />
-              </div>
-              <div v-show="!readOnly">
-                <QuillEditor
-                  v-model:content="engDescription.description"
-                  content-type="html"
-                  :toolbar="customToolbar"
-                  :placeholder="$t('_global.description')"
+                  :read-only="isDisabled"
                 />
               </div>
             </v-col>
@@ -77,22 +69,13 @@
               <div class="subtitle-2">
                 {{ $t('CRFDescriptions.sponsor_instruction') }}
               </div>
-              <div v-show="readOnly">
+              <div>
                 <QuillEditor
                   v-model:content="engDescription.sponsor_instruction"
                   content-type="html"
                   :toolbar="customToolbar"
                   data-cy="crf-item-group-help-for-sponsor"
-                  :options="quillOptions"
-                />
-              </div>
-              <div v-show="!readOnly">
-                <QuillEditor
-                  v-model:content="engDescription.sponsor_instruction"
-                  content-type="html"
-                  :toolbar="customToolbar"
-                  :placeholder="$t('CRFDescriptions.sponsor_instruction')"
-                  data-cy="crf-item-group-help-for-sponsor"
+                  :read-only="isDisabled"
                 />
               </div>
             </v-col>
@@ -110,29 +93,20 @@
                 data-cy="crf-item-group-displayed-text"
                 density="compact"
                 clearable
-                :disabled="readOnly"
+                :disabled="isDisabled"
               />
             </v-col>
             <v-col cols="9">
               <div class="subtitle-2">
                 {{ $t('CRFDescriptions.instruction') }}
               </div>
-              <div v-show="readOnly">
+              <div>
                 <QuillEditor
                   v-model:content="engDescription.instruction"
                   content-type="html"
                   :toolbar="customToolbar"
                   data-cy="crf-item-group-help-for-site"
-                  :options="quillOptions"
-                />
-              </div>
-              <div v-show="!readOnly">
-                <QuillEditor
-                  v-model:content="engDescription.instruction"
-                  content-type="html"
-                  :toolbar="customToolbar"
-                  :placeholder="$t('CRFDescriptions.instruction')"
-                  data-cy="crf-item-group-help-for-site"
+                  :read-only="isDisabled"
                 />
               </div>
             </v-col>
@@ -214,7 +188,7 @@
                 data-cy="item-group-sas-dataset-name"
                 density="compact"
                 clearable
-                :disabled="readOnly"
+                :disabled="isDisabled"
               />
             </v-col>
           </v-row>
@@ -224,7 +198,7 @@
                 v-model="form.is_reference_data"
                 class="mt-2"
                 :label="$t('CRFItemGroups.is_referential')"
-                :disabled="readOnly"
+                :disabled="isDisabled"
               >
                 <v-radio :label="$t('_global.yes')" value="Yes" />
                 <v-radio :label="$t('_global.no')" value="No" />
@@ -240,7 +214,7 @@
                 item-value="nci_preferred_name"
                 density="compact"
                 clearable
-                :disabled="readOnly"
+                :disabled="isDisabled"
               />
             </v-col>
           </v-row>
@@ -252,7 +226,7 @@
                 data-cy="item-group-purpose"
                 density="compact"
                 clearable
-                :disabled="readOnly"
+                :disabled="isDisabled"
               />
             </v-col>
             <v-col cols="6">
@@ -262,7 +236,7 @@
                 data-cy="item-group-comment"
                 density="compact"
                 clearable
-                :disabled="readOnly"
+                :disabled="isDisabled"
               />
             </v-col>
           </v-row>
@@ -272,19 +246,19 @@
     <template #[`step.extensions`]>
       <CrfExtensionsManagementTable
         type="ItemGroupDef"
-        :read-only="readOnly"
+        :read-only="isDisabled"
         :edit-extensions="selectedExtensions"
         @set-extensions="setExtensions"
       />
     </template>
     <template #[`step.alias`]="{ step }">
       <v-form :ref="`observer_${step}`">
-        <CrfAliasSelection v-model="form.aliases" :disabled="readOnly" />
+        <CrfAliasSelection v-model="form.aliases" :disabled="isDisabled" />
       </v-form>
     </template>
     <template #[`step.description`]="{ step }">
       <v-form :ref="`observer_${step}`">
-        <CrfDescriptionSelection v-model="desc" :disabled="readOnly" />
+        <CrfDescriptionSelection v-model="desc" :disabled="isDisabled" />
       </v-form>
     </template>
     <template #[`step.change_description`]="{ step }">
@@ -296,7 +270,7 @@
               :label="$t('CRFForms.change_desc')"
               data-cy="item-group-change-description"
               clearable
-              :disabled="readOnly"
+              :disabled="isDisabled"
               :rules="[formRules.required]"
             />
           </v-col>
@@ -304,7 +278,11 @@
       </v-form>
     </template>
     <template #actions>
-      <ActionsMenu v-if="selectedGroup" :actions="actions" :item="form" />
+      <ActionsMenu
+        v-if="selectedGroup && checkPermission($roles.LIBRARY_WRITE)"
+        :actions="actions"
+        :item="form"
+      />
     </template>
   </HorizontalStepperForm>
   <CrfActivitiesModelsLinkForm
@@ -339,6 +317,7 @@ import filteringParameters from '@/utils/filteringParameters'
 import { useAppStore } from '@/stores/app'
 import { computed } from 'vue'
 import regex from '@/utils/regex'
+import { useAccessGuard } from '@/composables/accessGuard'
 
 export default {
   components: {
@@ -367,8 +346,10 @@ export default {
   emits: ['updateItemGroup', 'close', 'linkGroup'],
   setup() {
     const appStore = useAppStore()
+    const accessGuard = useAccessGuard()
 
     return {
+      checkPermission: accessGuard.checkPermission,
       userData: computed(() => appStore.userData),
       clearEmptyHtml: regex.clearEmptyHtml,
     }
@@ -433,9 +414,6 @@ export default {
         [{ script: 'sub' }, { script: 'super' }],
         [{ list: 'ordered' }, { list: 'bullet' }],
       ],
-      quillOptions: {
-        readOnly: true,
-      },
       readOnly: this.readOnlyProp,
       linkForm: false,
       actions: [
@@ -477,6 +455,9 @@ export default {
     }
   },
   computed: {
+    isDisabled() {
+      return this.readOnly || !this.checkPermission(this.$roles.LIBRARY_WRITE)
+    },
     title() {
       return this.isEdit()
         ? this.readOnly
@@ -698,12 +679,13 @@ export default {
       this.$emit('close')
     },
     async submit() {
-      this.notificationHub.clearErrors()
-
-      if (this.readOnly) {
+      if (this.isDisabled) {
         this.close()
         return
       }
+
+      this.notificationHub.clearErrors()
+
       await this.setDescription()
       this.form.library_name = libraries.LIBRARY_SPONSOR
       if (this.form.oid === 'G.') {

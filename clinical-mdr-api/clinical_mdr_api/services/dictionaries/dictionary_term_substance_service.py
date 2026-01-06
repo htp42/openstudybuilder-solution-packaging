@@ -21,6 +21,8 @@ from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services.dictionaries.dictionary_term_generic_service import (
     DictionaryTermGenericService,
 )
+from clinical_mdr_api.utils import is_attribute_in_model
+from common.exceptions import ValidationException
 
 
 class DictionaryTermSubstanceService(DictionaryTermGenericService):
@@ -118,3 +120,27 @@ class DictionaryTermSubstanceService(DictionaryTermGenericService):
             for dictionary_term_ar in item_ars
         ]
         return GenericFilteringReturn(items=items, total=total)
+
+    def get_distinct_values_for_header(
+        self,
+        field_name: str,
+        search_string: str = "",
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
+        page_size: int = 10,
+    ) -> list[str]:
+        # First, check that attributes provided for filtering exist in the return class
+        # Properties can be nested => check if root property exists in class
+        if not is_attribute_in_model(field_name.split(".")[0], DictionaryTermSubstance):
+            raise ValidationException(
+                msg=f"Invalid field name specified in the filter dictionary : {field_name}"
+            )
+
+        header_values = self.repository.get_distinct_headers(
+            field_name=field_name,
+            search_string=search_string,
+            filter_by=filter_by,
+            filter_operator=filter_operator,
+            page_size=page_size,
+        )
+        return header_values

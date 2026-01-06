@@ -95,7 +95,8 @@ def get_studies(
 
     base_query = f"""
         MATCH (study_root:StudyRoot)-[:LATEST]->(study_value:StudyValue)
-        OPTIONAL MATCH (study_root)-[hv:HAS_VERSION]->(:StudyValue)
+        OPTIONAL MATCH (study_root)-[hv:HAS_VERSION|LATEST_DRAFT]->(:StudyValue)
+        OPTIONAL MATCH (study_root)-[hv_ld:LATEST_DRAFT]->(:StudyValue)
         OPTIONAL MATCH (author:User) WHERE author.user_id = hv.author_id
         WITH *,
             COLLECT ({{
@@ -112,7 +113,8 @@ def get_studies(
                 WHEN IS NULL THEN COALESCE(study_value.study_id_prefix, '') + "-" + COALESCE(study_value.study_number, '')
                 ELSE COALESCE(study_value.study_id_prefix, '') + "-" + COALESCE(study_value.study_number, '') + "-" + study_value.subpart_id
             END AS id,
-            COLLECT({{
+            hv_ld as version_latest_draft,
+            COLLECT(DISTINCT {{
                 version_status: hv.status,
                 version_number: hv.version,
                 version_started_at: hv.start_date,
@@ -120,11 +122,21 @@ def get_studies(
                 version_author_id: hv.author_id,
                 all_authors: authors,
                 version_description: hv.change_description
-            }}) as versions
+            }}) as versions_all
 
         {filter_clause}
 
-        RETURN *
+        WITH *,
+            [v IN versions_all 
+                WHERE v.version_status IN ['RELEASED', 'LOCKED']
+                OR (v.version_started_at = version_latest_draft.start_date AND v.version_ended_at is null)] as versions
+            
+        RETURN uid,
+            acronym,
+            id_prefix,
+            number,
+            id,
+            versions
         """
 
     full_query = " ".join(
@@ -430,13 +442,14 @@ def get_study_detailed_soa(
             study_epoch,
             study_activity,
             head([(study_activity)-[:HAS_SELECTED_ACTIVITY]->(activity_value:ActivityValue)<-[:HAS_VERSION]-(activity_root:ActivityRoot) | {value: activity_value, uid: activity_root.uid}]) AS activity,
-            head([(study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]->(:StudyActivitySubGroup)-[:HAS_SELECTED_ACTIVITY_SUBGROUP]->(activity_subgroup_value:ActivitySubGroupValue) | activity_subgroup_value]) AS activity_subgroup,
-            head([(study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(:StudyActivityGroup)-[:HAS_SELECTED_ACTIVITY_GROUP]->(activity_group_value:ActivityGroupValue) | activity_group_value]) AS activity_group,
+            head([(study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]->(:StudyActivitySubGroup)-[:HAS_SELECTED_ACTIVITY_SUBGROUP]->(activity_subgroup_value:ActivitySubGroupValue)<-[:HAS_VERSION]-(activity_subgroup_root:ActivitySubGroupRoot) | {value: activity_subgroup_value, uid: activity_subgroup_root.uid}]) AS activity_subgroup,
+            head([(study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(:StudyActivityGroup)-[:HAS_SELECTED_ACTIVITY_GROUP]->(activity_group_value:ActivityGroupValue)<-[:HAS_VERSION]-(activity_group_root:ActivityGroupRoot) | {value: activity_group_value, uid: activity_group_root.uid}]) AS activity_group,
             head([(study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(:StudySoAGroup)-[:HAS_FLOWCHART_GROUP]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(term_name_value:CTTermNameValue) | term_name_value]) AS term_name_value,
             head([(study_epoch)-[:HAS_EPOCH]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]-(epoch_term:CTTermNameValue) | epoch_term.name]) AS epoch_name
 
         RETURN DISTINCT
             study_root.uid AS study_uid,
+            study_visit.uid AS visit_uid,
             study_visit.short_visit_label AS visit_short_name,
             study_activity.uid AS study_activity_uid,
             epoch_name AS epoch_name,
@@ -444,8 +457,10 @@ def get_study_detailed_soa(
             activity.value.name AS activity_name,
             activity.value.nci_concept_id AS activity_nci_concept_id,
             activity.value.nci_concept_name AS activity_nci_concept_name,
-            activity_subgroup.name AS activity_subgroup_name,
-            activity_group.name AS activity_group_name,
+            activity_subgroup.value.name AS activity_subgroup_name,
+            activity_subgroup.uid AS activity_subgroup_uid,
+            activity_group.value.name AS activity_group_name,
+            activity_group.uid AS activity_group_uid,
             term_name_value.name AS soa_group_name,
             coalesce(activity.is_data_collected, False) AS is_data_collected
         """
@@ -456,7 +471,7 @@ def get_study_detailed_soa(
             db_sort_clause(
                 sort_by.value,
                 sort_order.value,
-                secondary_sort_fields="soa_group_name, activity_group_name, activity_subgroup_name,activity_uid, study_activity_uid, visit_short_name",
+                secondary_sort_fields="visit_uid, soa_group_name, activity_group_uid, activity_subgroup_uid, activity_uid, study_activity_uid",
             ),
             db_pagination_clause(page_size, page_number),
         ]
@@ -856,7 +871,11 @@ def get_studies_audit_trail(
             [label IN labels(sa) WHERE label <> 'StudyAction'][0] as action,
             obj_after.uid as entity_uid,
             labels(obj_after) as entity_labels,
-            [key IN keys(obj_after) WHERE obj_after[key] <> obj_before[key]] AS changed_properties
+            [key IN keys(obj_after) WHERE obj_after[key] <> obj_before[key]] AS changed_properties,
+            CASE WHEN sa.author_id IS NOT NULL AND sa.author_id <> ''
+                THEN apoc.util.md5([sa.author_id])
+                ELSE ''
+            END AS author
             
         { 'WHERE ' + ' AND '.join(filters) if filters else ''}
 
@@ -867,7 +886,8 @@ def get_studies_audit_trail(
             action,
             entity_uid,
             apoc.text.join(entity_labels, '|') AS entity_type,
-            changed_properties
+            changed_properties,
+            author
         ORDER BY ts ASC
         """
 

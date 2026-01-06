@@ -18,6 +18,7 @@ class LibraryItem(BaseModel):
 
 class CTTermItem(LibraryItem):
     codelist_uid: str | None = None
+    submission_value: str | None = None
 
 
 @dataclass(frozen=True)

@@ -323,7 +323,7 @@ watch(termsFilterOperator, () => {
 
 const filters = {}
 if (props.library) {
-  filters['codelists.library'] = { v: [props.library] }
+  filters['codelists.library_name'] = { v: [props.library] }
 }
 termsStore.fetchTerms(filters, true).then(() => {
   loading.value = false
@@ -438,7 +438,7 @@ const updateTerms = _debounce(function () {
   const filters = { '*': { v: [search.value] } }
 
   if (props.library) {
-    filters['codelists.library'] = { v: [props.library] }
+    filters['codelists.library_name'] = { v: [props.library] }
   }
 
   termsStore.fetchTerms(filters, true).then(() => {

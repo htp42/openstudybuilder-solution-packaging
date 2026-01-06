@@ -8,6 +8,9 @@ from clinical_mdr_api.domain_repositories._generic_repository_interface import (
 from clinical_mdr_api.domain_repositories.dictionaries.dictionary_term_repository import (
     DictionaryTermGenericRepository,
 )
+from clinical_mdr_api.domain_repositories.models._utils import (
+    format_generic_header_values,
+)
 from clinical_mdr_api.domain_repositories.models.dictionary import DictionaryTermRoot
 from clinical_mdr_api.domain_repositories.models.generic import (
     Library,
@@ -24,13 +27,15 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemStatus,
     LibraryVO,
 )
-from clinical_mdr_api.models.dictionaries.dictionary_codelist import DictionaryCodelist
+from clinical_mdr_api.models.dictionaries.dictionary_term import DictionaryTermSubstance
 from clinical_mdr_api.repositories._utils import (
     CypherQueryBuilder,
     FilterDict,
     FilterOperator,
+    validate_filters_and_add_search_string,
 )
 from clinical_mdr_api.services.user_info import UserInfoService
+from common.config import settings
 from common.utils import convert_to_datetime
 
 
@@ -62,7 +67,11 @@ class DictionaryTermSubstanceRepository(DictionaryTermGenericRepository):
                 name_sentence_case=term_dict["name_sentence_case"],
                 abbreviation=term_dict.get("abbreviation"),
                 definition=term_dict.get("definition"),
-                pclass_uid=term_dict.get("pclass_uid"),
+                pclass_uid=(
+                    term_dict.get("pclass").get("uid")
+                    if term_dict.get("pclass")
+                    else None
+                ),
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=term_dict["library_name"],
@@ -125,7 +134,7 @@ class DictionaryTermSubstanceRepository(DictionaryTermGenericRepository):
     def specific_alias_clause(self) -> str:
         return """
             WITH *,
-                head([(dictionary_term_value)-[:HAS_PCLASS]->(pclass_dict_term_root:DictionaryTermRoot) | pclass_dict_term_root.uid]) AS pclass_uid
+                head([(dictionary_term_value)-[:HAS_PCLASS]->(pclass_dict_term_root:DictionaryTermRoot)-[:LATEST]->(pclass_dict_term_value) | {uid: pclass_dict_term_root.uid, dictionary_id: pclass_dict_term_value.dictionary_id, name: pclass_dict_term_value.name}]) AS pclass
             """
 
     def find_all(
@@ -167,7 +176,7 @@ class DictionaryTermSubstanceRepository(DictionaryTermGenericRepository):
             filter_by=FilterDict.model_validate({"elements": filter_by}),
             filter_operator=filter_operator,
             total_count=total_count,
-            return_model=DictionaryCodelist,
+            return_model=DictionaryTermSubstance,
         )
 
         query.parameters.update({"codelist_name": codelist_name})
@@ -184,6 +193,47 @@ class DictionaryTermSubstanceRepository(DictionaryTermGenericRepository):
         )
 
         return extracted_items, total_amount
+
+    def get_distinct_headers(
+        self,
+        field_name: str,
+        search_string: str = "",
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
+        page_size: int = 10,
+    ) -> list[Any]:
+        # Match clause
+        match_clause = self.generic_match_clause()
+
+        # Aliases clause
+        alias_clause = self.generic_alias_clause() + self.specific_alias_clause()
+
+        # Add header field name to filter_by, to filter with a CONTAINS pattern
+        filter_by = validate_filters_and_add_search_string(
+            search_string, field_name, filter_by
+        )
+
+        # Use Cypher query class to use reusable helper methods
+        query = CypherQueryBuilder(
+            filter_by=FilterDict.model_validate({"elements": filter_by}),
+            filter_operator=filter_operator,
+            match_clause=match_clause,
+            alias_clause=alias_clause,
+        )
+
+        query.parameters.update(
+            {"codelist_name": settings.library_substances_codelist_name}
+        )
+        query.full_query = query.build_header_query(
+            header_alias=field_name, page_size=page_size
+        )
+        result_array, _ = query.execute()
+
+        return (
+            format_generic_header_values(result_array[0][0])
+            if len(result_array) > 0
+            else []
+        )
 
     def _has_data_changed(self, ar: DictionaryTermSubstanceAR, value: VersionValue):
         parent_data_modified = super()._has_data_changed(ar=ar, value=value)

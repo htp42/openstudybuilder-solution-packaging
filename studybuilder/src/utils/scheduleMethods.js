@@ -14,6 +14,12 @@ function getSoaRowClasses(row) {
     if (row.cells[0].style === 'subGroup') {
       return 'subgroup'
     }
+    if (row.cells[0].style === 'activityPlaceholder') {
+      return 'bg-warning'
+    }
+    if (row.cells[0].style === 'activityPlaceholderSubmitted') {
+      return 'bg-yellow'
+    }
   }
   return 'bg-white'
 }
@@ -50,9 +56,18 @@ function getElementFootnotesLetters(uid) {
   return Array.from(new Set(footnotesLetters.split(''))).join(' ')
 }
 
+function isActivityRow(row) {
+  return [
+    'activity',
+    'activityPlaceholder',
+    'activityPlaceholderSubmitted',
+  ].includes(getSoaRowType(row))
+}
+
 export default {
   getSoaRowClasses,
   getSoaRowType,
   getSoaFirstCellClasses,
   getElementFootnotesLetters,
+  isActivityRow,
 }

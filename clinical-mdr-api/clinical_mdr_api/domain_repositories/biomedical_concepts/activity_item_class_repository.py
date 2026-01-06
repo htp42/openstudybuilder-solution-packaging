@@ -198,56 +198,80 @@ class ActivityItemClassRepository(ConceptGenericRepository[ActivityItemClassAR])
         return new_value
 
     def get_all_for_activity_instance_class(
-        self, activity_instance_class_uid: str, dataset_uid: str | None = None
+        self,
+        activity_instance_class_uid: str,
+        ig_uid: str | None = None,
+        dataset_uid: str | None = None,
     ) -> set[ActivityItemClassRoot]:
         """
         Return all Activity Item Class nodes linked to given Activity Instance Class
         and its parents.
         """
-        filter_kwargs: dict[str, str] = {
-            "has_activity_instance_class__uid": activity_instance_class_uid,
-        }
-        if dataset_uid:
-            filter_kwargs[
-                "maps_variable_class__has_instance__implemented_by_variable__has_dataset_variable__is_instance_of__uid"
-            ] = dataset_uid
 
-        nodes = (
-            ActivityItemClassRoot.nodes.traverse(
-                Path("has_latest_value", include_rels_in_return=False)
-            )
-            .filter(**filter_kwargs)
-            .resolve_subgraph()
-        )
-
-        # Then fetch parent UIDs
-        query = """MATCH (n:ActivityInstanceClassRoot)
-WHERE n.uid=$uid
-OPTIONAL MATCH (n)-[:PARENT_CLASS]->{1,3}(m:ActivityInstanceClassRoot)
-RETURN collect(DISTINCT m.uid)
+        # Building a Cypher query for performance optimization
+        # Also, using some or on node labels and relationship types
+        base_match = """
+            MATCH (aicv:ActivityItemClassValue)<-[:LATEST]-(aicr:ActivityItemClassRoot)
+            <-[has_activity_instance_class:HAS_ITEM_CLASS]-(:ActivityInstanceClassRoot{uid:$activity_instance_class_uid})
         """
-        results, _ = db.cypher_query(query, {"uid": activity_instance_class_uid})
-        parent_uids: list[str] = []
-        if results and results[0][0]:
-            parent_uids += results[0][0]
 
-        # Finally, get activity item classes linked to parents
-        parent_filter_kwargs: dict[str, str | list[str]] = {
-            "has_activity_instance_class__uid__in": parent_uids,
-        }
-        if dataset_uid:
-            parent_filter_kwargs[
-                "maps_variable_class__has_instance__implemented_by_variable__has_dataset_variable__is_instance_of__uid"
-            ] = dataset_uid
-        parent_nodes = (
-            ActivityItemClassRoot.nodes.traverse(
-                Path("has_latest_value", include_rels_in_return=False)
-            )
-            .exclude(uid__in=[node.uid for node in nodes])
-            .filter(**parent_filter_kwargs)
-            .resolve_subgraph()
+        base_parent_match = """
+            MATCH (aic:ActivityInstanceClassRoot {uid:$activity_instance_class_uid})-[:PARENT_CLASS]->{1,3}(p_aic:ActivityInstanceClassRoot)
+            -[has_activity_instance_class:HAS_ITEM_CLASS]->(aicr:ActivityItemClassRoot)-[:LATEST]->(aicv:ActivityItemClassValue)
+        """
+
+        match_for_filter = """
+            MATCH (aicr)-[:MAPS_VARIABLE_CLASS]->(:VariableClass)-[:HAS_INSTANCE]->(:VariableClassInstance)
+            <-[:IMPLEMENTS_VARIABLE|IMPLEMENTS_VARIABLE_CLASS]-(:DatasetVariableInstance|SponsorModelDatasetVariableInstance)
+            <-[:HAS_DATASET_VARIABLE]-(di:DatasetInstance|SponsorModelDatasetInstance)
+        """
+
+        dataset_uid_filter = (
+            "EXISTS((di)<-[:HAS_INSTANCE]-(:Dataset {uid: $dataset_uid}))"
         )
-        return set(nodes).union(set(parent_nodes))
+        ig_uid_filter = """
+            (
+                EXISTS((di)<-[:HAS_DATASET]-(:DataModelIGValue)<-[:HAS_VERSION]-(:DataModelIGRoot {uid: $ig_uid}))
+                OR
+                EXISTS((di)<-[:HAS_DATASET]-(:SponsorModelValue)-[:EXTENDS_VERSION]->(:DataModelIGValue)<-[:HAS_VERSION]-(:DataModelIGRoot {uid: $ig_uid}))
+            )
+        """
+
+        return_clause = "RETURN DISTINCT aicr, aicv, has_activity_instance_class"
+
+        query_elements = [base_match]
+        filter_clause = ""
+        if dataset_uid or ig_uid:
+            query_elements.append(match_for_filter)
+
+            filter_elements = []
+            if dataset_uid:
+                filter_elements.append(dataset_uid_filter)
+            if ig_uid:
+                filter_elements.append(ig_uid_filter)
+            filter_clause = "WHERE " + " AND ".join(filter_elements)
+            query_elements.append(filter_clause)
+
+        query_elements.append(return_clause)
+        query_elements.append("UNION")
+        query_elements.append(base_parent_match)
+        if filter_clause:
+            query_elements.append(match_for_filter)
+            query_elements.append(filter_clause)
+        query_elements.append(return_clause)
+
+        query = " ".join(query_elements)
+
+        results, meta = db.cypher_query(
+            query,
+            params={
+                "activity_instance_class_uid": activity_instance_class_uid,
+                "dataset_uid": dataset_uid,
+                "ig_uid": ig_uid,
+            },
+        )
+
+        return [dict(zip(meta, row)) for row in results]
 
     def _has_data_changed(
         self, ar: ActivityItemClassAR, value: ActivityItemClassValue
@@ -445,13 +469,23 @@ RETURN collect(DISTINCT m.uid)
         pass
 
     def get_referenced_codelist_and_term_uids(
-        self, activity_item_class_uid: str, dataset_uid: str, use_sponsor_model: bool
+        self,
+        activity_item_class_uid: str,
+        dataset_uid: str,
+        use_sponsor_model: bool,
+        ct_catalogue_name: str | None = None,
     ) -> dict[str, list[str] | None]:
-
+        if ct_catalogue_name:
+            extra_filter_kwargs = {
+                "maps_variable_class__has_instance__implemented_by_variable__references_codelist__has_codelist__name": ct_catalogue_name,
+            }
+        else:
+            extra_filter_kwargs = {}
         uids_for_standard_model = (
             ActivityItemClassRoot.nodes.filter(
                 uid=activity_item_class_uid,
                 maps_variable_class__has_instance__implemented_by_variable__has_dataset_variable__is_instance_of__uid=dataset_uid,
+                **extra_filter_kwargs,
             )
             .traverse(
                 "maps_variable_class__has_instance__implemented_by_variable__references_codelist",
@@ -485,7 +519,6 @@ RETURN collect(DISTINCT m.uid)
             )
             .all()
         )
-
         codelist_term_sets: dict[str, set[str] | None] = {}
         for cl_uid, term_uid in uids_for_standard_model:
             if cl_uid not in codelist_term_sets:
@@ -499,10 +532,17 @@ RETURN collect(DISTINCT m.uid)
                 codelist_term_sets[cl_uid].add(term_uid)
 
         if use_sponsor_model:
+            if ct_catalogue_name:
+                extra_sponsor_filter_kwargs = {
+                    "maps_variable_class__has_instance__implemented_by_sponsor_variable__references_codelist__has_codelist__name": ct_catalogue_name,
+                }
+            else:
+                extra_sponsor_filter_kwargs = {}
             uids_for_sponsor_model = (
                 ActivityItemClassRoot.nodes.filter(
                     uid=activity_item_class_uid,
                     maps_variable_class__has_instance__implemented_by_sponsor_variable__has_variable__is_instance_of__uid=dataset_uid,
+                    **extra_sponsor_filter_kwargs,
                 )
                 .traverse(
                     "maps_variable_class__has_instance__implemented_by_sponsor_variable__references_codelist",

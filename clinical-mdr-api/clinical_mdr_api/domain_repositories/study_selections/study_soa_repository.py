@@ -360,8 +360,9 @@ class StudySoARepository:
         """
             )
         )
-        if get_instances:
-            query.append("WHERE act_library.name <> $requested_library_name")
+        # Removed filter that excluded Requested library activities to support L3 MVP feature #3446656
+        # Previously: if get_instances: query.append("WHERE act_library.name <> $requested_library_name")
+        # Now placeholders (Requested library activities) will appear in operational SoA (L3)
         query.append(
             dedent(
                 """
@@ -427,7 +428,8 @@ class StudySoARepository:
             )
         )
         if get_instances:
-            query.append(", study_activity_instance.order")
+            # Use COALESCE to handle NULL instance orders for placeholders without instances
+            query.append(", COALESCE(study_activity_instance.order, 0)")
 
         query.append(
             dedent(

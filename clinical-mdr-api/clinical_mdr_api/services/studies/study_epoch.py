@@ -615,7 +615,7 @@ class StudyEpochService(StudySelectionMixin):
         for epoch in all_epochs:
             if epoch.uid is None:
                 raise BusinessLogicException(
-                    "Cannot synchronize epoch orders because the UID of one of the epochs is None."
+                    msg="Cannot synchronize epoch orders because the UID of one of the epochs is None."
                 )
             new_order_in_subtype = self._get_order_of_epoch_in_subtype(
                 study_epoch_uid=epoch.uid, all_epochs=epochs_to_synchronize
@@ -632,7 +632,7 @@ class StudyEpochService(StudySelectionMixin):
             ):
                 if epoch.subtype is None:
                     raise BusinessLogicException(
-                        "Cannot synchronize epoch orders because the subtype of one of the epochs is None."
+                        msg="Cannot synchronize epoch orders because the subtype of one of the epochs is None."
                     )
 
                 # if we are creating a new epoch we need to add 1 to the total amount of epochs withing subtype

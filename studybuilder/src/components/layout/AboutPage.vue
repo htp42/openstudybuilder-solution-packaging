@@ -79,7 +79,7 @@
         </template>
       </NNTable>
     </v-card-text>
-    <v-dialog v-model="showLicense" scrollable max-width="850">
+    <v-dialog v-model="showLicense" scrollable max-width="1000">
       <AboutLicense
         :raw-markdown="licenseText"
         :title="licenseTitle"

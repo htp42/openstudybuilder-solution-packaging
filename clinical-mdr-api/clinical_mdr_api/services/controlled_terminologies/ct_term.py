@@ -114,7 +114,7 @@ class CTTermService:
                 and codelist.order is None
             ):
                 raise exceptions.BusinessLogicException(
-                    f"Codelist identified by {codelist.codelist_uid} is ordinal and order is required"
+                    msg=f"Codelist identified by {codelist.codelist_uid} is ordinal and order is required"
                 )
             ct_codelist_name_ar = self._repos.ct_codelist_name_repository.find_by_uid(
                 codelist_uid=codelist.codelist_uid
@@ -509,7 +509,7 @@ class CTTermService:
         ct_term_root = CTTermRoot.nodes.filter(uid=term_uid).get_or_none()
         if ct_term_root is None:
             raise exceptions.BusinessLogicException(
-                f"There is no CTTermRoot identified by provided term_uid ({term_uid})"
+                msg=f"There is no CTTermRoot identified by provided term_uid ({term_uid})"
             )
         has_parent_types = ct_term_root.has_parent_type.all()
         has_parent_subtypes = ct_term_root.has_parent_subtype.all()

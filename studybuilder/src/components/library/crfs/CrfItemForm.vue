@@ -26,7 +26,7 @@
                 :rules="[formRules.required]"
                 density="compact"
                 clearable
-                :disabled="readOnly"
+                :disabled="isDisabled"
               />
             </v-col>
             <v-col cols="6">
@@ -36,7 +36,7 @@
                 data-cy="item-oid"
                 density="compact"
                 clearable
-                :disabled="readOnly"
+                :disabled="isDisabled"
               />
             </v-col>
           </v-row>
@@ -53,7 +53,7 @@
                 density="compact"
                 clearable
                 class="mt-3"
-                :disabled="readOnly"
+                :disabled="isDisabled"
                 @update:model-value="checkIfNumeric()"
               />
             </v-col>
@@ -67,7 +67,7 @@
                 clearable
                 class="mt-3"
                 type="number"
-                :disabled="readOnly"
+                :disabled="isDisabled"
               />
             </v-col>
             <v-col v-if="digitsFieldCheck" cols="4">
@@ -80,7 +80,7 @@
                 clearable
                 class="mt-3"
                 type="number"
-                :disabled="readOnly"
+                :disabled="isDisabled"
               />
             </v-col>
           </v-row>
@@ -89,23 +89,12 @@
               <div class="subtitle-2">
                 {{ $t('_global.description') }}
               </div>
-              <div v-show="readOnly">
+              <div>
                 <QuillEditor
-                  v-show="readOnly"
                   v-model:content="engDescription.description"
                   content-type="html"
                   :toolbar="customToolbar"
-                  :disabled="readOnly"
-                />
-              </div>
-              <div v-show="!readOnly">
-                <QuillEditor
-                  v-show="!readOnly"
-                  v-model:content="engDescription.description"
-                  content-type="html"
-                  :toolbar="customToolbar"
-                  :placeholder="$t('_global.description')"
-                  :disabled="readOnly"
+                  :read-only="isDisabled"
                 />
               </div>
             </v-col>
@@ -113,23 +102,12 @@
               <div class="subtitle-2">
                 {{ $t('CRFDescriptions.sponsor_instruction') }}
               </div>
-              <div v-show="readOnly">
+              <div>
                 <QuillEditor
-                  v-show="readOnly"
                   v-model:content="engDescription.sponsor_instruction"
                   content-type="html"
                   :toolbar="customToolbar"
-                  :disabled="readOnly"
-                />
-              </div>
-              <div v-show="!readOnly">
-                <QuillEditor
-                  v-show="!readOnly"
-                  v-model:content="engDescription.sponsor_instruction"
-                  content-type="html"
-                  :toolbar="customToolbar"
-                  :placeholder="$t('CRFDescriptions.sponsor_instruction')"
-                  :disabled="readOnly"
+                  :read-only="isDisabled"
                 />
               </div>
             </v-col>
@@ -147,30 +125,19 @@
                 data-cy="form-oid-name"
                 density="compact"
                 clearable
-                :disabled="readOnly"
+                :disabled="isDisabled"
               />
             </v-col>
             <v-col cols="9">
               <div class="subtitle-2">
                 {{ $t('CRFDescriptions.instruction') }}
               </div>
-              <div v-show="readOnly">
+              <div>
                 <QuillEditor
-                  v-show="readOnly"
                   v-model:content="engDescription.instruction"
                   content-type="html"
                   :toolbar="customToolbar"
-                  :disabled="readOnly"
-                />
-              </div>
-              <div v-show="!readOnly">
-                <QuillEditor
-                  v-show="!readOnly"
-                  v-model:content="engDescription.instruction"
-                  content-type="html"
-                  :toolbar="customToolbar"
-                  :placeholder="$t('CRFDescriptions.instruction')"
-                  :disabled="readOnly"
+                  :read-only="isDisabled"
                 />
               </div>
             </v-col>
@@ -188,7 +155,7 @@
                 data-cy="item-sas-name"
                 density="compact"
                 clearable
-                :disabled="readOnly"
+                :disabled="isDisabled"
               />
             </v-col>
             <v-col cols="6">
@@ -198,7 +165,7 @@
                 data-cy="item-sds-name"
                 density="compact"
                 clearable
-                :disabled="readOnly"
+                :disabled="isDisabled"
               />
             </v-col>
           </v-row>
@@ -213,7 +180,7 @@
                 item-value="nci_preferred_name"
                 density="compact"
                 clearable
-                :disabled="readOnly"
+                :disabled="isDisabled"
               />
             </v-col>
             <v-col cols="8">
@@ -223,7 +190,7 @@
                 data-cy="item-comment"
                 density="compact"
                 clearable
-                :disabled="readOnly"
+                :disabled="isDisabled"
               />
             </v-col>
           </v-row>
@@ -233,19 +200,19 @@
     <template #[`step.extensions`]>
       <CrfExtensionsManagementTable
         type="ItemDef"
-        :read-only="readOnly"
+        :read-only="isDisabled"
         :edit-extensions="selectedExtensions"
         @set-extensions="setExtensions"
       />
     </template>
     <template #[`step.alias`]="{ step }">
       <v-form :ref="`observer_${step}`">
-        <CrfAliasSelection v-model="form.aliases" :disabled="readOnly" />
+        <CrfAliasSelection v-model="form.aliases" :disabled="isDisabled" />
       </v-form>
     </template>
     <template #[`step.description`]="{ step }">
       <v-form :ref="`observer_${step}`">
-        <CrfDescriptionSelection v-model="desc" :disabled="readOnly" />
+        <CrfDescriptionSelection v-model="desc" :disabled="isDisabled" />
       </v-form>
     </template>
     <template #[`step.codelist`]="{ step }">
@@ -265,7 +232,7 @@
               size="small"
               variant="outlined"
               color="nnBaseBlue"
-              :disabled="readOnly"
+              :disabled="isDisabled"
               @click="removeCodelist(item)"
             />
           </template>
@@ -292,7 +259,7 @@
               size="small"
               variant="outlined"
               color="nnBaseBlue"
-              :disabled="readOnly"
+              :disabled="isDisabled"
               @click="addCodelist(item)"
             />
           </template>
@@ -303,12 +270,12 @@
       <v-form :ref="`observer_${step}`">
         <v-data-table :headers="selectedTermsHeaders" :items="selectedTerms">
           <template #[`item.mandatory`]="{ item }">
-            <v-checkbox v-model="item.mandatory" :disabled="readOnly" />
+            <v-checkbox v-model="item.mandatory" :disabled="isDisabled" />
           </template>
           <template #[`item.display_text`]="{ item }">
             <v-text-field
               v-model="item.display_text"
-              :disabled="readOnly"
+              :disabled="isDisabled"
               density="compact"
             />
           </template>
@@ -317,7 +284,7 @@
               icon="mdi-delete-outline"
               class="mt-1"
               variant="text"
-              :disabled="readOnly"
+              :disabled="isDisabled"
               @click="removeTerm(item)"
             />
           </template>
@@ -342,7 +309,7 @@
               class="mt-1"
               variant="text"
               :disabled="
-                readOnly ||
+                isDisabled ||
                 selectedTerms.find((e) => e.term_uid === item.term_uid)
               "
               @click="addTerm(item)"
@@ -368,7 +335,7 @@
               variant="outlined"
               color="nnBaseBlue"
               :label="$t('CRFItemGroups.new_translation')"
-              :disabled="readOnly"
+              :disabled="isDisabled"
               icon="mdi-plus"
               @click.stop="addUnit"
             />
@@ -384,19 +351,19 @@
               item-title="name"
               item-value="name"
               return-object
-              :disabled="readOnly"
+              :disabled="isDisabled"
               @update:model-value="setUnit(index)"
             />
           </template>
           <template #[`item.mandatory`]="{ item }">
-            <v-checkbox v-model="item.mandatory" :disabled="readOnly" />
+            <v-checkbox v-model="item.mandatory" :disabled="isDisabled" />
           </template>
           <template #[`item.delete`]="{ index }">
             <v-btn
               icon="mdi-delete-outline"
               class="mt-n5"
               variant="text"
-              :disabled="readOnly"
+              :disabled="isDisabled"
               @click="removeUnit(index)"
             />
           </template>
@@ -413,14 +380,18 @@
               data-cy="item-change-description"
               :rules="[formRules.required]"
               clearable
-              :disabled="readOnly"
+              :disabled="isDisabled"
             />
           </v-col>
         </v-row>
       </v-form>
     </template>
     <template #actions>
-      <ActionsMenu v-if="selectedItem" :actions="actions" :item="form" />
+      <ActionsMenu
+        v-if="selectedItem && checkPermission($roles.LIBRARY_WRITE)"
+        :actions="actions"
+        :item="form"
+      />
     </template>
   </HorizontalStepperForm>
   <CrfActivitiesModelsLinkForm
@@ -459,6 +430,7 @@ import filteringParameters from '@/utils/filteringParameters'
 import regex from '@/utils/regex'
 import CrfNewVersionSummaryConfirmDialog from '@/components/library/crfs/CrfNewVersionSummaryConfirmDialog.vue'
 import CrfApprovalSummaryConfirmDialog from '@/components/library/crfs/CrfApprovalSummaryConfirmDialog.vue'
+import { useAccessGuard } from '@/composables/accessGuard'
 
 export default {
   components: {
@@ -489,8 +461,10 @@ export default {
   setup() {
     const appStore = useAppStore()
     const unitsStore = useUnitsStore()
+    const accessGuard = useAccessGuard()
 
     return {
+      checkPermission: accessGuard.checkPermission,
       fetchUnits: unitsStore.fetchUnits,
       userData: computed(() => appStore.userData),
       units: computed(() => unitsStore.units),
@@ -639,7 +613,6 @@ export default {
           icon: 'mdi-check-decagram',
           iconColor: 'success',
           condition: () => !this.readOnly,
-          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.approve,
         },
         {
@@ -647,7 +620,6 @@ export default {
           icon: 'mdi-plus-circle-outline',
           iconColor: 'primary',
           condition: () => this.readOnly,
-          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.newVersion,
         },
         {
@@ -660,7 +632,6 @@ export default {
                   (action) => action === actions.DELETE
                 )
               : false,
-          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.delete,
         },
         {
@@ -668,7 +639,6 @@ export default {
           icon: 'mdi-plus',
           iconColor: 'primary',
           condition: () => this.readOnly,
-          accessRole: this.$roles.LIBRARY_WRITE,
           click: this.openLinkForm,
         },
       ],
@@ -684,6 +654,9 @@ export default {
     }
   },
   computed: {
+    isDisabled() {
+      return this.readOnly || !this.checkPermission(this.$roles.LIBRARY_WRITE)
+    },
     title() {
       return this.isEdit()
         ? this.readOnly
@@ -1021,12 +994,13 @@ export default {
       )
     },
     async submit() {
-      this.notificationHub.clearErrors()
-
-      if (this.readOnly) {
+      if (this.isDisabled) {
         this.close()
         return
       }
+
+      this.notificationHub.clearErrors()
+
       await this.setDescription()
       this.form.library_name = constants.LIBRARY_SPONSOR
       if (this.form.oid === 'I.') {

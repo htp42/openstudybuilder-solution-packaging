@@ -464,20 +464,21 @@ class StudyDataSupplierRepository:
     ):
         if data_supplier_type_uid is not None:
             ct_term_root = CTTermRoot.nodes.get(uid=data_supplier_type_uid)
-            study_data_supplier_node = (
-                StudyDataSupplier.nodes.has(study_value=True)
-                .filter(
-                    uid=study_data_supplier_uid,
-                    study_value__latest_value__uid=study_uid,
-                )
-                .get()[0]
+            # Use Cypher to find the CURRENT node (connected to LATEST StudyValue)
+            results, _ = db.cypher_query(
+                """
+                MATCH (sr:StudyRoot {uid: $study_uid})-[:LATEST]->(sv:StudyValue)
+                -[:HAS_STUDY_DATA_SUPPLIER]->(sds:StudyDataSupplier {uid: $sds_uid})
+                RETURN sds
+                """,
+                params={"study_uid": study_uid, "sds_uid": study_data_supplier_uid},
             )
-            selected_term_node = (
-                CTCodelistAttributesRepository().get_or_create_selected_term(
+            if results and results[0]:
+                study_data_supplier_node = StudyDataSupplier.inflate(results[0][0])
+                selected_term_node = CTCodelistAttributesRepository().get_or_create_selected_term(
                     ct_term_root,
                     codelist_submission_value=settings.data_supplier_type_cl_submval,
                 )
-            )
-            study_data_supplier_node.has_study_data_supplier_type.connect(
-                selected_term_node
-            )
+                study_data_supplier_node.has_study_data_supplier_type.connect(
+                    selected_term_node
+                )

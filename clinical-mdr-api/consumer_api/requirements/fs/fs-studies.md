@@ -177,4 +177,48 @@ SoA items are sorted by the specified sort criteria and order.
 | tests/v1/test_api_studies.py | test_get_study_operational_soa_all                        |
 | tests/v1/test_api_studies.py | test_get_study_operational_soa_all_specific_study_version |
 
+# Audit Trail
+
+## FS-ConsumerApi-Studies-AuditTrail-Get-010 [`URS-ConsumerApi-Studies-AuditTrail`]
+
+Consumers must be able to retrieve study audit trail entries by calling the `GET /studies/audit-trail` endpoint.
+
+### Request
+
+The endpoint must accept the following query parameters:
+
+- `from_ts` (required): Start timestamp in ISO format with timezone (e.g., 2024-01-01T00:00:00Z). Audit trail entries with timestamps greater than or equal to this value will be returned.
+- `to_ts` (required): End timestamp in ISO format with timezone (e.g., 2024-01-05T00:00:00Z). Audit trail entries with timestamps less than this value will be returned.
+- `study_id` (optional): Filter by study ID using case-insensitive partial match (e.g., "NN1234-5678").
+- `entity_type` (optional): Filter by entity type (e.g., "StudyActivity").
+- `exclude_study_ids` (optional): List of study IDs to exclude using case-insensitive partial match.
+- `page_number` (optional): Page number for pagination (default: 1).
+
+### Response
+
+The endpoint must return audit trail entries in CSV format with the following columns:
+
+- `ts`: Timestamp of the action
+- `study_uid`: Study UID
+- `study_id`: Study ID
+- `action`: Action performed (Create, Edit, Delete)
+- `entity_uid`: UID of the entity affected by the action
+- `entity_type`: Type (node labels) of the entity affected by the action. Multiple labels are separated by '|' character.
+- `changed_properties`: List of properties that were changed during the Edit action
+- `author`: Hashed (MD5) value of the ID of a user that performed the action
+
+The response must have a media type of `text/csv`.
+
+The maximum number of rows returned is limited to 10,000.
+
+### Privacy Requirements
+
+User identifiers must be anonymized by applying MD5 hashing to the author's user ID before including it in the response.
+
+### Test coverage
+
+| Test File                         | Test Function                  |
+| --------------------------------- | ------------------------------ |
+| tests/v1/test_api_audit_trail.py  | test_get_study_audit_trail     |
+
 

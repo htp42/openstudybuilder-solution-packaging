@@ -18,7 +18,6 @@
       <v-tooltip
         v-if="props.notification?.error"
         location="top left"
-        :text="t('NotificationPanel.copy_error')"
         style="z-index: 99999 !important"
       >
         <template #activator="{ props: tooltipProps }">
@@ -43,6 +42,10 @@
               <v-icon v-else>mdi-check</v-icon>
             </v-fab-transition>
           </v-btn>
+        </template>
+
+        <template #default>
+          <div v-html="t('NotificationPanel.copy_error')"></div>
         </template>
       </v-tooltip>
 

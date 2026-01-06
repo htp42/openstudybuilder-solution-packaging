@@ -91,6 +91,7 @@ openapi = "python generate_openapi_json.py"
 schemathesis = """
     schemathesis
         run
+        --experimental=openapi-3.1
         --checks=all
         --base-url=http://localhost:8000
         --request-timeout=200000
@@ -113,6 +114,7 @@ consumer-openapi = "python generate_openapi.py consumer_api.consumer_api:app con
 consumer-api-schemathesis = """
     schemathesis
         run
+        --experimental=openapi-3.1
         --checks=all
         --base-url=http://localhost:8008
         --request-timeout=30000

@@ -102,7 +102,7 @@ class CTTermAggregatedRepository:
                     codelist_concept_id: codelist_attributes_value.concept_id,
                     submission_value: codelist_term.submission_value,
                     order: rel_term.order,
-                    library: codelist_library.name,
+                    library_name: codelist_library.name,
                     start_date: rel_term.start_date
                 }} AS codelists
             }} AS codelists,
@@ -166,7 +166,7 @@ class CTTermAggregatedRepository:
                     codelist_concept_id: codelist_attributes_value.concept_id,
                     submission_value: codelist_term.submission_value,
                     order: rel_term.order,
-                    library: codelist_library.name,
+                    library_name: codelist_library.name,
                     start_date: rel_term.start_date
                 }} AS codelists
             }} AS codelists,

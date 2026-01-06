@@ -52,6 +52,15 @@ class CompactCTTerm(BaseModel):
             },
         ),
     ] = None
+    submission_value: Annotated[
+        str | None,
+        Field(
+            json_schema_extra={
+                "source": "has_ct_term.has_selected_term.has_term_root.submission_value",
+                "nullable": True,
+            },
+        ),
+    ] = None
 
 
 class CompactUnitDefinition(BaseModel):

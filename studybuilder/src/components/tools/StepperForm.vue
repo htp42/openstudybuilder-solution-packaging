@@ -30,7 +30,7 @@
               <template v-else>
                 <slot :name="`step.${step.name}`" :step="index + 1" />
               </template>
-              <div class="mx-2 mt-6 mb-1">
+              <div class="mt-6 mb-1 mr-5">
                 <v-row class="pl-3 pb-3">
                   <v-spacer />
                   <v-btn
@@ -195,7 +195,7 @@ export default {
     },
     async validateStepObserver(step) {
       const observer = this.formObserverGetter(step)
-      if (observer !== undefined) {
+      if (observer !== undefined && observer !== null) {
         const { valid } = await observer.validate()
         return valid
       }

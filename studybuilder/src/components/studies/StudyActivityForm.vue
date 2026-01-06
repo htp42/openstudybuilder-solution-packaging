@@ -740,7 +740,6 @@ function switchTableItems() {
 
 function close() {
   emit('close')
-  notificationHub.clearErrors()
   selectedActivities.value = []
   currentFlowchartGroup.value = null
   creationMode.value = 'selectFromLibrary'

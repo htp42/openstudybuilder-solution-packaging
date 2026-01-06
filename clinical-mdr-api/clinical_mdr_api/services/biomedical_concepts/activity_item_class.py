@@ -190,6 +190,7 @@ class ActivityItemClassService(ConceptGenericService[ActivityItemClassAR]):
         activity_item_class_uid: str,
         dataset_uid: str,
         use_sponsor_model: bool = True,
+        ct_catalogue_name: str | None = None,
         sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
@@ -199,7 +200,7 @@ class ActivityItemClassService(ConceptGenericService[ActivityItemClassAR]):
     ) -> GenericFilteringReturn[ActivityItemClassCodelist]:
 
         codelists_and_terms = self._repos.activity_item_class_repository.get_referenced_codelist_and_term_uids(
-            activity_item_class_uid, dataset_uid, use_sponsor_model
+            activity_item_class_uid, dataset_uid, use_sponsor_model, ct_catalogue_name
         )
 
         if not codelists_and_terms:
@@ -237,15 +238,30 @@ class ActivityItemClassService(ConceptGenericService[ActivityItemClassAR]):
         return GenericFilteringReturn.create(items, count)
 
     def get_all_for_activity_instance_class(
-        self, activity_item_class_uid: str, dataset_uid: str | None = None
+        self,
+        activity_item_class_uid: str,
+        ig_uid: str | None = None,
+        dataset_uid: str | None = None,
     ) -> list[CompactActivityItemClass]:
         item_classes = self.repository.get_all_for_activity_instance_class(
-            activity_item_class_uid, dataset_uid
+            activity_item_class_uid, ig_uid, dataset_uid
         )
-        return [
-            CompactActivityItemClass.model_validate(item_class)
-            for item_class in item_classes
-        ]
+        # Deduplicate by uid to avoid duplicates from UNION query
+        # (same item class can appear both directly and through parent)
+        seen_uids: dict[str, CompactActivityItemClass] = {}
+        for item_class in item_classes:
+            uid = item_class["aicr"]["uid"]
+            if uid not in seen_uids:
+                seen_uids[uid] = CompactActivityItemClass(
+                    uid=uid,
+                    name=item_class["aicv"]["name"],
+                    mandatory=item_class["has_activity_instance_class"]["mandatory"],
+                    is_adam_param_specific_enabled=item_class[
+                        "has_activity_instance_class"
+                    ]["is_adam_param_specific_enabled"],
+                )
+        # Order the results by name
+        return sorted(seen_uids.values(), key=lambda x: x.name or "")
 
     def get_activity_item_class_overview(
         self, activity_item_class_uid: str, version: str | None = None

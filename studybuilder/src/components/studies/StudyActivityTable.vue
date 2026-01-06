@@ -116,7 +116,12 @@
     fullscreen
     content-class="fullscreen-dialog"
   >
-    <StudyActivityForm @close="closeForm" @added="onStudyActivitiesUpdated" />
+    <StudyActivityForm
+      :exchange-mode="exchangeActivityMode"
+      :exchange-activity-uid="selectedStudyActivity?.study_activity_uid"
+      @close="closeForm"
+      @added="onStudyActivitiesUpdated"
+    />
   </v-dialog>
   <v-dialog v-model="showActivityEditForm" max-width="800px">
     <StudyActivityEditForm
@@ -199,6 +204,7 @@ const roles = inject('roles')
 const studiesGeneralStore = useStudiesGeneralStore()
 const activitiesStore = useStudyActivitiesStore()
 const accessGuard = useAccessGuard()
+
 const table = ref()
 const confirm = ref()
 const studyActivities = ref([])
@@ -240,6 +246,13 @@ const actions = [
       !checkIfRejected(item) &&
       !checkIfActivityRequestIsEditable(item),
     click: editStudyDraftedActivity,
+    accessRole: roles.STUDY_WRITE,
+  },
+  {
+    label: t('DetailedFlowchart.exchange_activity'),
+    icon: 'mdi-autorenew',
+    condition: () => !studiesGeneralStore.selectedStudyVersion,
+    click: exchangeStudyActivity,
     accessRole: roles.STUDY_WRITE,
   },
   {
@@ -299,6 +312,7 @@ const headers = [
   { title: t('_global.modified_by'), key: 'author_username' },
 ]
 const total = ref(0)
+const exchangeActivityMode = ref(false)
 
 const exportDataUrl = computed(() => {
   return `studies/${studiesGeneralStore.selectedStudy.uid}/study-activities`
@@ -399,6 +413,12 @@ function getActionsForItem(item) {
   return result
 }
 
+function exchangeStudyActivity(item) {
+  exchangeActivityMode.value = true
+  selectedStudyActivity.value = item
+  showActivityForm.value = true
+}
+
 function openUpdateForm(item) {
   selectedStudyActivity.value = item
   if (item.activity.library_name === 'Sponsor') {
@@ -442,6 +462,8 @@ function actionsMenuBadge(item) {
 
 function closeForm() {
   showActivityForm.value = false
+  exchangeActivityMode.value = false
+  selectedStudyActivity.value = null
 }
 
 function closeEditForm() {

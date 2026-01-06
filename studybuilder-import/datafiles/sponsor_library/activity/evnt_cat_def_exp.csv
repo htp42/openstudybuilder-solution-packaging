@@ -1,61 +1,61 @@
 CODELIST_SUBMVAL,TERM_SUBMVAL,SPONSOR_NAME,SPONSOR_NAME_SENTENCE_CASE,NCI_PREFERRED_NAME,ORDER,CONCEPT_ID,CATALOGUES,DEFINITION
-EVNTCAT,ADVERSE EVENT EVNT_CAT,Adverse Event,,,10,,,Adverse event
-EVNTCAT,AE REQUIRING ADDITIONAL DATA EVNT_CAT,AE Requiring Additional Data,,,1,,,AE requiring additional data - For the SHARP forms
-EVNTCAT,BLEEDING EVNT_CAT,Bleeding,,,1,,,Bleeding
-EVNTCAT,BLEEDING EPISODE EVNT_CAT,Bleeding Episode,,,1,,,Bleeding Episode
-EVNTCAT,BREAST NEOPLASMS EVNT_CAT,Breast Neoplasms,,,20,,,Breast Neoplasms. History of Breast Neoplasms
-EVNTCAT,CARDIOVASCULAR DISEASE EVNT_CAT,Cardiovascular Disease,,,31,,,Cardiovascular Disease. History of Cardiovascular Disease
-EVNTCAT,CGM EVNT_CAT,CGM,,,1,,,Continuous Glucose Monitor (CGM)
-EVNTCAT,COLON NEOPLASMS EVNT_CAT,Colon Neoplasms,,,33,,,Colon Neoplasms. History of Colon Neoplasms
-EVNTCAT,COMORBIDITIES EVNT_CAT,Comorbidities,,,1,,,Comorbidities
-EVNTCAT,COMPLAINT EVNT_CAT,Complaint,,,35,,,Complaint Event Forms
-EVNTCAT,CONCOMITANT ILLNESS EVNT_CAT,Concomitant Illness,,,34,,,Concomitant illness
-EVNTCAT,DEMOGRAPHY EVNT_CAT,Demography,,,42,,,Demography
-EVNTCAT,DETAILS OF HAEMOPHILIA EVNT_CAT,Details of Haemophilia,,,1,,,Details of Haemophilia
-EVNTCAT,DEVICE PROBLEMS EVNT_CAT,Device Problems,,,10,,,Device problems
-EVNTCAT,DEVICE USE EVNT_CAT,Device Use,,,1,,,Device Use
-EVNTCAT,DEVICE USE ERROR EVNT_CAT,Device Use Error,,,1,,,Device Use Error
-EVNTCAT,DIABETES COMPLICATIONS EVNT_CAT,Diabetes Complications,,,440,,,Diabetes complications
-EVNTCAT,DIAGNOSIS OF DIABETES EVNT_CAT,Diagnosis of Diabetes,,,45,,,Diagnosis of diabetes
-EVNTCAT,DISPOSITION EVENT EVNT_CAT,Disposition Event,,,4,,,"For SCREEN FAILURE, COMPLETED, DEATH and withdrawal reason."
-EVNTCAT,DOSING INFORMATION EVNT_CAT,Dosing Information,,,40,,,"Dosing Information - Category used for general information regarding dosing, that does not fit in any other category"
-EVNTCAT,DYSLIPIDAEMIA HISTORY EVNT_CAT,Dyslipidaemia History,,,1,,,Dyslipidaemia History
-EVNTCAT,END OF TRIAL EVNT_CAT,End of Trial,,,52,,,End of trial
-EVNTCAT,EYE DISORDERS EVNT_CAT,Eye Disorders,,,1,,,Eye Disorders
-EVNTCAT,GALLBLADDER DISEASE EVNT_CAT,Gallbladder Disease,,,1,,,History of Gallbladder Disease
-EVNTCAT,GASTROINTESTINAL DISORDERS EVNT_CAT,Gastrointestinal Disorders,,,1,,,Gastrointestinal (GI) disorders is the term used to refer to any condition or disease that occurs within the gastrointestinal tract.
-EVNTCAT,GENE CONSENT EVNT_CAT,Gene Consent,,,72,,,Gene consent
-EVNTCAT,GROWTH HORMONE DEFICIENCY EVNT_CAT,Growth Hormone Deficiency,,,1,,,Growth Hormone Deficiency
-EVNTCAT,HEART FAILURE HOSPITALISATION EVNT_CAT,Heart Failure Hospitalisation,,,1,,,Heart failure hospitalisation
-EVNTCAT,HEPATIC IMPAIRMENT EVNT_CAT,Hepatic Impairment,,,1,,,Hepatic impairment
-EVNTCAT,HYPERGLYCAEMIC EPISODES EVNT_CAT,Hyperglycaemic Episodes,,,81,,,Hyperglycaemic episodes
-EVNTCAT,HYPOGLYCAEMIC EPISODES EVNT_CAT,Hypoglycaemic Episodes,,,80,,,Hypoglycaemic episodes
-EVNTCAT,IN-PATIENT/PROLONGED HOSPITALISATION EVNT_CAT,In-Patient/Prolonged Hospitalisation,,,1,,,In-Patient/Prolonged Hospitalisation
-EVNTCAT,INFORMED CONSENT EVNT_CAT,Informed Consent,,,92,,,Informed consent
-EVNTCAT,LOCAL TOLERABILITY EVNT_CAT,Local Tolerability,,,1267,,,Local Tolerability
-EVNTCAT,MACROVASCULAR COMPLICATIONS EVNT_CAT,Macrovascular Complications,,,1,,,Macrovascular Complications
-EVNTCAT,MAJOR SURGERY EVNT_CAT,Major Surgery,,,1,,,Category for History of Surgery form
-EVNTCAT,MEDICAL HISTORY EVNT_CAT,Medical History,,,133,,,Medical history
-EVNTCAT,MICROVASCULAR COMPLICATIONS EVNT_CAT,Microvascular Complications,,,1,,,Microvascular Complications
-EVNTCAT,NEOPLASM EVNT_CAT,Neoplasm,,,1212,,,Sponsor defined: Neoplasm. The terminology that includes concepts relevant to benign or malignant tissue growth. CDISC SEND Tumor Findings Results Terminology (NCI)
-EVNTCAT,NON SAE HOSPITALISATION EVNT_CAT,Non SAE Hospitalisation,,,1,,,Non SAE Hospitalisation
-EVNTCAT,OTHER EVENT EVNT_CAT,Other Event,,,15,,,For TREATMENT UNBLINDED.
-EVNTCAT,OUT PATIENT VISIT EVNT_CAT,Out Patient Visit,,,1,,,Out Patient Visit
-EVNTCAT,PANCREATITIS EVNT_CAT,Pancreatitis,,,1,,,Pancreatitis
-EVNTCAT,PARKINSONS DISEASE EVNT_CAT,Parkinson's Disease,,,1,,,Parkinson's Disease
-EVNTCAT,PERIOD WITHOUT TRIAL PRODUCT EVNT_CAT,Period Without Trial Product,,,1,,,Period Without Trial Product
-EVNTCAT,PROTOCOL MILESTONE EVNT_CAT,Protocol Milestone,,,16,,,"For INFORMED CONSENT OBTAINED, RANDOMIZED, FIRST DATE ON TRIAL PRODUCT and LAST DATE ON TRIAL PRODUCT."
-EVNTCAT,PSYCHIATRIC DISORDER EVNT_CAT,Psychiatric Disorder,,,16,,,Psychiatric Disorder
-EVNTCAT,RANDOMISATION EVNT_CAT,Randomisation,,,180,,,Randomisation
-EVNTCAT,RENAL DISORDERS EVNT_CAT,Renal Disorders,,,181,,,"Renal disorders (excl nephropathies), e.g. Renal disorders NEC, Renal failure and impairment (e.g. Chronic kidney disease), Renal failure complications, Renal hypertension and related conditions, Renal infections and inflammations (excl nephritis), Renal neoplasms, Renal obstructive disorders, Renal structural abnormalities and trauma, Renal vascular and ischaemic conditions"
-EVNTCAT,REPEAT HOSPITALISATION EVNT_CAT,Repeat Hospitalisation,,,1,,,Repeat Hospitalisation
-EVNTCAT,RISK FACTORS FOR BREAST NEOPLASM EVNT_CAT,Risk Factors for Breast Neoplasm,,,1,,,Risk factors for Breast Neoplasm
-EVNTCAT,RISK FACTORS FOR COLON NEOPLASM EVNT_CAT,Risk Factors for Colon Neoplasm,,,2,,,Risk factors for Colon Neoplasm
-EVNTCAT,RISK FACTORS FOR SKIN CANCER EVNT_CAT,Risk Factors for Skin Cancer,,,3,,,Risk factors for Skin Cancer
-EVNTCAT,SCREENING FAILURE EVNT_CAT,Screening Failure,,,1910,,,Screening failure
-EVNTCAT,SICKLE CELL DISEASE EVNT_CAT,Sickle Cell Disease,,,1800,,,Sickle Cell Disease
-EVNTCAT,SKIN CANCER EVNT_CAT,Skin Cancer,,,1,,,Skin Cancer
-EVNTCAT,TARGET JOINT ASSESSMENT EVNT_CAT,Target Joint Assessment,,,1,,,Assessment of target joint
-EVNTCAT,USE ERROR EVNT_CAT,Use Error,,,1,,,Use Error
-EVNTCAT,VASO OCCLUSIVE CRISIS EVNT_CAT,Vaso Occlusive Crisis,,,1,,,Vaso Occlusive Crisis
-EVNTCAT,WEIGHT HISTORY EVNT_CAT,Weight History,,,1,,,Weight History
+EVNTCAT,ADVERSE EVENT,Adverse Event,,,10,,,Adverse event
+EVNTCAT,AE REQUIRING ADDITIONAL DATA,AE Requiring Additional Data,,,1,,,AE requiring additional data - For the SHARP forms
+EVNTCAT,BLEEDING,Bleeding,,,1,,,Bleeding
+EVNTCAT,BLEEDING EPISODE,Bleeding Episode,,,1,,,Bleeding Episode
+EVNTCAT,BREAST NEOPLASMS,Breast Neoplasms,,,20,,,Breast Neoplasms. History of Breast Neoplasms
+EVNTCAT,CARDIOVASCULAR DISEASE,Cardiovascular Disease,,,31,,,Cardiovascular Disease. History of Cardiovascular Disease
+EVNTCAT,CGM,CGM,,,1,,,Continuous Glucose Monitor (CGM)
+EVNTCAT,COLON NEOPLASMS,Colon Neoplasms,,,33,,,Colon Neoplasms. History of Colon Neoplasms
+EVNTCAT,COMORBIDITIES,Comorbidities,,,1,,,Comorbidities
+EVNTCAT,COMPLAINT,Complaint,,,35,,,Complaint Event Forms
+EVNTCAT,CONCOMITANT ILLNESS,Concomitant Illness,,,34,,,Concomitant illness
+EVNTCAT,DEMOGRAPHY,Demography,,,42,,,Demography
+EVNTCAT,DETAILS OF HAEMOPHILIA,Details of Haemophilia,,,1,,,Details of Haemophilia
+EVNTCAT,DEVICE PROBLEMS,Device Problems,,,10,,,Device problems
+EVNTCAT,DEVICE USE,Device Use,,,1,,,Device Use
+EVNTCAT,DEVICE USE ERROR,Device Use Error,,,1,,,Device Use Error
+EVNTCAT,DIABETES COMPLICATIONS,Diabetes Complications,,,440,,,Diabetes complications
+EVNTCAT,DIAGNOSIS OF DIABETES,Diagnosis of Diabetes,,,45,,,Diagnosis of diabetes
+EVNTCAT,DISPOSITION EVENT,Disposition Event,,,4,,,"For SCREEN FAILURE, COMPLETED, DEATH and withdrawal reason."
+EVNTCAT,DOSING INFORMATION,Dosing Information,,,40,,,"Dosing Information - Category used for general information regarding dosing, that does not fit in any other category"
+EVNTCAT,DYSLIPIDAEMIA HISTORY,Dyslipidaemia History,,,1,,,Dyslipidaemia History
+EVNTCAT,END OF TRIAL,End of Trial,,,52,,,End of trial
+EVNTCAT,EYE DISORDERS,Eye Disorders,,,1,,,Eye Disorders
+EVNTCAT,GALLBLADDER DISEASE,Gallbladder Disease,,,1,,,History of Gallbladder Disease
+EVNTCAT,GASTROINTESTINAL DISORDERS,Gastrointestinal Disorders,,,1,,,Gastrointestinal (GI) disorders is the term used to refer to any condition or disease that occurs within the gastrointestinal tract.
+EVNTCAT,GENE CONSENT,Gene Consent,,,72,,,Gene consent
+EVNTCAT,GROWTH HORMONE DEFICIENCY,Growth Hormone Deficiency,,,1,,,Growth Hormone Deficiency
+EVNTCAT,HEART FAILURE HOSPITALISATION,Heart Failure Hospitalisation,,,1,,,Heart failure hospitalisation
+EVNTCAT,HEPATIC IMPAIRMENT,Hepatic Impairment,,,1,,,Hepatic impairment
+EVNTCAT,HYPERGLYCAEMIC EPISODES,Hyperglycaemic Episodes,,,81,,,Hyperglycaemic episodes
+EVNTCAT,HYPOGLYCAEMIC EPISODES,Hypoglycaemic Episodes,,,80,,,Hypoglycaemic episodes
+EVNTCAT,IN-PATIENT/PROLONGED HOSPITALISATION,In-Patient/Prolonged Hospitalisation,,,1,,,In-Patient/Prolonged Hospitalisation
+EVNTCAT,INFORMED CONSENT,Informed Consent,,,92,,,Informed consent
+EVNTCAT,LOCAL TOLERABILITY,Local Tolerability,,,1267,,,Local Tolerability
+EVNTCAT,MACROVASCULAR COMPLICATIONS,Macrovascular Complications,,,1,,,Macrovascular Complications
+EVNTCAT,MAJOR SURGERY,Major Surgery,,,1,,,Category for History of Surgery form
+EVNTCAT,MEDICAL HISTORY,Medical History,,,133,,,Medical history
+EVNTCAT,MICROVASCULAR COMPLICATIONS,Microvascular Complications,,,1,,,Microvascular Complications
+EVNTCAT,NEOPLASM,Neoplasm,,,1212,,,Sponsor defined: Neoplasm. The terminology that includes concepts relevant to benign or malignant tissue growth. CDISC SEND Tumor Findings Results Terminology (NCI)
+EVNTCAT,NON SAE HOSPITALISATION,Non SAE Hospitalisation,,,1,,,Non SAE Hospitalisation
+EVNTCAT,OTHER EVENT,Other Event,,,15,,,For TREATMENT UNBLINDED.
+EVNTCAT,OUT PATIENT VISIT,Out Patient Visit,,,1,,,Out Patient Visit
+EVNTCAT,PANCREATITIS,Pancreatitis,,,1,,,Pancreatitis
+EVNTCAT,PARKINSONS DISEASE,Parkinson's Disease,,,1,,,Parkinson's Disease
+EVNTCAT,PERIOD WITHOUT TRIAL PRODUCT,Period Without Trial Product,,,1,,,Period Without Trial Product
+EVNTCAT,PROTOCOL MILESTONE,Protocol Milestone,,,16,,,"For INFORMED CONSENT OBTAINED, RANDOMIZED, FIRST DATE ON TRIAL PRODUCT and LAST DATE ON TRIAL PRODUCT."
+EVNTCAT,PSYCHIATRIC DISORDER,Psychiatric Disorder,,,16,,,Psychiatric Disorder
+EVNTCAT,RANDOMISATION,Randomisation,,,180,,,Randomisation
+EVNTCAT,RENAL DISORDERS,Renal Disorders,,,181,,,"Renal disorders (excl nephropathies), e.g. Renal disorders NEC, Renal failure and impairment (e.g. Chronic kidney disease), Renal failure complications, Renal hypertension and related conditions, Renal infections and inflammations (excl nephritis), Renal neoplasms, Renal obstructive disorders, Renal structural abnormalities and trauma, Renal vascular and ischaemic conditions"
+EVNTCAT,REPEAT HOSPITALISATION,Repeat Hospitalisation,,,1,,,Repeat Hospitalisation
+EVNTCAT,RISK FACTORS FOR BREAST NEOPLASM,Risk Factors for Breast Neoplasm,,,1,,,Risk factors for Breast Neoplasm
+EVNTCAT,RISK FACTORS FOR COLON NEOPLASM,Risk Factors for Colon Neoplasm,,,2,,,Risk factors for Colon Neoplasm
+EVNTCAT,RISK FACTORS FOR SKIN CANCER,Risk Factors for Skin Cancer,,,3,,,Risk factors for Skin Cancer
+EVNTCAT,SCREENING FAILURE,Screening Failure,,,1910,,,Screening failure
+EVNTCAT,SICKLE CELL DISEASE,Sickle Cell Disease,,,1800,,,Sickle Cell Disease
+EVNTCAT,SKIN CANCER,Skin Cancer,,,1,,,Skin Cancer
+EVNTCAT,TARGET JOINT ASSESSMENT,Target Joint Assessment,,,1,,,Assessment of target joint
+EVNTCAT,USE ERROR,Use Error,,,1,,,Use Error
+EVNTCAT,VASO OCCLUSIVE CRISIS,Vaso Occlusive Crisis,,,1,,,Vaso Occlusive Crisis
+EVNTCAT,WEIGHT HISTORY,Weight History,,,1,,,Weight History

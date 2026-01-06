@@ -526,7 +526,7 @@ from clinical_mdr_api.tests.utils.checks import (
     assert_response_content_type,
     assert_response_status_code,
 )
-from common.auth.dependencies import dummy_user_auth
+from common.auth.dependencies import dummy_user_test_auth
 from common.auth.user import clear_users_cache
 from common.config import settings
 
@@ -743,7 +743,7 @@ class TestUtils:
     @classmethod
     def create_dummy_user(cls, user_id: str = "unknown-user"):
         clear_users_cache()
-        dummy_user_auth(user_id=user_id)
+        dummy_user_test_auth(user_id=user_id)
 
     # region Syntax Templates
     @classmethod

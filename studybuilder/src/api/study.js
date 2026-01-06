@@ -985,9 +985,6 @@ export default {
       `studies/${studyUid}/study-data-suppliers/${studyDataSupplierUid}/audit-trail`
     )
   },
-  createStudyDataSupplier(studyUid, data) {
-    return repository.post(`studies/${studyUid}/study-data-suppliers`, data)
-  },
   updateStudyDataSupplier(studyUid, studyDataSupplierUid, data) {
     return repository.put(
       `studies/${studyUid}/study-data-suppliers/${studyDataSupplierUid}`,
@@ -1005,5 +1002,10 @@ export default {
     return repository.delete(
       `studies/${studyUid}/study-data-suppliers/${studyDataSupplierUid}`
     )
+  },
+  syncStudyDataSuppliers(studyUid, suppliers) {
+    return repository.put(`studies/${studyUid}/study-data-suppliers/sync`, {
+      suppliers,
+    })
   },
 }

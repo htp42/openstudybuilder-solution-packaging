@@ -219,6 +219,7 @@ STUDY_AUDIT_TRAIL_FIELDS = [
     "entity_uid",
     "entity_type",
     "changed_properties",
+    "author",
 ]
 
 STUDY_AUDIT_TRAIL_FIELDS_NOT_NULL = [
@@ -254,6 +255,16 @@ def test_get_study_audit_trail(api_client):
 
         assert from_ts <= row["ts"] < to_ts
         assert row["action"] in ["Create", "Edit", "Delete"]
+
+        # Verify that author field is present and is a valid MD5 hash (32 hex characters)
+        assert "author" in row
+        if row["author"]:
+            assert (
+                len(row["author"]) == 32
+            ), f"Author hash should be 32 characters (MD5), got {len(row['author'])}"
+            assert all(
+                char in "0123456789abcdef" for char in row["author"]
+            ), "Author hash should be valid hexadecimal"
 
 
 def _add_study_activity(

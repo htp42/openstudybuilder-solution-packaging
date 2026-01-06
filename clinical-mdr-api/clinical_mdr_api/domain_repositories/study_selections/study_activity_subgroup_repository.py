@@ -71,7 +71,7 @@ class StudySelectionActivitySubGroupRepository(
             accepted_version=acv,
         )
 
-    def _additional_match(self) -> str:
+    def _additional_match(self, **kwargs) -> str:
         return """
             WITH sr, sv
             

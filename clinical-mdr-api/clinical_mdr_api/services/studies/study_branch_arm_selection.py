@@ -526,7 +526,9 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
         repos = self._repos
 
         if selection_update_input.branch_arm_uid is None:
-            raise exceptions.BusinessLogicException("branch_arm_uid must not be None")
+            raise exceptions.BusinessLogicException(
+                msg="branch_arm_uid must not be None"
+            )
 
         try:
             # Load aggregate

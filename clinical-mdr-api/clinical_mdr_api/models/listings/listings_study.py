@@ -954,7 +954,7 @@ class StudyCriteriaListingModel(BaseModel):
         criteria_ar = find_criteria_by_uid(study_criteria_vo.syntax_object_uid)
         if criteria_ar is None:
             raise BusinessLogicException(
-                f"Criteria with UID {study_criteria_vo.syntax_object_uid} not found."
+                msg=f"Criteria with UID {study_criteria_vo.syntax_object_uid} not found."
             )
         return cls(
             type=ct_term_uid_to_str(
@@ -1002,7 +1002,7 @@ class StudyObjectiveListingModel(BaseModel):
         )
         if objective_ar is None:
             raise BusinessLogicException(
-                f"Objective with UID {study_objective_vo.objective_uid} not found."
+                msg=f"Objective with UID {study_objective_vo.objective_uid} not found."
             )
         return cls(
             uid=study_objective_vo.study_selection_uid,
@@ -1069,7 +1069,7 @@ class StudyEndpointListingModel(BaseModel):
         )
         if endpoint_ar is None:
             raise BusinessLogicException(
-                f"Endpoint with UID {study_endpoint_vo.endpoint_uid} not found."
+                msg=f"Endpoint with UID {study_endpoint_vo.endpoint_uid} not found."
             )
         timeframe_ar = (
             find_timeframe_by_uid(study_endpoint_vo.timeframe_uid)
@@ -1078,7 +1078,7 @@ class StudyEndpointListingModel(BaseModel):
         )
         if timeframe_ar is None:
             raise BusinessLogicException(
-                f"Timeframe with UID {study_endpoint_vo.timeframe_uid} not found."
+                msg=f"Timeframe with UID {study_endpoint_vo.timeframe_uid} not found."
             )
 
         return cls(

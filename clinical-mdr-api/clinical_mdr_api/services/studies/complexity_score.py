@@ -19,8 +19,8 @@ PHYSICAL_VISIT_BURDEN_ID = "99211"
 PHYSICAL_VISIT_BURDEN_DEFAULT_VAL = 0.18
 NON_PHYSICAL_VISIT_BURDEN_ID = "NC008"
 NON_PHYSICAL_VISIT_BURDEN_DEFAULT_VAL = 0.6
-ELECTRONIC_DATA_CAPTURE_BURDEN_ID = "EDC"
-ELECTRONIC_DATA_CAPTURE_BURDEN_DEFAULT_VAL = 0.2
+ANY_VISIT_BURDEN_ID = "EDC"
+ANY_VISIT_BURDEN_DEFAULT_VAL = 0.2
 
 
 @dataclass
@@ -35,6 +35,12 @@ class SoaRow:
     activity_subgroup_uid: str
     activity_subgroup_name: str
     visits: list[Visit]
+
+
+@dataclass
+class VisitsSummary:
+    physical_visits: int
+    non_physical_visits: int
 
 
 class ComplexityScoreService:
@@ -146,6 +152,42 @@ class ComplexityScoreService:
         return soa
 
     @classmethod
+    def get_visits_summary(
+        cls, study_uid: str, study_version_number: str | None
+    ) -> VisitsSummary:
+        params = {"study_uid": study_uid, "study_version_number": study_version_number}
+
+        query = cls.get_base_query_for_study_root_and_value(study_version_number)
+
+        query += """
+            MATCH (study_value)-[:HAS_STUDY_VISIT]->(study_visit:StudyVisit)
+                -[:HAS_VISIT_CONTACT_MODE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)<-[:HAS_TERM_ROOT]-(visit_contact_mode_term:CTCodelistTerm)
+            WHERE NOT (study_visit)<-[:BEFORE]-()
+            
+            WITH DISTINCT
+                study_visit,
+                visit_contact_mode_term
+
+            RETURN 
+                count(DISTINCT CASE WHEN visit_contact_mode_term.submission_value = 'ONSITE' THEN study_visit.uid END) AS physical_visits,
+                count(DISTINCT CASE WHEN visit_contact_mode_term.submission_value <> 'ONSITE' THEN study_visit.uid END) AS non_physical_visits 
+            """
+
+        rows, columns = db.cypher_query(
+            query=query,
+            params=params,
+            handle_unique=True,
+            retry_on_session_expire=False,
+            resolve_objects=False,
+        )
+
+        res = get_db_result_as_dict(rows[0], columns)
+        return VisitsSummary(
+            physical_visits=res["physical_visits"],
+            non_physical_visits=res["non_physical_visits"],
+        )
+
+    @classmethod
     def get_activity_burdens(cls, lite: bool = True) -> list[ActivityBurden]:
         return_stmt = (
             """
@@ -184,6 +226,7 @@ class ComplexityScoreService:
     ) -> float:
         """Calculates the site complexity score for a study based on its Schedule of Activities (SoA) and predefined activity burdens."""
 
+        visits_summary = self.get_visits_summary(study_uid, study_version_number)
         soa = self.get_soa(study_uid, study_version_number)
         activity_burdens = self.get_activity_burdens()
         activity_burden_dict = {ab.activity_subgroup_uid: ab for ab in activity_burdens}
@@ -203,7 +246,7 @@ class ComplexityScoreService:
         total_score = (
             initial_visit_burden
             + follow_up_visit_burden
-            + self.get_visits_site_burden(soa, activity_burden_dict)
+            + self.get_visits_site_burden(visits_summary, activity_burden_dict)
             + self.get_activities_site_burden(soa, activity_burden_dict)
         )
 
@@ -211,30 +254,18 @@ class ComplexityScoreService:
         return round(total_score, 3)
 
     @classmethod
-    def get_visits_site_burden(cls, soa, activity_burden_dict) -> float:
+    def get_visits_site_burden(
+        cls, visits_summary: VisitsSummary, activity_burden_dict
+    ) -> float:
         # Total =
-        #   + total_visits * "Electronic Data Capture [*EDC*]" burden		    = x * 0.20
+        #   + total_visits * "Any Visit [*EDC*]" burden		                    = x * 0.20
         #   + non_physical_visits * "simple or brief tel. visit [NC008]" burden	= x * 0.60
         #   + physical_visits * "brief visit with vital signs [99211]" burden	= x * 0.18
 
-        all_visits: list[SoaRow.Visit] = []
-        # Loop through soa to get all unique visits
-        for row in soa:
-            for visit in row.visits:
-                if visit.uid not in [v.uid for v in all_visits]:
-                    all_visits.append(visit)
-
-        physical_visits = [
-            v for v in all_visits if cls.is_visit_physical(v.visit_contact_mode)
-        ]
-        non_physical_visits = [
-            v for v in all_visits if not cls.is_visit_physical(v.visit_contact_mode)
-        ]
-
-        burden_edc = (
-            activity_burden_dict.get(ELECTRONIC_DATA_CAPTURE_BURDEN_ID).site_burden
-            if ELECTRONIC_DATA_CAPTURE_BURDEN_ID in activity_burden_dict
-            else ELECTRONIC_DATA_CAPTURE_BURDEN_DEFAULT_VAL
+        burden_any_visit = (
+            activity_burden_dict.get(ANY_VISIT_BURDEN_ID).site_burden
+            if ANY_VISIT_BURDEN_ID in activity_burden_dict
+            else ANY_VISIT_BURDEN_DEFAULT_VAL
         )
         burden_non_physical = (
             activity_burden_dict.get(NON_PHYSICAL_VISIT_BURDEN_ID).site_burden
@@ -248,34 +279,27 @@ class ComplexityScoreService:
         )
 
         total_score = 0.0
-        total_score += len(all_visits) * burden_edc
-        total_score += len(non_physical_visits) * burden_non_physical
-        total_score += len(physical_visits) * burden_physical
+        total_score += (
+            visits_summary.non_physical_visits + visits_summary.physical_visits
+        ) * burden_any_visit
+        total_score += visits_summary.non_physical_visits * burden_non_physical
+        total_score += visits_summary.physical_visits * burden_physical
 
         return total_score
 
     @classmethod
     def get_activities_site_burden(cls, soa, activity_burden_dict) -> float:
-        # Assessment group complexities summed up over all visits
-        #   - same burden IDs will only be added once per visit
-        #   - 'Clinical Outcome Assessment' and 'Initial visit [99205]' will be excluded
+        # Activity burdens summed up over all visits
+        #   - all activities under the same activity subgroup will be added once per visit
 
         total_score = 0.0
         for row in soa:
             activity_burden = activity_burden_dict.get(row.activity_subgroup_uid, None)
-            if (
-                activity_burden
-                and row.activity_subgroup_name != "Clinical Outcome Assessment"
-                and activity_burden.burden_id != ROUTINE_INITIAL_VISIT_BURDEN_ID
-            ):
+            if activity_burden:
                 for _visit in row.visits:
                     total_score += activity_burden.site_burden
 
         return total_score
-
-    @classmethod
-    def is_visit_physical(cls, visit_contact_mode: str | None) -> bool:
-        return visit_contact_mode in ["ONSITE"]
 
     def get_burdens(self) -> list[Burden]:
         query = """

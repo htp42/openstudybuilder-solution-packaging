@@ -13,12 +13,13 @@
         <v-row>
           <v-col>
             <v-select
-              v-model="form.catalogue_name"
+              v-model="form.catalogue_names"
               data-cy="catalogue-dropdown"
               :label="$t('CodelistCreationForm.catalogue')"
               :items="catalogues"
               item-title="name"
               item-value="name"
+              multiple
               clearable
               density="compact"
               persistent-hint
@@ -187,17 +188,13 @@ const steps = [
 ]
 
 async function cancel() {
-  if (form.value.catalogue_name === 'All') {
+  const options = {
+    type: 'warning',
+    cancelLabel: t('_global.cancel'),
+    agreeLabel: t('_global.continue'),
+  }
+  if (await confirm.value.open(t('_global.cancel_changes'), options)) {
     close()
-  } else {
-    const options = {
-      type: 'warning',
-      cancelLabel: t('_global.cancel'),
-      agreeLabel: t('_global.continue'),
-    }
-    if (await confirm.value.open(t('_global.cancel_changes'), options)) {
-      close()
-    }
   }
 }
 
@@ -219,9 +216,6 @@ function getObserver(step) {
 
 async function submit() {
   form.value.terms = []
-  form.value.catalogue_names = [form.value.catalogue_name]
-  // remove the catalogue_name from the form
-  delete form.value.catalogue_name
   const data = JSON.parse(JSON.stringify(form.value))
   try {
     const resp = await controlledTerminology.createCodelist(data)

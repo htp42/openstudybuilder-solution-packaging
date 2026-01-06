@@ -469,8 +469,7 @@
                   <div class="d-flex align-center justify-start">
                     <v-btn
                       v-if="
-                        !props.readOnly &&
-                        scheduleMethods.getSoaRowType(row) !== 'activity'
+                        !props.readOnly && !scheduleMethods.isActivityRow(row)
                       "
                       :icon="
                         getDisplayButtonIcon(`row-${row.cells[0].refs[0]?.uid}`)
@@ -483,15 +482,16 @@
                     />
                     <ActionsMenu
                       v-if="row.order"
+                      v-model="actionMenuStates[index]"
                       size="small"
                       :actions="actions"
                       :item="{ row: row, index: index }"
                       :disabled="studiesGeneralStore.selectedStudyVersion"
+                      @update:model-value="highlightRow(row)"
                     />
                     <v-checkbox
                       v-if="
-                        !props.readOnly &&
-                        scheduleMethods.getSoaRowType(row) === 'activity'
+                        !props.readOnly && scheduleMethods.isActivityRow(row)
                       "
                       color="primary"
                       hide-details
@@ -551,7 +551,7 @@
                           <div v-bind="props">
                             <span
                               :class="
-                                row.cells[0].style !== 'activity'
+                                !scheduleMethods.isActivityRow(row)
                                   ? 'text-uppercase'
                                   : ''
                               "
@@ -563,7 +563,7 @@
                         </template>
                         <span
                           :class="
-                            row.cells[0].style !== 'activity'
+                            !scheduleMethods.isActivityRow(row)
                               ? 'text-uppercase'
                               : ''
                           "
@@ -635,7 +635,7 @@
                   </div>
                 </td>
                 <td
-                  v-if="scheduleMethods.getSoaRowType(row) !== 'activity'"
+                  v-if="!scheduleMethods.isActivityRow(row)"
                   :colspan="row.cells.length - 1"
                 />
                 <td
@@ -1055,6 +1055,7 @@ const tableContainer = ref()
 const complexityScore = ref(0)
 const complexityScoreLoading = ref(false)
 
+const actionMenuStates = ref({})
 const currentSelectionMatrix = ref({})
 const expandAllRows = ref(false)
 const rowsDisplayState = ref({})
@@ -1097,7 +1098,7 @@ const actions = [
     label: t('DetailedFlowchart.edit_activity'),
     icon: 'mdi-pencil-outline',
     condition: (item) =>
-      item.row.cells[0].style === 'activity' &&
+      scheduleMethods.isActivityRow(item.row) &&
       !studiesGeneralStore.selectedStudyVersion,
     click: editStudyActivity,
     accessRole: roles.STUDY_WRITE,
@@ -1106,7 +1107,7 @@ const actions = [
     label: t('DetailedFlowchart.bulk_edit'),
     icon: 'mdi-pencil-outline',
     condition: (item) =>
-      item.row.cells[0].style === 'activity' &&
+      scheduleMethods.isActivityRow(item.row) &&
       studyActivitySelection.value.length > 1 &&
       !studiesGeneralStore.selectedStudyVersion,
     click: openBatchEditForm,
@@ -1116,7 +1117,7 @@ const actions = [
     label: t('DetailedFlowchart.add_activity'),
     icon: 'mdi-plus-circle-outline',
     condition: (item) =>
-      item.row.cells[0].style === 'activity' &&
+      scheduleMethods.isActivityRow(item.row) &&
       !studiesGeneralStore.selectedStudyVersion,
     click: addStudyActivity,
     accessRole: roles.STUDY_WRITE,
@@ -1125,7 +1126,7 @@ const actions = [
     label: t('DetailedFlowchart.exchange_activity'),
     icon: 'mdi-autorenew',
     condition: (item) =>
-      item.row.cells[0].style === 'activity' &&
+      scheduleMethods.isActivityRow(item.row) &&
       !studiesGeneralStore.selectedStudyVersion,
     click: exchangeStudyActivity,
     accessRole: roles.STUDY_WRITE,
@@ -1144,7 +1145,7 @@ const actions = [
     label: t('DetailedFlowchart.remove_activity'),
     icon: 'mdi-minus-circle-outline',
     condition: (item) =>
-      item.row.cells[0].style === 'activity' &&
+      scheduleMethods.isActivityRow(item.row) &&
       !studiesGeneralStore.selectedStudyVersion,
     click: removeActivity,
     accessRole: roles.STUDY_WRITE,
@@ -1153,7 +1154,7 @@ const actions = [
     label: t('DetailedFlowchart.bulk_remove'),
     icon: 'mdi-minus-circle-outline',
     condition: (item) =>
-      item.row.cells[0].style === 'activity' &&
+      scheduleMethods.isActivityRow(item.row) &&
       studyActivitySelection.value.length > 1 &&
       !studiesGeneralStore.selectedStudyVersion,
     click: batchRemoveStudyActivities,
@@ -1180,7 +1181,7 @@ const soaRows = computed(() => {
     const result = itemsToSearch.filter((obj) => {
       return !(
         !obj.cells[0].text.toLowerCase().includes(search.value.toLowerCase()) &&
-        obj.cells[0].style === 'activity'
+        scheduleMethods.isActivityRow(obj)
       )
     })
     try {
@@ -1188,7 +1189,7 @@ const soaRows = computed(() => {
         // Removing all subgroups without activities
         if (
           result[i].cells[0].style === 'subGroup' &&
-          (!result[i + 1] || result[i + 1].cells[0].style !== 'activity')
+          (!result[i + 1] || !scheduleMethods.isActivityRow(result[i + 1]))
         ) {
           result.splice(i, 1)
         }
@@ -1351,9 +1352,10 @@ function observeWidth() {
   resizeObserver.observe(document.getElementById('sideBar'))
 }
 
-async function removeActivity(activity) {
+async function removeActivity(item) {
   localStorage.setItem('refresh-activities', true)
-  activity = activity.row.cells[0].refs[0]
+  highlightRow(item.row)
+  const activity = item.row.cells[0].refs[0]
   const options = { type: 'warning' }
   if (
     !(await confirm.value.open(
@@ -1361,6 +1363,7 @@ async function removeActivity(activity) {
       options
     ))
   ) {
+    highlightRow(item.row)
     return
   }
   loadingSoaContent.value = true
@@ -1412,6 +1415,7 @@ function onActivityExchanged() {
 
 function editStudyActivity(item) {
   localStorage.setItem('refresh-activities', true)
+  highlightRow(item.row)
   try {
     item = item.row.cells[0].refs[0]
     scrollItemId.value = `row-scroll-${item?.uid}`
@@ -1506,7 +1510,7 @@ function getStudyActivitiesForSubgroup(subgroupUid) {
     ) {
       subgroupFound = true
     } else if (subgroupFound) {
-      if (row.cells[0].style === 'activity') {
+      if (scheduleMethods.isActivityRow(row)) {
         result.push(row.cells[0])
       } else {
         break
@@ -1684,6 +1688,15 @@ function getLevelDisplayState(row) {
   return !row.hide
 }
 
+function highlightRow(row) {
+  if (!scheduleMethods.isActivityRow(row)) {
+    return
+  }
+  const rowId = `row-scroll-${row.cells[0].refs[0]?.uid}`
+  const el = document.getElementById(rowId)
+  el.classList.toggle('bg-nnBaseHeavy')
+}
+
 function toggleRowState(rowKey) {
   try {
     const currentValue = getCurrentDisplayValue(rowKey)
@@ -1704,7 +1717,7 @@ async function toggleLevelDisplay(row) {
   let action
   let field
 
-  if (firstCell.style === 'activity') {
+  if (scheduleMethods.isActivityRow(row)) {
     field = 'show_activity_in_protocol_flowchart'
     action = 'updateStudyActivity'
   } else if (firstCell.style === 'subGroup') {
@@ -1968,7 +1981,7 @@ async function loadSoaContent(keepDisplayState) {
           }
         }
         currentSubGroup = rowUid
-      } else if (row.cells[0].style === 'activity') {
+      } else if (scheduleMethods.isActivityRow(row)) {
         const scheduleCells = row.cells.slice(1)
         if (!keepDisplayState) {
           rowsDisplayState.value[key] = {

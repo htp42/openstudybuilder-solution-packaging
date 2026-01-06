@@ -96,6 +96,23 @@ class DataSupplierRepository(  # type: ignore[misc]
             initial_context=[NodeNameResolver("self")],
         )
 
+    def extend_distinct_headers_query(self, nodeset: NodeSet) -> NodeSet:
+        return nodeset.subquery(
+            self.root_class.nodes.fetch_relations("has_version")
+            .intermediate_transform(
+                {"rel": {"source": RelationNameResolver("has_version")}},
+                ordering=[
+                    RawCypher("toInteger(split(rel.version, '.')[0])"),
+                    RawCypher("toInteger(split(rel.version, '.')[1])"),
+                    "rel.end_date",
+                    "rel.start_date",
+                ],
+            )
+            .annotate(latest_version=Last(Collect("rel"))),
+            ["latest_version"],
+            initial_context=[NodeNameResolver("self")],
+        )
+
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
         root: DataSupplierRoot,

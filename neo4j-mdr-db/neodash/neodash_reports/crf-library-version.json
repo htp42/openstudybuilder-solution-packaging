@@ -428,7 +428,7 @@
       ]
     },
     {
-      "title": "Collection release Notes",
+      "title": "Collection Release Notes",
       "reports": [
         {
           "id": "51b7df6b-463e-4447-b82b-58cbaa8d049e",
@@ -478,7 +478,7 @@
         {
           "id": "f82affc7-6f5c-4d85-b04f-543b767444f5",
           "title": "Filter Change Type",
-          "query": "WITH ['⚪ No Changes','✅ Added','❌ Removed'] as change_types UNWIND change_types as change_type\nWITH change_type WHERE toLower(change_type) CONTAINS toLower($input) \nRETURN DISTINCT change_type as value,  change_type as display ORDER BY display DESC",
+          "query": "WITH ['⚪ No Changes','✅ Added','❌ Removed','🔄 Modified'] as change_types UNWIND change_types as change_type\nWITH change_type WHERE toLower(change_type) CONTAINS toLower($input) \nRETURN DISTINCT change_type as value,  change_type as display ORDER BY display DESC",
           "width": 6,
           "height": 2,
           "x": 18,

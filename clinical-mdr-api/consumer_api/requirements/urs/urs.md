@@ -28,4 +28,19 @@ Consumers must be able to retrieve the following entities related to Schedule of
 - Detailed SoA
 - Operational SoA
 
+# URS-ConsumerApi-Studies-AuditTrail
+
+Consumers must be able to retrieve audit trail information for studies via the Consumer API.
+
+The audit trail must include information about actions performed on study entities, including:
+
+- Timestamp of the action
+- Study Id
+- Action type (Create, Edit, Delete)
+- Entity affected by the action
+- Properties that were changed
+- Anonymized information about the user who performed the action
+
+The audit trail must protect user privacy by anonymizing user identifiers.
+
 

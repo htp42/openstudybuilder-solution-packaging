@@ -13,6 +13,7 @@ from migrations.utils.utils import get_logger
 LOGGER = get_logger(os.path.basename(__file__))
 DB_DRIVER = get_db_driver()
 
+
 def test_change_visit_window_unit_from_weeks_to_days_study_000137():
     LOGGER.info(
         "Checking if all study visits in Study_000137 selected 'days' as visit window unit"

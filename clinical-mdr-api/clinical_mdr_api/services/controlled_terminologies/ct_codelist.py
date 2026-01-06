@@ -381,7 +381,7 @@ class CTCodelistService:
 
             if ct_codelist_attributes_ar.ct_codelist_vo.ordinal and order is None:
                 raise BusinessLogicException(
-                    f"Codelist identified by {codelist_uid} is ordinal and order is required"
+                    msg=f"Codelist identified by {codelist_uid} is ordinal and order is required"
                 )
 
             parent_codelist_uid = (

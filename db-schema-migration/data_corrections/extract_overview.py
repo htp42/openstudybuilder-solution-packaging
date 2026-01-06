@@ -40,5 +40,7 @@ def extract_overview(module_name: str) -> str:
 if __name__ == "__main__":
     correction_module_name = sys.argv[1]
     correction_overview = extract_overview(correction_module_name)
-    with open(f"data_corrections/{correction_module_name}_overview.md", "w", encoding="utf-8") as f:
+    with open(
+        f"data_corrections/{correction_module_name}_overview.md", "w", encoding="utf-8"
+    ) as f:
         f.write(correction_overview)

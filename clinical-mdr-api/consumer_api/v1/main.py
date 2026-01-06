@@ -606,6 +606,7 @@ def get_studies_audit_trail(
       - **entity_uid**: UID of the entity affected by the action
       - **entity_type**: Type (i.e node labels) of the entity affected by the action (*StudyVisit*, *StudyActivity*, etc..). Multiple labels are separated by '**|**' character.
       - **changed_properties**: List of properties that were changed during the Edit action
+      - **author**: Hashed (MD5) value of the ID of a user that performed the action
 
     Audit trail can be filtered by:
       - `study_id` - returns study audit trail entries for the specified study ID (case-insensitive partial match)
@@ -633,6 +634,7 @@ def get_studies_audit_trail(
         "entity_uid",
         "entity_type",
         "changed_properties",
+        "author",
     ]
     csv_output = ",".join(keys) + "\n"
     for entry in audit_trail:

@@ -1,5 +1,53 @@
 # OpenStudyBuilder (OSB) Commits changelog
 
+## V 2.3
+
+New Features and Enhancements
+============
+
+### Fixes and Enhancements
+
+- Minor improvements to activity instance wizard stepper.
+- It is now possible to exchange activities in the Study Activities list page, beside on the Detailed Schedule of Activities page.
+- In the Schedule of Activities, when a user opens the action menu of a row displaying an activity, that row will also be highlighted.
+- In the Schedule of Activities, rows displaying activity placeholder requests will be highlighted in the same way they already are in the Study Activities list page (using orange and yellow colors).
+- Activity Placeholders created under detailed SoA is now also visible under Data Specifications, Study activity instances. The library will refer to 'Requested' and while the request is under evaluation it is not possible to select a related activity instance.
+- The 'Study Structure' menu has been updated and it is now possible to edit 'Epochs' in the 'Study Visits table' when the table is in 'edit mode'. Furthermore, the 'Study' menu under Manage Study' menu has been updated. The possibility to 'add exiting study as study subpart' has been removed from the front end and it is now possible to create a new study as a subpart.
+- Minor updates to API and data model for study data suppliers.
+
+### New Feature
+
+- Define Study, Data Specifications, Study Activity Instances now support defining baseline flags by visits for activity instances in operational SoA.
+
+
+### End-to-End Automated test enhancements
+
+- Various code improvements to ensure easier maintenance and overall tests stability.
+- Studies > Manage Study > Study Data Supplier: Added study data supplier automation test implementation.
+- Studies > Define Study > Data Specifications > Study Activity Instances: Defined Gherkins and implemented tests for Baseline Flags.
+
+
+Solved Bugs
+============
+
+### Library
+
+ **Code Lists -> CT Catalogues -> Codelist** 
+
+- Catalogue Name is cleared when trying to save before filling all mandatory data
+
+ **Code Lists > CT Catalogues > Terms** 
+
+- Download of SDTM domain abbreviation codelist does not contain the abbreviation
+
+
+### Studies
+
+ **Manage Study > Study Core Attributes** 
+
+- The API is very slow when deleting study activities
+
+
 ## V 2.2
 
 New Features and Enhancements

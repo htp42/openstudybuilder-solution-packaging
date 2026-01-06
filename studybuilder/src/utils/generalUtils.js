@@ -37,14 +37,6 @@ export function getAppEnv() {
   return env
 }
 
-export function isPrd() {
-  const appEnv = getAppEnvVariable()
-
-  if (!appEnv) return false
-
-  return appEnv.toUpperCase().startsWith('PRD')
-}
-
 export default {
   extractStudyUidFromUrl,
   extractStudyUidFromLocalStorage,

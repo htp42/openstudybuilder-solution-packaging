@@ -215,9 +215,20 @@ const getDescriptions = (filters, options, filtersUpdated) => {
     params.search = options.search
     params.exclude_english = true
     crfs.getDescriptions(params).then((resp) => {
-      descriptions.value = resp.data.items
-      total.value =
-        resp.data.total - (resp.data.items.length - descriptions.value.length)
+      descriptions.value = [
+        ...modelValue.value,
+        ...resp.data.items.filter((description) => {
+          return !modelValue.value.some(
+            (d) =>
+              d.name === description.name &&
+              d.language === description.language &&
+              d.description === description.description &&
+              d.instruction === description.instruction &&
+              d.sponsor_instruction === description.sponsor_instruction
+          )
+        }),
+      ]
+      total.value = resp.data.total
     })
   }
 }

@@ -33,7 +33,11 @@
             <template #[`item.name`]="{ item }">
               <div class="d-block">
                 <span v-if="item.ct_terms && item.ct_terms.length > 0">
-                  {{ item.ct_terms.map((term) => term.name).join(', ') }}
+                  {{
+                    item.ct_terms
+                      .map((term) => term.submission_value)
+                      .join(', ')
+                  }}
                 </span>
                 <span
                   v-else-if="

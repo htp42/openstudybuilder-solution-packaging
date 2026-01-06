@@ -449,6 +449,7 @@ def get_codelist_terms(
     "/codelists/terms",
     dependencies=[security, rbac.LIBRARY_READ],
     summary="List the CTTerms of a CTCodelist identified either by codelist uid, submission value or name",
+    description=_generic_descriptions.DATA_EXPORTS_HEADER,
     response_model=CustomPage[CTCodelistTerm],
     status_code=200,
     responses={
@@ -456,7 +457,36 @@ def get_codelist_terms(
         404: _generic_descriptions.ERROR_404,
     },
 )
+@decorators.allow_exports(
+    {
+        "defaults": [
+            "term_uid",
+            "submission_value",
+            "order",
+            "library_name",
+            "sponsor_preferred_name",
+            "sponsor_preferred_name_sentence_case",
+            "concept_id",
+            "nci_preferred_name",
+            "definition",
+            "name_date",
+            "name_status",
+            "attributes_date",
+            "attributes_status",
+            "start_date",
+            "end_date",
+        ],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+# pylint: disable=unused-argument
 def get_codelist_terms_by_name_or_submval(
+    request: Request,  # request is actually required by the allow_exports decorator
     codelist_uid: str | None = Query(
         None,
         description="UID of the codelist.",
