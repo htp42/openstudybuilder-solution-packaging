@@ -38,6 +38,11 @@ on:
         required: false
         type: string
         default: ''
+      force_rebuild:
+        description: 'Force rebuild even if images already exist in Docker Hub'
+        required: false
+        type: boolean
+        default: false
 
 env:
   REPOSITORY: htp42/openstudybuilder
@@ -49,6 +54,7 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.version }}
       matrix: ${{ steps.matrix.outputs.matrix }}
+      should_build: ${{ steps.check-exists.outputs.should_build }}
 
     steps:
       - name: Determine version
@@ -86,9 +92,47 @@ jobs:
           echo "matrix=${MATRIX}" >> $GITHUB_OUTPUT
           echo "Services to build: ${MATRIX}"
 
+      - name: Check if images already exist
+        id: check-exists
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          FORCE_REBUILD="${{ github.event.inputs.force_rebuild }}"
+
+          # If force rebuild is enabled, always build
+          if [ "$FORCE_REBUILD" == "true" ]; then
+            echo "Force rebuild enabled, will build images"
+            echo "should_build=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Check if the database image exists (use as indicator for all images)
+          # Using Docker Hub API v2
+          IMAGE_TAG="database-${VERSION}"
+
+          echo "Checking if ${{ env.REPOSITORY }}:${IMAGE_TAG} exists..."
+
+          # Query Docker Hub API (no auth required for public repos)
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "https://hub.docker.com/v2/repositories/${{ env.REPOSITORY }}/tags/${IMAGE_TAG}")
+
+          if [ "$HTTP_STATUS" == "200" ]; then
+            echo "Images for version ${VERSION} already exist in Docker Hub"
+            echo "should_build=false" >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "## Skipped - Images Already Exist" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Images for version **${VERSION}** already exist in Docker Hub." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "To force a rebuild, run the workflow manually with **Force rebuild** enabled." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Images for version ${VERSION} not found, will build"
+            echo "should_build=true" >> $GITHUB_OUTPUT
+          fi
+
   build-and-push:
     name: Build ${{ matrix.service }}
     needs: prepare
+    if: needs.prepare.outputs.should_build == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -140,6 +184,7 @@ jobs:
   validate-images:
     name: Validate Images
     needs: [prepare, build-and-push]
+    if: needs.prepare.outputs.should_build == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -253,6 +298,7 @@ jobs:
     needs: [prepare, build-and-push, validate-images]
     runs-on: ubuntu-latest
     if: |
+      needs.prepare.outputs.should_build == 'true' &&
       (github.event.inputs.skip_s3_upload != 'true') &&
       contains(fromJson(needs.prepare.outputs.matrix), 'database')
 
@@ -307,11 +353,22 @@ jobs:
       - name: Generate summary
         run: |
           VERSION="${{ needs.prepare.outputs.version }}"
+          SHOULD_BUILD="${{ needs.prepare.outputs.should_build }}"
 
           echo "## Build and Push Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Version: ${VERSION}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "$SHOULD_BUILD" != "true" ]; then
+            echo "### Status: Skipped" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Images for this version already exist in Docker Hub." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "To force a rebuild, run the workflow manually with **Force rebuild** enabled." >> $GITHUB_STEP_SUMMARY
+            exit 0
+          fi
+
           echo "### Images Published" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
