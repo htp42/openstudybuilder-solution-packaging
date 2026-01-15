@@ -14,8 +14,9 @@ services:
         CDISC_DATA_DIR: ${CDISC_DATA_DIR:-mdr_standards_import/container_booting/}
         NEO4J_MDR_AUTH_PASSWORD: "${NEO4J_PASSWORD:-changeme1234}"
         UID: ${UID:-1000}
-      context: ./
+      context: ./ 
       dockerfile: database.Dockerfile
+    image: ${DATABASE_IMAGE:-htp42/openstudybuilder:database-${VERSION:-latest}}
     environment:
       NEO4J_ACCEPT_LICENSE_AGREEMENT: "yes"
       NEO4J_server_memory_heap_initial__size: "2G"
@@ -42,7 +43,7 @@ services:
       dockerfile: Dockerfile
       args:
         TARGET: ${BUILD_TARGET:-dev}
-    image: ${API_IMAGE:-}
+    image: ${API_IMAGE:-htp42/openstudybuilder:api-${VERSION:-latest}}
     depends_on:
       database:
         condition: service_healthy
@@ -72,7 +73,7 @@ services:
       dockerfile: Dockerfile
       args:
         TARGET: ${BUILD_TARGET:-dev}
-    image: ${API_IMAGE:-}
+    image: ${API_IMAGE:-htp42/openstudybuilder:consumerapi-${VERSION:-latest}}
     depends_on:
       database:
         condition: service_healthy
@@ -96,7 +97,7 @@ services:
         NODE_IMAGE: ${NODE_IMAGE:-node:lts-alpine}
       context: ./studybuilder
       dockerfile: Dockerfile
-    image: ${FRONTEND_IMAGE:-}
+    image: ${FRONTEND_IMAGE:-htp42/openstudybuilder:frontend-${VERSION:-latest}}
     depends_on:
       # Nginx reverse-proxy configuration requires downstream services to be ready at startup
       api:
@@ -125,17 +126,18 @@ services:
         NODE_IMAGE: ${NODE_IMAGE:-node:lts-alpine}
       context: ./documentation-portal
       dockerfile: Dockerfile
-    image: ${DOCUMENTATION_IMAGE:-}
+    image: ${DOCUMENTATION_IMAGE:-htp42/openstudybuilder:documentation-${VERSION:-latest}}
 
   # Neodash service used with defined parameters
   neodash:
-    image: ${NEODASH_IMAGE:-}
+    image: ${NEODASH_IMAGE:-htp42/openstudybuilder:neodash-${VERSION:-latest}}
     build:
       context: ./osb-neodash
       dockerfile: Dockerfile
       args:
         NODE_IMAGE: ${NODE_IMAGE:-node:lts-alpine}
         NGINX_IMAGE: ${NGINX_IMAGE:-nginx:alpine}
+        NEODASH_VERSION: ${NEODASH_VERSION:-main}
     depends_on:
       database:
         condition: service_healthy
