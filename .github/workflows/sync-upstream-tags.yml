@@ -1,0 +1,125 @@
+name: Sync Upstream Tags
+
+# This workflow checks for new version tags on the upstream repository
+# and syncs them to this fork, triggering the build pipeline
+
+on:
+  # Run on a schedule to check for new tags (every 6 hours)
+  schedule:
+    - cron: '0 */6 * * *'
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Specific tag to sync (e.g., v2.3.0). Leave empty to sync latest.'
+        required: false
+        type: string
+
+env:
+  UPSTREAM_REPO: NovoNordisk-OpenSource/openstudybuilder-solution
+
+jobs:
+  check-and-sync-tags:
+    name: Check and Sync Upstream Tags
+    runs-on: ubuntu-latest
+    outputs:
+      new_tag: ${{ steps.check-tags.outputs.new_tag }}
+      version: ${{ steps.check-tags.outputs.version }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/${{ env.UPSTREAM_REPO }}.git || true
+          git fetch upstream --tags
+
+      - name: Check for new tags
+        id: check-tags
+        run: |
+          # Get all version tags from upstream (format: v*.*.*)
+          UPSTREAM_TAGS=$(git tag -l 'v*.*.*' --sort=-v:refname)
+
+          # If a specific tag was requested via workflow_dispatch
+          if [ -n "${{ github.event.inputs.tag }}" ]; then
+            TARGET_TAG="${{ github.event.inputs.tag }}"
+            echo "Manual sync requested for tag: ${TARGET_TAG}"
+          else
+            # Get the latest upstream tag
+            TARGET_TAG=$(echo "$UPSTREAM_TAGS" | head -1)
+            echo "Latest upstream tag: ${TARGET_TAG}"
+          fi
+
+          if [ -z "$TARGET_TAG" ]; then
+            echo "No version tags found on upstream"
+            echo "new_tag=" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Check if this tag already exists in our fork (check if we've processed it)
+          # We check for both the tag and a marker branch
+          if git rev-parse "refs/tags/${TARGET_TAG}" >/dev/null 2>&1; then
+            LOCAL_TAG_SHA=$(git rev-parse "refs/tags/${TARGET_TAG}")
+            UPSTREAM_TAG_SHA=$(git rev-parse "upstream/${TARGET_TAG}" 2>/dev/null || git ls-remote --tags upstream "${TARGET_TAG}" | cut -f1)
+
+            if [ "$LOCAL_TAG_SHA" = "$UPSTREAM_TAG_SHA" ]; then
+              echo "Tag ${TARGET_TAG} already synced"
+              echo "new_tag=" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+          fi
+
+          # Extract version without 'v' prefix
+          VERSION=${TARGET_TAG#v}
+
+          echo "New tag to sync: ${TARGET_TAG}"
+          echo "Version: ${VERSION}"
+          echo "new_tag=${TARGET_TAG}" >> $GITHUB_OUTPUT
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Sync tag to fork
+        if: steps.check-tags.outputs.new_tag != ''
+        run: |
+          TAG="${{ steps.check-tags.outputs.new_tag }}"
+
+          echo "Syncing tag ${TAG} from upstream..."
+
+          # Fetch the specific tag
+          git fetch upstream tag "${TAG}" --no-tags
+
+          # Create/update the tag locally pointing to the same commit
+          git tag -f "${TAG}" "upstream/${TAG}^{}" 2>/dev/null || git tag -f "${TAG}" FETCH_HEAD
+
+          # Push the tag to origin (fork)
+          git push origin "${TAG}" --force
+
+          echo "Successfully synced tag ${TAG}"
+
+      - name: Summary
+        if: steps.check-tags.outputs.new_tag != ''
+        run: |
+          echo "## Tag Sync Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Synced Tag:** ${{ steps.check-tags.outputs.new_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version:** ${{ steps.check-tags.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The build-and-push workflow will be triggered automatically." >> $GITHUB_STEP_SUMMARY
+
+  trigger-build:
+    name: Trigger Build Pipeline
+    needs: check-and-sync-tags
+    if: needs.check-and-sync-tags.outputs.new_tag != ''
+    uses: ./.github/workflows/build-and-push.yml
+    with:
+      version: ${{ needs.check-and-sync-tags.outputs.version }}
+      tag: ${{ needs.check-and-sync-tags.outputs.new_tag }}
+    secrets: inherit

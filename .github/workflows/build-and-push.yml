@@ -1,0 +1,225 @@
+name: Build and Push Images
+
+# This workflow builds Docker images and pushes them to Docker Hub
+# It also uploads database backups to S3
+
+on:
+  # Triggered by sync workflow
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version number (e.g., 2.3.0)'
+        required: true
+        type: string
+      tag:
+        description: 'Git tag (e.g., v2.3.0)'
+        required: true
+        type: string
+
+  # Trigger on version tags pushed directly
+  push:
+    tags:
+      - 'v*.*.*'
+
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build (e.g., 2.3.0)'
+        required: true
+        type: string
+      skip_s3_upload:
+        description: 'Skip S3 backup upload'
+        required: false
+        type: boolean
+        default: false
+      exclude_images:
+        description: 'Comma-separated list of images to exclude (e.g., neodash,documentation)'
+        required: false
+        type: string
+        default: ''
+
+env:
+  REPOSITORY: htp42/openstudybuilder
+
+jobs:
+  prepare:
+    name: Prepare Build
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      matrix: ${{ steps.matrix.outputs.matrix }}
+
+    steps:
+      - name: Determine version
+        id: version
+        run: |
+          if [ -n "${{ inputs.version }}" ]; then
+            VERSION="${{ inputs.version }}"
+          elif [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            # Extract from tag (remove 'v' prefix)
+            VERSION="${GITHUB_REF_NAME#v}"
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Building version: ${VERSION}"
+
+      - name: Build matrix
+        id: matrix
+        run: |
+          # Define all services
+          ALL_SERVICES='["database", "api", "consumerapi", "frontend", "documentation", "neodash"]'
+
+          # Get excluded images
+          EXCLUDE="${{ github.event.inputs.exclude_images }}"
+
+          if [ -n "$EXCLUDE" ]; then
+            # Filter out excluded services using jq
+            MATRIX=$(echo "$ALL_SERVICES" | jq -c --arg exclude "$EXCLUDE" '
+              . - ($exclude | split(",") | map(gsub("^\\s+|\\s+$"; "")))
+            ')
+          else
+            MATRIX="$ALL_SERVICES"
+          fi
+
+          echo "matrix=${MATRIX}" >> $GITHUB_OUTPUT
+          echo "Services to build: ${MATRIX}"
+
+  build-and-push:
+    name: Build ${{ matrix.service }}
+    needs: prepare
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJson(needs.prepare.outputs.matrix) }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: v${{ needs.prepare.outputs.version }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extract metadata
+        id: meta
+        run: |
+          VERSION="${{ needs.prepare.outputs.version }}"
+          SERVICE="${{ matrix.service }}"
+
+          echo "version_tag=${{ env.REPOSITORY }}:${SERVICE}-${VERSION}" >> $GITHUB_OUTPUT
+          echo "latest_tag=${{ env.REPOSITORY }}:${SERVICE}-latest" >> $GITHUB_OUTPUT
+
+      - name: Build and push ${{ matrix.service }}
+        uses: docker/bake-action@v4
+        with:
+          files: compose.yaml
+          targets: ${{ matrix.service }}
+          push: true
+          set: |
+            *.platform=linux/amd64,linux/arm64
+            *.cache-from=type=gha,scope=${{ matrix.service }}
+            *.cache-to=type=gha,mode=max,scope=${{ matrix.service }}
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+
+      - name: Create latest tag
+        run: |
+          VERSION="${{ needs.prepare.outputs.version }}"
+          SERVICE="${{ matrix.service }}"
+
+          VERSION_IMAGE="${{ env.REPOSITORY }}:${SERVICE}-${VERSION}"
+          LATEST_IMAGE="${{ env.REPOSITORY }}:${SERVICE}-latest"
+
+          echo "Creating latest tag for ${SERVICE}..."
+          docker buildx imagetools create -t "${LATEST_IMAGE}" "${VERSION_IMAGE}"
+
+  upload-backup:
+    name: Upload Database Backup to S3
+    needs: [prepare, build-and-push]
+    runs-on: ubuntu-latest
+    if: |
+      (github.event.inputs.skip_s3_upload != 'true') &&
+      contains(fromJson(needs.prepare.outputs.matrix), 'database')
+
+    steps:
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION || 'eu-west-3' }}
+
+      - name: Extract and upload database backup
+        run: |
+          VERSION="${{ needs.prepare.outputs.version }}"
+          DATABASE_IMAGE="${{ env.REPOSITORY }}:database-${VERSION}"
+
+          # Convert version format: 2.3.0 -> 2-3-0
+          VERSION_DASHES=$(echo "${VERSION}" | tr '.' '-')
+          BACKUP_FILENAME="mdrdb-${VERSION_DASHES}.backup"
+
+          echo "Pulling database image..."
+          docker pull "${DATABASE_IMAGE}"
+
+          echo "Extracting backup from image..."
+          CONTAINER_ID=$(docker create "${DATABASE_IMAGE}")
+          docker cp "${CONTAINER_ID}:/data/backup/mdrdockerdb.backup" "./${BACKUP_FILENAME}"
+          docker rm "${CONTAINER_ID}"
+
+          echo "Uploading backup to S3..."
+          aws s3 cp "./${BACKUP_FILENAME}" "s3://${{ secrets.S3_BUCKET }}/vanilla/${BACKUP_FILENAME}" \
+            --metadata "version=${VERSION},backup-date=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+          echo "## S3 Upload Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Bucket:** ${{ secrets.S3_BUCKET }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Path:** vanilla/${BACKUP_FILENAME}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version:** ${VERSION}" >> $GITHUB_STEP_SUMMARY
+
+  summary:
+    name: Build Summary
+    needs: [prepare, build-and-push, upload-backup]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Generate summary
+        run: |
+          VERSION="${{ needs.prepare.outputs.version }}"
+
+          echo "## Build and Push Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Version: ${VERSION}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Images Published" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          for service in $(echo '${{ needs.prepare.outputs.matrix }}' | jq -r '.[]'); do
+            echo "- \`${{ env.REPOSITORY }}:${service}-${VERSION}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- \`${{ env.REPOSITORY }}:${service}-latest\`" >> $GITHUB_STEP_SUMMARY
+          done
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Job Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Build: ${{ needs.build-and-push.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- S3 Upload: ${{ needs.upload-backup.result }}" >> $GITHUB_STEP_SUMMARY
