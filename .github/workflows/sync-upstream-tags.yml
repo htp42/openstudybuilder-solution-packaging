@@ -3,6 +3,9 @@ name: Sync Upstream Tags
 # This workflow checks for new version tags on the upstream repository
 # and syncs them to this fork, triggering the build pipeline
 
+permissions:
+  contents: write
+
 on:
   # Run on a schedule to check for new tags (every 6 hours)
   schedule:

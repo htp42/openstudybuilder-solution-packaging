@@ -138,7 +138,7 @@ RUN /neo4j/bin/neo4j-admin dbms set-initial-password "$NEO4J_MDR_AUTH_PASSWORD" 
     && while ! netstat -tna | grep 'LISTEN\>' | grep -q '8000\>'; do sleep 2; done \
     && set -x \
     # imports
-    && sleep 10 && cd ../studybuilder-import && pipenv run import_all && pipenv run import_dummydata && pipenv run import_feature_flags \
+    && sleep 10 && cd ../studybuilder-import && pipenv run import_all && pipenv run import_feature_flags \
     # stop the api
     && sleep 10 && kill -INT $api_pid && wait $api_pid \
     # get database name
