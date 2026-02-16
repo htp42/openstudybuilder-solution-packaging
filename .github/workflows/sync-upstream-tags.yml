@@ -89,23 +89,28 @@ jobs:
           echo "new_tag=${TARGET_TAG}" >> $GITHUB_OUTPUT
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
 
-      - name: Sync tag to fork
+      - name: Merge upstream tag into main
         if: steps.check-tags.outputs.new_tag != ''
         run: |
           TAG="${{ steps.check-tags.outputs.new_tag }}"
 
-          echo "Syncing tag ${TAG} from upstream..."
+          echo "Merging upstream tag ${TAG} into main..."
 
-          # Fetch the specific tag
-          git fetch upstream tag "${TAG}" --no-tags
+          # Make sure we're on main
+          git checkout main
 
-          # Create/update the tag locally pointing to the same commit
-          git tag -f "${TAG}" "upstream/${TAG}^{}" 2>/dev/null || git tag -f "${TAG}" FETCH_HEAD
+          # Merge the upstream tag into main (preserving our custom changes)
+          # This combines upstream code with our fork-specific files
+          git merge "${TAG}" --no-edit -m "Merge upstream ${TAG} into main"
 
-          # Push the tag to origin (fork)
-          git push origin "${TAG}" --force
+          # Create a fork-specific tag on the merged result
+          git tag -f "${TAG}" HEAD
 
-          echo "Successfully synced tag ${TAG}"
+          # Push updated main branch and the tag
+          git push origin main
+          git push origin "refs/tags/${TAG}" --force
+
+          echo "Successfully merged upstream ${TAG} into main and tagged"
 
       - name: Summary
         if: steps.check-tags.outputs.new_tag != ''
