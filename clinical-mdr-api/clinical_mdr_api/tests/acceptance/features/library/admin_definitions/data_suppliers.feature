@@ -1,11 +1,11 @@
 @REQ_ID:2383812
 
-Feature: Manage Library Admin definitions for Data Suppliers in Clinical MDR API 
+Feature: Manage Library Admin definitions for Data Suppliers in OpenStudyBuilder API 
 
     As an API user, I want to manage the Data Suppliers by using the Library API endpoints
 
-    Background: Test user must be able to call the Clinical MDR API and the test data exists
-        Given The test user can call the Clinical MDR API
+    Background: Test user must be able to call the OpenStudyBuilder API and the test data exists
+        Given The test user can call the OpenStudyBuilder API
 
     Scenario: User must be able to get a specific data supplier details
         When the user requests to get the details of a data supplier with a specific UID

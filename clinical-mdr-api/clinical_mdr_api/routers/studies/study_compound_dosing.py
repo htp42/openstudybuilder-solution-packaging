@@ -1,7 +1,6 @@
 from typing import Annotated, Any
 
-from fastapi import Body, Query, Request
-from pydantic.types import Json
+from fastapi import Body, Request
 
 from clinical_mdr_api.models.study_selections.study_selection import (
     StudyCompoundDosing,
@@ -66,30 +65,11 @@ def get_all_selected_compound_dosings(
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,
-    filters: Annotated[
-        Json | None,
-        Query(
-            description=_generic_descriptions.FILTERS,
-            openapi_examples=_generic_descriptions.FILTERS_EXAMPLE,
-        ),
-    ] = None,
-    page_number: Annotated[
-        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = settings.default_page_number,
-    page_size: Annotated[
-        int,
-        Query(
-            ge=0,
-            le=settings.max_page_size,
-            description=_generic_descriptions.PAGE_SIZE,
-        ),
-    ] = settings.default_page_size,
-    operator: Annotated[
-        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = settings.default_filter_operator,
-    total_count: Annotated[
-        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
-    ] = False,
+    filters: _generic_descriptions.FILTERS_QUERY = None,
+    page_number: _generic_descriptions.PAGE_NUMBER_QUERY = settings.default_page_number,
+    page_size: _generic_descriptions.PAGE_SIZE_QUERY = settings.default_page_size,
+    operator: _generic_descriptions.FILTER_OPERATOR_QUERY = settings.default_filter_operator,
+    total_count: _generic_descriptions.TOTAL_COUNT_QUERY = False,
 ) -> CustomPage[StudyCompoundDosing]:
     service = StudyCompoundDosingSelectionService()
     all_items = service.get_all_compound_dosings(
@@ -127,25 +107,11 @@ def get_all_selected_compound_dosings(
 )
 def get_distinct_values_for_header(
     study_uid: Annotated[str, utils.studyUID],
-    field_name: Annotated[
-        str, Query(description=_generic_descriptions.HEADER_FIELD_NAME)
-    ],
-    search_string: Annotated[
-        str, Query(description=_generic_descriptions.HEADER_SEARCH_STRING)
-    ] = "",
-    filters: Annotated[
-        Json | None,
-        Query(
-            description=_generic_descriptions.FILTERS,
-            openapi_examples=_generic_descriptions.FILTERS_EXAMPLE,
-        ),
-    ] = None,
-    operator: Annotated[
-        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = settings.default_filter_operator,
-    page_size: Annotated[
-        int, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
-    ] = settings.default_header_page_size,
+    field_name: _generic_descriptions.HEADER_FIELD_NAME_QUERY,
+    search_string: _generic_descriptions.HEADER_SEARCH_STRING_QUERY = "",
+    filters: _generic_descriptions.FILTERS_QUERY = None,
+    operator: _generic_descriptions.FILTER_OPERATOR_QUERY = settings.default_filter_operator,
+    page_size: _generic_descriptions.HEADER_PAGE_SIZE_QUERY = settings.default_header_page_size,
 ) -> list[Any]:
     service = StudyCompoundDosingSelectionService()
     return service.get_distinct_values_for_header(
@@ -174,25 +140,11 @@ def get_distinct_values_for_header(
     },
 )
 def get_distinct_compound_dosings_values_for_header(
-    field_name: Annotated[
-        str, Query(description=_generic_descriptions.HEADER_FIELD_NAME)
-    ],
-    search_string: Annotated[
-        str, Query(description=_generic_descriptions.HEADER_SEARCH_STRING)
-    ] = "",
-    filters: Annotated[
-        Json | None,
-        Query(
-            description=_generic_descriptions.FILTERS,
-            openapi_examples=_generic_descriptions.FILTERS_EXAMPLE,
-        ),
-    ] = None,
-    operator: Annotated[
-        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = settings.default_filter_operator,
-    page_size: Annotated[
-        int, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
-    ] = settings.default_header_page_size,
+    field_name: _generic_descriptions.HEADER_FIELD_NAME_QUERY,
+    search_string: _generic_descriptions.HEADER_SEARCH_STRING_QUERY = "",
+    filters: _generic_descriptions.FILTERS_QUERY = None,
+    operator: _generic_descriptions.FILTER_OPERATOR_QUERY = settings.default_filter_operator,
+    page_size: _generic_descriptions.HEADER_PAGE_SIZE_QUERY = settings.default_header_page_size,
 ) -> list[Any]:
     service = StudyCompoundDosingSelectionService()
     return service.get_distinct_values_for_header(

@@ -249,8 +249,8 @@ class StudyDefinitionRepositoryFake(StudyDefinitionRepository):
     ):
         raise NotImplementedError("Study Subpart audit trail is not yet mocked.")
 
+    @staticmethod
     def get_soa_preferences(
-        self,
         study_uid: str,
         study_value_version: str | None = None,
         field_names: Sequence[str] | None = None,
@@ -270,6 +270,33 @@ class StudyDefinitionRepositoryFake(StudyDefinitionRepository):
         soa_preferences: StudySoaPreferencesInput,
     ) -> list[StudyBooleanField]:
         raise NotImplementedError("edit_soa_preferences")
+
+    @staticmethod
+    def get_soa_split_uids(
+        study_uid: str,
+        study_value_version: str | None,
+    ):
+        return None
+
+    def add_soa_split_uid(
+        self,
+        study_uid: str,
+        uid: str,
+    ):
+        raise NotImplementedError("add_soa_split_uid")
+
+    def remove_soa_split_uid(
+        self,
+        study_uid: str,
+        uid: str,
+    ):
+        return None
+
+    def remove_soa_splits(
+        self,
+        study_uid: str,
+    ) -> None:
+        return
 
 
 def _random_study_number() -> str:
@@ -317,6 +344,7 @@ class TestStudyDefinitionsRepositoryBase(unittest.TestCase):
                 national_medical_products_administration_nmpa_number=random_str(),
                 eudamed_srn_number=random_str(),
                 investigational_device_exemption_ide_number=random_str(),
+                eu_pas_number=random_str(),
                 ct_gov_id_null_value_code=None,
                 eudract_id_null_value_code=None,
                 universal_trial_number_utn_null_value_code=None,
@@ -329,6 +357,7 @@ class TestStudyDefinitionsRepositoryBase(unittest.TestCase):
                 national_medical_products_administration_nmpa_number_null_value_code=None,
                 eudamed_srn_number_null_value_code=None,
                 investigational_device_exemption_ide_number_null_value_code=None,
+                eu_pas_number_null_value_code=None,
             ),
             project_number=random_str(),
         )
@@ -358,6 +387,7 @@ class TestStudyDefinitionsRepositoryBase(unittest.TestCase):
                 national_medical_products_administration_nmpa_number=random_str(),
                 eudamed_srn_number=random_str(),
                 investigational_device_exemption_ide_number=random_str(),
+                eu_pas_number=random_str(),
                 ct_gov_id_null_value_code=None,
                 eudract_id_null_value_code=None,
                 universal_trial_number_utn_null_value_code=None,
@@ -370,6 +400,7 @@ class TestStudyDefinitionsRepositoryBase(unittest.TestCase):
                 national_medical_products_administration_nmpa_number_null_value_code=None,
                 eudamed_srn_number_null_value_code=None,
                 investigational_device_exemption_ide_number_null_value_code=None,
+                eu_pas_number_null_value_code=None,
             ),
             project_number=random_str(),
         )

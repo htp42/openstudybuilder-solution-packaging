@@ -115,12 +115,6 @@
         @close="closeFormHistory"
       />
     </v-dialog>
-    <CrfActivitiesModelsLinkForm
-      :open="linkForm"
-      :item-to-link="selectedForm"
-      item-type="form"
-      @close="closeLinkForm"
-    />
     <ConfirmDialog ref="confirm" :text-cols="6" :action-cols="5" />
     <CrfApprovalSummaryConfirmDialog ref="confirmApproval" />
     <CrfNewVersionSummaryConfirmDialog ref="confirmNewVersion" />
@@ -134,7 +128,6 @@ import ActionsMenu from '@/components/tools/ActionsMenu.vue'
 import crfs from '@/api/crfs'
 import CrfFormForm from '@/components/library/crfs/CrfFormForm.vue'
 import HistoryTable from '@/components/tools/HistoryTable.vue'
-import CrfActivitiesModelsLinkForm from '@/components/library/crfs/CrfActivitiesModelsLinkForm.vue'
 import statuses from '@/constants/statuses'
 import filteringParameters from '@/utils/filteringParameters'
 import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
@@ -154,7 +147,6 @@ export default {
     ActionsMenu,
     CrfFormForm,
     HistoryTable,
-    CrfActivitiesModelsLinkForm,
     ConfirmDialog,
     CrfApprovalSummaryConfirmDialog,
     CrfNewVersionSummaryConfirmDialog,
@@ -278,7 +270,6 @@ export default {
       selectedForm: null,
       filters: '',
       showFormHistory: false,
-      linkForm: false,
       formHistoryItems: [],
     }
   },
@@ -316,8 +307,8 @@ export default {
       return sanitizeHTML(html)
     },
     getDescriptionAttribute(item, attr, short) {
-      const engDesc = item.descriptions.find(
-        (el) => el.language === parameters.ENG
+      const engDesc = item.descriptions.find((el) =>
+        [parameters.EN, parameters.ENG].includes(el.language)
       )
       if (engDesc && engDesc[attr]) {
         return short
@@ -436,15 +427,6 @@ export default {
     closeFormHistory() {
       this.selectedForm = null
       this.showFormHistory = false
-    },
-    openLinkForm(item) {
-      this.selectedForm = item
-      this.linkForm = true
-    },
-    closeLinkForm() {
-      this.linkForm = false
-      this.selectedForm = null
-      this.$refs.table.filterTable()
     },
     async getForms(filters, options, filtersUpdated) {
       if (filters) {

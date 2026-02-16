@@ -10,23 +10,23 @@ When('The identifiers are set with following data', (dataTable) => {
     cy.wait(1000)
     cy.uncheckAllCheckboxes()
     dataTable.hashes().forEach(element => cy.fillInput(element.identifier, element.value))
-    cy.clickButton('save-button')
-    cy.waitForFormSave()
 })
 
-When('The not applicable is checked for all identifiers', (dataTable) => {
+When('The not applicable is checked for all identifiers', () => {
     //null on all
     cy.nullRegistryIdentifiersForStudy(getCurrStudyUid())
     cy.waitForTable()
     cy.clickButton('edit-content')
     cy.wait(1000)
     cy.checkAllCheckboxes()
-    cy.clickButton('save-button')
-    cy.waitForFormSave()
 })
 
 Then('The identifiers table is showing following data', (dataTable) => {
     cy.waitForTableData()
-    dataTable.hashes().forEach(element => cy.tableContains(element.value))
+    dataTable.hashes().forEach(element => cy.contains('table tbody tr td', element.identifier).next().contains(element.value))
 })
 
+Then('The identifiers table is showing following data in column Reason for missing', (dataTable) => {
+    cy.waitForTableData()
+    dataTable.hashes().forEach(element => cy.contains('table tbody tr td', element.identifier).next().next().contains(element.value, { matchCase: false }))
+})

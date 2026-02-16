@@ -56,7 +56,7 @@ def test_data(temporary_database) -> dict[str, str]:
 
     activity_group = TestUtils.create_activity_group(name="test activity group")
     activity_subgroup = TestUtils.create_activity_subgroup(
-        name="test activity subgroup", activity_groups=[activity_group.uid]
+        name="test activity subgroup"
     )
 
     uids = {}

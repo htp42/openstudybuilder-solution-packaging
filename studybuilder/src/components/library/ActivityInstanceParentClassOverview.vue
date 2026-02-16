@@ -97,19 +97,12 @@
           <div>
             <NNTable
               :headers="itemClassHeaders"
-              :items="
-                searchTerm
-                  ? filteredItemClasses
-                  : addUniqueKeys(itemClasses, 'item') || []
-              "
-              :items-length="
-                searchTerm ? filteredItemClasses.length : itemClassesTotal
-              "
+              :items="activityItemClasses"
+              :items-length="activityItemClasses.length"
               :items-per-page="itemClassesItemsPerPage"
               :hide-export-button="false"
               :hide-default-switches="true"
               :disable-filtering="true"
-              :hide-search-field="false"
               :modifiable-table="true"
               :no-padding="true"
               elevation="0"
@@ -179,15 +172,13 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-// import { useI18n } from 'vue-i18n'
 import ActivitySummary from '@/components/library/ActivitySummary.vue'
 import NNTable from '@/components/tools/NNTable.vue'
 import StatusChip from '@/components/tools/StatusChip.vue'
 import activityInstanceClasses from '@/api/activityInstanceClasses'
 
-// const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 
@@ -233,6 +224,12 @@ const itemClassHeaders = [
 
 // Expose itemOverview for parent component
 defineExpose({ itemOverview })
+
+const activityItemClasses = computed(() => {
+  return searchTerm.value
+    ? filteredItemClasses.value
+    : addUniqueKeys(itemClasses.value, 'item') || []
+})
 
 // Add unique keys to items to avoid duplicate key warnings
 function addUniqueKeys(items, prefix = 'item') {
@@ -401,7 +398,7 @@ function handleItemClassFilter(_filters, options) {
     }
 
     // Handle search
-    if (options.search !== undefined) {
+    if (options.search !== undefined && options.search !== null) {
       searchTerm.value = options.search.toLowerCase()
       if (searchTerm.value) {
         let itemsToFilter = addUniqueKeys(itemClasses.value, 'item') || []
@@ -426,6 +423,9 @@ function handleItemClassFilter(_filters, options) {
       } else {
         filteredItemClasses.value = []
       }
+    } else {
+      searchTerm.value = ''
+      filteredItemClasses.value = itemClasses.value
     }
   }
 }

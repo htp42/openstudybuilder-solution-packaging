@@ -2,7 +2,7 @@
 
 # At a glance
 
-StudyBuilder implements the OAuth 2 protocol for authorization and the superimposed OpenID Connect protocol. 
+OpenStudyBuilder implements the OAuth 2 protocol for authorization and the superimposed OpenID Connect protocol. 
 
 - API mandates the clients to include a valid access-token in the header of HTTP request
 - JWT tokens are used, which are cryptographically signed by the authority, and has a JSON payload (called claims) 
@@ -17,10 +17,10 @@ Recommended reading:
 
 # Authorization code flow
 
-The client applications, like StudyBuilder UI has to initiate an
+The client applications, like OpenStudyBuilder UI has to initiate an
 [OAuth 2.0 authorization code flow](https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-auth-code-flow)
 (also called authorization code grant) with the identity provider.
-StudyBuilder UI uses [oidc-client-ts](https://github.com/authts/oidc-client-ts) library, which supports the OAuth 2.0
+OpenStudyBuilder UI uses [oidc-client-ts](https://github.com/authts/oidc-client-ts) library, which supports the OAuth 2.0
 and OpenID Connect protocols, and also reads the
 [OpenID Connect Discovery](https://openid.net/specs/openid-connect-discovery-1_0.html)
 metadata from the identity provider for obtaining its configuration.
@@ -61,7 +61,7 @@ Recommended reading:
 <IMG  src="https://www.plantuml.com/plantuml/svg/VP0zJiGm48NxdEBrA2aeLmX1IKUp1x2I1xR8silCHC3jiHW5sLkaI_ozdvbvKWjYssKTpah1E3xY_0ASi9Rtb96oCPkpXx6YIeHB4ix-YcfutYmMIVPJOQZVrP7cOAdatTYAkcm9SwlhL7iFlfB5ls3CPI6AW295zdwVwfyFzRVjyoJoehtcfitA1pE4UYrPEKpJr5taX7rIJt_rItnkLCDTXJDLFSJ3NT85uXwnRA9OWr5WaPqFCIZuVKt21OVzjzkz2JNsvGrtsZOTBc57M_m2"  alt="OAuth 2.0 Authorization Code Flow and using access token with API"/>
 
 - **User**: the actor with their browser
-- **UI**: StudyBuilder UI Single-Page-Application running in user's browser
+- **UI**: OpenStudyBuilder UI Single-Page-Application running in user's browser
 - **Authority**: the OAuth Authority, aka. Identity Provider, in our case this is Azure Active Directory
 - **API**: our Clinical-MDR API Python application
 
@@ -92,7 +92,7 @@ UI <- API : response
 # Application registrations
 
 The following is a guide for application registration in the Azure Active Directory as identity provider.
-Theoretically StudyBuilder could be able to work with different OAuth-compatible identity providers as well, 
+Theoretically OpenStudyBuilder could be able to work with different OAuth-compatible identity providers as well, 
 although it is not tested. With some OAuth experience, based on this guide, it should be possible to infer the setup 
 with a different identity provider.
 
@@ -157,15 +157,15 @@ setting.
 ## Client application registration:
 
 Ideally we would create a separate registration for each client application, but it is also possible to share the 
-registration between StudyBuilder UI and Swagger UI, just add the URLs of both at the *Redirect URIs* below.  
+registration between OpenStudyBuilder UI and Swagger UI, just add the URLs of both at the *Redirect URIs* below.  
 
 - **Authentication**:
   - **Redirect URIs**:
-    - For StudyBuilder UI, add a *Single-page application* with *Redirect URI* set to the OAuth callback URL of the 
+    - For OpenStudyBuilder UI, add a *Single-page application* with *Redirect URI* set to the OAuth callback URL of the 
       hosted UI application like `https://sb.example.com/oauth-callback` (use HTTPS except for localhost)
     - For Swagger UI, add a *Single-page application* with *Redirect URI* set to the OAuth callback URL of the hosted 
       clinical-mdr-api like `https://sb.example.com/api/docs/oauth2-redirect` (use HTTPS except for localhost)
-    - For the StudyBuilder Word addon, add platform as *Mobile and desktop application* and enable all three pre-defined 
+    - For the OpenStudyBuilder Word addon, add platform as *Mobile and desktop application* and enable all three pre-defined 
       redirect URLs for now (there's some uncertainty while it is under development)
 - **Certificates and Secrets**: Single-page, mobile and desktop applications must not have a client secret, as they 
   can not keep it secret. For other services and automated processes like studybuilder-import, studybuilder-export 
@@ -180,7 +180,7 @@ registration between StudyBuilder UI and Swagger UI, just add the URLs of both a
 - **Roles and administrators**: *Cloud application administrators* is there by default
 - **Go back to the clinical-mdr-api registration,** and register this new client application on the **Expose API** page.
 
-On the **Overview** page take a note of the *Application (client) ID* which in case of StudyBuilder UI will go as 
+On the **Overview** page take a note of the *Application (client) ID* which in case of OpenStudyBuilder UI will go as 
 the `OAUTH_UI_APP_ID` setting, or for the Swagger UI of clinical-mdr-api as `OAUTH_SWAGGER_APP_ID` setting.
 
 
@@ -188,12 +188,12 @@ the `OAUTH_UI_APP_ID` setting, or for the Swagger UI of clinical-mdr-api as `OAU
 
 The following is a possible combination of user roles to system roles based on group membership.
 
-| Group                   | Roles                                                               |
-|-------------------------|---------------------------------------------------------------------|
-| StudyBuilder Readers    | Study.Read <br/> Library.Read                                       |
-| Library Contributors    | Study.Read <br/> Library.Write <br/> Library.Read                   |
-| Study Contributors      | Study.Write <br/> Study.Read<br/> Library.Read                      |
-| StudyBuilder Superusers | Study.Write <br/> Library.Write <br/> Study.Read <br/> Library.Read |
+| Group                       | Roles                                                               |
+|-----------------------------|---------------------------------------------------------------------|
+| OpenStudyBuilder Readers    | Study.Read <br/> Library.Read                                       |
+| Library Contributors        | Study.Read <br/> Library.Write <br/> Library.Read                   |
+| Study Contributors          | Study.Write <br/> Study.Read<br/> Library.Read                      |
+| OpenStudyBuilder Superusers | Study.Write <br/> Library.Write <br/> Study.Read <br/> Library.Read |
 
 * clinical-mdr-api assumes that any group with *write* grant on some resource is also granted *read* onto the same 
   resource.
@@ -267,7 +267,7 @@ Configuring the Swagger UI with OAuth is completely optional, clinical-mdr-api s
   when the Swagger UI initiates an authorization code flow. Defaults to the above example.
 
 
-## Configuring the StudyBuilder UI
+## Configuring the OpenStudyBuilder UI
 
 At the startup of the *frontend* container image, `config.json` is updated with any environment variables of the same 
 name as the properties, before starting the Nginx daemon. Docker compose will forward relevant environment variables 
@@ -283,7 +283,7 @@ to the service, (and also from the `.env` file in the same folder as the compose
 : Application id of the clinical-mdr-api registration.
 
 `OAUTH_UI_APP_ID: "YOUR_CLIENT_ID",`
-: The application id of the StudyBuilder UI registration.
+: The application id of the OpenStudyBuilder UI registration.
 
 
 # Authorization in clinical-mdr-api
@@ -311,7 +311,7 @@ Currently, clinical-mdr-api doesn't require any scopes to be claimed in the acce
 
 All clinical-mdr-api endpoints should require the caller to have certain roles.
 
-The identity provider is responsible for granting roles to users when authenticating for the StudyBuilder application. 
+The identity provider is responsible for granting roles to users when authenticating for the OpenStudyBuilder application. 
 Those roles get listed in the access token as the `roles` claim,
 which is an array of strings, like `Study.Read` and `Library.Write`.
 
@@ -324,7 +324,7 @@ endpoint just reads but doesn't alter any object, the role gets suffiexed with
 role get suffixed with `Write`.
 
 
-## StudyBuilder UI client
+## OpenStudyBuilder UI client
 
 UI starts with a landing page with a login button, which starts the authorization code flow. It builds a URL and 
 redirects the browser to it, leading to the identity provider's site, with query parameters like the client 

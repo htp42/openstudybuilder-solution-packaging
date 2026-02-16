@@ -801,6 +801,54 @@ class CTCodelistGenericRepository(
 
         return None
 
+    def get_paired_codelist_uid(self, codelist_uid: str) -> str | None:
+        """
+        Returns the paired codelist UID if the codelist is part of a codelist pair.
+        Returns None if no pairing exists.
+        :param codelist_uid: The UID of the codelist
+        :return: Paired codelist UID or None
+        """
+        codelist_root = CTCodelistRoot.nodes.get_or_none(uid=codelist_uid)
+        if not codelist_root:
+            return None
+
+        # Check if this codelist has a paired code codelist (outgoing relationship)
+        paired_code = codelist_root.has_paired_code_codelist.get_or_none()
+        if paired_code:
+            return paired_code.uid
+
+        # Check if this codelist has a paired name codelist (incoming relationship)
+        paired_name = codelist_root.has_paired_name_codelist.get_or_none()
+        if paired_name:
+            return paired_name.uid
+
+        return None
+
+    def is_term_in_codelist(self, term_uid: str, codelist_uid: str) -> bool:
+        """
+        Checks if a term is currently in a codelist (has an active HAS_TERM relationship).
+        :param term_uid: The UID of the term
+        :param codelist_uid: The UID of the codelist
+        :return: True if the term is in the codelist, False otherwise
+        """
+        codelist_root = CTCodelistRoot.nodes.get_or_none(uid=codelist_uid)
+        if not codelist_root:
+            return False
+
+        term_root = CTTermRoot.nodes.get_or_none(uid=term_uid)
+        if not term_root:
+            return False
+
+        # Check if there's an active HAS_TERM relationship
+        for codelist_term in codelist_root.has_term.all():
+            term_from_codelist = codelist_term.has_term_root.get_or_none()
+            if term_from_codelist and term_from_codelist.uid == term_uid:
+                has_term_rel = codelist_root.has_term.relationship(codelist_term)
+                if has_term_rel.end_date is None:
+                    return True
+
+        return False
+
     def get_or_create_selected_term(
         self,
         term_node,

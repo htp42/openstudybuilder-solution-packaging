@@ -94,12 +94,26 @@ def list_used_library_data(studies):
                 instance_class_uid = instance["activity_instance_class"]["uid"]
                 if instance_class_uid is not None:
                     instance_classes.add(instance_class_uid)
-                items = instance["activity_items"]
+                # activity_items may not be present in study-level data
+                items = instance.get("activity_items")
                 if items is not None:
                     for item in items:
                         item_class_uid = item["activity_item_class"]["uid"]
                         if item_class_uid is not None:
                             item_classes.add(item_class_uid)
+
+    # If no item_classes found in study data, look them up from library data
+    if len(item_classes) == 0 and len(instances) > 0:
+        with open(os.path.join("output", "concepts.activities.activity-instances.json"), 'r') as f:
+            library_instances = json.load(f)
+            for lib_instance in library_instances:
+                if lib_instance["uid"] in instances:
+                    items = lib_instance.get("activity_items", [])
+                    if items:
+                        for item in items:
+                            item_class_uid = item["activity_item_class"]["uid"]
+                            if item_class_uid is not None:
+                                item_classes.add(item_class_uid)
 
     return {"project_names": project_names, "programme_names": programme_names, "groups": groups, "subgroups": subgroups, "activities": activities, "soa_group_terms": soa_group_terms, "instances": instances, "instance_classes": instance_classes, "item_classes": item_classes}
 

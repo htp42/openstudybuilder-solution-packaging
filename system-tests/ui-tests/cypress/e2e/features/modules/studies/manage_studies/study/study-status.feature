@@ -34,6 +34,8 @@ Feature: Studies - Manage Study - Study Status
         Given A study in draft status without study number is selected
         And The test study '/study_status/study_status' page is opened
         When The study is locked with description provided
+        And Form save button is clicked
+		And The form is no longer available
         Then The pop up displays 'Cannot lock study without study_number nor study_title'
         And The form is not closed
 
@@ -42,6 +44,8 @@ Feature: Studies - Manage Study - Study Status
         Given A study in draft status without title is selected
         And The test study '/study_status/study_status' page is opened
         When The study is locked with description provided
+        And Form save button is clicked
+		And The form is no longer available
         Then The pop up displays 'Cannot lock study without study_number nor study_title'
         And The form is not closed
 
@@ -56,6 +60,8 @@ Feature: Studies - Manage Study - Study Status
         Given A study in draft status with defined study number and study title is selected
         Given The test study '/study_status/study_status' page is opened
         When The study is released with description provided
+        And Form save button is clicked
+		And The form is no longer available
         Then The pop up displays 'Study snapshot has been released'
         And A row for the Released Study Status is displayed with a current time stamp and Release description and version incremented by 0.1
         And A the first row is showing Draft without Version and description, with the current timestamp
@@ -66,6 +72,8 @@ Feature: Studies - Manage Study - Study Status
         And study is not defined as a main or subpart study
         And The test study '/study_status/study_status' page is opened
         When The study is locked with description provided
+        And Form save button is clicked
+		And The form is no longer available
         Then The pop up displays 'Study has been locked and new  version created'
         And A row for the Locked Study Status is displayed with a current time stamp and Lock description and version rounded up to full number
         And A row for the Released Study Status is displayed with a current time stamp and Lock description and version rounded up to full number
@@ -76,7 +84,9 @@ Feature: Studies - Manage Study - Study Status
         And study is defined as a main study with subparts
         And The test study '/study_status/study_status' page is opened
         When The study is locked with description provided
-        Then TThe pop up displays 'Study has been locked and new  version created'
+        And Form save button is clicked
+		And The form is no longer available
+        Then The pop up displays 'Study has been locked and new  version created'
         And A row for the Locked Study Status is displayed with a current time stamp and Lock description and version rounded up to full number including all subpart studies
         And A row for the Released Study Status is displayed with a current time stamp and Lock description and version rounded up to full number including all subpart studies
 

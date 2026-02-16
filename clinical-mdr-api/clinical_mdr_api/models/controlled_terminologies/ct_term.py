@@ -118,7 +118,7 @@ class CTTerm(BaseModel):
 class CTTermCodelistInput(BaseModel):
     codelist_uid: Annotated[str, Field()]
     submission_value: Annotated[str, Field()]
-    order: Annotated[int | None, Field()]
+    order: Annotated[int | None, Field()] = None
 
 
 class CTTermCreateInput(PostInputModel):
@@ -521,14 +521,20 @@ class SimpleCodelistTermModel(BaseModel):
     preferred_term: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
-    codelist_uid: Annotated[str | None, Field(json_schema_extra={"nullable": True})]
-    codelist_name: Annotated[str | None, Field(json_schema_extra={"nullable": True})]
+    codelist_uid: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
+        None
+    )
+    codelist_name: Annotated[
+        str | None, Field(json_schema_extra={"nullable": True})
+    ] = None
     codelist_submission_value: Annotated[
         str | None,
         Field(json_schema_extra={"nullable": True}),
-    ]
-    order: Annotated[int | None, Field(json_schema_extra={"nullable": True})]
-    submission_value: Annotated[str | None, Field(json_schema_extra={"nullable": True})]
+    ] = None
+    order: Annotated[int | None, Field(json_schema_extra={"nullable": True})] = None
+    submission_value: Annotated[
+        str | None, Field(json_schema_extra={"nullable": True})
+    ] = None
     queried_effective_date: Annotated[datetime | None, Field()] = None
     date_conflict: Annotated[bool | None, Field()] = None
 

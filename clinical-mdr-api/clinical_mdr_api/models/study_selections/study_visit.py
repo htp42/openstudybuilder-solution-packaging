@@ -176,6 +176,9 @@ class StudyVisitBase(BaseModel):
     consecutive_visit_group: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
+    consecutive_visit_group_uid: Annotated[
+        str | None, Field(json_schema_extra={"nullable": True})
+    ] = None
     show_visit: Annotated[bool, Field()]
     min_visit_window_value: Annotated[
         int | None, Field(json_schema_extra={"nullable": True})
@@ -398,6 +401,9 @@ class StudyVisitBase(BaseModel):
             consecutive_visit_group=(
                 visit.study_visit_group.group_name if visit.study_visit_group else None
             ),
+            consecutive_visit_group_uid=(
+                visit.study_visit_group.uid if visit.study_visit_group else None
+            ),
             show_visit=visit.show_visit,
             min_visit_window_value=visit.visit_window_min,
             max_visit_window_value=visit.visit_window_max,
@@ -455,7 +461,7 @@ class VisitConsecutiveGroupInput(PostInputModel):
     format: Annotated[
         VisitGroupFormat,
         Field(
-            description="""The way how the Visits should be groupped. The possible values are: range or list.
+            description="""The way how the Visits should be grouped. The possible values are: range or list.
                            The range technique will name the group in the following way (V4-V6),
                            the list technique will generate the group name in the following way (V4,V5,V6)""",
         ),
@@ -466,3 +472,8 @@ class VisitConsecutiveGroupInput(PostInputModel):
             description="The uid of the visit from which get properties to overwrite"
         ),
     ] = None
+
+
+class StudyVisitGroup(BaseModel):
+    uid: Annotated[str, Field()]
+    group_name: Annotated[str, Field()]

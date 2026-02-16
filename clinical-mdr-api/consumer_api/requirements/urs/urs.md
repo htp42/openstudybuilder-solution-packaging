@@ -1,6 +1,6 @@
 # Overview
 
-This document contains a set of user requirements related to StudyBuilder Consumer API.
+This document contains a set of user requirements related to OpenStudyBuilder Consumer API.
 
 # URS-ConsumerApi-Library-Activities
 
@@ -8,7 +8,7 @@ Consumers must be able to retrieve a list of all library activities and activity
 
 # URS-ConsumerApi-Studies
 
-Consumers must be able to retrieve a list of all studies that exist in StudyBuilder via the Consumer API.
+Consumers must be able to retrieve a list of all studies that exist in OpenStudyBuilder via the Consumer API.
 
 # URS-ConsumerApi-Studies-SoA
 

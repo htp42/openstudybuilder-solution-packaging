@@ -12,6 +12,7 @@ Tests for /studies/{uid}/study-activity-groups endpoints
 import logging
 from datetime import datetime, timezone
 from typing import Any
+from unittest.mock import ANY
 
 import pytest
 from fastapi.testclient import TestClient
@@ -73,6 +74,8 @@ def test_data():
     global study
     study, _test_data_dict = inject_base_data()
 
+    TestUtils.set_study_title(study.uid)
+
     global general_activity_group
     global second_general_activity_group
     global randomisation_activity_subgroup
@@ -95,7 +98,7 @@ def test_data():
         name="Second General"
     )
     randomisation_activity_subgroup = TestUtils.create_activity_subgroup(
-        name="Randomisation", activity_groups=[general_activity_group.uid]
+        name="Randomisation"
     )
     randomized_activity = TestUtils.create_activity(
         name="Randomized",
@@ -110,7 +113,7 @@ def test_data():
         library_name="Sponsor",
     )
     body_measurements_activity_subgroup = TestUtils.create_activity_subgroup(
-        name="Body Measurements", activity_groups=[second_general_activity_group.uid]
+        name="Body Measurements"
     )
     weight_activity = TestUtils.create_activity(
         name="Weight",
@@ -213,7 +216,7 @@ def test_post_and_get_all_study_activity_groups(api_client):
     for i in range(20):
         general_activity_group = TestUtils.create_activity_group(name=f"General {i}")
         randomisation_activity_subgroup = TestUtils.create_activity_subgroup(
-            name=f"Randomisation {i}", activity_groups=[general_activity_group.uid]
+            name=f"Randomisation {i}"
         )
         randomized_activity = TestUtils.create_activity(
             name=f"Randomized {i}",
@@ -297,9 +300,7 @@ def test_modify_visibility_flag_in_protocol_flowchart(
     api_client,
 ):
     activity_group = TestUtils.create_activity_group(name="AG")
-    activity_subgroup = TestUtils.create_activity_subgroup(
-        name="AS", activity_groups=[activity_group.uid]
-    )
+    activity_subgroup = TestUtils.create_activity_subgroup(name="AS")
     activity = TestUtils.create_activity(
         name="Act",
         library_name="Sponsor",
@@ -323,6 +324,20 @@ def test_modify_visibility_flag_in_protocol_flowchart(
     assert res["show_activity_subgroup_in_protocol_flowchart"] is True
     assert res["show_activity_group_in_protocol_flowchart"] is True
     assert res["show_soa_group_in_protocol_flowchart"] is False
+
+    # lock and unlock study to create a version
+    response = api_client.post(
+        f"/studies/{study.uid}/locks",
+        json={"change_description": "v1"},
+    )
+    assert_response_status_code(response, 201)
+    locked_version = response.json()["current_metadata"]["version_metadata"][
+        "version_number"
+    ]
+    response = api_client.delete(f"/studies/{study.uid}/locks")
+    assert_response_status_code(response, 200)
+    locked_results = res
+    locked_results["study_version"] = ANY
 
     response = api_client.patch(
         f"/studies/{study.uid}/study-activities/{study_activity_uid}",
@@ -354,9 +369,20 @@ def test_modify_visibility_flag_in_protocol_flowchart(
     assert res["show_activity_group_in_protocol_flowchart"] is False
     assert res["show_soa_group_in_protocol_flowchart"] is False
 
+    # verify locked version
+    response = api_client.get(
+        f"/studies/{study.uid}/study-activities/{study_activity_uid}",
+        params={"study_value_version": locked_version},
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert res == locked_results
+
 
 def test_study_activity_group_reordering(api_client):
     test_study = TestUtils.create_study(project_number=project.project_number)
+    TestUtils.set_study_title(test_study.uid)
+
     # create study activity
     randomized_sa = TestUtils.create_study_activity(
         study_uid=test_study.uid,
@@ -411,6 +437,21 @@ def test_study_activity_group_reordering(api_client):
     assert study_activities[3]["study_activity_group"]["order"] == 2
     assert study_activities[3]["study_activity_subgroup"]["order"] == 1
     assert study_activities[3]["order"] == 1
+
+    # lock and unlock study to create a version
+    response = api_client.post(
+        f"/studies/{test_study.uid}/locks",
+        json={"change_description": "v1"},
+    )
+    assert_response_status_code(response, 201)
+    locked_version = response.json()["current_metadata"]["version_metadata"][
+        "version_number"
+    ]
+    response = api_client.delete(f"/studies/{test_study.uid}/locks")
+    assert_response_status_code(response, 200)
+    locked_data = study_activities
+    for item in locked_data:
+        item["study_version"] = ANY
 
     # Reorder first SA
     response = api_client.patch(
@@ -479,6 +520,26 @@ def test_study_activity_group_reordering(api_client):
     assert study_activities[3]["study_activity_subgroup"]["order"] == 1
     assert study_activities[3]["order"] == 3
 
+    # create a study release
+    response = api_client.post(
+        f"/studies/{test_study.uid}/release",
+        json={"change_description": "r1"},
+    )
+    assert_response_status_code(response, 201)
+    released_version = f"{locked_version}.1"
+    released_data = study_activities
+    for item in released_data:
+        item["study_version"] = ANY
+
+    # verify locked version
+    response = api_client.get(
+        f"/studies/{test_study.uid}/study-activities",
+        params={"study_value_version": locked_version},
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()["items"]
+    assert res == locked_data
+
     response = api_client.patch(
         f"/studies/{test_study.uid}/study-activities/{weight_sa1.study_activity_uid}",
         json={
@@ -519,3 +580,12 @@ def test_study_activity_group_reordering(api_client):
     assert study_activities[3]["study_activity_group"]["order"] == 1
     assert study_activities[3]["study_activity_subgroup"]["order"] == 1
     assert study_activities[3]["order"] == 1
+
+    # verify released version
+    response = api_client.get(
+        f"/studies/{test_study.uid}/study-activities",
+        params={"study_value_version": released_version},
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()["items"]
+    assert res == released_data

@@ -30,9 +30,8 @@ class DatasetRepository(StandardDataModelRepository):
         return f"""MATCH (standard_root:{standard_data_model_label} {uid_filter})-[:HAS_INSTANCE]->
                 (standard_value:{standard_data_model_value_label})<-[has_dataset:HAS_DATASET]-
                 (data_model_ig_value:DataModelIGValue {{version_number: $data_model_ig_version}})<-[:HAS_VERSION]-(data_model_ig_root:DataModelIGRoot {{uid:$data_model_ig_name}})
-                OPTIONAL MATCH (standard_value)-[implements:IMPLEMENTS_DATASET_CLASS]->(dataset_class_value)
-                OPTIONAL MATCH (dataset_class_value)<-[:HAS_INSTANCE]-(dataset_class:DatasetClass)
-                OPTIONAL MATCH (dataset_class_value)<-[has_dataset_class:HAS_DATASET_CLASS]-(:DataModelValue)<-[:IMPLEMENTS]-(data_model_ig_value)
+                MATCH (standard_value)-[implements:IMPLEMENTS_DATASET_CLASS]->(dataset_class_value)<-[:HAS_DATASET_CLASS]-(:DataModelValue)<-[:IMPLEMENTS]-(data_model_ig_value)
+                MATCH (dataset_class_value)<-[:HAS_INSTANCE]-(dataset_class:DatasetClass)
 """
 
     def create_query_filter_statement(self, **kwargs) -> tuple[str, dict[Any, Any]]:
@@ -83,8 +82,7 @@ class DatasetRepository(StandardDataModelRepository):
         WITH *,
             standard_value.label AS label,
             standard_value.title AS title,
-            head([(standard_root)<-[:HAS_DATASET]-(catalogue:DataModelCatalogue) | catalogue.name]) AS catalogue_name,
-            {ordinal:has_dataset_class.ordinal, dataset_class_name:dataset_class_value.label, dataset_class_uid:dataset_class.uid} AS implemented_dataset_class,
+            {dataset_class_name:dataset_class_value.label, dataset_class_uid:dataset_class.uid} AS implemented_dataset_class,
             head([(standard_value)<-[has_dataset:HAS_DATASET]-(data_model_ig_value:DataModelIGValue) | 
-            {ordinal:has_dataset.ordinal, data_model_ig_name:data_model_ig_value.name}]) AS data_model_ig
+            {ordinal:toInteger(has_dataset.ordinal), data_model_ig_name:data_model_ig_value.name}]) AS data_model_ig
         """

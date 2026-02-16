@@ -7,7 +7,7 @@
     <v-col cols="2">
       <v-checkbox
         v-model="notApplicable"
-        color="primary"
+        color="nnBaseBlue"
         data-cy="not-applicable-checkbox"
         :label="naLabel"
         hide-details

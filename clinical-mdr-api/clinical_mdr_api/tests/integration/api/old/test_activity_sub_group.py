@@ -41,7 +41,6 @@ def test_post_create_activity_sub_group(api_client):
         "definition": "definition",
         "abbreviation": "abbv",
         "library_name": "Sponsor",
-        "activity_groups": ["activity_group_root1"],
     }
     response = api_client.post("/concepts/activities/activity-sub-groups", json=data)
 
@@ -55,9 +54,6 @@ def test_post_create_activity_sub_group(api_client):
     assert res["definition"] == "definition"
     assert res["abbreviation"] == "abbv"
     assert res["library_name"] == "Sponsor"
-    assert res["activity_groups"] == [
-        {"uid": "activity_group_root1", "name": "name1", "version": None}
-    ]
     assert res["end_date"] is None
     assert res["status"] == "Draft"
     assert res["version"] == "0.1"
@@ -81,9 +77,6 @@ def test_get_all_activity_sub_groups(api_client):
     assert res["items"][0]["definition"] == "definition1"
     assert res["items"][0]["abbreviation"] == "abbv"
     assert res["items"][0]["library_name"] == "Sponsor"
-    assert res["items"][0]["activity_groups"] == [
-        {"uid": "activity_group_root1", "name": "name1", "version": None}
-    ]
     assert res["items"][0]["end_date"] is None
     assert res["items"][0]["status"] == "Final"
     assert res["items"][0]["version"] == "1.0"
@@ -96,9 +89,6 @@ def test_get_all_activity_sub_groups(api_client):
     assert res["items"][1]["definition"] == "definition2"
     assert res["items"][1]["abbreviation"] == "abbv"
     assert res["items"][1]["library_name"] == "Sponsor"
-    assert res["items"][1]["activity_groups"] == [
-        {"uid": "activity_group_root2", "name": "name2", "version": None}
-    ]
     assert res["items"][1]["end_date"] is None
     assert res["items"][1]["status"] == "Final"
     assert res["items"][1]["version"] == "1.0"
@@ -111,9 +101,6 @@ def test_get_all_activity_sub_groups(api_client):
     assert res["items"][2]["definition"] == "definition3"
     assert res["items"][2]["abbreviation"] == "abbv"
     assert res["items"][2]["library_name"] == "Sponsor"
-    assert res["items"][2]["activity_groups"] == [
-        {"uid": "activity_group_root3", "name": "name3", "version": None}
-    ]
     assert res["items"][2]["end_date"] is None
     assert res["items"][2]["status"] == "Final"
     assert res["items"][2]["version"] == "1.0"
@@ -126,67 +113,12 @@ def test_get_all_activity_sub_groups(api_client):
     assert res["items"][3]["definition"] == "definition"
     assert res["items"][3]["abbreviation"] == "abbv"
     assert res["items"][3]["library_name"] == "Sponsor"
-    assert res["items"][3]["activity_groups"] == [
-        {"uid": "activity_group_root1", "name": "name1", "version": None}
-    ]
     assert res["items"][3]["end_date"] is None
     assert res["items"][3]["status"] == "Draft"
     assert res["items"][3]["version"] == "0.1"
     assert res["items"][3]["change_description"] == "Initial version"
     assert res["items"][3]["author_username"] == "unknown-user@example.com"
     assert res["items"][3]["possible_actions"] == ["approve", "delete", "edit"]
-
-
-def test_get_all_activity_sub_groups_from_given_activity_group(api_client):
-    response = api_client.get(
-        "/concepts/activities/activity-sub-groups?activity_group_uid=activity_group_root2&total_count=true"
-    )
-
-    assert_response_status_code(response, 200)
-
-    res = response.json()
-
-    assert res["items"][0]["uid"] == "activity_subgroup_root2"
-    assert res["items"][0]["name"] == "name2"
-    assert res["items"][0]["name_sentence_case"] == "name2"
-    assert res["items"][0]["definition"] == "definition2"
-    assert res["items"][0]["abbreviation"] == "abbv"
-    assert res["items"][0]["library_name"] == "Sponsor"
-    assert res["items"][0]["activity_groups"] == [
-        {"uid": "activity_group_root2", "name": "name2", "version": None}
-    ]
-    assert res["items"][0]["end_date"] is None
-    assert res["items"][0]["status"] == "Final"
-    assert res["items"][0]["version"] == "1.0"
-    assert res["items"][0]["change_description"] == "Approved version"
-    assert res["items"][0]["author_username"] == "unknown-user@example.com"
-    assert res["items"][0]["possible_actions"] == ["inactivate", "new_version"]
-
-
-def test_get_all_activity_sub_groups_from_given_activity_group_using_name(api_client):
-    response = api_client.get(
-        "/concepts/activities/activity-sub-groups?activity_group_names[]=name2&total_count=true"
-    )
-
-    assert_response_status_code(response, 200)
-
-    res = response.json()
-
-    assert res["items"][0]["uid"] == "activity_subgroup_root2"
-    assert res["items"][0]["name"] == "name2"
-    assert res["items"][0]["name_sentence_case"] == "name2"
-    assert res["items"][0]["definition"] == "definition2"
-    assert res["items"][0]["abbreviation"] == "abbv"
-    assert res["items"][0]["library_name"] == "Sponsor"
-    assert res["items"][0]["activity_groups"] == [
-        {"uid": "activity_group_root2", "name": "name2", "version": None}
-    ]
-    assert res["items"][0]["end_date"] is None
-    assert res["items"][0]["status"] == "Final"
-    assert res["items"][0]["version"] == "1.0"
-    assert res["items"][0]["change_description"] == "Approved version"
-    assert res["items"][0]["author_username"] == "unknown-user@example.com"
-    assert res["items"][0]["possible_actions"] == ["inactivate", "new_version"]
 
 
 def test_post_approve_activity_sub_group(api_client):
@@ -204,9 +136,6 @@ def test_post_approve_activity_sub_group(api_client):
     assert res["definition"] == "definition"
     assert res["abbreviation"] == "abbv"
     assert res["library_name"] == "Sponsor"
-    assert res["activity_groups"] == [
-        {"uid": "activity_group_root1", "name": "name1", "version": None}
-    ]
     assert res["end_date"] is None
     assert res["status"] == "Final"
     assert res["version"] == "1.0"
@@ -230,9 +159,6 @@ def test_post_versions_activity_sub_group(api_client):
     assert res["definition"] == "definition"
     assert res["abbreviation"] == "abbv"
     assert res["library_name"] == "Sponsor"
-    assert res["activity_groups"] == [
-        {"uid": "activity_group_root1", "name": "name1", "version": None}
-    ]
     assert res["end_date"] is None
     assert res["status"] == "Draft"
     assert res["version"] == "1.1"
@@ -256,9 +182,6 @@ def test_delete_activations_activity_sub_group(api_client):
     assert res["definition"] == "definition1"
     assert res["abbreviation"] == "abbv"
     assert res["library_name"] == "Sponsor"
-    assert res["activity_groups"] == [
-        {"uid": "activity_group_root1", "name": "name1", "version": None}
-    ]
     assert res["end_date"] is None
     assert res["status"] == "Retired"
     assert res["version"] == "1.0"
@@ -282,9 +205,6 @@ def test_post_activations_activity_sub_group(api_client):
     assert res["definition"] == "definition1"
     assert res["abbreviation"] == "abbv"
     assert res["library_name"] == "Sponsor"
-    assert res["activity_groups"] == [
-        {"uid": "activity_group_root1", "name": "name1", "version": None}
-    ]
     assert res["end_date"] is None
     assert res["status"] == "Final"
     assert res["version"] == "1.0"

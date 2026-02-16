@@ -1,3 +1,4 @@
+from copy import deepcopy
 from datetime import datetime, timezone
 
 from fastapi import status
@@ -75,21 +76,16 @@ class StudyDesignCellService(StudySelectionMixin):
         study_arm_uid: str,
         study_value_version: str | None = None,
     ) -> list[StudyDesignCell]:
-        sdc_nodes = (
-            self._repos.study_design_cell_repository.get_design_cells_connected_to_arm(
-                study_uid, study_arm_uid, study_value_version=study_value_version
+        sdc_vos = (
+            self._repos.study_design_cell_repository.find_all_design_cells_by_study(
+                study_uid=study_uid,
+                study_arm_uid=study_arm_uid,
+                study_value_version=study_value_version,
             )
         )
         return [
-            StudyDesignCell.from_vo(
-                self._repos.study_design_cell_repository._from_repository_values(
-                    study_uid=study_uid,
-                    design_cell=sdc_node,
-                    study_value_version=study_value_version,
-                ),
-                study_value_version=study_value_version,
-            )
-            for sdc_node in sdc_nodes
+            StudyDesignCell.from_vo(sdc_vo, study_value_version=study_value_version)
+            for sdc_vo in sdc_vos
         ]
 
     @db.transaction
@@ -99,21 +95,16 @@ class StudyDesignCellService(StudySelectionMixin):
         study_branch_arm_uid: str,
         study_value_version: str | None = None,
     ) -> list[StudyDesignCell]:
-        sdc_nodes = self._repos.study_design_cell_repository.get_design_cells_connected_to_branch_arm(
-            study_uid,
-            study_branch_arm_uid,
-            study_value_version=study_value_version,
-        )
-        return [
-            StudyDesignCell.from_vo(
-                self._repos.study_design_cell_repository._from_repository_values(
-                    study_uid=study_uid,
-                    design_cell=sdc_node,
-                    study_value_version=study_value_version,
-                ),
+        sdc_vos = (
+            self._repos.study_design_cell_repository.find_all_design_cells_by_study(
+                study_uid=study_uid,
+                study_branch_arm_uid=study_branch_arm_uid,
                 study_value_version=study_value_version,
             )
-            for sdc_node in sdc_nodes
+        )
+        return [
+            StudyDesignCell.from_vo(sdc_vo, study_value_version=study_value_version)
+            for sdc_vo in sdc_vos
         ]
 
     @db.transaction
@@ -123,19 +114,16 @@ class StudyDesignCellService(StudySelectionMixin):
         study_epoch_uid: str,
         study_value_version: str | None = None,
     ) -> list[StudyDesignCell]:
-        sdc_nodes = self._repos.study_design_cell_repository.get_design_cells_connected_to_epoch(
-            study_uid, study_epoch_uid, study_value_version=study_value_version
-        )
-        return [
-            StudyDesignCell.from_vo(
-                self._repos.study_design_cell_repository._from_repository_values(
-                    study_uid=study_uid,
-                    design_cell=sdc_node,
-                    study_value_version=study_value_version,
-                ),
+        sdc_vos = (
+            self._repos.study_design_cell_repository.find_all_design_cells_by_study(
+                study_uid=study_uid,
+                study_epoch_uid=study_epoch_uid,
                 study_value_version=study_value_version,
             )
-            for sdc_node in sdc_nodes
+        )
+        return [
+            StudyDesignCell.from_vo(sdc_vo, study_value_version=study_value_version)
+            for sdc_vo in sdc_vos
         ]
 
     def get_specific_design_cell(
@@ -230,14 +218,18 @@ class StudyDesignCellService(StudySelectionMixin):
             order=study_design_cell_edit_input.order,  # type: ignore[arg-type]
         )
 
+    @trace_calls
     @ensure_transaction(db)
     def patch(
         self, study_uid: str, design_cell_update_input: StudyDesignCellEditInput
     ) -> StudyDesignCell:
-        # study_design_cell: StudyDesignCellVO
-        study_design_cell = self._repos.study_design_cell_repository.find_by_uid(
-            study_uid=study_uid, uid=design_cell_update_input.study_design_cell_uid
+        study_design_cell: StudyDesignCellVO = (
+            self._repos.study_design_cell_repository.find_by_uid(
+                study_uid=study_uid, uid=design_cell_update_input.study_design_cell_uid
+            )
         )
+        previous_study_design_cell = deepcopy(study_design_cell)
+
         if design_cell_update_input.study_branch_arm_uid is not None:
             design_cell_update_input.study_arm_uid = None
         elif design_cell_update_input.study_arm_uid is not None:
@@ -255,11 +247,15 @@ class StudyDesignCellService(StudySelectionMixin):
         )
         # updated_item: StudyDesignCellVO
         updated_item = self._repos.study_design_cell_repository.save(
-            study_design_cell, self.author, create=False
+            study_design_cell,
+            self.author,
+            create=False,
+            previous_vo=previous_study_design_cell,
         )
         # return json response model
         return StudyDesignCell.from_vo(updated_item)
 
+    @trace_calls
     @ensure_transaction(db)
     def delete(self, study_uid: str, design_cell_uid: str):
         study_design_cell = self._repos.study_design_cell_repository.find_by_uid(
@@ -287,10 +283,15 @@ class StudyDesignCellService(StudySelectionMixin):
             study_uid=study_uid,
             study_design_cell_uid=study_selection_history.study_selection_uid,
             study_arm_uid=study_selection_history.study_arm_uid,
+            study_arm_name=study_selection_history.study_arm_name,
             study_branch_arm_uid=study_selection_history.study_branch_arm_uid,
+            study_branch_arm_name=study_selection_history.study_branch_arm_name,
             study_epoch_uid=study_selection_history.study_epoch_uid,
+            study_epoch_name=study_selection_history.study_epoch_name,
             study_element_uid=study_selection_history.study_element_uid,
+            study_element_name=study_selection_history.study_element_name,
             transition_rule=study_selection_history.transition_rule,
+            author_username=study_selection_history.author_id,
             change_type=study_selection_history.change_type,
             modified=study_selection_history.start_date,
             order=study_selection_history.order,
@@ -359,6 +360,7 @@ class StudyDesignCellService(StudySelectionMixin):
         finally:
             repos.close()
 
+    @trace_calls
     @ensure_transaction(db)
     def handle_batch_operations(
         self, study_uid: str, operations: list[StudyDesignCellBatchInput]
@@ -400,4 +402,5 @@ class StudyDesignCellService(StudySelectionMixin):
                         content=BatchErrorResponse(message=str(error)),
                     )
                 )
+                raise error
         return results

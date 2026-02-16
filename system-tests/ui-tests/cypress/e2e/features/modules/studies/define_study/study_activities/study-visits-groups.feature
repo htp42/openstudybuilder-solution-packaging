@@ -8,10 +8,8 @@ Feature: Studies - Study Activities - Study Visits groups
         And Select study with uid saved in previous step
         And [API] The epoch with type 'Pre Treatment' and subtype 'Run-in' exists in selected study
         And [API] The epoch with type 'Treatment' and subtype 'Intervention' exists in selected study
-        And [API] Visits group 'V2-V4' is removed
-        And [API] Visits group 'V2,V3,V4' is removed
-        And [API] Visits group 'V1,V2' is removed
-        And [API] Visits group 'V2,V3' is removed
+        And [API] All visit groups uids are fetched
+        And [API] All visit groups are removed
         And [API] Study vists uids are fetched for selected study
         When [API] Study visits in selected study are cleaned-up
         And [API] The static visit data is fetched
@@ -100,7 +98,8 @@ Feature: Studies - Study Activities - Study Visits groups
         And The page 'study_structure/visits' is opened for selected study
         And Visits are no longer grouped in table
 
-    Scenario: [Collapse][Negative case][Inconsecutive visit] User must not be able to collapse inconsecutive visit
+
+    Scenario: [Collapse][Negative case][Inconsecutive visit] User must be able to collapse inconsecutive visits as List
         And [API] The dynamic visit data is fetched: contact mode 'On Site Visit', time reference 'Global anchor visit', type 'Pre-screening', epoch 'Run-in'
         And [API] The visit with following attributes is created: isGlobalAnchor 1, visitWeek 0
         And [API] The dynamic visit data is fetched: contact mode 'On Site Visit', time reference 'Global anchor visit', type 'Randomisation', epoch 'Run-in'
@@ -109,7 +108,13 @@ Feature: Studies - Study Activities - Study Visits groups
         And [API] The visit with following attributes is created: isGlobalAnchor 0, visitWeek 4
         And The page 'activities/soa' is opened for selected study
         When User selects visits 'V2, V4'
-        Then Button for collapsing visits is not available
+        And Button for collapsing visits is clicked
+        And Option for collapsing in 'list' is selected
+        And Form save button is clicked
+        Then Visits are collapsed as 'V2,V4' in detailed SoA view
+        And Visit group delete button is clicked
+        And Action is confirmed by clicking continue
+        Then Visits are no longer collapsed in detailed SoA view
 
     Scenario: [Collapse][Negative case][Epochs] User must not be able to collapse visits from different epochs
         Given [API] The dynamic visit data is fetched: contact mode 'On Site Visit', time reference 'Global anchor visit', type 'Pre-screening', epoch 'Run-in'
@@ -133,7 +138,7 @@ Feature: Studies - Study Activities - Study Visits groups
         When User selects visits 'V2, V3'
         And User waits for 1 seconds
         And Button for collapsing visits is clicked
-        Then The pop up displays "Visit 'V2' is not the same as 'V3'"
+        Then The pop up displays "Visit 'V2' and 'V3' have the following properties different ['visit_type']"
 
     Scenario: [Collapse][Negative case][Visit type] User must not be able to collapse visits with different visit type
         And [API] The dynamic visit data is fetched: contact mode 'On Site Visit', time reference 'Global anchor visit', type 'Pre-screening', epoch 'Run-in'
@@ -145,7 +150,7 @@ Feature: Studies - Study Activities - Study Visits groups
         When User selects visits 'V2, V3'
         And User waits for 1 seconds
         And Button for collapsing visits is clicked
-        Then The pop up displays "Visit 'V2' is not the same as 'V3'"
+        Then The pop up displays "Visit 'V2' and 'V3' have the following properties different ['visit_type']"
 
     Scenario: [Collapse][Negative case][Contact mode] User must not be able to collapse visits with different contact mode
         And [API] The dynamic visit data is fetched: contact mode 'On Site Visit', time reference 'Global anchor visit', type 'Randomisation', epoch 'Run-in'
@@ -157,7 +162,7 @@ Feature: Studies - Study Activities - Study Visits groups
         When User selects visits 'V2, P3'
         And User waits for 1 seconds
         And Button for collapsing visits is clicked
-        Then The pop up displays "Visit 'V2' is not the same as 'P3'"
+        Then The pop up displays "Visit 'V2' and 'P3' have the following properties different ['visit_contact_mode']"
 
     Scenario: [Collapse][Negative case][Visit Window] User must not be able to collapse visits with different visit window
         And [API] The dynamic visit data is fetched: contact mode 'On Site Visit', time reference 'Global anchor visit', type 'Randomisation', epoch 'Run-in'
@@ -168,7 +173,7 @@ Feature: Studies - Study Activities - Study Visits groups
         When User selects visits 'V2, V3'
         And User waits for 1 seconds
         And Button for collapsing visits is clicked
-        Then The pop up displays "Visit 'V2' is not the same as 'V3'"
+        Then The pop up displays "Visit 'V2' and 'V3' have the following properties different ['max_visit_window_value']"
 
     Scenario: [Collapse][Negative case][Delete visit] User must not be able to delete visit that is part of the visit group
         And [API] The dynamic visit data is fetched: contact mode 'On Site Visit', time reference 'Global anchor visit', type 'Randomisation', epoch 'Run-in'
@@ -225,3 +230,11 @@ Feature: Studies - Study Activities - Study Visits groups
         And Time unit 'days' is selected for the visit
         And Form save button is clicked
         Then The pop up displays "The study visit can't be edited as it is part of visit group V2,V3. The visit group should be uncollapsed first."
+
+    @manual_test
+    Scenario: Footnote must be applied to all visits in visit group when collapsing
+        Given The page 'activities/soa' is opened for selected study
+        And Multiple visits are defined for that study
+        When User applies a footnote to one of the visits
+        And The user collapses multiple visits including visit with footnote
+        Then The footnote is applied onto all visits in the visit group

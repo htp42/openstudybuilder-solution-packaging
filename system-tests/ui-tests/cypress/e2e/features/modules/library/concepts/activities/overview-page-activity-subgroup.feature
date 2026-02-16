@@ -10,12 +10,6 @@ Feature: Library - Concepts - Activities - Activity Subgroup Overview Page
         And Overview page for subgroup created via API is opened
         And Subgroup overview page is opened
 
-    Scenario: [Navigation][Group] User must be able to navigate to activity group overview page by clicking its name in the activity subgroup table
-        Given The '/library/activities/activity-subgroups' page is opened
-        When Subgroup created via API is searched for and found
-        When User goes to group overview page by clicking its name
-        Then Group overview page is opened
-
     Scenario: [Navigation][Group] User must be able to navigate to activity group overview page by clicking its name in the activity subgroup overview page
         When The group overview page can be opened by clicking the group link in overview page
         Then Group overview page is opened
@@ -31,6 +25,7 @@ Feature: Library - Concepts - Activities - Activity Subgroup Overview Page
         Then Activity overview page is opened
 
     Scenario: [COSMoS YAML] Verify that the instance overview page displays all sections correctly
+        And User waits for linked 'Activities' table data to load
         When I click on the COSMoS YAML tab
         Then The COSMoS YAML page should be opened with Download button and Close button displayed
         When The Download YAML content button is clicked
@@ -45,13 +40,14 @@ Feature: Library - Concepts - Activities - Activity Subgroup Overview Page
         |  Name       |
         |  Version    |
         |  Status     |
+        And User waits for linked 'Activities' table data to load
         And The 'Activities' table is displaying correct columns
         |  header     |
         |  Name       |
         |  Version    |
         |  Status     |
         And The linked group is found in the Groups table with status 'Final' and version '1.0'
-        And The free text search field should be displayed in the 'Activity group' table
+        #And The free text search field should be displayed in the 'Activity group' table
         And The linked activity is found in the Acivities table with status 'Final' and version '1.0'
         And The free text search field should be displayed in the 'Activities' table
 
@@ -90,6 +86,7 @@ Feature: Library - Concepts - Activities - Activity Subgroup Overview Page
         And The linked activity is found in the Acivities table with status 'Final' and version '2.0'
         And The linked group is found in the Groups table with status 'Final' and version '1.0'
 
+    @pending_implementation
     Scenario: [Table][Search][Negative case] User must be able to search not existing group and table will be correctly filtered
         When User searches for non-existing item in 'Activity group' table
         Then The Activities groups table is empty
@@ -98,10 +95,8 @@ Feature: Library - Concepts - Activities - Activity Subgroup Overview Page
         When User searches for non-existing item in 'Activities' table
         Then The Activities table is empty
 
-    @smoke_test
+    @pending_implementation
     Scenario: [Table][Search][Postive case] User must be able to search groups connected to subgroup
-        When [API] A subgroup connected to two to groups is created
-        And [API] Fetch names of subgroup with two connected groups
         And Overview page for subgroup created via API is opened
         Then Subgroup overview page is opened
         And User searches for group in linked Activity Group table
@@ -111,8 +106,8 @@ Feature: Library - Concepts - Activities - Activity Subgroup Overview Page
         Then 2 result is present in the 'Activity group' table
 
     Scenario: [Table][Search][Postive case] User must be able to search created activities connected to subgroup
-        When [API] A subgroup connected to two activities is created
-        And [API] Fetch names of subgroup with two connected activities
+        And [API] Activity is created
+        And [API] Activity is approved
         And Overview page for subgroup created via API is opened
         Then Subgroup overview page is opened
         And User searches for activity in linked Activities table
@@ -121,6 +116,7 @@ Feature: Library - Concepts - Activities - Activity Subgroup Overview Page
         And User searches for activity by using partial name in linked Activities table
         Then 2 result is present in the 'Activities' table
 
+    @pending_implementation
     Scenario: [Table][Search][Case sensitivity] User must be able to search item ignoring case sensitivity in group table
         And User searches for group by using lowecased name in linked Activity Group table
         Then 1 result is present in the 'Activity group' table

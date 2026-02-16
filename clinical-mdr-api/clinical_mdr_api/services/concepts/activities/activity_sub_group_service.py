@@ -9,7 +9,6 @@ from clinical_mdr_api.domain_repositories.concepts.activities.activity_sub_group
 from clinical_mdr_api.domains.concepts.activities.activity_sub_group import (
     ActivitySubGroupAR,
     ActivitySubGroupVO,
-    SimpleActivityGroupVO,
 )
 from clinical_mdr_api.domains.enums import LibraryItemStatus
 from clinical_mdr_api.models.concepts.activities.activity import (
@@ -18,7 +17,7 @@ from clinical_mdr_api.models.concepts.activities.activity import (
     SimpleActivity,
 )
 from clinical_mdr_api.models.concepts.activities.activity_sub_group import (
-    ActivityGroup,
+    ActivityGroupForActivitySubGroup,
     ActivitySubGroup,
     ActivitySubGroupCreateInput,
     ActivitySubGroupDetail,
@@ -47,12 +46,9 @@ class ActivitySubGroupService(ConceptGenericService[ActivitySubGroupAR]):
     def _transform_aggregate_root_to_pydantic_model(
         self,
         item_ar: ActivitySubGroupAR,
-        was_cascade_update_performed: bool | None = None,
     ) -> ActivitySubGroup:
         return ActivitySubGroup.from_activity_ar(
             activity_subgroup_ar=item_ar,
-            find_activity_by_uid=self._repos.activity_group_repository.find_by_uid_2,
-            was_cascade_update_performed=was_cascade_update_performed,
         )
 
     def _create_aggregate_root(
@@ -65,35 +61,17 @@ class ActivitySubGroupService(ConceptGenericService[ActivitySubGroupAR]):
                 name_sentence_case=concept_input.name_sentence_case,
                 definition=concept_input.definition,
                 abbreviation=concept_input.abbreviation,
-                activity_groups=(
-                    [
-                        SimpleActivityGroupVO(activity_group_uid=activity_group)
-                        for activity_group in concept_input.activity_groups
-                    ]
-                    if concept_input.activity_groups
-                    else []
-                ),
             ),
             library=library,
             generate_uid_callback=self.repository.generate_uid,
             concept_exists_by_library_and_name_callback=self._repos.activity_subgroup_repository.latest_concept_in_library_exists_by_name,
-            activity_group_exists=self._repos.activity_group_repository.final_concept_exists,
         )
 
     def _edit_aggregate(
         self,
         item: ActivitySubGroupAR,
         concept_edit_input: ActivitySubGroupEditInput,
-        perform_validation: bool = True,
     ) -> ActivitySubGroupAR:
-        activity_groups = (
-            [
-                SimpleActivityGroupVO(activity_group_uid=activity_group)
-                for activity_group in concept_edit_input.activity_groups
-            ]
-            if concept_edit_input.activity_groups
-            else []
-        )
         item.edit_draft(
             author_id=self.author_id,
             change_description=concept_edit_input.change_description,
@@ -102,11 +80,8 @@ class ActivitySubGroupService(ConceptGenericService[ActivitySubGroupAR]):
                 name_sentence_case=concept_edit_input.name_sentence_case,
                 definition=concept_edit_input.definition,
                 abbreviation=concept_edit_input.abbreviation,
-                activity_groups=activity_groups,
             ),
             concept_exists_by_library_and_name_callback=self._repos.activity_subgroup_repository.latest_concept_in_library_exists_by_name,
-            activity_group_exists=self._repos.activity_group_repository.final_concept_exists,
-            perform_validation=perform_validation,
         )
         return item
 
@@ -134,64 +109,6 @@ class ActivitySubGroupService(ConceptGenericService[ActivitySubGroupAR]):
             linked_activity_group_data,
         )
 
-        activity_groups: list[ActivityGroup] = []
-        if linked_activity_group_data:
-            # Dynamically import ActivityGroupService to avoid circular imports
-            from clinical_mdr_api.services.concepts.activities.activity_group_service import (
-                ActivityGroupService,
-            )
-
-            activity_group_service = ActivityGroupService()
-
-            for group_data in linked_activity_group_data:
-                try:
-                    logger.debug(
-                        "Fetching activity group with UID: %s and version: %s",
-                        group_data["uid"],
-                        group_data["version"],
-                    )
-                    activity_group = activity_group_service.get_by_uid(
-                        uid=group_data["uid"], version=group_data["version"]
-                    )
-                    # Add the linked version to the activity group information
-                    activity_groups.append(
-                        ActivityGroup(
-                            uid=activity_group.uid,
-                            name=activity_group.name,
-                            version=group_data[
-                                "version"
-                            ],  # Use the version from the relationship
-                            status=activity_group.status,
-                        )
-                    )
-                    logger.debug(
-                        "Added activity group: %s with version %s",
-                        activity_group,
-                        group_data["version"],
-                    )
-                except exceptions.NotFoundException:
-                    logger.debug(
-                        "Activity group with UID '%s' not found - skipping",
-                        group_data["uid"],
-                    )
-                    continue
-                except exceptions.BusinessLogicException as e:
-                    logger.info(
-                        "Business logic prevented access to activity group '%s': %s",
-                        group_data["uid"],
-                        str(e),
-                    )
-                    continue
-                except db.DatabaseError as e:
-                    logger.warning(
-                        "Database error retrieving activity group '%s': %s",
-                        group_data["uid"],
-                        str(e),
-                    )
-                    continue
-
-        logger.debug("Final activity groups: %s", activity_groups)
-
         activity_subgroup_detail = ActivitySubGroupDetail(
             name=subgroup.name,
             name_sentence_case=subgroup.name_sentence_case,
@@ -204,16 +121,11 @@ class ActivitySubGroupService(ConceptGenericService[ActivitySubGroupAR]):
             possible_actions=subgroup.possible_actions,
             change_description=subgroup.change_description,
             author_username=subgroup.author_username,
-            activity_groups=activity_groups,
         )
 
         result = ActivitySubGroupOverview(
             activity_subgroup=activity_subgroup_detail,
             all_versions=all_versions,
-        )
-        logger.debug(
-            "Created overview with %s activity groups",
-            len(activity_subgroup_detail.activity_groups),
         )
         return result
 
@@ -305,7 +217,7 @@ class ActivitySubGroupService(ConceptGenericService[ActivitySubGroupAR]):
         page_number: int = 1,
         page_size: int = 10,
         total_count: bool = False,
-    ) -> CustomPage[ActivityGroup]:
+    ) -> CustomPage[ActivityGroupForActivitySubGroup]:
         """
         Get activity groups for a specific activity subgroup with pagination.
 
@@ -319,23 +231,35 @@ class ActivitySubGroupService(ConceptGenericService[ActivitySubGroupAR]):
         Returns:
             CustomPage containing paginated ActivityGroup objects
         """
-        # Get the overview which contains all activity groups
-        overview = self.get_subgroup_overview(
-            subgroup_uid=subgroup_uid, version=version
-        )
-        activity_groups = overview.activity_subgroup.activity_groups
-
-        # Handle pagination
-        start_idx = (page_number - 1) * page_size
-        end_idx = start_idx + page_size if page_size > 0 else len(activity_groups)
-        paginated_groups = (
-            activity_groups[start_idx:end_idx] if page_size > 0 else activity_groups
+        linked_groups = (
+            self._repos.activity_subgroup_repository.get_linked_activity_group_uids(
+                subgroup_uid=subgroup_uid, version=version
+            )
         )
 
-        total = len(activity_groups) if total_count else 0
+        # Apply pagination
+        if page_size == 0:
+            paginated_groups = linked_groups
+        else:
+            start_index = (page_number - 1) * page_size
+            end_index = start_index + page_size
+            paginated_groups = linked_groups[start_index:end_index]
+
+        total = len(linked_groups) if total_count else 0
+
+        # Transform to ActivityGroup models
+        activity_groups: list[ActivityGroupForActivitySubGroup] = []
+        for group in paginated_groups:
+            activity_group = ActivityGroupForActivitySubGroup(
+                uid=group["uid"],
+                name=group["name"],
+                version=group["version"],
+                status=group["status"],
+            )
+            activity_groups.append(activity_group)
 
         return CustomPage(
-            items=paginated_groups, total=total, page=page_number, size=page_size
+            items=activity_groups, total=total, page=page_number, size=page_size
         )
 
     def get_cosmos_subgroup_overview(self, subgroup_uid: str) -> dict[str, Any]:
@@ -369,25 +293,9 @@ class ActivitySubGroupService(ConceptGenericService[ActivitySubGroupAR]):
             )
         )
         if linked_activities is None:
-            return False
+            return
 
-        activity_groups_before_subgroup_update = self._repos.activity_subgroup_repository.get_activity_group_uids_linked_by_subgroup_in_specific_version(
-            activity_subgroup_uid=item.uid, version=last_final_version
-        )
-        removed_activity_groups = set(activity_groups_before_subgroup_update) - {
-            ag.activity_group_uid for ag in item.concept_vo.activity_groups
-        }
-        if removed_activity_groups:
-            for activity in linked_activities.get("activities", []):
-                for grouping in activity["activity_groupings"]:
-                    # If any of the activity's groupings reference a removed activity group, skip Activity cascade update
-                    if grouping["activity_group_uid"] in removed_activity_groups:
-                        return False
-
-        was_cascade_update_performed = self.batch_cascade_update(
-            linked_activities=linked_activities
-        )
-        return was_cascade_update_performed
+        self.batch_cascade_update(linked_activities=linked_activities)
 
     def batch_cascade_update(self, linked_activities: dict[str, Any]):
         activity_service = ActivityService()
@@ -446,7 +354,6 @@ class ActivitySubGroupService(ConceptGenericService[ActivitySubGroupAR]):
                     activity, author_id=self.author_id
                 )
                 activity_service.cascade_edit_and_approve(activity)
-        return True
 
     @ensure_transaction(db)
     def approve(
@@ -459,9 +366,6 @@ class ActivitySubGroupService(ConceptGenericService[ActivitySubGroupAR]):
         except exceptions.BusinessLogicException as exc:
             if not ignore_exc or exc.msg != "The object isn't in draft status.":
                 raise
-        was_cascade_update_performed = None
         if cascade_edit_and_approve:
-            was_cascade_update_performed = self.cascade_edit_and_approve(item)
-        return self._transform_aggregate_root_to_pydantic_model(
-            item, was_cascade_update_performed=was_cascade_update_performed
-        )
+            self.cascade_edit_and_approve(item)
+        return self._transform_aggregate_root_to_pydantic_model(item)

@@ -27,6 +27,7 @@ Feature: Library - Overview Pages - Study Structures
             | Cohorts?              |
             | Study ID(s)           |
 
+    @skip_on_prv_val
     Scenario Outline: [Table][Filtering] User must be able to filter the table by text fields
         Given The '/library/overviews/study_structures' page is opened
         When The user filters field '<name>'

@@ -98,7 +98,7 @@ class OdmForm(ConceptModel):
                     )
                     for item_group_uid in odm_form_ar.concept_vo.item_group_uids
                 ],
-                key=lambda item: item.order_number or "",
+                key=lambda item: item.order_number,
             ),
             vendor_elements=sorted(
                 [
@@ -210,9 +210,7 @@ class OdmFormRefModel(BaseModel):
     uid: Annotated[str, Field()]
     name: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
     version: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
-    order_number: Annotated[int | None, Field(json_schema_extra={"nullable": True})] = (
-        None
-    )
+    order_number: Annotated[int, Field(json_schema_extra={"nullable": True})] = 999999
     mandatory: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
     locked: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
     collection_exception_condition_oid: Annotated[

@@ -60,7 +60,8 @@ class CTTermService:
     def __del__(self):
         self._repos.close()
 
-    def non_transactional_create(
+    @ensure_transaction(db)
+    def create(
         self,
         term_input: CTTermCreateInput,
         start_date: datetime | None = None,
@@ -191,17 +192,6 @@ class CTTermService:
 
         return CTTerm.from_ct_term_ars(
             ct_term_name_ar, ct_term_attributes_ar, codelists_vo
-        )
-
-    @ensure_transaction(db)
-    def create(
-        self,
-        term_input: CTTermCreateInput,
-        start_date: datetime | None = None,
-        approve: bool = False,
-    ) -> CTTerm:
-        return self.non_transactional_create(
-            term_input, start_date=start_date, approve=approve
         )
 
     def get_all_terms(

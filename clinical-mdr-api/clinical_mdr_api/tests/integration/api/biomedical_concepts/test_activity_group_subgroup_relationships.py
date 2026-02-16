@@ -58,17 +58,21 @@ def test_data():
     activity_subgroup_1 = TestUtils.create_activity_subgroup(
         name="Test Subgroup 1",
         definition="Definition for subgroup 1",
-        activity_groups=[activity_group_1.uid],
     )
     activity_subgroup_2 = TestUtils.create_activity_subgroup(
         name="Test Subgroup 2",
         definition="Definition for subgroup 2",
-        activity_groups=[activity_group_1.uid, activity_group_2.uid],
     )
     activity_subgroup_3 = TestUtils.create_activity_subgroup(
         name="Test Subgroup 3",
         definition="Definition for subgroup 3",
-        activity_groups=[activity_group_2.uid],
+    )
+
+    # Create an activity that links group 1 with both subgroups 1 and 2
+    TestUtils.create_activity(
+        name="Activity linking group 1",
+        activity_groups=[activity_group_1.uid, activity_group_1.uid],
+        activity_subgroups=[activity_subgroup_1.uid, activity_subgroup_2.uid],
     )
 
     yield
@@ -84,17 +88,13 @@ def test_activity_group_shows_linked_subgroups(api_client):
 
     # Request the activity group overview which should include subgroups
     response = api_client.get(
-        f"/concepts/activities/activity-groups/{activity_group_1.uid}/overview"
+        f"/concepts/activities/activity-groups/{activity_group_1.uid}/subgroups"
     )
     assert_response_status_code(response, 200)
 
     overview_data = response.json()
 
-    # Check that the response contains the linked subgroups
-    assert (
-        "subgroups" in overview_data
-    ), "Activity group overview should include subgroups field"
-    subgroups = overview_data["subgroups"]
+    subgroups = overview_data["items"]
 
     # Group 1 should be linked to subgroups 1 and 2
     assert len(subgroups) == 2, f"Expected 2 linked subgroups, got {len(subgroups)}"
@@ -201,24 +201,27 @@ def test_draft_status_subgroups_are_included(api_client):
     draft_subgroup = TestUtils.create_activity_subgroup(
         name="Draft Subgroup",
         definition="Definition for draft subgroup",
+    )
+
+    TestUtils.create_activity(
+        name="Activity linking Draft Subgroup",
         activity_groups=[activity_group_1.uid],
+        activity_subgroups=[draft_subgroup.uid],
     )
     # Update the status after creation
     TestUtils.update_entity_status(draft_subgroup.uid, "Draft", "ActivitySubGroup")
 
-    # Request the activity group overview which should include subgroups
+    # Request the activity group subgroup listing which should include the draft subgroup
     response = api_client.get(
-        f"/concepts/activities/activity-groups/{activity_group_1.uid}/overview"
+        f"/concepts/activities/activity-groups/{activity_group_1.uid}/subgroups"
     )
     assert_response_status_code(response, 200)
 
     overview_data = response.json()
 
     # Check that the response contains the linked subgroups INCLUDING the draft one
-    assert (
-        "subgroups" in overview_data
-    ), "Activity group overview should include subgroups field"
-    subgroups = overview_data["subgroups"]
+
+    subgroups = overview_data["items"]
 
     # Draft subgroup SHOULD be included (changed per user requirement)
     subgroup_uids = [sg["uid"] for sg in subgroups]

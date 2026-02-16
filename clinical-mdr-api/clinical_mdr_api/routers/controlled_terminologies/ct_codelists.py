@@ -133,33 +133,12 @@ def get_codelists(
             description="Boolean value to indicate desired package is a sponsor package. Defaults to False.",
         ),
     ] = False,
-    sort_by: Annotated[
-        Json | None, Query(description=_generic_descriptions.SORT_BY)
-    ] = None,
-    page_number: Annotated[
-        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = settings.default_page_number,
-    page_size: Annotated[
-        int,
-        Query(
-            ge=0,
-            le=settings.max_page_size,
-            description=_generic_descriptions.PAGE_SIZE,
-        ),
-    ] = settings.default_page_size,
-    filters: Annotated[
-        Json | None,
-        Query(
-            description=_generic_descriptions.FILTERS,
-            openapi_examples=_generic_descriptions.FILTERS_EXAMPLE,
-        ),
-    ] = None,
-    operator: Annotated[
-        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = settings.default_filter_operator,
-    total_count: Annotated[
-        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
-    ] = False,
+    sort_by: _generic_descriptions.SORT_BY_QUERY = None,
+    page_number: _generic_descriptions.PAGE_NUMBER_QUERY = settings.default_page_number,
+    page_size: _generic_descriptions.PAGE_SIZE_QUERY = settings.default_page_size,
+    filters: _generic_descriptions.FILTERS_QUERY = None,
+    operator: _generic_descriptions.FILTER_OPERATOR_QUERY = settings.default_filter_operator,
+    total_count: _generic_descriptions.TOTAL_COUNT_QUERY = False,
     term_filter: Annotated[
         Json | None,
         Query(
@@ -225,23 +204,10 @@ def get_sub_codelists_that_have_given_terms(
             description="If specified, only codelists from given library are returned.",
         ),
     ] = None,
-    sort_by: Annotated[
-        Json | None, Query(description=_generic_descriptions.SORT_BY)
-    ] = None,
-    page_number: Annotated[
-        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = settings.default_page_number,
-    page_size: Annotated[
-        int,
-        Query(
-            ge=0,
-            le=settings.max_page_size,
-            description=_generic_descriptions.PAGE_SIZE,
-        ),
-    ] = settings.default_page_size,
-    total_count: Annotated[
-        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
-    ] = False,
+    sort_by: _generic_descriptions.SORT_BY_QUERY = None,
+    page_number: _generic_descriptions.PAGE_NUMBER_QUERY = settings.default_page_number,
+    page_size: _generic_descriptions.PAGE_SIZE_QUERY = settings.default_page_size,
+    total_count: _generic_descriptions.TOTAL_COUNT_QUERY = False,
 ) -> CustomPage[CTCodelistNameAndAttributes]:
     ct_codelist_service = CTCodelistService()
     results = ct_codelist_service.get_sub_codelists_that_have_given_terms(
@@ -320,9 +286,7 @@ def update_paired_codelist(
     },
 )
 def get_distinct_values_for_header(
-    field_name: Annotated[
-        str, Query(description=_generic_descriptions.HEADER_FIELD_NAME)
-    ],
+    field_name: _generic_descriptions.HEADER_FIELD_NAME_QUERY,
     catalogue_name: Annotated[
         str | None,
         Query(
@@ -343,22 +307,10 @@ def get_distinct_values_for_header(
             description="Boolean value to indicate desired package is a sponsor package. Defaults to False.",
         ),
     ] = False,
-    search_string: Annotated[
-        str, Query(description=_generic_descriptions.HEADER_SEARCH_STRING)
-    ] = "",
-    filters: Annotated[
-        Json | None,
-        Query(
-            description=_generic_descriptions.FILTERS,
-            openapi_examples=_generic_descriptions.FILTERS_EXAMPLE,
-        ),
-    ] = None,
-    operator: Annotated[
-        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = settings.default_filter_operator,
-    page_size: Annotated[
-        int, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
-    ] = settings.default_header_page_size,
+    search_string: _generic_descriptions.HEADER_SEARCH_STRING_QUERY = "",
+    filters: _generic_descriptions.FILTERS_QUERY = None,
+    operator: _generic_descriptions.FILTER_OPERATOR_QUERY = settings.default_filter_operator,
+    page_size: _generic_descriptions.HEADER_PAGE_SIZE_QUERY = settings.default_header_page_size,
 ) -> list[Any]:
     ct_codelist_service = CTCodelistService()
     return ct_codelist_service.get_distinct_values_for_header(
@@ -400,31 +352,14 @@ def get_codelist_terms(
             description="""If specified, return the terms that were part of the codelist at the specified date and time in format YYYY-MM-DDThh:mm:ss+hh:mm'""",
         ),
     ] = None,
-    sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    page_number: Annotated[
-        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = settings.default_page_number,
-    page_size: Annotated[
-        int,
-        Query(
-            ge=0,
-            le=settings.max_page_size,
-            description=_generic_descriptions.PAGE_SIZE,
-        ),
-    ] = settings.default_page_size,
-    filters: Annotated[
-        Json | None,
-        Query(
-            description=_generic_descriptions.FILTERS,
-            openapi_examples=_generic_descriptions.FILTERS_EXAMPLE,
-        ),
-    ] = None,
+    sort_by: _generic_descriptions.SORT_BY_QUERY = None,
+    page_number: _generic_descriptions.PAGE_NUMBER_QUERY = settings.default_page_number,
+    page_size: _generic_descriptions.PAGE_SIZE_QUERY = settings.default_page_size,
+    filters: _generic_descriptions.FILTERS_QUERY = None,
     operator: str | None = Query(
         "and", description=_generic_descriptions.FILTER_OPERATOR
     ),
-    total_count: Annotated[
-        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
-    ] = False,
+    total_count: _generic_descriptions.TOTAL_COUNT_QUERY = False,
 ):
     ct_codelist_service = CTCodelistService()
 
@@ -512,31 +447,14 @@ def get_codelist_terms_by_name_or_submval(
             description="""If specified, return the terms that were part of the codelist at the specified date and time in format YYYY-MM-DDThh:mm:ss+hh:mm'""",
         ),
     ] = None,
-    sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
-    page_number: Annotated[
-        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = settings.default_page_number,
-    page_size: Annotated[
-        int,
-        Query(
-            ge=0,
-            le=settings.max_page_size,
-            description=_generic_descriptions.PAGE_SIZE,
-        ),
-    ] = settings.default_page_size,
-    filters: Annotated[
-        Json | None,
-        Query(
-            description=_generic_descriptions.FILTERS,
-            openapi_examples=_generic_descriptions.FILTERS_EXAMPLE,
-        ),
-    ] = None,
+    sort_by: _generic_descriptions.SORT_BY_QUERY = None,
+    page_number: _generic_descriptions.PAGE_NUMBER_QUERY = settings.default_page_number,
+    page_size: _generic_descriptions.PAGE_SIZE_QUERY = settings.default_page_size,
+    filters: _generic_descriptions.FILTERS_QUERY = None,
     operator: str | None = Query(
         "and", description=_generic_descriptions.FILTER_OPERATOR
     ),
-    total_count: Annotated[
-        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
-    ] = False,
+    total_count: _generic_descriptions.TOTAL_COUNT_QUERY = False,
 ):
     ct_codelist_service = CTCodelistService()
 
@@ -577,7 +495,8 @@ def get_codelist_terms_by_name_or_submval(
             "- The codelist doesn't exist.\n"
             "- The term doesn't exist.\n"
             "- The codelist is not extensible.\n"
-            "- The codelist already has passed term.\n",
+            "- The codelist already has passed term.\n"
+            "- The term submission value is a new one for this term.\n",
         },
     },
 )
@@ -654,19 +573,11 @@ def get_distinct_term_values_for_header(
     search_string: str | None = Query(
         "", description=_generic_descriptions.HEADER_SEARCH_STRING
     ),
-    filters: Annotated[
-        Json | None,
-        Query(
-            description=_generic_descriptions.FILTERS,
-            openapi_examples=_generic_descriptions.FILTERS_EXAMPLE,
-        ),
-    ] = None,
+    filters: _generic_descriptions.FILTERS_QUERY = None,
     operator: str | None = Query(
         "and", description=_generic_descriptions.FILTER_OPERATOR
     ),
-    page_size: Annotated[
-        int, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
-    ] = settings.default_header_page_size,
+    page_size: _generic_descriptions.HEADER_PAGE_SIZE_QUERY = settings.default_header_page_size,
 ):
     ct_codelist_service = CTCodelistService()
     return ct_codelist_service.get_distinct_term_values_for_header(

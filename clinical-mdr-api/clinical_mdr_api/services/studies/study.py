@@ -7,6 +7,7 @@ from typing import Any, Callable, Collection, Iterable
 from neomodel import NodeSet, db  # type: ignore
 from opencensus.trace import execution_context
 
+from clinical_mdr_api.domain_repositories.models.study_field import StudyArrayField
 from clinical_mdr_api.domain_repositories.study_definitions.study_definition_repository_impl import (
     StudyDefinitionRepositoryImpl,
 )
@@ -64,6 +65,8 @@ from clinical_mdr_api.models.study_selections.study import (
     StudySimple,
     StudySoaPreferences,
     StudySoaPreferencesInput,
+    StudySoaSplit,
+    StudySoaSplitInput,
     StudyStructureOverview,
     StudyStructureStatistics,
     StudySubpartAuditTrail,
@@ -369,23 +372,13 @@ class StudyService:
         filter_operator: FilterOperator = FilterOperator.AND,
         page_size: int = 10,
     ):
-        all_items = (
-            self._repos.study_definition_repository.get_study_structure_overview()
-        )
-
-        parsed_items = self._group_study_structure_overview_by_data(all_items[0])
-
-        # Do filtering, sorting, pagination and count
-        header_values = service_level_generic_header_filtering(
-            items=parsed_items,
+        return self._repos.study_definition_repository.get_study_structure_overview_headers(
             field_name=field_name,
             search_string=search_string,
             filter_by=filter_by,
             filter_operator=filter_operator,
             page_size=page_size,
         )
-        # Return values for field_name
-        return header_values
 
     @db.transaction
     def get_study_structure_statistics(self, uid: str) -> StudyStructureStatistics:
@@ -682,6 +675,11 @@ class StudyService:
 
     @db.transaction
     def release(self, uid: str, change_description: str | None) -> Study:
+        # avoid circular imports
+        from clinical_mdr_api.services.studies.study_flowchart import (
+            StudyFlowchartService,
+        )
+
         try:
             study_definition = self._repos.study_definition_repository.find_by_uid(
                 uid, for_update=True
@@ -694,6 +692,14 @@ class StudyService:
                 study_definition.study_parent_part_uid,
                 msg=f"Study Subparts cannot be released independently from its Study Parent Part with UID '{study_definition.study_parent_part_uid}'.",
             )
+
+            # save Protocol SoA snapshot
+            StudyFlowchartService().update_soa_snapshot(
+                study_uid=uid,
+                layout=SoALayout.PROTOCOL,
+                study_status=study_definition.study_status,
+            )
+
             study_definition.release(
                 change_description=change_description, author_id=self.author_id
             )
@@ -723,7 +729,7 @@ class StudyService:
         finally:
             self._close_all_repos()
 
-    @db.transaction
+    @ensure_transaction(db)
     def soft_delete(self, uid: str) -> None:
         try:
             study_definition = self._repos.study_definition_repository.find_by_uid(
@@ -744,9 +750,7 @@ class StudyService:
             )
 
             if is_subpart:
-                self.non_transactional_reorder_study_subparts(
-                    study_definition.study_parent_part_uid
-                )
+                self.reorder_study_subparts(study_definition.study_parent_part_uid)
         finally:
             self._close_all_repos()
 
@@ -1051,13 +1055,7 @@ class StudyService:
 
         return available_letters[0]
 
-    @db.transaction
-    def create(
-        self, study_create_input: StudySubpartCreateInput | StudyCreateInput
-    ) -> Study:
-        return self.non_transactional_create(study_create_input)
-
-    @db.transaction
+    @ensure_transaction(db)
     def clone_study(
         self,
         study_src_uid: str,
@@ -1073,7 +1071,7 @@ class StudyService:
                 else study_clone_input.description
             ),
         )
-        study_created = self.non_transactional_create(study_create_input)
+        study_created = self.create(study_create_input)
 
         list_of_items_to_copy = []
         if study_clone_input.copy_study_arm:
@@ -1155,7 +1153,8 @@ class StudyService:
         )
         return study_created
 
-    def non_transactional_create(
+    @ensure_transaction(db)
+    def create(
         self, study_create_input: StudySubpartCreateInput | StudyCreateInput
     ) -> Study:
         try:
@@ -1216,6 +1215,8 @@ class StudyService:
                     eudamed_srn_number_null_value_code=None,
                     investigational_device_exemption_ide_number=None,
                     investigational_device_exemption_ide_number_null_value_code=None,
+                    eu_pas_number=None,
+                    eu_pas_number_null_value_code=None,
                 )
 
             # now we invoke our domain layer
@@ -1561,6 +1562,9 @@ class StudyService:
             trial_phase_null_value_code=get_term_uid_or_none(
                 request_high_level_study_design.trial_phase_null_value_code
             ),
+            development_stage_code=get_term_uid_or_none(
+                request_high_level_study_design.development_stage_code
+            ),
             is_extension_trial=request_high_level_study_design.is_extension_trial,
             is_extension_trial_null_value_code=get_term_uid_or_none(
                 request_high_level_study_design.is_extension_trial_null_value_code
@@ -1686,6 +1690,10 @@ class StudyService:
                 investigational_device_exemption_ide_number_null_value_code=get_term_uid_or_none(
                     request_id_metadata.registry_identifiers.investigational_device_exemption_ide_number_null_value_code
                 ),
+                eu_pas_number=request_id_metadata.registry_identifiers.eu_pas_number,
+                eu_pas_number_null_value_code=get_term_uid_or_none(
+                    request_id_metadata.registry_identifiers.eu_pas_number_null_value_code
+                ),
             ),
         )
 
@@ -1710,7 +1718,7 @@ class StudyService:
 
         return new_id_metadata
 
-    @db.transaction
+    @ensure_transaction(db)
     def patch(
         self, uid: str, dry: bool, study_patch_request: StudyPatchRequestJsonModel
     ) -> Study:
@@ -1811,6 +1819,15 @@ class StudyService:
             study_definition_ar.study_parent_part_uid = (
                 study_patch_request.study_parent_part_uid
             )
+
+            if (
+                previous_is_subpart
+                and study_patch_request.study_parent_part_uid is None
+                and _study_number is not None
+            ):
+                raise BusinessLogicException(
+                    msg="When removing a Study Subpart from its Study Parent Part the Study Number must be set to null."
+                )
 
             new_id_metadata: StudyIdentificationMetadataVO | None = None
             new_high_level_study_design: HighLevelStudyDesignVO | None = None
@@ -1948,9 +1965,7 @@ class StudyService:
                     previous_is_subpart
                     and not study_patch_request.study_parent_part_uid
                 ):
-                    self.non_transactional_reorder_study_subparts(
-                        previous_study_parent_part_uid
-                    )
+                    self.reorder_study_subparts(previous_study_parent_part_uid)
 
             return self._models_study_from_study_definition_ar(
                 study_definition_ar,
@@ -2183,7 +2198,8 @@ class StudyService:
         )
         return StudyPreferredTimeUnit.model_validate(return_node)
 
-    def non_transactional_reorder_study_subparts(
+    @ensure_transaction(db)
+    def reorder_study_subparts(
         self,
         study_parent_part_uid: str,
         study_subpart_reordering_input: StudySubpartReorderingInput | None = None,
@@ -2246,16 +2262,6 @@ class StudyService:
                 for study in studies
             ],
             key=lambda x: x.uid,
-        )
-
-    @db.transaction
-    def reorder_study_subparts(
-        self,
-        study_parent_part_uid: str,
-        study_subpart_reordering_input: StudySubpartReorderingInput | None = None,
-    ):
-        return self.non_transactional_reorder_study_subparts(
-            study_parent_part_uid, study_subpart_reordering_input
         )
 
     def _update_study_subpart_id(self, study: StudyDefinitionAR, new_subpart_id: str):
@@ -2389,3 +2395,56 @@ class StudyService:
 
         preferences = {node.field_name: node.value for node in nodes}
         return StudySoaPreferences(study_uid=study_uid, **preferences)
+
+    @ensure_transaction(db)
+    def get_study_soa_splits(
+        self, study_uid: str, study_value_version: str | None = None
+    ) -> list[StudySoaSplit]:
+        self.check_if_study_uid_and_version_exists(
+            study_uid=study_uid, study_value_version=study_value_version
+        )
+        node = self._repos.study_definition_repository.get_soa_split_uids(
+            study_uid=study_uid, study_value_version=study_value_version
+        )
+        if node is None:
+            return []
+        return self._study_array_field_to_study_soa_splits(study_uid, node)
+
+    @staticmethod
+    def _study_array_field_to_study_soa_splits(
+        study_uid: str, node: StudyArrayField
+    ) -> list[StudySoaSplit]:
+        return [StudySoaSplit(study_uid=study_uid, uid=uid) for uid in node.value]
+
+    @ensure_transaction(db)
+    def add_study_soa_split(
+        self,
+        study_uid: str,
+        soa_split_input: StudySoaSplitInput,
+    ) -> list[StudySoaSplit]:
+        node = self._repos.study_definition_repository.add_soa_split_uid(
+            study_uid=study_uid, uid=soa_split_input.uid
+        )
+        return self._study_array_field_to_study_soa_splits(study_uid, node)
+
+    @ensure_transaction(db)
+    def remove_study_soa_split(
+        self,
+        study_uid: str,
+        uid: str,
+    ) -> list[StudySoaSplit]:
+        node = self._repos.study_definition_repository.remove_soa_split_uid(
+            study_uid=study_uid, uid=uid
+        )
+        return (
+            self._study_array_field_to_study_soa_splits(study_uid, node) if node else []
+        )
+
+    @ensure_transaction(db)
+    def remove_study_soa_splits(
+        self,
+        study_uid: str,
+    ) -> None:
+        self._repos.study_definition_repository.remove_soa_splits(
+            study_uid=study_uid,
+        )

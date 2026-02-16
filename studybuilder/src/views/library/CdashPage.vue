@@ -58,7 +58,7 @@ const modelsHeaders = ref([
   { title: t('DataModels.impl_notes'), key: 'implementation_notes' },
   { title: t('DataModels.mapping_inst'), key: 'mapping_instructions' },
   { title: t('DataModels.mapping_targets'), key: 'has_mapping_target.uid' },
-  { title: t('DataModels.code_list'), key: 'referenced_codelist.uid' },
+  { title: t('DataModels.code_list'), key: 'referenced_codelists.uid' },
 ])
 const igHeaders = ref([
   { title: t('DataModels.ordinal'), key: 'dataset.ordinal' },

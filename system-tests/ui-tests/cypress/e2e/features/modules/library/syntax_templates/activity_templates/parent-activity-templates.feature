@@ -32,10 +32,10 @@ Feature: Library - Syntax Templates - Activity Instructions - Parent
         Given [API] Activity in status Final with Final group and subgroub exists
         And [API] Activity Instruction in status Draft exists
         And The '/library/activity_instruction_templates/parent' page is opened
-        And The activity instruction is found
+        And The activity instruction is searched and found
         When The latest sequence number is saved
         And [API] Activity Instruction in status Draft exists
-        And The activity instruction is found
+        And The activity instruction is searched and found
         Then Sequence number is incremented
 
     @pending_implementation
@@ -51,7 +51,10 @@ Feature: Library - Syntax Templates - Activity Instructions - Parent
         And The Add template button is clicked
         And The activity instruction template form is filled with base data
         And All activity instruction indexes are filled in
-        And The activity instruction is saved and searched for
+        And User intercepts activity templates request
+        And Form save button is clicked
+        And User waits for activity templates request
+        And The activity instruction is searched and found
         Then The Activity Instruction template is visible in the table
         And The item has status 'Draft' and version '0.1'
 
@@ -61,7 +64,10 @@ Feature: Library - Syntax Templates - Activity Instructions - Parent
         And The activity instruction template form is filled with base data
         When Indexes are set as not applicable
         And The mandatory indexes are filled
-        And The activity instruction is saved and searched for
+        And User intercepts activity templates request
+        And Form save button is clicked
+        And User waits for activity templates request
+        And The activity instruction is searched and found
         Then The Activity Instruction template is visible in the table
         And The item has status 'Draft' and version '0.1'
 
@@ -69,13 +75,15 @@ Feature: Library - Syntax Templates - Activity Instructions - Parent
         Given [API] Activity in status Final with Final group and subgroub exists
         And [API] Activity Instruction in status Draft exists
         And The 'library/activity_instruction_templates/parent' page is opened
-        And Activity Instruction is searched for
-        Given The 'library/activity_instruction_templates/parent' page is opened
+        And The activity instruction is searched and found
         When The 'Edit' option is clicked from the three dot menu list
         And The activity instruction template form is filled with base data
         And Form continue button is clicked
         And Template change description is provided
-        And The activity instruction is saved and searched for
+        And User intercepts activity templates request
+        And Form save button is clicked
+        And User waits for activity templates request
+        And The activity instruction is searched and found
         Then The Activity Instruction template is visible in the table
         And The item has status 'Draft' and version '0.2'
 
@@ -163,16 +171,20 @@ Feature: Library - Syntax Templates - Activity Instructions - Parent
     Scenario: [Actions][Delete] User must be able to delete the Draft Activity Instruction template in version below 1.0
         Given [API] Activity in status Final with Final group and subgroub exists
         And [API] Activity Instruction in status Draft exists
+        Then User intercepts activity templates request
         And The 'library/activity_instruction_templates/parent' page is opened
-        And Activity Instruction is searched for
+        And User waits for activity templates request
+        And The activity instruction is searched and found
         When The 'Delete' option is clicked from the three dot menu list
         Then The parent activity is no longer available
 
     Scenario: [Actions][Approve] User must be able to approve the Draft Activity Instruction template
         Given [API] Activity in status Final with Final group and subgroub exists
         And [API] Activity Instruction in status Draft exists
+        Then User intercepts activity templates request
         And The 'library/activity_instruction_templates/parent' page is opened
-        And Activity Instruction is searched for
+        And User waits for activity templates request
+        And The activity instruction is searched and found
         When The 'Approve' option is clicked from the three dot menu list
         Then The pop up displays 'Activity template is now in Final state'
         And The item has status 'Final' and version '1.0'
@@ -181,21 +193,28 @@ Feature: Library - Syntax Templates - Activity Instructions - Parent
         Given [API] Activity in status Final with Final group and subgroub exists
         And [API] Activity Instruction in status Draft exists
         And [API] Activity Instruction is approved
+        And Group name created through API is found
+        Then User intercepts activity templates request
         And The 'library/activity_instruction_templates/parent' page is opened
-        And Activity Instruction is searched for
+        And User waits for activity templates request
+        And The activity instruction is searched and found
         When The 'Edit indexing' option is clicked from the three dot menu list
+        And The activity group data is loaded in the edit indexing form
         And The indication indexes edition is initiated
         And Form save button is clicked
         And The pop up displays 'Indexing properties updated'
-        And The activity instruction is found
+        And The activity instruction is searched and found
         And The 'Edit indexing' option is clicked from the three dot menu list
+        And The activity group data is loaded in the edit indexing form
         Then The indication index is updated
 
     Scenario: [Actions][Edit][Mandatory fields] User must not be able to save changes to Activity Instruction template without: Change description
         Given [API] Activity in status Final with Final group and subgroub exists
         And [API] Activity Instruction in status Draft exists
+        Then User intercepts activity templates request
         And The 'library/activity_instruction_templates/parent' page is opened
-        And Activity Instruction is searched for
+        And User waits for activity templates request
+        And The activity instruction is searched and found
         When The 'Edit' option is clicked from the three dot menu list
         And User goes to Change description step
         And The template change description is cleared
@@ -207,8 +226,10 @@ Feature: Library - Syntax Templates - Activity Instructions - Parent
         Given [API] Activity in status Final with Final group and subgroub exists
         And [API] Activity Instruction in status Draft exists
         And [API] Activity Instruction is approved
+        Then User intercepts activity templates request
         And The 'library/activity_instruction_templates/parent' page is opened
-        And Activity Instruction is searched for
+        And User waits for activity templates request
+        And The activity instruction is searched and found
         When The 'New version' option is clicked from the three dot menu list
         Then The pop up displays 'New version created'
         And The item has status 'Draft' and version '1.1'
@@ -217,8 +238,10 @@ Feature: Library - Syntax Templates - Activity Instructions - Parent
         Given [API] Activity in status Final with Final group and subgroub exists
         And [API] Activity Instruction in status Draft exists
         And [API] Activity Instruction is approved
+        Then User intercepts activity templates request
         And The 'library/activity_instruction_templates/parent' page is opened
-        And Activity Instruction is searched for
+        And User waits for activity templates request
+        And The activity instruction is searched and found
         When The 'New version' option is clicked from the three dot menu list
         Then The item has status 'Draft' and version '1.1'
         When The 'Edit' option is clicked from the three dot menu list
@@ -227,7 +250,7 @@ Feature: Library - Syntax Templates - Activity Instructions - Parent
         And Form continue button is clicked
         And Template change description is provided
         And Form save button is clicked
-        And The activity instruction is found
+        And The activity instruction is searched and found
         Then The item has status 'Draft' and version '1.2'
         When The 'Approve' option is clicked from the three dot menu list
         Then The item has status 'Final' and version '2.0'
@@ -236,8 +259,10 @@ Feature: Library - Syntax Templates - Activity Instructions - Parent
         Given [API] Activity in status Final with Final group and subgroub exists
         And [API] Activity Instruction in status Draft exists
         And [API] Activity Instruction is approved
+        Then User intercepts activity templates request
         And The 'library/activity_instruction_templates/parent' page is opened
-        And Activity Instruction is searched for
+        And User waits for activity templates request
+        And The activity instruction is searched and found
         When The 'Inactivate' option is clicked from the three dot menu list
         Then The pop up displays 'Activity template retired'
         And The item has status 'Retired' and version '1.0'
@@ -247,8 +272,10 @@ Feature: Library - Syntax Templates - Activity Instructions - Parent
         And [API] Activity Instruction in status Draft exists
         And [API] Activity Instruction is approved
         And [API] Activity Instruction is inactivated
+        Then User intercepts activity templates request
         And The 'library/activity_instruction_templates/parent' page is opened
-        And Activity Instruction is searched for
+        And User waits for activity templates request
+        And The activity instruction is searched and found
         When The 'Reactivate' option is clicked from the three dot menu list
         Then The pop up displays 'Activity template is now in Final state'
         And The item has status 'Final' and version '1.0'
@@ -259,8 +286,10 @@ Feature: Library - Syntax Templates - Activity Instructions - Parent
         And [API] Activity Instruction in status Draft exists
         And [API] Activity Instruction is approved
         And [API] Activity Instruction is inactivated
+        Then User intercepts activity templates request
         And The 'library/activity_instruction_templates/parent' page is opened
-        And Activity Instruction is searched for
+        And User waits for activity templates request
+        And The activity instruction is searched and found
         When The 'Reactivate' option is clicked from the three dot menu list
         Then The 'History for template' window is displayed with the following column list with values
             | Column | Header                 |
@@ -304,7 +333,7 @@ Feature: Library - Syntax Templates - Activity Instructions - Parent
         Given [API] Activity in status Final with Final group and subgroub exists
         And [API] Activity Instruction in status Draft exists
         Given The 'library/activity_instruction_templates/parent' page is opened
-        And The activity instruction is found
+        And The activity instruction is searched and found
         When The 'Edit' option is clicked from the three dot menu list
         And The activity template edition form is filled with data
         And All activity instruction indexes are filled in
@@ -318,7 +347,7 @@ Feature: Library - Syntax Templates - Activity Instructions - Parent
         And [API] Activity Instruction in status Draft exists
         And [API] Activity Instruction is approved
         Given The 'library/activity_instruction_templates/parent' page is opened
-        And The activity instruction is found
+        And The activity instruction is searched and found
         When The 'Edit indexing' option is clicked from the three dot menu list
         When The indication indexes edition is initiated
         And Modal window form is closed by clicking cancel button
@@ -330,7 +359,7 @@ Feature: Library - Syntax Templates - Activity Instructions - Parent
         Given [API] Activity in status Final with Final group and subgroub exists
         And [API] Activity Instruction in status Draft exists
         Given The 'library/activity_instruction_templates/parent' page is opened
-        And The activity instruction is found
+        And The activity instruction is searched and found
         When The item actions button is clicked
         Then Only actions that should be avaiable for the Draft item are displayed
 
@@ -339,7 +368,7 @@ Feature: Library - Syntax Templates - Activity Instructions - Parent
         And [API] Activity Instruction in status Draft exists
         And [API] Activity Instruction is approved
         Given The 'library/activity_instruction_templates/parent' page is opened
-        And The activity instruction is found
+        And The activity instruction is searched and found
         When The item actions button is clicked
         Then Only actions that should be avaiable for the Final item are displayed
 
@@ -348,7 +377,7 @@ Feature: Library - Syntax Templates - Activity Instructions - Parent
         And [API] Activity Instruction in status Draft exists
         And [API] Activity Instruction is approved
         Given The 'library/activity_instruction_templates/parent' page is opened
-        And The activity instruction is found
+        And The activity instruction is searched and found
         When The item actions button is clicked
         Then 'Edit indexing' action is available
         And 'Create pre-instantiation' action is available
@@ -359,7 +388,7 @@ Feature: Library - Syntax Templates - Activity Instructions - Parent
         And [API] Activity Instruction is approved
         And [API] Activity Instruction is inactivated
         Given The 'library/activity_instruction_templates/parent' page is opened
-        And The activity instruction is found
+        And The activity instruction is searched and found
         And The item actions button is clicked
         Then Only actions that should be avaiable for the Retired item are displayed
 
@@ -369,7 +398,7 @@ Feature: Library - Syntax Templates - Activity Instructions - Parent
         When [API] Search Test - Create first activity instruction template
         And [API] Search Test - Create second activity instruction template
         Given The 'library/activity_instruction_templates/parent' page is opened
-        Then The activity instruction is found
+        Then The activity instruction is searched and found
         And The existing item is searched for by partial name
         Then More than one result is found
 

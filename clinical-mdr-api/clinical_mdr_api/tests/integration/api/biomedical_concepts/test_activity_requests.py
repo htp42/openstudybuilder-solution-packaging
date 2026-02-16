@@ -83,9 +83,7 @@ def test_data():
     activity_group = TestUtils.create_activity_group(name="activity_group")
 
     global activity_subgroup
-    activity_subgroup = TestUtils.create_activity_subgroup(
-        name="activity_subgroup", activity_groups=[activity_group.uid]
-    )
+    activity_subgroup = TestUtils.create_activity_subgroup(name="activity_subgroup")
 
     global activity_requests_all
     # Create some activity requests
@@ -655,7 +653,7 @@ def test_edit_study_activity_request(api_client):
 
     general_activity_group = TestUtils.create_activity_group(name="General")
     general_activity_subgroup = TestUtils.create_activity_subgroup(
-        name="General subgroup", activity_groups=[general_activity_group.uid]
+        name="General subgroup"
     )
     # Replace activity request to the replacing sponsor activity in the Study Activity
     response = api_client.patch(

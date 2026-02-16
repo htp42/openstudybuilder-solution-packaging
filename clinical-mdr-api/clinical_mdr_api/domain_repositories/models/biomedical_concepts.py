@@ -27,6 +27,8 @@ from clinical_mdr_api.domain_repositories.models.standard_data_model import (
 class ActivityItemClassRel(ClinicalMdrRel):
     mandatory = BooleanProperty()
     is_adam_param_specific_enabled = BooleanProperty()
+    is_additional_optional = BooleanProperty()
+    is_default_linked = BooleanProperty()
 
 
 class ActivityInstanceClassValue(VersionValue):
@@ -72,6 +74,7 @@ class ActivityItemClassValue(VersionValue):
     definition = StringProperty()
     nci_concept_id = StringProperty()
     order = IntegerProperty()
+    display_name = StringProperty()
     has_latest_value = RelationshipFrom(
         "ActivityItemClassRoot", "LATEST", model=ClinicalMdrRel
     )

@@ -10,7 +10,7 @@ class NoFieldsInAnnotatedWithDisallowedArgs(SBLinter):
     DISALLOWED_ARGS = {"alias", "default", "default_factory"}
 
     @classmethod
-    def validate(cls, code_tree: ast.Module) -> list[int]:
+    def validate(cls, code_tree: ast.Module, _file_path: str) -> list[int]:
         """
         Validates the given Python code by checking if it contains any
         `pydantic.Field` that is passed to `typing.Annotated` while also

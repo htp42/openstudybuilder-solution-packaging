@@ -69,6 +69,8 @@
               :rules="[formRules.required]"
               density="compact"
               clearable
+              variant="outlined"
+              rounded="lg"
               @update:model-value="setSentenceCase"
             />
           </v-col>
@@ -85,6 +87,8 @@
               ]"
               density="compact"
               clearable
+              variant="outlined"
+              rounded="lg"
             />
           </v-col>
         </v-row>
@@ -100,6 +104,8 @@
               :label="$t('CodelistTermCreationForm.concept_id')"
               density="compact"
               clearable
+              variant="outlined"
+              rounded="lg"
             />
           </v-col>
         </v-row>
@@ -111,6 +117,8 @@
               :label="$t('CodelistTermCreationForm.nci_pref_name')"
               density="compact"
               clearable
+              variant="outlined"
+              rounded="lg"
             />
           </v-col>
         </v-row>
@@ -125,6 +133,8 @@
               clearable
               auto-grow
               rows="1"
+              variant="outlined"
+              rounded="lg"
             />
           </v-col>
         </v-row>
@@ -141,6 +151,8 @@
               :rules="[formRules.required]"
               density="compact"
               clearable
+              variant="outlined"
+              rounded="lg"
             />
           </v-col>
         </v-row>
@@ -153,6 +165,8 @@
               :rules="[formRules.required]"
               density="compact"
               clearable
+              variant="outlined"
+              rounded="lg"
             />
           </v-col>
         </v-row>
@@ -168,7 +182,8 @@
             {{ term.attributes.concept_id }}
           </v-col>
           <v-col>
-            <v-combobox
+            <component
+              :is="getSubmissionValueComponent(term)"
               v-model="form[index].submission_value"
               :items="
                 Array.from(
@@ -182,6 +197,8 @@
               :rules="[formRules.required]"
               density="compact"
               clearable
+              variant="outlined"
+              rounded="lg"
             />
           </v-col>
           <v-col>
@@ -192,6 +209,8 @@
               :rules="[formRules.required]"
               density="compact"
               clearable
+              variant="outlined"
+              rounded="lg"
             />
           </v-col>
         </v-row>
@@ -202,6 +221,7 @@
 
 <script setup>
 import { inject, onMounted, ref, watch } from 'vue'
+import { VCombobox, VSelect } from 'vuetify/components'
 import { useI18n } from 'vue-i18n'
 import constants from '@/constants/libraries.js'
 import controlledTerminology from '@/api/controlledTerminology'
@@ -314,15 +334,15 @@ const stepper = ref()
 const namesForm = ref()
 const attributesForm = ref()
 const orderAndSubmvalForm = ref()
+const pairedCodelist = ref(null)
 
 watch(createNewTerm, (value) => {
   steps.value = value ? alternateSteps : getInitialSteps()
 })
 
 onMounted(() => {
-  termsApi.getAll({ page_size: 10, total_count: true }).then((resp) => {
-    terms.value = resp.data.items
-    total.value = resp.data.total
+  controlledTerminology.getPairedCodelists(props.codelistUid).then((resp) => {
+    pairedCodelist.value = resp.data
   })
 })
 
@@ -349,6 +369,14 @@ function getInitialSteps() {
     },
   ]
 }
+
+function getSubmissionValueComponent(term) {
+  if (term.library_name === constants.LIBRARY_SPONSOR && pairedCodelist.value) {
+    return VCombobox
+  }
+  return VSelect
+}
+
 function getObserver(step) {
   if (step === 2) {
     return namesForm.value
@@ -442,7 +470,8 @@ function scheduleFilterTerms(filters, options, filtersUpdated) {
 function selectTerms() {
   form.value = selection.value.map((term) => ({
     term_uid: term.term_uid,
-    submission_value: term.codelists[0].submission_value,
+    submission_value:
+      term.codelists.length > 0 ? term.codelists[0].submission_value : null,
     order: null,
   }))
 }

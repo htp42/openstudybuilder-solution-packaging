@@ -8,10 +8,11 @@ from clinical_mdr_api.domains.concepts.activities.activity_group import (
     ActivityGroupAR,
     ActivityGroupVO,
 )
-from clinical_mdr_api.domains.concepts.activities.activity_sub_group import (
-    SimpleActivityGroupVO,
-)
 from clinical_mdr_api.domains.enums import LibraryItemStatus
+from clinical_mdr_api.models.concepts.activities.activity import (
+    ActivityEditInput,
+    ActivityGrouping,
+)
 from clinical_mdr_api.models.concepts.activities.activity_group import (
     ActivityGroup,
     ActivityGroupCreateInput,
@@ -21,13 +22,10 @@ from clinical_mdr_api.models.concepts.activities.activity_group import (
     ActivityGroupVersion,
     SimpleSubGroup,
 )
-from clinical_mdr_api.models.concepts.activities.activity_sub_group import (
-    ActivitySubGroupEditInput,
-)
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.services.concepts import constants
-from clinical_mdr_api.services.concepts.activities.activity_sub_group_service import (
-    ActivitySubGroupService,
+from clinical_mdr_api.services.concepts.activities.activity_service import (
+    ActivityService,
 )
 from clinical_mdr_api.services.concepts.concept_generic_service import (
     ConceptGenericService,
@@ -177,6 +175,7 @@ class ActivityGroupService(ConceptGenericService[ActivityGroupAR]):
                 name=subgroup["name"],
                 version=subgroup["version"],
                 status=subgroup["status"],
+                start_date=subgroup["start_date"].isoformat(),
                 definition=subgroup["definition"],
             )
             for subgroup in linked_subgroups
@@ -287,68 +286,70 @@ class ActivityGroupService(ConceptGenericService[ActivityGroupAR]):
     def cascade_edit_and_approve(self, item: ActivityGroupAR):
         last_final_version = f"{item.item_metadata.major_version-1}.0"
 
-        linked_activity_subgroups = self._repos.activity_group_repository.get_linked_upgradable_activity_subgroups(
-            uid=item.uid, version=last_final_version
+        linked_activities = (
+            self._repos.activity_group_repository.get_linked_upgradable_activities(
+                uid=item.uid, version=last_final_version
+            )
         )
-        if linked_activity_subgroups is None:
+        if linked_activities is None:
             return
-        self.batch_cascade_update(linked_activity_subgroups=linked_activity_subgroups)
+        self.batch_cascade_update(linked_activities=linked_activities)
 
-    def batch_cascade_update(self, linked_activity_subgroups: dict[str, Any]):
-        activity_subgroup_service = ActivitySubGroupService()
-        activity_subgroup_uids = [
-            activity_subgroup["uid"]
-            for activity_subgroup in linked_activity_subgroups.get(
-                "activity_subgroups", []
-            )
+    def batch_cascade_update(self, linked_activities: dict[str, Any]):
+        activity_service = ActivityService()
+        activity_uids = [
+            activity["uid"] for activity in linked_activities.get("activities", [])
         ]
-        if activity_subgroup_uids:
-            self._repos.activity_subgroup_repository.lock_objects(
-                uids=activity_subgroup_uids
-            )
-            activity_subgroup_ars, _ = (
-                self._repos.activity_subgroup_repository.find_all(
-                    uids=activity_subgroup_uids,
-                )
+        if activity_uids:
+            self._repos.activity_repository.lock_objects(uids=activity_uids)
+            activity_ars, _ = self._repos.activity_repository.find_all(
+                uids=activity_uids,
             )
 
-            for activity_subgroup in activity_subgroup_ars:
-                # Only process FINAL status subgroups - skip DRAFT subgroups entirely
-                if (
-                    activity_subgroup.item_metadata.status.value
-                    != LibraryItemStatus.FINAL.value
-                ):
+            for activity in activity_ars:
+                # Only process FINAL status activities - skip DRAFT activities entirely
+                if activity.item_metadata.status.value != LibraryItemStatus.FINAL.value:
                     continue
 
-                activity_groups: list[SimpleActivityGroupVO] = (
-                    activity_subgroup.concept_vo.activity_groups
-                )
-
-                if not activity_groups:
-                    # No matching groupings found, skip this subgroup
+                activity_groupings: list[ActivityGrouping] | None = []
+                for grouping in activity.concept_vo.activity_groupings:
+                    grp = {
+                        "activity_group_uid": grouping.activity_group_uid,
+                        "activity_subgroup_uid": grouping.activity_subgroup_uid,
+                    }
+                    activity_groupings.append(ActivityGrouping(**grp))
+                if not activity_groupings:
+                    # No matching groupings found, skip this activity
                     continue
 
-                # For FINAL subgroups: create new version, edit, and approve
-                activity_subgroup.create_new_version(author_id=self.author_id)
+                # For FINAL activities: create new version, edit, and approve
+                activity.create_new_version(author_id=self.author_id)
 
-                edit_input = ActivitySubGroupEditInput(
+                edit_input = ActivityEditInput(
+                    name=activity.concept_vo.name,
+                    name_sentence_case=activity.concept_vo.name_sentence_case,
+                    activity_groupings=activity_groupings,
+                    definition=activity.concept_vo.definition,
+                    abbreviation=activity.concept_vo.abbreviation,
+                    nci_concept_id=activity.concept_vo.nci_concept_id,
+                    nci_concept_name=activity.concept_vo.nci_concept_name,
+                    synonyms=activity.concept_vo.synonyms,
+                    request_rationale=activity.concept_vo.request_rationale,
+                    is_request_final=activity.concept_vo.is_request_final,
+                    is_data_collected=activity.concept_vo.is_data_collected,
+                    is_multiple_selection_allowed=activity.concept_vo.is_multiple_selection_allowed,
+                    library_name=activity.library.name,
                     change_description="Cascade edit",
-                    activity_groups=[
-                        ag.activity_group_uid
-                        for ag in activity_subgroup.concept_vo.activity_groups
-                    ],
-                    name=activity_subgroup.concept_vo.name,
-                    name_sentence_case=activity_subgroup.concept_vo.name_sentence_case,
-                    library_name=activity_subgroup.library.name,
                 )
-                activity_subgroup = activity_subgroup_service._edit_aggregate(
-                    item=activity_subgroup,
+                activity = activity_service._edit_aggregate(
+                    item=activity,
                     concept_edit_input=edit_input,
                     perform_validation=False,
                 )
 
-                activity_subgroup.approve(author_id=self.author_id)
-                self._repos.activity_subgroup_repository.copy_activity_subgroup_and_recreate_activity_groupings(
-                    activity_subgroup, author_id=self.author_id
+                activity.approve(author_id=self.author_id)
+                self._repos.activity_repository.copy_activity_and_recreate_activity_groupings(
+                    activity, author_id=self.author_id
                 )
-                activity_subgroup_service.cascade_edit_and_approve(activity_subgroup)
+                activity_service.cascade_edit_and_approve(activity)
+        return True

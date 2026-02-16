@@ -1,4 +1,4 @@
-"""RESTful API endpoints used by consumers that want to extract data from StudyBuilder"""
+"""RESTful API endpoints used by consumers that want to extract data from OpenStudyBuilder"""
 
 # Placed at the top to ensure logging is configured before anything else is loaded
 from typing import Any
@@ -118,7 +118,7 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(
-    title="StudyBuilder Consumer API",
+    title="OpenStudyBuilder Consumer API",
     version=get_api_version(),
     middleware=middlewares,
     lifespan=lifespan,

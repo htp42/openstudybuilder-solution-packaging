@@ -22,7 +22,7 @@ from clinical_mdr_api.models.concepts.odms.odm_form import (
     OdmFormPostInput,
     OdmFormVersion,
 )
-from clinical_mdr_api.services._utils import get_input_or_new_value
+from clinical_mdr_api.services._utils import ensure_transaction, get_input_or_new_value
 from clinical_mdr_api.services.concepts.odms.odm_generic_service import (
     OdmGenericService,
 )
@@ -95,18 +95,8 @@ class OdmFormService(OdmGenericService[OdmFormAR]):
         )
         return item
 
-    @db.transaction
+    @ensure_transaction(db)
     def add_item_groups(
-        self,
-        uid: str,
-        odm_form_item_group_post_input: list[OdmFormItemGroupPostInput],
-        override: bool = False,
-    ) -> OdmForm:
-        return self.non_transactional_add_item_groups(
-            uid, odm_form_item_group_post_input, override
-        )
-
-    def non_transactional_add_item_groups(
         self,
         uid: str,
         odm_form_item_group_post_input: list[OdmFormItemGroupPostInput],

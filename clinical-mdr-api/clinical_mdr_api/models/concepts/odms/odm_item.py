@@ -52,7 +52,7 @@ from clinical_mdr_api.models.controlled_terminologies.ct_term import (
     SimpleDictionaryTermModel,
     SimpleTermModel,
 )
-from clinical_mdr_api.models.utils import BaseModel, InputModel
+from clinical_mdr_api.models.utils import BaseModel, InputModel, PostInputModel
 from clinical_mdr_api.models.validators import has_english_description
 from common.config import settings
 
@@ -252,6 +252,7 @@ class OdmItem(ConceptModel):
         Field(json_schema_extra={"nullable": True}),
     ] = None
     terms: Annotated[list[OdmItemTermRelationshipModel], Field()]
+    activity_instances: Annotated[list, Field()]
     vendor_elements: Annotated[list[OdmVendorElementRelationModel], Field()]
     vendor_attributes: Annotated[list[OdmVendorAttributeRelationModel], Field()]
     vendor_element_attributes: Annotated[
@@ -335,6 +336,22 @@ class OdmItem(ConceptModel):
                 ],
                 key=lambda item: (item.order is not None, item.order),
             ),
+            activity_instances=[
+                ActivityInstanceRel(
+                    activity_instance_uid=activity_instance["activity_instance_uid"],
+                    activity_item_class_uid=activity_instance[
+                        "activity_item_class_uid"
+                    ],
+                    odm_form_uid=activity_instance["odm_form_uid"],
+                    odm_item_group_uid=activity_instance["odm_item_group_uid"],
+                    order=activity_instance["order"],
+                    primary=activity_instance.get("primary", False),
+                    preset_response_value=activity_instance["preset_response_value"],
+                    value_condition=activity_instance["value_condition"],
+                    value_dependent_map=activity_instance["value_dependent_map"],
+                )
+                for activity_instance in odm_item_ar.concept_vo.activity_instances
+            ],
             vendor_elements=sorted(
                 [
                     OdmVendorElementRelationModel.from_uid(
@@ -475,9 +492,7 @@ class OdmItemRefModel(BaseModel):
     oid: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
     name: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
     version: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
-    order_number: Annotated[int | None, Field(json_schema_extra={"nullable": True})] = (
-        None
-    )
+    order_number: Annotated[int, Field()] = 999999
     mandatory: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
     key_sequence: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
@@ -565,6 +580,18 @@ class OdmItemPostInput(ConceptPostInput):
     )
 
 
+class ActivityInstanceRel(PostInputModel):
+    activity_instance_uid: Annotated[str, Field(min_length=1)]
+    activity_item_class_uid: Annotated[str, Field(min_length=1)]
+    odm_form_uid: Annotated[str, Field(min_length=1)]
+    odm_item_group_uid: Annotated[str, Field(min_length=1)]
+    order: Annotated[int | None, Field()] = None
+    primary: Annotated[bool, Field()] = False
+    preset_response_value: Annotated[str | None, Field()] = None
+    value_condition: Annotated[str | None, Field()] = None
+    value_dependent_map: Annotated[str | None, Field()] = None
+
+
 class OdmItemPatchInput(ConceptPatchInput):
     name: Annotated[str, Field(min_length=1)]
     oid: Annotated[str | None, Field(min_length=1)]
@@ -583,11 +610,37 @@ class OdmItemPatchInput(ConceptPatchInput):
     )
     codelist_uid: Annotated[str | None, Field(min_length=1)]
     terms: Annotated[list[OdmItemTermRelationshipInput], Field()]
+    activity_instances: list[ActivityInstanceRel] = Field(default_factory=list)
 
     _ = model_validator(mode="after")(check_length_and_significant_digits)
     _english_description_validator = field_validator("descriptions")(
         has_english_description
     )
+
+    @field_validator("activity_instances")
+    @classmethod
+    def check_activity_instance_uniqueness(
+        cls, v: list[ActivityInstanceRel]
+    ) -> list[ActivityInstanceRel]:
+        activity_instance = [
+            (
+                elm.activity_instance_uid,
+                elm.activity_item_class_uid,
+                elm.odm_form_uid,
+                elm.odm_item_group_uid,
+            )
+            for elm in v
+        ]
+
+        duplicates = {
+            f"{ai}" for ai in activity_instance if activity_instance.count(ai) > 1
+        }
+
+        if len(activity_instance) != len(set(activity_instance)):
+            raise ValueError(
+                f"Activity Instances must be unique. Following duplicates were found: {", ".join(duplicates)}"
+            )
+        return v
 
 
 class OdmItemVersion(OdmItem):

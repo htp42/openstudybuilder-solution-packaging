@@ -80,10 +80,10 @@ class StudySoAGroupRepository(StudySelectionActivityBaseRepository[StudySoAGroup
             
             MATCH (sv)-[:HAS_STUDY_ACTIVITY]->(sa:StudyActivity)
                 -[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(soag:StudySoAGroup)
-            WHERE NOT (soag)<-[:BEFORE]-()
+                <-[:HAS_STUDY_SOA_GROUP]-(sv)
             
             OPTIONAL MATCH (sa)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(sag:StudyActivityGroup)
-            WHERE NOT (sag)<-[:BEFORE]-()
+                <-[:HAS_STUDY_ACTIVITY_GROUP]-(sv)
             
             WITH DISTINCT sr, soag, collect(DISTINCT sag.uid) AS study_activity_group_uids
             

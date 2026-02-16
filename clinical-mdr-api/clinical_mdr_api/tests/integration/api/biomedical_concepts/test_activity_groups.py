@@ -271,10 +271,9 @@ def test_filtering_versions_exact(
 def test_cascade_edit_activity_groups(api_client):
     # ==== Create activity and activity instance ====
     activity_group = TestUtils.create_activity_group(name="Cascade Group")
-    second_activity_group = TestUtils.create_activity_group(name="Second Group")
+    _second_activity_group = TestUtils.create_activity_group(name="Second Group")
     activity_subgroup = TestUtils.create_activity_subgroup(
         name="Cascade SubGroup",
-        activity_groups=[activity_group.uid, second_activity_group.uid],
     )
     activity = TestUtils.create_activity(
         name="Cascade Activity",
@@ -308,15 +307,10 @@ def test_cascade_edit_activity_groups(api_client):
     res = response.json()
     assert_response_status_code(response, 200)
     assert res["name"] == activity_subgroup.name
-    assert len(res["activity_groups"]) == 2
-    assert res["activity_groups"][0]["uid"] == activity_group.uid
-    assert res["activity_groups"][0]["name"] == activity_group.name
-    assert res["activity_groups"][1]["uid"] == second_activity_group.uid
-    assert res["activity_groups"][1]["name"] == second_activity_group.name
     assert res["version"] == "1.0"
     assert res["status"] == "Final"
 
-    # ==== Update activity group with cascade edit&approve, activity subgroup should be updated also ====
+    # ==== Update activity group with cascade edit&approve, activity and instance should be updated also ====
 
     # Create new version of activity
     response = api_client.post(
@@ -356,24 +350,12 @@ def test_cascade_edit_activity_groups(api_client):
     assert res["status"] == "Final"
     assert res["version"] == "2.0"
 
-    # Get the activity subgroup and assert that it was updated
-    response = api_client.get(
-        f"/concepts/activities/activity-sub-groups/{activity_subgroup.uid}"
-    )
-    assert_response_status_code(response, 200)
-    res = response.json()
-    assert len(res["activity_groups"]) == 2
-    assert res["activity_groups"][0]["uid"] == activity_group.uid
-    assert res["activity_groups"][0]["name"] == updated_activity_group_name
-    assert res["activity_groups"][1]["uid"] == second_activity_group.uid
-    assert res["activity_groups"][1]["name"] == second_activity_group.name
-    assert res["version"] == "2.0"
-    assert res["status"] == "Final"
-
     # Get the activity and assert that it was updated
     response = api_client.get(f"/concepts/activities/activities/{activity.uid}")
     assert_response_status_code(response, 200)
     res = response.json()
+    assert res["version"] == "2.0"
+    assert res["status"] == "Final"
     assert len(res["activity_groupings"]) == 1
     assert res["activity_groupings"][0]["activity_group_uid"] == activity_group.uid
     assert (
@@ -386,8 +368,6 @@ def test_cascade_edit_activity_groups(api_client):
     assert (
         res["activity_groupings"][0]["activity_subgroup_name"] == activity_subgroup.name
     )
-    assert res["version"] == "2.0"
-    assert res["status"] == "Final"
 
     # Get the activity instance and assert that it was updated
     response = api_client.get(
@@ -395,6 +375,8 @@ def test_cascade_edit_activity_groups(api_client):
     )
     assert_response_status_code(response, 200)
     res = response.json()
+    assert res["version"] == "2.0"
+    assert res["status"] == "Final"
     assert len(res["activity_groupings"]) == 1
     assert res["activity_groupings"][0]["activity_group"]["uid"] == activity_group.uid
     assert (
@@ -411,26 +393,10 @@ def test_cascade_edit_activity_groups(api_client):
     )
     assert res["activity_groupings"][0]["activity"]["uid"] == activity.uid
     assert res["activity_groupings"][0]["activity"]["name"] == activity.name
-    assert res["version"] == "2.0"
-    assert res["status"] == "Final"
-
-    # Get the activity subgroup versions and assert that one new version was created.
-    # There should be new final version 2.0 that links to activity group version 2.0
-    response = api_client.get(
-        f"/concepts/activities/activity-sub-groups/{activity_subgroup.uid}/versions"
-    )
-    assert_response_status_code(response, 200)
-    res = response.json()
-    unchanged_draft = TestUtils._get_version_from_list(res, "1.1")
-    updated_draft = TestUtils._get_version_from_list(res, "1.2")
-    new_final = TestUtils._get_version_from_list(res, "2.0")
-
-    assert unchanged_draft is None
-    assert updated_draft is None
-    assert new_final["activity_groups"][0]["name"] == updated_activity_group_name
 
     # Get the activity versions and assert that one new version was created.
-    # There should be a new final version 2.0 that links to activity subgroup version 2.0
+    # There should be a new final version 2.0 that links to activity group version 2.0
+    # and activity subgroup version 1.0
     response = api_client.get(
         f"/concepts/activities/activities/{activity.uid}/versions"
     )
@@ -465,7 +431,7 @@ def test_cascade_edit_activity_groups(api_client):
         == updated_activity_group_name
     )
 
-    # ==== Update activity group without cascade edit&approve, activity subgroup should NOT be updated ====
+    # ==== Update activity group without cascade edit&approve, activity and instance should NOT be updated ====
     # Create new version of activity
     response = api_client.post(
         f"/concepts/activities/activity-groups/{activity_group.uid}/versions",
@@ -493,27 +459,13 @@ def test_cascade_edit_activity_groups(api_client):
     )
     assert_response_status_code(response, 201)
 
-    # Get the activity subgroup and assert that it was not updated
-    response = api_client.get(
-        f"/concepts/activities/activity-sub-groups/{activity_subgroup.uid}"
-    )
-    assert_response_status_code(response, 200)
-    res = response.json()
-    assert len(res["activity_groups"]) == 2
-    assert res["version"] == "2.0"
-    assert res["status"] == "Final"
-    assert res["activity_groups"][0]["uid"] == activity_group.uid
-    assert res["activity_groups"][0]["name"] == updated_activity_group_name
-    assert res["activity_groups"][1]["uid"] == second_activity_group.uid
-    assert res["activity_groups"][1]["name"] == second_activity_group.name
-
     # Get the activity and assert that it was not updated
     response = api_client.get(f"/concepts/activities/activities/{activity.uid}")
     assert_response_status_code(response, 200)
     res = response.json()
-    assert len(res["activity_groupings"]) == 1
     assert res["version"] == "2.0"
     assert res["status"] == "Final"
+    assert len(res["activity_groupings"]) == 1
     assert (
         res["activity_groupings"][0]["activity_subgroup_uid"] == activity_subgroup.uid
     )
@@ -529,9 +481,9 @@ def test_cascade_edit_activity_groups(api_client):
     )
     assert_response_status_code(response, 200)
     res = response.json()
-    assert len(res["activity_groupings"]) == 1
     assert res["version"] == "2.0"
     assert res["status"] == "Final"
+    assert len(res["activity_groupings"]) == 1
     assert (
         res["activity_groupings"][0]["activity_subgroup"]["uid"]
         == activity_subgroup.uid

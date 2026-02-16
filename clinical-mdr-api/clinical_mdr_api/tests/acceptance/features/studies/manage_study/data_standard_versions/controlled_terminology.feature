@@ -1,8 +1,8 @@
 @REQ_ID:<new>
-Feature: Maintaining Study Controlled Terminology Standard Versions in Clinical MDR API
+Feature: Maintaining Study Controlled Terminology Standard Versions in OpenStudyBuilder API
 
-    Background: Test user must be able to call the Clinical MDR API
-        Given The test user can call the Clinical MDR API
+    Background: Test user must be able to call the OpenStudyBuilder API
+        Given The test user can call the OpenStudyBuilder API
 
     Rule: As an API user,
         I want the system to ensure [Scenario], 

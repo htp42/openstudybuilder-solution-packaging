@@ -24,6 +24,9 @@ class SBLinter(ABC):
         and detecting potential issues in the codebase. Each linter class implements
         its own set of rules and checks.
         """
+        from sblint.linters.no_api_models_with_duplicated_names import (
+            NoDuplicatedApiModelNames,
+        )
         from sblint.linters.no_fields_as_default_value_without_required_args import (
             NoFieldsAsDefaultValueWithoutRequiredArgs,
         )
@@ -54,11 +57,12 @@ class SBLinter(ABC):
             NoHTTPMethodsWithDisallowedStatusCode,
             NoRelativeImports,
             NoUnnecessaryImports,
+            NoDuplicatedApiModelNames,
         ]
 
     @classmethod
     @abstractmethod
-    def validate(cls, code_tree: ast.Module) -> list[int]:
+    def validate(cls, code_tree: ast.Module, _file_path: str) -> list[int]:
         """
         Validates the given Python code.
 
@@ -74,6 +78,21 @@ class SBLinter(ABC):
             NotImplementedError: If the method is not implemented by a subclass.
         """
         raise NotImplementedError("Subclasses must implement this method.")
+
+    @classmethod
+    def postprocess_validation(cls) -> list[tuple[str, list[int]]] | None:
+        """
+        Optional post-processing step after validation.
+
+        This allows validators to perform additional checks that span multiple files
+        or require aggregation of results after the initial validation phase.
+
+        This method can be overridden by subclasses to perform any additional
+        processing or reporting after the validation has been completed.
+        Returns:
+            list[tuple[str, list[int]]] | None: A list of tuples containing file names
+            and their corresponding line numbers with issues, or None if no post-processing is needed.
+        """
 
     @classmethod
     def expose_validation(cls, invalid_files: list[str]) -> None:
@@ -96,7 +115,7 @@ class SBLinter(ABC):
     def code_crawler(
         cls,
         directories: list[str],
-        validators: list[Callable[[ast.Module], list[int]]],
+        validators: list[Callable[[ast.Module, str], list[int]]],
         extension: str = ".py",
     ) -> dict[str, list]:
         """
@@ -122,7 +141,7 @@ class SBLinter(ABC):
                             if content := f.read():
                                 tree = ast.parse(content)
                                 for validate in validators:
-                                    if lines := validate(tree):
+                                    if lines := validate(tree, file_path):
                                         for line in lines:
                                             invalid_files[validate.__qualname__].append(
                                                 f"{file_path}:{line}"
@@ -157,6 +176,15 @@ class SBLinter(ABC):
         failed_validators = cls.code_crawler(
             directories_to_crawl, [validator.validate for validator in validators]
         )
+
+        # Post-process validations
+        for validator in validators:
+            if postprocess := validator.postprocess_validation():
+                for file_name, line_numbers in postprocess:
+                    for line in line_numbers:
+                        failed_validators[validator.validate.__qualname__].append(
+                            f"{file_name}:{line}"
+                        )
 
         if failed_validators:
             terminal = console.Console()

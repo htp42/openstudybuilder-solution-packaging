@@ -1,9 +1,9 @@
 @REQ_ID:1070683
-Feature: Manage Library Concept CRF Stylesheet Function in Clinical MDR API
+Feature: Manage Library Concept CRF Stylesheet Function in OpenStudyBuilder API
     As an API user, I want to manage the CRF XML Stylesheet function in the Concepts Library API endpoints
 
-    Background: The test user must be able to call the Clinical MDR API and the test data exists
-        Given the test user can call the Clinical MDR API
+    Background: The test user must be able to call the OpenStudyBuilder API and the test data exists
+        Given the test user can call the OpenStudyBuilder API
 
     Scenario: User must be able to get all the names of available XML stylesheets
         When the user calls the API endpoint 'concepts/odms/metadata/xmls/stylesheets'

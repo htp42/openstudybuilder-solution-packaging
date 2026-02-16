@@ -27,7 +27,7 @@ from clinical_mdr_api.models.utils import (
 from common.config import settings
 
 
-class CompactActivityInstanceClass(BaseModel):
+class CompactActivityInstanceClassForActivityItemClass(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     uid: Annotated[
@@ -66,6 +66,24 @@ class CompactActivityInstanceClass(BaseModel):
             }
         ),
     ] = None
+    is_additional_optional: Annotated[
+        bool | None,
+        Field(
+            json_schema_extra={
+                "source": "has_activity_instance_class|is_additional_optional",
+                "nullable": True,
+            }
+        ),
+    ] = False
+    is_default_linked: Annotated[
+        bool | None,
+        Field(
+            json_schema_extra={
+                "source": "has_activity_instance_class|is_default_linked",
+                "nullable": True,
+            }
+        ),
+    ] = False
 
 
 class SimpleDataTypeTerm(BaseModel):
@@ -128,7 +146,7 @@ class SimpleRoleTerm(BaseModel):
     ] = None
 
 
-class SimpleVariableClass(BaseModel):
+class SimpleVariableClassForActivityItemClass(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     uid: Annotated[
@@ -158,14 +176,24 @@ class ActivityItemClass(VersionProperties):
             }
         ),
     ] = None
+    display_name: Annotated[
+        str | None,
+        Field(
+            json_schema_extra={
+                "source": "has_latest_value.display_name",
+                "nullable": True,
+            }
+        ),
+    ] = None
     order: Annotated[int, Field(json_schema_extra={"source": "has_latest_value.order"})]
     data_type: Annotated[SimpleDataTypeTerm, Field()]
     role: Annotated[SimpleRoleTerm, Field()]
     activity_instance_classes: Annotated[
-        list[CompactActivityInstanceClass] | None, Field()
+        list[CompactActivityInstanceClassForActivityItemClass] | None, Field()
     ]
     variable_classes: Annotated[
-        list[SimpleVariableClass] | None, Field(json_schema_extra={"nullable": True})
+        list[SimpleVariableClassForActivityItemClass] | None,
+        Field(json_schema_extra={"nullable": True}),
     ] = None
     library_name: Annotated[
         str, Field(json_schema_extra={"source": "has_library.name"})
@@ -235,11 +263,13 @@ class ActivityItemClass(VersionProperties):
                 if item.uid == activity_instance_class.uid
             )
             activity_instance_classes.append(
-                CompactActivityInstanceClass(
+                CompactActivityInstanceClassForActivityItemClass(
                     uid=activity_instance_class.uid,
                     name=rel.name,
                     mandatory=activity_instance_class.mandatory,
                     is_adam_param_specific_enabled=activity_instance_class.is_adam_param_specific_enabled,
+                    is_additional_optional=activity_instance_class.is_additional_optional,
+                    is_default_linked=activity_instance_class.is_default_linked,
                 )
             )
 
@@ -248,6 +278,7 @@ class ActivityItemClass(VersionProperties):
             name=activity_item_class_ar.name,
             definition=activity_item_class_ar.definition,
             nci_concept_id=activity_item_class_ar.nci_concept_id,
+            display_name=activity_item_class_ar.display_name,
             order=activity_item_class_ar.activity_item_class_vo.order,
             activity_instance_classes=activity_instance_classes,
             data_type=SimpleDataTypeTerm(
@@ -262,7 +293,7 @@ class ActivityItemClass(VersionProperties):
             ),
             variable_classes=(
                 [
-                    SimpleVariableClass(uid=variable_class_uid)
+                    SimpleVariableClassForActivityItemClass(uid=variable_class_uid)
                     for variable_class_uid in activity_item_class_ar.activity_item_class_vo.variable_class_uids
                 ]
                 if activity_item_class_ar.activity_item_class_vo.variable_class_uids
@@ -297,6 +328,15 @@ class CompactActivityItemClass(BaseModel):
             }
         ),
     ] = None
+    display_name: Annotated[
+        str | None,
+        Field(
+            json_schema_extra={
+                "source": "has_latest_value.display_name",
+                "nullable": True,
+            }
+        ),
+    ] = None
     mandatory: Annotated[
         bool | None,
         Field(
@@ -315,11 +355,31 @@ class CompactActivityItemClass(BaseModel):
             }
         ),
     ] = None
+    is_additional_optional: Annotated[
+        bool | None,
+        Field(
+            json_schema_extra={
+                "source": "has_activity_instance_class|is_additional_optional",
+                "nullable": True,
+            }
+        ),
+    ] = False
+    is_default_linked: Annotated[
+        bool | None,
+        Field(
+            json_schema_extra={
+                "source": "has_activity_instance_class|is_default_linked",
+                "nullable": True,
+            }
+        ),
+    ] = False
 
 
 class ActivityInstanceClassRelInput(InputModel):
     uid: Annotated[str, Field(min_length=1)]
     is_adam_param_specific_enabled: Annotated[bool, Field()]
+    is_additional_optional: Annotated[bool, Field()]
+    is_default_linked: Annotated[bool, Field()]
     mandatory: Annotated[bool, Field()]
 
 
@@ -327,6 +387,7 @@ class ActivityItemClassCreateInput(PostInputModel):
     name: Annotated[str, Field()]
     definition: Annotated[str | None, Field(min_length=1)] = None
     nci_concept_id: Annotated[str | None, Field(min_length=1)] = None
+    display_name: Annotated[str | None, Field(min_length=1)] = None
     order: Annotated[int, Field(gt=0, lt=settings.max_int_neo4j)]
     activity_instance_classes: Annotated[list[ActivityInstanceClassRelInput], Field()]
     role_uid: Annotated[str, Field(min_length=1)]
@@ -338,6 +399,7 @@ class ActivityItemClassEditInput(PatchInputModel):
     name: Annotated[str | None, Field(min_length=1)] = None
     definition: Annotated[str | None, Field(min_length=1)] = None
     nci_concept_id: Annotated[str | None, Field(min_length=1)] = None
+    display_name: Annotated[str | None, Field(min_length=1)] = None
     order: Annotated[int | None, Field(gt=0, lt=settings.max_int_neo4j)] = None
     activity_instance_classes: list[ActivityInstanceClassRelInput] = Field(
         default_factory=list
@@ -393,6 +455,7 @@ class ActivityItemClassDetail(BaseModel):
     uid: Annotated[str, Field()]
     name: Annotated[str, Field()]
     definition: Annotated[str | None, Field()] = None
+    display_name: Annotated[str | None, Field()] = None
     nci_code: Annotated[str | None, Field()] = None
     library_name: Annotated[str | None, Field()] = None
     start_date: Annotated[str | None, Field()] = None
@@ -410,6 +473,8 @@ class SimpleActivityInstanceClassForItem(BaseModel):
     uid: Annotated[str, Field()]
     name: Annotated[str, Field()]
     adam_param_specific_enabled: Annotated[bool, Field()] = False
+    is_additional_optional: Annotated[bool, Field()] = False
+    is_default_linked: Annotated[bool, Field()] = False
     mandatory: Annotated[bool, Field()] = False
     modified_date: Annotated[str | None, Field()] = None
     modified_by: Annotated[str | None, Field()] = None

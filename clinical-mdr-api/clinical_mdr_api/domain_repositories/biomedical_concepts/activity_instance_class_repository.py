@@ -81,7 +81,12 @@ class ActivityInstanceClassRepository(  # type: ignore[misc]
             )
         )
 
-    def extend_distinct_headers_query(self, nodeset: NodeSet) -> NodeSet:
+    def extend_distinct_headers_query(
+        self,
+        nodeset: NodeSet,
+        field_name: str,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+    ) -> NodeSet:
         return nodeset.subquery(
             self.root_class.nodes.fetch_relations("has_version")
             .intermediate_transform(
@@ -188,6 +193,12 @@ class ActivityInstanceClassRepository(  # type: ignore[misc]
                         is_adam_param_specific_enabled=activity_item_class.has_activity_instance_class.relationship(
                             root
                         ).is_adam_param_specific_enabled,
+                        is_additional_optional=activity_item_class.has_activity_instance_class.relationship(
+                            root
+                        ).is_additional_optional,
+                        is_default_linked=activity_item_class.has_activity_instance_class.relationship(
+                            root
+                        ).is_default_linked,
                     )
                     for activity_item_class in activity_item_classes
                 ],

@@ -9,8 +9,6 @@ When('Activity subgroup is searched for and found', () => cy.searchAndCheckPrese
 
 When('Activity subgroup is searched for and not found', () => cy.searchAndCheckPresence(activitysubgroup, false))
 
-Given('Custom group name is typed', () => cy.get('[data-cy="groupform-activity-group-dropdown"] input').type(apiGroupName))
-
 Given('Activity subgroup is saved and snackbar message says it is {string}', (action) => saveSubGroup(action))
 
 When('The activity subgroup edition form is filled with data', () => editSubGroup())
@@ -24,7 +22,7 @@ Then('The newly added activity subgroup is visible in the the table', () => {
     cy.checkRowByIndex(0, 'Definition', definition)
 })
 
-When('The Activity groups, Subgroup name, Sentence case name and Definition fields are not filled with data', () => {
+When('The Activity Subgroup name, Sentence case name and Definition fields are not filled with data', () => {
     cy.fillInput('groupform-activity-group-field', 'test')
     cy.clearInput('sentence-case-name-field')
     cy.clearInput('groupform-activity-group-field')
@@ -35,9 +33,7 @@ Then('The user is not able to save the acitivity subgroup', () => {
     cy.get('span.dialog-title').should('be.visible').should('have.text', 'Add activity subgroup'); 
 })
 
-Then('The validation appears for missing subgroup', () => cy.checkIfValidationAppears('groupform-subgroup-class'))
-
-Then('The validation appears for missing group', () => cy.checkIfValidationAppears('groupform-activity-group-class'))
+Then('The validation appears for missing subgroup', () => cy.checkIfValidationAppears('groupform-activity-group-field'))
 
 Then('The validation appears for missing subgroup name', () => cy.checkIfValidationAppears('sentence-case-name-class'))
 
@@ -72,19 +68,15 @@ Given('[API] Second activity subgroup for search test is created', () => cy.crea
 
 Given('[API] Activity subgroup is created', () => cy.createSubGroup())
 
-When('Drafted or Retired group is not available during subgroup creation', () => cy.checkNoDataAvailable())
-
 function fillSubGroupData() {
-    activitysubgroup = `Subgroup${Date.now()}`
-    cy.selectFirstVSelect('groupform-activity-group-dropdown')
-    cy.fillInput('groupform-activity-group-field', activitysubgroup)
+    cy.get('[data-cy="groupform-activity-group-field"] input').click().type(activitysubgroup = `Subgroup${Date.now()}`)
     cy.fillInput('groupform-abbreviation-field', abbreviation)
-    cy.fillInput('groupform-definition-field', definition) 
+    cy.fillInput('groupform-definition-field', definition)
 }
 
 function editSubGroup() {
-    activitysubgroup = `${activitysubgroup}Edited`
-    cy.fillInput('groupform-activity-group-field', activitysubgroup)
+    cy.get('[data-cy="groupform-activity-group-field"] input').should('have.value', activitysubgroup)
+    cy.get('[data-cy="groupform-activity-group-field"] input').click().clear().type(activitysubgroup = `${activitysubgroup}Edited`)
     cy.fillInput('groupform-change-description-field', "e2e test")
 }
 
@@ -96,9 +88,6 @@ function saveSubGroup(action = 'created') {
 }
 
 function createSubGroupViaApi(customName = '') {
-    cy.intercept('/api/concepts/activities/activity-sub-groups?page_number=1&*').as('getData')
-    cy.getFinalGroupUid()
     cy.createSubGroup(customName)
     cy.getSubGroupNameByUid().then(name => activitysubgroup = name)
-    cy.wait('@getData', {timeout: 20000})
 }

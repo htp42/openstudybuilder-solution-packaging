@@ -393,6 +393,7 @@ class StudyDiseaseMilestoneRepository:
                     }
                 },
                 distinct=True,
+                ordering=[field_path],
             )
             .all()
         )

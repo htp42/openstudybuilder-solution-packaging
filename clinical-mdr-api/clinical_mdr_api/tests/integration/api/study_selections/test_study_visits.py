@@ -2382,3 +2382,124 @@ def test_assert_uvn_is_changed_when_group_of_visits_is_modified(api_client):
     assert audit_trail[0]["unique_visit_number"] == 100
     assert audit_trail[1]["unique_visit_number"] == 110
     assert audit_trail[2]["unique_visit_number"] == 100
+
+
+def test_it_is_possible_create_two_study_visits_with_the_same_timing(api_client):
+    test_study = TestUtils.create_study(project_number=project.project_number)
+    study_epoch = create_study_epoch("EpochSubType_0001", study_uid=test_study.uid)
+
+    study_visits_dict = {}
+    for idx_number in range(1, 5):
+        inputs = {
+            "study_epoch_uid": study_epoch.uid,
+            "visit_type_uid": "VisitType_0002",
+            "time_reference_uid": "VisitSubType_0005",
+            "time_value": 10,
+            "time_unit_uid": DAYUID,
+            "visit_class": "SINGLE_VISIT",
+            "visit_subclass": "SINGLE_VISIT",
+            "is_global_anchor_visit": False,
+        }
+        datadict = visits_basic_data.copy()
+        datadict.update(inputs)
+        response = api_client.post(
+            f"/studies/{test_study.uid}/study-visits",
+            json=datadict,
+        )
+        if idx_number < 3:
+            assert_response_status_code(response, 201)
+            res = response.json()
+            assert res["time_value"] == 10
+            assert res["visit_number"] == idx_number
+            assert res["visit_short_name"] == f"V{idx_number}"
+            assert res["unique_visit_number"] == idx_number * 100
+            study_visits_dict[res["uid"]] = res
+        else:
+            assert_response_status_code(response, 409)
+            res = response.json()
+            assert (
+                res["message"] == "There already exists a visit with timing set to 10"
+            )
+
+    response = api_client.get(
+        f"/studies/{test_study.uid}/study-visits",
+    )
+    assert_response_status_code(response, 200)
+    study_visits = response.json()["items"]
+    first_visit_uid = study_visits[0]["uid"]
+    # Edit first StudyVisit with same timing and make sure it's still the first one in schedule
+    new_description = "Edited Visit"
+    datadict.update({"uid": first_visit_uid, "description": new_description})
+    response = api_client.patch(
+        f"/studies/{test_study.uid}/study-visits/{first_visit_uid}",
+        json=datadict,
+    )
+    assert_response_status_code(response, 200)
+    edited_study_visit = response.json()
+    assert edited_study_visit["time_value"] == 10
+    assert edited_study_visit["visit_number"] == 1
+    assert edited_study_visit["visit_short_name"] == "V1"
+    assert edited_study_visit["unique_visit_number"] == 100
+    assert edited_study_visit["description"] == new_description
+
+    # Make sure all study visits are returned in the order they were created
+    response = api_client.get(
+        f"/studies/{test_study.uid}/study-visits",
+    )
+    assert_response_status_code(response, 200)
+    study_visits = response.json()["items"]
+    for study_visit in study_visits:
+        assert study_visit["uid"] in study_visits_dict
+        created_study_visit = study_visits_dict[study_visit["uid"]]
+        assert study_visit["visit_number"] == created_study_visit["visit_number"]
+        assert (
+            study_visit["visit_short_name"] == created_study_visit["visit_short_name"]
+        )
+        assert (
+            study_visit["unique_visit_number"]
+            == created_study_visit["unique_visit_number"]
+        )
+
+    # Although it is possible to create 2 visits with the same timing, it should not be possible 2 visits with timing set to 0
+    inputs = {
+        "study_epoch_uid": study_epoch.uid,
+        "visit_type_uid": "VisitType_0002",
+        "time_reference_uid": "VisitSubType_0005",
+        "time_value": 0,
+        "time_unit_uid": DAYUID,
+        "visit_class": "SINGLE_VISIT",
+        "visit_subclass": "SINGLE_VISIT",
+        "is_global_anchor_visit": True,
+    }
+    datadict = visits_basic_data.copy()
+    datadict.update(inputs)
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-visits",
+        json=datadict,
+    )
+    assert_response_status_code(response, 201)
+    anchor_visit = response.json()
+    assert anchor_visit["time_value"] == 0
+
+    datadict.update({"is_global_anchor_visit": False})
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-visits",
+        json=datadict,
+    )
+    assert_response_status_code(response, 409)
+    res = response.json()
+    assert res["message"] == "There already exists a visit with timing set to 0"
+
+    last_study_visit = study_visits[-1]
+    datadict.update(
+        {
+            "uid": last_study_visit["uid"],
+        }
+    )
+    response = api_client.patch(
+        f"/studies/{test_study.uid}/study-visits/{last_study_visit['uid']}",
+        json=datadict,
+    )
+    assert_response_status_code(response, 409)
+    res = response.json()
+    assert res["message"] == "There already exists a visit with timing set to 0"

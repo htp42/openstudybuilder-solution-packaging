@@ -1,0 +1,4 @@
+CODELIST_SUBMVAL,TERM_SUBMVAL,SPONSOR_NAME,SPONSOR_NAME_SENTENCE_CASE,NCI_PREFERRED_NAME,ORDER,CONCEPT_ID,CATALOGUES,DEFINITION
+DEVELOPMENT_STAGE,PLTSTAGE,Pilot Stage,pilot stage,Pilot stage,1,,,Sponsor terminology for Pilot stage
+DEVELOPMENT_STAGE,PVTLSTAGE,Pivotal Stage,pivotal stage,Pivotal stage,2,,,Sponsor terminology for Pivotal stage
+DEVELOPMENT_STAGE,POSTMRKTSTAGE,Post-market Stage,post-market stage,Post-market stage,3,,,Sponsor terminology for Post-market stage

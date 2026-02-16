@@ -103,13 +103,12 @@
               clearable
               :rules="[formRules.required]"
               return-object
-              @update:model-value="filterSubGroups"
             />
             <v-autocomplete
               v-model="subgroup"
               :label="$t('ActivityForms.activity_subgroup')"
               data-cy="sponsorform-activity-subgroup-dropdown"
-              :items="filteredSubGroups"
+              :items="subGroups"
               item-title="name"
               item-value="uid"
               density="compact"
@@ -339,7 +338,6 @@ export default {
       ],
       options: {},
       total: 0,
-      filteredSubGroups: [],
       showRejectForm: false,
     }
   },
@@ -384,16 +382,6 @@ export default {
         this.activity = { activity_groupings: [{}] }
       }
       this.getGroups()
-    },
-    filterSubGroups() {
-      this.subgroup = null
-      if (!this.group.uid) {
-        this.filteredSubGroups = []
-      }
-      this.filteredSubGroups = this.subGroups.filter(
-        (el) =>
-          el.activity_groups.find((o) => o.uid === this.group.uid) !== undefined
-      )
     },
     getObserver(step) {
       return this.$refs[`observer_${step}`]
@@ -460,8 +448,6 @@ export default {
           (sg) =>
             sg.uid === this.activity.activity_groupings[0].activity_group_uid
         )
-
-        this.filterSubGroups()
         this.subgroup = this.subGroups.find(
           (sg) =>
             sg.uid === this.activity.activity_groupings[0].activity_subgroup_uid

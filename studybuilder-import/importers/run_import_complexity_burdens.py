@@ -39,9 +39,13 @@ class ComplexityBurdens(BaseImporter):
 
         existing_subgroups = {}
         for item in all_subgroups:
-            existing_subgroups[item["name"].strip().lower()] = {
-                "uid": item["uid"],
-            }
+            normalized_name = " ".join(item["name"].split())
+
+            activity_subgroup_uids = existing_subgroups.get(normalized_name)
+            if activity_subgroup_uids:
+                activity_subgroup_uids.append(item["uid"])
+            else:
+                existing_subgroups[normalized_name] = [item["uid"]]
 
         r = csv.DictReader(file)
         for line in r:
@@ -49,23 +53,25 @@ class ComplexityBurdens(BaseImporter):
 
             if data["burden_id"] and data["burden_id"].strip().lower() != "null":
                 activity_subgroup_uid = None
-                matched_subgroup = existing_subgroups.get(
-                    data["activity_subgroup_name"].strip().lower()
+                normalized_activity_subgroup_name = " ".join(
+                    data["activity_subgroup_name"].split()
                 )
-                if matched_subgroup:
-                    activity_subgroup_uid = matched_subgroup["uid"]
-                    self.log.info(
-                        f"Mapping Activity Subgroup '{data['activity_subgroup_name']}' to Burden '{data['burden_id']}'"
-                    )
+                matched_subgroup_uids = existing_subgroups.get(
+                    normalized_activity_subgroup_name
+                )
+                if matched_subgroup_uids:
+                    for activity_subgroup_uid in matched_subgroup_uids:
+                        self.log.info(
+                            f"Mapping Activity Subgroup '{data['activity_subgroup_name']}' to Burden '{data['burden_id']}'"
+                        )
+                        url = f"admin/complexity-scores/burdens/activity-burdens/{activity_subgroup_uid}"
+                        path = "admin/complexity-scores/activity-burdens"
+                        self.api.simple_put(data, url, path)
                 else:
                     self.log.warning(
                         f"Activity Subgroup '{data['activity_subgroup_name']}' not found, skipping..."
                     )
                     continue
-
-                url = f"admin/complexity-scores/burdens/activity-burdens/{activity_subgroup_uid}"
-                path = "admin/complexity-scores/activity-burdens"
-                self.api.simple_put(data, url, path)
 
     def run(self):
         self.log.info("Importing complexity score burdens")

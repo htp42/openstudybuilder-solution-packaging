@@ -1,11 +1,11 @@
 @REQ_ID:1070684
-Feature: Pre-Instantiations and Study Instantiations of template text from Syntax Templates in Clinical MDR API
+Feature: Pre-Instantiations and Study Instantiations of template text from Syntax Templates in OpenStudyBuilder API
 
 # This feature describes rules for how template text is to be instantiated from syntax templates
 # It covers both pre-instantiations and instantiations made at study level
 
-    Background: Test user must be able to call the Clinical MDR API and test data must exist
-        Given The test user can call the Clinical MDR API
+    Background: Test user must be able to call the OpenStudyBuilder API and test data must exist
+        Given The test user can call the OpenStudyBuilder API
         And a test study identified by 'uid' is in status 'Locked' for the 'study_value_version'
 
 Rule: As an API user

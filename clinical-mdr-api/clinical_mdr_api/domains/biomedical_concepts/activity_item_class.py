@@ -1,8 +1,6 @@
 from dataclasses import dataclass
 from typing import AbstractSet, Callable, Self
 
-from pydantic import BaseModel
-
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemAggregateRootBase,
     LibraryItemMetadataVO,
@@ -22,9 +20,12 @@ class ActivityInstanceClassActivityItemClassRelVO:
     uid: str
     mandatory: bool
     is_adam_param_specific_enabled: bool
+    is_additional_optional: bool
+    is_default_linked: bool
 
 
-class CTTermItem(BaseModel):
+@dataclass(frozen=True)
+class CTTermItem:
     uid: str
     name: str | None = None
     codelist_uid: str | None = None
@@ -40,6 +41,7 @@ class ActivityItemClassVO:
     definition: str | None
     nci_concept_id: str | None
     order: int
+    display_name: str | None
     activity_instance_classes: list[ActivityInstanceClassActivityItemClassRelVO]
     data_type: CTTermItem
     role: CTTermItem
@@ -56,6 +58,7 @@ class ActivityItemClassVO:
         definition: str | None = None,
         nci_concept_id: str | None = None,
         variable_class_uids: list[str] | None = None,
+        display_name: str | None = None,
     ) -> Self:
         activity_item_class_vo = cls(
             name=name,
@@ -66,6 +69,7 @@ class ActivityItemClassVO:
             variable_class_uids=variable_class_uids,
             definition=definition,
             nci_concept_id=nci_concept_id,
+            display_name=display_name,
         )
 
         return activity_item_class_vo
@@ -126,6 +130,10 @@ class ActivityItemClassAR(LibraryItemAggregateRootBase):
     @property
     def nci_concept_id(self) -> str | None:
         return self._activity_item_class_vo.nci_concept_id
+
+    @property
+    def display_name(self) -> str | None:
+        return self._activity_item_class_vo.display_name
 
     @classmethod
     def from_repository_values(

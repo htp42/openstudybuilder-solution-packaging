@@ -45,7 +45,8 @@ Feature: Studies - Define Study - Registry Identifiers
          | NMPA Number                                       | Azerty0123 |
          | EUDAMED number                                    | Azerty9999 |
          | Investigational Device Exemption Number           | Azerty1111 |
-
+		And Form save button is clicked
+		And The form is no longer available
       Then The identifiers table is showing following data
          | identifier                                        | value      |
          | ClinicalTrials.gov ID                             | Azerty1234 |
@@ -78,8 +79,9 @@ Feature: Studies - Define Study - Registry Identifiers
          | NMPA Number                                       |
          | EUDAMED number                                    |
          | Investigational Device Exemption Number           |
-
-      Then The identifiers table is showing following data
+		And Form save button is clicked
+		And The form is no longer available
+      Then The identifiers table is showing following data in column Reason for missing
          | identifier                                        | value          |
          | ClinicalTrials.gov ID                             | Not applicable |
          | EUDRACT ID                                        | Not applicable |

@@ -1,5 +1,131 @@
 # OpenStudyBuilder (OSB) Commits changelog
 
+## V 2.4
+
+New Features and Enhancements
+============
+
+### Fixes and Enhancements
+
+- Corrections and improvements to Library -> Concepts -> Compounds and Studies -> Define Study -> Study Interventions.
+- Simplified model for Activity Group and Subgroup. The link between subgroup and group has been removed. Activities are now free to choose any combination of group and subgroup. This change was made to make it easier to maintain the Activity library.
+- Define Study, Study Structure, Design Matrix now support definition of SDTM transition rule.
+- Adding two new flag attributes on relationship from Activity Instance Class to Activity Item Class for indicating if this is to be a default linkage or an additional optional selection. 
+- Improvements on field labels in activity instance wizard stepper.
+- User guide added in documentation portal for neodash CRF Library Version report.
+- Support for USDM version 4.0. Note only for a partial scope, additional scope coverage will be gradually added in subsequent releases.
+- In 'Define Study/Study Structure/Study Visits page' the Epoch column now stay visible when 'edit mode' is selected and the column selections doesn't reset when page is changed. 
+- Removes duplicated query parameter to /concepts/activities/activities endpoints that splits one Activity object if it contains more than 1 activity grouping into separate instances. The same can be obtained by using already existing group_by_groupings query parameter.
+- Activity requests (placeholders) can now be exchanged for multiple activities.
+- The wizard stepper for creating activity instances now includes enhanced form restriction messages, more user-friendly notifications, and improved stability across the different phases of the form.
+- Implement openapi.json changes to use unique titles for classes to enable class generators using titles as keys.
+
+### New Feature
+
+- It is now possible to onboard interventional device studies.
+- The users will be able to set up studies with overlapping Main and Extension parts now as well as split Main and Extension SoAs in protocol.
+- Study complexity score number added to the Detailed SoA page.
+- Consumer API improved to support extract of masked audit trail data for process data mining.
+- Study Data Specification, Study Activity Instances now support linkage to study data suppliers including definition of origin type and origin source.
+- 'EU PAS number' added to registry identifiers, which will allow to onboard relevant (in-house) NIS and DAS studies.
+- Initial pilot implementation of linking CRF elements to the Activity Instances and Activity Items, as the biomedical concepts in OSB. This is to support creation of initial CRF library content with Activity Concepts linkage. The implementation will continue with usability improvements in coming releases.
+- The Study Activity Instances table now includes an edit mode, enabling batch add/modify of Important flag, Baseline visits and Data Supplier details (Name, Origin Type and Source) directly in the table.
+- Added feature flags to control visibility of Study Data Suppliers page and create button in the UI.
+- Added feature flag configuration entries (disabled in production, enabled in E2E test environment).
+- Improved navigation within the collapsed visit functionality: 
+  - Guidance on why some visits cannot be collapsed
+  - That collapsed visits groups cannot be edited 
+  - Handling of footnotes in collapsed visit groups and 
+  - Possibility to collapse non-consecutive visits in a list view (relevant for large SoAs)
+
+### Performance Improvements
+ 
+Faster editing of Study Design Matrix on 'Study Structure > Design Matrix' page
+
+### End-to-End Automated test enhancements
+
+- Various code improvements to ensure easier maintenance and overall tests stability.
+- Library > Concepts > Activities > Activity Instances: Tests refactorization to support changes for NumericFindings Activity Instance Class.
+- Library > Concepts > Activities > Activity Instances: Defined and Implemented test for checking requested activities visibility in the Wizard Stepper.
+- Library > Concepts > Activities > Activity Instances: Defined and Implemented test for checking visibility of selected activity in the Wizard Stepper.
+- Library > Concepts > Activities: Adjusted tests to removal of group-subgroup linkage.
+- Studies > Define Study > Study Structure > Design Matrix: Defined and Implemented tests for checking transition rules.
+- Studies > Define Study > Study Structure > Study Visits: Defined and Implemented tests for multiple visits on same day.
+- Studies > Define Study > Study Properties > Study Type: Updated tests for Study Development Stage Classification
+- Studies > Define Study > Study Activities: Defined and Implemented tests for exchaning study activity and activity placeholder.
+- Studies > Define Study > Study Activities > Protocol SoA: Defined and Implemented tests for splitting the view.
+- Studies > Define Study > Study Activities > Detailed SoA: Updated tests for collapsing visits.
+- Studies > Define Study > Study Activities > Detailed SoA: Defined and Implemented tests for Complexity Score.
+- Studies > Define Study > Study Activities > Detailed SoA: Defined and Implemented tests for verification of placeholders visibility.
+- Studies > Define Study > Data Specifications > Study Activity Instances: Defined and Implemented tests for verification of placeholders visibility.
+- Studies > Define Study > Data Specifications > Study Activity Instances: Defined and Implemented tests for edition mode.
+- Studies > Define Study > Data Specifications > Study Activity Instances: Defined and Implemented tests for assignment of Data Suppliers.
+
+Solved Bugs
+============
+
+### CDISC
+
+ **Import** 
+
+- Update CDISC import script to use author_id for user identification
+
+### Library
+
+ **Concepts -> Activities -> Activities** 
+
+- Missing loading indication when switching between statuses
+- Search field value cleared when switching between status filter
+
+ **Concepts -> Activities -> Activity Instance Classes -> Overview Page** 
+
+- Search refresh issue
+
+ **Concepts -> Activities -> Activity Overview Page** 
+
+- Duplicated items in Activity groupings table
+
+ **Data Collection Standards -> CRF Builder -> Items** 
+
+- Edit Item - Alias - Rows per page - All
+- Removed term are still selectable at the Item level
+
+ **Overview Pages -> Study Structures** 
+
+- Filters values are not sorted
+- Poor performance on filtering
+
+### Studies
+
+ **Define Study -> Data Specification**
+
+ - Sorting Activity Instance Column Returns an Error
+
+ **Define Study -> Study Activities -> Schedule of Activities** 
+
+- Visit grouping in locked protocol SoA
+
+ **Define Study -> Study Properties -> Study Attributes** 
+
+- Error thrown when trying to edit attributes of study subpart
+
+ **Define Study -> Study Structure -> Design Matrix** 
+
+- Incorrect Pagination
+
+ **Define Study > Study Structure > Study Epochs** 
+
+- Study Epoch API is not robust against changes in CDISC codelists
+
+ **Manage Study > Study Core Attributes** 
+
+- Not possible to edit study to update study number or project
+
+ **Study List -> Study List** 
+
+- Blocked save button, when trying to add a study with already existing number
+
+
 ## V 2.3
 
 New Features and Enhancements

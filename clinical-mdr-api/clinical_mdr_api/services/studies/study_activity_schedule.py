@@ -271,4 +271,5 @@ class StudyActivityScheduleService(StudySelectionMixin):
                         content=BatchErrorResponse(message=str(error)),
                     )
                 )
+                raise error
         return results

@@ -75,6 +75,119 @@
     </template>
     <template #[`step.selectFromStudies`]>
       <v-col cols="12">
+        <v-card
+          v-if="exchangeMode && exchangeActivityData"
+          elevation="0"
+          class="mb-4"
+          color="nnBaseBlue"
+          rounded="lg"
+        >
+          <v-card-text class="pa-4">
+            <div class="d-flex align-center flex-wrap ga-2">
+              <span class="text-body-2 font-weight-medium mr-2">
+                {{
+                  isExchangeActivityFromRequestLibrary
+                    ? $t('StudyActivityForm.exchanging_placeholder')
+                    : $t('StudyActivityForm.exchanging_study_activity')
+                }}:
+              </span>
+              <div
+                v-if="exchangeActivityData.study_soa_group"
+                class="d-flex align-center ga-1"
+              >
+                <span class="text-body-2">
+                  {{ $t('StudyActivityForm.flowchart_group') }}:
+                  {{ exchangeActivityData.study_soa_group.soa_group_term_name }}
+                </span>
+                <v-icon
+                  :icon="
+                    exchangeActivityData.show_soa_group_in_protocol_flowchart
+                      ? 'mdi-eye-outline'
+                      : 'mdi-eye-off-outline'
+                  "
+                  :color="
+                    exchangeActivityData.show_soa_group_in_protocol_flowchart
+                      ? 'success'
+                      : undefined
+                  "
+                  size="small"
+                />
+              </div>
+              <div
+                v-if="exchangeActivityData.study_activity_group"
+                class="d-flex align-center ga-1"
+              >
+                <span class="text-body-2">
+                  {{ $t('StudyActivity.activity_group') }}:
+                  {{
+                    exchangeActivityData.study_activity_group
+                      .activity_group_name
+                  }}
+                </span>
+                <v-icon
+                  :icon="
+                    exchangeActivityData.show_activity_group_in_protocol_flowchart
+                      ? 'mdi-eye-outline'
+                      : 'mdi-eye-off-outline'
+                  "
+                  :color="
+                    exchangeActivityData.show_activity_group_in_protocol_flowchart
+                      ? 'success'
+                      : undefined
+                  "
+                  size="small"
+                />
+              </div>
+              <div
+                v-if="exchangeActivityData.study_activity_subgroup"
+                class="d-flex align-center ga-1"
+              >
+                <span class="text-body-2">
+                  {{ $t('StudyActivity.activity_sub_group') }}:
+                  {{
+                    exchangeActivityData.study_activity_subgroup
+                      .activity_subgroup_name
+                  }}
+                </span>
+                <v-icon
+                  :icon="
+                    exchangeActivityData.show_activity_subgroup_in_protocol_flowchart
+                      ? 'mdi-eye-outline'
+                      : 'mdi-eye-off-outline'
+                  "
+                  :color="
+                    exchangeActivityData.show_activity_subgroup_in_protocol_flowchart
+                      ? 'success'
+                      : undefined
+                  "
+                  size="small"
+                />
+              </div>
+              <div
+                v-if="exchangeActivityData.activity"
+                class="d-flex align-center ga-1"
+              >
+                <span class="text-body-2">
+                  {{ $t('StudyActivity.activity') }}:
+                  {{ exchangeActivityData.activity.name }}
+                </span>
+                <v-icon
+                  :icon="
+                    exchangeActivityData.show_activity_in_protocol_flowchart
+                      ? 'mdi-eye-outline'
+                      : 'mdi-eye-off-outline'
+                  "
+                  :color="
+                    exchangeActivityData.show_activity_in_protocol_flowchart
+                      ? 'success'
+                      : undefined
+                  "
+                  size="small"
+                />
+              </div>
+            </div>
+          </v-card-text>
+        </v-card>
         <NNTable
           v-if="selectedStudy"
           key="studyActivityTable"
@@ -166,6 +279,119 @@
     </template>
     <template #[`step.selectFromLibrary`]>
       <v-col cols="12">
+        <v-card
+          v-if="exchangeMode && exchangeActivityData"
+          elevation="0"
+          class="mb-4"
+          color="nnBaseBlue"
+          rounded="lg"
+        >
+          <v-card-text class="pa-4">
+            <div class="d-flex align-center flex-wrap ga-2">
+              <span class="text-body-2 font-weight-medium mr-2">
+                {{
+                  isExchangeActivityFromRequestLibrary
+                    ? $t('StudyActivityForm.exchanging_placeholder')
+                    : $t('StudyActivityForm.exchanging_study_activity')
+                }}:
+              </span>
+              <div
+                v-if="exchangeActivityData.study_soa_group"
+                class="d-flex align-center ga-1"
+              >
+                <span class="text-body-2">
+                  {{ $t('StudyActivityForm.flowchart_group') }}:
+                  {{ exchangeActivityData.study_soa_group.soa_group_term_name }}
+                </span>
+                <v-icon
+                  :icon="
+                    exchangeActivityData.show_soa_group_in_protocol_flowchart
+                      ? 'mdi-eye-outline'
+                      : 'mdi-eye-off-outline'
+                  "
+                  :color="
+                    exchangeActivityData.show_soa_group_in_protocol_flowchart
+                      ? 'success'
+                      : undefined
+                  "
+                  size="small"
+                />
+              </div>
+              <div
+                v-if="exchangeActivityData.study_activity_group"
+                class="d-flex align-center ga-1"
+              >
+                <span class="text-body-2">
+                  {{ $t('StudyActivity.activity_group') }}:
+                  {{
+                    exchangeActivityData.study_activity_group
+                      .activity_group_name
+                  }}
+                </span>
+                <v-icon
+                  :icon="
+                    exchangeActivityData.show_activity_group_in_protocol_flowchart
+                      ? 'mdi-eye-outline'
+                      : 'mdi-eye-off-outline'
+                  "
+                  :color="
+                    exchangeActivityData.show_activity_group_in_protocol_flowchart
+                      ? 'success'
+                      : undefined
+                  "
+                  size="small"
+                />
+              </div>
+              <div
+                v-if="exchangeActivityData.study_activity_subgroup"
+                class="d-flex align-center ga-1"
+              >
+                <span class="text-body-2">
+                  {{ $t('StudyActivity.activity_sub_group') }}:
+                  {{
+                    exchangeActivityData.study_activity_subgroup
+                      .activity_subgroup_name
+                  }}
+                </span>
+                <v-icon
+                  :icon="
+                    exchangeActivityData.show_activity_subgroup_in_protocol_flowchart
+                      ? 'mdi-eye-outline'
+                      : 'mdi-eye-off-outline'
+                  "
+                  :color="
+                    exchangeActivityData.show_activity_subgroup_in_protocol_flowchart
+                      ? 'success'
+                      : undefined
+                  "
+                  size="small"
+                />
+              </div>
+              <div
+                v-if="exchangeActivityData.activity"
+                class="d-flex align-center ga-1"
+              >
+                <span class="text-body-2">
+                  {{ $t('StudyActivity.activity') }}:
+                  {{ exchangeActivityData.activity.name }}
+                </span>
+                <v-icon
+                  :icon="
+                    exchangeActivityData.show_activity_in_protocol_flowchart
+                      ? 'mdi-eye-outline'
+                      : 'mdi-eye-off-outline'
+                  "
+                  :color="
+                    exchangeActivityData.show_activity_in_protocol_flowchart
+                      ? 'success'
+                      : undefined
+                  "
+                  size="small"
+                />
+              </div>
+            </div>
+          </v-card-text>
+        </v-card>
         <NNTable
           key="activityTable"
           ref="selectionLibraryTable"
@@ -218,6 +444,12 @@
               return-object
               clearable
             />
+          </template>
+          <template #[`item.activity_group.name`]="{ item }">
+            {{ item.activity_groupings?.[0]?.activity_group_name || '-' }}
+          </template>
+          <template #[`item.activity_subgroup.name`]="{ item }">
+            {{ item.activity_groupings?.[0]?.activity_subgroup_name || '-' }}
           </template>
           <template #[`item.soa_group`]="{ item }">
             <v-autocomplete
@@ -311,6 +543,11 @@
                 color="nnBaseBlue"
                 density="compact"
                 clearable
+                :rules="
+                  form.activity_groupings[0].activity_subgroup_uid
+                    ? [formRules.required]
+                    : []
+                "
               />
             </v-col>
             <v-col cols="3">
@@ -318,7 +555,7 @@
                 v-model="form.activity_groupings[0].activity_subgroup_uid"
                 :label="$t('ActivityForms.activity_subgroup')"
                 data-cy="activity-subgroup"
-                :items="filteredSubGroups"
+                :items="subgroups"
                 item-title="name"
                 item-value="uid"
                 rounded="lg"
@@ -330,9 +567,6 @@
                   form.activity_groupings[0].activity_group_uid
                     ? [formRules.required]
                     : []
-                "
-                :disabled="
-                  form.activity_groupings[0].activity_group_uid ? false : true
                 "
               />
             </v-col>
@@ -559,6 +793,8 @@ const timeout = ref(null)
 const sameGroup = ref(false)
 const unifiedGroup = ref(null)
 const stopLoading = ref(null)
+const isExchangeActivityFromRequestLibrary = ref(false)
+const exchangeActivityData = ref(null)
 
 const requestTypes = [
   {
@@ -582,14 +818,14 @@ const activityHeaders = [
   },
   {
     title: t('StudyActivity.activity_group'),
-    key: 'activity_group_name',
-    split_activity_by_groupings: true,
+    key: 'activity_group.name',
+    externalFilterSource: 'concepts/activities/activity-groups$name',
     exludeFromHeader: ['is_data_collected'],
   },
   {
     title: t('StudyActivity.activity_sub_group'),
-    split_activity_by_groupings: true,
-    key: 'activity_subgroup_name',
+    key: 'activity_subgroup.name',
+    externalFilterSource: 'concepts/activities/activity-sub-groups$name',
     exludeFromHeader: ['is_data_collected'],
   },
   {
@@ -601,7 +837,6 @@ const activityHeaders = [
   { title: t('ActivityTable.synonyms'), key: 'synonyms' },
   { title: t('_global.abbreviation'), key: 'abbreviation' },
   { title: t('StudyActivity.data_collection'), key: 'is_data_collected' },
-  { title: t('_global.status'), key: 'status' },
 ]
 
 const selectFromStudiesSteps = [
@@ -653,18 +888,6 @@ const studyActivityHeaders = [
 ]
 const initialFilters = { status: [statuses.FINAL] }
 
-const filteredSubGroups = computed(() => {
-  if (!form.value.activity_groupings[0].activity_group_uid) {
-    return []
-  }
-  return subgroups.value.filter(
-    (el) =>
-      el.activity_groups.find(
-        (o) => o.uid === form.value.activity_groupings[0].activity_group_uid
-      ) !== undefined
-  )
-})
-
 const title = computed(() => {
   if (props.exchangeMode) {
     return t('DetailedFlowchart.exchange_study_activity')
@@ -677,14 +900,6 @@ const successMessage = computed(() => {
     return t('DetailedFlowchart.exchange_success')
   }
   return t('StudyActivityForm.add_success')
-})
-
-watch(filteredSubGroups, (value) => {
-  if (value.length === 1) {
-    form.value.activity_groupings[0].activity_subgroup_uid = value[0].uid
-  } else {
-    form.value.activity_groupings[0].activity_subgroup_uid = null
-  }
 })
 
 watch(creationMode, (value) => {
@@ -705,6 +920,34 @@ watch(selectedStudy, () => {
     selectionTable.value.filterTable()
   }
 })
+
+watch(
+  () => [props.exchangeMode, props.exchangeActivityUid],
+  () => {
+    // Check if exchange activity is a placeholder (from Requested library)
+    // Placeholders allow multiple activity selections: first replaces placeholder, rest create new activities
+    if (props.exchangeMode && props.exchangeActivityUid) {
+      study
+        .getStudyActivity(
+          studiesGeneralStore.selectedStudy.uid,
+          props.exchangeActivityUid
+        )
+        .then((resp) => {
+          exchangeActivityData.value = resp.data
+          isExchangeActivityFromRequestLibrary.value =
+            resp.data.activity.library_name === libConstants.LIBRARY_REQUESTED
+        })
+        .catch(() => {
+          exchangeActivityData.value = null
+          isExchangeActivityFromRequestLibrary.value = false
+        })
+    } else {
+      exchangeActivityData.value = null
+      isExchangeActivityFromRequestLibrary.value = false
+    }
+  },
+  { immediate: true }
+)
 
 steps.value = selectFromLibrarySteps
 
@@ -749,6 +992,8 @@ function close() {
     name: '',
     activity_groupings: [{}],
   }
+  isExchangeActivityFromRequestLibrary.value = false
+  exchangeActivityData.value = null
   stepper.value.reset()
 }
 
@@ -916,31 +1161,51 @@ function getActivities(filters, options) {
     // New filters, also reset current page
     savedFilters.value = filters
   }
-  const params = {
-    page_number: options ? options.page : 1,
-    page_size: options ? options.itemsPerPage : 15,
-    library_name: libConstants.LIBRARY_SPONSOR,
-    total_count: true,
-    filters: JSON.parse(savedFilters.value),
-    split_activity_by_groupings: true,
-  }
-  if (options && options.sortBy && options.sortBy.length) {
-    const ascending = options.sortBy[0].order === 'asc'
-    params.sort_by = `{"${options.sortBy[0].key}":${ascending}}`
-  }
-  activitiesApi.get(params, 'activities').then((resp) => {
-    activities.value = resp.data.items
-    if (selectedActivities.value.length > 0) {
-      for (const sa of selectedActivities.value) {
-        activities.value[
-          activities.value.indexOf(
-            activities.value.find((ac) => ac.item_key === sa.item_key)
-          )
-        ] = sa
-      }
+  try {
+    const filtersObj = JSON.parse(savedFilters.value)
+    const params = {
+      page_number: options ? options.page : 1,
+      page_size: options ? options.itemsPerPage : 15,
+      library_name: libConstants.LIBRARY_SPONSOR,
+      total_count: true,
+      group_by_groupings: false,
     }
-    activitiesTotal.value = resp.data.total
-  })
+    if (filtersObj['activity_group.name']) {
+      params.activity_group_names = []
+      filtersObj['activity_group.name'].v.forEach((value) => {
+        params.activity_group_names.push(value)
+      })
+      delete filtersObj['activity_group.name']
+    }
+    if (filtersObj['activity_subgroup.name']) {
+      params.activity_subgroup_names = []
+      filtersObj['activity_subgroup.name'].v.forEach((value) => {
+        params.activity_subgroup_names.push(value)
+      })
+      delete filtersObj['activity_subgroup.name']
+    }
+    filtersObj.status = { v: [statuses.FINAL] }
+    params.filters = JSON.stringify(filtersObj)
+    if (options && options.sortBy && options.sortBy.length) {
+      const ascending = options.sortBy[0].order === 'asc'
+      params.sort_by = `{"${options.sortBy[0].key}":${ascending}}`
+    }
+    activitiesApi.get(params, 'activities').then((resp) => {
+      activities.value = resp.data.items
+      if (selectedActivities.value.length > 0) {
+        for (const sa of selectedActivities.value) {
+          activities.value[
+            activities.value.indexOf(
+              activities.value.find((ac) => ac.item_key === sa.item_key)
+            )
+          ] = sa
+        }
+      }
+      activitiesTotal.value = resp.data.total
+    })
+  } catch (error) {
+    console.error(error)
+  }
 }
 
 function modifyFilters(jsonFilter, params, externalFilterSource) {
@@ -967,6 +1232,7 @@ function modifyFilters(jsonFilter, params, externalFilterSource) {
   }
   if (creationMode.value === 'selectFromLibrary') {
     jsonFilter.library_name = { v: [libConstants.LIBRARY_SPONSOR] }
+    jsonFilter.status = { v: [statuses.FINAL] }
   } else {
     jsonFilter['activity.library_name'] = { v: [libConstants.LIBRARY_SPONSOR] }
   }
@@ -1019,11 +1285,40 @@ function isGroupingValid(studyActivity) {
 }
 
 function multipleSelectedInExchangeMode(item) {
+  // Only allow multiple selections in exchange mode if the activity being exchanged is a placeholder (from Requested library)
+  // When exchanging a placeholder: first activity replaces it, remaining activities create new study activities
+  if (props.exchangeMode && isExchangeActivityFromRequestLibrary.value) {
+    return false // false = don't disable, allow multiple selections
+  }
+  // Otherwise, restrict to single selection (original behavior for non-placeholder exchanges)
   if (selectedActivities.value.length > 0 && props.exchangeMode) {
-    if (item && selectedActivities.value[0].uid === item.uid) {
+    if (!item) {
       return false
     }
-    return true
+
+    // Get the first selected item to compare against
+    const firstSelected = selectedActivities.value[0]
+
+    // Check if this item is the first selected item
+    let isFirstSelected = false
+    if (creationMode.value === 'selectFromStudies') {
+      // For "Select from Studies", compare by uid, study_activity_uid, or item_key
+      isFirstSelected =
+        (firstSelected.uid && firstSelected.uid === item.uid) ||
+        (firstSelected.study_activity_uid &&
+          firstSelected.study_activity_uid === item.study_activity_uid) ||
+        (firstSelected.item_key && firstSelected.item_key === item.item_key) ||
+        firstSelected === item
+    } else {
+      // For "Select from Library", compare by item_key or uid
+      isFirstSelected =
+        (firstSelected.item_key && firstSelected.item_key === item.item_key) ||
+        (firstSelected.uid && firstSelected.uid === item.uid) ||
+        firstSelected === item
+    }
+
+    // Disable all items except the first selected one
+    return !isFirstSelected
   }
   return false
 }
@@ -1052,13 +1347,24 @@ function isActivitySelected(activity) {
   if (studyActivities.value) {
     let selected
     if (studyActivities.value.length) {
+      // Extract group and subgroup UIDs from activity (handle multiple structures)
+      // Library activities may have them in different locations
+      const activityGroupUid =
+        activity.activity_group_uid ||
+        activity.activity_group?.uid ||
+        activity.activity_groupings?.[0]?.activity_group_uid
+
+      const activitySubgroupUid =
+        activity.activity_subgroup_uid ||
+        activity.activity_subgroup?.uid ||
+        activity.activity_groupings?.[0]?.activity_subgroup_uid
+
       selected = studyActivities.value.find(
         (item) =>
           item.activity.uid === activity.uid &&
-          item.study_activity_group.activity_group_uid ===
-            activity.activity_group_uid &&
+          item.study_activity_group.activity_group_uid === activityGroupUid &&
           item.study_activity_subgroup.activity_subgroup_uid ===
-            activity.activity_subgroup_uid
+            activitySubgroupUid
       )
     }
     return selected !== undefined
@@ -1106,14 +1412,25 @@ function getCreationPayload(selectedItem) {
       activity_uid: selectedItem.uid,
       order: props.order,
     }
-    if (form.value.activity_groupings) {
+    // Always include activity_group_uid and activity_subgroup_uid if available
+    if (selectedItem.activity_group_uid) {
       result.activity_group_uid = selectedItem.activity_group_uid
-        ? selectedItem.activity_group_uid
-        : selectedItem.activity_group.uid
-      result.activity_subgroup_uid = selectedItem.activity_subgroup_uid
-        ? selectedItem.activity_subgroup_uid
-        : selectedItem.activity_subgroup.uid
+    } else if (selectedItem.activity_group?.uid) {
+      result.activity_group_uid = selectedItem.activity_group.uid
+    } else if (selectedItem.activity_groupings?.[0]?.activity_group_uid) {
+      result.activity_group_uid =
+        selectedItem.activity_groupings[0].activity_group_uid
     }
+
+    if (selectedItem.activity_subgroup_uid) {
+      result.activity_subgroup_uid = selectedItem.activity_subgroup_uid
+    } else if (selectedItem.activity_subgroup?.uid) {
+      result.activity_subgroup_uid = selectedItem.activity_subgroup.uid
+    } else if (selectedItem.activity_groupings?.[0]?.activity_subgroup_uid) {
+      result.activity_subgroup_uid =
+        selectedItem.activity_groupings[0].activity_subgroup_uid
+    }
+
     return result
   }
 
@@ -1159,15 +1476,26 @@ async function batchCreateStudyActivities() {
 }
 
 async function exchangeStudyActivity() {
+  // Create replacements array for all selected activities
+  // API behavior: First replacement replaces the placeholder, remaining replacements create new study activities
+  const replacements = []
   for (const item of selectedActivities.value) {
     let payload = getCreationPayload(item)
-    payload.show_activity_in_protocol_flowchart = false
-    await study.exchangeStudyActivity(
-      studiesGeneralStore.selectedStudy.uid,
-      props.exchangeActivityUid,
-      payload
-    )
+    const replacement = {
+      show_activity_in_protocol_flowchart: false,
+      soa_group_term_uid: payload.soa_group_term_uid,
+      activity_group_uid: payload.activity_group_uid,
+      activity_subgroup_uid: payload.activity_subgroup_uid,
+      keep_old_version: false,
+      activity_uid: payload.activity_uid,
+    }
+    replacements.push(replacement)
   }
+  await study.exchangeStudyActivity(
+    studiesGeneralStore.selectedStudy.uid,
+    props.exchangeActivityUid,
+    { replacements }
+  )
 }
 
 async function submit() {
@@ -1262,6 +1590,14 @@ async function submit() {
     }
   } catch (error) {
     stepper.value.loading = false
+    notificationHub.add({
+      type: 'error',
+      msg:
+        error.response?.data?.message ||
+        error.message ||
+        t('StudyActivityForm.exchange_error'),
+    })
+    resetLoading.value += 1
     return
   }
   if (errors.length) {

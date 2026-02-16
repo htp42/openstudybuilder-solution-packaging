@@ -31,51 +31,6 @@ Given('The CRF Item in {string} status exists in database', (status) => {
     })
 })
 
-When('The CRF Form is linked to CRF Template', () => {
-    cy.contains('.v-chip__content', 'T').first().parent().parent().invoke('text').then((template) => {
-        templateForLinking = template.substring(2, 256).trim()
-    })
-    cy.clickFirstButton('link-crf-template-to-crf-form')
-    cy.get('[data-cy="form-body"]').filter(':visible').within(() => {
-        cy.clickFirstButton('add-item-link')
-        cy.get('[data-cy="remove-item-link"]').first().parent().siblings().invoke('text').then((form) => {
-            selectedForm = form
-        })
-        cy.clickButton('save-button')
-    })
-    cy.waitForFormSave()
-})
-
-When('The CRF Item Group is linked to CRF Form', () => {
-    cy.contains('.v-chip__content', 'F').first().parent().parent().invoke('text').then((form) => {
-        formForLinking = form.substring(2, 256).trim()
-    })
-    cy.clickFirstButton('link-crf-form-to-crf-item-group')
-    cy.get('[data-cy="form-body"]').filter(':visible').within(() => {
-        cy.clickFirstButton('add-item-link')
-        cy.get('[data-cy="remove-item-link"]').first().parent().siblings().invoke('text').then((itemGroup) => {
-            selectedItemGroup = itemGroup
-        })
-        cy.clickButton('save-button')
-    })
-    cy.waitForFormSave()
-})
-
-When('The CRF Item is linked to CRF Item Group', () => {
-    cy.contains('.v-chip__content', 'G').first().parent().parent().invoke('text').then((itemGroup) => {
-        itemGroupForLinking = itemGroup.substring(2, 256).trim()
-    })
-    cy.clickFirstButton('link-crf-item-group-to-crf-item')
-    cy.get('[data-cy="form-body"]').filter(':visible').within(() => {
-        cy.clickFirstButton('add-item-link')
-        cy.get('[data-cy="remove-item-link"]').first().parent().siblings().invoke('text').then((form) => {
-            selectedItem = form
-        })
-        cy.clickButton('save-button')
-    })
-    cy.waitForFormSave()
-})
-
 Then('The CRF Form is displayed underneath the linked CRF Template', () => {
     cy.contains(templateForLinking).parentsUntil('tbody').next().within(() => {
         cy.contains('td', selectedForm)

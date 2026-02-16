@@ -116,13 +116,14 @@
               :headers="headers"
               :items="variables"
             >
-              <template #[`item.referenced_codelist.uid`]="{ item }">
+              <template #[`item.referenced_codelists.uid`]="{ item }">
                 <a
+                  v-for="codelist in item.referenced_codelists"
+                  :key="codelist.uid"
                   href="#"
-                  @click="showCodelistTerms(item.referenced_codelist.uid)"
-                  >{{
-                    item.referenced_codelist ? item.referenced_codelist.uid : ''
-                  }}</a
+                  class="mr-2"
+                  @click="showCodelistTerms(codelist.uid)"
+                  >{{ codelist.uid }}</a
                 >
               </template>
               <template #[`item.implements_variable.uid`]="{ item }">
@@ -183,15 +184,14 @@
                   :headers="headers"
                   :items="variables"
                 >
-                  <template #[`item.referenced_codelist.uid`]="{ item }">
+                  <template #[`item.referenced_codelists.uid`]="{ item }">
                     <a
+                      v-for="codelist in item.referenced_codelists"
+                      :key="codelist"
                       href="#"
-                      @click="showCodelistTerms(item.referenced_codelist.uid)"
-                      >{{
-                        item.referenced_codelist
-                          ? item.referenced_codelist.uid
-                          : ''
-                      }}</a
+                      class="mr-2"
+                      @click="showCodelistTerms(codelist.uid)"
+                      >{{ codelist.uid }}</a
                     >
                   </template>
                   <template #[`item.implements_variable.uid`]="{ item }">
@@ -226,147 +226,139 @@
   </v-dialog>
 </template>
 
-<script>
+<script setup>
+import { onMounted, ref, watch } from 'vue'
 import standards from '@/api/standards'
 import _isEmpty from 'lodash/isEmpty'
 import StandardsCodelistTermsDialog from '@/components/library/StandardsCodelistTermsDialog.vue'
 
-export default {
-  components: {
-    StandardsCodelistTermsDialog,
+const props = defineProps({
+  uid: {
+    type: String,
+    default: null,
   },
-  props: {
-    uid: {
-      type: String,
-      default: null,
-    },
-    headers: {
-      type: Array,
-      default: null,
-    },
-    redirectGuide: {
-      type: Object,
-      default: null,
-    },
+  headers: {
+    type: Array,
+    default: null,
   },
-  emits: ['redirectToModelWithVariable', 'redirectToModel'],
-  data() {
-    return {
-      models: [],
-      activeGuide: {},
-      datasets: [],
-      activeClass: {},
-      activeTab: null,
-      variables: [],
-      loading: false,
-      domainTab: null,
-      showCodelist: false,
-      codelistUid: '',
-    }
+  redirectGuide: {
+    type: Object,
+    default: null,
   },
-  watch: {
-    activeTab(value) {
-      this.domainTab = 0
-      if (this.datasets[value]) {
-        this.getVariables(this.datasets[value][0].label)
-      }
-    },
-    redirectGuide(value) {
-      this.chooseGuideVersion(
-        this.models.find((model) => model.name === value.name)
-      )
-    },
-    domainTab(value) {
-      this.getVariables(this.datasets[this.activeTab][value].label)
-    },
-  },
-  mounted() {
+})
+const emit = defineEmits(['redirectToModelWithVariable', 'redirectToModel'])
+
+const models = ref([])
+const activeGuide = ref({})
+const datasets = ref([])
+const activeTab = ref(null)
+const variables = ref([])
+const loading = ref(false)
+const domainTab = ref(null)
+const showCodelist = ref(false)
+const codelistUid = ref('')
+
+watch(activeTab, (value) => {
+  domainTab.value = 0
+  if (datasets.value[value]) {
+    getVariables(datasets.value[value][0].uid)
+  }
+})
+watch(
+  () => props.redirectGuide,
+  (value) => {
+    chooseGuideVersion(models.value.find((model) => model.name === value.name))
+  }
+)
+watch(domainTab, (value) => {
+  getVariables(datasets.value[activeTab.value][value].uid)
+})
+
+onMounted(() => {
+  const params = {
+    filters: { uid: { v: [props.uid], op: 'eq' } },
+    page_size: 0,
+  }
+  standards.getAllGuides(params).then((resp) => {
+    models.value = resp.data.items
+    chooseGuideVersion(
+      !_isEmpty(props.redirectGuide)
+        ? models.value.find((model) => model.name === props.redirectGuide.name)
+        : models.value[0]
+    )
+  })
+})
+
+function openImplementedModel(variable) {
+  const params = {
+    data_model_name: activeGuide.value.implemented_data_model.uid,
+    data_model_version:
+      activeGuide.value.implemented_data_model.name.substring(6),
+    dataset_class_name:
+      datasets.value[activeTab.value][0].implemented_dataset_class
+        .dataset_class_name,
+    filters: { uid: { v: [variable], op: 'eq' } },
+  }
+  standards.getClassVariables(params).then((resp) => {
+    emit('redirectToModelWithVariable', {
+      data: resp.data.items,
+      implementation: activeGuide.value.implemented_data_model,
+    })
+  })
+}
+function showCodelistTerms(uid) {
+  codelistUid.value = uid
+  showCodelist.value = true
+}
+function closeCodelistTerms() {
+  codelistUid.value = ''
+  showCodelist.value = false
+}
+function redirectToModel(item) {
+  emit('redirectToModel', item)
+}
+function chooseGuideVersion(guide) {
+  if (guide) {
+    datasets.value = []
+    activeGuide.value = guide
     const params = {
-      filters: { uid: { v: [this.uid], op: 'eq' } },
+      data_model_ig_name: activeGuide.value.uid,
+      data_model_ig_version: activeGuide.value.version_number,
       page_size: 0,
     }
-    standards.getAllGuides(params).then((resp) => {
-      this.models = resp.data.items
-      this.chooseGuideVersion(
-        !_isEmpty(this.redirectGuide)
-          ? this.models.find((model) => model.name === this.redirectGuide.name)
-          : this.models[0]
+    standards.getDatasets(params).then((resp) => {
+      datasets.value = resp.data.items
+      const sortedDatasets = Object.values(
+        datasets.value.reduce((acc, curr) => {
+          acc[curr.implemented_dataset_class.dataset_class_name] =
+            acc[curr.implemented_dataset_class.dataset_class_name] || []
+          acc[curr.implemented_dataset_class.dataset_class_name].push(curr)
+          return acc
+        }, {})
+      ).sort((a, b) =>
+        a[0].implemented_dataset_class.dataset_class_name.localeCompare(
+          b[0].implemented_dataset_class.dataset_class_name
+        )
       )
+      datasets.value = sortedDatasets
+      activeTab.value = 0
+      getVariables(datasets.value[0][0].uid)
     })
-  },
-  methods: {
-    openImplementedModel(variable) {
-      const params = {
-        data_model_name: this.activeGuide.implemented_data_model.uid,
-        data_model_version:
-          this.activeGuide.implemented_data_model.name.substring(6),
-        dataset_class_name:
-          this.datasets[this.activeTab][0].implemented_dataset_class
-            .dataset_class_name,
-        filters: { uid: { v: [variable], op: 'eq' } },
-      }
-      standards.getClassVariables(params).then((resp) => {
-        this.$emit('redirectToModelWithVariable', {
-          data: resp.data.items,
-          implementation: this.activeGuide.implemented_data_model,
-        })
-      })
-    },
-    showCodelistTerms(codelistUid) {
-      this.codelistUid = codelistUid
-      this.showCodelist = true
-    },
-    closeCodelistTerms() {
-      this.codelistUid = ''
-      this.showCodelist = false
-    },
-    redirectToModel(item) {
-      this.$emit('redirectToModel', item)
-    },
-    chooseGuideVersion(guide) {
-      if (guide) {
-        this.datasets = []
-        this.activeGuide = guide
-        const params = {
-          data_model_ig_name: this.activeGuide.uid,
-          data_model_ig_version: this.activeGuide.version_number,
-          page_size: 0,
-        }
-        standards.getDatasets(params).then((resp) => {
-          this.datasets = resp.data.items
-          const sortedDatasets = Object.values(
-            this.datasets.reduce((acc, curr) => {
-              acc[curr.implemented_dataset_class.dataset_class_name] =
-                acc[curr.implemented_dataset_class.dataset_class_name] || []
-              acc[curr.implemented_dataset_class.dataset_class_name].push(curr)
-              return acc
-            }, {})
-          ).sort((a, b) =>
-            a[0].implemented_dataset_class.dataset_class_name.localeCompare(
-              b[0].implemented_dataset_class.dataset_class_name
-            )
-          )
-          this.datasets = sortedDatasets
-          this.activeTab = 0
-          this.getVariables(this.datasets[0][0].label)
-        })
-      }
-    },
-    getVariables(domain) {
-      this.loading = true
-      this.variables = []
-      const params = {
-        filters: { 'dataset.name': { v: [domain], op: 'eq' } },
-        data_model_ig_name: this.activeGuide.uid,
-        data_model_ig_version: this.activeGuide.version_number,
-        page_size: 0,
-      }
-      standards.getDatasetVariables(params).then((resp) => {
-        this.variables = resp.data.items
-        this.loading = false
-      })
-    },
-  },
+  }
+}
+function getVariables(domain) {
+  loading.value = true
+  variables.value = []
+  const params = {
+    filters: { 'dataset.uid': { v: [domain], op: 'eq' } },
+    data_model_ig_name: activeGuide.value.uid,
+    data_model_ig_version: activeGuide.value.version_number,
+    page_size: 0,
+  }
+  standards.getDatasetVariables(params).then((resp) => {
+    variables.value = resp.data.items
+    loading.value = false
+  })
 }
 </script>
 <style>

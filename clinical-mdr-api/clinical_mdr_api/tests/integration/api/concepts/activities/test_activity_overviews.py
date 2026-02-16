@@ -63,7 +63,6 @@ def test_data():
     subgroup1 = TestUtils.create_activity_subgroup(
         name="Laboratory Assessment",
         library_name="Sponsor",
-        activity_groups=[group.uid],
         definition="Laboratory Assessment Definition",
     )
     activity_subgroups_all.append(subgroup1)
@@ -71,7 +70,6 @@ def test_data():
     subgroup2 = TestUtils.create_activity_subgroup(
         name="Acute Kidney Injury",
         library_name="Sponsor",
-        activity_groups=[group.uid],
         definition=None,
     )
     activity_subgroups_all.append(subgroup2)
@@ -79,7 +77,6 @@ def test_data():
     subgroup3 = TestUtils.create_activity_subgroup(
         name="Pancreatitis",
         library_name="Sponsor",
-        activity_groups=[group.uid],
         definition=None,
     )
     activity_subgroups_all.append(subgroup3)
@@ -183,11 +180,6 @@ def test_get_activity_subgroup_overview(api_client):
     assert "version" in subgroup_data
     assert "status" in subgroup_data
     assert "start_date" in subgroup_data
-    assert "activity_groups" in subgroup_data
-
-    activity_groups = subgroup_data["activity_groups"]
-    assert len(activity_groups) == 1
-    assert activity_groups[0]["name"] == "AE Requiring Additional Data"
 
 
 def test_get_activity_subgroup_overview_not_found(api_client):
@@ -221,10 +213,6 @@ def test_get_activity_subgroup_overview_with_version(api_client):
     subgroup_data = res["activity_subgroup"]
     assert subgroup_data["version"] == "0.1"
     assert subgroup_data["status"] == "Draft"
-
-    # Check activity groups in this version
-    activity_groups = subgroup_data["activity_groups"]
-    assert len(activity_groups) == 1
 
 
 def test_get_activity_group_overview(api_client):
@@ -299,7 +287,7 @@ def test_get_activity_group_overview(api_client):
         )
 
     # Verifying we have all expected subgroups
-    assert len(subgroups) == 3
+    assert len(subgroups) == 1
 
     # Sort subgroups by uid for consistent testing
     sorted_subgroups = sorted(subgroups, key=lambda x: x["uid"])
@@ -308,14 +296,6 @@ def test_get_activity_group_overview(api_client):
     assert sorted_subgroups[0]["name"] == "Laboratory Assessment"
     assert sorted_subgroups[0]["version"] == "1.0"
     assert sorted_subgroups[0]["status"] == "Final"
-
-    assert sorted_subgroups[1]["name"] == "Acute Kidney Injury"
-    assert sorted_subgroups[1]["version"] == "1.0"
-    assert sorted_subgroups[1]["status"] == "Final"
-
-    assert sorted_subgroups[2]["name"] == "Pancreatitis"
-    assert sorted_subgroups[2]["version"] == "1.0"
-    assert sorted_subgroups[2]["status"] == "Final"
 
     # Verifying versions
     versions = res["all_versions"]

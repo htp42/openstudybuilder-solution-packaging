@@ -342,6 +342,8 @@ class HighLevelStudyDesignVO:
     trial_phase_code: str | None = None
     trial_phase_null_value_code: str | None = None
 
+    development_stage_code: str | None = None
+
     is_extension_trial: bool | None = None
     is_extension_trial_null_value_code: str | None = None
 
@@ -370,6 +372,7 @@ class HighLevelStudyDesignVO:
         trial_intent_type_exists_callback: Callable[[str], bool] = lambda _: True,
         trial_type_exists_callback: Callable[[str], bool] = lambda _: True,
         trial_phase_exists_callback: Callable[[str], bool] = lambda _: True,
+        development_stage_exists_callback: Callable[[str], bool] = (lambda _: True),
         null_value_exists_callback: Callable[[str], bool] = lambda _: True,
     ) -> None:
         """
@@ -380,6 +383,7 @@ class HighLevelStudyDesignVO:
         :param trial_intent_type_exists_callback: (optional) callback for checking intent_type_codes
         :param trial_type_exists_callback: (optional) callback for checking trail_type_codes
         :param trial_phase_exists_callback: (optional) callback for checking trial_phase_codes
+        :param development_stage_exists_callback: (optional) callback for checking development_stage_code
         :param null_value_exists_callback: (optional) callback for checking null_value_code for all specific values
         """
 
@@ -459,6 +463,12 @@ class HighLevelStudyDesignVO:
             msg=f"Non-existent study type code provided '{self.study_type_code}'.",
         )
 
+        exceptions.ValidationException.raise_if(
+            self.development_stage_code is not None
+            and not development_stage_exists_callback(self.development_stage_code),
+            msg=f"Non-existent development stage code provided '{self.development_stage_code}'.",
+        )
+
         for trial_type_code in self.trial_type_codes:
             exceptions.ValidationException.raise_if_not(
                 trial_type_exists_callback(trial_type_code),
@@ -471,6 +481,7 @@ class HighLevelStudyDesignVO:
         trial_intent_type_exists_callback: Callable[[str], bool] = lambda _: True,
         trial_type_exists_callback: Callable[[str], bool] = lambda _: True,
         trial_phase_exists_callback: Callable[[str], bool] = lambda _: True,
+        development_stage_exists_callback: Callable[[str], bool] = lambda _: True,
     ) -> bool:
         """
         Convenience method (mostly for testing purposes).
@@ -482,6 +493,7 @@ class HighLevelStudyDesignVO:
                 trial_intent_type_exists_callback=trial_intent_type_exists_callback,
                 trial_type_exists_callback=trial_type_exists_callback,
                 trial_phase_exists_callback=trial_phase_exists_callback,
+                development_stage_exists_callback=development_stage_exists_callback,
             )
         except exceptions.ValidationException:
             return False
@@ -495,6 +507,7 @@ class HighLevelStudyDesignVO:
         trial_type_null_value_code: str | None = FIX_SOME_VALUE_DEFAULT,
         trial_phase_code: str | None = FIX_SOME_VALUE_DEFAULT,
         trial_phase_null_value_code: str | None = FIX_SOME_VALUE_DEFAULT,
+        development_stage_code: str | None = FIX_SOME_VALUE_DEFAULT,
         is_extension_trial: bool | None = FIX_SOME_VALUE_DEFAULT,  # type: ignore[assignment]
         is_extension_trial_null_value_code: str | None = FIX_SOME_VALUE_DEFAULT,
         is_adaptive_design: bool | None = FIX_SOME_VALUE_DEFAULT,  # type: ignore[assignment]
@@ -518,6 +531,7 @@ class HighLevelStudyDesignVO:
         :param trial_type_null_value_code:
         :param trial_phase_code:
         :param trial_phase_null_value_code:
+        :param development_stage_code:
         :param is_extension_trial:
         :param is_extension_trial_null_value_code:
         :param is_adaptive_design:
@@ -546,6 +560,9 @@ class HighLevelStudyDesignVO:
             trial_phase_code=helper(trial_phase_code, self.trial_phase_code),
             trial_phase_null_value_code=helper(
                 trial_phase_null_value_code, self.trial_phase_null_value_code
+            ),
+            development_stage_code=helper(
+                development_stage_code, self.development_stage_code
             ),
             is_extension_trial=helper(is_extension_trial, self.is_extension_trial),
             is_extension_trial_null_value_code=helper(
@@ -586,6 +603,7 @@ class HighLevelStudyDesignVO:
         trial_type_null_value_code: str | None,
         trial_phase_code: str | None,
         trial_phase_null_value_code: str | None,
+        development_stage_code: str | None,
         is_extension_trial: bool | None,
         is_extension_trial_null_value_code: str | None,
         is_adaptive_design: bool | None,
@@ -604,6 +622,7 @@ class HighLevelStudyDesignVO:
             trial_type_null_value_code=trial_type_null_value_code,
             trial_phase_code=trial_phase_code,
             trial_phase_null_value_code=trial_phase_null_value_code,
+            development_stage_code=development_stage_code,
             is_extension_trial=is_extension_trial,
             is_extension_trial_null_value_code=is_extension_trial_null_value_code,
             is_adaptive_design=is_adaptive_design,
@@ -697,7 +716,7 @@ class StudyPopulationVO:
         def normalize_code_set(codes: Iterable[str] | None) -> list[str]:
             if codes is None:
                 codes = []
-            return list(
+            return sorted(
                 dict.fromkeys(
                     [_ for _ in [normalize_string(_) for _ in codes] if _ is not None]
                 )
@@ -1540,6 +1559,7 @@ class StudyMetadataVO:
         trial_intent_type_exists_callback: Callable[[str], bool] = lambda _: True,
         trial_type_exists_callback: Callable[[str], bool] = lambda _: True,
         trial_phase_exists_callback: Callable[[str], bool] = lambda _: True,
+        development_stage_exists_callback: Callable[[str], bool] = lambda _: True,
         null_value_exists_callback: Callable[[str], bool] = lambda _: True,
         therapeutic_area_exists_callback: Callable[[str], bool] = lambda _: True,
         disease_condition_or_indication_exists_callback: Callable[[str], bool] = (
@@ -1578,6 +1598,7 @@ class StudyMetadataVO:
         self.high_level_study_design.validate(
             study_type_exists_callback=study_type_exists_callback,
             trial_phase_exists_callback=trial_phase_exists_callback,
+            development_stage_exists_callback=development_stage_exists_callback,
             trial_type_exists_callback=trial_type_exists_callback,
             trial_intent_type_exists_callback=trial_intent_type_exists_callback,
             null_value_exists_callback=null_value_exists_callback,

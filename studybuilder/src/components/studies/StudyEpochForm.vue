@@ -1,6 +1,6 @@
 <template>
   <SimpleFormDialog
-    ref="form"
+    ref="formRef"
     :title="title"
     :help-items="helpItems"
     :help-text="$t('_help.StudyDefineForm.general')"
@@ -138,262 +138,267 @@
   </SimpleFormDialog>
 </template>
 
-<script>
+<script setup>
 import _isEmpty from 'lodash/isEmpty'
 import _isEqual from 'lodash/isEqual'
 import units from '@/api/units'
+import studyEpochsApi from '@/api/studyEpochs'
 import SimpleFormDialog from '@/components/tools/SimpleFormDialog.vue'
-import studyEpochs from '../../api/studyEpochs'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 import { useEpochsStore } from '@/stores/studies-epochs'
-import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { computed, inject, onMounted, ref, watch } from 'vue'
 
-export default {
-  components: {
-    SimpleFormDialog,
+const notificationHub = inject('notificationHub')
+const formRules = inject('formRules')
+
+const props = defineProps({
+  studyEpoch: {
+    type: Object,
+    default: undefined,
   },
-  inject: ['notificationHub', 'formRules'],
-  props: {
-    studyEpoch: {
-      type: Object,
-      default: undefined,
-    },
-    open: Boolean,
-  },
-  emits: ['close'],
-  setup() {
-    const studiesGeneralStore = useStudiesGeneralStore()
-    const epochsStore = useEpochsStore()
-    return {
-      selectedStudy: studiesGeneralStore.selectedStudy,
-      studyEpochs: computed(() => epochsStore.studyEpochs),
-      groups: computed(() => epochsStore.allowedConfigs),
-      updateStudyEpoch: epochsStore.updateStudyEpoch,
-      fetchAllowedConfigs: epochsStore.fetchAllowedConfigs,
-      addStudyEpoch: epochsStore.addStudyEpoch,
-      fetchStudyEpochs: epochsStore.fetchStudyEpochs,
+  open: Boolean,
+})
+
+const emit = defineEmits(['close'])
+
+const { t } = useI18n()
+const studiesGeneralStore = useStudiesGeneralStore()
+const epochsStore = useEpochsStore()
+
+const colorHash = ref(null)
+const form = ref({})
+
+const helpItems = [
+  'StudyEpochForm.name',
+  'StudyEpochForm.epoch_type',
+  'StudyEpochForm.epoch_subtype',
+  'StudyEpochForm.description',
+  'StudyEpochForm.start_rule',
+  'StudyEpochForm.stop_rule',
+  'StudyEpochForm.epoch_time_unit',
+  'StudyEpochForm.expected_epoch_duration',
+  'StudyEpochForm.color',
+]
+
+const timeUnits = ref([])
+const typeTrigger = ref(0)
+const typeGroups = ref([])
+const subtypeGroups = ref([])
+const epochDisplay = ref('')
+const observer = ref()
+const formRef = ref()
+
+const selectedStudy = computed(() => studiesGeneralStore.selectedStudy)
+const groups = computed(() => epochsStore.allowedConfigs)
+const uniqueTypeGroups = computed(() => {
+  const result = []
+  for (let group of typeGroups.value) {
+    if (!result.find((item) => item.type === group.type)) {
+      result.push(group)
     }
-  },
-  data() {
-    return {
-      colorHash: null,
-      epochs: [],
-      form: {},
-      helpItems: [
-        'StudyEpochForm.name',
-        'StudyEpochForm.epoch_type',
-        'StudyEpochForm.epoch_subtype',
-        'StudyEpochForm.description',
-        'StudyEpochForm.start_rule',
-        'StudyEpochForm.stop_rule',
-        'StudyEpochForm.epoch_time_unit',
-        'StudyEpochForm.expected_epoch_duration',
-        'StudyEpochForm.color',
-      ],
-      timeUnits: [],
-      typeTrigger: 0,
-      typeGroups: [],
-      subtypeGroups: [],
-      epochDisplay: '',
+  }
+  return result
+})
+const title = computed(() => {
+  return props.studyEpoch
+    ? t('StudyEpochForm.edit_title')
+    : t('StudyEpochForm.add_title')
+})
+
+watch(
+  () => props.studyEpoch,
+  (value) => {
+    if (value) {
+      studyEpochsApi
+        .getStudyEpoch(selectedStudy.value.uid, value.uid)
+        .then((resp) => {
+          loadFromStudyEpoch(resp.data)
+        })
     }
-  },
-  computed: {
-    uniqueTypeGroups() {
-      const result = []
-      for (let group of this.typeGroups) {
-        if (!result.find((item) => item.type === group.type)) {
-          result.push(group)
-        }
-      }
-      return result
-    },
-    title() {
-      return this.studyEpoch
-        ? this.$t('StudyEpochForm.edit_title')
-        : this.$t('StudyEpochForm.add_title')
-    },
-  },
-  watch: {
-    studyEpoch(value) {
-      if (value) {
-        studyEpochs
-          .getStudyEpoch(this.selectedStudy.uid, value.uid)
-          .then((resp) => {
-            this.loadFromStudyEpoch(resp.data)
-          })
-      }
-    },
-    groups() {
-      this.typeGroups = this.groups
-      this.subtypeGroups = this.groups
-    },
-  },
-  mounted() {
-    this.fetchAllowedConfigs()
-    units.getByDimension('TIME').then((resp) => {
-      this.timeUnits = resp.data.items
+  }
+)
+watch(groups, () => {
+  typeGroups.value = groups.value
+  subtypeGroups.value = groups.value
+})
+
+onMounted(() => {
+  epochsStore.fetchAllowedConfigs()
+  units.getByDimension('TIME').then((resp) => {
+    timeUnits.value = resp.data.items
+  })
+  if (props.studyEpoch) {
+    loadFromStudyEpoch(props.studyEpoch)
+    setEpochGroups()
+  }
+})
+
+function close() {
+  emit('close')
+  notificationHub.clearErrors()
+  form.value = {}
+  colorHash.value = null
+  observer.value.reset()
+  typeGroups.value = groups.value
+  subtypeGroups.value = groups.value
+}
+
+async function cancel() {
+  if (
+    (!props.studyEpoch && !_isEmpty(form.value)) ||
+    (props.studyEpoch && !_isEqual(form.value, props.studyEpoch))
+  ) {
+    const options = {
+      type: 'warning',
+      cancelLabel: t('_global.cancel'),
+      agreeLabel: t('_global.continue'),
+    }
+    if (await formRef.value.confirm(t('_global.cancel_changes'), options)) {
+      close()
+    }
+  } else {
+    close()
+  }
+}
+
+function setEpochGroups() {
+  let type = ''
+  let subtype = ''
+  if (!form.value.epoch_subtype && !form.value.epoch_type) {
+    form.value.epoch = ''
+    subtypeGroups.value = groups.value
+    typeGroups.value = groups.value
+    epochDisplay.value = ''
+  } else if (!form.value.epoch_subtype) {
+    form.value.epoch = ''
+    type = form.value.epoch_type
+    subtypeGroups.value = groups.value
+    typeGroups.value = groups.value
+    subtypeGroups.value = groups.value.filter(function (value) {
+      return value.type === type
     })
-    if (this.studyEpoch) {
-      this.loadFromStudyEpoch(this.studyEpoch)
-      this.setEpochGroups()
+    epochDisplay.value = ''
+  } else if (!form.value.epoch_type) {
+    form.value.epoch = ''
+    subtype = form.value.epoch_subtype
+    typeGroups.value = groups.value
+    subtypeGroups.value = groups.value
+    typeGroups.value = groups.value.filter(function (value) {
+      return value.subtype === subtype
+    })
+    epochDisplay.value = ''
+  } else {
+    subtype = form.value.epoch_subtype
+    type = form.value.epoch_type
+    typeGroups.value = groups.value.filter(function (value) {
+      return value.subtype === subtype
+    })
+    subtypeGroups.value = groups.value.filter(function (value) {
+      return value.type === type
+    })
+
+    const data = {
+      study_uid: selectedStudy.value.uid,
+      epoch_subtype: subtype,
     }
-  },
-  methods: {
-    createMapping(codelist) {
-      const returnValue = {}
-      codelist.forEach((item) => {
-        returnValue[item.term_uid] = item.sponsor_preferred_name
+    studyEpochsApi
+      .getPreviewEpoch(selectedStudy.value.uid, data)
+      .then((resp) => {
+        form.value.epoch = resp.data.epoch
+        epochDisplay.value = resp.data.epoch_name
       })
-      return returnValue
-    },
-    close() {
-      this.$emit('close')
-      this.notificationHub.clearErrors()
-      this.form = {}
-      this.colorHash = null
-      this.$refs.observer.reset()
-      this.typeGroups = this.groups
-      this.subtypeGroups = this.groups
-    },
-    async cancel() {
-      if (
-        (!this.studyEpoch && !_isEmpty(this.form)) ||
-        (this.studyEpoch && !_isEqual(this.form, this.studyEpoch))
-      ) {
-        const options = {
-          type: 'warning',
-          cancelLabel: this.$t('_global.cancel'),
-          agreeLabel: this.$t('_global.continue'),
-        }
-        if (
-          await this.$refs.form.confirm(
-            this.$t('_global.cancel_changes'),
-            options
-          )
-        ) {
-          this.close()
-        }
-      } else {
-        this.close()
-      }
-    },
-    setEpochGroups() {
-      let type = ''
-      let subtype = ''
-      if (!this.form.epoch_subtype && !this.form.epoch_type) {
-        this.form.epoch = ''
-        this.subtypeGroups = this.groups
-        this.typeGroups = this.groups
-        this.epochDisplay = ''
-      } else if (!this.form.epoch_subtype) {
-        this.form.epoch = ''
-        type = this.form.epoch_type
-        this.subtypeGroups = this.groups
-        this.typeGroups = this.groups
-        this.subtypeGroups = this.groups.filter(function (value) {
-          return value.type === type
-        })
-        this.epochDisplay = ''
-      } else if (!this.form.epoch_type) {
-        this.form.epoch = ''
-        subtype = this.form.epoch_subtype
-        this.typeGroups = this.groups
-        this.subtypeGroups = this.groups
-        this.typeGroups = this.groups.filter(function (value) {
-          return value.subtype === subtype
-        })
-        this.epochDisplay = ''
-      } else {
-        subtype = this.form.epoch_subtype
-        type = this.form.epoch_type
-        this.typeGroups = this.groups.filter(function (value) {
-          return value.subtype === subtype
-        })
-        this.subtypeGroups = this.groups.filter(function (value) {
-          return value.type === type
-        })
+  }
+}
 
-        const data = {
-          study_uid: this.selectedStudy.uid,
-          epoch_subtype: subtype,
-        }
-        studyEpochs
-          .getPreviewEpoch(this.selectedStudy.uid, data)
-          .then((resp) => {
-            this.form.epoch = resp.data.epoch
-            this.epochDisplay = resp.data.epoch_name
-          })
-      }
-    },
-    async submit() {
-      this.notificationHub.clearErrors()
+async function submit() {
+  notificationHub.clearErrors()
 
-      try {
-        if (!this.studyEpoch) {
-          await this.addObject()
-        } else {
-          await this.updateObject()
-        }
-        this.close()
-      } finally {
-        this.$refs.form.working = false
-      }
-    },
-    addObject() {
-      const data = JSON.parse(JSON.stringify(this.form))
-      if (this.colorHash) {
-        data.color_hash = this.colorHash
-      } else {
-        data.color_hash = '#BDBDBD'
-      }
-      data.study_uid = this.selectedStudy.uid
-      return this.addStudyEpoch({
-        studyUid: this.selectedStudy.uid,
-        input: data,
-      }).then(() => {
-        this.fetchStudyEpochs({ studyUid: this.selectedStudy.uid })
-        this.notificationHub.add({
-          msg: this.$t('StudyEpochForm.add_success'),
-        })
+  try {
+    if (!props.studyEpoch) {
+      await addObject()
+    } else {
+      await updateObject()
+    }
+    close()
+  } finally {
+    formRef.value.working = false
+  }
+}
+
+function addObject() {
+  const data = JSON.parse(JSON.stringify(form.value))
+  if (colorHash.value) {
+    data.color_hash = colorHash.value
+  } else {
+    data.color_hash = '#BDBDBD'
+  }
+  data.study_uid = selectedStudy.value.uid
+  return epochsStore
+    .addStudyEpoch({
+      studyUid: selectedStudy.value.uid,
+      input: data,
+    })
+    .then(() => {
+      epochsStore.fetchStudyEpochs({ studyUid: selectedStudy.value.uid })
+      notificationHub.add({
+        msg: t('StudyEpochForm.add_success'),
       })
-    },
-    updateObject() {
-      const data = JSON.parse(JSON.stringify(this.form))
-      if (this.colorHash) {
-        data.color_hash =
-          this.colorHash.hexa !== undefined
-            ? this.colorHash.hexa
-            : this.colorHash
-      } else {
-        data.color_hash = '#BDBDBD'
-      }
-      return this.updateStudyEpoch({
-        studyUid: this.selectedStudy.uid,
-        studyEpochUid: this.studyEpoch.uid,
-        input: data,
-      }).then(() => {
-        this.fetchStudyEpochs({ studyUid: this.selectedStudy.uid })
-        this.notificationHub.add({
-          msg: this.$t('StudyEpochForm.update_success'),
-        })
+    })
+}
+
+function updateObject() {
+  const data = JSON.parse(JSON.stringify(form.value))
+  if (colorHash.value) {
+    data.color_hash =
+      colorHash.value.hexa !== undefined
+        ? colorHash.value.hexa
+        : colorHash.value
+  } else {
+    data.color_hash = '#BDBDBD'
+  }
+  return epochsStore
+    .updateStudyEpoch({
+      studyUid: selectedStudy.value.uid,
+      studyEpochUid: props.studyEpoch.uid,
+      input: data,
+    })
+    .then(() => {
+      epochsStore.fetchStudyEpochs({ studyUid: selectedStudy.value.uid })
+      notificationHub.add({
+        msg: t('StudyEpochForm.update_success'),
       })
+    })
+}
+
+function loadFromStudyEpoch(studyEpoch) {
+  typeGroups.value = [
+    {
+      type: studyEpoch.epoch_type_ctterm.term_uid,
+      type_name: studyEpoch.epoch_type_ctterm.sponsor_preferred_name,
     },
-    loadFromStudyEpoch(studyEpoch) {
-      this.form = { ...studyEpoch }
-      this.form.epoch_type = this.uniqueTypeGroups.find(
-        (group) => group.type_name === this.form.epoch_type_name
-      )
-      this.form.epoch_subtype = this.subtypeGroups.find(
-        (group) => group.subtype_name === this.form.epoch_subtype_name
-      ).subtype
-      this.epochDisplay = studyEpoch.epoch_name
-      if (studyEpoch.color_hash) {
-        this.colorHash = studyEpoch.color_hash
-      }
+  ]
+  subtypeGroups.value = [
+    {
+      subtype: studyEpoch.epoch_subtype_ctterm.term_uid,
+      subtype_name: studyEpoch.epoch_subtype_ctterm.sponsor_preferred_name,
     },
-  },
+  ]
+
+  form.value = { ...studyEpoch }
+  form.value.epoch_type = uniqueTypeGroups.value.find(
+    (group) => group.type_name === form.value.epoch_type_name
+  )
+  form.value.epoch_subtype = subtypeGroups.value.find(
+    (group) => group.subtype_name === form.value.epoch_subtype_name
+  ).subtype
+  epochDisplay.value = studyEpoch.epoch_name
+  if (studyEpoch.color_hash) {
+    colorHash.value = studyEpoch.color_hash
+  }
 }
 </script>
+
 <style>
 .v-color-picker__controls {
   display: none;

@@ -14,9 +14,9 @@
           item-title="name"
           item-value="value"
           class="mt-2"
-          :class="{ shake: shakeit && selectedCollections.length === 0 }"
+          :class="{ shake: isShaking && selectedCollections.length === 0 }"
         >
-          <template #prepend-item>
+          <template v-if="collections.length > 0" #prepend-item>
             <v-list-item
               :title="
                 allCollectionsSelected
@@ -70,12 +70,12 @@
           :disabled="selectedCollections.length === 0"
           :class="{
             shake:
-              shakeit &&
+              isShaking &&
               selectedCollections.length !== 0 &&
               selectedForms.length === 0,
           }"
         >
-          <template #prepend-item>
+          <template v-if="forms.length > 0" #prepend-item>
             <v-list-item
               :title="
                 allFormsSelected
@@ -238,7 +238,11 @@ import exportLoader from '@/utils/exportLoader'
 import { DateTime } from 'luxon'
 import { ref, onMounted, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useShake } from '@/composables/shake'
+
 const { t } = useI18n()
+
+const { isShaking, activateShake } = useShake()
 
 const showOdmXml = ref(false)
 
@@ -267,8 +271,6 @@ const data = ref({
 })
 const loading = ref(false)
 const exportLoading = ref(false)
-
-const shakeit = ref(false)
 
 onMounted(() => {
   getCollections()
@@ -337,10 +339,10 @@ async function loadXml() {
   doc.value = ''
   loading.value = true
   data.value.allowed_namespaces = '&allowed_namespaces=*'
-  data.value.target_uids = ''
-  selectedForms.value.forEach((form) => {
-    data.value.target_uids += `target_uids=${form}&`
-  })
+  data.value.targets = ''
+  for (const form of selectedForms.value) {
+    data.value.targets += `targets=${form}&`
+  }
   crfs.getXml(data.value).then((resp) => {
     const parser = new DOMParser()
     xmlString.value = resp.data
@@ -353,10 +355,10 @@ async function loadXml() {
         xsltProcessor.transformToDocument(xml)
       )
 
-      var iframe = document.createElement('iframe')
+      let iframe = document.createElement('iframe')
       iframe.classList.add('frame')
       document.querySelector('iframe').replaceWith(iframe)
-      var iframeDoc = iframe.contentDocument
+      let iframeDoc = iframe.contentDocument
       iframeDoc.write(doc.value)
       iframeDoc.close()
 
@@ -407,15 +409,6 @@ function downloadPdf() {
     )
     exportLoading.value = false
   })
-}
-
-function activateShake(condition) {
-  if (condition === false) return
-
-  shakeit.value = true
-  setTimeout(() => {
-    shakeit.value = false
-  }, 1000)
 }
 </script>
 <style>

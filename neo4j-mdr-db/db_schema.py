@@ -87,7 +87,6 @@ INDEXES = [
     ("StudyField", "field_name"),
     ("DataModelVersion", "uid"),
     ("ActivityGrouping", "uid"),
-    ("ActivityValidGroup", "uid"),
     ("StudyActivityGroup", "uid"),
     ("StudyActivitySubGroup", "uid"),
     ("StudyActivityInstance", "uid"),

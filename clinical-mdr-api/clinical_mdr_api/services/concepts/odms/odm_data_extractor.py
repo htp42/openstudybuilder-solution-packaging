@@ -41,12 +41,13 @@ from common.exceptions import BusinessLogicException, NotFoundException
 
 
 class OdmDataExtractor:
-    target_uids: list[str]
-    target_name: str
+    targets: list[str]
+    first_target_uid: str
+    first_target_name: str
 
     odm_vendor_namespaces: dict[str, dict[str, str]]
     odm_vendor_elements: dict[str, dict[str, dict[str, str]]]
-    odm_study_event: list[OdmStudyEvent]
+    odm_study_events: list[OdmStudyEvent]
     odm_forms: list[OdmForm]
     odm_item_groups: list[OdmItemGroup]
     odm_items: list[OdmItem]
@@ -69,12 +70,7 @@ class OdmDataExtractor:
     ct_term_attributes_service: CTTermAttributesService
     unit_definition_service: UnitDefinitionService
 
-    def __init__(
-        self,
-        target_uids: list[str],
-        target_type: TargetType,
-        version: str | None = None,
-    ):
+    def __init__(self, target_type: TargetType, targets: list[str]):
         self.unit_definition_service = UnitDefinitionService()
         self.vendor_namespace_service = OdmVendorNamespaceService()
         self.vendor_element_service = OdmVendorElementService()
@@ -91,6 +87,7 @@ class OdmDataExtractor:
         self.odm_vendor_namespaces = {}
         self.odm_vendor_elements = {}
         self.ref_odm_vendor_attributes: dict[str, dict[str, dict[str, str]]] = {}
+        self.odm_study_events = []
         self.odm_forms = []
         self.odm_item_groups = []
         self.odm_items = []
@@ -100,55 +97,87 @@ class OdmDataExtractor:
         self.ct_terms = []
         self.unit_definitions = []
 
-        self.target_uids = target_uids
+        self.targets = targets
 
         if target_type == TargetType.STUDY_EVENT:
-            self.odm_study_event = self.study_event_service.get_all_concepts(
-                filter_by={"uid": {"v": target_uids, "op": "eq"}}, version=version
-            ).items
-
-            if not self.odm_study_event:
-                raise NotFoundException(
-                    msg=f"No ODM Study Event found for the given target UID(s): {target_uids}."
+            for target in targets:
+                uid, version = (
+                    target.rsplit(",", maxsplit=1) if "," in target else (target, None)
                 )
 
-            self.target_name = self.odm_study_event[0].name
-            self.set_forms_of_study_event(self.odm_study_event)
+                self.odm_study_events += self.study_event_service.get_all_concepts(
+                    filter_by={"uid": {"v": [uid], "op": "eq"}}, version=version or None
+                ).items
+
+                if not self.odm_study_events:
+                    raise NotFoundException(
+                        msg=f"ODM Study Event with UID '{uid}'"
+                        + (f"and version '{version}'" if version is not None else "")
+                        + "doesn't exist"
+                    )
+
+            self.first_target_name = self.odm_study_events[0].name
+            self.first_target_uid = self.odm_study_events[0].uid
+            self.set_forms_of_study_event(self.odm_study_events)
         elif target_type == TargetType.FORM:
-            self.odm_forms = self.form_service.get_all_concepts(
-                filter_by={"uid": {"v": target_uids, "op": "eq"}}, version=version
-            ).items
-
-            if not self.odm_forms:
-                raise NotFoundException(
-                    msg=f"No ODM Form found for the given target UID(s): {target_uids}."
+            for target in targets:
+                uid, version = (
+                    target.rsplit(",", maxsplit=1) if "," in target else (target, None)
                 )
 
-            self.target_name = self.odm_forms[0].name
+                self.odm_forms += self.form_service.get_all_concepts(
+                    filter_by={"uid": {"v": [uid], "op": "eq"}}, version=version or None
+                ).items
+
+                if not self.odm_forms:
+                    raise NotFoundException(
+                        msg=f"ODM Form with UID '{uid}'"
+                        + (f"and version '{version}'" if version is not None else "")
+                        + "doesn't exist"
+                    )
+
+            self.first_target_name = self.odm_forms[0].name
+            self.first_target_uid = self.odm_forms[0].uid
             self.set_item_groups_of_forms(self.odm_forms)
         elif target_type == TargetType.ITEM_GROUP:
-            self.odm_item_groups = self.item_group_service.get_all_concepts(
-                filter_by={"uid": {"v": target_uids, "op": "eq"}}, version=version
-            ).items
-
-            if not self.odm_item_groups:
-                raise NotFoundException(
-                    msg=f"No ODM Item Group found for the given target UID(s): {target_uids}."
+            for target in targets:
+                uid, version = (
+                    target.rsplit(",", maxsplit=1) if "," in target else (target, None)
                 )
 
-            self.target_name = self.odm_item_groups[0].name
+                self.odm_item_groups += self.item_group_service.get_all_concepts(
+                    filter_by={"uid": {"v": [uid], "op": "eq"}}, version=version or None
+                ).items
+
+                if not self.odm_item_groups:
+                    raise NotFoundException(
+                        msg=f"ODM Item Group with UID '{uid}'"
+                        + (f"and version '{version}'" if version is not None else "")
+                        + "doesn't exist"
+                    )
+
+            self.first_target_name = self.odm_item_groups[0].name
+            self.first_target_uid = self.odm_item_groups[0].uid
             self.set_items_of_item_groups(self.odm_item_groups)
         elif target_type == TargetType.ITEM:
-            self.odm_items = self.item_service.get_all_concepts(
-                filter_by={"uid": {"v": target_uids, "op": "eq"}}, version=version
-            ).items
-
-            if not self.odm_items:
-                raise NotFoundException(
-                    msg=f"No ODM Item found for the given target UID(s): {target_uids}."
+            for target in targets:
+                uid, version = (
+                    target.rsplit(",", maxsplit=1) if "," in target else (target, None)
                 )
 
-            self.target_name = self.odm_items[0].name
+                self.odm_items = self.item_service.get_all_concepts(
+                    filter_by={"uid": {"v": [uid], "op": "eq"}}, version=version or None
+                ).items
+
+                if not self.odm_items:
+                    raise NotFoundException(
+                        msg=f"ODM Item with UID '{uid}'"
+                        + (f"and version '{version}'" if version is not None else "")
+                        + "doesn't exist"
+                    )
+
+            self.first_target_name = self.odm_items[0].name
+            self.first_target_uid = self.odm_items[0].uid
             self.set_unit_definitions_of_items(self.odm_items)
             self.set_codelists_of_items(self.odm_items)
         else:
@@ -241,59 +270,63 @@ class OdmDataExtractor:
         }
 
     def set_forms_of_study_event(self, study_events: list[OdmStudyEvent]):
-        self.odm_forms = sorted(
-            self.form_service.get_all_concepts(
-                filter_by={
-                    "uid": {
-                        "v": [
-                            form.uid
-                            for study_event in study_events
-                            for form in study_event.forms
-                        ],
-                        "op": "eq",
-                    }
-                },
-            ).items,
-            key=lambda elm: elm.name,
-        )
+        self.odm_forms = []
+
+        for study_event in study_events:
+            for form in study_event.forms:
+                _forms = self.form_service.get_all_concepts(
+                    filter_by={
+                        "uid": {
+                            "v": [form.uid],
+                            "op": "eq",
+                        }
+                    },
+                    version=form.version,
+                ).items
+
+                self.odm_forms += _forms
+
+        self.odm_forms.sort(key=lambda elm: elm.name)
 
         self.set_item_groups_of_forms(self.odm_forms)
 
     def set_item_groups_of_forms(self, forms: list[OdmForm]):
-        self.odm_item_groups = sorted(
-            self.item_group_service.get_all_concepts(
-                filter_by={
-                    "uid": {
-                        "v": [
-                            item_group.uid
-                            for form in forms
-                            for item_group in form.item_groups
-                        ],
-                        "op": "eq",
-                    }
-                },
-            ).items,
-            key=lambda elm: elm.name,
-        )
+        self.odm_item_groups = []
+        for form in forms:
+            for item_group in form.item_groups:
+                _item_groups = self.item_group_service.get_all_concepts(
+                    filter_by={
+                        "uid": {
+                            "v": [item_group.uid],
+                            "op": "eq",
+                        }
+                    },
+                    version=item_group.version,
+                ).items
+
+                self.odm_item_groups += _item_groups
+
+        self.odm_item_groups.sort(key=lambda elm: elm.name)
 
         self.set_items_of_item_groups(self.odm_item_groups)
 
     def set_items_of_item_groups(self, item_groups: list[OdmItemGroup]):
-        self.odm_items = sorted(
-            self.item_service.get_all_concepts(
-                filter_by={
-                    "uid": {
-                        "v": [
-                            item.uid
-                            for item_group in item_groups
-                            for item in item_group.items
-                        ],
-                        "op": "eq",
-                    }
-                },
-            ).items,
-            key=lambda elm: elm.name,
-        )
+        self.odm_items = []
+        for item_group in item_groups:
+            for item in item_group.items:
+                _items = self.item_service.get_all_concepts(
+                    filter_by={
+                        "uid": {
+                            "v": [item.uid],
+                            "op": "eq",
+                        }
+                    },
+                    version=item.version,
+                ).items
+
+                self.odm_items += _items
+
+        self.odm_items.sort(key=lambda elm: elm.name)
 
         self.set_unit_definitions_of_items(self.odm_items)
         self.set_codelists_of_items(self.odm_items)

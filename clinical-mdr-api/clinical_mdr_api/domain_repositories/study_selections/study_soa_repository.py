@@ -504,7 +504,7 @@ class StudySoARepository:
                 show_activity_in_protocol_flowchart: study_activity.show_activity_in_protocol_flowchart,
                 show_activity_group_in_protocol_flowchart: COALESCE(study_activity_group.show_activity_group_in_protocol_flowchart, false),
                 show_activity_subgroup_in_protocol_flowchart: COALESCE(study_activity_subgroup.show_activity_subgroup_in_protocol_flowchart, false),
-                show_soa_group_in_protocol_flowchart: study_soa_group.show_soa_group_in_protocol_flowchart,
+                show_soa_group_in_protocol_flowchart: COALESCE(study_soa_group.show_soa_group_in_protocol_flowchart, false),
                 study_activity_subgroup: {
                     study_activity_subgroup_uid: study_activity_subgroup.uid,
                     activity_subgroup_uid: activity_subgroup_root.uid,

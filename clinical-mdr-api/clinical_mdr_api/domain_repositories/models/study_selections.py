@@ -105,6 +105,12 @@ class StudyDataSupplier(StudySelection):
         model=ClinicalMdrRel,
         cardinality=ZeroOrOne,
     )
+    study_activity_instance_has_study_data_supplier = RelationshipFrom(
+        "StudyActivityInstance",
+        "HAS_STUDY_DATA_SUPPLIER",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrMore,
+    )
 
 
 class StudyObjective(StudySelection):
@@ -440,6 +446,24 @@ class StudyActivityInstance(StudySelection):
         "HAS_BASELINE",
         model=ClinicalMdrRel,
         cardinality=ZeroOrMore,
+    )
+    has_study_data_supplier = RelationshipTo(
+        StudyDataSupplier,
+        "HAS_STUDY_DATA_SUPPLIER",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrOne,
+    )
+    has_origin_type = RelationshipTo(
+        CTTermContext,
+        "HAS_ORIGIN_TYPE",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrOne,
+    )
+    has_origin_source = RelationshipTo(
+        CTTermContext,
+        "HAS_ORIGIN_SOURCE",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrOne,
     )
 
 

@@ -45,18 +45,23 @@ Feature: Studies - Define Study - Study Structure - Disease Milestones
     Scenario: [Create][Positive case] User can add a new Study Disease Milestone
         Given The test study '/study_structure/disease_milestones' page is opened
         When The new Study Disease Milestone is added
+        And Form save button is clicked
         Then The new Study Disease Milestone is visible within the study disease milestones table
 
     Scenario: [Actions][Edit] User can edit the Study Disease Milestones
         Given The test study '/study_structure/disease_milestones' page is opened
         And The test Study Disease Milestones exists
         And The 'Edit' option is clicked from the three dot menu list
+        And User waits for 2 seconds
         When The Study Disease Milestones is edited
+        And Form save button is clicked
+        And The pop up displays 'Disease milestone updated'
         Then The Study Disease Milestones with updated values is visible within the table
 
     Scenario: [Create][Mandatory fields] User must not be able to add or edit study disease milestones without Disease Milestone Type provided
         Given The test study '/study_structure/disease_milestones' page is opened
         When The user tries to close the form without Disease Milestone Type provided
+        And Form save button is clicked
         Then The validation appears under that field in the Disease Milestones form
         And The form is not closed
 
@@ -73,6 +78,7 @@ Feature: Studies - Define Study - Study Structure - Disease Milestones
         Given The test Study Disease Milestones exists
         And The test study '/study_structure/disease_milestones' page is opened
         When New Disease Milestone Type is created with the same Disease Milestone Type
+        And Form save button is clicked
         Then The system displays the message "in field Type is not unique for the study"
         And The form is not closed
 
@@ -80,7 +86,8 @@ Feature: Studies - Define Study - Study Structure - Disease Milestones
         Given The test Study Disease Milestones exists
         And The test study '/study_structure/disease_milestones' page is opened
         And The 'Delete' option is clicked from the three dot menu list
-        And The continue is clicked in confirmation popup
+        And Action is confirmed by clicking continue
+        And The pop up displays 'Disease milestone deleted'
         Then The test Study Disease Milestones is no longer available
 
     Scenario: [Export][CSV] User must be able to export the data in CSV format

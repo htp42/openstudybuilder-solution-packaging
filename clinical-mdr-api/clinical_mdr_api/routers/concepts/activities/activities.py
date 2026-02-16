@@ -3,7 +3,6 @@
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Body, Path, Query
-from pydantic.types import Json
 from starlette.requests import Request
 
 from clinical_mdr_api.models.concepts.activities.activity import (
@@ -14,7 +13,6 @@ from clinical_mdr_api.models.concepts.activities.activity import (
     ActivityOverview,
     ActivityRequestRejectInput,
     ActivityVersionDetail,
-    CompactActivity,
 )
 from clinical_mdr_api.models.concepts.activities.activity_instance import (
     ActivityInstanceDetail,
@@ -131,69 +129,29 @@ def get_activities(
             " so we won't loose the information about which activity instances has each group"
         ),
     ] = True,
-    sort_by: Annotated[
-        Json | None, Query(description=_generic_descriptions.SORT_BY)
-    ] = None,
-    page_number: Annotated[
-        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = settings.default_page_number,
-    page_size: Annotated[
-        int,
-        Query(
-            ge=0,
-            le=settings.max_page_size,
-            description=_generic_descriptions.PAGE_SIZE,
-        ),
-    ] = settings.default_page_size,
-    filters: Annotated[
-        Json | None,
-        Query(
-            description=_generic_descriptions.FILTERS,
-            openapi_examples=_generic_descriptions.FILTERS_EXAMPLE,
-        ),
-    ] = None,
-    operator: Annotated[
-        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = settings.default_filter_operator,
-    total_count: Annotated[
-        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
-    ] = False,
-    split_activity_by_groupings: Annotated[
-        bool,
-        Query(
-            description="""
-Specifies whether Activity should be split into separate rows if it contains multiple groupings.\n
-If equals to true, only library_name, sort_by, page_number, page_size, total_count, filters and operator Query parameters will be applied into the query."""
-        ),
-    ] = False,
-) -> CustomPage[Activity | CompactActivity]:
+    sort_by: _generic_descriptions.SORT_BY_QUERY = None,
+    page_number: _generic_descriptions.PAGE_NUMBER_QUERY = settings.default_page_number,
+    page_size: _generic_descriptions.PAGE_SIZE_QUERY = settings.default_page_size,
+    filters: _generic_descriptions.FILTERS_QUERY = None,
+    operator: _generic_descriptions.FILTER_OPERATOR_QUERY = settings.default_filter_operator,
+    total_count: _generic_descriptions.TOTAL_COUNT_QUERY = False,
+) -> CustomPage[Activity]:
     activity_service = ActivityService()
-    if split_activity_by_groupings:
-        results = activity_service.get_compact_activity_with_splitted_groupings(
-            library=library_name,
-            sort_by=sort_by,
-            page_number=page_number,
-            page_size=page_size,
-            total_count=total_count,
-            filter_by=filters,
-            filter_operator=FilterOperator.from_str(operator),
-        )
-    else:
-        results = activity_service.get_all_concepts(
-            library=library_name,
-            sort_by=sort_by,
-            page_number=page_number,
-            page_size=page_size,
-            total_count=total_count,
-            filter_by=filters,
-            filter_operator=FilterOperator.from_str(operator),
-            activity_subgroup_uid=activity_subgroup_uid,
-            activity_group_uid=activity_group_uid,
-            activity_names=activity_names,
-            activity_subgroup_names=activity_subgroup_names,
-            activity_group_names=activity_group_names,
-            group_by_groupings=group_by_groupings,
-        )
+    results = activity_service.get_all_concepts(
+        library=library_name,
+        sort_by=sort_by,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
+        filter_by=filters,
+        filter_operator=FilterOperator.from_str(operator),
+        activity_subgroup_uid=activity_subgroup_uid,
+        activity_group_uid=activity_group_uid,
+        activity_names=activity_names,
+        activity_subgroup_names=activity_subgroup_names,
+        activity_group_names=activity_group_names,
+        group_by_groupings=group_by_groupings,
+    )
     return CustomPage(
         items=results.items, total=results.total, page=page_number, size=page_size
     )
@@ -277,30 +235,11 @@ def get_activities_versions(
             alias="activity_group_names[]",
         ),
     ] = None,
-    page_number: Annotated[
-        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = settings.default_page_number,
-    page_size: Annotated[
-        int,
-        Query(
-            ge=0,
-            le=settings.max_page_size,
-            description=_generic_descriptions.PAGE_SIZE,
-        ),
-    ] = settings.default_page_size,
-    filters: Annotated[
-        Json | None,
-        Query(
-            description=_generic_descriptions.FILTERS,
-            openapi_examples=_generic_descriptions.FILTERS_EXAMPLE,
-        ),
-    ] = None,
-    operator: Annotated[
-        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = settings.default_filter_operator,
-    total_count: Annotated[
-        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
-    ] = False,
+    page_number: _generic_descriptions.PAGE_NUMBER_QUERY = settings.default_page_number,
+    page_size: _generic_descriptions.PAGE_SIZE_QUERY = settings.default_page_size,
+    filters: _generic_descriptions.FILTERS_QUERY = None,
+    operator: _generic_descriptions.FILTER_OPERATOR_QUERY = settings.default_filter_operator,
+    total_count: _generic_descriptions.TOTAL_COUNT_QUERY = False,
 ) -> CustomPage[Activity]:
     activity_service = ActivityService()
     results = activity_service.get_all_concept_versions(
@@ -337,13 +276,9 @@ def get_activities_versions(
     },
 )
 def get_distinct_values_for_header(
-    field_name: Annotated[
-        str, Query(description=_generic_descriptions.HEADER_FIELD_NAME)
-    ],
+    field_name: _generic_descriptions.HEADER_FIELD_NAME_QUERY,
     library_name: Annotated[str | None, Query()] = None,
-    search_string: Annotated[
-        str, Query(description=_generic_descriptions.HEADER_SEARCH_STRING)
-    ] = "",
+    search_string: _generic_descriptions.HEADER_SEARCH_STRING_QUERY = "",
     activity_names: Annotated[
         list[str] | None,
         Query(
@@ -365,57 +300,28 @@ def get_distinct_values_for_header(
             alias="activity_group_names[]",
         ),
     ] = None,
-    filters: Annotated[
-        Json | None,
-        Query(
-            description=_generic_descriptions.FILTERS,
-            openapi_examples=_generic_descriptions.FILTERS_EXAMPLE,
-        ),
-    ] = None,
-    operator: Annotated[
-        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = settings.default_filter_operator,
-    page_size: Annotated[
-        int, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
-    ] = settings.default_header_page_size,
-    split_activity_by_groupings: Annotated[
-        bool,
-        Query(
-            description="""
-Specifies whether Activity should be split into separate rows if it contains multiple groupings.\n
-If equals to true, only library_name, sort_by, page_number, page_size, total_count, filters and operator Query parameters will be applied into the query."""
-        ),
-    ] = False,
+    filters: _generic_descriptions.FILTERS_QUERY = None,
+    operator: _generic_descriptions.FILTER_OPERATOR_QUERY = settings.default_filter_operator,
+    page_size: _generic_descriptions.HEADER_PAGE_SIZE_QUERY = settings.default_header_page_size,
     lite: Annotated[
         bool,
         Query(description=_generic_descriptions.HEADERS_QUERY_LITE),
     ] = False,
 ) -> list[Any]:
     activity_service = ActivityService()
-    if split_activity_by_groupings:
-        headers = activity_service.get_compact_activity_with_splitted_groupings_distinct_values_for_header(
-            library=library_name,
-            field_name=field_name,
-            search_string=search_string,
-            filter_by=filters,
-            filter_operator=FilterOperator.from_str(operator),
-            page_size=page_size,
-        )
-    else:
-        headers = activity_service.get_distinct_values_for_header(
-            library=library_name,
-            field_name=field_name,
-            search_string=search_string,
-            filter_by=filters,
-            filter_operator=FilterOperator.from_str(operator),
-            page_size=page_size,
-            activity_names=activity_names,
-            activity_subgroup_names=activity_subgroup_names,
-            activity_group_names=activity_group_names,
-            group_by_groupings=False,
-            lite=lite,
-        )
-    return headers
+    return activity_service.get_distinct_values_for_header(
+        library=library_name,
+        field_name=field_name,
+        search_string=search_string,
+        filter_by=filters,
+        filter_operator=FilterOperator.from_str(operator),
+        page_size=page_size,
+        activity_names=activity_names,
+        activity_subgroup_names=activity_subgroup_names,
+        activity_group_names=activity_group_names,
+        group_by_groupings=False,
+        lite=lite,
+    )
 
 
 @router.get(
@@ -574,20 +480,9 @@ def get_specific_activity_version_groupings(
     version: Annotated[
         str, Path(description="The version of the activity in format 'x.y'")
     ],
-    page_number: Annotated[
-        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = settings.default_page_number,
-    page_size: Annotated[
-        int,
-        Query(
-            ge=0,
-            le=settings.max_page_size,
-            description=_generic_descriptions.PAGE_SIZE,
-        ),
-    ] = settings.default_page_size,
-    total_count: Annotated[
-        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
-    ] = False,
+    page_number: _generic_descriptions.PAGE_NUMBER_QUERY = settings.default_page_number,
+    page_size: _generic_descriptions.PAGE_SIZE_QUERY = settings.default_page_size,
+    total_count: _generic_descriptions.TOTAL_COUNT_QUERY = False,
 ):
     activity_service = ActivityService()
     results = activity_service.get_specific_activity_version_groupings(

@@ -88,33 +88,12 @@ def get_terms(
     codelist_uid: Annotated[
         str, Query(description="The unique id of the DictionaryCodelist")
     ],
-    sort_by: Annotated[
-        Json | None, Query(description=_generic_descriptions.SORT_BY)
-    ] = None,
-    page_number: Annotated[
-        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = settings.default_page_number,
-    page_size: Annotated[
-        int,
-        Query(
-            ge=0,
-            le=settings.max_page_size,
-            description=_generic_descriptions.PAGE_SIZE,
-        ),
-    ] = settings.default_page_size,
-    filters: Annotated[
-        Json | None,
-        Query(
-            description=_generic_descriptions.FILTERS,
-            openapi_examples=_generic_descriptions.FILTERS_EXAMPLE,
-        ),
-    ] = None,
-    operator: Annotated[
-        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = settings.default_filter_operator,
-    total_count: Annotated[
-        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
-    ] = False,
+    sort_by: _generic_descriptions.SORT_BY_QUERY = None,
+    page_number: _generic_descriptions.PAGE_NUMBER_QUERY = settings.default_page_number,
+    page_size: _generic_descriptions.PAGE_SIZE_QUERY = settings.default_page_size,
+    filters: _generic_descriptions.FILTERS_QUERY = None,
+    operator: _generic_descriptions.FILTER_OPERATOR_QUERY = settings.default_filter_operator,
+    total_count: _generic_descriptions.TOTAL_COUNT_QUERY = False,
 ) -> CustomPage[DictionaryTerm]:
     dictionary_term_service: DictionaryTermGenericService = (
         DictionaryTermGenericService()
@@ -152,25 +131,11 @@ def get_distinct_values_for_header(
     codelist_uid: Annotated[
         str, Query(description="The unique id of the DictionaryCodelist")
     ],
-    field_name: Annotated[
-        str, Query(description=_generic_descriptions.HEADER_FIELD_NAME)
-    ],
-    search_string: Annotated[
-        str, Query(description=_generic_descriptions.HEADER_SEARCH_STRING)
-    ] = "",
-    filters: Annotated[
-        Json | None,
-        Query(
-            description=_generic_descriptions.FILTERS,
-            openapi_examples=_generic_descriptions.FILTERS_EXAMPLE,
-        ),
-    ] = None,
-    operator: Annotated[
-        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = settings.default_filter_operator,
-    page_size: Annotated[
-        int, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
-    ] = settings.default_header_page_size,
+    field_name: _generic_descriptions.HEADER_FIELD_NAME_QUERY,
+    search_string: _generic_descriptions.HEADER_SEARCH_STRING_QUERY = "",
+    filters: _generic_descriptions.FILTERS_QUERY = None,
+    operator: _generic_descriptions.FILTER_OPERATOR_QUERY = settings.default_filter_operator,
+    page_size: _generic_descriptions.HEADER_PAGE_SIZE_QUERY = settings.default_header_page_size,
 ) -> list[Any]:
     dictionary_term_service: DictionaryTermGenericService = (
         DictionaryTermGenericService()
@@ -619,12 +584,8 @@ def create_substance(
     },
 )
 def get_distinct_values_for_substances_header(
-    field_name: Annotated[
-        str, Query(description=_generic_descriptions.HEADER_FIELD_NAME)
-    ],
-    search_string: Annotated[
-        str, Query(description=_generic_descriptions.HEADER_SEARCH_STRING)
-    ] = "",
+    field_name: _generic_descriptions.HEADER_FIELD_NAME_QUERY,
+    search_string: _generic_descriptions.HEADER_SEARCH_STRING_QUERY = "",
     filters: Annotated[
         Json | None,
         Query(
@@ -635,9 +596,7 @@ def get_distinct_values_for_substances_header(
     operator: Annotated[
         str, Query(description=_generic_descriptions.FILTER_OPERATOR)
     ] = settings.default_filter_operator,
-    page_size: Annotated[
-        int, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
-    ] = settings.default_header_page_size,
+    page_size: _generic_descriptions.HEADER_PAGE_SIZE_QUERY = settings.default_header_page_size,
 ) -> list[Any]:
     dictionary_term_service: DictionaryTermSubstanceService = (
         DictionaryTermSubstanceService()
@@ -727,33 +686,12 @@ Possible errors:
 # pylint: disable=unused-argument
 def get_substances(
     request: Request,  # request is actually required by the allow_exports decorator
-    sort_by: Annotated[
-        Json | None, Query(description=_generic_descriptions.SORT_BY)
-    ] = None,
-    page_number: Annotated[
-        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = settings.default_page_number,
-    page_size: Annotated[
-        int,
-        Query(
-            ge=0,
-            le=settings.max_page_size,
-            description=_generic_descriptions.PAGE_SIZE,
-        ),
-    ] = settings.default_page_size,
-    filters: Annotated[
-        Json | None,
-        Query(
-            description=_generic_descriptions.FILTERS,
-            openapi_examples=_generic_descriptions.FILTERS_EXAMPLE,
-        ),
-    ] = None,
-    operator: Annotated[
-        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = settings.default_filter_operator,
-    total_count: Annotated[
-        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
-    ] = False,
+    sort_by: _generic_descriptions.SORT_BY_QUERY = None,
+    page_number: _generic_descriptions.PAGE_NUMBER_QUERY = settings.default_page_number,
+    page_size: _generic_descriptions.PAGE_SIZE_QUERY = settings.default_page_size,
+    filters: _generic_descriptions.FILTERS_QUERY = None,
+    operator: _generic_descriptions.FILTER_OPERATOR_QUERY = settings.default_filter_operator,
+    total_count: _generic_descriptions.TOTAL_COUNT_QUERY = False,
 ) -> CustomPage[DictionaryTermSubstance]:
     dictionary_term_service = DictionaryTermSubstanceService()
     results = dictionary_term_service.get_all_dictionary_terms(

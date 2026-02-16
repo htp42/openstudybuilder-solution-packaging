@@ -17,7 +17,12 @@ from clinical_mdr_api.models.study_selections.study_epoch import StudyEpoch
 from clinical_mdr_api.models.study_selections.study_selection import (
     ReferencedItem,
     SoACellReference,
+    SoAFootnoteReference,
+    StudyActivityGroup,
+    StudyActivityGroupEditInput,
     StudyActivitySchedule,
+    StudyActivitySubGroup,
+    StudyActivitySubGroupEditInput,
     StudySelectionActivity,
     StudySelectionActivityInstance,
 )
@@ -26,6 +31,9 @@ from clinical_mdr_api.models.study_selections.study_soa_footnote import (
 )
 from clinical_mdr_api.models.study_selections.study_visit import StudyVisit
 from clinical_mdr_api.services.studies.study import StudyService
+from clinical_mdr_api.services.studies.study_activity_group import (
+    StudyActivityGroupService,
+)
 from clinical_mdr_api.services.studies.study_activity_instance_selection import (
     StudyActivityInstanceSelectionService,
 )
@@ -34,6 +42,9 @@ from clinical_mdr_api.services.studies.study_activity_schedule import (
 )
 from clinical_mdr_api.services.studies.study_activity_selection import (
     StudyActivitySelectionService,
+)
+from clinical_mdr_api.services.studies.study_activity_subgroup import (
+    StudyActivitySubGroupService,
 )
 from clinical_mdr_api.services.studies.study_epoch import StudyEpochService
 from clinical_mdr_api.services.studies.study_flowchart import _T as _gettext
@@ -848,7 +859,9 @@ class TestSoASnapshot:
 
         # SCENARIO: After changing the SoA data of DRAFT Study, the SoA snapshot of the previous Study version reads back correctly
         # WHEN: Changed Study SoA data
+        self._update_a_study_activity_subgroup(soa_test_data2)
         self._remove_first_visible_study_activity(soa_test_data2)
+        self._update_a_study_activity_group(soa_test_data2)
         # WHEN: SoA snapshot of the previous Study version read from the db
         # THEN: It matches the SoA snapshot of the previous Study version
         self._assert_soa_snapshot_refs_from_db_match_expected_refs(
@@ -857,6 +870,26 @@ class TestSoASnapshot:
             study_value_version=previous_study_version,
             layout=layout,
             expected_refs=expected_refs,
+        )
+
+        # SCENARIO: After releasing a Study version, the released version has a SoA snapshot
+        # GIVEN: A Study version is released
+        study_service.release(uid=study_uid, change_description="r1")
+        released_study_version = f"{previous_study_version}.1"  # release API call does not return version number
+        # GIVEN: SoA snapshot of the latest Study version built
+        latest_refs: list[SoACellReference] = (
+            study_flowchart_service.build_soa_snapshot(
+                study_uid, study_value_version=None, layout=layout
+            )
+        )
+        # WHEN: SoA snapshot of the released Study version read from the db
+        # THEN: It matches the SoA snapshot of the draft Study version
+        self._assert_soa_snapshot_refs_from_db_match_expected_refs(
+            study_flowchart_service,
+            study_uid,
+            study_value_version=released_study_version,
+            layout=layout,
+            expected_refs=latest_refs,
         )
 
         # SCENARIO: After locking the Study, the SoA snapshots of the latest draft and previous locked versions differ
@@ -955,7 +988,7 @@ class TestSoASnapshot:
         study_uid: str,
         study_value_version: str,
         layout: SoALayout,
-        expected_refs: list[SoACellReference],
+        expected_refs: tuple[list[SoACellReference], list[SoAFootnoteReference]],
     ):
         """loads SoA snapshot references from db and compares them to expected references"""
 
@@ -967,12 +1000,17 @@ class TestSoASnapshot:
         )
 
         # THEN: SoA snapshot (without cell footnote references) match as expected
-        assert refs == expected_refs
+        if expected_refs[0]:
+            assert refs[0], "Missing SoA cell references"
+        if expected_refs[1]:
+            assert refs[1], "Missing SoA footnote references"
+        assert refs[0] == expected_refs[0], "SoA cell references mismatch"
+        assert refs[1] == expected_refs[1], "SoA footnote references mismatch"
 
     @staticmethod
     def _load_soa_snapshot_for_comparison(
         study_flowchart_service, study_uid, study_value_version, layout
-    ):
+    ) -> tuple[list[SoACellReference], list[SoAFootnoteReference]]:
         """loads SoA snapshot references from db, and removes cell footnote references to prepare for comparison"""
 
         refs = study_flowchart_service.repository.load(
@@ -1003,6 +1041,40 @@ class TestSoASnapshot:
                 )
                 log.info("deleted StudyActivity [%s]", ssact.study_activity_uid)
                 break
+
+    @staticmethod
+    def _update_a_study_activity_group(test_data: SoATestData):
+        service = StudyActivityGroupService()
+        sag: StudyActivityGroup = service.get_all_selection(
+            study_uid=test_data.study.uid
+        ).items[-1]
+        service.patch_selection(
+            study_uid=test_data.study.uid,
+            study_selection_uid=sag.study_activity_group_uid,
+            selection_update_input=StudyActivityGroupEditInput(
+                show_activity_group_in_protocol_flowchart=not bool(
+                    sag.show_activity_group_in_protocol_flowchart
+                ),
+            ),
+        )
+        log.info("updated StudyActivityGroup [%s]", sag.study_activity_group_uid)
+
+    @staticmethod
+    def _update_a_study_activity_subgroup(test_data: SoATestData):
+        service = StudyActivitySubGroupService()
+        sasg: StudyActivitySubGroup = service.get_all_selection(
+            study_uid=test_data.study.uid
+        ).items[-3]
+        service.patch_selection(
+            study_uid=test_data.study.uid,
+            study_selection_uid=sasg.study_activity_subgroup_uid,
+            selection_update_input=StudyActivitySubGroupEditInput(
+                show_activity_subgroup_in_protocol_flowchart=not bool(
+                    sasg.show_activity_subgroup_in_protocol_flowchart
+                ),
+            ),
+        )
+        log.info("updated StudyActivitySubGroup [%s]", sasg.study_activity_subgroup_uid)
 
     def test_build_soa_snapshot_versioned(
         self, soa_test_data2: SoATestData, layout: SoALayout = SoALayout.PROTOCOL

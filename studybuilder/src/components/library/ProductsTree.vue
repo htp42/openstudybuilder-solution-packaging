@@ -20,16 +20,6 @@
     <v-spacer />
     <v-btn
       size="small"
-      variant="outlined"
-      color="nnBaseBlue"
-      :title="$t('NNTableTooltips.filters')"
-      data-cy="filters-button"
-      :active="showFilterBar"
-      icon="mdi-filter-outline"
-      @click="enableFiltering"
-    />
-    <v-btn
-      size="small"
       color="nnBaseBlue"
       class="ml-2"
       :title="$t('MedicinalProductForm.add_title')"
@@ -37,6 +27,26 @@
       icon="mdi-plus"
       variant="outlined"
       @click.stop="showForm = true"
+    />
+    <v-btn
+      size="small"
+      variant="outlined"
+      color="nnBaseBlue"
+      class="ml-2"
+      :title="$t('NNTableTooltips.filters')"
+      data-cy="filters-button"
+      :active="showFilterBar"
+      icon="mdi-filter-outline"
+      @click="enableFiltering"
+    />
+    <DataTableExportButton
+      class="ml-2"
+      object-label="medicinal-products"
+      data-url="concepts/medicinal-products"
+      :headers="headers"
+      filters="{}"
+      data-cy="export-data-button"
+      @export="confirmExport"
     />
     <v-btn
       class="ml-2"
@@ -156,6 +166,7 @@ import TableLikePagination from '@/components/tools/TableLikePagination.vue'
 import medicinalProductsApi from '@/api/concepts/medicinalProducts'
 import filteringParameters from '@/utils/filteringParameters'
 import _debounce from 'lodash/debounce'
+import DataTableExportButton from '@/components/tools/DataTableExportButton.vue'
 
 const { t } = useI18n()
 const notificationHub = inject('notificationHub')
@@ -430,6 +441,10 @@ function getDoseLabel(dose_values) {
     .map((dose) => `${dose.value} ${dose.unit_label}`)
     .join(', ')
   return result || '-'
+}
+
+async function confirmExport(resolve) {
+  resolve(true)
 }
 </script>
 

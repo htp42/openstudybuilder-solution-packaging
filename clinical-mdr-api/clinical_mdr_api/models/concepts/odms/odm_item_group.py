@@ -144,7 +144,7 @@ class OdmItemGroup(ConceptModel):
                     )
                     for item_uid in odm_item_group_ar.concept_vo.item_uids
                 ],
-                key=lambda item: item.order_number or "",
+                key=lambda item: item.order_number,
             ),
             vendor_elements=sorted(
                 [
@@ -277,9 +277,7 @@ class OdmItemGroupRefModel(BaseModel):
     oid: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
     name: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
     version: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
-    order_number: Annotated[int | None, Field(json_schema_extra={"nullable": True})] = (
-        None
-    )
+    order_number: Annotated[int, Field()] = 999999
     mandatory: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
     collection_exception_condition_oid: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})

@@ -635,6 +635,18 @@ def test_add_study_title_test_to_have_multiple_study_value_relationships_attache
         ]
         is None
     )
+    assert (
+        res["current_metadata"]["identification_metadata"]["registry_identifiers"][
+            "eu_pas_number"
+        ]
+        is None
+    )
+    assert (
+        res["current_metadata"]["identification_metadata"]["registry_identifiers"][
+            "eu_pas_number_null_value_code"
+        ]
+        is None
+    )
     assert res["current_metadata"]["version_metadata"]["study_status"] == "DRAFT"
     assert res["current_metadata"]["version_metadata"]["version_number"] is None
     assert res["current_metadata"]["version_metadata"]["version_timestamp"] is not None

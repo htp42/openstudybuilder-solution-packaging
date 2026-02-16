@@ -64,8 +64,9 @@ def test_post_create_dictionary_term(api_client):
 
 
 def test_get_all_dictionaries_terms_from_given_codelist(api_client):
+    sort_by = '{"term_uid": true}'
     response = api_client.get(
-        "/dictionaries/terms?codelist_uid=codelist_root1_uid&total_count=true"
+        f"/dictionaries/terms?codelist_uid=codelist_root1_uid&total_count=true&sort_by={sort_by}"
     )
 
     assert_response_status_code(response, 200)
@@ -85,12 +86,13 @@ def test_get_all_dictionaries_terms_from_given_codelist(api_client):
     assert res["items"][0]["change_description"] == "Initial version"
     assert res["items"][0]["author_username"] == "unknown-user@example.com"
     assert res["items"][0]["possible_actions"] == ["approve", "delete", "edit"]
-    assert res["items"][1]["term_uid"] == "term_root4_uid"
-    assert res["items"][1]["dictionary_id"] == "dictionary_id4"
-    assert res["items"][1]["name"] == "name4"
-    assert res["items"][1]["name_sentence_case"] == "Name4"
-    assert res["items"][1]["abbreviation"] == "abbreviation4"
-    assert res["items"][1]["definition"] == "definition4"
+
+    assert res["items"][1]["term_uid"] == "term_root1_uid"
+    assert res["items"][1]["dictionary_id"] == "dictionary_id1"
+    assert res["items"][1]["name"] == "name1"
+    assert res["items"][1]["name_sentence_case"] == "Name1"
+    assert res["items"][1]["abbreviation"] == "abbreviation1"
+    assert res["items"][1]["definition"] == "definition1"
     assert res["items"][1]["library_name"] == "SNOMED"
     assert res["items"][1]["end_date"] is None
     assert res["items"][1]["status"] == "Final"
@@ -98,12 +100,13 @@ def test_get_all_dictionaries_terms_from_given_codelist(api_client):
     assert res["items"][1]["change_description"] == "Approved version"
     assert res["items"][1]["author_username"] == "unknown-user@example.com"
     assert res["items"][1]["possible_actions"] == ["inactivate", "new_version"]
-    assert res["items"][2]["term_uid"] == "term_root1_uid"
-    assert res["items"][2]["dictionary_id"] == "dictionary_id1"
-    assert res["items"][2]["name"] == "name1"
-    assert res["items"][2]["name_sentence_case"] == "Name1"
-    assert res["items"][2]["abbreviation"] == "abbreviation1"
-    assert res["items"][2]["definition"] == "definition1"
+
+    assert res["items"][2]["term_uid"] == "term_root4_uid"
+    assert res["items"][2]["dictionary_id"] == "dictionary_id4"
+    assert res["items"][2]["name"] == "name4"
+    assert res["items"][2]["name_sentence_case"] == "Name4"
+    assert res["items"][2]["abbreviation"] == "abbreviation4"
+    assert res["items"][2]["definition"] == "definition4"
     assert res["items"][2]["library_name"] == "SNOMED"
     assert res["items"][2]["end_date"] is None
     assert res["items"][2]["status"] == "Final"

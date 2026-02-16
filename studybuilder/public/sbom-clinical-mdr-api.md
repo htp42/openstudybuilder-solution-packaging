@@ -4,20 +4,19 @@
 | Package                  | Version     | License                                     |
 |--------------------------|-------------|---------------------------------------------|
 | annotated-types          | 0.6.0       | [see below](#annotated-types)               |
-| anyio                    | 4.11.0      | [MIT](#anyio)                               |
+| anyio                    | 4.12.0      | [MIT](#anyio)                               |
 | asyncache                | 0.3.1       | [MIT](#asyncache)                           |
 | attrs                    | 25.4.0      | [MIT](#attrs)                               |
 | Authlib                  | 1.6.5       | [BSD-3-Clause](#authlib)                    |
 | azure-core               | 1.36.0      | [MIT License](#azure-core)                  |
 | azure-identity           | 1.25.1      | [MIT](#azure-identity)                      |
 | beautifulsoup4           | 4.12.3      | [MIT License](#beautifulsoup4)              |
-| Brotli                   | 1.1.0       | [MIT](#brotli)                              |
-| bs4                      | 0.0.2       | [MIT License](#bs4)                         |
+| brotli                   | 1.2.0       | [MIT](#brotli)                              |
 | cachetools               | 5.5.2       | [MIT](#cachetools)                          |
-| certifi                  | 2025.10.5   | [MPL-2.0](#certifi)                         |
+| certifi                  | 2025.11.12  | [MPL-2.0](#certifi)                         |
 | cffi                     | 1.17.1      | [MIT](#cffi)                                |
 | charset-normalizer       | 3.4.4       | [MIT](#charset-normalizer)                  |
-| click                    | 8.3.0       | [BSD-3-Clause](#click)                      |
+| click                    | 8.3.1       | [BSD-3-Clause](#click)                      |
 | colour                   | 0.1.5       | [BSD 3-Clause License](#colour)             |
 | cryptography             | 46.0.0      | [Apache-2.0 OR BSD-3-Clause](#cryptography) |
 | cssselect2               | 0.8.0       | [see below](#cssselect2)                    |
@@ -28,10 +27,10 @@
 | fastapi                  | 0.116.2     | [see below](#fastapi)                       |
 | fhir_core                | 1.1.4       | [BSD license](#fhir_core)                   |
 | fhir.resources           | 8.1.0       | [BSD license](#fhirresources)               |
-| fonttools                | 4.60.1      | [MIT](#fonttools)                           |
+| fonttools                | 4.61.0      | [MIT](#fonttools)                           |
 | google-api-core          | 2.28.1      | [Apache 2.0](#google-api-core)              |
-| google-auth              | 2.42.0      | [Apache 2.0](#google-auth)                  |
-| googleapis-common-protos | 1.71.0      | [Apache 2.0](#googleapis-common-protos)     |
+| google-auth              | 2.43.0      | [Apache 2.0](#google-auth)                  |
+| googleapis-common-protos | 1.72.0      | [Apache 2.0](#googleapis-common-protos)     |
 | h11                      | 0.16.0      | [MIT](#h11)                                 |
 | httpcore                 | 1.0.9       | [BSD-3-Clause](#httpcore)                   |
 | httpx                    | 0.27.2      | [BSD-3-Clause](#httpx)                      |
@@ -45,24 +44,24 @@
 | neo4j                    | 5.28.2      | [Apache License, Version 2.0](#neo4j)       |
 | neomodel                 | 5.5.3       | [MIT](#neomodel)                            |
 | nh3                      | 0.2.22      | [MIT](#nh3)                                 |
-| numpy                    | 2.3.3       | [see below](#numpy)                         |
+| numpy                    | 2.3.5       | [see below](#numpy)                         |
 | opencensus               | 0.11.4      | [Apache-2.0](#opencensus)                   |
 | opencensus-context       | 0.1.3       | [Apache-2.0](#opencensus-context)           |
 | opencensus-ext-azure     | 1.1.15      | [Apache-2.0](#opencensus-ext-azure)         |
 | openpyxl                 | 3.1.5       | [MIT](#openpyxl)                            |
 | orderly-set              | 5.5.0       | [see below](#orderly-set)                   |
-| pandas                   | 2.3.2       | [see below](#pandas)                        |
+| pandas                   | 2.3.3       | [see below](#pandas)                        |
 | pillow                   | 12.0.0      | [MIT-CMU](#pillow)                          |
 | proto-plus               | 1.26.1      | [Apache 2.0](#proto-plus)                   |
-| protobuf                 | 6.33.0      | [3-Clause BSD License](#protobuf)           |
-| psutil                   | 7.1.2       | [BSD-3-Clause](#psutil)                     |
+| protobuf                 | 6.33.2      | [3-Clause BSD License](#protobuf)           |
+| psutil                   | 7.1.3       | [BSD-3-Clause](#psutil)                     |
 | pyasn1                   | 0.6.1       | [BSD-2-Clause](#pyasn1)                     |
 | pyasn1_modules           | 0.4.2       | [BSD](#pyasn1_modules)                      |
 | pycparser                | 2.23        | [BSD-3-Clause](#pycparser)                  |
 | pydantic                 | 2.10.6      | [MIT](#pydantic)                            |
 | pydantic_core            | 2.27.2      | [MIT](#pydantic_core)                       |
 | pydantic-settings        | 2.7.1       | [MIT](#pydantic-settings)                   |
-| pydyf                    | 0.11.0      | [see below](#pydyf)                         |
+| pydyf                    | 0.12.1      | [see below](#pydyf)                         |
 | PyJWT                    | 2.10.1      | [MIT](#pyjwt)                               |
 | pyphen                   | 0.17.2      | [see below](#pyphen)                        |
 | python-dateutil          | 2.9.0.post0 | [Dual License](#python-dateutil)            |
@@ -80,18 +79,18 @@
 | starlette                | 0.48.0      | [BSD-3-Clause](#starlette)                  |
 | starlette-context        | 0.4.0       | [MIT](#starlette-context)                   |
 | stringcase               | 1.2.0       | [MIT](#stringcase)                          |
-| tinycss2                 | 1.4.0       | [see below](#tinycss2)                      |
+| tinycss2                 | 1.5.1       | [see below](#tinycss2)                      |
 | tinyhtml5                | 2.0.0       | [see below](#tinyhtml5)                     |
 | typing_extensions        | 4.15.0      | [PSF-2.0](#typing_extensions)               |
 | tzdata                   | 2025.2      | [Apache-2.0](#tzdata)                       |
-| urllib3                  | 2.5.0       | [MIT](#urllib3)                             |
-| usdm                     | 0.59.0      | [see below](#usdm)                          |
+| urllib3                  | 2.6.0       | [MIT](#urllib3)                             |
+| usdm                     | 0.65.0      | [see below](#usdm)                          |
 | uvicorn                  | 0.32.1      | [BSD-3-Clause](#uvicorn)                    |
 | weasyprint               | 63.1        | [see below](#weasyprint)                    |
 | webencodings             | 0.5.1       | [BSD](#webencodings)                        |
 | xsdata                   | 24.11       | [MIT](#xsdata)                              |
 | yattag                   | 1.16.1      | [see below](#yattag)                        |
-| zopfli                   | 0.2.3.post1 | [ASL](#zopfli)                              |
+| zopfli                   | 0.4.0       | [Apache-2.0](#zopfli)                       |
 
 
 ## Third-party package licenses
@@ -364,7 +363,7 @@
     Isaac Muse
 
 ---
-### Brotli
+### brotli
 
     Copyright (c) 2009, 2010, 2013-2016 by the Brotli Authors.
 
@@ -385,17 +384,6 @@
     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
     THE SOFTWARE.
-
----
-### bs4
-
-    This is a dummy package designed to prevent namesquatting on PyPI. You should install beautifulsoup4 instead.
-
-    License
-    : MIT License
-
-    Author
-    : Leonard Richardson
 
 ---
 ### cachetools

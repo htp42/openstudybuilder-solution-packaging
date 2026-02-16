@@ -1,3 +1,4 @@
+import dataclasses
 import functools
 import inspect
 import json
@@ -989,7 +990,11 @@ def rgetattr(obj, attr):
             return [_getattr(element, attr) for element in obj]
         if isinstance(obj, dict):
             return [_getattr(element, attr) for element in obj.values()]
-        return getattr(obj, attr, None)
+
+        attr_value = getattr(obj, attr, None)
+        if isinstance(attr_value, Enum):
+            return attr_value.value
+        return attr_value
 
     return functools.reduce(_getattr, attr.split("."), obj)
 
@@ -1014,14 +1019,26 @@ def rgetattr_type(obj, attr):
         if isinstance(obj, dict):
             return [_getattr(element, attr) for element in obj.values()]
         inner_obj = getattr(obj, attr, None)
-        if not isinstance(inner_obj, BaseModel):
+
+        if isinstance(obj, BaseModel):
             prop = obj.model_fields.get(attr)
             if prop:
                 return get_field_type(prop.annotation)
             raise ValidationException(
                 msg=f"Cannot resolve a model field for attribute {attr}"
             )
-        return inner_obj
+        if dataclasses.is_dataclass(obj):
+            field_types = {field.name: field.type for field in dataclasses.fields(obj)}
+            field_type = field_types.get(attr)
+            # Using issubclass here as field_type can be Union and when Union is placed as 2nd argument to issublass(..)
+            # then it can validate if any types inside Union matches str or int type
+            if issubclass(str, field_type):  # type: ignore[arg-type]
+                return str
+            if issubclass(int, field_type):  # type: ignore[arg-type]
+                return int
+            return type(field_types.get(attr))
+
+        return type(inner_obj)
 
     return functools.reduce(_getattr, attr.split("."), obj)
 

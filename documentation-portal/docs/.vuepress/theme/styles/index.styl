@@ -70,12 +70,33 @@ body
   img
     max-width 100%
 
-{$contentClass}.custom
-  padding 0
-  margin 0
+{$contentClass}:not(.custom)
+  @extend $wrapper
+  > *:first-child
+    margin-top $navbarHeight
+
+  a:hover
+    text-decoration underline
+
+  p.demo
+    padding 1rem 1.5rem
+    border 1px solid #ddd
+    border-radius 4px
 
   img
     max-width 100%
+    box-shadow 0 4px 12px rgba(0, 0, 0, 0.15)
+    border-radius 4px
+    display block
+    margin 20px auto
+    
+  // Remove shadow from table images
+  table img
+    box-shadow none
+    border-radius 0
+    display inline-block
+    margin 0
+    vertical-align middle  // Better alignment in table cells                        
 
 a
   font-weight 500
@@ -99,6 +120,18 @@ blockquote
   border-left .2rem solid #dfe2e5
   margin 1rem 0
   padding .25rem 0 .25rem 1rem
+.theme-default-content pre
+  background-color #f6f8fa
+  color #24292e
+  border 1px solid #e1e4e8
+  border-radius 6px
+  padding 16px
+  overflow-x auto
+  
+// Make sure code inside pre also has dark text
+.theme-default-content pre code
+  background-color transparent
+  color #24292e
 
   & > p
     margin 0

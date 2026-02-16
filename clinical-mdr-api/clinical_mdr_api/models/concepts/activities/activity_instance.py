@@ -23,17 +23,14 @@ from clinical_mdr_api.models.concepts.activities.activity import (
     SimpleActivityGroup,
     SimpleActivityGrouping,
     SimpleActivityInstance,
-    SimpleActivityInstanceClass,
+    SimpleActivityInstanceClassForActivity,
     SimpleActivitySubGroup,
 )
 from clinical_mdr_api.models.concepts.activities.activity_item import (
     ActivityItem,
     ActivityItemCreateInput,
-    CompactActivityItemClass,
+    CompactActivityItemClassForActivityItem,
     CompactCTTerm,
-    CompactOdmForm,
-    CompactOdmItem,
-    CompactOdmItemGroup,
     CompactUnitDefinition,
 )
 from clinical_mdr_api.models.concepts.concept import (
@@ -149,46 +146,16 @@ class ActivityInstance(ActivityBase):
                     )
                 )
             ct_terms.sort(key=lambda x: x.uid or "")
-            odm_form = (
-                CompactOdmForm(
-                    uid=activity_item.odm_form.uid,
-                    oid=activity_item.odm_form.oid,
-                    name=activity_item.odm_form.name,
-                )
-                if activity_item.odm_form
-                else None
-            )
-            odm_item_group = (
-                CompactOdmItemGroup(
-                    uid=activity_item.odm_item_group.uid,
-                    oid=activity_item.odm_item_group.oid,
-                    name=activity_item.odm_item_group.name,
-                )
-                if activity_item.odm_item_group
-                else None
-            )
-            odm_item = (
-                CompactOdmItem(
-                    uid=activity_item.odm_item.uid,
-                    oid=activity_item.odm_item.oid,
-                    name=activity_item.odm_item.name,
-                )
-                if activity_item.odm_item
-                else None
-            )
 
             activity_items.append(
                 ActivityItem(
-                    activity_item_class=CompactActivityItemClass(
+                    activity_item_class=CompactActivityItemClassForActivityItem(
                         uid=activity_item.activity_item_class_uid,
                         name=activity_item.activity_item_class_name,
                     ),
                     ct_terms=ct_terms,
                     unit_definitions=unit_definitions,
                     is_adam_param_specific=activity_item.is_adam_param_specific,
-                    odm_form=odm_form,
-                    odm_item_group=odm_item_group,
-                    odm_item=odm_item,
                 )
             )
 
@@ -295,40 +262,13 @@ class ActivityInstance(ActivityBase):
 
             activity_items.append(
                 ActivityItem(
-                    activity_item_class=CompactActivityItemClass(
+                    activity_item_class=CompactActivityItemClassForActivityItem(
                         uid=activity_item.activity_item_class_uid,
                         name=activity_item.activity_item_class_name,
                     ),
                     ct_terms=ct_terms,
                     unit_definitions=unit_definitions,
                     is_adam_param_specific=activity_item.is_adam_param_specific,
-                    odm_form=(
-                        CompactOdmForm(
-                            uid=activity_item.odm_form.uid,
-                            oid=activity_item.odm_form.oid,
-                            name=activity_item.odm_form.name,
-                        )
-                        if activity_item.odm_form
-                        else None
-                    ),
-                    odm_item_group=(
-                        CompactOdmItemGroup(
-                            uid=activity_item.odm_item_group.uid,
-                            oid=activity_item.odm_item_group.oid,
-                            name=activity_item.odm_item_group.name,
-                        )
-                        if activity_item.odm_item_group
-                        else None
-                    ),
-                    odm_item=(
-                        CompactOdmItem(
-                            uid=activity_item.odm_item.uid,
-                            oid=activity_item.odm_item.oid,
-                            name=activity_item.odm_item.name,
-                        )
-                        if activity_item.odm_item
-                        else None
-                    ),
                 )
             )
 
@@ -414,6 +354,12 @@ class ActivityInstanceCreateInput(ExtendedConceptPostInput):
     activity_instance_class_uid: Annotated[str, Field(min_length=1)]
     activity_items: Annotated[list[ActivityItemCreateInput] | None, Field()] = None
     library_name: Annotated[str, Field(min_length=1)]
+    strict_mode: Annotated[
+        bool,
+        Field(
+            description="If True, enforces strict validation for parent mandatory activity item classes. Defaults to False (relaxed mode)."
+        ),
+    ] = False
 
 
 class ActivityInstancePreviewInput(ActivityInstanceCreateInput):
@@ -442,6 +388,12 @@ class ActivityInstanceEditInput(ExtendedConceptPatchInput):
     activity_instance_class_uid: Annotated[str | None, Field(min_length=1)] = None
     activity_groupings: Annotated[list[ActivityInstanceGrouping] | None, Field()] = None
     activity_items: Annotated[list[ActivityItemCreateInput] | None, Field()] = None
+    strict_mode: Annotated[
+        bool | None,
+        Field(
+            description="If True, enforces strict validation for parent mandatory activity item classes. Defaults to False (relaxed mode) when not provided."
+        ),
+    ] = None
     change_description: Annotated[str, Field(min_length=1)]
 
 
@@ -453,7 +405,7 @@ class ActivityInstanceVersion(ActivityInstance):
     changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)
 
 
-class SimpleActivity(BaseModel):
+class SimpleActivityForActivityInstance(BaseModel):
     uid: Annotated[str, Field()]
     nci_concept_id: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
@@ -485,7 +437,7 @@ class SimpleActivity(BaseModel):
     status: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
 
 
-class SimpleActivityItemClass(BaseModel):
+class SimpleActivityItemClassForActivityInstance(BaseModel):
     name: Annotated[str, Field()]
     order: Annotated[int, Field()]
     role_name: Annotated[str, Field()]
@@ -497,15 +449,12 @@ class SimplifiedActivityItem(BaseModel):
 
     ct_terms: list[CTTermItem] = Field(default_factory=list)
     unit_definitions: list[CompactUnitDefinition] = Field(default_factory=list)
-    activity_item_class: Annotated[SimpleActivityItemClass, Field()]
+    activity_item_class: Annotated[SimpleActivityItemClassForActivityInstance, Field()]
     is_adam_param_specific: Annotated[bool, Field()]
-    odm_form: Annotated[CompactOdmForm | None, Field()] = None
-    odm_item_group: Annotated[CompactOdmItemGroup | None, Field()] = None
-    odm_item: Annotated[CompactOdmItem | None, Field()] = None
 
 
 class SimpleActivityInstanceGrouping(SimpleActivityGrouping):
-    activity: Annotated[SimpleActivity, Field()]
+    activity: Annotated[SimpleActivityForActivityInstance, Field()]
 
 
 class ActivityInstanceOverview(BaseModel):
@@ -541,33 +490,6 @@ class ActivityInstanceOverview(BaseModel):
                 ],
                 key=lambda x: x.uid or "",
             )
-            odm_form = (
-                CompactOdmForm(
-                    uid=activity_item["odm_form"]["uid"],
-                    oid=activity_item["odm_form"]["oid"],
-                    name=activity_item["odm_form"]["name"],
-                )
-                if activity_item.get("odm_form", None)
-                else None
-            )
-            odm_item_group = (
-                CompactOdmItemGroup(
-                    uid=activity_item["odm_item_group"]["uid"],
-                    oid=activity_item["odm_item_group"]["oid"],
-                    name=activity_item["odm_item_group"]["name"],
-                )
-                if activity_item.get("odm_item_group", None)
-                else None
-            )
-            odm_item = (
-                CompactOdmItem(
-                    uid=activity_item["odm_item"]["uid"],
-                    oid=activity_item["odm_item"]["oid"],
-                    name=activity_item["odm_item"]["name"],
-                )
-                if activity_item.get("odm_item", None)
-                else None
-            )
             # Extract activity_item_class handling Neo4j node format
             aic = activity_item.get("activity_item_class", {})
             if "properties" in aic:
@@ -583,10 +505,7 @@ class ActivityInstanceOverview(BaseModel):
                 SimplifiedActivityItem(
                     ct_terms=terms,
                     unit_definitions=units,
-                    odm_form=odm_form,
-                    odm_item_group=odm_item_group,
-                    odm_item=odm_item,
-                    activity_item_class=SimpleActivityItemClass(
+                    activity_item_class=SimpleActivityItemClassForActivityInstance(
                         name=aic_name,
                         order=aic_order,
                         role_name=activity_item.get("activity_item_class_role"),
@@ -603,7 +522,7 @@ class ActivityInstanceOverview(BaseModel):
         return cls(
             activity_groupings=[
                 SimpleActivityInstanceGrouping(
-                    activity=SimpleActivity(
+                    activity=SimpleActivityForActivityInstance(
                         uid=activity_grouping.get("uid"),
                         name=activity_grouping.get("activity_value").get("name"),
                         definition=activity_grouping.get("activity_value").get(
@@ -701,7 +620,7 @@ class ActivityInstanceOverview(BaseModel):
                     "molecular_weight"
                 ),
                 library_name=overview["instance_library_name"],
-                activity_instance_class=SimpleActivityInstanceClass(
+                activity_instance_class=SimpleActivityInstanceClassForActivity(
                     name=overview.get("activity_instance_class").get("name")
                 ),
                 status=overview.get("has_version", {}).get("status"),
@@ -712,6 +631,7 @@ class ActivityInstanceOverview(BaseModel):
                 end_date=convert_to_datetime(
                     overview.get("has_version", {}).get("end_date")
                 ),
+                author_username=overview.get("has_version", {}).get("author_username"),
             ),
             activity_items=activity_items,
             all_versions=overview["all_versions"],
@@ -731,9 +651,9 @@ class ActivityInstanceDetail(BaseModel):
     )
     version: Annotated[str, Field()]
     status: Annotated[str, Field()]
-    activity_instance_class: Annotated[SimpleActivityInstanceClass | None, Field()] = (
-        None
-    )
+    activity_instance_class: Annotated[
+        SimpleActivityInstanceClassForActivity | None, Field()
+    ] = None
     start_date: Annotated[
         datetime | None, Field(json_schema_extra={"nullable": True})
     ] = None

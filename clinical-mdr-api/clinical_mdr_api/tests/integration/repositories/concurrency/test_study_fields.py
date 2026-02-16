@@ -115,6 +115,8 @@ class StudyFieldsConcurrencyTest(unittest.TestCase):
                         eudamed_srn_number_null_value_code=None,
                         investigational_device_exemption_ide_number=None,
                         investigational_device_exemption_ide_number_null_value_code=None,
+                        eu_pas_number=None,
+                        eu_pas_number_null_value_code=None,
                     ),
                 ),
                 project_exists_callback=lambda _: True,

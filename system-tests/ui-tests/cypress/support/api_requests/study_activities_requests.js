@@ -1,6 +1,6 @@
 let soaGroup_uid
 const studyActivityUrl = (study_uid, study_activity_uid) => `/studies/${study_uid}/study-activities/${study_activity_uid}`
-const studyActivitiesUrl = (study_uid) => `/studies/${study_uid}/study-activities`
+const studyActivitiesUrl = (study_uid) => `/studies/${study_uid}/study-activities?page_number=1&page_size=0`
 const studyActivityBatchUrl = (study_uid) => `/studies/${study_uid}/study-activities/batch`
 const flowchartGroupUrl = () => '/ct/codelists/terms?page_size=100&codelist_submission_value=FLWCRTGRP'
 

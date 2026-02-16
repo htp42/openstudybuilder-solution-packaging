@@ -376,6 +376,7 @@ def test_study_metadata_listing_api(api_client):
             "nmpa": "some nmpa",
             "esn": "some esn",
             "ide": "some ide",
+            "eupn": "some eupn",
         },
         "study_type": {
             "stype": "",
@@ -819,6 +820,7 @@ def test_study_metadata_listing_with_subpart(api_client):
             "nmpa": "",
             "esn": "",
             "ide": "",
+            "eupn": "",
         },
         "study_type": {
             "stype": "",

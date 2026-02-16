@@ -10,7 +10,7 @@ class NoFieldsWithDisallowedArgs(SBLinter):
     DISALLOWED_ARGS = ["title"]
 
     @classmethod
-    def validate(cls, code_tree: ast.Module) -> list[int]:
+    def validate(cls, code_tree: ast.Module, _file_path: str) -> list[int]:
         """
         Validates the given Python code by checking if it contains any
         `pydantic.Field` assignments where fields listed in

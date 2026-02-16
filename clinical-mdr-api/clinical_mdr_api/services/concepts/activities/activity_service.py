@@ -25,7 +25,6 @@ from clinical_mdr_api.models.concepts.activities.activity import (
     ActivityRequestRejectInput,
     ActivityVersion,
     ActivityVersionDetail,
-    CompactActivity,
 )
 from clinical_mdr_api.models.concepts.activities.activity_instance import (
     ActivityInstanceDetail,
@@ -33,7 +32,6 @@ from clinical_mdr_api.models.concepts.activities.activity_instance import (
     ActivityInstanceGrouping,
 )
 from clinical_mdr_api.models.utils import GenericFilteringReturn
-from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._utils import is_library_editable
 from clinical_mdr_api.services.concepts import constants
 from clinical_mdr_api.services.concepts.activities.activity_instance_service import (
@@ -231,9 +229,14 @@ class ActivityService(ConceptGenericService[ActivityAR]):
                 activity_groups_by_uid = {}
                 activity_subgroups_by_uid = {}
         else:
-            activity_groupings = []
-            activity_groups_by_uid = set()
-            activity_subgroups_by_uid = set()
+            # Preserve existing groupings when not explicitly provided
+            activity_groupings = item.concept_vo.activity_groupings
+            activity_groups_by_uid = {
+                g.activity_group_uid for g in item.concept_vo.activity_groupings
+            }
+            activity_subgroups_by_uid = {
+                g.activity_subgroup_uid for g in item.concept_vo.activity_groupings
+            }
         synonyms = (
             [] if concept_edit_input.synonyms is None else concept_edit_input.synonyms
         )
@@ -670,56 +673,3 @@ class ActivityService(ConceptGenericService[ActivityAR]):
             paginated_items = flattened_items
 
         return GenericFilteringReturn(items=paginated_items, total=total)
-
-    def get_compact_activity_with_splitted_groupings(
-        self,
-        library: str | None = None,
-        sort_by: dict[str, bool] | None = None,
-        page_number: int = 1,
-        page_size: int = 0,
-        filter_by: dict[str, dict[str, Any]] | None = None,
-        filter_operator: FilterOperator = FilterOperator.AND,
-        total_count: bool = False,
-    ) -> GenericFilteringReturn[CompactActivity]:
-        self.enforce_library(library)
-
-        items, total = self.repository.get_compact_activity_with_splitted_groupings(
-            library=library,
-            total_count=total_count,
-            sort_by=sort_by,
-            filter_by=filter_by,
-            filter_operator=filter_operator,
-            page_number=page_number,
-            page_size=page_size,
-        )
-
-        all_concepts = GenericFilteringReturn(items=items, total=total)
-        all_concepts.items = [
-            CompactActivity.from_repository_output(item) for item in all_concepts.items
-        ]
-
-        return all_concepts
-
-    def get_compact_activity_with_splitted_groupings_distinct_values_for_header(
-        self,
-        library: str | None,
-        field_name: str,
-        search_string: str = "",
-        filter_by: dict[str, dict[str, Any]] | None = None,
-        filter_operator: FilterOperator = FilterOperator.AND,
-        page_size: int = 10,
-        **kwargs,
-    ) -> list[Any]:
-        self.enforce_library(library)
-
-        header_values = self.repository.get_compact_activity_with_splitted_groupings_distinct_headers(
-            library=library,
-            field_name=field_name,
-            search_string=search_string,
-            filter_by=filter_by,
-            filter_operator=filter_operator,
-            page_size=page_size,
-            **kwargs,
-        )
-
-        return header_values

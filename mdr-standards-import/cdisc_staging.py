@@ -86,7 +86,7 @@ def create_database(db_driver, db_name, clear_db=False):
         with db_driver.session() as session:
             query = f"CREATE DATABASE `{db_name}` IF NOT EXISTS"
             run_single_query(session, query)
-    except neo4j.exceptions.DatabaseError:
+    except neo4j.exceptions.Neo4jError:
         LOGGER.info(f"Could not execute query for creating database '{db_name}', normal if running against an AuraDB instance")
     try_cnt = 1
     db_exists = False

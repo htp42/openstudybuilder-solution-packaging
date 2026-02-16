@@ -40,7 +40,14 @@ class NeomodelExtBaseRepository:
 
         raise NotImplementedError
 
-    def extend_distinct_headers_query(self, nodeset: NodeSet) -> NodeSet:
+    def extend_distinct_headers_query(
+        self,
+        nodeset: NodeSet,
+        field_name: str,  # pylint: disable=unused-argument
+        filter_by: (  # pylint: disable=unused-argument
+            dict[str, dict[str, Any]] | None
+        ) = None,
+    ) -> NodeSet:
         """
         Method to extend the query built for distinct header retrieval.
         """
@@ -168,7 +175,9 @@ class NeomodelExtBaseRepository:
             },
             distinct=True,
         )
-        nodeset = self.extend_distinct_headers_query(nodeset)
+        nodeset = self.extend_distinct_headers_query(
+            nodeset, field_name=field_name, filter_by=filter_by
+        )
 
         rs = nodeset.all()
 

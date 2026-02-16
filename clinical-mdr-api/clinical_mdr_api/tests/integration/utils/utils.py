@@ -1269,11 +1269,7 @@ class TestUtils:
                 indication_uids=[],
                 activity_uids=[],
                 activity_group_uids=[activity_group_uid],
-                activity_subgroup_uids=[
-                    cls.create_activity_subgroup(
-                        name="test", activity_groups=[activity_group_uid]
-                    ).uid
-                ],
+                activity_subgroup_uids=[cls.create_activity_subgroup(name="test").uid],
                 approve=False,
             ).uid
 
@@ -1397,11 +1393,7 @@ class TestUtils:
                 indication_uids=[],
                 activity_uids=[],
                 activity_group_uids=[activity_group_uid],
-                activity_subgroup_uids=[
-                    cls.create_activity_subgroup(
-                        name="test", activity_groups=[activity_group_uid]
-                    ).uid
-                ],
+                activity_subgroup_uids=[cls.create_activity_subgroup(name="test").uid],
             ).uid
 
         service: FootnotePreInstanceService = FootnotePreInstanceService()
@@ -1815,7 +1807,6 @@ class TestUtils:
     def create_activity_subgroup(
         cls,
         name: str,
-        activity_groups: list[str],
         name_sentence_case: str | None = None,
         definition: str | None = None,
         abbreviation: str | None = None,
@@ -1829,7 +1820,6 @@ class TestUtils:
                 name_sentence_case=name_sentence_case if name_sentence_case else name,
                 definition=definition,
                 abbreviation=abbreviation,
-                activity_groups=activity_groups,
                 library_name=library_name,
             )
         )
@@ -3803,7 +3793,7 @@ class TestUtils:
         simple_datatype: str = "simple_datatype",
         role: str = "role",
         core: str = "core",
-        references_codelist_uid: str | None = None,
+        references_codelist_uids: list[str] | None = None,
         library_name: str = LIBRARY_NAME,
     ) -> DatasetVariableAPIModel:
         """
@@ -3841,7 +3831,8 @@ class TestUtils:
             MATCH (dataset_value)<-[:HAS_DATASET]-(data_model_ig_value:DataModelIGValue)
             SET has_dataset_variable.version_number = data_model_ig_value.version_number
             WITH dataset_variable_value
-            MATCH (codelist:CTCodelistRoot {uid:$referenced_codelist_uid})
+            MATCH (codelist:CTCodelistRoot)
+            WHERE codelist.uid IN $referenced_codelist_uids
             MERGE (dataset_variable_value)-[:REFERENCES_CODELIST]->(codelist)
             """
         dataset_variable_uid = DatasetVariable.get_next_free_uid_and_increment_counter()
@@ -3858,7 +3849,7 @@ class TestUtils:
                 "simple_datatype": simple_datatype,
                 "role": role,
                 "core": core,
-                "referenced_codelist_uid": references_codelist_uid,
+                "referenced_codelist_uids": references_codelist_uids,
                 "library_name": library_name,
             },
         )

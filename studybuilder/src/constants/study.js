@@ -26,6 +26,7 @@ const REGISTRY_IDENTIFIERS = [
   'national_medical_products_administration_nmpa_number',
   'eudamed_srn_number',
   'investigational_device_exemption_ide_number',
+  'eu_pas_number',
 ]
 
 export default {

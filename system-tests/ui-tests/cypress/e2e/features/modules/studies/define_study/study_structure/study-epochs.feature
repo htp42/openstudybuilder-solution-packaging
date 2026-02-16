@@ -47,6 +47,9 @@ Feature: Studies - Define Study - Study Structure - Study Epochs
     Scenario: [Create][Positve case] User must be able to add a Study Epoch
         Given The test study '/study_structure/epochs' page is opened
         When A new Study Epoch is added
+        And Form save button is clicked
+        And User waits for epochs data
+        When The form is no longer available
         And Study Epoch is found
         Then The new Study Epoch is available within the table
 
@@ -55,6 +58,9 @@ Feature: Studies - Define Study - Study Structure - Study Epochs
         And Study Epoch is found
         And The 'Edit' option is clicked from the three dot menu list
         When The Study Epoch is edited
+        And Form save button is clicked
+        And User waits for epochs data
+        When The form is no longer available
         And Study Epoch is found
         Then The edited Study Epoch with updated values is available within the table
 

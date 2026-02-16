@@ -11,7 +11,7 @@
           item-title="name"
           item-value="value"
           class="mt-2"
-          :class="{ shake: shakeit && !data.target_type }"
+          :class="{ shake: isShaking && !data.target_type }"
           @update:model-value="setElements()"
           @click:clear="data.target_uid = null"
         />
@@ -27,7 +27,7 @@
           item-title="name"
           item-value="uid"
           :disabled="!data.target_type"
-          :class="{ shake: shakeit && data.target_type && !data.target_uid }"
+          :class="{ shake: isShaking && data.target_type && !data.target_uid }"
           @update:model-value="setElementVersions()"
         />
       </v-col>
@@ -224,6 +224,7 @@ import { DateTime } from 'luxon'
 import { ref, watch, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
+import { useShake } from '@/composables/shake'
 
 const props = defineProps({
   typeProp: {
@@ -242,6 +243,8 @@ const props = defineProps({
 const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
+
+const { isShaking, activateShake } = useShake()
 
 const allowedNamespaces = ref([])
 const selectedNamespaces = ref([])
@@ -302,8 +305,6 @@ watch(
 onMounted(() => {
   automaticLoad()
 })
-
-const shakeit = ref(false)
 
 const targetUidLabel = computed(() => {
   switch (data.value.target_type) {
@@ -447,7 +448,7 @@ async function loadXml() {
       : elementVersion.value
 
   data.value.allowed_namespaces = getAllowedNamespaces()
-  data.value.target_uids = `target_uids=${data.value.target_uid}&`
+  data.value.targets = `targets=${data.value.target_uid},${data.value.version}&`
   crfs.getXml(data.value).then((resp) => {
     const parser = new DOMParser()
     xmlString.value = resp.data
@@ -460,10 +461,10 @@ async function loadXml() {
         xsltProcessor.transformToDocument(xml)
       )
 
-      var iframe = document.createElement('iframe')
+      let iframe = document.createElement('iframe')
       iframe.classList.add('frame')
       document.querySelector('iframe').replaceWith(iframe)
-      var iframeDoc = iframe.contentDocument
+      let iframeDoc = iframe.contentDocument
       iframeDoc.write(doc.value)
       iframeDoc.close()
 
@@ -532,15 +533,6 @@ function clearXml() {
   doc.value = null
   url = ''
   router.push({ name: 'Crfs', params: { tab: 'odm-viewer' } })
-}
-
-function activateShake(condition) {
-  if (condition === false) return
-
-  shakeit.value = true
-  setTimeout(() => {
-    shakeit.value = false
-  }, 1000)
 }
 </script>
 <style>

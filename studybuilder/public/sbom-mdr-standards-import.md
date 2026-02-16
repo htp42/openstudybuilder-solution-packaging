@@ -3,12 +3,12 @@
 
 | Package            | Version  | License                               |
 |--------------------|----------|---------------------------------------|
-| certifi            | 2025.8.3 | [MPL-2.0](#certifi)                   |
-| charset-normalizer | 3.4.3    | [MIT](#charset-normalizer)            |
+| certifi            | 2026.1.4 | [MPL-2.0](#certifi)                   |
+| charset-normalizer | 3.4.4    | [MIT](#charset-normalizer)            |
 | et_xmlfile         | 2.0.0    | [MIT](#et_xmlfile)                    |
-| idna               | 3.10     | [see below](#idna)                    |
-| iniconfig          | 2.1.0    | [MIT](#iniconfig)                     |
-| neo4j              | 5.28.2   | [Apache License, Version 2.0](#neo4j) |
+| idna               | 3.11     | [BSD-3-Clause](#idna)                 |
+| iniconfig          | 2.3.0    | [MIT](#iniconfig)                     |
+| neo4j              | 5.28.3   | [Apache License, Version 2.0](#neo4j) |
 | openpyxl           | 3.1.5    | [MIT](#openpyxl)                      |
 | packaging          | 25.0     | [see below](#packaging)               |
 | pluggy             | 1.6.0    | [MIT](#pluggy)                        |
@@ -16,7 +16,7 @@
 | pytest             | 8.4.2    | [MIT](#pytest)                        |
 | pytz               | 2025.2   | [MIT](#pytz)                          |
 | requests           | 2.32.5   | [Apache-2.0](#requests)               |
-| urllib3            | 2.5.0    | [MIT](#urllib3)                       |
+| urllib3            | 2.6.3    | [MIT](#urllib3)                       |
 
 
 ## Third-party package licenses
@@ -407,7 +407,7 @@
 
     BSD 3-Clause License
 
-    Copyright (c) 2013-2024, Kim Davies and contributors.
+    Copyright (c) 2013-2025, Kim Davies and contributors.
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without

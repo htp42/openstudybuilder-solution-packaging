@@ -216,7 +216,7 @@ class DataSupplierVersion(DataSupplier):
 
 class DataSupplierInput(InputModel):
     name: Annotated[str, Field(min_length=1)]
-    order: Annotated[int, Field()] = 999999
+    order: Annotated[int | None, Field(gt=0)] = None
     supplier_type_uid: Annotated[str, Field(min_length=1)]
     description: Annotated[str | None, Field(min_length=1)]
     api_base_url: Annotated[str | None, Field(min_length=1)]
@@ -226,5 +226,15 @@ class DataSupplierInput(InputModel):
     library_name: Annotated[str, Field(min_length=1)] = "Sponsor"
 
 
-class DataSupplierEditInput(DataSupplierInput):
+class DataSupplierEditInput(InputModel):
+    """Input model for PATCH endpoint - all fields optional except change_description."""
+
+    name: Annotated[str | None, Field(min_length=1)] = None
+    order: Annotated[int | None, Field(gt=0)] = None
+    supplier_type_uid: Annotated[str | None, Field(min_length=1)] = None
+    description: Annotated[str | None, Field(min_length=1)] = None
+    api_base_url: Annotated[str | None, Field(min_length=1)] = None
+    ui_base_url: Annotated[str | None, Field(min_length=1)] = None
+    origin_source_uid: Annotated[str | None, Field(min_length=1)] = None
+    origin_type_uid: Annotated[str | None, Field(min_length=1)] = None
     change_description: Annotated[str, Field(min_length=1)]

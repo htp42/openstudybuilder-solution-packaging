@@ -15,8 +15,6 @@ When('The study is released with description provided', () => {
   })
   cy.clickButton('release-study')
   cy.fillInput('release-description', release_description)
-  cy.clickButton('save-button')
-  cy.waitForFormSave()
 })
 
 When('The study is locked with description provided', () => {
@@ -26,8 +24,6 @@ When('The study is locked with description provided', () => {
   })
   cy.clickButton('lock-study')
   cy.fillInput('release-description', lock_description)
-  cy.clickButton('save-button')
-  cy.waitForFormSave()
 })
 
 When('The study is unlocked', () => {

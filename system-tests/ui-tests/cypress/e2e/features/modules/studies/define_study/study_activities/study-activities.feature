@@ -7,6 +7,10 @@ Feature: Studies - Define Study - Study Activities - Study Activities
 
     Background: User is logged in and study has been selected
         Given The user is logged in
+        And A test study is selected
+
+    Scenario: [TestData] Study visits, epochs and activities are created
+        And [API] All Activities are deleted from study
 
     @smoke_test
     Scenario: [Navigation] User must be able to navigate to Study Activity page using side menu
@@ -38,10 +42,16 @@ Feature: Studies - Define Study - Study Activities - Study Activities
 
     @smoke_test
     Scenario: [Create][Existing Study][By Id] User must be able to create a Study Activity from an existing study by study id
-        Given The test study '/activities/list' page is opened
+        When Get study 'CDISC DEV-9881' uid
+        And Select study with uid saved in previous step
+        And The page 'activities/list' is opened for selected study
+        And Study activity add button is clicked
+        And The user goes through selection from library form
+        And Form save button is clicked
+        And The test study '/activities/list' page is opened
         When Study activity add button is clicked
         And Activity from studies is selected
-        And Study with id value '999-3000' is selected
+        And Study with id value 'CDISC DEV-9881' is selected
         And Form continue button is clicked
         And User selects first available activity
         And Form save button is clicked
@@ -61,10 +71,17 @@ Feature: Studies - Define Study - Study Activities - Study Activities
 
     @smoke_test
     Scenario: [Create][Existing Study][By Acronym] User must be able to create a Study Activity from an existing study by study acronym
-        Given The test study '/activities/list' page is opened
+        When Get study 'CDISC DEV-9881' uid
+        And Select study with uid saved in previous step
+        And The page 'activities/list' is opened for selected study
+        And Study activity add button is clicked
+        And The user goes through selection from library form
+        And Form save button is clicked
+        And The test study '/activities/list' page is opened
         When Study activity add button is clicked
         And Activity from studies is selected
-        And Study with acronym value 'DummyStudy 0' is selected
+        And Type study acronym value 'Empty study'
+        And Study with acronym value 'Empty study' is selected
         And Form continue button is clicked
         And User selects first available activity
         And Form save button is clicked
@@ -90,6 +107,7 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         When Study activity add button is clicked
         And Activity from placeholder is selected
         And Form continue button is clicked
+        And User selects option to create placeholder without submitting
         When Activity placeholder data is filled in
         And Form save button is clicked
         And The form is no longer available
@@ -122,6 +140,7 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         When Study activity add button is clicked
         And Activity from placeholder is selected
         And Form continue button is clicked
+        And User selects option to create placeholder without submitting
         When Activity placeholder data is filled in
         And Selected study id is saved
         And Form save button is clicked
@@ -141,6 +160,7 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         When Study activity add button is clicked
         And Activity from placeholder is selected
         And Form continue button is clicked
+        And User selects option to create placeholder without submitting
         When Activity placeholder data is filled in
         And Data collection flag is unchecked
         And Form save button is clicked
@@ -320,6 +340,7 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         And [API] Study Activity is created and approved
         And [API] Get SoA Group 'BIOMARKERS' id
         And [API] Activity is added to the study
+        And Activity name created through API is found
         And The test study '/activities/list' page is opened
         And The Study Activity is found
         And The red alert badge is not present
@@ -332,10 +353,12 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         And [API] Study Activity is created and approved
         And [API] Get SoA Group 'BIOMARKERS' id
         And [API] Activity is added to the study
+        And Activity name created through API is found
         When The activity name is updated for that study activity
         And The test study '/activities/list' page is opened
         And The Study Activity is found
         And The user accepts the changes
+        And The form is no longer available
         And The Study Activity is found
         Then The changes are applied in the study activity
         Then The yellow alert badge is not present
@@ -345,6 +368,7 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         And [API] Study Activity is created and approved
         And [API] Get SoA Group 'BIOMARKERS' id
         And [API] Activity is added to the study
+        And Activity name created through API is found
         When The activity name is updated for that study activity
         And The test study '/activities/list' page is opened
         And The Study Activity is found
@@ -355,12 +379,14 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         And [API] Study Activity is created and approved
         And [API] Get SoA Group 'BIOMARKERS' id
         And [API] Activity is added to the study
+        And Activity name created through API is found
         When The activity name is updated for that study activity
         And The test study '/activities/list' page is opened
         And The Study Activity is found
         And The user declines the changes
         Then The yellow alert badge is present
         When The user accepts the changes
+        And The form is no longer available
         And The Study Activity is found
         Then The changes are applied in the study activity
         Then The yellow alert badge is not present
@@ -370,6 +396,7 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         And [API] Study Activity is created and approved
         And [API] Get SoA Group 'BIOMARKERS' id
         And [API] Activity is added to the study
+        And Activity name created through API is found
         When The activity name is updated for that study activity
         And The test study '/activities/list' page is opened
         When The user filters the table by red alert status
@@ -379,6 +406,7 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         And [API] Study Activity is created and approved
         And [API] Get SoA Group 'BIOMARKERS' id
         And [API] Activity is added to the study
+        And Activity name created through API is found
         When The activity name is updated for that study activity
         And The test study '/activities/list' page is opened
         And The Study Activity is found
@@ -392,6 +420,7 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         And [API] Study Activity is created and approved
         And [API] Get SoA Group 'BIOMARKERS' id
         And [API] Activity is added to the study
+        And Activity name created through API is found
         When The activity name is updated for that study activity
         And The test study '/activities/list' page is opened
         And The Study Activity is found
@@ -436,4 +465,3 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         And The Study Activity is found
         And The user opens changes review window for that activity
         And The 'Decline and keep' button is present
-        

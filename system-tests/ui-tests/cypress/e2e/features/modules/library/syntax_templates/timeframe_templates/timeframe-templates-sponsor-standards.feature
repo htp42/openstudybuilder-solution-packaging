@@ -60,7 +60,7 @@ Feature: Library - Syntax Templates - Time Frames - Parent
     And The second timeframe is added with the same template text
     And Form save button is clicked
     Then The pop up displays 'already exists'
-    And The overlay is not closed
+    And The user is not able to save
 
   Scenario: [Create][Syntax validation] User must be able to verify syntax when creating Timeframe template
     Given The '/library/timeframe_templates/parent' page is opened

@@ -52,6 +52,7 @@ from clinical_mdr_api.models.error import BatchErrorResponse
 from clinical_mdr_api.models.study_selections.study_selection import (
     DetailedSoAHistory,
     StudyActivityReplaceActivityInput,
+    StudyActivitySchedule,
     StudyActivityScheduleCreateInput,
     StudyActivitySyncLatestVersionInput,
     StudySelectionActivity,
@@ -397,6 +398,186 @@ class StudyActivitySelectionService(
                 study_activity_selection=study_selection,
             )
 
+    def _replicate_schedules_to_study_activity(
+        self,
+        study_uid: str,
+        target_study_activity_uid: str,
+        schedules_to_replicate: list[StudyActivitySchedule],
+    ) -> list[str]:
+        """
+        Replicates StudyActivitySchedules to target StudyActivity.
+        Creates new schedule nodes for the target StudyActivity with the same study_visit_uid.
+
+        Args:
+            study_uid: Study UID
+            target_study_activity_uid: Target StudyActivity UID to create schedules for
+            schedules_to_replicate: List of StudyActivitySchedule objects to replicate
+
+        Returns:
+            List of newly created schedule UIDs
+        """
+        schedule_service = StudyActivityScheduleService()
+        new_schedule_uids = []
+
+        for schedule in schedules_to_replicate:
+            # Create a new schedule for the target StudyActivity with the same visit
+            new_schedule = schedule_service.create(
+                study_uid=study_uid,
+                schedule_input=StudyActivityScheduleCreateInput(
+                    study_activity_uid=target_study_activity_uid,
+                    study_visit_uid=schedule.study_visit_uid,
+                ),
+            )
+            new_schedule_uids.append(new_schedule.study_activity_schedule_uid)
+
+        return new_schedule_uids
+
+    @ensure_transaction(db)
+    def replace_study_activity_with_multiple_activities(
+        self,
+        study_uid: str,
+        study_activity_uid: str,
+        replacements: list[StudyActivityReplaceActivityInput],
+    ) -> list[StudySelectionActivity]:
+        """
+        Replaces a StudyActivity with multiple activities.
+        - Multiple replacements are only allowed when replacing a StudyActivity placeholder (activity in 'Requested' library).
+        - First item in the list replaces the original StudyActivity
+        - Remaining items create new StudyActivities
+        - Schedules are preserved for the replaced StudyActivity and replicated to all new ones
+        - StudyActivityInstances are recreated for the replaced StudyActivity only (existing behavior)
+        - StudyActivityInstances are NOT created for newly created StudyActivities
+        """
+        if not replacements:
+            raise ValidationException(
+                msg="At least one replacement must be provided in the replacements list."
+            )
+
+        # Get the original StudyActivity
+        _, current_vo = self._find_ar_to_patch(
+            study_uid=study_uid, study_selection_uid=study_activity_uid
+        )
+        NotFoundException.raise_if_not(
+            current_vo,
+            "Study Activity",
+            study_activity_uid,
+        )
+
+        # Only allow multiple replacements if the original StudyActivity is a placeholder
+        # (i.e., activity is in the "Requested" library)
+        is_placeholder = (
+            current_vo.activity_library_name == settings.requested_library_name
+        )
+        if not is_placeholder and len(replacements) > 1:
+            raise BusinessLogicException(
+                msg=(
+                    "Multiple activity replacements are only allowed when replacing "
+                    "a StudyActivity placeholder (activity in 'Requested' library). "
+                    "For regular StudyActivities, only one replacement is allowed."
+                )
+            )
+
+        # Get existing schedules for the original StudyActivity
+        schedule_service = StudyActivityScheduleService()
+        existing_schedules = schedule_service.get_all_schedules_for_specific_activity(
+            study_uid=study_uid, study_activity_uid=study_activity_uid
+        )
+        results: list[StudySelectionActivity] = []
+
+        # Process first item: Replace the original StudyActivity
+        first_replacement = replacements[0]
+        replaced_study_activity = self.patch_selection(
+            study_uid=study_uid,
+            study_selection_uid=study_activity_uid,
+            selection_update_input=first_replacement,
+        )
+        results.append(replaced_study_activity)
+
+        # Process remaining items: Create new StudyActivities
+        for replacement in replacements[1:]:
+            # Validate activity groupings using the same validation as patch_selection
+            activity_service = ActivityService()
+            activity_ar = activity_service.repository.find_by_uid_2(
+                replacement.activity_uid, for_update=True
+            )
+            NotFoundException.raise_if_not(
+                activity_ar, "Activity", replacement.activity_uid
+            )
+
+            # Create a minimal current_object for validation (only activity_uid is used in error messages)
+            minimal_current_object = StudySelectionActivityVO.from_input_values(
+                study_uid=study_uid,
+                activity_uid=replacement.activity_uid,
+                activity_version=activity_ar.item_metadata.version,
+                study_soa_group_uid="",  # Not used in validation
+                soa_group_term_uid="",  # Not used in validation
+                author_id=self.author,
+            )
+
+            self._validate_new_activity_groupings(
+                request_object=replacement,
+                activity_ar=activity_ar,
+                current_object=minimal_current_object,
+            )
+
+            # Validate soa_group_term_uid is provided (required for create)
+            if not replacement.soa_group_term_uid:
+                raise ValidationException(
+                    msg="soa_group_term_uid is required when creating a new StudyActivity."
+                )
+
+            # Convert replacement to create input
+            create_input = StudySelectionActivityCreateInput(
+                activity_uid=replacement.activity_uid,
+                activity_group_uid=replacement.activity_group_uid,
+                activity_subgroup_uid=replacement.activity_subgroup_uid,
+                soa_group_term_uid=replacement.soa_group_term_uid,
+            )
+
+            # Create new StudyActivity
+            # Note: make_selection will automatically create StudyActivityInstances for non-placeholder activities
+            new_study_activity = self.make_selection(
+                study_uid=study_uid, selection_create_input=create_input
+            )
+
+            # Remove StudyActivityInstances that were automatically created by make_selection
+            # We don't want instances for newly created StudyActivities, only for the replaced one
+            study_activity_instances = self._repos.study_activity_instance_repository.get_all_study_activity_instances_for_study_activity(
+                study_uid=study_uid,
+                study_activity_uid=new_study_activity.study_activity_uid,
+            )
+            for study_activity_instance in study_activity_instances:
+                (
+                    study_activity_instance_ar,
+                    _,
+                    _,
+                ) = self._get_specific_activity_instance_selection_by_uids(
+                    study_uid=study_uid,
+                    study_selection_uid=study_activity_instance.uid,
+                    for_update=True,
+                )
+                study_activity_instance_ar.remove_object_selection(
+                    study_activity_instance.uid
+                )
+                self._repos.study_activity_instance_repository.save(
+                    study_activity_instance_ar, self.author
+                )
+
+            # Replicate schedules to the new StudyActivity
+            # Use the schedules we fetched before replacement (they're still valid)
+            assert (
+                new_study_activity.study_activity_uid is not None
+            ), "Newly created StudyActivity must have a study_activity_uid"
+            self._replicate_schedules_to_study_activity(
+                study_uid=study_uid,
+                target_study_activity_uid=new_study_activity.study_activity_uid,
+                schedules_to_replicate=existing_schedules,
+            )
+
+            results.append(new_study_activity)
+
+        return results
+
     def _create_value_object(
         self,
         study_uid: str,
@@ -639,7 +820,7 @@ class StudyActivitySelectionService(
             and perform_subgroup_validation,
             msg=f"Activity Subgroup '{activity_subgroup_ar.concept_vo.name}' with UID '{activity_subgroup_uid}' has status {activity_subgroup_ar.item_metadata.status.value}."
             " Only Final subgroups can be added to a study."
-            " Contact StudyBuilder library responsible for updates.",
+            " Contact OpenStudyBuilder library responsible for updates.",
         )
         return activity_subgroup_ar
 
@@ -668,7 +849,7 @@ class StudyActivitySelectionService(
             and perform_group_validation,
             msg=f"Activity Group '{activity_group_ar.concept_vo.name}' with UID '{activity_group_uid}' has status {activity_group_ar.item_metadata.status.value}."
             " Only Final groups can be added to a study."
-            " Contact StudyBuilder library responsible for updates.",
+            " Contact OpenStudyBuilder library responsible for updates.",
         )
         return activity_group_ar
 
@@ -1747,6 +1928,7 @@ class StudyActivitySelectionService(
                         content=BatchErrorResponse(message=str(error)),
                     )
                 )
+                raise error
         return results
 
     @ensure_transaction(db)

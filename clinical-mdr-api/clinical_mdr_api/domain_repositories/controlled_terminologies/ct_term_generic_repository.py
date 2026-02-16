@@ -187,10 +187,16 @@ class CTTermGenericRepository(
 
     def get_term_name_and_attributes_by_codelist_uids(self, codelist_uids: list[Any]):
         query = """
-            MATCH (codelist:CTCodelistRoot)-[:HAS_TERM]->(codelist_term:CTCodelistTerm)-[:HAS_TERM_ROOT]->(term_root:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]->(term_attr_root:CTTermAttributesRoot)-[:LATEST]->(term_attr_value:CTTermAttributesValue)
+            MATCH (codelist:CTCodelistRoot)-[ht:HAS_TERM]->(codelist_term:CTCodelistTerm)-[:HAS_TERM_ROOT]->(term_root:CTTermRoot)
+            -[:HAS_ATTRIBUTES_ROOT]->(term_attr_root:CTTermAttributesRoot)-[:LATEST]->(term_attr_value:CTTermAttributesValue)
             MATCH (term_root)-[:HAS_NAME_ROOT]->(term_name_root:CTTermNameRoot)-[:LATEST]->(term_name_value:CTTermNameValue)
-            WHERE codelist.uid in $codelist_uids
-            RETURN term_name_value.name as name, term_root.uid as term_uid, codelist.uid as codelist_uid, codelist_term.submission_value as submission_value, term_attr_value.preferred_term as nci_preferred_name
+            WHERE codelist.uid in $codelist_uids and ht.end_date IS NULL
+            RETURN
+                term_name_value.name as name,
+                term_root.uid as term_uid,
+                codelist.uid as codelist_uid,
+                codelist_term.submission_value as submission_value,
+                term_attr_value.preferred_term as nci_preferred_name
             """
 
         items, prop_names = db.cypher_query(query, {"codelist_uids": codelist_uids})
@@ -644,8 +650,6 @@ class CTTermGenericRepository(
             RETURN term_root.uid
         """
         items, _ = db.cypher_query(cypher_query, params)
-        print("--øøø find_uid_by_submission_value", value, codelist_uid)
-        print(items)
         if len(items) > 0:
             return items[0][0]
         return None
@@ -664,6 +668,39 @@ class CTTermGenericRepository(
         items, _ = db.cypher_query(cypher_query, params)
         if len(items) > 0:
             return items[0][0]
+        return None
+
+    def get_submission_values_for_term(self, term_uid: str) -> list[str]:
+        """
+        Returns all existing submission values for a given term.
+        Returns empty list if term is not found.
+        :param term_uid: The UID of the term
+        :return: List of submission values
+        """
+        term_root = CTTermRoot.nodes.get_or_none(uid=term_uid)
+        if not term_root:
+            return []
+
+        submission_values = []
+        for codelist_term in term_root.has_term_root.all():
+            submission_values.append(codelist_term.submission_value)
+            # break
+
+        return list(set(submission_values))  # Remove duplicates
+
+    def get_library_name_for_term(self, term_uid: str) -> str | None:
+        """
+        Returns the library name for a given term.
+        :param term_uid: The UID of the term
+        :return: Library name or None
+        """
+        term_root = CTTermRoot.nodes.get_or_none(uid=term_uid)
+        if not term_root:
+            return None
+
+        library = term_root.has_library.get_or_none()
+        if library:
+            return library.name
         return None
 
     def _generate_generic_match_clause(

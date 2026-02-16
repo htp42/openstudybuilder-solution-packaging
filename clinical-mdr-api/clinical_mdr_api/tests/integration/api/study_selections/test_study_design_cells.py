@@ -185,6 +185,19 @@ def test_design_cell_modify_actions_on_locked_study(api_client):
             "study_arm_uid": study_arm.arm_uid,
             "study_epoch_uid": epoch_uid,
             "study_element_uid": study_element_uid,
+            "transition_rule": "x" * 250,
+        },
+    )
+    assert_response_status_code(response, 400)
+    detail = response.json()["details"]
+    assert detail[0]["msg"] == "String should have at most 200 characters"
+
+    response = api_client.post(
+        f"/studies/{study.uid}/study-design-cells",
+        json={
+            "study_arm_uid": study_arm.arm_uid,
+            "study_epoch_uid": epoch_uid,
+            "study_element_uid": study_element_uid,
             "transition_rule": "Transition_Rule_1",
         },
     )
@@ -227,6 +240,25 @@ def test_design_cell_modify_actions_on_locked_study(api_client):
     assert res["message"] == f"Study with UID '{study.uid}' is locked."
 
     # edit epoch
+    response = api_client.post(
+        f"/studies/{study.uid}/study-design-cells/batch",
+        json=[
+            {
+                "method": "PATCH",
+                "content": {
+                    "study_design_cell_uid": design_cell_uid,
+                    "study_arm_uid": study_arm2.arm_uid,
+                    "study_epoch_uid": epoch_uid,
+                    "study_element_uid": study_element_uid,
+                    "transition_rule": "x" * 250,
+                },
+            }
+        ],
+    )
+    assert_response_status_code(response, 400)
+    detail = response.json()["details"]
+    assert detail[0]["msg"] == "String should have at most 200 characters"
+
     response = api_client.post(
         f"/studies/{study.uid}/study-design-cells/batch",
         json=[

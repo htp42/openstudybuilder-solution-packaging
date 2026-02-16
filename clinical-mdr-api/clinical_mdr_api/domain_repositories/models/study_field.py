@@ -126,6 +126,9 @@ class StudyIntField(StudyField):
 class StudyArrayField(StudyField):
     value = ArrayProperty()
     field_name = StringProperty()
+    has_array_field = RelationshipFrom(
+        ".study.StudyValue", "HAS_ARRAY_FIELD", model=ClinicalMdrRel
+    )
 
 
 class StudyBooleanField(StudyField):

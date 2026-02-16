@@ -1,11 +1,11 @@
 
 @REQ_ID:1074254
-Feature: Maintaining Study Visit 0 in Clinical MDR API
+Feature: Maintaining Study Visit 0 in OpenStudyBuilder API
 
 # See shared notes for study visits in file system-tests/cypress/e2e/features/modules/studies/define_study/study_structure/study-visit-intro-notes.txt
 
-   Background: Test user must be able to call the Clinical MDR API
-        Given The test user can call the Clinical MDR API
+   Background: Test user must be able to call the OpenStudyBuilder API
+        Given The test user can call the OpenStudyBuilder API
 
     Rule: As an API user,
         I want the system to ensure [Scenario],

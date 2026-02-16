@@ -1,5 +1,6 @@
 from typing import Literal, overload
 
+from clinical_mdr_api.domains.concepts.utils import EN_LANGUAGE, ENG_LANGUAGE
 from clinical_mdr_api.domains.iso_languages import LANGUAGES_INDEXED_BY
 from clinical_mdr_api.domains.libraries.parameter_term import ParameterTermEntryVO
 from common import exceptions
@@ -8,76 +9,88 @@ from common import exceptions
 @overload
 def get_iso_lang_data(
     query: str,
-    key: Literal["names", "639-1", "639-2/T", "639-2/B", "639-3"] = "639-3",
     return_key: None = None,
     ignore_case: bool = True,
-) -> dict[str, str | list[str]]: ...
+) -> str | list[str] | dict[str, str]: ...
 @overload
 def get_iso_lang_data(
     query: str,
-    key: Literal["names", "639-1", "639-2/T", "639-2/B", "639-3"] = "639-3",
-    return_key: Literal["names", "639-3"] = "names",
+    return_key: Literal["names"],
     ignore_case: bool = True,
 ) -> list[str]: ...
 @overload
 def get_iso_lang_data(
     query: str,
-    key: Literal["names", "639-1", "639-2/T", "639-2/B", "639-3"] = "639-3",
-    return_key: Literal["639-1", "639-2/T", "639-2/B"] = "639-1",
+    return_key: Literal["639-3"],
+    ignore_case: bool = True,
+) -> dict[str, str]: ...
+@overload
+def get_iso_lang_data(
+    query: str,
+    return_key: Literal["639-1", "639-2/T", "639-2/B"],
     ignore_case: bool = True,
 ) -> str: ...
 def get_iso_lang_data(
     query: str,
-    key: Literal["names", "639-1", "639-2/T", "639-2/B", "639-3"] = "639-3",
     return_key: Literal["names", "639-1", "639-2/T", "639-2/B", "639-3"] | None = None,
     ignore_case: bool = True,
-) -> str | dict[str, str | list[str]] | list[str]:
+) -> str | list[str] | dict[str, str]:
     """
-    Returns ISO language data based on the provided query string and key.
+    Returns ISO language data based on the provided query string and return_key.
 
     Args:
-        query (str): Query string to search for in the language index.
-        key (str, optional): Key to use for indexing the language data. Defaults to "639-3".
-        return_key (str | None, optional): Key to return from the found language data. Defaults to None.
+        query (str): The language identifier to search for (e.g., code or name).
+        return_key (Literal["names", "639-1", "639-2/T", "639-2/B", "639-3"] | None, optional):
+            Specifies which field to return from the matched language entry.
+            - If None, returns the value for the matched key.
+            - If "names", returns a list of language names.
+            - If "639-3", returns a dictionary mapping 639-3 codes to names.
+            - If "639-1", "639-2/T", or "639-2/B", returns the corresponding code as a string.
         ignore_case (bool, optional): Whether to ignore case when searching for the query string. Defaults to True.
 
-    Returns:
-        str | dict[str, str, list[str]] | list[Any]: The value of the found language data, or the entire language data if return_key is None.
+    Returns: str | list[str] | dict[str, str]: The requested language data, depending on return_key.
 
     Raises:
-        TypeError: If the query string is not a string.
-        ValueError: If the provided key is not a valid index for the language data.
-        ValidationException: If the query string is not found in the language index, or if it is found but does not match the query when ignore_case is False.
+        TypeError: If the query is not a string.
+        ValidationException: If the query is not found or does not match when ignore_case is False.
 
-    Example:
-        >>> get_iso_lang_data("spa", "639-2/T", "names")
+    Examples:
+        >>> get_iso_lang_data("spa", "names")
         ["Spanish", "Castilian"]
+        >>> get_iso_lang_data("spa", "639-1")
+        'es'
     """
     if not isinstance(query, str):
         raise TypeError(f"Expected type str but found {type(query)}")
 
-    try:
+    keys = LANGUAGES_INDEXED_BY.keys()
+
+    if return_key is not None and return_key not in keys:
+        raise KeyError(f"Return key '{return_key}' is not a valid language key.")
+
+    lang = None
+    key = ""
+    for key in keys:
         index = LANGUAGES_INDEXED_BY[key]
-    except KeyError as exc:
-        raise exceptions.ValidationException(
-            msg=f"Languages not indexed by key: {key}"
-        ) from exc
 
-    casefolded_query = query.casefold()
+        casefolded_query = query.casefold()
 
-    try:
-        lang = index[casefolded_query]
-    except KeyError as exc:
-        raise exceptions.ValidationException(
-            msg=f"Language '{query}' not found in {key}."
-        ) from exc
+        try:
+            lang = index[casefolded_query]
+            break
+        except KeyError:
+            continue
 
-    if not ignore_case and lang[key] != query:
+    if lang is None or (not ignore_case and lang[key] != query):
         raise exceptions.ValidationException(
-            msg=f"Language '{query}' not found in {key}."
+            msg=f"The provided language '{query}' does not match any known language names or codes.",
         )
 
-    return lang[return_key] if return_key else lang
+    return lang[key] if not return_key else lang[return_key]
+
+
+def is_language_english(lang: str) -> bool:
+    return lang.casefold() in [EN_LANGUAGE, ENG_LANGUAGE]
 
 
 def is_syntax_of_template_name_correct(name: str) -> bool:

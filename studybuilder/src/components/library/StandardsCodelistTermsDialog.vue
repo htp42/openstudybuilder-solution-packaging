@@ -63,7 +63,7 @@
         v-model:options="options"
         :headers="headers"
         :items="terms"
-        :server-items-length="total"
+        :items-length="total"
         item-value="term_uid"
         height="40vh"
         class="mt-4"

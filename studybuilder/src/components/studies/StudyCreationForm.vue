@@ -216,9 +216,13 @@ async function submit() {
   if (createFromScratch.value) {
     const data = JSON.parse(JSON.stringify(studyForm.value))
     data.project_number = project.value.project_number
-    const resp = await studiesManageStore.addStudy(data)
-    notificationHub.add({ msg: t('StudyForm.add_success') })
-    await studiesGeneralStore.selectStudy(resp.data, true)
+    try {
+      const resp = await studiesManageStore.addStudy(data)
+      notificationHub.add({ msg: t('StudyForm.add_success') })
+      await studiesGeneralStore.selectStudy(resp.data, true)
+    } finally {
+      stepper.value.loading = false
+    }
   } else {
     if (!copyForm.value.selectionMade) {
       notificationHub.add({

@@ -123,12 +123,12 @@ export default {
   },
   getXml(params) {
     return repository.post(
-      `${resource}/metadata/xmls/export?${params.target_uids}target_type=${params.target_type}&export_to=${params.export_to}&stylesheet=${params.selectedStylesheet}&version=${params.version || ''}${params.allowed_namespaces}`
+      `${resource}/metadata/xmls/export?${params.targets}target_type=${params.target_type}&export_to=${params.export_to}&stylesheet=${params.selectedStylesheet}${params.allowed_namespaces}`
     )
   },
   getPdf(params) {
     return repository.post(
-      `${resource}/metadata/xmls/export?${params.target_uids}&target_type=${params.target_type}&export_to=${params.export_to}&stylesheet=${params.selectedStylesheet}&pdf=true&version=${params.version || ''}${params.allowed_namespaces}`,
+      `${resource}/metadata/xmls/export?${params.targets}target_type=${params.target_type}&export_to=${params.export_to}&stylesheet=${params.selectedStylesheet}&pdf=true${params.allowed_namespaces}`,
       {},
       {
         responseType: 'arraybuffer',

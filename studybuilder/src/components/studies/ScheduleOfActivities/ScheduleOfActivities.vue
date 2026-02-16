@@ -27,7 +27,7 @@
     <ProtocolFlowchart
       v-if="['operational', 'protocol'].indexOf(layout) > -1"
       :layout="layout"
-      :style="`max-height: ${tableHeight + 70}px;`"
+      :style="`max-height: ${tableHeight + 150}px;`"
     />
     <div v-else>
       <div class="d-flex align-center mb-4">
@@ -72,7 +72,7 @@
         </div>
         <template v-if="!props.readOnly">
           <v-btn
-            v-show="multipleConsecutiveVisitsSelected()"
+            v-show="multipleVisitsSelected()"
             class="ml-2"
             size="small"
             variant="outlined"
@@ -308,8 +308,8 @@
                       floating
                       :content="
                         cell.refs.length
-                          ? scheduleMethods.getElementFootnotesLetters(
-                              cell.refs[0].uid
+                          ? scheduleMethods.getElementFootnoteLettersForMultipleRefs(
+                              cell.refs
                             )
                           : ''
                       "
@@ -328,11 +328,7 @@
                       class="mb-1 mx-0 px-0"
                       variant="text"
                       @click="
-                        addElementForFootnote(
-                          cell.refs[0].uid,
-                          'StudyVisit',
-                          cell.text
-                        )
+                        addVisitForFootnote(cell.refs, 'StudyVisit', cell.text)
                       "
                     />
                     <v-btn
@@ -375,7 +371,7 @@
                         studiesGeneralStore.selectedStudyVersion !== null
                       "
                       variant="text"
-                      @click="deleteVisitGroup(cell.text)"
+                      @click="deleteVisitGroup(cell)"
                     />
                   </div>
                 </th>
@@ -923,6 +919,7 @@
       @close="closeRemoveFootnoteForm"
     />
     <StudyActivityScheduleBatchEditForm
+      v-if="showBatchEditForm"
       :open="showBatchEditForm"
       :selection="formattedStudyActivitySelection"
       :current-selection-matrix="currentSelectionMatrix"
@@ -934,6 +931,7 @@
     <CollapsibleVisitDisplaySelectForm
       :open="showCollapsibleGroupForm"
       :visits="selectedVisits"
+      :are-consecutive-visits-selected="areConsecutiveVisitsSelected"
       @close="closeCollapsibleVisitGroupForm"
       @created="collapsibleVisitGroupCreated"
     />
@@ -1171,6 +1169,7 @@ const sortMode = ref(false)
 const scrollItemId = ref('')
 const selectedReorderItem = ref({})
 const search = ref('')
+const studyVisits = ref([])
 
 const soaRows = computed(() => {
   // Activities searching handler
@@ -1308,6 +1307,7 @@ onMounted(() => {
   loadSoaContent()
   onResize()
   fetchFootnotes()
+  getStudyVisits()
 })
 
 onUpdated(() => {
@@ -1350,6 +1350,17 @@ function observeWidth() {
     }
   })
   resizeObserver.observe(document.getElementById('sideBar'))
+}
+
+function getStudyVisits() {
+  const params = {
+    page_size: 0,
+  }
+  studyEpochs
+    .getStudyVisits(studiesGeneralStore.selectedStudy.uid, params)
+    .then((resp) => {
+      studyVisits.value = resp.data.items
+    })
 }
 
 async function removeActivity(item) {
@@ -1553,6 +1564,25 @@ function disableFootnoteMode() {
   elementsForFootnote.value.referenced_items = []
   footnoteMode.value = false
   fetchFootnotes()
+}
+
+function addVisitForFootnote(refs, type, name) {
+  if (!name) {
+    name = type
+  }
+  if (refs.length > 1) {
+    this.notificationHub.add({
+      msg: t('DetailedFlowchart.footnote_added_to_visit_group'),
+      type: 'warning',
+    })
+  }
+  refs.forEach((ref) => {
+    elementsForFootnote.value.referenced_items.push({
+      item_uid: ref.uid,
+      item_type: ref.type,
+      item_name: name,
+    })
+  })
 }
 
 function addElementForFootnote(uid, type, name) {
@@ -2074,12 +2104,16 @@ function collapsibleVisitGroupCreated() {
     msg: t('CollapsibleVisitGroupForm.creation_success'),
   })
   loadSoaContent(true)
+  getStudyVisits()
   selectedVisitIndexes.value = []
 }
 
-async function deleteVisitGroup(groupName) {
+async function deleteVisitGroup(cell) {
+  const group = studyVisits.value.find(
+    (visit) => visit.uid === cell.refs[0].uid
+  )
   const message = t('DetailedFlowchart.confirm_group_deletion', {
-    group: groupName,
+    group: group.consecutive_visit_group,
   })
   const options = { type: 'warning' }
   if (!(await confirm.value.open(message, options))) {
@@ -2087,9 +2121,10 @@ async function deleteVisitGroup(groupName) {
   }
   await studyEpochs.deleteCollapsibleVisitGroup(
     studiesGeneralStore.selectedStudy.uid,
-    groupName
+    group.consecutive_visit_group_uid
   )
   loadSoaContent(true)
+  getStudyVisits()
 }
 
 async function getHistoryData(options) {
@@ -2144,15 +2179,17 @@ async function downloadDOCX() {
   }
 }
 
-function multipleConsecutiveVisitsSelected() {
-  // Check if more than one visit is selected,
-  // and that they are in consecutive order without gaps.
+const areConsecutiveVisitsSelected = computed(() => {
   if (selectedVisitIndexes.value.length > 1) {
     const minIndex = selectedVisitIndexes.value.reduce((a, b) => Math.min(a, b))
     const maxIndex = selectedVisitIndexes.value.reduce((a, b) => Math.max(a, b))
     return selectedVisitIndexes.value.length - 1 === maxIndex - minIndex
   }
-  return false
+  return true
+})
+function multipleVisitsSelected() {
+  // Check if more than one visit is selected
+  return selectedVisitIndexes.value.length > 1
 }
 </script>
 

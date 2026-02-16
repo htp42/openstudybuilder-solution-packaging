@@ -1,6 +1,7 @@
 # pylint: disable=redefined-outer-name,unused-argument
 import csv
 import logging
+from collections import deque
 from io import BytesIO
 
 import docx
@@ -23,6 +24,10 @@ from clinical_mdr_api.models.study_selections.study import (
     StudyDescriptionJsonModel,
     StudyMetadataJsonModel,
     StudyPatchRequestJsonModel,
+)
+from clinical_mdr_api.models.study_selections.study_selection import (
+    StudyActivitySchedule,
+    StudySelectionActivity,
 )
 from clinical_mdr_api.services.studies.study import StudyService
 from clinical_mdr_api.services.studies.study_flowchart import (
@@ -54,6 +59,7 @@ from clinical_mdr_api.tests.utils.checks import (
     assert_json_response,
     assert_response_content_type,
     assert_response_status_code,
+    parse_json_response,
 )
 
 CSV_CONTENT_TYPE = "text/csv"
@@ -875,12 +881,19 @@ def test_get_study_flowchart_versioned(api_client, temp_database_populated):
     response = api_client.delete(f"/studies/{soa_test_data.study.uid}/locks")
     assert_response_status_code(response, 200)
 
-    # GIVEN: SoA has some alterations
-    sched = soa_test_data.study_activity_schedules[-1]
-    response = api_client.delete(
-        f"/studies/{soa_test_data.study.uid}/study-activity-schedules/{sched.study_activity_schedule_uid}"
+    # WHEN: SoA snapshot of the locked study version is retrieved
+    response = api_client.get(
+        f"/studies/{soa_test_data.study.uid}/flowchart/snapshot",
+        params={
+            "layout": SoALayout.PROTOCOL.value,
+            "study_value_version": locked_study_version,
+        },
     )
-    assert_response_status_code(response, 204)
+    assert_response_status_code(response, 200)
+    locked_soa = response.json()
+
+    # THEN: SoA of the locked study version is the same as the initial SoA
+    assert locked_soa == initial_soa
 
     # WHEN: retrieving protocol SoA of draft version
     response = api_client.get(
@@ -888,7 +901,23 @@ def test_get_study_flowchart_versioned(api_client, temp_database_populated):
         params={"layout": SoALayout.PROTOCOL.value},
     )
     assert_response_status_code(response, 200)
-    recent_soa = response.json()
+    draft_soa = response.json()
+
+    # THEN: SoA of the draft study version is the same as the initial SoA
+    assert draft_soa == initial_soa
+
+    # GIVEN: SoA of the draft has been modified
+    make_changes_to_soa(
+        api_client, soa_test_data, schedule_index=None, activity_index=0
+    )
+
+    # WHEN: retrieving protocol SoA of draft version
+    response = api_client.get(
+        f"/studies/{soa_test_data.study.uid}/flowchart",
+        params={"layout": SoALayout.PROTOCOL.value},
+    )
+    assert_response_status_code(response, 200)
+    r1_soa = response.json()
 
     # WHEN: retrieving protocol SoA of the locked version
     response = api_client.get(
@@ -905,7 +934,122 @@ def test_get_study_flowchart_versioned(api_client, temp_database_populated):
     assert locked_soa == initial_soa
 
     # THEN: SoA of the latest draft study version is different from the SoA of the locked study version
-    assert recent_soa != locked_soa
+    assert r1_soa != locked_soa
+
+    # WHEN: SoA snapshot of the locked study version is retrieved
+    response = api_client.get(
+        f"/studies/{soa_test_data.study.uid}/flowchart/snapshot",
+        params={
+            "study_value_version": locked_study_version,
+        },
+    )
+    assert_response_status_code(response, 200)
+    locked_soa = response.json()
+
+    # THEN: SoA of the locked study version is the same as the initial SoA
+    assert locked_soa == initial_soa
+
+    # GIVEN: study has a released version
+    response = api_client.post(
+        f"/studies/{soa_test_data.study.uid}/release",
+        json=StatusChangeDescription(change_description="r1.1").model_dump(),
+    )
+    assert_response_status_code(response, status=201)
+    released_study_version = (
+        f"{locked_study_version}.1"  # API does not return released study version
+    )
+
+    # GIVEN: SoA of the draft has been modified
+    make_changes_to_soa(api_client, soa_test_data, schedule_index=-2, activity_index=-1)
+
+    # WHEN: SoA snapshot of the released study version is retrieved
+    response = api_client.get(
+        f"/studies/{soa_test_data.study.uid}/flowchart/snapshot",
+        params={
+            "layout": SoALayout.PROTOCOL.value,
+            "study_value_version": released_study_version,
+        },
+    )
+    assert_response_status_code(response, 200)
+    released_soa = response.json()
+
+    # THEN: SoA of the locked study version is the same as the initial SoA
+    assert released_soa == r1_soa
+
+    # WHEN: retrieving protocol SoA of the released version
+    response = api_client.get(
+        f"/studies/{soa_test_data.study.uid}/flowchart",
+        params={
+            "layout": SoALayout.PROTOCOL.value,
+            "study_value_version": released_study_version,
+        },
+    )
+    released_soa = parse_json_response(response, status=200)
+
+    # THEN: SoA of the released study version is the same as the previous draft SoA
+    assert released_soa == r1_soa
+
+    # WHEN: retrieving protocol SoA of draft version
+    response = api_client.get(
+        f"/studies/{soa_test_data.study.uid}/flowchart",
+        params={"layout": SoALayout.PROTOCOL.value},
+    )
+    assert_response_status_code(response, 200)
+    draft_soa = response.json()
+
+    # THEN: SoA of the released study version differs from the latest draft SoA
+    assert released_soa != draft_soa
+
+
+def make_changes_to_soa(
+    api_client: TestClient,
+    soa_test_data: SoATestData,
+    schedule_index: int | None = None,
+    activity_index: int = -3,
+):
+    if schedule_index is not None:
+        # GIVEN: SoA has a schedule deleted
+        sched: StudyActivitySchedule = soa_test_data.study_activity_schedules[
+            schedule_index
+        ]
+        response = api_client.delete(
+            f"/studies/{soa_test_data.study.uid}/study-activity-schedules/{sched.study_activity_schedule_uid}"
+        )
+        assert_response_status_code(response, 204)
+
+    # GIVEN: SoA has a group/sub-group visibility toggled
+    sact: StudySelectionActivity = deque(
+        soa_test_data.study_activities.values(), maxlen=(abs(activity_index) + 1)
+    )[0 if activity_index < 1 else -1]
+    response = api_client.patch(
+        f"/studies/{soa_test_data.study.uid}/study-activity-subgroups/{sact.study_activity_subgroup.study_activity_subgroup_uid}",
+        json={
+            "show_activity_subgroup_in_protocol_flowchart": not bool(
+                sact.show_activity_subgroup_in_protocol_flowchart
+            )
+        },
+    )
+    assert_response_status_code(response, 200)
+    response = api_client.patch(
+        f"/studies/{soa_test_data.study.uid}/study-activity-groups/{sact.study_activity_group.study_activity_group_uid}",
+        json={
+            "show_activity_group_in_protocol_flowchart": not bool(
+                sact.show_activity_group_in_protocol_flowchart
+            )
+        },
+    )
+    assert_response_status_code(response, 200)
+
+    # GIVEN: SoA has visibility of an activity toggled
+    response = api_client.patch(
+        f"/studies/{soa_test_data.study.uid}/study-activities/{sact.study_activity_uid}",
+        json={
+            "show_activity_in_protocol_flowchart": not bool(
+                sact.show_activity_in_protocol_flowchart
+            )
+        },
+    )
+    assert_response_status_code(response, 200)
 
 
 def test_operational_soa_json(

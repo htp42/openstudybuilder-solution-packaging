@@ -67,16 +67,17 @@ from clinical_mdr_api.services.utils.table_f import (
     TableCell,
     TableRow,
     TableWithFootnotes,
-    table_to_docx,
     table_to_html,
     table_to_xlsx,
+    tables_to_docx,
+    tables_to_html,
 )
 from clinical_mdr_api.utils import enumerate_letters
 from common.auth.user import user
 from common.config import settings
 from common.exceptions import BusinessLogicException, NotFoundException
 from common.telemetry import trace_calls
-from common.utils import VisitClass
+from common.utils import VisitClass, insert_space_after_commas
 
 NUM_OPERATIONAL_CODE_COLS = 2
 SOA_CHECK_MARK = "X"
@@ -102,6 +103,7 @@ _T = {
     "group": "group",
     "subgroup": "subgroup",
     "activity": "activity",
+    "footnotes_in_last_table_slice": "Footnotes are found under the last SoA table.",
 }.get
 
 log = logging.getLogger(__name__)
@@ -621,6 +623,102 @@ class StudyFlowchartService:
 
         return table
 
+    @staticmethod
+    @trace_calls
+    def split_flowchart_table(
+        table: TableWithFootnotes, split_uids: Iterable[str]
+    ) -> list[TableWithFootnotes]:
+        """Splits flowchart table into multiple tables at columns referencing StudyVisit.uids in split_uids"""
+
+        split_uids = set(split_uids)
+
+        # Iterate through visit header row to find columns indexes to split at
+        split_indices = set()
+        visit_row_idx = max(0, table.num_header_rows - 3)
+        for col_idx, cell in enumerate(
+            table.rows[visit_row_idx].cells[table.num_header_cols :],
+            start=table.num_header_cols,
+        ):
+            if cell.refs:
+                for ref in cell.refs:
+                    if ref.uid in split_uids:
+                        split_indices.add(col_idx)
+
+        table_slices: list[TableWithFootnotes] = [
+            table.model_copy(update={"rows": [], "footnotes": None})
+            for _ in range(len(split_indices) + 1)
+        ]
+        for row_idx, row in enumerate(table.rows):
+            spanning_cell, remaining_span = None, 0
+
+            # row prototype includes only header cells
+            row_proto = row.model_copy(
+                update={"cells": row.cells[: table.num_header_cols]}
+            )
+
+            # select the first slice and append new row based on prototype
+            iter_slices = iter(table_slices)
+            table_slice: TableWithFootnotes = next(iter_slices)
+            table_slice.rows.append(
+                slice_row := row_proto.model_copy(
+                    update={"cells": row_proto.cells.copy()}
+                )
+            )
+
+            for col_idx, cell in enumerate(
+                row.cells[table.num_header_cols :], start=table.num_header_cols
+            ):
+                # split at indexes referencing split_uids
+                if col_idx in split_indices:
+                    # select next slice and create new row based on prototype
+                    table_slice = next(iter_slices)
+                    table_slice.rows.append(
+                        slice_row := row_proto.model_copy(
+                            update={"cells": row_proto.cells.copy()}
+                        )
+                    )
+
+                    # continue with a spanning cell from the previous slice
+                    if (
+                        row_idx < table.num_header_rows
+                        and cell.span == 0
+                        and remaining_span > 0
+                    ):
+                        spanning_cell = cell = spanning_cell.model_copy(
+                            update={"span": 0}
+                        )
+
+                # handle cell spanning across slices (header rows only)
+                if row_idx < table.num_header_rows:
+                    if cell.span > 1:
+                        spanning_cell = cell = (
+                            cell.model_copy()
+                        )  # shallow copy to avoid modifying original table when updating `spanning_cell`
+                        remaining_span = cell.span - 1
+                        spanning_cell.span = 1
+
+                    elif cell.span == 0 and remaining_span > 0:
+                        spanning_cell.span += 1
+                        remaining_span -= 1
+
+                    else:
+                        spanning_cell, remaining_span = None, 0
+
+                # append cell to current slice row
+                slice_row.cells.append(cell)
+
+        # add a comment footnote to each slice that footnotes are in the last slice
+        comment = str(_T("footnotes_in_last_table_slice"))
+        for table_slice in table_slices[:-1]:
+            table_slice.footnotes = {
+                "": SimpleFootnote(uid="", text_html=comment, text_plain=comment)
+            }
+
+        # last slice inherits all footnotes
+        table_slices[-1].footnotes = table.footnotes
+
+        return table_slices
+
     @trace_calls
     def build_flowchart_table(
         self,
@@ -816,8 +914,27 @@ class StudyFlowchartService:
         if debug_uids:
             self.add_uid_debug(table)
 
+        # splitting
+        if layout == SoALayout.PROTOCOL:
+            tables = self.split_soa(study_uid, study_value_version, table)
+        else:
+            tables = [table]
+
         # convert flowchart to HTML document
-        return table_to_html(table)
+        return tables_to_html(tables)
+
+    def split_soa(self, study_uid: str, study_value_version: str | None, table) -> Any:
+        # Get StudyVisit.uids for slicing the SoA table
+        split_uids = set(
+            sp.uid
+            for sp in self._study_service.get_study_soa_splits(
+                study_uid=study_uid, study_value_version=study_value_version
+            )
+        )
+
+        # Split SoA table into multiple tables at specified StudyVisit.uids
+        tables = self.split_flowchart_table(table, split_uids)
+        return tables
 
     @trace_calls
     def get_study_flowchart_docx(
@@ -845,9 +962,15 @@ class StudyFlowchartService:
         if layout == SoALayout.PROTOCOL:
             self.add_protocol_section_column(table)
 
+        # splitting
+        if layout == SoALayout.PROTOCOL:
+            tables = self.split_soa(study_uid, study_value_version, table)
+        else:
+            tables = [table]
+
         # convert flowchart to DOCX document applying styles
-        return table_to_docx(
-            table,
+        return tables_to_docx(
+            tables,
             styles=(
                 OPERATIONAL_DOCX_STYLES
                 if layout == SoALayout.OPERATIONAL
@@ -1374,34 +1497,8 @@ class StudyFlowchartService:
                         prev_visit_type_uid = None
                         milestones_row.cells.append(TableCell())
 
-                visit_timing = ""
-
-                # Visit group
-                if len(group) > 1:
-                    visit_name = visit.consecutive_visit_group
-
-                    if not (
-                        getattr(visit, visit_timing_prop) is None
-                        or getattr(group[-1], visit_timing_prop) is None
-                    ):
-                        # If there is a comma it means that group was made in the LIST grouping way
-                        if visit_name and "," in visit_name:
-                            visit_timings = [
-                                f"{getattr(visit, visit_timing_prop):d}"
-                                for visit in group
-                            ]
-                            visit_timing = ",".join(visit_timings)
-                        else:
-                            visit_timing = f"{getattr(visit, visit_timing_prop):d}-{getattr(group[-1], visit_timing_prop):d}"
-
-                # Single Visit
-                else:
-                    visit_name = visit.visit_short_name
-                    if (
-                        getattr(visit, visit_timing_prop) is not None
-                        and visit.visit_class != VisitClass.SPECIAL_VISIT.name
-                    ):
-                        visit_timing = f"{getattr(visit, visit_timing_prop):d}"
+                visit_name = cls._get_visit_name(group)
+                visit_timing = cls._get_visit_timing(group, visit_timing_prop)
 
                 # Visit name cell
                 visits_row.cells.append(
@@ -1443,34 +1540,57 @@ class StudyFlowchartService:
         return "study_week_number"
 
     @staticmethod
-    def _get_visit_name(visit: StudyVisit, num_visits_in_group: int = 0) -> str:
-        if num_visits_in_group:
-            return (
-                visit.consecutive_visit_group
-                if num_visits_in_group > 1
-                else visit.visit_short_name
+    def _get_visit_name(visits_in_group: Sequence[StudyVisit]) -> str:
+        visit: StudyVisit = visits_in_group[0]
+        visit_name = visit.consecutive_visit_group or visit.visit_short_name
+
+        if len(visits_in_group) > 1 and "," in visit_name:
+            # insert line-breaks after certain commas when the cell text gets too long
+            visit_name = insert_space_after_commas(
+                visit_name, settings.soa_insert_space_after_commas_length, space="\n"
             )
-        return visit.consecutive_visit_group or visit.visit_short_name
+
+        return visit_name
 
     @staticmethod
     def _get_visit_timing(visits: list[StudyVisit], visit_timing_property: str) -> str:
-        visit = visits[0]
-
-        # Visit group
-        if len(visits) > 1:
-            if not (
-                getattr(visit, visit_timing_property) is None
-                or getattr(visits[-1], visit_timing_property) is None
-            ):
-                return f"{getattr(visit, visit_timing_property):d}-{getattr(visits[-1], visit_timing_property):d}"
+        visit: StudyVisit = visits[0]
+        num_visits_in_group = len(visits)
 
         # Single Visit
-        else:
+        if num_visits_in_group == 1:
             if (
                 getattr(visit, visit_timing_property) is not None
                 and visit.visit_class != VisitClass.SPECIAL_VISIT.name
             ):
                 return f"{getattr(visit, visit_timing_property):d}"
+
+        # Visit Group
+        if not (
+            getattr(visit, visit_timing_property) is None
+            or getattr(visits[-1], visit_timing_property) is None
+        ):
+            visit_name = (
+                num_visits_in_group > 1
+                and visit.consecutive_visit_group
+                or visit.visit_short_name
+            )
+
+            # If there is a comma it means that group was made in the LIST grouping way
+            if visit_name and "," in visit_name:
+                visit_timings = [
+                    f"{getattr(visit, visit_timing_property):d}" for visit in visits
+                ]
+                visit_timing = ",".join(visit_timings)
+                # insert line-breaks after certain commas when the cell text gets too long
+                visit_timing = insert_space_after_commas(
+                    visit_timing,
+                    settings.soa_insert_space_after_commas_length,
+                    space="\n",
+                )
+                return visit_timing
+
+            return f"{getattr(visit, visit_timing_property):d}-{getattr(visits[-1], visit_timing_property):d}"
 
         return ""
 
@@ -2690,7 +2810,7 @@ class StudyFlowchartService:
                     )
 
             visit_row.cells[col_idx] = TableCell(
-                self._get_visit_name(visit, num_visits_in_group=len(visits_in_group)),
+                self._get_visit_name(visits_in_group),
                 style="header2",
                 refs=[
                     Ref(

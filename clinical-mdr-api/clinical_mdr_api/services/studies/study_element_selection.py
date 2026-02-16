@@ -312,7 +312,7 @@ class StudyElementSelectionService(
                 study_uid=study_uid, element_uid=study_selection_uid
             ):
                 design_cells_on_element = (
-                    StudyDesignCellRepository.get_design_cells_connected_to_element(
+                    StudyDesignCellRepository.find_all_design_cells_by_study(
                         study_uid=study_uid,
                         study_element_uid=study_selection_uid,
                     )

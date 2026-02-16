@@ -39,7 +39,7 @@ Feature: Studies - Define Study - Study Population
         Given The test study '/population' page is opened
         When The population is edited
         And Form save button is clicked
-        And The form is closed
+        And The form is no longer available
         Then The population data is reflected in the table
 
     @manual_test

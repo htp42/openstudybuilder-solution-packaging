@@ -28,6 +28,7 @@ export const useStudiesGeneralStore = defineStore('studiesGeneral', {
     endpointLevels: [],
     endpointSubLevels: [],
     allUnits: [],
+    developmentStageCodes: [],
   }),
 
   getters: {
@@ -190,6 +191,11 @@ export const useStudiesGeneralStore = defineStore('studiesGeneral', {
     fetchNullValues() {
       terms.getTermsByCodelist('nullValues').then((resp) => {
         this.nullValues = resp.data.items
+      })
+    },
+    fetchDevelopmentStageCodes() {
+      terms.getTermsByCodelist('developmentStageCodes').then((resp) => {
+        this.developmentStageCodes = resp.data.items
       })
     },
     fetchObjectiveLevels() {

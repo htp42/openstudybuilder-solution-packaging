@@ -8,6 +8,7 @@
     :form-url="formUrl"
     :editable="isEdit()"
     :save-from-any-step="isEdit()"
+    :read-only="isReadOnly"
     @close="close"
     @save="submit"
   >
@@ -25,8 +26,8 @@
                 data-cy="item-name"
                 :rules="[formRules.required]"
                 density="compact"
-                clearable
-                :disabled="isDisabled"
+                :clearable="!isReadOnly"
+                :readonly="isReadOnly"
               />
             </v-col>
             <v-col cols="6">
@@ -35,8 +36,8 @@
                 :label="$t('CRFItems.oid')"
                 data-cy="item-oid"
                 density="compact"
-                clearable
-                :disabled="isDisabled"
+                :clearable="!isReadOnly"
+                :readonly="isReadOnly"
               />
             </v-col>
           </v-row>
@@ -51,9 +52,9 @@
                 item-value="submission_value"
                 :rules="[formRules.required]"
                 density="compact"
-                clearable
+                :clearable="!isReadOnly"
                 class="mt-3"
-                :disabled="isDisabled"
+                :readonly="isReadOnly"
                 @update:model-value="checkIfNumeric()"
               />
             </v-col>
@@ -64,10 +65,10 @@
                 data-cy="item-length"
                 density="compact"
                 :rules="[lengthRequired]"
-                clearable
+                :clearable="!isReadOnly"
                 class="mt-3"
                 type="number"
-                :disabled="isDisabled"
+                :readonly="isReadOnly"
               />
             </v-col>
             <v-col v-if="digitsFieldCheck" cols="4">
@@ -77,10 +78,10 @@
                 data-cy="item-significant-digits"
                 density="compact"
                 :rules="[significantDigitsRequired]"
-                clearable
+                :clearable="!isReadOnly"
                 class="mt-3"
                 type="number"
-                :disabled="isDisabled"
+                :readonly="isReadOnly"
               />
             </v-col>
           </v-row>
@@ -94,7 +95,7 @@
                   v-model:content="engDescription.description"
                   content-type="html"
                   :toolbar="customToolbar"
-                  :read-only="isDisabled"
+                  :read-only="isReadOnly"
                 />
               </div>
             </v-col>
@@ -107,7 +108,7 @@
                   v-model:content="engDescription.sponsor_instruction"
                   content-type="html"
                   :toolbar="customToolbar"
-                  :read-only="isDisabled"
+                  :read-only="isReadOnly"
                 />
               </div>
             </v-col>
@@ -124,8 +125,8 @@
                 :label="$t('CRFDescriptions.name')"
                 data-cy="form-oid-name"
                 density="compact"
-                clearable
-                :disabled="isDisabled"
+                :clearable="!isReadOnly"
+                :readonly="isReadOnly"
               />
             </v-col>
             <v-col cols="9">
@@ -137,7 +138,7 @@
                   v-model:content="engDescription.instruction"
                   content-type="html"
                   :toolbar="customToolbar"
-                  :read-only="isDisabled"
+                  :read-only="isReadOnly"
                 />
               </div>
             </v-col>
@@ -154,8 +155,8 @@
                 :label="$t('CRFItems.sas_name')"
                 data-cy="item-sas-name"
                 density="compact"
-                clearable
-                :disabled="isDisabled"
+                :clearable="!isReadOnly"
+                :readonly="isReadOnly"
               />
             </v-col>
             <v-col cols="6">
@@ -164,8 +165,8 @@
                 :label="$t('CRFItems.sds_name')"
                 data-cy="item-sds-name"
                 density="compact"
-                clearable
-                :disabled="isDisabled"
+                :clearable="!isReadOnly"
+                :readonly="isReadOnly"
               />
             </v-col>
           </v-row>
@@ -179,8 +180,8 @@
                 item-title="nci_preferred_name"
                 item-value="nci_preferred_name"
                 density="compact"
-                clearable
-                :disabled="isDisabled"
+                :clearable="!isReadOnly"
+                :readonly="isReadOnly"
               />
             </v-col>
             <v-col cols="8">
@@ -189,8 +190,8 @@
                 :label="$t('CRFItems.comment')"
                 data-cy="item-comment"
                 density="compact"
-                clearable
-                :disabled="isDisabled"
+                :clearable="!isReadOnly"
+                :readonly="isReadOnly"
               />
             </v-col>
           </v-row>
@@ -200,19 +201,19 @@
     <template #[`step.extensions`]>
       <CrfExtensionsManagementTable
         type="ItemDef"
-        :read-only="isDisabled"
+        :read-only="isReadOnly"
         :edit-extensions="selectedExtensions"
         @set-extensions="setExtensions"
       />
     </template>
     <template #[`step.alias`]="{ step }">
       <v-form :ref="`observer_${step}`">
-        <CrfAliasSelection v-model="form.aliases" :disabled="isDisabled" />
+        <CrfAliasSelection v-model="form.aliases" :read-only="isReadOnly" />
       </v-form>
     </template>
     <template #[`step.description`]="{ step }">
       <v-form :ref="`observer_${step}`">
-        <CrfDescriptionSelection v-model="desc" :disabled="isDisabled" />
+        <CrfDescriptionSelection v-model="desc" :read-only="isReadOnly" />
       </v-form>
     </template>
     <template #[`step.codelist`]="{ step }">
@@ -232,7 +233,7 @@
               size="small"
               variant="outlined"
               color="nnBaseBlue"
-              :disabled="isDisabled"
+              :readonly="isReadOnly"
               @click="removeCodelist(item)"
             />
           </template>
@@ -259,7 +260,7 @@
               size="small"
               variant="outlined"
               color="nnBaseBlue"
-              :disabled="isDisabled"
+              :readonly="isReadOnly"
               @click="addCodelist(item)"
             />
           </template>
@@ -270,12 +271,12 @@
       <v-form :ref="`observer_${step}`">
         <v-data-table :headers="selectedTermsHeaders" :items="selectedTerms">
           <template #[`item.mandatory`]="{ item }">
-            <v-checkbox v-model="item.mandatory" :disabled="isDisabled" />
+            <v-checkbox v-model="item.mandatory" :readonly="isReadOnly" />
           </template>
           <template #[`item.display_text`]="{ item }">
             <v-text-field
               v-model="item.display_text"
-              :disabled="isDisabled"
+              :readonly="isReadOnly"
               density="compact"
             />
           </template>
@@ -284,7 +285,7 @@
               icon="mdi-delete-outline"
               class="mt-1"
               variant="text"
-              :disabled="isDisabled"
+              :readonly="isReadOnly"
               @click="removeTerm(item)"
             />
           </template>
@@ -300,6 +301,7 @@
           :items-length="totalTerms"
           hide-export-button
           only-text-search
+          :column-data-parameters="{ include_removed: false }"
           hide-default-switches
           @filter="getCodeListTerms"
         >
@@ -308,8 +310,8 @@
               icon="mdi-plus"
               class="mt-1"
               variant="text"
-              :disabled="
-                isDisabled ||
+              :readonly="
+                isReadOnly ||
                 selectedTerms.find((e) => e.term_uid === item.term_uid)
               "
               @click="addTerm(item)"
@@ -335,7 +337,7 @@
               variant="outlined"
               color="nnBaseBlue"
               :label="$t('CRFItemGroups.new_translation')"
-              :disabled="isDisabled"
+              :readonly="isReadOnly"
               icon="mdi-plus"
               @click.stop="addUnit"
             />
@@ -351,23 +353,335 @@
               item-title="name"
               item-value="name"
               return-object
-              :disabled="isDisabled"
+              :readonly="isReadOnly"
               @update:model-value="setUnit(index)"
             />
           </template>
           <template #[`item.mandatory`]="{ item }">
-            <v-checkbox v-model="item.mandatory" :disabled="isDisabled" />
+            <v-checkbox v-model="item.mandatory" :readonly="isReadOnly" />
           </template>
           <template #[`item.delete`]="{ index }">
             <v-btn
               icon="mdi-delete-outline"
               class="mt-n5"
               variant="text"
-              :disabled="isDisabled"
+              :readonly="isReadOnly"
               @click="removeUnit(index)"
             />
           </template>
         </NNTable>
+      </v-form>
+    </template>
+    <template #[`step.activity_instance_links`]="{ step }">
+      <v-form :ref="`observer_${step}`">
+        <v-card
+          v-for="(activityInstance, idx) in form.activity_instances"
+          :key="idx"
+          elevation="2"
+          class="mb-8"
+          :border="
+            isAlreadyDefined(activityInstance) ? 'error xl' : 'vTransparent xl'
+          "
+        >
+          <v-card-title class="d-flex">
+            <v-skeleton-loader :loading="loading" type="heading" width="300">
+              {{ $t('CRFItems.activity_instance') }} {{ idx + 1 }}
+            </v-skeleton-loader>
+
+            <v-spacer />
+            <span
+              v-if="isAlreadyDefined(activityInstance)"
+              style="color: #f44336; font-weight: bold"
+            >
+              {{ $t('CRFItems.activity_instance_already_defined') }}
+            </span>
+            <v-spacer />
+
+            <v-skeleton-loader :loading="loading" type="avatar">
+              <v-btn
+                icon="mdi-delete-outline"
+                size="small"
+                variant="outlined"
+                color="red"
+                :readonly="isReadOnly"
+                @click.stop="removeActivityInstance(idx)"
+              />
+            </v-skeleton-loader>
+          </v-card-title>
+
+          <v-card-text>
+            <v-row>
+              <v-col>
+                <v-skeleton-loader
+                  height="54px"
+                  :loading="loading"
+                  type="heading"
+                >
+                  <v-select
+                    v-model="activityInstance.odm_item_group_uid"
+                    :label="$t('CRFItemGroups.item_group')"
+                    :items="availableParentItemGroups"
+                    item-title="name"
+                    item-value="uid"
+                    density="compact"
+                    :clearable="!isReadOnly"
+                    :readonly="isReadOnly"
+                    :rules="[formRules.required]"
+                    :class="{
+                      shake: isShaking && !activityInstance.odm_item_group_uid,
+                    }"
+                    @update:model-value="onItemGroupChange($event, idx)"
+                  />
+                </v-skeleton-loader>
+              </v-col>
+              <v-col
+                @click="
+                  () => activateShake(!activityInstance.odm_item_group_uid)
+                "
+              >
+                <v-skeleton-loader
+                  height="54px"
+                  :loading="loading"
+                  type="heading"
+                >
+                  <v-select
+                    v-model="activityInstance.odm_form_uid"
+                    :label="$t('CRFForms.crf_form')"
+                    :items="activityInstance.availableParentForms"
+                    item-title="name"
+                    item-value="uid"
+                    density="compact"
+                    :clearable="!isReadOnly"
+                    :readonly="
+                      isReadOnly || !activityInstance.odm_item_group_uid
+                    "
+                    :rules="[formRules.required]"
+                    :class="{
+                      shake:
+                        isShaking &&
+                        activityInstance.odm_item_group_uid &&
+                        !activityInstance.odm_form_uid,
+                    }"
+                  />
+                </v-skeleton-loader>
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col
+                @click="() => activateShake(!activityInstance.odm_form_uid)"
+              >
+                <v-skeleton-loader
+                  height="54px"
+                  :loading="loading"
+                  type="heading"
+                >
+                  <v-autocomplete
+                    v-model="activityInstance.activity_instance_uid"
+                    :label="$t('CRFItems.activity_instance')"
+                    :items="availableActivityInstances"
+                    item-title="name"
+                    item-value="uid"
+                    density="compact"
+                    :clearable="!isReadOnly"
+                    :readonly="isReadOnly || !activityInstance.odm_form_uid"
+                    :rules="[formRules.required]"
+                    :class="{
+                      shake:
+                        isShaking &&
+                        activityInstance.odm_item_group_uid &&
+                        activityInstance.odm_form_uid &&
+                        !activityInstance.activity_instance_uid,
+                    }"
+                    @update:model-value="onActivityInstanceChange(idx)"
+                  />
+                </v-skeleton-loader>
+              </v-col>
+              <v-col
+                @click="
+                  () =>
+                    activateShake(
+                      !activityInstance.odm_form_uid ||
+                        !activityInstance.activity_instance_uid
+                    )
+                "
+              >
+                <v-skeleton-loader
+                  height="54px"
+                  :loading="loading"
+                  type="heading"
+                >
+                  <v-select
+                    v-model="activityInstance.activity_item_class_uid"
+                    :label="$t('CRFItems.activity_item_class')"
+                    :items="activityInstance.availableActivityItemClasses"
+                    item-title="name"
+                    item-value="uid"
+                    density="compact"
+                    :clearable="!isReadOnly"
+                    :readonly="
+                      isReadOnly ||
+                      !activityInstance.activity_instance_uid ||
+                      !activityInstance.odm_form_uid
+                    "
+                    :rules="[formRules.required]"
+                    :class="{
+                      shake:
+                        isShaking &&
+                        activityInstance.odm_item_group_uid &&
+                        activityInstance.odm_form_uid &&
+                        activityInstance.activity_instance_uid &&
+                        !activityInstance.activity_item_class_uid,
+                    }"
+                  />
+                </v-skeleton-loader>
+              </v-col>
+            </v-row>
+            <v-row
+              @click="
+                () =>
+                  activateShake(
+                    !activityInstance.activity_item_class_uid ||
+                      !activityInstance.odm_form_uid
+                  )
+              "
+            >
+              <v-col>
+                <v-skeleton-loader
+                  height="54px"
+                  :loading="loading"
+                  type="heading"
+                >
+                  <v-text-field
+                    v-model="activityInstance.preset_response_value"
+                    :label="$t('CRFItems.preset_response_value')"
+                    density="compact"
+                    :clearable="!isReadOnly"
+                    :readonly="
+                      isReadOnly ||
+                      !activityInstance.activity_item_class_uid ||
+                      !activityInstance.odm_form_uid
+                    "
+                  />
+                </v-skeleton-loader>
+              </v-col>
+              <v-col>
+                <v-skeleton-loader
+                  height="54px"
+                  :loading="loading"
+                  type="heading"
+                >
+                  <v-text-field
+                    v-model="activityInstance.value_condition"
+                    :label="$t('CRFItems.value_condition')"
+                    density="compact"
+                    :clearable="!isReadOnly"
+                    :readonly="
+                      isReadOnly ||
+                      !activityInstance.activity_item_class_uid ||
+                      !activityInstance.odm_form_uid
+                    "
+                  />
+                </v-skeleton-loader>
+              </v-col>
+              <v-col>
+                <v-skeleton-loader
+                  height="54px"
+                  :loading="loading"
+                  type="heading"
+                >
+                  <v-text-field
+                    v-model="activityInstance.value_dependent_map"
+                    :label="$t('CRFItems.value_dependent_map')"
+                    density="compact"
+                    :clearable="!isReadOnly"
+                    :readonly="
+                      isReadOnly ||
+                      !activityInstance.activity_item_class_uid ||
+                      !activityInstance.odm_form_uid
+                    "
+                  />
+                </v-skeleton-loader>
+              </v-col>
+              <v-col>
+                <v-skeleton-loader
+                  height="54px"
+                  :loading="loading"
+                  type="heading"
+                >
+                  <v-number-input
+                    v-model="activityInstance.order"
+                    :label="$t('_global.order')"
+                    density="compact"
+                    :clearable="!isReadOnly"
+                    :readonly="
+                      isReadOnly ||
+                      !activityInstance.activity_item_class_uid ||
+                      !activityInstance.odm_form_uid
+                    "
+                  />
+                </v-skeleton-loader>
+              </v-col>
+              <v-col>
+                <v-skeleton-loader
+                  height="20px"
+                  :loading="loading"
+                  type="heading"
+                >
+                  <v-checkbox
+                    v-model="activityInstance.primary"
+                    :label="$t('CRFItems.primary')"
+                    density="compact"
+                    :readonly="
+                      isReadOnly ||
+                      !activityInstance.activity_item_class_uid ||
+                      !activityInstance.odm_form_uid
+                    "
+                  />
+                </v-skeleton-loader>
+              </v-col>
+            </v-row>
+          </v-card-text>
+        </v-card>
+
+        <v-row v-if="form.activity_instances.length === 0">
+          <v-col class="d-flex justify-center align-center mb-4">
+            {{ $t('CRFItems.no_activity_instance_links') }}
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col class="d-flex justify-center align-center">
+            <v-skeleton-loader
+              :loading="loading && form.activity_instances.length > 0"
+              type="button"
+              height="48"
+              width="148"
+            >
+              <v-btn-group
+                color="nnBaseBlue"
+                rounded="xl"
+                variant="tonal"
+                divided
+              >
+                <v-btn
+                  :text="$t('_global.reset')"
+                  :disabled="isReadOnly || !hasActivityInstanceLinksChanged"
+                  @click.stop="resetActivityInstances"
+                />
+                <v-btn
+                  icon="mdi-plus"
+                  :disabled="
+                    isReadOnly ||
+                    (form.activity_instances.length > 0 &&
+                      !form.activity_instances[
+                        form.activity_instances.length - 1
+                      ].activity_item_class_uid)
+                  "
+                  @click.stop="addActivityInstance"
+                />
+              </v-btn-group>
+            </v-skeleton-loader>
+          </v-col>
+        </v-row>
       </v-form>
     </template>
     <template #[`step.change_description`]="{ step }">
@@ -379,8 +693,8 @@
               :label="$t('CRFItems.change_desc')"
               data-cy="item-change-description"
               :rules="[formRules.required]"
-              clearable
-              :disabled="isDisabled"
+              :clearable="!isReadOnly"
+              :readonly="isReadOnly"
             />
           </v-col>
         </v-row>
@@ -394,12 +708,6 @@
       />
     </template>
   </HorizontalStepperForm>
-  <CrfActivitiesModelsLinkForm
-    :open="linkForm"
-    :item-to-link="selectedItem"
-    item-type="item"
-    @close="closeLinkForm"
-  />
   <ConfirmDialog ref="confirm" :text-cols="6" :action-cols="5" />
   <CrfApprovalSummaryConfirmDialog ref="confirmApproval" />
   <CrfNewVersionSummaryConfirmDialog ref="confirmNewVersion" />
@@ -407,7 +715,9 @@
 
 <script>
 import crfs from '@/api/crfs'
+import codelistApi from '@/api/controlledTerminology/codelists'
 import NNTable from '@/components/tools/NNTable.vue'
+import { useShake } from '@/composables/shake'
 import terms from '@/api/controlledTerminology/terms'
 import HorizontalStepperForm from '@/components/tools/HorizontalStepperForm.vue'
 import controlledTerminology from '@/api/controlledTerminology'
@@ -418,7 +728,6 @@ import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
 import crfTypes from '@/constants/crfTypes'
 import ActionsMenu from '@/components/tools/ActionsMenu.vue'
-import CrfActivitiesModelsLinkForm from '@/components/library/crfs/CrfActivitiesModelsLinkForm.vue'
 import actions from '@/constants/actions'
 import parameters from '@/constants/parameters'
 import CrfExtensionsManagementTable from '@/components/library/crfs/CrfExtensionsManagementTable.vue'
@@ -430,6 +739,8 @@ import filteringParameters from '@/utils/filteringParameters'
 import regex from '@/utils/regex'
 import CrfNewVersionSummaryConfirmDialog from '@/components/library/crfs/CrfNewVersionSummaryConfirmDialog.vue'
 import CrfApprovalSummaryConfirmDialog from '@/components/library/crfs/CrfApprovalSummaryConfirmDialog.vue'
+import _isEmpty from 'lodash/isEmpty'
+import activities from '@/api/activities'
 import { useAccessGuard } from '@/composables/accessGuard'
 
 export default {
@@ -440,7 +751,6 @@ export default {
     CrfDescriptionSelection,
     QuillEditor,
     ActionsMenu,
-    CrfActivitiesModelsLinkForm,
     CrfExtensionsManagementTable,
     ConfirmDialog,
     CrfNewVersionSummaryConfirmDialog,
@@ -450,6 +760,10 @@ export default {
   props: {
     selectedItem: {
       type: Object,
+      default: null,
+    },
+    startStep: {
+      type: String,
       default: null,
     },
     readOnlyProp: {
@@ -463,7 +777,11 @@ export default {
     const unitsStore = useUnitsStore()
     const accessGuard = useAccessGuard()
 
+    const { isShaking, activateShake } = useShake()
+
     return {
+      isShaking,
+      activateShake,
       checkPermission: accessGuard.checkPermission,
       fetchUnits: unitsStore.fetchUnits,
       userData: computed(() => appStore.userData),
@@ -491,7 +809,23 @@ export default {
         oid: 'I.',
         aliases: [],
         descriptions: [],
+        activity_instances: [
+          {
+            activity_instance_uid: '',
+            activity_item_class_uid: '',
+            odm_form_uid: '',
+            odm_item_group_uid: '',
+            order: 999999,
+            preset_response_value: '',
+            primary: false,
+            value_condition: '',
+            value_dependent_map: '',
+            availableActivityItemClasses: [],
+            availableParentForms: [],
+          },
+        ],
       },
+      originalForm: {},
       desc: [],
       selectedExtensions: [],
       selectedCodelistHeaders: [
@@ -583,6 +917,10 @@ export default {
           title: this.$t('CRFItemGroups.description_details'),
         },
         { name: 'alias', title: this.$t('CRFItemGroups.alias_details') },
+        {
+          name: 'activity_instance_links',
+          title: this.$t('CRFItems.activity_instance_links'),
+        },
         { name: 'change_description', title: this.$t('CRFForms.change_desc') },
       ],
       origins: [],
@@ -601,12 +939,11 @@ export default {
       ],
       engDescription: {
         library_name: constants.LIBRARY_SPONSOR,
-        language: parameters.ENG,
+        language: parameters.EN,
       },
       terms: [],
       selectedTerms: [],
       readOnly: this.readOnlyProp,
-      linkForm: false,
       actions: [
         {
           label: this.$t('_global.approve'),
@@ -634,27 +971,23 @@ export default {
               : false,
           click: this.delete,
         },
-        {
-          label: this.$t('CRFLinkingForm.link_activities'),
-          icon: 'mdi-plus',
-          iconColor: 'primary',
-          condition: () => this.readOnly,
-          click: this.openLinkForm,
-        },
       ],
       lengthFieldCheck: false,
       digitsFieldCheck: false,
       originFieldCheck: true,
+      loading: false,
       filteringTerms: [],
       selectedFilteringTerms: [],
       search: '',
       operators: ['or', 'and'],
       termsFilterOperator: 'or',
       totalTerms: 0,
+      availableActivityInstances: [],
+      availableParentItemGroups: [],
     }
   },
   computed: {
-    isDisabled() {
+    isReadOnly() {
       return this.readOnly || !this.checkPermission(this.$roles.LIBRARY_WRITE)
     },
     title() {
@@ -669,6 +1002,12 @@ export default {
         return `${window.location.href.replace('crf-tree', 'items')}/item/${this.selectedItem.uid}`
       }
       return null
+    },
+    hasActivityInstanceLinksChanged() {
+      const current = JSON.stringify(this.form.activity_instances)
+      const original = JSON.stringify(this.originalForm.activity_instances)
+
+      return current !== original
     },
   },
   watch: {
@@ -692,7 +1031,7 @@ export default {
     selectedItem: {
       handler(value) {
         if (this.isEdit()) {
-          this.steps = this.readOnly ? this.createSteps : this.editSteps
+          this.steps = this.editSteps
           if (value.datatype.indexOf('STRING') !== -1) {
             this.steps.splice(1, 0, {
               name: 'codelist',
@@ -740,7 +1079,11 @@ export default {
   created() {
     this.crfTypes = crfTypes
   },
-  mounted() {
+  async mounted() {
+    if (this.startStep) {
+      this.$refs.stepper.goToStep(this.startStep)
+    }
+
     this.fetchCodelists()
     terms.getTermsByCodelist('originType').then((resp) => {
       this.origins = resp.data.items
@@ -752,7 +1095,7 @@ export default {
     })
     this.fetchUnits({ page_size: 0 })
     if (this.isEdit()) {
-      this.steps = this.readOnly ? this.createSteps : this.editSteps
+      this.steps = this.editSteps
     } else {
       this.steps = this.createSteps
     }
@@ -761,8 +1104,97 @@ export default {
         return obj.name !== 'description'
       })
     }
+
+    crfs.getRelationships(this.selectedItem.uid, 'items').then(async (resp) => {
+      const itemGroupUids = resp.data['OdmItemGroup'] || []
+
+      if (_isEmpty(itemGroupUids)) {
+        this.availableParentItemGroups = []
+        return
+      }
+
+      const params = {
+        filters: { uid: { v: itemGroupUids } },
+        page_size: 0,
+      }
+      const res = await crfs.get('item-groups', { params })
+      this.availableParentItemGroups = res.data.items
+    })
   },
   methods: {
+    isAlreadyDefined(activityInstance) {
+      const key = `${activityInstance.odm_item_group_uid}|${activityInstance.odm_form_uid}|${activityInstance.activity_instance_uid}|${activityInstance.activity_item_class_uid}`
+
+      const count = this.form.activity_instances.filter(
+        (ai) =>
+          `${ai.odm_item_group_uid}|${ai.odm_form_uid}|${ai.activity_instance_uid}|${ai.activity_item_class_uid}` ===
+          key
+      ).length
+      return count > 1
+    },
+    addActivityInstance() {
+      this.form.activity_instances.push({
+        activity_instance_uid: '',
+        activity_item_class_uid: '',
+        odm_form_uid: '',
+        odm_item_group_uid: '',
+        order: 999999,
+        preset_response_value: '',
+        primary: false,
+        value_condition: '',
+        value_dependent_map: '',
+        availableActivityItemClasses: [],
+        availableParentForms: [],
+      })
+    },
+    removeActivityInstance(idx) {
+      this.form.activity_instances.splice(idx, 1)
+    },
+    onItemGroupChange(value, idx) {
+      this.form.activity_instances[idx].odm_form_uid = null
+      if (!value) {
+        return
+      }
+
+      this.loadItemGroupForms(value).then((forms) => {
+        this.form.activity_instances[idx].availableParentForms = forms
+      })
+    },
+    async loadItemGroupForms(itemGroupUid) {
+      return crfs.getRelationships(itemGroupUid, 'item-groups').then((resp) => {
+        const formUids = resp.data['OdmForm'] || []
+
+        if (_isEmpty(formUids)) {
+          return []
+        }
+
+        const params = {
+          filters: { uid: { v: formUids } },
+          page_size: 0,
+        }
+
+        return crfs.get('forms', { params }).then((res) => {
+          return res.data.items
+        })
+      })
+    },
+    async resetActivityInstances() {
+      this.form.activity_instances = [...this.originalForm.activity_instances]
+    },
+    onActivityInstanceChange(idx) {
+      this.form.activity_instances[idx].activity_item_class_uid = null
+
+      this.form.activity_instances[idx].availableActivityItemClasses =
+        this.loadActivityInstanceItemClasses(idx)
+    },
+    loadActivityInstanceItemClasses(idx) {
+      const ai = this.availableActivityInstances.find(
+        (inst) =>
+          inst.uid === this.form.activity_instances[idx].activity_instance_uid
+      )
+
+      return ai?.activity_items?.map((item) => item.activity_item_class) || []
+    },
     lengthRequired(value) {
       if (
         ['STRING', 'TEXT'].includes(this.form.datatype) ||
@@ -801,13 +1233,6 @@ export default {
       crfs.getItem(this.selectedItem.uid).then((resp) => {
         this.initForm(resp.data)
       })
-    },
-    openLinkForm() {
-      this.linkForm = true
-    },
-    closeLinkForm() {
-      this.linkForm = false
-      this.getItem()
     },
     async newVersion() {
       if (
@@ -956,7 +1381,7 @@ export default {
       this.selectedExtensions = []
       this.engDescription = {
         library_name: constants.LIBRARY_SPONSOR,
-        language: parameters.ENG,
+        language: parameters.EN,
       }
       this.$refs.stepper.reset()
       this.$emit('close')
@@ -967,15 +1392,19 @@ export default {
         filters,
         filtersUpdated
       )
+      params.include_removed = false
+
       if (this.selectedCodelists[0]) {
         params.codelist_uid = this.selectedCodelists[0].codelist_uid
-        terms.getTermsByCodelistUid(params).then((resp) => {
-          this.terms = resp.data.items
-          if (this.form.terms) {
-            this.selectedTerms = this.form.terms
-          }
-          this.totalTerms = resp.data.total
-        })
+        codelistApi
+          .getCodelistTerms(params.codelist_uid, params)
+          .then((resp) => {
+            this.terms = resp.data.items
+            if (this.form.terms) {
+              this.selectedTerms = this.form.terms
+            }
+            this.totalTerms = resp.data.total
+          })
       } else {
         this.terms = []
       }
@@ -994,7 +1423,7 @@ export default {
       )
     },
     async submit() {
-      if (this.isDisabled) {
+      if (this.isReadOnly) {
         this.close()
         return
       }
@@ -1016,6 +1445,13 @@ export default {
               uid: e.uid ? e.uid : e.name.uid,
               mandatory: e.mandatory,
             }))
+      if (
+        !['BASE64FLOAT', 'DOUBLE', 'FLOAT', 'HEXFLOAT', 'INTEGER'].includes(
+          this.form.datatype
+        )
+      ) {
+        this.form.unit_definitions = []
+      }
       if (this.form.datatype !== 'STRING') {
         this.form.codelist_uid = null
         this.form.terms = []
@@ -1150,15 +1586,22 @@ export default {
       this.form.descriptions = [...descArray, ...this.desc]
     },
     async initForm(item) {
+      this.loading = true
+      this.originalForm = JSON.parse(JSON.stringify(item))
+
       this.form = item
       this.form.aliases = item.aliases
-      if (item.descriptions.find((el) => el.language === parameters.ENG)) {
-        this.engDescription = item.descriptions.find(
-          (el) => el.language === parameters.ENG
+      if (
+        item.descriptions.some((el) =>
+          [parameters.EN, parameters.ENG].includes(el.language)
+        )
+      ) {
+        this.engDescription = item.descriptions.find((el) =>
+          [parameters.EN, parameters.ENG].includes(el.language)
         )
       }
       this.desc = item.descriptions.filter(
-        (el) => el.language !== parameters.ENG
+        (el) => ![parameters.EN, parameters.ENG].includes(el.language)
       )
       if (!item.unit_definitions || item.unit_definitions.length === 0) {
         this.chosenUnits = []
@@ -1189,6 +1632,7 @@ export default {
       if (item.terms) {
         this.selectedTerms = item.terms
       }
+
       this.form.change_description = this.$t('_global.draft_change')
       this.checkIfNumeric()
       item.vendor_attributes.forEach((attr) => (attr.type = 'attr'))
@@ -1201,6 +1645,31 @@ export default {
         ...item.vendor_attributes,
         ...item.vendor_elements,
       ]
+
+      const activity_instances = await activities.get(
+        { page_size: 0 },
+        'activity-instances'
+      )
+      this.availableActivityInstances = activity_instances.data.items
+
+      for (const [idx, ai] of this.form.activity_instances.entries()) {
+        if (ai.odm_item_group_uid) {
+          const forms = await this.loadItemGroupForms(ai.odm_item_group_uid)
+          this.form.activity_instances[idx].availableParentForms = forms
+          this.originalForm.activity_instances[idx].availableParentForms = forms
+        }
+
+        if (ai.activity_instance_uid) {
+          const activityItemClasses = this.loadActivityInstanceItemClasses(idx)
+          this.form.activity_instances[idx].availableActivityItemClasses =
+            activityItemClasses
+          this.originalForm.activity_instances[
+            idx
+          ].availableActivityItemClasses = activityItemClasses
+        }
+      }
+
+      this.loading = false
     },
     isEdit() {
       if (this.selectedItem) {

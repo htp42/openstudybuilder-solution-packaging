@@ -8,7 +8,7 @@ from fastapi import UploadFile
 from lxml import etree
 from weasyprint import HTML
 
-from clinical_mdr_api.domains._utils import get_iso_lang_data
+from clinical_mdr_api.domains._utils import get_iso_lang_data, is_language_english
 from clinical_mdr_api.domains.concepts.odms.odm_xml_definition import (
     ODM,
     Alias,
@@ -41,7 +41,7 @@ from clinical_mdr_api.domains.concepts.odms.odm_xml_definition import (
     Symbol,
     TranslatedText,
 )
-from clinical_mdr_api.domains.concepts.utils import ENG_LANGUAGE, TargetType
+from clinical_mdr_api.domains.concepts.utils import EN_LANGUAGE, TargetType
 from clinical_mdr_api.models.concepts.odms.odm_common_models import (
     OdmRefVendorAttributeModel,
 )
@@ -74,9 +74,8 @@ class OdmXmlExporterService:
 
     def __init__(
         self,
-        target_uids: list[str],
         target_type: TargetType,
-        version: str | None,
+        targets: list[str],
         allowed_namespaces: list[str],
         pdf: bool,
         stylesheet: str | None,
@@ -86,19 +85,17 @@ class OdmXmlExporterService:
         Initializes a new instance of the `OdmXmlGenerator` class.
 
         Args:
-            target_uids (list[str]): The UIDs of the ODM elements to generate XML for.
             target_type (TargetType): The type of the ODM element to generate XML for.
-            version (str | None): The version of the ODM elements to generate XML for.
+            targets (list[str]): The UIDs and versions of the ODM elements to generate XML for.
             allowed_namespaces (list[str]): A list of allowed vendor namespace prefixes.
             pdf (bool | None): A flag indicating whether to generate a PDF.
             stylesheet (str | None): The name of the stylesheet to include as the XML stylesheet.
             mapper_file (UploadFile | None): The mapper file to use for the XML generation.
-            unit_definition_service: The service that provides functionality for unit definitions.
 
         Returns:
             None
         """
-        self.odm_data_extractor = OdmDataExtractor(target_uids, target_type, version)
+        self.odm_data_extractor = OdmDataExtractor(target_type, targets)
         self.mapper_file = mapper_file
         self.allowed_namespaces = allowed_namespaces
         self.pdf = pdf
@@ -384,7 +381,7 @@ class OdmXmlExporterService:
                                     (
                                         description.instruction
                                         for description in form.descriptions
-                                        if description.language == ENG_LANGUAGE
+                                        if is_language_english(description.language)
                                         and description.instruction
                                     ),
                                     None,
@@ -396,7 +393,7 @@ class OdmXmlExporterService:
                                     (
                                         description.sponsor_instruction
                                         for description in form.descriptions
-                                        if description.language == ENG_LANGUAGE
+                                        if is_language_english(description.language)
                                         and description.sponsor_instruction
                                     ),
                                     None,
@@ -412,9 +409,8 @@ class OdmXmlExporterService:
                                 description.description,
                                 lang=Attribute(
                                     self.XML_LANG,
-                                    get_iso_lang_data(
-                                        query=description.language or "en",
-                                        return_key="639-1",
+                                    get_iso_lang_data(  # type: ignore[arg-type]
+                                        query=description.language or EN_LANGUAGE
                                     ),
                                 ),
                             )
@@ -486,7 +482,7 @@ class OdmXmlExporterService:
                                     (
                                         description.instruction
                                         for description in item_group.descriptions
-                                        if description.language == ENG_LANGUAGE
+                                        if is_language_english(description.language)
                                         and description.instruction
                                     ),
                                     None,
@@ -498,7 +494,7 @@ class OdmXmlExporterService:
                                     (
                                         description.sponsor_instruction
                                         for description in item_group.descriptions
-                                        if description.language == ENG_LANGUAGE
+                                        if is_language_english(description.language)
                                         and description.sponsor_instruction
                                     ),
                                     None,
@@ -528,9 +524,8 @@ class OdmXmlExporterService:
                                 description.description,
                                 lang=Attribute(
                                     self.XML_LANG,
-                                    get_iso_lang_data(
-                                        query=description.language or "en",
-                                        return_key="639-1",
+                                    get_iso_lang_data(  # type: ignore[arg-type]
+                                        query=description.language or EN_LANGUAGE,
                                     ),
                                 ),
                             )
@@ -587,7 +582,7 @@ class OdmXmlExporterService:
                                     (
                                         description.instruction
                                         for description in item.descriptions
-                                        if description.language == ENG_LANGUAGE
+                                        if is_language_english(description.language)
                                         and description.instruction
                                     ),
                                     None,
@@ -599,7 +594,7 @@ class OdmXmlExporterService:
                                     (
                                         description.sponsor_instruction
                                         for description in item.descriptions
-                                        if description.language == ENG_LANGUAGE
+                                        if is_language_english(description.language)
                                         and description.sponsor_instruction
                                     ),
                                     None,
@@ -622,9 +617,8 @@ class OdmXmlExporterService:
                                 description.description,
                                 lang=Attribute(
                                     self.XML_LANG,
-                                    get_iso_lang_data(
-                                        query=description.language or "en",
-                                        return_key="639-1",
+                                    get_iso_lang_data(  # type: ignore[arg-type]
+                                        query=description.language or EN_LANGUAGE,
                                     ),
                                 ),
                             )
@@ -638,9 +632,8 @@ class OdmXmlExporterService:
                                 description.name,
                                 lang=Attribute(
                                     self.XML_LANG,
-                                    get_iso_lang_data(
-                                        query=description.language or "en",
-                                        return_key="639-1",
+                                    get_iso_lang_data(  # type: ignore[arg-type]
+                                        query=description.language or EN_LANGUAGE,
                                     ),
                                 ),
                             )
@@ -698,9 +691,8 @@ class OdmXmlExporterService:
                                 description.description,
                                 lang=Attribute(
                                     self.XML_LANG,
-                                    get_iso_lang_data(
-                                        query=description.language or "en",
-                                        return_key="639-1",
+                                    get_iso_lang_data(  # type: ignore[arg-type]
+                                        query=description.language or EN_LANGUAGE,
                                     ),
                                 ),
                             )
@@ -741,9 +733,8 @@ class OdmXmlExporterService:
                                 description.description,
                                 lang=Attribute(
                                     self.XML_LANG,
-                                    get_iso_lang_data(
-                                        query=description.language or "en",
-                                        return_key="639-1",
+                                    get_iso_lang_data(  # type: ignore[arg-type]
+                                        query=description.language or EN_LANGUAGE,
                                     ),
                                 ),
                             )
@@ -808,9 +799,7 @@ class OdmXmlExporterService:
                                             or codelist_item["nci_preferred_name"],
                                             Attribute(
                                                 self.XML_LANG,
-                                                get_iso_lang_data(
-                                                    query="eng", return_key="639-1"
-                                                ),
+                                                get_iso_lang_data(query=EN_LANGUAGE),  # type: ignore[arg-type]
                                             ),
                                         )
                                     ),
@@ -868,8 +857,7 @@ class OdmXmlExporterService:
                             TranslatedText(
                                 unit_definition.name,
                                 lang=Attribute(
-                                    self.XML_LANG,
-                                    get_iso_lang_data(query="eng", return_key="639-1"),
+                                    self.XML_LANG, get_iso_lang_data(query=EN_LANGUAGE)  # type: ignore[arg-type]
                                 ),
                             )
                         ),
@@ -897,7 +885,7 @@ class OdmXmlExporterService:
             study=Study(
                 oid=Attribute(
                     "OID",
-                    f"{self.odm_data_extractor.target_name}-{self.odm_data_extractor.target_uids[0]}",
+                    f"{self.odm_data_extractor.first_target_name}-{self.odm_data_extractor.first_target_uid}",
                 ),
                 meta_data_version=MetaDataVersion(
                     oid=Attribute("OID", "MDV.0.1"),
@@ -914,10 +902,12 @@ class OdmXmlExporterService:
                     measurement_units=create_odm_measurement_unit()
                 ),
                 global_variables=GlobalVariables(
-                    protocol_name=ProtocolName(self.odm_data_extractor.target_name),
-                    study_name=StudyName(self.odm_data_extractor.target_name),
+                    protocol_name=ProtocolName(
+                        self.odm_data_extractor.first_target_name
+                    ),
+                    study_name=StudyName(self.odm_data_extractor.first_target_name),
                     study_description=StudyDescription(
-                        self.odm_data_extractor.target_name
+                        self.odm_data_extractor.first_target_name
                     ),
                 ),
             ),

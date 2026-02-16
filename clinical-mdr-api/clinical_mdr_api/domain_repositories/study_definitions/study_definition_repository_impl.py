@@ -7,7 +7,7 @@ from typing import Any, Mapping, MutableSequence, Sequence, cast, overload
 from neomodel import NodeSet
 from neomodel.exceptions import DoesNotExist
 from neomodel.sync_.core import NodeMeta, db
-from neomodel.sync_.match import Collect, Last
+from neomodel.sync_.match import Collect, Last, Path
 
 from clinical_mdr_api import utils
 from clinical_mdr_api.domain_repositories._utils.helpers import (
@@ -44,6 +44,7 @@ from clinical_mdr_api.domain_repositories.models.study_field import (
     StudyTextField,
     StudyTimeField,
 )
+from clinical_mdr_api.domain_repositories.models.study_visit import StudyVisit
 from clinical_mdr_api.domain_repositories.study_definitions.study_definition_repository import (
     StudyDefinitionRepository,
 )
@@ -660,6 +661,9 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
         self._maintain_study_soa_preferences_relationship_on_save(
             expected_latest_value=expected_latest_value, previous_value=previous_value
         )
+        self._maintain_study_soa_split_relationship_on_save(
+            expected_latest_value=expected_latest_value, previous_value=previous_value
+        )
 
     def _maintain_study_relationship_on_save(
         self,
@@ -722,6 +726,19 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
             for node in nodes:
                 # add the relation to the new node
                 expected_latest_value.has_boolean_field.connect(node)
+
+    def _maintain_study_soa_split_relationship_on_save(
+        self, expected_latest_value: StudyValue, previous_value: StudyValue
+    ):
+        # if new value node is created
+        if expected_latest_value is not previous_value:
+            nodes = previous_value.has_array_field.filter(
+                field_name=settings.study_soa_split_uids_field
+            )
+
+            for node in nodes:
+                # add the relation to the new node
+                expected_latest_value.has_array_field.connect(node)
 
     def _maintain_latest_value_and_relationship_on_save(
         self,
@@ -997,18 +1014,20 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                 project_number=curr_metadata.project_number
             )
 
-            # assigning Project to newly created StudyValue node
-            study_project_field = StudyProjectField()
-            study_project_field.save()
-            study_project_field.has_field.connect(project_node)
-            expected_latest_value.has_project.connect(study_project_field)
-
+            # disconnecting Project from previous StudyValue node
             prev_study_project_field = previous_value.has_project.get_or_none()
             if (
                 prev_study_project_field is not None
                 and previous_value is expected_latest_value
             ):
                 expected_latest_value.has_project.disconnect(prev_study_project_field)
+
+            # assigning Project to newly created StudyValue node
+            study_project_field = StudyProjectField()
+            study_project_field.save()
+            study_project_field.has_field.connect(project_node)
+            expected_latest_value.has_project.connect(study_project_field)
+
             self._generate_study_field_audit_node(
                 study_root_node=study_root,
                 study_field_node_after=study_project_field,
@@ -3064,8 +3083,8 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
 
         return calculate_diffs(result, StudySubpartAuditTrail)
 
+    @staticmethod
     def get_soa_preferences(
-        self,
         study_uid: str,
         study_value_version: str | None = None,
         field_names: Sequence[str] | None = None,
@@ -3162,3 +3181,212 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
             )
 
         return self.get_soa_preferences(study_uid=study_uid)
+
+    @staticmethod
+    def get_soa_split_uids(
+        study_uid: str,
+        study_value_version: str | None = None,
+        _field_name: str = settings.study_soa_split_uids_field,
+    ) -> StudyArrayField | None:
+        """Gets a StudyArrayField node as uids for SoA splitting"""
+
+        if study_value_version:
+            filters = {
+                "has_array_field__has_version__uid": study_uid,
+                "has_array_field__has_version|version": study_value_version,
+                "has_array_field__has_version|status": StudyStatus.RELEASED.value,
+            }
+        else:
+            filters = {
+                "has_array_field__latest_value__uid": study_uid,
+            }
+
+        filters["field_name"] = _field_name
+
+        try:
+            return (
+                StudyArrayField.nodes.fetch_relations("has_after__audit_trail")
+                .filter(**filters)
+                .get()[0]
+            )
+        except DoesNotExist:
+            return None
+
+    def add_soa_split_uid(
+        self,
+        study_uid: str,
+        uid: str,
+        _field_name: str = settings.study_soa_split_uids_field,
+    ) -> StudyArrayField:
+        """Adds a UID to the StudyArrayField node for SoA splitting"""
+
+        study_root: StudyRoot
+        latest_study_value: StudyValue
+
+        # Lock study in db
+        acquire_write_lock_study_value(study_uid)
+
+        # Fetch previous StudyArrayField
+        try:
+            previous_study_array_field = self.get_soa_split_uids(
+                study_uid=study_uid, _field_name=_field_name
+            )
+        except exceptions.NotFoundException:
+            previous_study_array_field = None
+
+        # Check if uid is already in the array
+        exceptions.AlreadyExistsException.raise_if(
+            previous_study_array_field and uid in previous_study_array_field.value,
+            msg=f"StudyVisit '{uid}' is already present in SoA split UIDs for Study '{study_uid}'.",
+        )
+
+        # Get all StudyVisits ordered: we need to know which is the first member of a StudyVisitGroup
+        all_visits_q = (
+            StudyVisit.nodes.traverse(
+                Path("in_visit_group", optional=True, include_rels_in_return=False)
+            )
+            .filter(has_study_visit__latest_value__uid=study_uid)
+            .order_by("visit_number")
+        )
+
+        # Determine eligibility
+        seen_uids = set()
+        eligible_uids = set()
+        _seen_group_uids = set()
+
+        for (
+            study_visit,
+            study_visit_group,
+            latest_study_value,
+            _,
+            study_root,
+            _,
+        ) in all_visits_q.all():
+            seen_uids.add(study_visit.uid)
+            if study_visit_group:
+                if study_visit_group.uid in _seen_group_uids:
+                    continue
+                _seen_group_uids.add(study_visit_group.uid)
+            eligible_uids.add(study_visit.uid)
+
+        # Validate StudyVisit uid
+        exceptions.NotFoundException.raise_if_not(uid in seen_uids, "StudyVisit", uid)
+
+        # Validate eligibility of StudyVisit uid
+        exceptions.BusinessLogicException.raise_if_not(
+            uid in eligible_uids,
+            msg=f"StudyVisit '{uid}' is not eligible to split SoA of Study '{study_uid}'.",
+        )
+
+        # Disconnect previous StudyArrayField
+        if previous_study_array_field:
+            latest_study_value.has_array_field.disconnect(previous_study_array_field)
+
+        # Create new StudyArrayField with the uid added
+        uids = (
+            set(previous_study_array_field.value)
+            if previous_study_array_field
+            else set()
+        )
+        uids |= {uid}
+        new_study_array_field = StudyArrayField.create(
+            {"field_name": _field_name, "value": list(uids)}
+        )[0]
+        latest_study_value.has_array_field.connect(new_study_array_field)
+
+        # Extend audit trail
+        self._generate_study_field_audit_node(
+            study_root_node=study_root,
+            study_field_node_after=new_study_array_field,
+            study_field_node_before=previous_study_array_field,
+            change_status=None,
+            author_id=self.audit_info.author_id,
+            date=datetime.now(timezone.utc),
+        )
+
+        return new_study_array_field
+
+    def remove_soa_split_uid(
+        self,
+        study_uid: str,
+        uid: str,
+        _field_name: str = settings.study_soa_split_uids_field,
+    ) -> StudyArrayField | None:
+        """Removes a UID from the StudyArrayField node for SoA splitting"""
+
+        study_root: StudyRoot
+        latest_study_value: StudyValue
+
+        # Lock study in db
+        acquire_write_lock_study_value(study_uid)
+
+        # Fetch previous StudyArrayField
+        previous_study_array_field = self.get_soa_split_uids(
+            study_uid=study_uid, _field_name=_field_name
+        )
+
+        # Check if uid is in the array
+        exceptions.NotFoundException.raise_if_not(
+            previous_study_array_field is not None
+            and uid in previous_study_array_field.value,
+            msg=f"StudyVisit '{uid}' is not in SoA split UIDs for Study '{study_uid}'.",
+        )
+
+        # Disconnect previous StudyArrayField
+        study_root, latest_study_value, _ = StudyRoot.nodes.traverse(
+            "latest_value"
+        ).get(uid=study_uid)
+        latest_study_value.has_array_field.disconnect(previous_study_array_field)
+
+        # Create new StudyArrayField if uids remain after removal
+        if new_uids := list(set(previous_study_array_field.value) - {uid}):
+            new_study_array_field = StudyArrayField.create(
+                {"field_name": _field_name, "value": new_uids}
+            )[0]
+            latest_study_value.has_array_field.connect(new_study_array_field)
+        else:
+            new_study_array_field = None
+
+        # Extend audit trail
+        self._generate_study_field_audit_node(
+            study_root_node=study_root,
+            study_field_node_after=new_study_array_field,
+            study_field_node_before=previous_study_array_field,
+            change_status=None,
+            author_id=self.audit_info.author_id,
+            date=datetime.now(timezone.utc),
+        )
+
+        return new_study_array_field
+
+    def remove_soa_splits(
+        self,
+        study_uid: str,
+        _field_name: str = settings.study_soa_split_uids_field,
+    ) -> None:
+        """Removes the StudyArrayField nodes for SoA splitting"""
+
+        # Query StudyArrayFields
+        filters = {
+            "has_array_field__latest_value__uid": study_uid,
+            "field_name": _field_name,
+        }
+
+        node: StudyArrayField
+        for node, _, _, study_root, _, study_value, *_ in (
+            StudyArrayField.nodes.fetch_relations("has_after__audit_trail")
+            .filter(**filters)
+            .all()
+        ):
+            # Disconnect StudyArrayFields
+            study_value.has_array_field.disconnect(node)
+
+            # Extend audit trail
+            self._generate_study_field_audit_node(
+                study_root_node=study_root,
+                study_field_node_before=node,
+                study_field_node_after=None,
+                change_status=None,
+                author_id=self.audit_info.author_id,
+                date=datetime.now(timezone.utc),
+            )

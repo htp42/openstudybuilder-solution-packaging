@@ -1,14 +1,21 @@
 const { When, Then } = require("@badeball/cypress-cucumber-preprocessor");
 
+When('No results are returned in the form table', () => cy.get('.v-overlay tbody tr').should('have.text', 'No data available'))
+
 When('User waits for the table', () => cy.longWaitForTable(60000))
 
 When('User adds column {string} to filters', (headerName) => cy.tableHeaderActions(headerName, 'Add to filter'))
 
 When('User sets status filter to {string}', (filterValue) => {
     cy.get(`.layoutSelector button[value=${filterValue}]`).filter(':visible').click()
+    cy.longWaitForTable()
 })
 
 When('User searches for {string}', (value) => cy.searchAndCheckPresence(value, true))
+
+When('User searches for {string} and confirms no results returned', (value) => cy.searchAndCheckPresence(value, false))
+
+When('Only one row is present', () => cy.checkOnlyOneResultReturned())
 
 Then('The item has status {string} and version {string}', (status, version) => {
     cy.checkRowByIndex(0, 'Status', status)
@@ -43,18 +50,6 @@ Then('The table display the note {string}', (note) => cy.tableContains(note))
 Then('The table display following predefined data', (dataTable) => {
     cy.waitForTable()
     cy.tableContainsPredefinedData(dataTable)
-})
-
-When('The user is searching for {string} value', (value) => {
-    cy.intercept('**[%22Dummy%22]**').as('searchRequest')
-    cy.wait(500)
-    cy.fillInput('search-field', value)
-})
-
-Then('The results are shown in the table', () => {
-    cy.wait('@searchRequest').then(requests => {
-        expect(requests.response.statusCode).to.equal(200)
-    })
 })
 
 When('The {string} option is clicked from the three dot menu list', (action) => cy.performActionOnSearchedItem(action))

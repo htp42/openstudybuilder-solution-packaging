@@ -60,7 +60,7 @@ Feature: Studies - Define Study - Study Structure - Manually Defined Study Cohor
         And The 'Edit' option is clicked from the three dot menu list
         When The study cohort is edited
         And Form save button is clicked
-        And The form is closed
+        And The form is no longer available
         And The pop up displays 'Cohort updated'
         And The Study Cohort is found
         Then The study cohort is visible within the table
@@ -100,7 +100,7 @@ Feature: Studies - Define Study - Study Structure - Manually Defined Study Cohor
         And Add cohort button is clicked
         When The form for new study cohort is filled
         And Form save button is clicked
-        And The form is closed
+        And The form is no longer available
         And Add cohort button is clicked
         And First available study arm is selected
         And Another Study Cohort is created with the same cohort name
@@ -112,7 +112,7 @@ Feature: Studies - Define Study - Study Structure - Manually Defined Study Cohor
         And Add cohort button is clicked
         When The form for new study cohort is filled
         And Form save button is clicked
-        And The form is closed
+        And The form is no longer available
         And Add cohort button is clicked
         And First available study arm is selected
         And Another Study Cohort is created with the same cohort short name
@@ -124,7 +124,7 @@ Feature: Studies - Define Study - Study Structure - Manually Defined Study Cohor
         And Add cohort button is clicked
         When The form for new study cohort is filled
         And Form save button is clicked
-        And The form is closed
+        And The form is no longer available
         And Add cohort button is clicked
         And First available study arm is selected
         And Another Study Cohort is created with the same cohort code

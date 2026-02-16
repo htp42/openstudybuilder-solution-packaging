@@ -114,15 +114,14 @@
                   :headers="headers"
                   :items="variables"
                 >
-                  <template #[`item.referenced_codelist.uid`]="{ item }">
+                  <template #[`item.referenced_codelists.uid`]="{ item }">
                     <a
+                      v-for="codelist in item.referenced_codelists"
+                      :key="codelist"
                       href="#"
-                      @click="openCodelistTerms(item.referenced_codelist.uid)"
-                      >{{
-                        item.referenced_codelist
-                          ? item.referenced_codelist.uid
-                          : ''
-                      }}</a
+                      class="mr-2"
+                      @click="openCodelistTerms(codelist.uid)"
+                      >{{ codelist.uid }}</a
                     >
                   </template>
                 </v-data-table>
@@ -135,124 +134,122 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { onMounted, ref, watch } from 'vue'
 import standards from '@/api/standards'
 
-export default {
-  props: {
-    uid: {
-      type: String,
-      default: null,
-    },
-    redirectModel: {
-      type: Object,
-      default: null,
-    },
-    redirectClass: {
-      type: Object,
-      default: null,
-    },
-    headers: {
-      type: Array,
-      default: null,
-    },
+const props = defineProps({
+  uid: {
+    type: String,
+    default: null,
   },
-  emits: ['redirectToGuide'],
-  data() {
-    return {
-      models: [],
-      activeModel: {},
-      datasetClasses: [],
-      activeClass: {},
-      activeTab: 0,
-      datasetTab: null,
-      variables: [],
-      loading: false,
-      variableFilter: false,
+  redirectModel: {
+    type: Object,
+    default: null,
+  },
+  redirectClass: {
+    type: Object,
+    default: null,
+  },
+  headers: {
+    type: Array,
+    default: null,
+  },
+})
+const emit = defineEmits(['redirectToGuide'])
+
+const models = ref([])
+const activeModel = ref({})
+const datasetClasses = ref([])
+const activeTab = ref(0)
+const variables = ref([])
+const loading = ref(false)
+const variableFilter = ref(false)
+
+watch(activeTab, (value) => {
+  if (!variableFilter.value) {
+    getVariables(datasetClasses.value[value].label)
+  }
+  variableFilter.value = false
+})
+watch(
+  () => props.redirectModel,
+  (value) => {
+    if (value && value.implementation) {
+      variableFilter.value = true
+      activeModel.value = models.value.find(
+        (model) => model.name === value.implementation.name
+      )
+      activeTab.value = datasetClasses.value.findIndex(
+        (el) => el.label === value.data[0].dataset_class.dataset_class_name
+      )
+      variables.value = value.data
+    } else if (value) {
+      chooseModelVersion(
+        models.value.find((model) => model.name === value.name)
+      )
     }
-  },
-  watch: {
-    activeTab(value) {
-      if (!this.variableFilter) {
-        this.getVariables(this.datasetClasses[value].label)
-      }
-      this.variableFilter = false
-    },
-    redirectModel(value) {
-      if (value && value.implementation) {
-        this.variableFilter = true
-        this.activeModel = this.models.find(
-          (model) => model.name === value.implementation.name
-        )
-        this.activeTab = this.datasetClasses.findIndex(
-          (el) => el.label === value.data[0].dataset_class.dataset_class_name
-        )
-        this.variables = value.data
-      } else if (value) {
-        this.chooseModelVersion(
-          this.models.find((model) => model.name === value.name)
-        )
-      }
-    },
-  },
-  mounted() {
-    const params = {
-      filters: { uid: { v: [this.uid], op: 'eq' } },
+  }
+)
+
+onMounted(() => {
+  const params = {
+    filters: { uid: { v: [props.uid], op: 'eq' } },
+  }
+  standards.getAllModels(params).then((resp) => {
+    models.value = resp.data.items
+    if (models.value.length) {
+      chooseModelVersion(models.value[0])
     }
-    standards.getAllModels(params).then((resp) => {
-      this.models = resp.data.items
-      this.chooseModelVersion(this.models[0])
-    })
-  },
-  methods: {
-    openCodelistTerms(codelistUid) {
-      this.$router.push({
-        name: 'CodelistTerms',
-        params: { codelist_id: codelistUid, catalogue_name: 'All' },
-      })
+  })
+})
+
+function openCodelistTerms(codelistUid) {
+  this.$router.push({
+    name: 'CodelistTerms',
+    params: { codelist_id: codelistUid, catalogue_name: 'All' },
+  })
+}
+function redirectToGuide(item) {
+  emit('redirectToGuide', item)
+}
+function chooseModelVersion(model) {
+  activeModel.value = model
+  const params = {
+    filters: {
+      'data_models.data_model_name': {
+        v: [activeModel.value.name],
+        op: 'eq',
+      },
     },
-    redirectToGuide(item) {
-      this.$emit('redirectToGuide', item)
-    },
-    chooseModelVersion(model) {
-      this.activeModel = model
-      const params = {
-        filters: {
-          'data_models.data_model_name': {
-            v: [this.activeModel.name],
-            op: 'eq',
-          },
-        },
-        page_size: 0,
-      }
-      standards.getDatasetClasses(params).then((resp) => {
-        resp.data.items.forEach((element) => {
-          if (element.data_models.length > 1) {
-            element.data_models = element.data_models.filter((element) => {
-              return element.data_model_name === this.activeModel.name
-            })
-          }
+    page_size: 0,
+  }
+  standards.getDatasetClasses(params).then((resp) => {
+    resp.data.items.forEach((element) => {
+      if (element.data_models.length > 1) {
+        element.data_models = element.data_models.filter((element) => {
+          return element.data_model_name === activeModel.value.name
         })
-        this.datasetClasses = resp.data.items
-        this.activeTab = 0
-        this.getVariables(this.datasetClasses[0].label)
-      })
-    },
-    getVariables(className) {
-      this.loading = true
-      this.variables = []
-      const params = {
-        dataset_class_name: className,
-        data_model_name: this.activeModel.uid,
-        data_model_version: this.activeModel.version_number,
-        page_size: 0,
       }
-      standards.getClassVariables(params).then((resp) => {
-        this.variables = resp.data.items
-        this.loading = false
-      })
-    },
-  },
+    })
+    datasetClasses.value = resp.data.items
+    activeTab.value = 0
+    getVariables(datasetClasses.value[0].label)
+  })
+}
+function getVariables(className) {
+  loading.value = true
+  variables.value = []
+  const params = {
+    dataset_class_name: className,
+    data_model_name: activeModel.value.uid,
+    data_model_version: activeModel.value.version_number,
+    page_size: 0,
+  }
+  standards.getClassVariables(params).then((resp) => {
+    variables.value = resp.data.items
+    loading.value = false
+  })
 }
 </script>
 <style>

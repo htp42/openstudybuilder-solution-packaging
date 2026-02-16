@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field, field_validator
 from pydantic.types import T
 
 from clinical_mdr_api.models.biomedical_concepts.activity_item_class import (
-    CompactActivityInstanceClass,
+    CompactActivityInstanceClassForActivityItemClass,
 )
 from clinical_mdr_api.models.concepts.activities.activity import (
     ActivityGroupingHierarchySimpleModel,
@@ -889,7 +889,7 @@ class CypherQueryBuilder:
                                         )
                                     elif (
                                         get_field_type(attr_desc.annotation)
-                                        is CompactActivityInstanceClass
+                                        is CompactActivityInstanceClassForActivityItemClass
                                     ):
                                         # Wildcard filtering for activity_instance_classes
                                         # Search in the name field of each activity instance class

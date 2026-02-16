@@ -2,8 +2,8 @@
 
 Feature: Manage Sponsor CT Packages of sponsor names and sponsor extensions for CDISC CT Packages
 
-    Background: Test user must be able to call the Clinical MDR API and test data must exist
-        Given The test user can call the Clinical MDR API
+    Background: Test user must be able to call the OpenStudyBuilder API and test data must exist
+        Given The test user can call the OpenStudyBuilder API
         And a test data identified by 'uid' exists in the library
 
     Rule: As an API user

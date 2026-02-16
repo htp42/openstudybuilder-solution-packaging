@@ -12,7 +12,7 @@ from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatu
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository  # type: ignore
-from clinical_mdr_api.services._utils import calculate_diffs
+from clinical_mdr_api.services._utils import calculate_diffs, ensure_transaction
 from clinical_mdr_api.utils import normalize_string
 from common.auth.user import user
 from common.exceptions import NotFoundException
@@ -50,7 +50,8 @@ class CTTermGenericService(Generic[_AggregateRootType], abc.ABC):
         assert self._repos is not None
         return self.repository_interface()
 
-    def non_transactional_get_all_ct_terms(
+    @ensure_transaction(db)
+    def get_all_ct_terms(
         self,
         codelist_uid: str | None = None,
         codelist_name: str | None = None,
@@ -63,7 +64,7 @@ class CTTermGenericService(Generic[_AggregateRootType], abc.ABC):
         filter_by: dict[str, dict[str, Any]] | None = None,
         filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
-    ) -> GenericFilteringReturn[BaseModel]:
+    ) -> GenericFilteringReturn[Any]:
         self.enforce_codelist_package_library(
             codelist_uid, codelist_name, library, package
         )
@@ -88,35 +89,6 @@ class CTTermGenericService(Generic[_AggregateRootType], abc.ABC):
         ]
 
         return all_ct_terms
-
-    @db.transaction
-    def get_all_ct_terms(
-        self,
-        codelist_uid: str | None = None,
-        codelist_name: str | None = None,
-        library: str | None = None,
-        package: str | None = None,
-        in_codelist: bool = False,
-        sort_by: dict[str, bool] | None = None,
-        page_number: int = 1,
-        page_size: int = 0,
-        filter_by: dict[str, dict[str, Any]] | None = None,
-        filter_operator: FilterOperator = FilterOperator.AND,
-        total_count: bool = False,
-    ) -> GenericFilteringReturn[BaseModel]:
-        return self.non_transactional_get_all_ct_terms(
-            codelist_uid,
-            codelist_name,
-            library,
-            package,
-            in_codelist,
-            sort_by,
-            page_number,
-            page_size,
-            filter_by,
-            filter_operator,
-            total_count,
-        )
 
     def get_distinct_values_for_header(
         self,
@@ -227,15 +199,12 @@ class CTTermGenericService(Generic[_AggregateRootType], abc.ABC):
     def edit_draft(self, term_uid: str, term_input: BaseModel) -> BaseModel:
         raise NotImplementedError()
 
-    def non_transactional_approve(self, term_uid: str) -> BaseModel:
+    @ensure_transaction(db)
+    def approve(self, term_uid: str) -> BaseModel:
         item = self._find_by_uid_or_raise_not_found(term_uid=term_uid, for_update=True)
         item.approve(author_id=self.author_id)
         self.repository.save(item)
         return self._transform_aggregate_root_to_pydantic_model(item)
-
-    @db.transaction
-    def approve(self, term_uid: str) -> BaseModel:
-        return self.non_transactional_approve(term_uid)
 
     @db.transaction
     def inactivate_final(self, term_uid: str) -> BaseModel:

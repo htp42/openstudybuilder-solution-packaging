@@ -2,6 +2,10 @@ const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor")
 
 let filterValue
 
+When('Users enables filters in the form window', () => cy.get('.v-overlay [data-cy="filters-button"]').click())
+
+When('The Final status is selected by default', () => cy.get('.v-btn--active[value="final"]').should('be.visible'))
+
 When('The user filters field {string}', (fieldName) => {
     cy.longWaitForTable()
     cy.clickButton("filters-button", false)
@@ -55,7 +59,6 @@ function filterByText() {
             cy.wrap(element).should('not.contain.text', 'No data available').click()
         })
     })
-    cy.wait(1500)
     cy.wait('@filterRequest') //wait for the first request
 }
 

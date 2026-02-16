@@ -106,6 +106,10 @@ const knownCodelists = {
     attribute: 'codelist_submission_value',
     value: 'FINDSCAT',
   },
+  developmentStageCodes: {
+    attribute: 'codelist_submission_value',
+    value: 'DEVELOPMENT_STAGE',
+  },
 }
 
 export default {

@@ -29,15 +29,11 @@ Then('Validation error for {string} group is displayed', (status) => {
 
 Then('The user adds already existing synonym', () => cy.fillInputNew('activityform-synonyms-field', synonym))
 
-Given('Custom group name is typed and selected in activity form', () => {
-    cy.get('[data-cy="activityform-activity-group-dropdown"] input').type(apiGroupName)
-    cy.selectFirstVSelect('activityform-activity-group-dropdown')
-})
+Given('Custom group name is typed in activity form', () => cy.get('[data-cy="activityform-activity-group-dropdown"] input').type(apiGroupName))
 
-When('Drafted subgroup is not available during activity creation', () => {
-    cy.get('[data-cy="activityform-activity-subgroup-dropdown"]').click()
-    cy.checkNoDataAvailable()
-})
+Given('Custom subgroup name is typed in activity form', () => cy.get('[data-cy="activityform-activity-subgroup-dropdown"] input').type(apiSubgroupName))
+
+When('Not Final group or subgroup is not available during activity creation', () => cy.checkNoDataAvailable())
 
 Then('The user is not able to save activity with already existing synonym and error message is displayed', () => {
     cy.get('div[data-cy="form-body"]').should('be.visible');
@@ -67,7 +63,9 @@ Then('The validation message appears for activity subgroup', () => cy.checkIfVal
 
 Then('The validation message appears for sentance case name that it is not identical to name', () => cy.checkIfValidationAppears('sentence-case-name-class', 'Sentence case name can only differ in case compared to name value'))
 
-When('Select a value for Activity group field', () => cy.selectFirstVSelect('activityform-activity-group-dropdown'))
+When('Select value for Activity group field', () => cy.selectFirstVSelect('activityform-activity-group-dropdown'))
+
+When('Select value for Activity subgroup field', () => cy.selectFirstVSelect('activityform-activity-subgroup-dropdown'))
 
 Then('The default value for Data collection must be checked', () => {
     cy.get('[data-cy="activityform-datacollection-checkbox"]').within(() => {
@@ -75,9 +73,9 @@ Then('The default value for Data collection must be checked', () => {
     })
 })
 
-When('The user enters a value for Activity name', () => {
-    cy.fillInput('activityform-activity-name-field', "TEST")
-})
+When('The user enters a value for Activity name', () => cy.fillInput('activityform-activity-name-field', "TEST"))
+
+When('The user enters unique value for Activity name', () => cy.fillInput('activityform-activity-name-field', Date.now()))
 
 Then('The field for Sentence case name will be defaulted to the lower case value of the Activity name', () => {
     cy.get('[data-cy$="activity-name-field"] input').then(($input) => {
@@ -147,6 +145,8 @@ Given('[API] First activity for search test is created', () => createActivityVia
 
 Given('[API] Second activity for search test is created', () => cy.createActivity(`SearchTest${Date.now()}`))
 
+When('[API] Activity is created', () => cy.createActivity())
+
 When('The user opens version history of activity subgroup', () => {
     cy.intercept('**versions').as('version_history_data')
     cy.tableRowActions(0, 'History')
@@ -155,7 +155,6 @@ When('The user opens version history of activity subgroup', () => {
 Then('The version history displays correct data for activity subgroup', () => {
     cy.wait('@version_history_data').then((req) => {
         let data = req.response.body[0]
-        cy.getCellValue(0, 'Activity group', data.activity_groups[0].name)
         cy.getCellValue(0, 'Activity subgroup', data.name)
         cy.getCellValue(0, 'Sentence case name', data.name_sentence_case)
         cy.getCellValue(0, 'Status', data.status)
@@ -181,34 +180,12 @@ Then('The activity subgroups previously linked to that group remain linked', () 
 })
 
 When('The current activity subgroup is edited', () => {
-    cy.subGroupNewVersion(subgroup_uid)
-    cy.intercept(`**/activity-sub-groups/${subgroup_uid}`).as('groups')
-    cy.visit(`/library/activities/activity-sub-groups/${subgroup_uid}/overview`)
-    cy.wait('@groups').then((request) => {
-        currentGroupName = request.response.body.activity_groups[0].name
-        console.log('Dupa1 ' + currentGroupName)
-        cy.get('[title="Edit"]').click()
-        cy.fillInput('groupform-activity-group-field', `NewName ${Date.now()}`)
-        cy.fillInput('groupform-change-description-field', 'DefChange Desc')
-        cy.fillInput('groupform-definition-field', 'Def')
-        cy.intercept('**/activity-sub-groups/**').as('saveRequest')
-        cy.clickButton('save-button')
-        cy.intercept('**/approvals?cascade_edit_and_approve=true').as('approveRequest')
-        cy.wait('@saveRequest').then(() => {
-            cy.get('.text-success').click()
-            cy.wait('@approveRequest').then(() => {
-                cy.reload()
-                console.log('Dupa2 ' + currentGroupName)
-            })
-        })
-    })
+    cy.fillInput('groupform-activity-group-field', `NewName ${Date.now()}`)
+    cy.fillInput('groupform-change-description-field', 'DefChange Desc')
+    cy.fillInput('groupform-definition-field', 'Def')
 })
 
-Then('The activity groups previously linked to that subgroup remain linked', () => {
-    console.log('Dupa3 ' + currentGroupName)
-    cy.tableContains(currentGroupName)
-})
-
+Then('The activity groups previously linked to that subgroup remain linked', () => cy.tableContains(apiGroupName))
 
 function fillNewActivityData(fillOptionalData = false, customGroup = '') {
     cy.intercept('POST', '/api/concepts/activities/activities').as('getData')
@@ -228,6 +205,7 @@ function fillNewActivityData(fillOptionalData = false, customGroup = '') {
 
 function editActivity() {
     activityName = `Update ${activityName}`
+    cy.get('[data-cy="activityform-activity-name-class"] input').should('have.attr', 'value')
     cy.fillInput('activityform-activity-name-field', activityName)
     cy.contains('.v-label', 'Reason for change').parent().find('[value]').type('Test update')
 }

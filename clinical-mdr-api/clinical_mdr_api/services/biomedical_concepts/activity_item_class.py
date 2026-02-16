@@ -103,11 +103,14 @@ class ActivityItemClassService(ConceptGenericService[ActivityItemClassAR]):
                 definition=concept_input.definition,
                 nci_concept_id=concept_input.nci_concept_id,
                 order=concept_input.order,
+                display_name=concept_input.display_name,
                 activity_instance_classes=[
                     ActivityInstanceClassActivityItemClassRelVO(
                         uid=item.uid,
                         mandatory=item.mandatory,
                         is_adam_param_specific_enabled=item.is_adam_param_specific_enabled,
+                        is_additional_optional=item.is_additional_optional,
+                        is_default_linked=item.is_default_linked,
                     )
                     for item in concept_input.activity_instance_classes
                 ],
@@ -136,11 +139,18 @@ class ActivityItemClassService(ConceptGenericService[ActivityItemClassAR]):
                 definition=concept_edit_input.definition,
                 nci_concept_id=concept_edit_input.nci_concept_id,
                 order=concept_edit_input.order or item.activity_item_class_vo.order,
+                display_name=(
+                    concept_edit_input.display_name
+                    if concept_edit_input.display_name is not None
+                    else item.activity_item_class_vo.display_name
+                ),
                 activity_instance_classes=[
                     ActivityInstanceClassActivityItemClassRelVO(
                         uid=inst.uid,
                         mandatory=inst.mandatory,
                         is_adam_param_specific_enabled=inst.is_adam_param_specific_enabled,
+                        is_additional_optional=inst.is_additional_optional,
+                        is_default_linked=inst.is_default_linked,
                     )
                     for inst in concept_edit_input.activity_instance_classes
                 ],
@@ -255,10 +265,17 @@ class ActivityItemClassService(ConceptGenericService[ActivityItemClassAR]):
                 seen_uids[uid] = CompactActivityItemClass(
                     uid=uid,
                     name=item_class["aicv"]["name"],
+                    display_name=item_class["aicv"]["display_name"],
                     mandatory=item_class["has_activity_instance_class"]["mandatory"],
                     is_adam_param_specific_enabled=item_class[
                         "has_activity_instance_class"
                     ]["is_adam_param_specific_enabled"],
+                    is_additional_optional=item_class["has_activity_instance_class"][
+                        "is_additional_optional"
+                    ],
+                    is_default_linked=item_class["has_activity_instance_class"][
+                        "is_default_linked"
+                    ],
                 )
         # Order the results by name
         return sorted(seen_uids.values(), key=lambda x: x.name or "")
@@ -287,6 +304,7 @@ class ActivityItemClassService(ConceptGenericService[ActivityItemClassAR]):
             uid=item_class_ar.uid,
             name=item_class_ar.name,
             definition=item_class_ar.activity_item_class_vo.definition,
+            display_name=item_class_ar.display_name,
             nci_code=item_class_ar.activity_item_class_vo.nci_concept_id,
             library_name=item_class_ar.library.name if item_class_ar.library else None,
             start_date=(
@@ -348,6 +366,16 @@ class ActivityItemClassService(ConceptGenericService[ActivityItemClassAR]):
                     adam_param_specific_enabled=(
                         bool(instance.get("adam_param_specific_enabled"))
                         if instance.get("adam_param_specific_enabled") is not None
+                        else False
+                    ),
+                    is_additional_optional=(
+                        bool(instance.get("is_additional_optional"))
+                        if instance.get("is_additional_optional") is not None
+                        else False
+                    ),
+                    is_default_linked=(
+                        bool(instance.get("is_default_linked"))
+                        if instance.get("is_default_linked") is not None
                         else False
                     ),
                     mandatory=(

@@ -59,8 +59,8 @@ export const useStudiesManageStore = defineStore('studiesManage', {
     editStudyPopulation(uid, data, parentUid) {
       return study.updateStudyPopulation(uid, data, parentUid)
     },
-    updateStudyIntervention(uid, data) {
-      return study.updateStudyIntervention(uid, data)
+    updateStudyIntervention(uid, data, parentUid) {
+      return study.updateStudyIntervention(uid, data, parentUid)
     },
     fetchProjects() {
       return study.projects_all().then((resp) => {

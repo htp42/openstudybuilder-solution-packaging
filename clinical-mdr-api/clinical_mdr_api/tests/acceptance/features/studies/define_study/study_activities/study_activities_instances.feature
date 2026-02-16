@@ -1,8 +1,8 @@
 @REQ_ID:1074260
-Feature: Maintaining Study Activity Instances in Clinical MDR API
+Feature: Maintaining Study Activity Instances in OpenStudyBuilder API
 
-    Background: Test user must be able to call the Clinical MDR API and test data exist
-        Given The test user can call the Clinical MDR API
+    Background: Test user must be able to call the OpenStudyBuilder API and test data exist
+        Given The test user can call the OpenStudyBuilder API
 
     Rule: As an API user,
         I want the system to ensure only valid activity instances can be added to a study,

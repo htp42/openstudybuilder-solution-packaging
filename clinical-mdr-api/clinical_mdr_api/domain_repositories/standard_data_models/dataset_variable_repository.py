@@ -103,7 +103,7 @@ class DatasetVariableRepository(StandardDataModelRepository):
         return filter_statements_to_return, filter_query_parameters
 
     def sort_by(self) -> dict[str, bool] | None:
-        return {"dataset.ordinal": True}
+        return {"dataset.root_ordinal": True, "dataset.ordinal": True}
 
     def specific_alias_clause(self) -> str:
         return """
@@ -132,12 +132,12 @@ class DatasetVariableRepository(StandardDataModelRepository):
             apoc.coll.toSet([(standard_value)<-[:HAS_DATASET_VARIABLE]-
                 (:DatasetInstance)<-[:HAS_DATASET]-(data_model_ig_value:DataModelIGValue) 
                 | data_model_ig_value.name]) AS data_model_ig_names,
-            {ordinal:has_dataset_variable_rel.ordinal, uid:dataset_root.uid} AS dataset,
+            {ordinal:toInteger(last(split(has_dataset_variable_rel.ordinal, "."))), root_ordinal:toInteger(head(split(has_dataset_variable_rel.ordinal, "."))), uid:dataset_root.uid} AS dataset,
             head([(standard_value)-[:IMPLEMENTS_VARIABLE]->(class_variable_value:VariableClassInstance)<-[:HAS_INSTANCE]-(class_variable_root) | {
             uid:class_variable_root.uid, name:class_variable_value.label }]) AS implements_variable,
-            head([(standard_value)-[:HAS_MAPPING_TARGET]->(dataset_variable_value:DatasetVariableInstance)
-            <-[:HAS_INSTANCE]-(dataset_variable_root:DatasetVariable) | {uid:dataset_variable_root.uid, name:dataset_variable_value.label}]) AS has_mapping_target,
-            head([(standard_root)<-[:HAS_DATASET_VARIABLE]-(catalogue:DataModelCatalogue) | catalogue.name]) AS catalogue_name,
-            head([(standard_value)-[:REFERENCES_CODELIST]->(codelist_root:CTCodelistRoot)-[:HAS_NAME_ROOT]-()-[:LATEST]->(codelist_value:CTCodelistNameValue) | {
-            uid:codelist_root.uid, name:codelist_value.name }]) AS referenced_codelist
+            head([(standard_value)-[mt_rel:HAS_MAPPING_TARGET]->(dataset_variable_value:DatasetVariableInstance)
+                <-[:HAS_INSTANCE]-(dataset_variable_root:DatasetVariable) WHERE mt_rel.version_number=$data_model_ig_version
+                | {uid:dataset_variable_root.uid, name:dataset_variable_value.label}]) AS has_mapping_target,
+            [(standard_value)-[:REFERENCES_CODELIST]->(codelist_root:CTCodelistRoot)-[:HAS_NAME_ROOT]-()-[:LATEST]->(codelist_value:CTCodelistNameValue) | {
+            uid:codelist_root.uid, name:codelist_value.name }] AS referenced_codelists
         """

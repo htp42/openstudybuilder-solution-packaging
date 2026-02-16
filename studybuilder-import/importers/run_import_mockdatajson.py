@@ -125,7 +125,7 @@ STUDIES = "Studies"
 CONCEPT_VALUES = "ConceptValues"
 DICTIONARIES = "Dictionaries"
 
-DEFINITION_PLACEHOLDER = "(no definition provided)"
+DEFINITION_PLACEHOLDER = None
 
 
 IMPORT_DIR = os.path.dirname(IMPORT_PROJECTS)
@@ -319,6 +319,17 @@ class MockdataJson(BaseImporter):
             uid = items[0].get("uid", None)
             self.log.debug(
                 f"Found study epoch with name '{epoch_name}' and uid '{uid}'"
+            )
+            return uid
+        # Prefix match for auto-numbered epochs
+        filt = {"epoch_name": {"v": [f"{epoch_name} Study"], "op": "co"}}
+        items = self.api.get_all_from_api(
+            f"/studies/{study_uid}/study-epochs", params={"filters": json.dumps(filt)}
+        )
+        if items is not None and len(items) > 0:
+            uid = items[0].get("uid", None)
+            self.log.debug(
+                f"Found study epoch with prefix '{epoch_name} Study' and uid '{uid}'"
             )
             return uid
         self.log.warning(f"Could not find study epoch with name '{epoch_name}'")
@@ -1517,6 +1528,12 @@ class MockdataJson(BaseImporter):
                 uid = self.lookup_ct_term_uid(
                     CODELIST_EPOCH_SUBTYPE, epoch_sub_name_edited
                 )
+            if not uid and not epoch_sub_name.endswith(" Study"):
+                # Fallback with "Study" suffix
+                epoch_sub_name_edited = epoch_sub_name + " Study"
+                uid = self.lookup_ct_term_uid(
+                    CODELIST_EPOCH_SUBTYPE, epoch_sub_name_edited
+                )
             if uid:
                 self.log.info(
                     f"Found epoch subtype '{epoch_sub_name}' with uid '{uid}'"
@@ -1573,12 +1590,84 @@ class MockdataJson(BaseImporter):
 
         imported = json.load(jsonfile)
 
-        # Need to sort in order
-        def get_order(data):
-            is_subvisit = data.get("visit_sublabel_reference") is not None
-            return float(data["unique_visit_number"]) + 0.1 * float(is_subvisit)
+        # Need to sort visits in dependency order:
+        # Visits that define a visit_type must be imported BEFORE visits
+        # that reference that type as their time_reference
+        def dependency_sort_visits(visits):
+            """
+            Sort visits so visits defining a visit_type are imported before
+            visits using that type as time_reference.
+            """
+            if not visits:
+                return visits
 
-        imported.sort(key=get_order)
+            # Build map: visit_type_name -> visit that defines it
+            visit_type_to_visit = {}
+            for v in visits:
+                vtype = v.get("visit_type_name")
+                if vtype:
+                    visit_type_to_visit[vtype] = v
+
+            # Build dependency: visit -> list of visits it depends on
+            # A visit depends on the visit whose visit_type matches its time_reference
+            def get_dependencies(visit):
+                deps = []
+                time_ref = visit.get("time_reference_name")
+                if time_ref is None and visit.get("time_reference") is not None:
+                    time_ref = visit["time_reference"].get("sponsor_preferred_name")
+
+                if time_ref and time_ref in visit_type_to_visit:
+                    dep_visit = visit_type_to_visit[time_ref]
+                    # Don't add self-dependency (global anchor case)
+                    if dep_visit.get("uid") != visit.get("uid"):
+                        deps.append(dep_visit)
+                return deps
+
+            # Topological sort using Kahn's algorithm
+            # Calculate in-degree for each visit
+            in_degree = {v.get("uid"): 0 for v in visits}
+            graph = {v.get("uid"): [] for v in visits}
+            uid_to_visit = {v.get("uid"): v for v in visits}
+
+            for v in visits:
+                for dep in get_dependencies(v):
+                    dep_uid = dep.get("uid")
+                    v_uid = v.get("uid")
+                    if dep_uid in graph:
+                        graph[dep_uid].append(v_uid)
+                        in_degree[v_uid] += 1
+
+            # Start with visits that have no dependencies
+            queue = [uid for uid, deg in in_degree.items() if deg == 0]
+
+            # Sort queue: global anchor visits first, then by unique_visit_number
+            def sort_key(uid):
+                v = uid_to_visit[uid]
+                # Global anchor visits get priority (sort first)
+                is_anchor = 0 if v.get("is_global_anchor_visit", False) else 1
+                return (is_anchor, float(v.get("unique_visit_number", 0)))
+
+            queue.sort(key=sort_key)
+
+            sorted_visits = []
+            while queue:
+                uid = queue.pop(0)
+                sorted_visits.append(uid_to_visit[uid])
+                for dependent_uid in graph[uid]:
+                    in_degree[dependent_uid] -= 1
+                    if in_degree[dependent_uid] == 0:
+                        queue.append(dependent_uid)
+                        queue.sort(key=sort_key)
+
+            # Handle any remaining visits (cycles or orphans) - add them sorted by number
+            remaining = [v for v in visits if v not in sorted_visits]
+            remaining.sort(key=lambda v: float(v.get("unique_visit_number", 0)))
+            sorted_visits.extend(remaining)
+
+            return sorted_visits
+
+        # Sort visits considering dependencies first, then by visit number for subvisits
+        imported = dependency_sort_visits(imported)
 
         for imported_visit in imported:
             data = dict(import_templates.study_visit)
@@ -1637,6 +1726,19 @@ class MockdataJson(BaseImporter):
                 timeref = imported_visit["time_reference_name"]
             else:
                 timeref = imported_visit["time_reference"]["sponsor_preferred_name"]
+
+            # Global anchor visit must have time_reference="Global anchor visit"
+            # Override source data if necessary
+            is_global_anchor = imported_visit.get("is_global_anchor_visit", False)
+            if is_global_anchor and timeref != "Global anchor visit":
+                self.log.warning(
+                    f"Global anchor visit has time_reference='{timeref}', "
+                    "overriding to 'Global anchor visit'"
+                )
+                timeref = "Global anchor visit"
+                # Also ensure time_value is 0 for global anchor
+                data["time_value"] = 0
+
             if timeref is None:
                 data["time_reference_uid"] = None
             else:
@@ -1733,18 +1835,13 @@ class MockdataJson(BaseImporter):
             self.api.simple_post_to_api(path, data, "/study-visits")
 
     def _find_parent_visit(self, study_uid, visit_number):
-        # An alternative is to use the specific endpoint for this purpose: /studies/{uid}/anchor-visits-in-group-of-subvisits
-        filt = {
-            "visit_subclass": {"v": ["ANCHOR_VISIT_IN_GROUP_OF_SUBV"]},
-            "visit_number": {"v": [visit_number]},
-        }
-        params = {"filters": json.dumps(filt)}
-        visits = self.api.get_all_from_api(
-            f"/studies/{study_uid}/study-visits", params=params, items_only=True
+        """Find anchor visit for subvisits using the dedicated endpoint."""
+        anchors = self.api.get_all_from_api(
+            f"/studies/{study_uid}/anchor-visits-in-group-of-subvisits", items_only=True
         )
-        if len(visits) == 0:
-            return None
-        return visits[0]["uid"]
+        if anchors:
+            return anchors[0]["uid"]
+        return None
 
     @open_file()
     def handle_study_arms(self, jsonfile, study_name):
@@ -1770,6 +1867,9 @@ class MockdataJson(BaseImporter):
             if armtype is None:
                 armtype = {}
             armtype_name = armtype.get("sponsor_preferred_name", "")
+            if armtype_name == "":
+                # SB API from release 2.0 uses term_name instead of sponsor_preferred_name
+                armtype_name = armtype.get("term_name", "")
             if armtype_name == "":
                 # Is this an old json? Try getting "type"
                 armtype_name = imported_arm.get("type", None)
@@ -1932,6 +2032,11 @@ class MockdataJson(BaseImporter):
             element_subtype_name = imported_el.get("element_subtype", {}).get(
                 "sponsor_preferred_name", ""
             )
+            if element_subtype_name == "":
+                # SB API from release 2.0 uses term_name instead of sponsor_preferred_name
+                element_subtype_name = imported_el.get("element_subtype", {}).get(
+                    "term_name", ""
+                )
             if element_subtype_name == "":
                 # Old json files? Try with the old name
                 element_subtype_name = imported_el.get("element_subtype_name", "")
@@ -2451,7 +2556,10 @@ class MockdataJson(BaseImporter):
                 )
                 continue
             if f"{template_type}_template_uid" in post_data[data_key_import]:
-                template_name = instance[f"{template_type}_template"]["name"]
+                template_obj = instance.get(
+                    f"{template_type}_template"
+                ) or instance.get("template")
+                template_name = template_obj["name"]
                 template_uid = self.lookup_template_uid(template_name, template_type)
                 if template_uid is None:
                     self.log.error(
@@ -2918,20 +3026,10 @@ class MockdataJson(BaseImporter):
                 continue
             data = copy.deepcopy(import_templates.activity_subgroups)
             for key in data.keys():
-                if not key.lower().endswith("uid") and not isinstance(
-                    data[key], (list, dict, tuple)
-                ):
+                if not key.lower().endswith("uid"):
                     data[key] = subgroup.get(key, data[key])
             if "definition" in data and data["definition"] == "":
                 data["definition"] = DEFINITION_PLACEHOLDER
-            if subgroup.get("activity_groups") is not None:
-                for group in subgroup["activity_groups"]:
-                    uid = self.lookup_activity_group_uid(group["name"])
-                    if uid:
-                        data["activity_groups"].append(uid)
-            if len(data["activity_groups"]) == 0:
-                self.log.warning(f"Skipping subgroup '{name}' because it lacks a group")
-                continue
             path = "/concepts/activities/activity-sub-groups"
             res = self.api.simple_post_to_api(path, data)
             if res is not None:

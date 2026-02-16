@@ -83,7 +83,9 @@ def test_data():
             ("DatasetClass C", data_models[2].uid),
         ]
     ]
-    data_model_ig = TestUtils.create_data_model_ig(name="DataModelIG A")
+    data_model_ig = TestUtils.create_data_model_ig(
+        name="DataModelIG A", implemented_data_model=data_models[0].uid
+    )
     # Create some datasets
     dataset = TestUtils.create_dataset(
         label="Dataset A label",
@@ -216,7 +218,7 @@ CLASS_VARIABLE_FIELDS_ALL = [
     "catalogue_name",
     "dataset_class",
     "dataset_variable_name",
-    "referenced_codelist",
+    "referenced_codelists",
     "has_mapping_target",
     "core",
     "described_value_domain",

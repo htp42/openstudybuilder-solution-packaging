@@ -49,6 +49,11 @@ const params = [
     valuesDisplay: 'term',
   },
   {
+    label: t('StudyDefineForm.development_stage'),
+    name: 'development_stage_code',
+    valuesDisplay: 'term',
+  },
+  {
     label: t('StudyDefineForm.extensiontrial'),
     name: 'is_extension_trial',
     valuesDisplay: 'yesno',
@@ -81,6 +86,7 @@ onMounted(() => {
   studiesGeneralStore.fetchTrialPhases()
   studiesGeneralStore.fetchTrialTypes()
   studiesGeneralStore.fetchNullValues()
+  studiesGeneralStore.fetchDevelopmentStageCodes()
   fetchMetadata()
 })
 

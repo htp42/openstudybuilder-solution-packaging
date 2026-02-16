@@ -140,9 +140,46 @@ Given('[API] The visit with following attributes is created: isGlobalAnchor {int
     createVisitViaAPI(isGlobalAnchorVisit, visitWeek, minVisitWindow, maxVisitWindow)
 })
 
-Given('[API] Visits group {string} is removed', (group) => cy.deleteVisitsGroup(getCurrStudyUid(), group))
+Given('[API] All visit groups uids are fetched', () => cy.getVisitGroupsUid(getCurrStudyUid()))
+
+Given('[API] All visit groups are removed', () => cy.deleteAllVisitsGroups(getCurrStudyUid()))
 
 Given('[API] Visits group with format {string} is created', (groupFormat) => cy.createVisitsGroup(getCurrStudyUid(), groupFormat))
+
+When('The user creates a visit on the same day in the same epoch' , () => {
+    cy.wait(2000)
+    cy.clickButton('add-visit')
+    cy.clickButton('SINGLE_VISIT')
+    cy.clickButton('continue-button')
+    cy.selectVSelect('study-period', 'Run-in')
+    cy.clickButton('continue-button')
+    cy.selectVSelect('visit-type', 'Pre-screening')
+    cy.selectVSelect('contact-mode', 'On Site Visit')
+    cy.selectVSelect('time-reference', 'Global anchor visit')
+    cy.fillInput('visit-timing', 7)
+    cy.intercept('**/study-visits').as('visitRequest')
+})
+
+When('The user creates a visit on the same day in the neighboring epoch' , () => {
+    cy.wait(2000)
+    cy.clickButton('add-visit')
+    cy.clickButton('SINGLE_VISIT')
+    cy.clickButton('continue-button')
+    cy.selectVSelect('study-period', 'Intervention')
+    cy.clickButton('continue-button')
+    cy.selectVSelect('visit-type', 'Pre-screening')
+    cy.selectVSelect('contact-mode', 'On Site Visit')
+    cy.selectVSelect('time-reference', 'Global anchor visit')
+    cy.fillInput('visit-timing', 7)
+    cy.intercept('**/study-visits').as('visitRequest')
+})
+
+Then('The study visit is created', () => {
+    cy.wait('@visitRequest').then((request) => {
+        expect(request.response.statusCode).to.eq(201)
+    })
+
+})
 
 function createEpochViaAPI(epochType, epochSubType) {
     cy.getEpochTypeAndSubType(epochType, epochSubType)

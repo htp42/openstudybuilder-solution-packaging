@@ -56,6 +56,7 @@
             :items="filteredSubgroups"
             :items-length="subgroupsTotal"
             :items-per-page="tableOptions.itemsPerPage"
+            :page="tableOptions.page"
             :hide-export-button="false"
             :hide-default-switches="true"
             :export-data-url="`concepts/activities/activity-groups/${route.params.id}/subgroups`"
@@ -175,10 +176,10 @@ const tableOptions = ref({
   itemsPerPage: 10,
 })
 
-// Set initial sort order for the table
-const initialSort = ref([{ key: 'name', order: 'asc' }])
+// Store ALL subgroups for client-side filtering and pagination
+const allSubgroups = ref([])
 
-// Controlled sort state for the NNTable component
+const initialSort = ref([{ key: 'name', order: 'asc' }])
 const sortBy = ref([])
 
 const historyHeaders = [
@@ -208,12 +209,10 @@ const subgroupsHeaders = computed(() => [
   { title: t('_global.status'), key: 'status', align: 'start', sortable: true },
 ])
 
-// Returns all versions of the given item in descending order
 function allVersions(item) {
   return [...item.all_versions].sort().reverse()
 }
 
-// Changes the version of the given group
 async function changeVersion(group, version) {
   await router.push({
     name: 'GroupOverview',
@@ -222,7 +221,6 @@ async function changeVersion(group, version) {
   emit('refresh')
 }
 
-// Transforms the given item for display
 function transformItem(item) {
   item.item_key = item.uid
 
@@ -232,7 +230,6 @@ function transformItem(item) {
   }
 }
 
-// Checks if the given item matches the search term
 function itemMatchesSearch(item, searchTerm) {
   if (!searchTerm || searchTerm === '') return true
 
@@ -250,31 +247,21 @@ function itemMatchesSearch(item, searchTerm) {
   return false
 }
 
-// Handles column click event
 function handleColumnClick(column) {
   if (!column.sortable) return
 
   const key = column.key
   const currentSortBy = tableOptions.value.sortBy[0] || ''
   const currentSortDesc = tableOptions.value.sortDesc[0] || false
-  let newSortDesc
-  if (currentSortBy !== key) {
-    // New column clicked, default to ascending
-    newSortDesc = false
-  } else {
-    // Same column clicked, toggle direction
-    newSortDesc = !currentSortDesc
-  }
+  const newSortDesc = currentSortBy !== key ? false : !currentSortDesc
 
   tableOptions.value.sortBy = [key]
   tableOptions.value.sortDesc = [newSortDesc]
   if (props.itemOverview?.subgroups) {
-    // Get items array using the new format (items property) or the old format (direct array)
     const sourceItems =
       props.itemOverview.subgroups.items || props.itemOverview.subgroups
     let subgroupsToFilter = [...sourceItems]
 
-    // Apply any active search filter
     if (tableOptions.value.search) {
       const searchTerm = tableOptions.value.search.toLowerCase()
       subgroupsToFilter = subgroupsToFilter.filter((item) =>
@@ -282,35 +269,55 @@ function handleColumnClick(column) {
       )
     }
 
-    // Sort the filtered data
     subgroupsToFilter.sort((a, b) => {
-      let valA = a[key]
-      let valB = b[key]
-
-      // Handle undefined values
-      valA = valA || ''
-      valB = valB || ''
-
-      // Compare based on type
+      const valA = a[key] || ''
+      const valB = b[key] || ''
       if (typeof valA === 'string' && typeof valB === 'string') {
         return newSortDesc ? valB.localeCompare(valA) : valA.localeCompare(valB)
-      } else {
-        return newSortDesc ? valB - valA : valA - valB
       }
+      return newSortDesc ? valB - valA : valA - valB
     })
 
-    // Update the filtered list
     filteredSubgroups.value = subgroupsToFilter
     subgroupsTotal.value = subgroupsToFilter.length
   }
 }
 
-let lastSearchTerm = ''
 let savedFilters = ref({})
 
-// Handles filter event - Client-side filtering since API doesn't support it
-function handleFilter(filters, options, filtersUpdated) {
-  // Save filters if provided
+function applyFiltersAndPagination(searchTerm = '', page = 1, perPage = 10) {
+  let itemsToDisplay = [...allSubgroups.value]
+
+  if (searchTerm && searchTerm.trim() !== '') {
+    itemsToDisplay = itemsToDisplay.filter((item) =>
+      itemMatchesSearch(item, searchTerm)
+    )
+  }
+
+  const sortKey = tableOptions.value.sortBy[0] || 'name'
+  const sortDesc = tableOptions.value.sortDesc[0] || false
+  itemsToDisplay.sort((a, b) => {
+    const valA = a[sortKey] || ''
+    const valB = b[sortKey] || ''
+    if (typeof valA === 'string' && typeof valB === 'string') {
+      return sortDesc ? valB.localeCompare(valA) : valA.localeCompare(valB)
+    }
+    return sortDesc ? valB - valA : valA - valB
+  })
+
+  subgroupsTotal.value = itemsToDisplay.length
+
+  if (perPage > 0) {
+    const startIndex = (page - 1) * perPage
+    const endIndex = startIndex + perPage
+    filteredSubgroups.value = itemsToDisplay.slice(startIndex, endIndex)
+  } else {
+    filteredSubgroups.value = itemsToDisplay
+  }
+}
+
+// Client-side filtering since API doesn't support search
+function handleFilter(filters, options) {
   if (filters !== undefined) {
     savedFilters.value = filters
   }
@@ -319,211 +326,47 @@ function handleFilter(filters, options, filtersUpdated) {
     options = tableOptions.value
   }
 
-  if (options && options.search === lastSearchTerm && !filtersUpdated) {
-    return
-  }
-
-  if (options && options.search) {
-    lastSearchTerm = options.search
-  }
-
-  if (!props.itemOverview || !props.itemOverview.subgroups) {
-    return
-  }
-
-  // Get items array using the new format (items property) or the old format (direct array)
-  const sourceItems =
-    props.itemOverview.subgroups.items || props.itemOverview.subgroups
-
-  let filteredItems = [...sourceItems]
-
-  // Apply search filter
-  if (options && options.search) {
+  if (options.search !== undefined) {
     tableOptions.value.search = options.search
-    const searchTerm = options.search.toLowerCase()
-    filteredItems = filteredItems.filter((item) =>
-      itemMatchesSearch(item, searchTerm)
-    )
-  } else if (options) {
-    tableOptions.value.search = ''
+  }
+  if (options.page !== undefined) {
+    tableOptions.value.page = options.page
+  }
+  if (options.itemsPerPage !== undefined) {
+    tableOptions.value.itemsPerPage = options.itemsPerPage
   }
 
-  // Apply column filters
-  if (savedFilters.value && savedFilters.value !== '{}') {
-    let filtersObj = savedFilters.value
-    if (typeof filtersObj === 'string') {
-      try {
-        filtersObj = JSON.parse(filtersObj)
-      } catch (e) {
-        console.error('Error parsing filters string:', e)
-        return
-      }
-    }
-
-    // Skip column filters if this is a search filter (has '*' key with search term)
-    if (filtersObj['*'] && filtersObj['*'].v && options && options.search) {
-      // Don't apply column filters when it's just a search
-    } else {
-      // Check if filters is a column-specific filter object (from FilterAutocomplete)
-      if (filtersObj.column && filtersObj.data) {
-        const filterKey = filtersObj.column
-        const filterValues = filtersObj.data
-
-        if (filterValues && filterValues.length > 0) {
-          filteredItems = filteredItems.filter((item) => {
-            return applyFilter(item, filterKey, filterValues)
-          })
-        }
-      }
-      // If filters is a regular object with multiple filters
-      else if (typeof filtersObj === 'object') {
-        Object.keys(filtersObj).forEach((filterKey) => {
-          // Get the filter values object
-          const filterValueObj = filtersObj[filterKey]
-
-          if (!filterValueObj) {
-            // Skip empty filter
-            return
-          }
-
-          // Check if the filter has 'v' property (from NNTable)
-          if (filterValueObj.v && Array.isArray(filterValueObj.v)) {
-            const filterValues = filterValueObj.v
-
-            if (filterValues.length > 0) {
-              filteredItems = filteredItems.filter((item) => {
-                const matches = applyFilter(item, filterKey, filterValues)
-                return matches
-              })
-            }
-          }
-          // Check if the filter has 'data' property
-          else if (Array.isArray(filterValueObj.data)) {
-            const filterValues = filterValueObj.data
-            // Process filters from data property
-
-            if (filterValues.length > 0) {
-              filteredItems = filteredItems.filter((item) => {
-                return applyFilter(item, filterKey, filterValues)
-              })
-            }
-          }
-        })
-      }
-    }
-  }
-
-  // Helper function to apply filter based on key and values
-  function applyFilter(item, filterKey, filterValues) {
-    const itemValue = item[filterKey]
-
-    // Handle special case for status which might be different formats
-    if (filterKey === 'status') {
-      return filterValues.includes(item.status)
-    }
-    // Handle definition filtering
-    else if (filterKey === 'definition') {
-      // If the item has no definition, it should match only if null/empty is in filter values
-      if (!item.definition) {
-        return filterValues.includes(null) || filterValues.includes('')
-      }
-      // Otherwise check if definition is in filter values
-      return filterValues.includes(item.definition)
-    }
-    // Handle version filtering
-    else if (filterKey === 'version') {
-      // Convert to string for comparison as filterValues might be strings
-      return (
-        filterValues.includes(item.version) ||
-        filterValues.includes(String(item.version))
-      )
-    }
-    // Handle name filtering - this is the one we need most often
-    else if (filterKey === 'name') {
-      const included = filterValues.includes(item.name)
-      return included
-    }
-    // Generic handling for other fields
-    else {
-      return filterValues.includes(itemValue)
-    }
-  }
-
-  if (options && options.sortBy && options.sortBy.length > 0) {
-    const sortItem = options.sortBy[0]
-    const key = sortItem.key
-    const order = sortItem.order
-    filteredItems.sort((a, b) => {
-      let valA = a[key]
-      let valB = b[key]
-
-      // Handle undefined values
-      valA = valA || ''
-      valB = valB || ''
-
-      // Compare based on type
-      if (typeof valA === 'string' && typeof valB === 'string') {
-        return order === 'asc'
-          ? valA.localeCompare(valB)
-          : valB.localeCompare(valA)
-      } else {
-        return order === 'asc' ? valA - valB : valB - valA
-      }
-    })
-
-    // Update tableOptions with the current sort
-    tableOptions.value.sortBy = [key]
-    tableOptions.value.sortDesc = [order === 'desc']
-    sortBy.value = [{ key, order }]
-  }
-
-  filteredSubgroups.value = filteredItems
-  subgroupsTotal.value = filteredItems.length
+  applyFiltersAndPagination(
+    tableOptions.value.search,
+    tableOptions.value.page,
+    tableOptions.value.itemsPerPage
+  )
 }
 
-// Handles update options event
 function updateTableOptions(options) {
   if (!options) return
 
   if (options.sortBy && options.sortBy.length > 0) {
-    tableOptions.value.sortBy = [...options.sortBy]
-    tableOptions.value.sortDesc = [...(options.sortDesc || [])]
+    const sortItem = options.sortBy[0]
+    tableOptions.value.sortBy = [sortItem.key]
+    tableOptions.value.sortDesc = [sortItem.order === 'desc']
     sortBy.value = options.sortBy
   }
 
-  if (
-    options.page !== tableOptions.value.page ||
-    options.itemsPerPage !== tableOptions.value.itemsPerPage
-  ) {
-    tableOptions.value.page = options.page || 1
-    tableOptions.value.itemsPerPage = options.itemsPerPage || 10
-
-    // Need to fetch new data for pagination
-    fetchSubgroups(tableOptions.value)
-    return // Skip filtering, as fetchSubgroups will trigger a data update
+  if (options.page !== undefined) {
+    tableOptions.value.page = options.page
+  }
+  if (options.itemsPerPage !== undefined) {
+    tableOptions.value.itemsPerPage = options.itemsPerPage
   }
 
-  // If this is a search update, let the handleFilter function handle it
-  // This prevents duplicate processing of search
-  if (options.search !== undefined) {
-    // Only store the search value and skip additional filter call
-    // The @filter event handler will take care of filtering
-    tableOptions.value.search = options.search
-
-    // If we don't have a filter event (direct call), then filter manually
-    if (!options.fromFilterEvent) {
-      handleFilter(null, options)
-    }
-    return
-  }
-
-  // For other changes like sorting, still apply filter
-  if (!options.search) {
-    handleFilter(null, tableOptions.value)
-  }
+  applyFiltersAndPagination(
+    tableOptions.value.search,
+    tableOptions.value.page,
+    tableOptions.value.itemsPerPage
+  )
 }
 
-// Function to get headers for the subgroups filter
 function getSubgroupsHeaders() {
   const params = {
     field_name: 'name',
@@ -537,7 +380,6 @@ function getSubgroupsHeaders() {
   )
 }
 
-// Function to modify filters for subgroups
 function modifyFilters(jsonFilter, params) {
   return {
     jsonFilter,
@@ -545,7 +387,6 @@ function modifyFilters(jsonFilter, params) {
   }
 }
 
-// Function to get initial column data for filters
 function getInitialColumnData() {
   if (!props.itemOverview?.subgroups) return {}
 
@@ -555,7 +396,6 @@ function getInitialColumnData() {
 
   const columnData = {}
 
-  // Extract unique values for each column from the actual table data
   subgroupsHeaders.value.forEach((header) => {
     if (header.key === 'actions' || header.noFilter) return
 
@@ -584,14 +424,12 @@ function handleSubgroupsUpdate(subgroupsData) {
 
     const items = subgroupsData?.items || subgroupsData || []
 
-    // Check if we have an active search - if so, don't overwrite filtered results
-    if (tableOptions.value.search) {
-      subgroupsTotal.value = subgroupsData?.total || items.length || 0
-    } else {
-      filteredSubgroups.value = Array.isArray(items) ? [...items] : []
-      subgroupsTotal.value =
-        subgroupsData?.total || filteredSubgroups.value.length || 0
-    }
+    allSubgroups.value = Array.isArray(items) ? [...items] : []
+    applyFiltersAndPagination(
+      tableOptions.value.search,
+      tableOptions.value.page,
+      tableOptions.value.itemsPerPage
+    )
 
     setTimeout(() => {
       loadingSubgroups.value = false
@@ -599,10 +437,15 @@ function handleSubgroupsUpdate(subgroupsData) {
   }
 }
 
-// Watches for changes in itemOverview
 watch(
   () => props.itemOverview,
-  (newItemOverview) => {
+  (newItemOverview, oldItemOverview) => {
+    if (newItemOverview?.group?.uid !== oldItemOverview?.group?.uid) {
+      allSubgroups.value = []
+      tableOptions.value.search = ''
+      tableOptions.value.page = 1
+    }
+
     if (newItemOverview === null) {
       loadingSubgroups.value = true
       filteredSubgroups.value = []
@@ -610,42 +453,31 @@ watch(
       return
     }
 
-    // If subgroups is null, we need to fetch them
     if (newItemOverview?.subgroups === null) {
       loadingSubgroups.value = true
-      // Fetch subgroups when itemOverview changes with null subgroups
-      fetchSubgroups(tableOptions.value)
+      fetchSubgroups()
       return
     }
 
     loadingSubgroups.value = !newItemOverview?.subgroups
 
-    // If we have subgroups data and an active search or filters, re-apply them
     if (newItemOverview?.subgroups) {
       const sourceItems =
         newItemOverview.subgroups.items || newItemOverview.subgroups
-      subgroupsTotal.value = sourceItems.length
-
-      // If there's an active search or filters, re-apply them
-      if (
-        tableOptions.value.search ||
-        (savedFilters.value && Object.keys(savedFilters.value).length > 0)
-      ) {
-        handleFilter(savedFilters.value, tableOptions.value)
-      } else {
-        // Only update directly if there's no active search or filters
-        filteredSubgroups.value = sourceItems
-      }
+      allSubgroups.value = Array.isArray(sourceItems) ? [...sourceItems] : []
+      applyFiltersAndPagination(
+        tableOptions.value.search,
+        tableOptions.value.page,
+        tableOptions.value.itemsPerPage
+      )
     }
   },
   { immediate: true }
 )
 
-// Watches for changes in itemOverview.subgroups
 watch(
   () => props.itemOverview?.subgroups,
   (newSubgroups) => {
-    // If subgroups is null, keep loading state and let route watcher fetch
     if (newSubgroups === null) {
       return
     }
@@ -654,41 +486,14 @@ watch(
 
     if (newSubgroups) {
       const items = newSubgroups.items || newSubgroups
-      const initialSubgroups = [...items]
-      subgroupsTotal.value = newSubgroups.total || items.length
-
-      // Always apply filters if there's an active search or saved filters
-      if (
-        tableOptions.value.search ||
-        (savedFilters.value && Object.keys(savedFilters.value).length > 0) ||
-        (tableOptions.value.sortBy && tableOptions.value.sortBy.length > 0)
-      ) {
-        // Apply filters which will handle search, column filters, and sorting
-        handleFilter(savedFilters.value, tableOptions.value)
-      } else {
-        // Only set directly if there's no search, filters, or custom sorting
-        if (initialSort.value.length > 0) {
-          const sortKey = initialSort.value[0].key
-          const sortDesc = initialSort.value[0].order === 'desc'
-          // Sort the data based on initialSort configuration
-          initialSubgroups.sort((a, b) => {
-            let valA = a[sortKey] || ''
-            let valB = b[sortKey] || ''
-
-            if (typeof valA === 'string' && typeof valB === 'string') {
-              return sortDesc
-                ? valB.localeCompare(valA)
-                : valA.localeCompare(valB)
-            } else {
-              return sortDesc ? valB - valA : valA - valB
-            }
-          })
-          filteredSubgroups.value = initialSubgroups
-        } else {
-          filteredSubgroups.value = initialSubgroups
-        }
-      }
+      allSubgroups.value = Array.isArray(items) ? [...items] : []
+      applyFiltersAndPagination(
+        tableOptions.value.search,
+        tableOptions.value.page,
+        tableOptions.value.itemsPerPage
+      )
     } else {
+      allSubgroups.value = []
       filteredSubgroups.value = []
       subgroupsTotal.value = 0
     }
@@ -696,20 +501,17 @@ watch(
   { immediate: true }
 )
 
-// Fetches subgroups data
-const fetchSubgroups = async (options = {}) => {
-  // Prevent additional calls if already loading or missing required params
+// Fetches all subgroups for client-side filtering (API doesn't support search)
+const fetchSubgroups = async () => {
   if (!route.params.id || !route.params.id.trim()) {
     return
   }
 
   try {
-    // Set loading state
     loadingSubgroups.value = true
 
     const params = {
-      page_number: options.page || tableOptions.value.page,
-      page_size: options.itemsPerPage || tableOptions.value.itemsPerPage,
+      page_size: 0,
       total_count: true,
     }
 
@@ -720,29 +522,21 @@ const fetchSubgroups = async (options = {}) => {
     )
 
     if (result && result.data) {
-      // For empty arrays, ensure filteredSubgroups is properly set
-      if (Array.isArray(result.data.items)) {
-        filteredSubgroups.value = [...result.data.items]
-      } else if (Array.isArray(result.data)) {
-        filteredSubgroups.value = [...result.data]
-      } else {
-        filteredSubgroups.value = []
-      }
-
-      // Set the total
-      subgroupsTotal.value =
-        result.data.total || filteredSubgroups.value.length || 0
-
-      // Update the parent component
-      handleSubgroupsUpdate(result.data)
+      const items = result.data.items || result.data
+      allSubgroups.value = Array.isArray(items) ? [...items] : []
+      applyFiltersAndPagination(
+        tableOptions.value.search,
+        tableOptions.value.page,
+        tableOptions.value.itemsPerPage
+      )
     } else {
+      allSubgroups.value = []
       filteredSubgroups.value = []
       subgroupsTotal.value = 0
-      loadingSubgroups.value = false
     }
   } catch (error) {
     console.error('Error fetching subgroups:', error)
-    loadingSubgroups.value = false
+    allSubgroups.value = []
     filteredSubgroups.value = []
     subgroupsTotal.value = 0
   } finally {
@@ -751,16 +545,6 @@ const fetchSubgroups = async (options = {}) => {
   }
 }
 
-watch(
-  [() => tableOptions.value.page, () => tableOptions.value.itemsPerPage],
-  () => {
-    if (route.params.id && !tableOptions.value.search) {
-      fetchSubgroups(tableOptions.value)
-    }
-  }
-)
-
-// Fetch headers for filtering when component mounts
 onMounted(() => {
   getSubgroupsHeaders()
     .then(() => {})
@@ -768,9 +552,8 @@ onMounted(() => {
       console.error('Error loading subgroups headers:', error)
     })
 
-  // Initial fetch of subgroups if not provided
   if (props.itemOverview?.subgroups === null) {
-    fetchSubgroups(tableOptions.value)
+    fetchSubgroups()
   }
 })
 

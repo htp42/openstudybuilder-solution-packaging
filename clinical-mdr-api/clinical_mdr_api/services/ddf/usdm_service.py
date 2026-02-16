@@ -23,11 +23,13 @@ from clinical_mdr_api.services.studies.study_endpoint_selection import (
 )
 from clinical_mdr_api.services.studies.study_epoch import StudyEpochService
 from clinical_mdr_api.services.studies.study_visit import StudyVisitService
+from common.telemetry import trace_calls
 
 
 class USDMService:
     _usdm_mapper: USDMMapper
 
+    @trace_calls
     def __init__(self):
         self._usdm_mapper = USDMMapper(
             get_osb_study_design_cells=StudyDesignCellService().get_all_design_cells,
@@ -40,6 +42,7 @@ class USDMService:
             get_osb_activity_schedules=StudyActivityScheduleService().get_all_schedules,
         )
 
+    @trace_calls(args=[1], kwargs=["uid"])
     def get_by_uid(self, uid: str) -> dict[str, Any]:
         osb_study = StudyService().get_by_uid(
             uid,

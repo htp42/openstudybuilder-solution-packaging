@@ -90,15 +90,11 @@ def test_data():
     )
 
     global activity_subgroup
-    activity_subgroup = TestUtils.create_activity_subgroup(
-        name="activity_subgroup",
-        activity_groups=[activity_group.uid, different_activity_group.uid],
-    )
+    activity_subgroup = TestUtils.create_activity_subgroup(name="activity_subgroup")
 
     global different_activity_subgroup
     different_activity_subgroup = TestUtils.create_activity_subgroup(
-        name="different activity_subgroup",
-        activity_groups=[different_activity_group.uid, activity_group.uid],
+        name="different activity_subgroup"
     )
     global activity_with_multiple_groupings
     activity_with_multiple_groupings = TestUtils.create_activity(
@@ -185,6 +181,8 @@ def test_data():
                     "uid": activity_instance_classes[0].uid,
                     "mandatory": True,
                     "is_adam_param_specific_enabled": True,
+                    "is_additional_optional": False,
+                    "is_default_linked": False,
                 }
             ],
             role_uid=role_term.term_uid,
@@ -198,6 +196,8 @@ def test_data():
                     "uid": activity_instance_classes[1].uid,
                     "mandatory": True,
                     "is_adam_param_specific_enabled": True,
+                    "is_additional_optional": False,
+                    "is_default_linked": False,
                 }
             ],
             role_uid=role_term.term_uid,
@@ -211,6 +211,8 @@ def test_data():
                     "uid": activity_instance_classes[2].uid,
                     "mandatory": True,
                     "is_adam_param_specific_enabled": True,
+                    "is_additional_optional": False,
+                    "is_default_linked": False,
                 }
             ],
             role_uid=role_term.term_uid,
@@ -336,6 +338,28 @@ def test_data():
             activity_subgroups=[activity_subgroup.uid],
             activity_groups=[activity_group.uid],
             activity_items=[activity_items[0], activity_items[1]],
+        ),
+        TestUtils.create_activity_instance(
+            name="name multiple 1",
+            activity_instance_class_uid=activity_instance_classes[0].uid,
+            name_sentence_case="name multiple 1",
+            topic_code="topic code multiple 1",
+            is_required_for_activity=True,
+            activities=[activity_with_multiple_groupings.uid],
+            activity_subgroups=[activity_subgroup.uid],
+            activity_groups=[activity_group.uid],
+            activity_items=[activity_items[0], activity_items[1], activity_items[2]],
+        ),
+        TestUtils.create_activity_instance(
+            name="name multiple 2",
+            activity_instance_class_uid=activity_instance_classes[0].uid,
+            name_sentence_case="name multiple 2",
+            topic_code="topic code multiple 2",
+            is_required_for_activity=True,
+            activities=[activity_with_multiple_groupings.uid],
+            activity_subgroups=[different_activity_subgroup.uid],
+            activity_groups=[different_activity_group.uid],
+            activity_items=[activity_items[0], activity_items[1], activity_items[2]],
         ),
     ]
 
@@ -508,7 +532,7 @@ def test_get_activity_pagination(api_client):
     assert len(activities_all) == len(results_paginated_merged)
     assert results_all_in_one_page == sorted(results_all_in_one_page)
 
-    # Assert sorting by ActivityGroup works fine
+    # Ascending order applied to ActivityGroup name
     sort_by = '{"activity_groupings[0].activity_group_name":true}'
     res_all = parse_json_response(
         api_client.get(
@@ -517,13 +541,18 @@ def test_get_activity_pagination(api_client):
     )
     all_results = list(
         map(
-            lambda x: x["activity_groupings"][0]["activity_group_name"],
+            lambda x: min(
+                activity_grouping["activity_group_name"]
+                for activity_grouping in x["activity_groupings"]
+            ),
             res_all["items"],
         )
     )
     assert all_results == sorted(
         all_results
     ), "Results should be returned by ActivityGroup name ascending order"
+
+    # Descending order applied to ActivityGroup name
     sort_by = '{"activity_groupings[0].activity_group_name":false}'
     res_all = parse_json_response(
         api_client.get(
@@ -532,7 +561,10 @@ def test_get_activity_pagination(api_client):
     )
     all_results = list(
         map(
-            lambda x: x["activity_groupings"][0]["activity_group_name"],
+            lambda x: max(
+                activity_grouping["activity_group_name"]
+                for activity_grouping in x["activity_groupings"]
+            ),
             res_all["items"],
         )
     )
@@ -540,7 +572,7 @@ def test_get_activity_pagination(api_client):
         all_results, reverse=True
     ), "Results should be returned by ActivityGroup name descending order"
 
-    # Assert sorting by ActivitySubGroup works fine
+    # Ascending order applied to ActivitySubGroup name
     sort_by = '{"activity_groupings[0].activity_subgroup_name":true}'
     res_all = parse_json_response(
         api_client.get(
@@ -549,13 +581,18 @@ def test_get_activity_pagination(api_client):
     )
     all_results = list(
         map(
-            lambda x: x["activity_groupings"][0]["activity_subgroup_name"],
+            lambda x: min(
+                activity_grouping["activity_subgroup_name"]
+                for activity_grouping in x["activity_groupings"]
+            ),
             res_all["items"],
         )
     )
     assert all_results == sorted(
         all_results
     ), "Results should be returned by ActivitySubGroup name ascending order"
+
+    # Descending order applied to ActivitySubGroup name
     sort_by = '{"activity_groupings[0].activity_subgroup_name":false}'
     res_all = parse_json_response(
         api_client.get(
@@ -564,94 +601,10 @@ def test_get_activity_pagination(api_client):
     )
     all_results = list(
         map(
-            lambda x: x["activity_groupings"][0]["activity_subgroup_name"],
-            res_all["items"],
-        )
-    )
-    assert all_results == sorted(
-        all_results, reverse=True
-    ), "Results should be returned by ActivitySubGroup name descending order"
-
-
-def test_get_activities_with_split_groupings_pagination(api_client):
-    results_paginated: dict[int, str] = {}
-    sort_by = '{"name": true}'
-    for page_number in range(1, 5):
-        url = f"/concepts/activities/activities?page_number={page_number}&page_size=3&sort_by={sort_by}&split_activity_by_groupings=true"
-        response = api_client.get(url)
-        res = response.json()
-        res_names = [item["name"] for item in res["items"]]
-        results_paginated[page_number] = res_names
-        log.info("Page %s: %s", page_number, res_names)
-
-    log.info("All pages: %s", results_paginated)
-
-    results_paginated_merged = list(
-        reduce(lambda a, b: list(a) + list(b), list(results_paginated.values()))
-    )
-    log.info("All rows returned by pagination: %s", results_paginated_merged)
-
-    res_all = api_client.get(
-        f"/concepts/activities/activities?page_number=1&page_size=100&sort_by={sort_by}&split_activity_by_groupings=true"
-    ).json()
-    results_all_in_one_page = list(map(lambda x: x["name"], res_all["items"]))
-    log.info("All rows in one page: %s", results_all_in_one_page)
-    assert len(results_all_in_one_page) == len(results_paginated_merged)
-    activities_len_with_splitted_groupings = 0
-    for activity in activities_all:
-        activities_len_with_splitted_groupings += len(activity.activity_groupings)
-    assert activities_len_with_splitted_groupings == len(results_paginated_merged)
-    assert results_all_in_one_page == sorted(results_all_in_one_page)
-
-    # Assert sorting by ActivityGroup works fine
-    sort_by = '{"activity_group_name":true}'
-    res_all = api_client.get(
-        f"/concepts/activities/activities?page_number=1&page_size=100&sort_by={sort_by}&split_activity_by_groupings=true"
-    ).json()
-    all_results = list(
-        map(
-            lambda x: x["activity_group_name"],
-            res_all["items"],
-        )
-    )
-    assert all_results == sorted(
-        all_results
-    ), "Results should be returned by ActivityGroup name ascending order"
-    sort_by = '{"activity_group_name":false}'
-    res_all = api_client.get(
-        f"/concepts/activities/activities?page_number=1&page_size=100&sort_by={sort_by}&split_activity_by_groupings=true"
-    ).json()
-    all_results = list(
-        map(
-            lambda x: x["activity_group_name"],
-            res_all["items"],
-        )
-    )
-    assert all_results == sorted(
-        all_results, reverse=True
-    ), "Results should be returned by ActivityGroup name descending order"
-
-    # Assert sorting by ActivitySubGroup works fine
-    sort_by = '{"activity_subgroup_name":true}'
-    res_all = api_client.get(
-        f"/concepts/activities/activities?page_number=1&page_size=100&sort_by={sort_by}&split_activity_by_groupings=true"
-    ).json()
-    all_results = list(
-        map(
-            lambda x: x["activity_subgroup_name"],
-            res_all["items"],
-        )
-    )
-    assert all_results == sorted(
-        all_results
-    ), "Results should be returned by ActivitySubGroup name ascending order"
-    sort_by = '{"activity_subgroup_name":false}'
-    res_all = api_client.get(
-        f"/concepts/activities/activities?page_number=1&page_size=100&sort_by={sort_by}&split_activity_by_groupings=true"
-    ).json()
-    all_results = list(
-        map(
-            lambda x: x["activity_subgroup_name"],
+            lambda x: max(
+                activity_grouping["activity_subgroup_name"]
+                for activity_grouping in x["activity_groupings"]
+            ),
             res_all["items"],
         )
     )
@@ -847,38 +800,92 @@ def test_explicit_filtering_by_activity_subgroup_and_group_uid(api_client):
     assert len(res) == 0
 
 
-def test_groupped_groupings_payload_flag(api_client):
+def test_grouped_groupings_payload_flag(api_client):
     url = "/concepts/activities/activities"
 
-    response = api_client.get(url)
+    # ====== Test preconditions ======
+
+    # Get activities with group_by_groupings=True
+    response = api_client.get(
+        url,
+        params={
+            "group_by_groupings": True,
+            "page_size": 0,
+        },
+    )
     assert_response_status_code(response, 200)
+    res = response.json()["items"]
+    assert any(
+        len(activity["activity_groupings"]) > 1 for activity in res
+    ), "Test precondition failed: At least one activity should have multiple groupings"
+    assert any(
+        len(activity["activity_instances"]) > 1 for activity in res
+    ), "Test precondition failed: At least one activity should have multiple instances"
+
+    # Check that the activity with multiple groupings is present and has two instances linked to it
+    assert any(
+        activity["uid"] == activity_with_multiple_groupings.uid for activity in res
+    ), "Test precondition failed: The activity with multiple groupings is not present in the response"
+
+    # Collect groupings and number of instances for later comparison
+    grouped_groupings = set()
+    nbr_instances_grouped = 0
+    for activity in res:
+        if activity["uid"] == activity_with_multiple_groupings.uid:
+            assert (
+                len(activity["activity_instances"]) == 2
+            ), "Test precondition failed: The activity with multiple groupings should have two instances linked to it"
+            assert (
+                len(activity["activity_groupings"]) == 2
+            ), "Test precondition failed: The activity with multiple groupings should have two groupings"
+        nbr_instances_grouped += len(activity["activity_instances"])
+        for grouping in activity["activity_groupings"]:
+            grouped_groupings.add(
+                (
+                    activity["uid"],
+                    grouping["activity_group_uid"],
+                    grouping["activity_subgroup_uid"],
+                )
+            )
+
+    # ===== Test the group_by_groupings=False behavior ======
 
     response = api_client.get(
         url,
         params={
             "group_by_groupings": False,
+            "page_size": 0,
         },
     )
     assert_response_status_code(response, 200)
     res = response.json()["items"]
-    assert res[0]["activity_groupings"][0]["activity_group_name"] == "activity_group"
-    assert (
-        res[1]["activity_groupings"][0]["activity_group_name"]
-        == "different activity_group"
-    )
 
-    response = api_client.get(
-        url,
-        params={
-            "group_by_groupings": True,
-        },
+    ungrouped_groupings = set()
+    nbr_instances_ungrouped = 0
+    for activity in res:
+        nbr_instances_ungrouped += len(activity["activity_instances"])
+        if activity["uid"] == activity_with_multiple_groupings.uid:
+            assert (
+                len(activity["activity_instances"]) == 1
+            ), "In ungrouped mode, the activity with multiple groupings should have one instance linked to it"
+        assert (
+            len(activity["activity_groupings"]) <= 1
+        ), "When group_by_groupings=False, each activity should have at most one grouping"
+        for grouping in activity["activity_groupings"]:
+            ungrouped_groupings.add(
+                (
+                    activity["uid"],
+                    grouping["activity_group_uid"],
+                    grouping["activity_subgroup_uid"],
+                )
+            )
+    assert grouped_groupings == ungrouped_groupings, (
+        "The set of activity-grouping combinations should be the same "
+        "regardless of the group_by_groupings flag"
     )
-    assert_response_status_code(response, 200)
-    res = response.json()["items"]
-    assert res[0]["activity_groupings"][0]["activity_group_name"] == "activity_group"
-    assert (
-        res[0]["activity_groupings"][1]["activity_group_name"]
-        == "different activity_group"
+    assert nbr_instances_grouped == nbr_instances_ungrouped, (
+        "The total number of activity instances should be the same "
+        "regardless of the group_by_groupings flag"
     )
 
 
@@ -964,9 +971,7 @@ def test_update_activity_to_new_grouping(api_client):
     # ==== Create group, subgroup, activity and activity instance ====
     group = TestUtils.create_activity_group(name=group_name)
 
-    subgroup = TestUtils.create_activity_subgroup(
-        name=original_subgroup_name, activity_groups=[group.uid]
-    )
+    subgroup = TestUtils.create_activity_subgroup(name=original_subgroup_name)
     activity = TestUtils.create_activity(
         name=activity_name,
         activity_subgroups=[subgroup.uid],
@@ -988,7 +993,6 @@ def test_update_activity_to_new_grouping(api_client):
         json={
             "name": edited_subgroup_name,
             "name_sentence_case": edited_subgroup_name,
-            "activity_groups": [group.uid],
             "library_name": subgroup.library_name,
             "change_description": "update group",
         },
@@ -1009,10 +1013,6 @@ def test_update_activity_to_new_grouping(api_client):
     res = response.json()
 
     assert res["name"] == edited_subgroup_name
-    assert len(res["activity_groups"]) == 1
-    assert res["activity_groups"][0]["uid"] == group.uid
-
-    assert res["activity_groups"][0]["name"] == group_name
 
     assert res["version"] == "2.0"
     assert res["status"] == "Final"
@@ -1155,10 +1155,16 @@ def test_cannot_create_activity_with_non_unique_synonyms(api_client):
 
 def test_cannot_update_activity_with_non_unique_synonyms(api_client):
     new_activity1 = TestUtils.create_activity(
-        name="test1", synonyms=["XYZ1", "non_unique1"]
+        name="test1",
+        synonyms=["XYZ1", "non_unique1"],
+        activity_subgroups=[activity_subgroup.uid],
+        activity_groups=[activity_group.uid],
     )
     new_activity2 = TestUtils.create_activity(
-        name="test2", synonyms=["XYZ2", "non_unique2"]
+        name="test2",
+        synonyms=["XYZ2", "non_unique2"],
+        activity_subgroups=[activity_subgroup.uid],
+        activity_groups=[activity_group.uid],
     )
 
     activity = activities_all[0]
@@ -1272,7 +1278,7 @@ def test_cascade_edit_activities(api_client):
     # Update the activity
     activity_group_xyz = TestUtils.create_activity_group(name="activity_group xyz")
     activity_subgroup_xyz = TestUtils.create_activity_subgroup(
-        name="activity_subgroup xyz", activity_groups=[activity_group_xyz.uid]
+        name="activity_subgroup xyz"
     )
     response = api_client.put(
         f"/concepts/activities/activities/{activity.uid}",
@@ -1315,7 +1321,7 @@ def test_cascade_edit_activities(api_client):
     api_client.post(f"/concepts/activities/activities/{activity.uid}/versions")
     activity_group_zxy = TestUtils.create_activity_group(name="activity_group zyx")
     activity_subgroup_zxy = TestUtils.create_activity_subgroup(
-        name="activity_subgroup zyx", activity_groups=[activity_group_zxy.uid]
+        name="activity_subgroup zyx"
     )
     response = api_client.put(
         f"/concepts/activities/activities/{activity.uid}",
@@ -1461,3 +1467,20 @@ def test_cascade_edit_activities(api_client):
 
     assert res["version"] == "3.0"
     assert res["status"] == "Final"
+
+
+def test_create_activity_without_groupings_not_allowed(api_client):
+    response = api_client.post(
+        "/concepts/activities/activities",
+        json={
+            "name": "Activity without groupings",
+            "name_sentence_case": "Activity without groupings",
+            "library_name": "Sponsor",
+            "activity_groupings": [],
+        },
+    )
+    assert_response_status_code(response, 400)
+    res = response.json()
+
+    assert res["type"] == "BusinessLogicException"
+    assert res["message"] == "Sponsor activities must have at least one grouping."

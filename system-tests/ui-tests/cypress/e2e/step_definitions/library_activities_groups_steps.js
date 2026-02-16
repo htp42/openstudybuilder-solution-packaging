@@ -66,8 +66,7 @@ Given('[API] First activity group for search test is created', () => createGroup
 Given('[API] Second activity group for search test is created', () => cy.createGroup(`SearchTest${Date.now()}`))
 
 function fillGroupData() {
-    activityGroupName = `Group${Date.now()}`
-    cy.fillInput('groupform-activity-group-field', activityGroupName)
+    cy.get('[data-cy="groupform-activity-group-field"] input').click().type(activityGroupName = `Group${Date.now()}`)
     cy.fillInput('groupform-abbreviation-field', abbreviation)
     cy.fillInput('groupform-definition-field', definition)
 }
@@ -80,8 +79,8 @@ function saveGroup(action = 'created') {
 }
 
 function editGroup() {
-    activityGroupName = `${activityGroupName}Edited`
-    cy.fillInput('groupform-activity-group-field', activityGroupName)
+    cy.get('[data-cy="groupform-activity-group-field"] input').should('have.value', activityGroupName)
+    cy.get('[data-cy="groupform-activity-group-field"] input').click().clear().type(activityGroupName = `${activityGroupName}Edited`)
     cy.fillInput('groupform-change-description-field', "e2e test")
 }
 

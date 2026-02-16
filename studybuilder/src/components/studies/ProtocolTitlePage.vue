@@ -66,9 +66,11 @@ export default {
         },
         {
           label: this.$t('ProtocolTitlePage.study_phase'),
-          value: resp.data.trial_phase_code
-            ? resp.data.trial_phase_code.name
-            : '',
+          value: resp.data.trial_phase_code?.name,
+        },
+        {
+          label: this.$t('ProtocolTitlePage.development_stage'),
+          value: resp.data.development_stage_code?.name,
         },
       ]
     })

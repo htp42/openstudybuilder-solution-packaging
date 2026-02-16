@@ -48,6 +48,61 @@
       </thead>
       <tbody>
         <tr>
+          <td>{{ $t('InterventionOverview.sponsor_compound') }}</td>
+          <td
+            v-for="(
+              studyCompound, index
+            ) in studiesCompoundsStore.studyCompounds"
+            :key="`sc-${index}`"
+          >
+            <template v-if="studyCompound.compound">
+              {{ $filters.yesno(studyCompound.compound.is_sponsor_compound) }}
+            </template>
+          </td>
+        </tr>
+        <tr>
+          <td>{{ $t('InterventionOverview.compound_aliases') }}</td>
+          <td
+            v-for="(
+              studyCompound, index
+            ) in studiesCompoundsStore.studyCompounds"
+            :key="`alias-${index}`"
+            class="no-padding"
+          >
+            <table v-if="studyCompound.compound" class="no-border">
+              <tbody>
+                <tr
+                  v-for="(alias, aliasIndex) in compoundAliases[
+                    studyCompound.compound.uid
+                  ]"
+                  :key="`alias-${index}-${aliasIndex}`"
+                  class="no-padding"
+                  :class="{ 'border-top': aliasIndex > 0 }"
+                >
+                  <td class="no-border">
+                    {{ alias.name }} ({{
+                      $filters.yesno(alias.is_preferred_synonym)
+                    }})
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td>{{ $t('InterventionOverview.compound_def') }}</td>
+          <td
+            v-for="(
+              studyCompound, index
+            ) in studiesCompoundsStore.studyCompounds"
+            :key="`def-${index}`"
+          >
+            <template v-if="studyCompound.compound">
+              {{ studyCompound.compound.definition }}
+            </template>
+          </td>
+        </tr>
+        <tr>
           <td>{{ $t('InterventionOverview.medicinal_product') }}</td>
           <td
             v-for="(
@@ -171,9 +226,13 @@
             ) in studiesCompoundsStore.studyCompounds"
             :key="`dosage-${index}`"
           >
-            <template v-if="pharmaceuticalProducts[studyCompound.compound.uid]">
+            <template
+              v-if="pharmaceuticalProducts[studyCompound.medicinal_product.uid]"
+            >
               {{
-                pharmaceuticalProducts[studyCompound.compound.uid].dosage_forms
+                pharmaceuticalProducts[
+                  studyCompound.medicinal_product.uid
+                ].dosage_forms
                   .map((form) => form.term_name)
                   .join(', ')
               }}
@@ -188,69 +247,16 @@
             ) in studiesCompoundsStore.studyCompounds"
             :key="`roa-${index}`"
           >
-            <template v-if="pharmaceuticalProducts[studyCompound.compound.uid]">
+            <template
+              v-if="pharmaceuticalProducts[studyCompound.medicinal_product.uid]"
+            >
               {{
                 pharmaceuticalProducts[
-                  studyCompound.compound.uid
+                  studyCompound.medicinal_product.uid
                 ].routes_of_administration
                   .map((x) => x.term_name)
                   .join(', ')
               }}
-            </template>
-          </td>
-        </tr>
-        <tr>
-          <td>{{ $t('InterventionOverview.sponsor_compound') }}</td>
-          <td
-            v-for="(
-              studyCompound, index
-            ) in studiesCompoundsStore.studyCompounds"
-            :key="`sc-${index}`"
-          >
-            <template v-if="studyCompound.compound">
-              {{ $filters.yesno(studyCompound.compound.is_sponsor_compound) }}
-            </template>
-          </td>
-        </tr>
-        <tr>
-          <td>{{ $t('InterventionOverview.compound_aliases') }}</td>
-          <td
-            v-for="(
-              studyCompound, index
-            ) in studiesCompoundsStore.studyCompounds"
-            :key="`alias-${index}`"
-            class="no-padding"
-          >
-            <table v-if="studyCompound.compound" class="no-border">
-              <tbody>
-                <tr
-                  v-for="(alias, aliasIndex) in compoundAliases[
-                    studyCompound.compound.uid
-                  ]"
-                  :key="`alias-${index}-${aliasIndex}`"
-                  class="no-padding"
-                  :class="{ 'border-top': aliasIndex > 0 }"
-                >
-                  <td class="no-border">
-                    {{ alias.name }} ({{
-                      $filters.yesno(alias.is_preferred_synonym)
-                    }})
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </td>
-        </tr>
-        <tr>
-          <td>{{ $t('InterventionOverview.compound_def') }}</td>
-          <td
-            v-for="(
-              studyCompound, index
-            ) in studiesCompoundsStore.studyCompounds"
-            :key="`def-${index}`"
-          >
-            <template v-if="studyCompound.compound">
-              {{ studyCompound.compound.definition }}
             </template>
           </td>
         </tr>
@@ -263,12 +269,14 @@
             :key="`sub-${index}`"
             class="no-padding"
           >
-            <template v-if="pharmaceuticalProducts[studyCompound.compound.uid]">
+            <template
+              v-if="pharmaceuticalProducts[studyCompound.medicinal_product.uid]"
+            >
               <table
                 v-for="(ingredient, ingrIndex) in getPharmaProductIngredients(
-                  pharmaceuticalProducts[studyCompound.compound.uid]
+                  pharmaceuticalProducts[studyCompound.medicinal_product.uid]
                 )"
-                :key="`ingredient-${index}-${ingrIndex}`"
+                :key="`ingredient-${index}-${ingredient.id}`"
                 :class="{ 'border-top': ingrIndex > 0 }"
               >
                 <tbody class="ingredient">
@@ -391,7 +399,8 @@ export default {
         for (const item of studyCompound.medicinal_product
           .pharmaceutical_products) {
           pharmaceuticalProductsApi.getObject(item.uid).then((resp) => {
-            this.pharmaceuticalProducts[studyCompound.compound.uid] = resp.data
+            this.pharmaceuticalProducts[studyCompound.medicinal_product.uid] =
+              resp.data
           })
         }
       }
@@ -400,7 +409,7 @@ export default {
       let productIngredients = pharmaProduct.formulations.map((formulation) => {
         return formulation.ingredients?.map((ingredient) => {
           return {
-            id: `${pharmaProduct.uid}-ingredient-${ingredient.active_substance.long_number}`,
+            id: `${pharmaProduct.uid}-ingredient-${ingredient.active_substance.uid}`,
             title: getIngredientName(ingredient),
             halfLife: `${ingredient.half_life?.value} ${ingredient.half_life?.unit_label}`,
             lagTimes: ingredient.lag_times
@@ -465,7 +474,8 @@ tr {
 td,
 th {
   border: 1px solid black;
-  padding: 4px;
+  padding: 4px 8px;
+  vertical-align: top;
 }
 
 .ingredient span {

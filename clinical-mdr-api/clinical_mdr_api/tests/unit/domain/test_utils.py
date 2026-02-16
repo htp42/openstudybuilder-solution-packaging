@@ -15,72 +15,56 @@ from common import exceptions
 class TestServiceUtils(unittest.TestCase):
     @parameterized.expand(
         [
-            ("ak", "639-1", "names", ["Akan"]),
-            ("ak", "639-1", "639-1", "ak"),
-            ("ak", "639-1", "639-2/T", "aka"),
-            ("ak", "639-1", "639-2/B", "aka"),
-            ("ak", "639-1", "639-3", ["aka", "fat", "twi"]),
-            (
-                "ak",
-                "639-1",
-                None,
-                {
-                    "names": ["Akan"],
-                    "639-1": "ak",
-                    "639-2/T": "aka",
-                    "639-2/B": "aka",
-                    "639-3": ["aka", "fat", "twi"],
-                },
-            ),
-            ("aka", "639-3", "names", ["Akan"]),
-            ("aka", "639-3", "639-1", "ak"),
-            ("aka", "639-3", "639-2/T", "aka"),
-            ("aka", "639-3", "639-2/B", "aka"),
-            ("aka", "639-3", "639-3", ["aka", "fat", "twi"]),
-            (
-                "aka",
-                "639-3",
-                None,
-                {
-                    "names": ["Akan"],
-                    "639-1": "ak",
-                    "639-2/T": "aka",
-                    "639-2/B": "aka",
-                    "639-3": ["aka", "fat", "twi"],
-                },
-            ),
+            # Without return_key and names item, 639-1, 639-2, 639-3 as query
+            ("Akan", None, ["Akan"]),
+            ("ak", None, "ak"),
+            ("aka", None, "aka"),
+            ("fat", None, {"aka": "Akan", "fat": "Fanti", "twi": "Twi"}),
+            # With return_key and names item as query
+            ("Akan", "names", ["Akan"]),
+            ("Akan", "639-1", "ak"),
+            ("Akan", "639-2/T", "aka"),
+            ("Akan", "639-2/B", "aka"),
+            ("Akan", "639-3", {"aka": "Akan", "fat": "Fanti", "twi": "Twi"}),
+            # With return_key and 639-1 as query
+            ("ak", "names", ["Akan"]),
+            ("ak", "639-1", "ak"),
+            ("ak", "639-2/T", "aka"),
+            ("ak", "639-2/B", "aka"),
+            ("ak", "639-3", {"aka": "Akan", "fat": "Fanti", "twi": "Twi"}),
+            # With return_key and 639-2/T|639-2/B as query
+            ("aka", "names", ["Akan"]),
+            ("aka", "639-1", "ak"),
+            ("aka", "639-2/T", "aka"),
+            ("aka", "639-2/B", "aka"),
+            ("aka", "639-3", {"aka": "Akan", "fat": "Fanti", "twi": "Twi"}),
+            # With return_key and 639-3 item as query
+            ("fat", "names", ["Akan"]),
+            ("fat", "639-1", "ak"),
+            ("fat", "639-2/T", "aka"),
+            ("fat", "639-2/B", "aka"),
+            ("fat", "639-3", {"aka": "Akan", "fat": "Fanti", "twi": "Twi"}),
         ]
     )
-    def test_get_iso_lang_data(self, value, key, return_key, expected):
-        assert _utils.get_iso_lang_data(value, key, return_key) == expected
+    def test_get_iso_lang_data(self, value, return_key, expected):
+        assert _utils.get_iso_lang_data(value, return_key) == expected
 
     def test_get_iso_lang_data_raises_exception(self):
         self.assertRaises(
             exceptions.ValidationException,
             _utils.get_iso_lang_data,
             "AK",
-            "639-1",
             "639-3",
             False,
         )
-        self.assertRaises(
-            KeyError, _utils.get_iso_lang_data, "ak", "639-1", "NonExistingKey"
-        )
-        self.assertRaises(
-            exceptions.ValidationException,
-            _utils.get_iso_lang_data,
-            "ak",
-            "NonExistingKey",
-            "639-3",
-        )
+        self.assertRaises(KeyError, _utils.get_iso_lang_data, "ak", "NonExistingKey")
         self.assertRaises(
             exceptions.ValidationException,
             _utils.get_iso_lang_data,
             "NonExistingValue",
-            "639-1",
             "639-3",
         )
-        self.assertRaises(TypeError, _utils.get_iso_lang_data, 1, "639-1", "639-3")
+        self.assertRaises(TypeError, _utils.get_iso_lang_data, 1, "639-3")
 
     @parameterized.expand(
         [

@@ -104,7 +104,7 @@ The above dependency related principles are illustrated on the diagaram below:
 
 # General development workflow for DDD powered services
 
-In case of implementing some new feature in the clinical MDR API (or amending/fixing existing one) in most cases
+In case of implementing some new feature in the OpenStudyBuilder API (or amending/fixing existing one) in most cases
 a standard development workflow can be applied which consists of three phases:
 
 * design, development and testing of relevant **domain layer** classes

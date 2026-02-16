@@ -27,7 +27,10 @@ export default {
     return {}
   },
   mounted() {
-    this.addBreadcrumbsLevel(this.$route.params.term_id, undefined, 6)
+    this.addBreadcrumbsLevel(this.$t('CodeListDetail.code_list'))
+    this.addBreadcrumbsLevel(this.$t('CodelistTermsView.terms'))
+    this.addBreadcrumbsLevel(this.$t('CodelistTermDetail.term_detail'))
+    this.addBreadcrumbsLevel(this.$route.params.term_id)
   },
 }
 </script>

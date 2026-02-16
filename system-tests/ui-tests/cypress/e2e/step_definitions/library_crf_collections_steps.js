@@ -11,16 +11,15 @@ Given('[API] The CRF Collection in draft status exists', () => {
     cy.createCrfCollection(crfTemplateName)
 })
 
-When('The CRF Collection definition container is filled with data and saved', () => {
+When('The CRF Collection definition container is filled with data', () => {
     crfTemplateName = `CrfItem${Date.now()}`
     crfTemplateOid = `Oid${Date.now()}`
     fillNameAndOid()
     cy.selectDatePicker('crf-collection-effective-date', effectiveDate)
     cy.selectDatePicker('crf-collection-retired-date', retiredDate)
-    saveCrfTemplate('created')
 })
 
-When('The CRF Collection metadata are updated and saved', () => {
+When('The CRF Collection metadata are updated', () => {
     crfTemplateName += 'Update'
     crfTemplateOid += 'Update'
     effectiveDate += 1
@@ -28,7 +27,6 @@ When('The CRF Collection metadata are updated and saved', () => {
     fillNameAndOid()
     cy.selectDatePicker('crf-collection-effective-date', effectiveDate)
     cy.selectDatePicker('crf-collection-retired-date', retiredDate)
-    saveCrfTemplate('updated')
 })
 
 Then('The CRF Collection is visible in the table', () => {
@@ -48,12 +46,6 @@ Then('The approval popup window is displayed', () => {
       .should('be.visible') // Assert that the dialog is visible
       .and('contain', 'Approving the element will approve the following child elements:'); // Check that it contains the specific text
 });
-
-function saveCrfTemplate(action) {
-    cy.clickButton('save-button')
-    cy.waitForFormSave()
-    cy.checkSnackbarMessage(`${action}`)
-}
 
 function fillNameAndOid() {
     cy.fillInput('crf-collection-oid', crfTemplateOid)

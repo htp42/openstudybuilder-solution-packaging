@@ -8,6 +8,7 @@
         "close": "Close",
         "clear_all": "Clear all",
         "clear": "Clear",
+        "reset": "Reset",
         "endpoint": "Endpoint",
         "endpoints": "Endpoints",
         "timeframe": "Time frame",
@@ -65,6 +66,7 @@
         "cascade_update": "Are you sure you want to approve and update all related instantiations?",
         "definition": "Definition",
         "description": "Description",
+        "discard": "Discard",
         "unit": "Unit",
         "label": "Label",
         "order": "Order",
@@ -89,6 +91,8 @@
         "change_description": "Change description",
         "text": "text",
         "edit": "Edit",
+        "close_edit_mode": "Close edit mode",
+        "save_and_close": "Save and Close",
         "delete": "Delete",
         "approve": "Approve",
         "new_version": "New version",
@@ -367,13 +371,13 @@
             "general": "An activity group is a grouping of related activities. Activity groups are used for protocol SoA display and for searching in the List of Activities."
         },
         "CompoundsView": {
-            "general": "Definitions of compounds are created from the Compounds tab. If an alias name for a compound is needed, then this can be defined in the compound aliases tab."
+            "general": "Definitions of compounds are created from the Compounds tab. If an alias name for a compound is needed, then this can be defined in the compound aliases tab. Note, a default compound alias will initially be created. <br><br> The compound will be the main entity linked to a protocol reference for a compound, and the relevant compound alias will represent the named term used in context of the study protocol.<br><br>The compound is defined as a grouping for of one or more Medicinal Products definitions. Each Medicinal Product is also linked to a Pharmaceutical Product definition, and each of these are then related to Active Substances. The Active Substance is linked to Unique Ingredient (UNII) and Pharmacology Drug class Dictionary terms.<br><br>At study level a selection will be made to the compound synonym, thereby to the compound. Each study compound will then be linked to a study element in the study design structure with planned dosing according to the medicinal product definition."
         },
         "CompoundForm": {
             "sponsor_compound": "Indicate if this is a sponsor compound. Tick yes if sponsor is the authorisation holder/or future authorisation holder of the compound.",
             "analyte_number": "Analyte number (Non-clinical), example is AN000028 (The analyte number for semaglutide).",
-            "long_number": "Compound number (long). Example NNC0113-0000-0217. Only applicable for Novo Nordisk compound. Leave blank for other compounds.",
-            "short_number": "Compound number (short). Example NNC0113-0217. Only applicable for Novo Nordisk compound. Leave blank for other compounds. ",
+            "long_number": "Substance ID. Example NNC0113-0000-0217. Only applicable for Novo Nordisk compound. Leave blank for other compounds.",
+            "short_number": "Substance name. Example NNC0113-0217. Only applicable for Novo Nordisk compound. Leave blank for other compounds. ",
             "name": "The international nonproprietary name (INN) being the official generic and non-proprietary name given to a pharmaceutical drug or an active ingredient. Example: semaglutide.",
             "is_inn": "Tick No if INN hasn't been approved/published.",
             "definition": "A definition/description of the compound.",
@@ -399,8 +403,33 @@
         "CompoundAliasForm": {
             "step1_title": "Select compound for which you want to create an alias/nickname",
             "name": "Specify the new name/alias for the compound, e.g. MyNewDrug",
-            "sentence_case_name": "Sentence case name will be auto-populated based on the name/alias specified, e.g. mynewdrug",
+            "sentence_case_name": "Sentence case name will be auto-populated based on the name/alias specified in lower case, e.g. mynewdrug. But can be adjusted to use correct case for e.g. abbreviations.",
             "is_preferred_synonym": "Tick yes if this is the preferred synonym in your organisation."
+        },
+        "ActiveSubstanceForm": {
+            "inn": "The official INN name for the active substance.",
+            "analyte_number": "Sponsor identification number for the active substance.",
+            "name": "Name of the substance can be a sponsor name when an INN name is not yet defined.",
+            "id": "A sponsor identifier for the active substance.",
+            "unii": "Selection of UNII term by UNII name and ID. Start typing the INN and the INN will appear with the UNII e.g. Semaglutide (53AXN4NNHX). If the needed UNII for an INN   is missing, then it must be added to the independent UNII dictionary."
+        },
+        "PharmaceuticalProduct": {
+            "dosage_form": "Select dosage form (from CDISC CT codelist).",
+            "route_of_administration": "Select route of administration (from CDISC CT codelist)."
+        },
+        "PharmaceuticalProductForm": {
+            "ingredients": "Multiple ingredients can be defined for a pharmaceutical product. For each ingredient a selection of active substance must be made; a formulation, strength, unit for strength, half-life and unit for halphf-life can be defined; followed by lag-times and lag-time unit per SDTM domain. "
+        },
+        "MedicinalProduct": {
+            "compound": "Selection of related compound, where compound represent a set of medicinal products.",
+            "pharmaceutical_product": "Selection of pharmaceutical product.",
+            "medicinal_product": "Optional selection of dosing frequency when relevant to be specified for the medicinal product.",
+            "frequency": "Optional selection of dosing frequency when relevant to be specified for the medicinal product.",
+            "delivery_device": "Optional selection of what device the medicinal product is delivered in, when relevant to specify for the medicinal product. Based on sponsor codelist for delivery device.",
+            "dispenser": "Optional selection of how the medicinal product is dispensed, e.g. cartridge, when relevant to specify for the medicinal product. Based on sponsor codelist for compound dispensed in."
+        },
+        "MedicinalProductForm": {
+            "dose_values": "Optionally multiple sets of dose values and dose units can be defined when relevant to specify for the medicinal product."
         },
         "EndpointTemplateForm": {
             "name": "An endpoint consists of a title, timeframe and unit. Example: title: Change in systolic blood pressure, timeframe: from baseline to week 20, unit: mmHg. So put together 'Change in systolic blood pressure from baseline to week 20 (mmHg)'. A generic template could be defined as: Change in [ActivityInstance] from [Time Point Reference] to [Time Point Reference] ([Unit]). Add parameters enclosed in square brackets [ and ].",
@@ -503,6 +532,7 @@
             "studyintent": "Select the values that reflect the planned purposes of the therapy or device being investigated in the study",
             "trialtype": "Select the values that reflect the trial type(s) that is within the study purpose. For definition of the trial types see <a href='{url}' target='_blank'>[Trial Type Response]<a>",
             "trialphase": "Select relevant phase or stage, of the study",
+            "development_stage": "Select relevant development stage of the study",
             "studystoprule": "The rule(s), regulation(s) and/or condition(s) that determines the point in time when a clinical trial will be terminated. Stopping rule as specified in Protocol. If there is no stopping rule record 'NONE' in this field",
             "extensiontrial": "Indicate whether the study is an extension trial",
             "adaptivedesign": "Indicate if the study includes a prospectively planned opportunity for modification of one or more specified aspects of the study design and hypotheses based on analysis of data (usually interim data) from subjects in the study",
@@ -540,20 +570,21 @@
         },
         "StudyCompoundForm": {
             "general": "Compounds are defined in the OpenStudyBuilder Library. If a new compound or additional information to an existing compound is needed it must be defined in the library.",
-            "type_of_treatment": "Each Type of Treatment will be classified into IMP (Investigational Medical Product) or NIMP (Non-investigational Medical Product) - this will be used when generating the study interventions table for the protocol. Choose type of intervention from drop-down. Investigational Product (IMP):Following Study Compound will be linked to TSPARM 'TRT' (Investigational Therapy or Treatment) and SDTM.EX, Comparative Treatment (IMP): Following Study Compound will be linked to TSPARM 'COMPTRT' (Comparative Treatment Name) and SDTM.EX, Placebo Treatment (IMP): Following Study Compound will not be linked to TSPARM - but info used for SDTM.EX, Current Treatment (NIMP): Following Study Compound will be linked to TSPARM 'CURTRT' (Current Therapy or Treatment) and SDTM.EX. if Type of treatment is  either 'Investigational Product', 'Comparative Treatment' or 'Current Treatment' then NA can be ticked. This implies that no details for the compound will be/is provided (the next steps in this edit menu (select alias and details for the compound) will disappear. A reason for NA should be provided.",
-            "compound": "Choose compound from drop-down.",
+            "type_of_treatment": "Select the purpose of the treatment, e.g. Investigational product. It is possible to add additional study compounds after saving the first one, if applicable",
+            "compound": "Mandatory selection from the list of Compounds in the library. An overview will be provided after selection",
             "compound_alias": "Choose compound alias from drop-down",
+            "medicinal_product": "Mandatory selection of medicinal product linked to the selected compound. An overview will be provided after selection.",
             "dosage_form": "Choose from drop-down, which dosage form is used for the study.",
             "compound_strength_value": "Choose from drop-down, which strength is used for the study.",
             "route_of_admin": "Choose from drop-down which route of administration is applicable for the study.",
             "dispensed_in": "Choose from the drop-down the applicable for the study.",
             "device": "Choose from the drop-down the applicable for the study.",
-            "other": "Description of other information regarding the compound as applicable for the study."
+            "other": "Optional additional information"
         },
         "StudyCompoundDosingForm": {
-            "element": "Choose study element from drop-down",
-            "compound": "Choose compound from drop-down",
-            "dose_value": "Choose value from drop-down, e.g. 500mg",
+            "element": "Select relevant element where the compound will be used",
+            "compound": "Mandatory selection of the compound to be used in the selected element. An overview will be provided after selection",
+            "dose_value": "Optional selection of a dose value",
             "dose_frequency": "Choose value from drop-down, e.g. Daily"
         },
         "StudyObjectiveTable": {
@@ -682,7 +713,7 @@
             "general": "Overall specification of the participants that will be recruited to the study"
         },
         "StudyInterventionsTable": {
-            "general": "The description of drug, device, therapy, or process under investigation in a clinical study. Follow the tabs to fill in the details on the compounds/other interventions for the study. The Overview tab will provide a tabular overview of the compounds specified."
+            "general": "In Study Compounds the compounds to be used in the study are defined based on the compound library. <br><br> In Study Compound Dosing it is possible to specify the actual use in the study by linking to element from the study structure. It is also possible to add dose levels to detail the use of the compound in study further.<br><br>An overview will be provided after the selection of Study Compounds and Study Compound Dosing. The overview provides a table containing the selected study compound(s) as headers with all attributes related to the specific compound and selected dosing, if applicable."
         },
         "StudyTitleView": {
             "general": "Click on the pencil to add a study title or copy from an existing study.",
@@ -974,6 +1005,13 @@
             "cohort_short_name": "Cohort/subpop. short name can be filled in with free text but is most commonly the same as the cohort/subpop. name or sometimes just the dose level.",
             "link_arms_cohorts": "Enter the number of participants per branch. It is possible to copy the number of participants from the first row to all other rows. Branch name and branch short name is automatically generated based on the cohort and arm that the branch is assigned to. Using the Edit button, it is possible to rename the branch name and branch short name."
         },
+        "StudyDataSpecifications": {
+            "general": "The 'Data Specifications' page displays all selected study activities and allows linking each activity to its corresponding activity instances. Additionally for each activity instances the study supplier, importance or baseline flags may be defined (see 'Study Activity Instances' page). It can also visualize activities and their instances in the operational SoA view, showing their linkage with study visits (see 'Operational SoA' page).",
+            "instances_actions": "This table lists study activities and their instances. Each row shows one activity linked to one activity instance. If an activity is linked to multiple instances, it will appear in multiple rows, each showing a different instance. The State/Actions column shows the state of an activity or activity instance, or the action expected to be taken. There are six possible states/actions: <br/> 1) Review not needed <br/> 2) Review needed <br/> 3) Reviewed <br/> 4) Add instance <br/> 5) Remove instance <br/> 6) Not applicable <br/> 'Review not needed' requires no action from the user. It is a state specific to a mandatory activity instance, meaning the instance is required for the activity and is not expected to be removed. When the 'Review not needed' state is shown for an activity–activity instance pair, the 'Reviewed' checkbox is automatically checked. The row with the 'Review needed' state requires attention from the user. The user should verify whether the activity–activity instance pair meets study requirements. The activity instance may need to be changed to a different instance, or the activity may need to be linked to another activity instance. After the necessary changes are made, the user can select the 'Reviewed' checkbox for each row carrying the 'Review needed' state, which will change the state to 'Reviewed'. 'Add instance' state/action is displayed for an activity row that is not linked to any activity instance. The 'Reviewed' checkbox cannot be selected in this situation, because the expected action is to first create the relationship between the activity and an instance. 'Remove instance' is shown for an activity for which multiple instances are not allowed. This means that such an activity can only be paired with a single instance at the study level. The expected action from the user is to remove the unwanted activity–activity instance pair by clicking the ellipsis icon and selecting Delete Activity Instance relationship. 'Not applicable' is a state for activities that are not expected to be linked to any instances and for which the data collection attribute is set to NO. No user action is required. The 'Reviewed' checkbox cannot be checked for activities that carry the 'Not applicable' state. Please note that for rows with the 'Reviewed' and 'Review not needed' states, the 'Reviewed' checkbox may be ticked off. Clearing it will change the state/action to 'Review needed'",
+            "instances_ellipsis": "Use the ellipsis (three dots) to the left of an activity to access these options: <br/> 1) Edit Activity – Instance Relationship, <br/> 2) Delete Activity – Instance Relationship, <br/> 3) Update Instance to new version. <br/> The Edit option allows changing the activity–activity instance relationship for an activity. A new relationship (activity instance) can also be added. When adding or editing an instance, the data supplier (including data origin and data type), importance and baseline flags can be specified for the selected instance. These changes can also be made via the table edit mode — to open the table in this mode, click the pencil icon. The Delete option removes unwanted activity–activity instance pairs from the table. The Update Instance to New Version option updates an instance to the latest version available in the OpenStudyBuilder library. After an activity instance used in your trial has been updated in the library, you will be notified by a red exclamation‑mark icon displayed to the left of the activity row. In that situation, the Update Instance to New Version option becomes available; otherwise, this option is not availa-ble. If the user decides to update the instance to the latest version, the red exclamation‑mark icon will disappear. If the update is declined and the instance is kept as is, the red icon will be replaced by a yellow exclamation‑mark icon.",
+            "instances_exclamation": "All, Red and Yellow exclamation‑mark buttons are placed in the middle of the page just above the table. By default, the table is set to show all instances — the All button is turned on. However, the user may want to filter the table to see which study instances have been updated in the library to a new version. To do that, select the button with the red exclamation‑mark. To filter the table to see instances that were updated in the library but for which the user declined the update (instances kept as they are), select the button with the yellow exclamation‑mark.",
+            "instances_updates": "By clicking the Review Activity Instance Updates button, the user can open a table that dis-plays all instances that were updated and require the user's decision to accept or decline. Users can review them and take action in a batch. Note that the table does not show instances that have been retired."
+        },
         "DataSupplierView": {
             "DataSupplierTable": {
                 "general": "Default data suppliers are defined here. Click the + button to add a new supplier. Only suppliers in the Final state are available for use at the study level. To retire a supplier, use the Inactivate option in the left context menu (the three vertical dots to the left of the supplier row) then the supplier state will be changed to Retired. Retired suppliers may be reactivated using the Reactivate option in the left context menu."
@@ -982,7 +1020,9 @@
                 "name": "Please enter a unique name for the data supplier. Note that the supplier you add must be assigned to a single data type, which will be used as the default.",
                 "supplier_type": "Data types are defined according to the sponsor-defined code list 'Data Supplier Type'. One supplier can be assigned to one (default) data type.",
                 "description": "Use this field for any extra descriptive notes about the supplier (e.g., former name).",
-                "order": "Provide a sequence number to describe the supplier's position on the dedicated pull-down list.",
+                "order": "This is a sequence number indicating the supplier’s position in the dedicated pull-down list. By default, the field is auto-assigned with the lowest available integer.",
+                "order_placeholder": "Auto-assigned",
+                "order_hint": "Leave empty to auto-assign, or enter specific order to insert at that position",
                 "api_base_url": "Provide API base URL if known.",
                 "ui_base_url": "Provide UI base URL if known.",
                 "origin_source": "<b>Clinical Data Sponsor</b> - data recorder by sponsor, for example derived data; <b>Investigator</b> - data reported by the investigator; <b>Study Subject</b> - data reported by the participant; <b>Vendor</b> - data reported by the Vendor.",
@@ -1718,6 +1758,7 @@
         "device_study_indicator": "FDA-regulated device study indicator",
         "post_auth_safety_indicator": "Post authorization safety study indicator",
         "confirmed_resp_min_duration": "Confirmed response minimum duration",
+        "development_stage": "Development stage",
         "none": "NONE"
     },
     "StudyProperties": {
@@ -1806,7 +1847,8 @@
         "japanese_trial_registry_number_jrct": "Japanese Trial Registry Number",
         "national_medical_products_administration_nmpa_number": "NMPA Number",
         "eudamed_srn_number": "EUDAMED number",
-        "investigational_device_exemption_ide_number": "Investigational Device Exemption Number"
+        "investigational_device_exemption_ide_number": "Investigational Device Exemption Number",
+        "eu_pas_number": "EU PAS number"
     },
     "DurationField": {
         "label": "Unit"
@@ -2142,8 +2184,8 @@
         "type_of_treatment": "Type of treatment",
         "reason_for_missing": "Reason for missing",
         "sponsor_compound": "Sponsor compound",
-        "compound_number_long": "Compound number (long)",
-        "compound_number_short": "Compound number (short)",
+        "compound_number_long": "Substance ID",
+        "compound_number_short": "Substance name",
         "analyte_number": "Analyte number",
         "is_inn": "Is INN",
         "inn": "INN",
@@ -2762,8 +2804,8 @@
         "delivery_device": "Delivered in",
         "half_life": "Half-life",
         "lag_time": "Lag-time",
-        "nnc_number_long": "Compound number (long)",
-        "nnc_number_short": "Compound number (short)",
+        "nnc_number_long": "Substance ID",
+        "nnc_number_short": "Substance name",
         "analyte_number": "Analyte number",
         "brand_name": "Brand name",
         "compound": "Compound",
@@ -2818,8 +2860,8 @@
     "ActiveSubstance": {
         "inn": "INN",
         "analyte_number": "Analyte number",
-        "long_number": "Compound number (long)",
-        "short_number": "Compound number (short)",
+        "long_number": "Substance ID",
+        "short_number": "Substance name",
         "unii": "UNII",
         "pharma_class": "Pharmacological class:"
     },
@@ -2831,6 +2873,11 @@
         "reactivate_success": "Active substance reactivated"
     },
     "ActiveSubstanceForm": {
+        "inn": "INN",
+        "analyte_number": "Analyte number",
+        "id": "Substance ID",
+        "name": "Substance name",
+        "unii": "UNII",
         "add_title": "Add active substance",
         "edit_title": "Edit active substance",
         "add_success": "Active substance added",
@@ -3277,6 +3324,7 @@
     "DictionaryTermTable": {
         "lower_case_name": "Lower case name",
         "abbreviation": "Abbreviation",
+        "definition": "Definition",
         "indications": "Indications",
         "diagnosis_group": "Diagnosis group",
         "add_title": "Add term",
@@ -3289,10 +3337,11 @@
         "class_name": "Class name",
         "class_name_lower_case": "Class name (lower case)",
         "unii_title": "UNII (Unique Ingredient Identifier) for Active Substances",
-        "unii_id": "UNII ID",
+        "unii_id": "UNII",
         "substance_name": "Substance name",
         "substance_name_lower_case": "Substance name (lower case)",
-        "ucum_title": "UCUM (Unified Code for Units of Measure)"
+        "ucum_title": "UCUM (Unified Code for Units of Measure)",
+        "pclass": "Pharmaceutical class (MED-RT)"
     },
     "DictionaryTermForm": {
         "title": "Add/edit a {dictionaryName} term",
@@ -3512,7 +3561,8 @@
         "utn": "Universal Trial Number",
         "eudract_number": "EudraCT number",
         "ind_number": "IND number",
-        "study_phase": "Study phase"
+        "study_phase": "Study phase",
+        "development_stage": "Development stage"
     },
     "ActivitiesView": {
         "title": "Study Activities",
@@ -3533,10 +3583,13 @@
         "week": "Week",
         "time_unit": "Time unit:",
         "baseline_as_time_zero": "Baseline shown as time 0",
+        "show_split_menu": "Split SoA",
         "show_epochs": "Show epochs",
         "show_milestones": "Show milestones",
         "soa_settings": "SoA Settings",
-        "soa_settings_message": "Changes made here will apply to the Detailed, Protocol and Operational Schedule of Activities."
+        "soa_settings_message": "Changes made here will apply to the Detailed, Protocol and Operational Schedule of Activities.",
+        "split_info_1": "Choose where you wish to split the SoA in the protocol document.",
+        "split_info_2": "The selected visit(s) will appear as first visit(s) in the new protocol SoA tables."
     },
     "ProtocolInterventionsTable": {
         "title": "Protocol Interventions",
@@ -3569,7 +3622,8 @@
         "batch_activities_title": "Review updates to Activities",
         "batch_instances_title": "Review updates to Activity Instances",
         "review_changes": "Review changes",
-        "activity_status": "Activity status"
+        "activity_status": "Activity status",
+        "no_requested_in_batch_info": "Requested activity updates are not included in this list."
     },
     "StudyActivityTable": {
         "confirm_delete": "The study activity '{activity}' will be removed",
@@ -3624,7 +3678,12 @@
     "StudyDataSpecifications": {
         "title": "Study Data Specifications",
         "tab1_title": "Study Activity Instances",
-        "tab2_title": "Operational SoA"
+        "tab2_title": "Operational SoA",
+        "general": "General",
+        "instances_actions": "Study Activity Instances – State/Actions and Reviewed checkbox",
+        "instances_ellipsis": "Study Activity Instances – Ellipsis icon (three dots)",
+        "instances_exclamation": "Study Activity Instances - All, Red, and Yellow exclamation mark icons",
+        "instances_updates": "Study Activity Instances – Review Activity instance updates"
     },
     "StudyActivityInstances": {
         "instance": "Instance",
@@ -3639,6 +3698,8 @@
         "unmark_as_important": "Unmark as Important",
         "instance_deleted": "Study Activity Instance deleted",
         "instance_updated": "Study Activity Instance updated",
+        "instances_updated": "{count} Study Activity Instance(s) updated",
+        "instances_update_failed": "Failed to update Study Activity Instances",
         "instance_marked_important": "Study Activity Instance marked as important",
         "instance_unmarked_important": "Study Activity Instance unmarked as important",
         "instance_created": "New Study Activity Instances created",
@@ -3664,7 +3725,10 @@
         "reviewed": "Reviewed",
         "important": "Important",
         "baseline_flags": "Baseline flags",
-        "baseline_visits": "Baseline visits"
+        "baseline_visits": "Baseline visits",
+        "data_supplier": "Data Supplier",
+        "origin_type": "Origin Type",
+        "origin_source": "Origin Source"
     },
     "StudyActivityForm": {
         "add_title": "Add study activities",
@@ -3692,7 +3756,9 @@
         "placeholder_radio_title": "Create a placeholder activity",
         "placeholder_radio_text": "Create a placeholder activity without submitting for approval",
         "soa_group_required_info": "Every selected Activity needs SoA Group",
-        "use_the_same_group": "Use the same SoA group for all"
+        "use_the_same_group": "Use the same SoA group for all",
+        "exchanging_placeholder": "You are exchanging placeholder",
+        "exchanging_study_activity": "You are exchanging study activity"
     },
     "StudyActivityEditForm": {
         "title": "Edit study activity",
@@ -3763,7 +3829,8 @@
         "add_study_activity": "Add study activity",
         "add_visit": "Add visit",
         "complexity_score": "Complexity score:",
-        "search_activities": "Search Activities"
+        "search_activities": "Search Activities",
+        "footnote_added_to_visit_group": "Footnote is being added to Visit group, it will appear under each Visit in the group."
     },
     "StudyActivityInstructionTable": {
         "activities": "Activities",
@@ -3965,9 +4032,15 @@
         "cell_updated": "Cell updated",
         "cell_created": "Cell created",
         "cell_deleted": "Cell deleted",
+        "branch": "Branch",
         "branches": "Branches",
+        "epoch": "Epoch",
         "matrix_updated": "Design Matrix updated",
-        "matrix_guide": "To complete study design, please assign elements to all epochs per arm/branch."
+        "matrix_guide": "To complete study design, please assign elements to all epochs per arm/branch.",
+        "transition_rule": "Transition rule",
+        "transition_rules": "Transition rules",
+        "transition_rules_help": "Enable transition rules mode",
+        "history_title": "Design matrix history"
     },
     "CRFCollections": {
         "add_collection": "Add Collection",
@@ -4108,7 +4181,17 @@
         "delete_warning": "This Item is used in {count} Item Group(s). Are you sure you want to delete it?",
         "item_history_title": "History for item [{itemUid}]",
         "sponsor_pref_name": "Sponsor preferred name",
-        "displayed_name": "Displayed name"
+        "displayed_name": "Displayed name",
+        "activity_instance_links": "Activity Instance Links",
+        "manage_activity_instance_links": "Manage Activity Instance Links",
+        "no_activity_instance_links": "No Activity Instance Links",
+        "activity_instance_already_defined": "Activity Instance with same Activity Item Class already defined for this CRF Item",
+        "activity_instance": "Activity Instance",
+        "activity_item_class": "Activity Item Class",
+        "preset_response_value": "Preset Response Value",
+        "primary": "Primary",
+        "value_condition": "Value Condition",
+        "value_dependent_map": "Value Dependent Map"
     },
     "CRFAliases": {
         "add": "Add Alias",
@@ -4341,13 +4424,15 @@
     },
     "CollapsibleVisitGroupForm": {
         "title": "Add collapsible visit group",
-        "warning": "Automatic creation of a new collapsible visit group failed because selected visits differ in some way. You can still force creation by selecting a visit to act as a template to overwrite the other ones.",
+        "warning": "Automatic creation of a new collapsible visit group failed because activities at selected visits differ in some way. You can still force creation by selecting a visit to act as a template to overwrite the other ones.",
         "visit_template": "Select a template",
         "creation_success": "Collapsible visit group created",
         "format_title": "Group selected visits together",
         "format_question": "How do you want to show collapsed visits?",
         "format_info": "The visit timing will be shown in a similar way.",
+        "collapsing_visits_with_different_footnotes": "Footnotes for visits differ. Visit group shows all Footnotes. Please ensure that it is clear to which Visit(s) the Footnote applies.",
         "range_visits": "Range ({visits})",
+        "range_selection_only_consecutive": "Only visits that are consecutive can be grouped in a range group.",
         "list_visits": "List ({visits})",
         "selected_visits": "Visits selected ({number}):"
     },
@@ -4870,13 +4955,13 @@
         "step1_long_title": "Choose which activity to add an Activity Instance to",
         "step1_help": "When you select an activity that is part of multiple groupings, be aware that you select the right grouping. Make sure that the Activity Instance you want to create is not already existing with the same Activity grouping. Alternatively, you can add a new grouping to the Activity Instance.",
         "step2_title": "Required",
-        "step2_long_title": "Required Activity Item Classes",
+        "step2_long_title": "Select Activity Item Classes",
         "step3_title": "PARAM/PARAMCD",
         "step3_long_title": "Optional Activity Item Classes for PARAM/PARAMCD",
         "step3_second_title": "Activity Instance data",
         "step4_title": "Data specification",
         "step4_long_title": "Additional Activity Item Classes for data specification",
-        "step4_help": "If you only choose one value that will be the default in comparison to multiple values where there will be choices in the data collection instruments.",
+        "step4_help": "If you only choose one value within an activity item class, it will be the default in comparison to multiple values where there will be choices in the data collection instruments.",
         "activity_group": "Activity group",
         "activity_subgroup": "Activity subgroup",
         "activity_name": "Activity",
@@ -4887,8 +4972,9 @@
         "value": "Value",
         "attributes": "Attributes",
         "molecular_weight": "Molecular weight (optional)",
+        "molecular_weight_hint": "Molecular weight must be a valid number",
         "add_activity_item_class": "Add Activity Item Class",
-        "data_category": "Data category (optional)",
+        "data_category": "Data category",
         "data_subcategory": "Data subcategory (optional)",
         "required_for_activity": "Required for activity",
         "required_for_activity_help": "This flag is used in the standards governance process. The flag is used when some or all instances under an activity is required to be selected when that activity is selected, as an example in questionnaires",
@@ -4908,6 +4994,8 @@
         "code_submission_value": "Code submission value",
         "name_submission_value": "Name submission value",
         "activity_not_selected": "You must select an activity from the list",
+        "mandatory_activity_item_class_missing_value": "The mandatory Activity Item Class '{name}' must have a CT term value selected",
+        "mandatory_activity_item_classes_missing_values": "The following mandatory Activity Item Classes must have CT term values selected: {names}",
         "codelist": "Codelist",
         "allow_manual_edit": "Customize",
         "selected_activity": "Selected activity:"
@@ -5024,5 +5112,8 @@
         "of": "of",
         "next_aria_label": "Go to next page",
         "previous_aria_label": "Go to previous page"
+    },
+    "ElementDropdownList": {
+        "transition_rule_form_title": "Transition Rule"
     }
 }

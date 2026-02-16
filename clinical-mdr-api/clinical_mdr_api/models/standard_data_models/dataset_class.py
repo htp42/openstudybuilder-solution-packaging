@@ -5,12 +5,12 @@ from pydantic import Field
 from clinical_mdr_api.models.utils import BaseModel
 
 
-class SimpleDataModel(BaseModel):
+class SimpleDataModelForDatasetClass(BaseModel):
     data_model_name: Annotated[str, Field()]
     ordinal: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
 
 
-class SimpleDataset(BaseModel):
+class SimpleDatasetForDatasetClass(BaseModel):
     uid: Annotated[str, Field()]
     dataset_name: Annotated[str, Field()]
 
@@ -26,7 +26,7 @@ class DatasetClass(BaseModel):
     parent_class: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
-    data_models: Annotated[list[SimpleDataModel], Field()]
+    data_models: Annotated[list[SimpleDataModelForDatasetClass], Field()]
 
     @classmethod
     def from_repository_output(cls, input_dict: dict[str, Any]):
@@ -38,7 +38,7 @@ class DatasetClass(BaseModel):
             catalogue_name=input_dict["catalogue_name"],
             parent_class=input_dict.get("parent_class_name"),
             data_models=[
-                SimpleDataModel(
+                SimpleDataModelForDatasetClass(
                     data_model_name=data_model.get("data_model_name"),
                     ordinal=data_model.get("ordinal"),
                 )

@@ -850,6 +850,7 @@ class QueryService:
             WHEN 'national_medical_products_administration_nmpa_number' THEN 'C98714'
             WHEN 'eudamed_srn_number' THEN 'C98714'
             WHEN 'investigational_device_exemption_ide_number' THEN 'C98714'
+            WHEN 'eu_pas_number' THEN 'C98714'
             WHEN 'confirmed_response_minimum_duration' THEN 'C98715'
             WHEN 'is_adaptive_design' THEN 'C146995'
             WHEN 'study_stop_rules' THEN 'C49698'
@@ -893,6 +894,7 @@ class QueryService:
             WHEN sf.field_name='national_medical_products_administration_nmpa_number' THEN 'NMPA'
             WHEN sf.field_name='eudamed_srn_number' THEN 'ESN'
             WHEN sf.field_name='investigational_device_exemption_ide_number' THEN 'IDE'
+            WHEN sf.field_name='eu_pas_number' THEN 'EPN'
             WHEN sf:StudyTimeField
                 THEN 'Not Controlled TimeField'
             WHEN sf:StudyIntField

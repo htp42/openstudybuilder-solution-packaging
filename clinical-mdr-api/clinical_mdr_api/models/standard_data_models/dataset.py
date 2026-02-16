@@ -9,14 +9,13 @@ class SimpleDatasetClass(BaseModel):
     dataset_class_uid: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
-    ordinal: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
     dataset_class_name: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
 
 
 class SimpleDataModelIG(BaseModel):
-    ordinal: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
+    ordinal: Annotated[int | None, Field(json_schema_extra={"nullable": True})] = None
     data_model_ig_name: Annotated[str, Field()]
 
 
@@ -29,7 +28,6 @@ class Dataset(BaseModel):
     description: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
-    catalogue_name: Annotated[str, Field()]
     implemented_dataset_class: Annotated[
         SimpleDatasetClass | None, Field(json_schema_extra={"nullable": True})
     ] = None
@@ -42,7 +40,6 @@ class Dataset(BaseModel):
             label=input_dict.get("standard_value").get("label"),
             title=input_dict.get("standard_value").get("title"),
             description=input_dict.get("standard_value").get("description"),
-            catalogue_name=input_dict["catalogue_name"],
             implemented_dataset_class=(
                 SimpleDatasetClass(
                     dataset_class_uid=input_dict.get("implemented_dataset_class").get(
@@ -51,7 +48,6 @@ class Dataset(BaseModel):
                     dataset_class_name=input_dict.get("implemented_dataset_class").get(
                         "dataset_class_name"
                     ),
-                    ordinal=input_dict.get("implemented_dataset_class").get("ordinal"),
                 )
                 if input_dict.get("implemented_dataset_class")
                 else None

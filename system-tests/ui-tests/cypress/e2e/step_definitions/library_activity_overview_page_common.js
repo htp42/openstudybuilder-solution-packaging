@@ -1,4 +1,5 @@
 import { activityInstance_uid, activity_uid, group_uid, subgroup_uid} from "../../support/api_requests/library_activities";
+import { apiSubgroupName } from "./api_library_steps"
 
 const { When, Then, Given } = require("@badeball/cypress-cucumber-preprocessor");
 
@@ -73,7 +74,7 @@ Given('The linked subgroup is found in the Groups table with status {string} and
 })
 
 Given('The new linked subgroup is found in the Groups table with status {string} and version {string}', (status, version) => {
-    verifyLinkedItem('Activity subgroups', secondSubgroup, status, version, 1)
+    verifyLinkedItem('Activity subgroups', apiSubgroupName, status, version, 1)
 })
 
 Given('The linked activity is found in the Acivities table with status {string} and version {string}', (status, version) => {
@@ -115,15 +116,6 @@ Then('Activity group, activity subgroup and activity values are available in the
     cy.checkRowByIndex(0, 'Activity group', groupName)
     cy.checkRowByIndex(0, 'Activity subgroup', subgroupName) 
     cy.checkRowByIndex(0, 'Activity', activityName)  
-})
-
-When('I create a new subgroup and link it to the existing group', () => { 
-    secondSubgroup = `Sg${Date.now()}`
-    cy.get('[data-cy="groupform-activity-group-dropdown"] input').type(groupName)
-    cy.selectFirstVSelect('groupform-activity-group-dropdown')
-    cy.fillInput('groupform-activity-group-field', secondSubgroup)
-    cy.fillInput('groupform-abbreviation-field', 'abbsg2')
-    cy.fillInput('groupform-definition-field', 'defsg2') 
 })
 
 Then('The Activity Instance Classes table is empty', () => verifyIfTableIsEmpty('Activity Instance Classes', 'No data available'))
@@ -284,6 +276,15 @@ When('{int} result is present in the {string} table', (numberOfResults, tableNam
     cy.contains('.section-header', tableName).parent().within(() => cy.get('table tbody tr').should('have.length', numberOfResults))
 })
 
+Then("Activity Item Class {string} with value {string} and type {string} is present in the table", (itemClass, value, type) => {
+    cy.contains('.section-header', 'Activity Items').parent().within(() => {
+        cy.contains('table tbody tr', itemClass).invoke('index').then(rowIndex => {
+            verifyTableRow('Name', rowIndex, value)
+            verifyTableRow('Data type', rowIndex, type)
+        })
+    })
+})
+
 When('[API] A subgroup connected to two to groups is created', () => {
     cy.createTwoGroups(), cy.approveTwoGroups()
     cy.createSubGroupWithTwoGroups(), cy.approveSubGroup()
@@ -330,6 +331,11 @@ When('[API] Fetch names of activity with two connected instances', () => {
     cy.getActivityInstanceNameByUid().then(text => instanceName = text)
 })
 
+function verifyTableRow(columnName, rowIndex, value) {
+    cy.contains('table thead th', columnName).invoke('index').then(columnIndex => {
+        cy.get('table tbody tr').eq(rowIndex).find('td').eq(columnIndex).should('have.text', value)
+    })
+}
 function openOverviewPage(name, uid) {
     cy.visit(`/library/activities/${name}/${uid}/overview`)
     cy.waitForPage()
@@ -389,5 +395,6 @@ function setFilterValue(tableName, filterName, filterValue) {
     cy.contains('.section-header', tableName).parent().within(() => {
         cy.contains('[data-cy="filter-field"]', filterName).click()
     })
-    cy.contains('.v-list .v-list-item-title', filterValue).click()
+    cy.get('.v-list [placeholder="Search"]').click().clear().type(filterValue)
+    cy.contains('.v-list .v-list-item-title', filterValue.slice(0, 10)).click()
 }

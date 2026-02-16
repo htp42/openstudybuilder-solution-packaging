@@ -50,7 +50,6 @@
                     :rules="[formRules.required]"
                     density="compact"
                     clearable
-                    @update:model-value="clearSubgroup(index)"
                   />
                 </div>
                 <div data-cy="activityform-activity-subgroup-class">
@@ -60,16 +59,11 @@
                     "
                     :label="$t('ActivityForms.activity_subgroup')"
                     data-cy="activityform-activity-subgroup-dropdown"
-                    :items="filteredSubGroups(index)"
+                    :items="activitiesStore.activitySubGroups"
                     item-title="name"
                     item-value="uid"
                     density="compact"
                     clearable
-                    :disabled="
-                      form.activity_groupings[index].activity_group_uid
-                        ? false
-                        : true
-                    "
                     :rules="[formRules.required]"
                   />
                 </div>
@@ -252,7 +246,32 @@ const helpItems = [
 const editing = ref(false)
 
 onMounted(() => {
-  activitiesStore.getGroupsAndSubgroups()
+  // When editing, filter sub-groups to only show Final status
+  if (!_isEmpty(props.editedActivity)) {
+    // add the existing group and subgroup UIDs to the filter so they show up in the dropdowns
+    const usedGroupingUIDs = []
+    for (const grouping of props.editedActivity.activity_groupings) {
+      usedGroupingUIDs.push(grouping.activity_group_uid)
+      usedGroupingUIDs.push(grouping.activity_subgroup_uid)
+    }
+    const statusFilter = {
+      status: { v: [statuses.FINAL], op: 'eq' },
+      uid: { v: usedGroupingUIDs, op: 'eq' },
+    }
+    activitiesStore.getGroupsAndSubgroups(statusFilter, 'or').then(() => {
+      // Fetch full activity object and initialize form after data is loaded
+      activities
+        .getObject('activities', props.editedActivity.uid)
+        .then((resp) => {
+          initForm(resp.data)
+        })
+    })
+  } else {
+    const statusFilter = {
+      status: { v: [statuses.FINAL], op: 'eq' },
+    }
+    activitiesStore.getGroupsAndSubgroups(statusFilter)
+  }
 })
 
 const title = computed(() => {
@@ -265,9 +284,26 @@ watch(
   () => props.editedActivity,
   (value) => {
     if (!_isEmpty(value)) {
-      activities.getObject('activities', value.uid).then((resp) => {
-        initForm(resp.data)
+      // Fetch sub-groups with Final status filter when editing
+      const usedGroupingUIDs = []
+      for (const grouping of value.activity_groupings) {
+        usedGroupingUIDs.push(grouping.activity_group_uid)
+        usedGroupingUIDs.push(grouping.activity_subgroup_uid)
+      }
+      const statusFilter = {
+        status: { v: [statuses.FINAL], op: 'eq' },
+        uid: { v: usedGroupingUIDs, op: 'eq' },
+      }
+      activitiesStore.getGroupsAndSubgroups(statusFilter, 'or').then(() => {
+        activities.getObject('activities', value.uid).then((resp) => {
+          initForm(resp.data)
+        })
       })
+    } else {
+      const statusFilter = {
+        status: { v: [statuses.FINAL], op: 'eq' },
+      }
+      activitiesStore.getGroupsAndSubgroups(statusFilter)
     }
   }
 )
@@ -280,25 +316,6 @@ watch(
     }
   }
 )
-
-onMounted(() => {
-  if (!_isEmpty(props.editedActivity)) {
-    initForm(props.editedActivity)
-  }
-})
-
-function filteredSubGroups(index) {
-  if (!form.value.activity_groupings[index].activity_group_uid) {
-    return []
-  }
-  return activitiesStore.activitySubGroups.filter(
-    (el) =>
-      el.status !== statuses.DRAFT &&
-      el.activity_groups.find(
-        (o) => o.uid === form.value.activity_groupings[index].activity_group_uid
-      ) !== undefined
-  )
-}
 
 function initForm(value) {
   editing.value = true
@@ -334,10 +351,6 @@ async function cancel() {
     }
   }
   close()
-}
-
-function clearSubgroup(index) {
-  form.value.activity_groupings[index].activity_subgroup_uid = null
 }
 
 async function close() {

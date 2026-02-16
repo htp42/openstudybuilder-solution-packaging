@@ -42,7 +42,7 @@ MATCH (package:CTPackage {name:$package_name})-[:CONTAINS_CODELIST]->(package_co
 (package_term:CTPackageTerm)-[:CONTAINS_ATTRIBUTES]->(term_attr_val:CTTermAttributesValue)<-[versions:HAS_VERSION]-
 (term_attr_root:CTTermAttributesRoot)<-[:HAS_ATTRIBUTES_ROOT]-(term_root:CTTermRoot)
 WITH term_root,
-    [(codelist_root)-[:HAS_TERM]->(term_root) | codelist_root.uid] AS codelists,
+    [(codelist_root)-[:HAS_TERM]->(:CTCodelistTerm)-[:HAS_TERM_ROOT]->(term_root) | codelist_root.uid] AS codelists,
     term_attr_val,
     max(versions.start_date) AS latest_date
 WITH collect(apoc.map.fromValues([term_root.uid, {
@@ -129,6 +129,7 @@ def run_querystring_read(tx: Transaction, query: str):
 def list_cats_and_packages(tx: Transaction):
     cypher = """
     MATCH (pack:CTPackage)--(cat:CTCatalogue)
+    WHERE NOT (pack)-[:EXTENDS_PACKAGE]->(:CTPackage)
     WITH cat, pack
     ORDER BY pack.effective_date
     WITH cat, collect(pack) AS packages
@@ -144,8 +145,6 @@ def are_terms_different(left_term, right_term):
         left_term["change_date"] != right_term["change_date"]
         or left_value["preferred_term"] != right_value["preferred_term"]
         or left_value.get("synonyms") != right_value.get("synonyms")
-        or left_value.get("code_submission_value") != right_value.get("code_submission_value")
-        or left_value.get("name_submission_value") != right_value.get("name_submission_value")
         or left_value.get("definition") != right_value.get("definition")
     )
 
@@ -241,7 +240,7 @@ def process_packages(session, data):
             prev_package = package
 
 
-def process_ct_packages_changes(tx, old_package_name: str, new_package_name: str) -> dict:
+def process_ct_packages_changes(tx, old_package_name: str, new_package_name: str):
     print(f"\n{old_package_name} --> {new_package_name}")
     query_params = {
         "old_package_name": old_package_name,

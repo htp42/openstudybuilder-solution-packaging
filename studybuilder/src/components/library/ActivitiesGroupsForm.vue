@@ -10,22 +10,6 @@
     >
       <template #body>
         <v-form ref="observer">
-          <v-row v-if="subgroup" data-cy="groupform-subgroup-class">
-            <v-col>
-              <v-autocomplete
-                v-model="form.activity_groups"
-                :items="groups"
-                :label="$t('ActivityForms.groups')"
-                data-cy="groupform-activity-group-dropdown"
-                item-title="name"
-                item-value="uid"
-                density="compact"
-                clearable
-                multiple
-                :rules="[formRules.required]"
-              />
-            </v-col>
-          </v-row>
           <v-row data-cy="groupform-activity-group-class">
             <v-col>
               <v-text-field
@@ -167,7 +151,6 @@ export default {
     if (!_isEmpty(this.editedGroupOrSubgroup)) {
       this.initForm(this.editedGroupOrSubgroup)
     }
-    this.getGroups()
   },
   methods: {
     initForm(value) {
@@ -178,15 +161,6 @@ export default {
         definition: value.definition,
         change_description: '',
         abbreviation: value.abbreviation,
-      }
-      if (!_isEmpty(value)) {
-        if (value.activity_groups) {
-          const uids = []
-          for (const item of value.activity_groups) {
-            uids.push(item.uid)
-          }
-          this.form.activity_groups = uids
-        }
       }
       this.formStore.save(this.form)
     },
@@ -303,16 +277,6 @@ export default {
       } else {
         return false
       }
-    },
-    getGroups() {
-      activities
-        .get(
-          { page_size: 0, filters: { status: { v: ['Final'] } } },
-          'activity-groups'
-        )
-        .then((resp) => {
-          this.groups = resp.data.items
-        })
     },
   },
 }

@@ -18,10 +18,12 @@ export function getCurrStudyUid() {
   let current_study = JSON.parse(window.localStorage.getItem("selectedStudy"));
   return current_study.uid;
 }
+
 export function getCurrentStudyId() {
   let current_study = JSON.parse(window.localStorage.getItem("selectedStudy"));
   return current_study.current_metadata.identification_metadata.study_id
 }
+
 export function getCurrentDateFormatted() {
   const currentDate = new Date();
 

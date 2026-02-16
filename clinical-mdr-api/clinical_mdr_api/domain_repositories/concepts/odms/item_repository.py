@@ -1,4 +1,5 @@
 import json
+from textwrap import dedent
 from typing import Any
 
 from neomodel import db
@@ -37,6 +38,7 @@ from clinical_mdr_api.models.concepts.odms.odm_common_models import (
 )
 from clinical_mdr_api.models.concepts.odms.odm_item import OdmItem
 from clinical_mdr_api.services._utils import ensure_transaction
+from clinical_mdr_api.utils import db_result_to_list
 from common.exceptions import NotFoundException
 from common.utils import convert_to_datetime, version_string_to_tuple
 
@@ -54,6 +56,33 @@ class ItemRepository(OdmGenericRepository[OdmItemAR]):
         value: VersionValue,
         **_kwargs,
     ) -> OdmItemAR:
+        activity_instances = db.cypher_query(
+            dedent(
+                """
+                MATCH (oiv:OdmItemValue)-[ltai:LINKS_TO_ACTIVITY_ITEM]->(ai:ActivityItem)
+                MATCH (ai)<-[:HAS_ACTIVITY_ITEM]-(aicr:ActivityItemClassRoot)
+                MATCH (ai)<-[:CONTAINS_ACTIVITY_ITEM]-(:ActivityInstanceValue)<-[:LATEST]-(air:ActivityInstanceRoot)
+                WHERE elementId(oiv) = $element_id
+                MATCH (oigr:OdmItemGroupRoot)-[:HAS_VERSION]->(oigv:OdmItemGroupValue)
+                MATCH (oiv)<-[:ITEM_REF]-(oigv)-[:LINKS_TO_ACTIVITY_ITEM]->(ai)
+                MATCH (ofr:OdmFormRoot)-[:HAS_VERSION]->(ofv:OdmFormValue)
+                MATCH (oigv)<-[:ITEM_GROUP_REF]-(ofv)-[:LINKS_TO_ACTIVITY_ITEM]->(ai)
+                MATCH (ai)<-[:HAS_ACTIVITY_ITEM]-(aicr:ActivityItemClassRoot)
+                RETURN DISTINCT
+                    air.uid AS activity_instance_uid,
+                    aicr.uid AS activity_item_class_uid,
+                    ofr.uid AS odm_form_uid,
+                    oigr.uid AS odm_item_group_uid,
+                    ltai.order AS order,
+                    ltai.primary AS primary,
+                    ltai.preset_response_value AS preset_response_value,
+                    ltai.value_condition AS value_condition,
+                    ltai.value_dependent_map AS value_dependent_map
+                """
+            ),
+            params={"element_id": value.element_id},
+        )
+
         codelist = value.has_codelist.get_or_none()
         return OdmItemAR.from_repository_values(
             uid=root.uid,
@@ -92,6 +121,7 @@ class ItemRepository(OdmGenericRepository[OdmItemAR]):
                     for term_context in value.has_codelist_term.all()
                     if (term := term_context.has_selected_term.get_or_none())
                 ],
+                activity_instances=db_result_to_list(activity_instances),
                 vendor_element_uids=[
                     vendor_element_root.uid
                     for vendor_element_value in value.has_vendor_element.all()
@@ -155,6 +185,7 @@ class ItemRepository(OdmGenericRepository[OdmItemAR]):
                 unit_definition_uids=input_dict["unit_definition_uids"],
                 codelist_uid=input_dict["codelist_uid"],
                 term_uids=input_dict["term_uids"],
+                activity_instances=input_dict["activity_instances"],
                 vendor_element_uids=input_dict["vendor_element_uids"],
                 vendor_attribute_uids=input_dict["vendor_attribute_uids"],
                 vendor_element_attribute_uids=input_dict[
@@ -218,6 +249,28 @@ head([(concept_value)-[:HAS_CODELIST]->(ctcr:CTCodelistRoot)-[:HAS_ATTRIBUTES_RO
 [(concept_value)-[hvea:HAS_VENDOR_ELEMENT_ATTRIBUTE]->(vav:OdmVendorAttributeValue)<-[:HAS_VERSION]-(var:OdmVendorAttributeRoot) |
 {uid: var.uid, name: vav.name, value: hvea.value}] AS vendor_element_attributes
 
+CALL {
+    WITH *
+    MATCH (concept_value)-[ltai:LINKS_TO_ACTIVITY_ITEM]->(ai:ActivityItem)
+    MATCH (oigr:OdmItemGroupRoot)-[:HAS_VERSION]->(oigv:OdmItemGroupValue)
+    MATCH (concept_value)<-[:ITEM_REF]-(oigv)-[:LINKS_TO_ACTIVITY_ITEM]->(ai)
+    MATCH (ofr:OdmFormRoot)-[:HAS_VERSION]->(ofv:OdmFormValue)
+    MATCH (oigv)<-[:ITEM_GROUP_REF]-(ofv)-[:LINKS_TO_ACTIVITY_ITEM]->(ai)
+    MATCH (ai)<-[:HAS_ACTIVITY_ITEM]-(aicr:ActivityItemClassRoot)
+    MATCH (ai)<-[:CONTAINS_ACTIVITY_ITEM]-(:ActivityInstanceValue)<-[:LATEST]-(air:ActivityInstanceRoot)
+    RETURN COLLECT(DISTINCT {
+        activity_instance_uid: air.uid,
+        activity_item_class_uid: aicr.uid,
+        odm_form_uid: ofr.uid,
+        odm_item_group_uid: oigr.uid,
+        order: ltai.order,
+        primary: ltai.primary,
+        preset_response_value: ltai.preset_response_value,
+        value_condition: ltai.value_condition,
+        value_dependent_map: ltai.value_dependent_map
+    }) AS activity_instances
+}
+
 WITH *,
 apoc.coll.toSet([unit_definition in unit_definitions | unit_definition.uid]) AS unit_definition_uids,
 apoc.coll.toSet([term in terms | term.uid]) AS term_uids,
@@ -243,6 +296,44 @@ apoc.coll.toSet([vendor_element_attribute in vendor_element_attributes | vendor_
         if ar.concept_vo.codelist_uid is not None:
             codelist = CTCodelistRoot.nodes.get_or_none(uid=ar.concept_vo.codelist_uid)
             new_value.has_codelist.connect(codelist)
+
+        for activity_instance in ar.concept_vo.activity_instances:
+            db.cypher_query(
+                dedent(
+                    """
+                    MATCH (air:ActivityInstanceRoot {uid: $activity_instance_uid})-[:LATEST]->(aiv:ActivityInstanceValue)
+                    -[:CONTAINS_ACTIVITY_ITEM]->(ai:ActivityItem)<-[:HAS_ACTIVITY_ITEM]-(:ActivityItemClassRoot {uid: $activity_item_class_uid})
+                    MATCH (oiv:OdmItemValue)
+                    WHERE elementId(oiv) = $element_id
+                    MATCH (ofr:OdmFormRoot {uid: $odm_form_uid})-[:LATEST]->(ofv:OdmFormValue)
+                    MATCH (oigr:OdmItemGroupRoot {uid: $odm_item_group_uid})-[:LATEST]->(oigv:OdmItemGroupValue)
+
+                    MERGE (oiv)-[:LINKS_TO_ACTIVITY_ITEM {
+                        order: $order,
+                        primary: $primary,
+                        preset_response_value: $preset_response_value,
+                        value_condition: $value_condition,
+                        value_dependent_map: $value_dependent_map
+                    }]->(ai)
+                    MERGE (ofv)-[:LINKS_TO_ACTIVITY_ITEM]->(ai)
+                    MERGE (oigv)-[:LINKS_TO_ACTIVITY_ITEM]->(ai)
+                    """
+                ),
+                params={
+                    "element_id": new_value.element_id,
+                    "activity_instance_uid": activity_instance["activity_instance_uid"],
+                    "activity_item_class_uid": activity_instance[
+                        "activity_item_class_uid"
+                    ],
+                    "odm_form_uid": activity_instance["odm_form_uid"],
+                    "odm_item_group_uid": activity_instance["odm_item_group_uid"],
+                    "order": activity_instance["order"],
+                    "primary": activity_instance["primary"],
+                    "preset_response_value": activity_instance["preset_response_value"],
+                    "value_condition": activity_instance["value_condition"],
+                    "value_dependent_map": activity_instance["value_dependent_map"],
+                },
+            )
 
         return new_value
 
@@ -292,12 +383,54 @@ apoc.coll.toSet([vendor_element_attribute in vendor_element_attributes | vendor_
             for term in term_context.has_selected_term.all()
         }
 
+        activity_instances, _ = db.cypher_query(
+            dedent(
+                """
+                MATCH (oiv:OdmItemValue)-[ltai:LINKS_TO_ACTIVITY_ITEM]->(ai:ActivityItem)
+                MATCH (ai)<-[:HAS_ACTIVITY_ITEM]-(aicr:ActivityItemClassRoot)
+                MATCH (ai)<-[:CONTAINS_ACTIVITY_ITEM]-(:ActivityInstanceValue)<-[:LATEST]-(air:ActivityInstanceRoot)
+                WHERE elementId(oiv) = $element_id
+                MATCH (oigr:OdmItemGroupRoot)-[:HAS_VERSION]->(:OdmItemGroupValue)
+                MATCH (ofr:OdmFormRoot)-[:HAS_VERSION]->(ofv:OdmFormValue)
+                MATCH (ai)<-[:HAS_ACTIVITY_ITEM]-(aicr:ActivityItemClassRoot)
+
+                RETURN DISTINCT
+                    air.uid AS activity_instance_uid,
+                    aicr.uid AS activity_item_class_uid,
+                    ofr.uid AS odm_form_uid,
+                    oigr.uid AS odm_item_group_uid,
+                    ltai.order AS order,
+                    ltai.primary AS primary,
+                    ltai.preset_response_value AS preset_response_value,
+                    ltai.value_condition AS value_condition,
+                    ltai.value_dependent_map AS value_dependent_map
+                """
+            ),
+            params={"element_id": value.element_id},
+        )
+
+        ar_activity_instances = [
+            [
+                activity_instance["activity_instance_uid"],
+                activity_instance["activity_item_class_uid"],
+                activity_instance["odm_form_uid"],
+                activity_instance["odm_item_group_uid"],
+                activity_instance["order"],
+                activity_instance["primary"],
+                activity_instance["preset_response_value"],
+                activity_instance["value_condition"],
+                activity_instance["value_dependent_map"],
+            ]
+            for activity_instance in ar.concept_vo.activity_instances
+        ]
+
         are_rels_changed = (
             set(ar.concept_vo.descriptions) != description_nodes
             or set(ar.concept_vo.aliases) != alias_nodes
             or set(ar.concept_vo.unit_definition_uids) != unit_definition_uids
             or ar.concept_vo.codelist_uid != codelist_uid
             or set(ar.concept_vo.term_uids) != term_uids
+            or sorted(ar_activity_instances) != sorted(activity_instances)
         )
 
         return (
@@ -320,11 +453,17 @@ apoc.coll.toSet([vendor_element_attribute in vendor_element_attributes | vendor_
         rs, _ = db.cypher_query(
             """
             MATCH (:OdmItemGroupRoot {uid: $item_group_uid})-[:HAS_VERSION {version: $item_group_version}]->(:OdmItemGroupValue)
-            -[ref:ITEM_REF]->(value:OdmItemValue)<-[hv_rel:HAS_VERSION]-(:OdmItemRoot {uid: $uid})
+            -[ref:ITEM_REF]->(value:OdmItemValue)
+
+            MATCH (value)<-[hv_rel:HAS_VERSION]-(:OdmItemRoot {uid: $uid})
+            WITH value, ref, hv_rel
+            ORDER BY hv_rel.start_date DESC
+            WITH value, ref, collect(hv_rel) AS hv_rels 
+
             RETURN
                 value.oid AS oid,
                 value.name AS name,
-                hv_rel.version AS version,
+                hv_rels[0].version AS version,
                 ref.order_number AS order_number,
                 ref.mandatory AS mandatory,
                 ref.key_sequence AS key_sequence,
@@ -426,8 +565,13 @@ apoc.coll.toSet([vendor_element_attribute in vendor_element_attributes | vendor_
                 has_term__uid=codelist_uid, has_term_root__uid=term_uid
             )
         ).all()
-        submission_value = (
-            cl_term_nodes[0][0].submission_value if cl_term_nodes else None
+
+        submission_value = next(
+            (
+                cl_term[0].submission_value
+                for cl_term in cl_term_nodes
+                if cl_term[4].end_date is None
+            )
         )
 
         if rel and submission_value:
@@ -490,7 +634,7 @@ apoc.coll.toSet([vendor_element_attribute in vendor_element_attributes | vendor_
         MATCH (root:{self.root_class.__name__} {{uid: $root_uid}})-[ver_rel:HAS_VERSION]->(value:{self.value_class.__name__})
 
         WITH root, ver_rel, value
-        ORDER BY ver_rel.start_date DESC
+        ORDER BY ver_rel.start_date DESC, ver_rel.end_date DESC
         LIMIT 2
         WITH root, collect(value) AS values
         WITH root, values[0] as latest_value, values[1] as second_latest_value

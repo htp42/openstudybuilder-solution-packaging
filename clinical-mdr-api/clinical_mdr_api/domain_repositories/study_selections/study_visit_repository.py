@@ -232,6 +232,7 @@ class StudyVisitRepository:
             visit_order=int(study_visit_vo.visit_number),
             vis_unique_number=study_visit_vo.vis_unique_number,
             vis_short_name=study_visit_vo.vis_short_name,
+            repeating_frequency=study_visit_vo.repeating_frequency,
             # History VO params
             change_type=change_type,
             end_date=study_action_before.get("date"),
@@ -603,8 +604,7 @@ class StudyVisitRepository:
                 {
                     visit_group:visit_group,
                     consecutive_visits: apoc.coll.sortMaps([
-                        (visit_group)<-[:IN_VISIT_GROUP]-(consecutive_visits:StudyVisit)
-                        WHERE NOT (consecutive_visits)--(:Delete) AND NOT (consecutive_visits)-[:BEFORE]-()
+                        (visit_group)<-[:IN_VISIT_GROUP]-(consecutive_visits:StudyVisit)<-[:HAS_STUDY_VISIT]-(study_value)
                         | {vis: consecutive_visits, unique_visit_number: toInteger(consecutive_visits.unique_visit_number)}
                     ], '^unique_visit_number')
                 }]) AS group
@@ -643,7 +643,7 @@ class StudyVisitRepository:
 
         else:
             query.append(return_statement)
-            query.append("ORDER BY study_visit.unique_visit_number")
+            query.append("ORDER BY toInteger(study_visit.unique_visit_number)")
 
         return "\n".join(query), params
 

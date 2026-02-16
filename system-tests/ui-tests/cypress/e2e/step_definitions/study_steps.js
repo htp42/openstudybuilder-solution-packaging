@@ -27,9 +27,6 @@ When('A new study is added', () => {
     cy.selectAutoComplete('project-id', 'CDISC DEV')
     cy.fillInput('study-number', studyNumber)
     cy.fillInput('study-acronym', studyAcronym)
-    cy.clickButton('save-button')
-    cy.wait(2500)
-    cy.waitForTable()
 })
 
 Then('The study is visible within the table', () => {

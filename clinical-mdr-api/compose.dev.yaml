@@ -1,6 +1,6 @@
 services:
 
-  # Clinical-MDR API service for running tests in pipeline
+  # OpenStudyBuilder API service for running tests in pipeline
   api:
     extends:
       file: compose.yaml

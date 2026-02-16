@@ -1,8 +1,8 @@
 @REQ_ID:[New]
-Feature: Maintaining Study Subparts for a Study Parent Part in Clinical MDR API
+Feature: Maintaining Study Subparts for a Study Parent Part in OpenStudyBuilder API
 
-    Background: Test user must be able to call the Clinical MDR API and test data exist
-        Given The test user can call the Clinical MDR API
+    Background: Test user must be able to call the OpenStudyBuilder API and test data exist
+        Given The test user can call the OpenStudyBuilder API
         Given a test Study identified by 'uid' is in status 'Draft'
 
     Rule: As an API user,

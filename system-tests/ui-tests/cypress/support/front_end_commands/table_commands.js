@@ -21,7 +21,6 @@ Cypress.Commands.add('tableHeaderActions', (headerName, action) => {
 Cypress.Commands.add('performActionOnSearchedItem', (action, message = null) => {
     cy.tableRowActions(0, action)
     if (message != null) cy.checkSnackbarMessage(message)
-    cy.wait(1500)
 })
 
 Cypress.Commands.add('performActionOnFlaggedItem', (action) => {
@@ -45,6 +44,8 @@ Cypress.Commands.add('searchAndCheckPresence', (value, shouldBePresent) => {
 
 Cypress.Commands.add('checkIfMoreThanOneResultFound', () => cy.get(tableRowLocator).should('have.length.above', 1))
 
+Cypress.Commands.add('checkOnlyOneResultReturned', () => cy.get(tableRowLocator).should('have.length', 1))
+
 Cypress.Commands.add('confirmNoResultsFound', () => cy.get(tableRowLocator).should('have.text', 'No data available'))
 
 Cypress.Commands.add('searchFor', (value) => {
@@ -52,8 +53,10 @@ Cypress.Commands.add('searchFor', (value) => {
         cy.wrap(el).invoke('val').then((text) => {if (text.length > 0) cy.wrap(el).clear()})
         cy.wrap(el).type(value, { force: true, delay: 0 })
     })
-    cy.wait(1500)
+    cy.longWaitForTable()
 })
+
+Cypress.Commands.add('clearSearchInPopUp', () => cy.get('.v-overlay__content [data-cy="search-field"]').clear())
 
 Cypress.Commands.add('searchForInPopUp', (value) => {
     cy.get('.v-overlay__content [data-cy="search-field"]').type(value, { delay: 0 })

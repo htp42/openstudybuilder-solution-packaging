@@ -316,6 +316,18 @@ def test_adding_study(api_client):
         ]
         is None
     )
+    assert (
+        res["current_metadata"]["identification_metadata"]["registry_identifiers"][
+            "eu_pas_number"
+        ]
+        is None
+    )
+    assert (
+        res["current_metadata"]["identification_metadata"]["registry_identifiers"][
+            "eu_pas_number_null_value_code"
+        ]
+        is None
+    )
     assert res["current_metadata"]["version_metadata"]["study_status"] == "DRAFT"
     assert res["current_metadata"]["version_metadata"]["version_number"] is None
     assert res["current_metadata"]["version_metadata"]["version_timestamp"]
@@ -504,6 +516,18 @@ def test_patch_study_add_study_title(api_client):
     assert (
         res["current_metadata"]["identification_metadata"]["registry_identifiers"][
             "investigational_device_exemption_ide_number_null_value_code"
+        ]
+        is None
+    )
+    assert (
+        res["current_metadata"]["identification_metadata"]["registry_identifiers"][
+            "eu_pas_number"
+        ]
+        is None
+    )
+    assert (
+        res["current_metadata"]["identification_metadata"]["registry_identifiers"][
+            "eu_pas_number_null_value_code"
         ]
         is None
     )
@@ -698,6 +722,18 @@ def test_patch_study_change_study_title(api_client):
         ]
         is None
     )
+    assert (
+        res["current_metadata"]["identification_metadata"]["registry_identifiers"][
+            "eu_pas_number"
+        ]
+        is None
+    )
+    assert (
+        res["current_metadata"]["identification_metadata"]["registry_identifiers"][
+            "eu_pas_number_null_value_code"
+        ]
+        is None
+    )
     assert res["current_metadata"]["version_metadata"]["study_status"] == "DRAFT"
     assert res["current_metadata"]["version_metadata"]["version_number"] is None
     assert res["current_metadata"]["version_metadata"]["version_timestamp"]
@@ -886,6 +922,18 @@ def test_patch_study_remove_study_title(api_client):
     assert (
         res["current_metadata"]["identification_metadata"]["registry_identifiers"][
             "investigational_device_exemption_ide_number_null_value_code"
+        ]
+        is None
+    )
+    assert (
+        res["current_metadata"]["identification_metadata"]["registry_identifiers"][
+            "eu_pas_number"
+        ]
+        is None
+    )
+    assert (
+        res["current_metadata"]["identification_metadata"]["registry_identifiers"][
+            "eu_pas_number_null_value_code"
         ]
         is None
     )
@@ -1096,6 +1144,18 @@ def test_patch_study_add_multiple_boolean_text_and_numeric_fields(api_client):
     assert (
         res["current_metadata"]["identification_metadata"]["registry_identifiers"][
             "investigational_device_exemption_ide_number_null_value_code"
+        ]
+        is None
+    )
+    assert (
+        res["current_metadata"]["identification_metadata"]["registry_identifiers"][
+            "eu_pas_number"
+        ]
+        is None
+    )
+    assert (
+        res["current_metadata"]["identification_metadata"]["registry_identifiers"][
+            "eu_pas_number_null_value_code"
         ]
         is None
     )
@@ -1313,6 +1373,18 @@ def test_patch_study_update_and_remove_multiple_fields(api_client):
         ]
         is None
     )
+    assert (
+        res["current_metadata"]["identification_metadata"]["registry_identifiers"][
+            "eu_pas_number"
+        ]
+        is None
+    )
+    assert (
+        res["current_metadata"]["identification_metadata"]["registry_identifiers"][
+            "eu_pas_number_null_value_code"
+        ]
+        is None
+    )
     assert res["current_metadata"]["version_metadata"]["study_status"] == "DRAFT"
     assert res["current_metadata"]["version_metadata"]["version_number"] is None
     assert res["current_metadata"]["version_metadata"]["version_timestamp"]
@@ -1503,6 +1575,18 @@ def test_add_study_title_test_to_have_multiple_study_value_relationships_attache
     assert (
         res["current_metadata"]["identification_metadata"]["registry_identifiers"][
             "investigational_device_exemption_ide_number_null_value_code"
+        ]
+        is None
+    )
+    assert (
+        res["current_metadata"]["identification_metadata"]["registry_identifiers"][
+            "eu_pas_number"
+        ]
+        is None
+    )
+    assert (
+        res["current_metadata"]["identification_metadata"]["registry_identifiers"][
+            "eu_pas_number_null_value_code"
         ]
         is None
     )
@@ -1698,6 +1782,18 @@ def test_patch_study_change_study_identifiers(api_client):
     assert (
         res["current_metadata"]["identification_metadata"]["registry_identifiers"][
             "investigational_device_exemption_ide_number_null_value_code"
+        ]
+        is None
+    )
+    assert (
+        res["current_metadata"]["identification_metadata"]["registry_identifiers"][
+            "eu_pas_number"
+        ]
+        is None
+    )
+    assert (
+        res["current_metadata"]["identification_metadata"]["registry_identifiers"][
+            "eu_pas_number_null_value_code"
         ]
         is None
     )
@@ -2298,6 +2394,18 @@ def test_adding_second_study(api_client):
         ]
         is None
     )
+    assert (
+        res["current_metadata"]["identification_metadata"]["registry_identifiers"][
+            "eu_pas_number"
+        ]
+        is None
+    )
+    assert (
+        res["current_metadata"]["identification_metadata"]["registry_identifiers"][
+            "eu_pas_number_null_value_code"
+        ]
+        is None
+    )
     assert res["current_metadata"]["version_metadata"]["study_status"] == "DRAFT"
     assert res["current_metadata"]["version_metadata"]["version_number"] is None
     assert res["current_metadata"]["version_metadata"]["version_timestamp"]
@@ -2486,6 +2594,18 @@ def test_copy_study_high_level_design(api_client):
         ]
         is None
     )
+    assert (
+        res["current_metadata"]["identification_metadata"]["registry_identifiers"][
+            "eu_pas_number"
+        ]
+        is None
+    )
+    assert (
+        res["current_metadata"]["identification_metadata"]["registry_identifiers"][
+            "eu_pas_number_null_value_code"
+        ]
+        is None
+    )
     assert res["current_metadata"]["version_metadata"]["study_status"] == "DRAFT"
     assert res["current_metadata"]["version_metadata"]["version_number"] is None
     assert res["current_metadata"]["version_metadata"]["version_timestamp"]
@@ -2532,6 +2652,10 @@ def test_copy_study_high_level_design(api_client):
             "trial_phase_null_value_code"
         ]["term_uid"]
         == "A bad reason"
+    )
+    assert (
+        res["current_metadata"]["high_level_study_design"]["development_stage_code"]
+        is None
     )
     assert (
         res["current_metadata"]["high_level_study_design"][
@@ -2780,6 +2904,18 @@ def test_copy_study_intervention(api_client):
     assert (
         res["current_metadata"]["identification_metadata"]["registry_identifiers"][
             "investigational_device_exemption_ide_number_null_value_code"
+        ]
+        is None
+    )
+    assert (
+        res["current_metadata"]["identification_metadata"]["registry_identifiers"][
+            "eu_pas_number"
+        ]
+        is None
+    )
+    assert (
+        res["current_metadata"]["identification_metadata"]["registry_identifiers"][
+            "eu_pas_number_null_value_code"
         ]
         is None
     )
@@ -3162,6 +3298,18 @@ def test_copy_study_population(api_client):
     assert (
         res["current_metadata"]["identification_metadata"]["registry_identifiers"][
             "investigational_device_exemption_ide_number_null_value_code"
+        ]
+        is None
+    )
+    assert (
+        res["current_metadata"]["identification_metadata"]["registry_identifiers"][
+            "eu_pas_number"
+        ]
+        is None
+    )
+    assert (
+        res["current_metadata"]["identification_metadata"]["registry_identifiers"][
+            "eu_pas_number_null_value_code"
         ]
         is None
     )

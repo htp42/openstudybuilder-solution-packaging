@@ -72,6 +72,8 @@ Feature: Library - Code Lists - CT Catalogues
 	Scenario: [Actions][Edit] User must be able to edit an existing Codelist
 		Given The test Codelist for editing is opened
 		When The Codelist sponsor values are edited
+		And Form save button is clicked
+		And The form is no longer available
 		And The Codelist sponsor values are validated
 		Then The edited codelist page is showing correct data
 		And The sponsor values should be in status 'Final' and version '1.0'

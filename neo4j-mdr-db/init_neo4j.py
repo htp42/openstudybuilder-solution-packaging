@@ -147,6 +147,101 @@ def create_special_template_parameters(tx: Transaction):
     """
     run_querystring(tx, cypher)
 
+# Preload :Counter nodes for all relevant types, as if :Counter nodes doesn't exist and API is launched with a few process workers
+# and some request is sent, then the code to create :Counter is not atomic and different workers duplicate :Counter nodes.
+def pre_load_counter_nodes(tx: Transaction):
+    counter_names = [
+        "ActiveSubstanceCounter",
+        "ActivityCounter",
+        "ActivityDefinitionCounter",
+        "ActivityGroupCounter",
+        "ActivityGroupingCounter",
+        "ActivityInstanceClassCounter",
+        "ActivityInstanceCounter",
+        "ActivityInstructionCounter",
+        "ActivityInstructionTemplateCounter",
+        "ActivityItemClassCounter",
+        "ActivityItemCounter",
+        "ActivitySubGroupCounter",
+        "BrandCounter",
+        "CTCodelistCounter",
+        "CTConfigCounter",
+        "CTTermCounter",
+        "CategoricFindingCounter",
+        "ClinicalProgrammeCounter",
+        "CompoundAliasCounter",
+        "CompoundCounter",
+        "CriteriaCounter",
+        "CriteriaPreInstanceCounter",
+        "CriteriaTemplateCounter",
+        "DataSupplierCounter",
+        "DictionaryCodelistCounter",
+        "DictionaryTermCounter",
+        "EndpointCounter",
+        "EndpointTemplateCounter",
+        "EventCounter",
+        "FootnoteCounter",
+        "FootnotePreInstanceCounter",
+        "FootnoteTemplateCounter",
+        "LagTimeCounter",
+        "MedicinalProductCounter",
+        "NumericFindingCounter",
+        "NumericValueCounter",
+        "NumericValueWithUnitCounter",
+        "ObjectiveCounter",
+        "ObjectiveTemplateCounter",
+        "OdmFormCounter",
+        "OdmItemCounter",
+        "OdmItemGroupCounter",
+        "OdmStudyEventCounter",
+        "OdmTemplateCounter",
+        "OdmVendorAttributeCounter",
+        "OdmVendorNamespaceCounter",
+        "PharmaceuticalProductCounter",
+        "ProjectCounter",
+        "StudyActivityCounter",
+        "StudyActivityGroupCounter",
+        "StudyActivityInstanceCounter",
+        "StudyActivityInstructionCounter",
+        "StudyActivityScheduleCounter",
+        "StudyActivitySubGroupCounter",
+        "StudyArmCounter",
+        "StudyBranchArmCounter",
+        "StudyCohortCounter",
+        "StudyCompoundCounter",
+        "StudyCompoundDosingCounter",
+        "StudyCounter",
+        "StudyCriteriaCounter",
+        "StudyDayCounter",
+        "StudyDesignCellCounter",
+        "StudyDiseaseMilestoneCounter",
+        "StudyDurationDaysCounter",
+        "StudyDurationWeeksCounter",
+        "StudyElementCounter",
+        "StudyEndpointCounter",
+        "StudyEpochCounter",
+        "StudyObjectiveCounter",
+        "StudySoAFootnoteCounter",
+        "StudySoAGroupCounter",
+        "StudyStandardVersionCounter",
+        "StudyVisitCounter",
+        "StudyVisitGroupCounter",
+        "StudyWeekCounter",
+        "TemplateParameterTermCounter",
+        "TemplateParameterValueCounter",
+        "TextValueCounter",
+        "TextualFindingCounter",
+        "TimePointCounter",
+        "TimeframeCounter",
+        "TimeframeTemplateCounter",
+        "UnitDefinitionCounter",
+        "VisitNameCounter",
+        "WeekInStudyCounter"
+    ]
+    for counter_name in counter_names:
+        cypher = f"MERGE (c:Counter:{counter_name} {{counterId: '{counter_name}'}}) ON CREATE SET c.count = 0"
+        run_querystring(tx, cypher)
+        print(f"{cypher}")
 
 def make_db_name():
     if (
@@ -251,6 +346,12 @@ with driver.session(database=DATABASE) as session:
     print("\n-- Creating special template parameters (NA...) --")
     with session.begin_transaction() as tx:
         create_special_template_parameters(tx)
+
+    print(
+        "\n-- Preloading :Counter nodes --"
+    )
+    with session.begin_transaction() as tx:
+        pre_load_counter_nodes(tx)
 
     session.close()
 

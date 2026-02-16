@@ -44,6 +44,12 @@
               :rules="[formRules.required]"
             >
               <v-radio
+                :title="
+                  $t(
+                    'CollapsibleVisitGroupForm.range_selection_only_consecutive'
+                  )
+                "
+                :disabled="!props.areConsecutiveVisitsSelected"
                 :label="
                   $t('CollapsibleVisitGroupForm.range_visits', {
                     visits: `${visits[0].text}-${visits[visits.length - 1].text}`,
@@ -61,6 +67,16 @@
                   </div>
                 </template>
               </v-radio>
+              <v-alert
+                v-if="!props.areConsecutiveVisitsSelected"
+                type="warning"
+                :text="
+                  $t(
+                    'CollapsibleVisitGroupForm.range_selection_only_consecutive'
+                  )
+                "
+                rounded="lg"
+              />
               <v-radio value="list">
                 <template #label>
                   <div class="chkText">
@@ -81,6 +97,16 @@
               rounded="lg"
               :text="$t('CollapsibleVisitGroupForm.format_info')"
             />
+            <v-alert
+              v-if="areDifferentFootnotesApplied()"
+              type="warning"
+              rounded="lg"
+              :text="
+                $t(
+                  'CollapsibleVisitGroupForm.collapsing_visits_with_different_footnotes'
+                )
+              "
+            />
           </v-col>
         </v-row>
       </v-form>
@@ -100,7 +126,7 @@ import SimpleFormDialog from '@/components/tools/SimpleFormDialog.vue'
 import studyEpochs from '@/api/studyEpochs'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 import CollapsibleVisitGroupForm from './CollapsibleVisitGroupForm.vue'
-import { inject, ref } from 'vue'
+import { watch, inject, ref } from 'vue'
 
 const formRules = inject('formRules')
 const studiesGeneralStore = useStudiesGeneralStore()
@@ -110,6 +136,11 @@ const props = defineProps({
   visits: {
     type: Array,
     default: () => [],
+  },
+  areConsecutiveVisitsSelected: {
+    type: Boolean,
+    default: true,
+    required: false,
   },
   open: Boolean,
 })
@@ -130,9 +161,28 @@ function closeCollapsibleVisitGroupForm() {
   close()
 }
 
+function areDifferentFootnotesApplied() {
+  const footnotes = JSON.stringify(props.visits[0].footnotes)
+  for (const visit of props.visits) {
+    if (JSON.stringify(visit.footnotes) !== footnotes) {
+      return true
+    }
+  }
+  return false
+}
+
 function close() {
   emit('close')
 }
+watch(
+  () => props.areConsecutiveVisitsSelected,
+  (value) => {
+    if (value === false) format.value = 'list'
+    else {
+      format.value = 'range'
+    }
+  }
+)
 
 async function submit() {
   const visitUids = props.visits.map((item) => item.refs[0].uid)

@@ -99,9 +99,7 @@ def test_data(api_client):
     activity_instances = []
 
     activity_group = TestUtils.create_activity_group("Activity Group")
-    activity_subgroup = TestUtils.create_activity_subgroup(
-        "Activity Sub Group", activity_groups=[activity_group.uid]
-    )
+    activity_subgroup = TestUtils.create_activity_subgroup("Activity Sub Group")
 
     for idx in range(0, total_activities):
         # Create Final Activity
@@ -341,9 +339,12 @@ def test_get_library_activities_invalid_pagination_params(api_client):
         f"{BASE_URL}/studies?page_number={settings.max_int_neo4j + 1}&page_size=1"
     )
     assert_response_status_code(response, 400)
+    response_data = response.json()
+    assert response_data["message"] == "The request failed due to validation errors"
+    assert response_data["details"][0]["error_code"] == "less_than_equal"
     assert (
-        response.json()["message"]
-        == f"(page_number * page_size) value cannot be bigger than {settings.max_int_neo4j}"
+        response_data["details"][0]["msg"]
+        == "Input should be less than or equal to 1000000000"
     )
 
 
@@ -557,7 +558,10 @@ def test_get_library_activity_instances_invalid_pagination_params(api_client):
         f"{BASE_URL}/studies?page_number={settings.max_int_neo4j + 1}&page_size=1"
     )
     assert_response_status_code(response, 400)
+    response_data = response.json()
+    assert response_data["message"] == "The request failed due to validation errors"
+    assert response_data["details"][0]["error_code"] == "less_than_equal"
     assert (
-        response.json()["message"]
-        == f"(page_number * page_size) value cannot be bigger than {settings.max_int_neo4j}"
+        response_data["details"][0]["msg"]
+        == "Input should be less than or equal to 1000000000"
     )

@@ -22,7 +22,7 @@ from clinical_mdr_api.models.utils import (
 from clinical_mdr_api.services._utils import get_name_or_none
 
 
-class CompactStudyArm(BaseModel):
+class CompactStudyArmForPharmaCM(BaseModel):
     arm_type: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
     arm_title: Annotated[str, Field()]
     arm_description: Annotated[
@@ -82,7 +82,7 @@ class StudyPharmaCM(BaseModel):
     number_of_subjects: Annotated[
         int | None, Field(json_schema_extra={"nullable": True})
     ] = None
-    study_arms: list[CompactStudyArm] = Field(default_factory=list)
+    study_arms: list[CompactStudyArmForPharmaCM] = Field(default_factory=list)
     intervention_type: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
@@ -246,6 +246,13 @@ class StudyPharmaCM(BaseModel):
                     id_type=registry_identifier,
                 )
             )
+        if study.current_metadata.id_metadata.registry_identifiers.eu_pas_number:
+            secondary_ids.append(
+                CompactRegistryIdentifier(
+                    secondary_id=study.current_metadata.id_metadata.registry_identifiers.eu_pas_number,
+                    id_type=registry_identifier,
+                )
+            )
         return cls(
             unique_protocol_identification_number=f"{study.current_metadata.id_metadata.study_id_prefix}-{study.current_metadata.id_metadata.study_number}",
             brief_title=study.current_metadata.study_description.study_short_title,
@@ -279,7 +286,7 @@ class StudyPharmaCM(BaseModel):
                 if study_arm.number_of_subjects
             ),
             study_arms=[
-                CompactStudyArm(
+                CompactStudyArmForPharmaCM(
                     arm_type=get_name_or_none(find_term_by_uid(study_arm.arm_type_uid)),
                     arm_title=study_arm.name,
                     arm_description=study_arm.description,

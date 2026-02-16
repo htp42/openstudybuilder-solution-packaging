@@ -132,7 +132,7 @@ def test_data():
         data_model_ig_name=data_model_ig.uid,
         data_model_ig_version=data_model_ig.version_number,
         class_variable_uid=variable_class.uid,
-        references_codelist_uid=CT_CODELIST_UIDS.default,
+        references_codelist_uids=[CT_CODELIST_UIDS.default],
     )
 
     # Create some activity item classes
@@ -147,11 +147,15 @@ def test_data():
                     "uid": activity_instance_class.uid,
                     "mandatory": True,
                     "is_adam_param_specific_enabled": True,
+                    "is_additional_optional": False,
+                    "is_default_linked": False,
                 },
                 {
                     "uid": activity_instance_class2.uid,
                     "mandatory": True,
                     "is_adam_param_specific_enabled": True,
+                    "is_additional_optional": False,
+                    "is_default_linked": False,
                 },
             ],
             role_uid=role_term.term_uid,
@@ -167,6 +171,8 @@ def test_data():
                     "uid": activity_instance_class.uid,
                     "mandatory": True,
                     "is_adam_param_specific_enabled": True,
+                    "is_additional_optional": False,
+                    "is_default_linked": False,
                 }
             ],
             role_uid=role_term.term_uid,
@@ -182,6 +188,8 @@ def test_data():
                     "uid": activity_instance_class.uid,
                     "mandatory": True,
                     "is_adam_param_specific_enabled": True,
+                    "is_additional_optional": False,
+                    "is_default_linked": False,
                 }
             ],
             role_uid=role_term.term_uid,
@@ -197,6 +205,8 @@ def test_data():
                     "uid": activity_instance_class.uid,
                     "mandatory": True,
                     "is_adam_param_specific_enabled": True,
+                    "is_additional_optional": False,
+                    "is_default_linked": False,
                 }
             ],
             role_uid=role_term.term_uid,
@@ -212,6 +222,8 @@ def test_data():
                     "uid": activity_instance_class.uid,
                     "mandatory": True,
                     "is_adam_param_specific_enabled": True,
+                    "is_additional_optional": False,
+                    "is_default_linked": False,
                 }
             ],
             role_uid=role_term.term_uid,
@@ -231,6 +243,8 @@ def test_data():
                         "uid": activity_instance_class.uid,
                         "mandatory": False,
                         "is_adam_param_specific_enabled": False,
+                        "is_additional_optional": False,
+                        "is_default_linked": False,
                     }
                 ],
                 role_uid=role_term.term_uid,
@@ -248,6 +262,8 @@ def test_data():
                         "uid": activity_instance_class.uid,
                         "mandatory": False,
                         "is_adam_param_specific_enabled": False,
+                        "is_additional_optional": False,
+                        "is_default_linked": False,
                     },
                 ],
                 role_uid=role_term.term_uid,
@@ -265,6 +281,8 @@ def test_data():
                         "uid": activity_instance_class.uid,
                         "mandatory": False,
                         "is_adam_param_specific_enabled": False,
+                        "is_additional_optional": False,
+                        "is_default_linked": False,
                     },
                 ],
                 role_uid=role_term.term_uid,
@@ -282,6 +300,8 @@ def test_data():
                         "uid": activity_instance_class.uid,
                         "mandatory": False,
                         "is_adam_param_specific_enabled": False,
+                        "is_additional_optional": False,
+                        "is_default_linked": False,
                     },
                 ],
                 role_uid=role_term.term_uid,
@@ -293,6 +313,7 @@ def test_data():
 ACTIVITY_IC_FIELDS_ALL = [
     "uid",
     "name",
+    "display_name",
     "definition",
     "nci_concept_id",
     "order",
@@ -584,6 +605,8 @@ def test_edit_activity_item_class(api_client):
                 "uid": activity_instance_class.uid,
                 "mandatory": True,
                 "is_adam_param_specific_enabled": True,
+                "is_additional_optional": False,
+                "is_default_linked": False,
             }
         ],
         approve=False,
@@ -596,12 +619,15 @@ def test_edit_activity_item_class(api_client):
             "name": "new name for item class",
             "definition": "new definition for item class",
             "nci_concept_id": "new nci concept id",
+            "display_name": "new display name for item class",
             "order": 45,
             "activity_instance_classes": [
                 {
                     "uid": activity_instance_class_after_edit.uid,
                     "mandatory": False,
                     "is_adam_param_specific_enabled": False,
+                    "is_additional_optional": True,
+                    "is_default_linked": True,
                 }
             ],
             "change_description": "updated item class",
@@ -612,16 +638,41 @@ def test_edit_activity_item_class(api_client):
     assert res["name"] == "new name for item class"
     assert res["definition"] == "new definition for item class"
     assert res["nci_concept_id"] == "new nci concept id"
+    assert res["display_name"] == "new display name for item class"
     assert res["order"] == 45
     assert res["activity_instance_classes"][0]["name"] == "Activity IC after edit"
     assert res["activity_instance_classes"][0]["mandatory"] is False
     assert (
         res["activity_instance_classes"][0]["is_adam_param_specific_enabled"] is False
     )
+    assert res["activity_instance_classes"][0]["is_additional_optional"] is True
+    assert res["activity_instance_classes"][0]["is_default_linked"] is True
     assert res["version"] == "0.2"
     assert res["status"] == "Draft"
     assert res["possible_actions"] == ["approve", "delete", "edit"]
     assert res["library_name"] == "Sponsor"
+
+    # Verify the changes persisted by doing a GET request
+    get_response = api_client.get(f"/activity-item-classes/{activity_item_class.uid}")
+    get_res = get_response.json()
+    assert_response_status_code(get_response, 200)
+    assert get_res["name"] == "new name for item class"
+    assert get_res["definition"] == "new definition for item class"
+    assert get_res["nci_concept_id"] == "new nci concept id"
+    assert get_res["display_name"] == "new display name for item class"
+    assert get_res["order"] == 45
+    assert get_res["activity_instance_classes"][1]["name"] == "Activity IC after edit"
+    assert get_res["activity_instance_classes"][1]["mandatory"] is False
+    assert (
+        get_res["activity_instance_classes"][1]["is_adam_param_specific_enabled"]
+        is False
+    )
+    assert get_res["activity_instance_classes"][1]["is_additional_optional"] is True
+    assert get_res["activity_instance_classes"][1]["is_default_linked"] is True
+    assert get_res["version"] == "0.2"
+    assert get_res["status"] == "Draft"
+    assert get_res["possible_actions"] == ["approve", "delete", "edit"]
+    assert get_res["library_name"] == "Sponsor"
 
     response = api_client.patch(
         f"/activity-item-classes/{activity_item_class.uid}/model-mappings",
@@ -641,6 +692,7 @@ def test_post_activity_item_class(api_client):
             "name": "New AIC Name",
             "definition": "New AIC Def",
             "nci_concept_id": "New nci id",
+            "display_name": "New AIC Display Name",
             "order": 36,
             "library_name": "Sponsor",
             "activity_instance_classes": [
@@ -648,6 +700,8 @@ def test_post_activity_item_class(api_client):
                     "uid": activity_instance_class.uid,
                     "mandatory": True,
                     "is_adam_param_specific_enabled": True,
+                    "is_additional_optional": False,
+                    "is_default_linked": False,
                 }
             ],
             "role_uid": role_term.term_uid,
@@ -659,11 +713,14 @@ def test_post_activity_item_class(api_client):
     assert res["name"] == "New AIC Name"
     assert res["definition"] == "New AIC Def"
     assert res["nci_concept_id"] == "New nci id"
+    assert res["display_name"] == "New AIC Display Name"
     assert res["order"] == 36
     assert res["activity_instance_classes"][0]["uid"] == activity_instance_class.uid
     assert res["activity_instance_classes"][0]["name"] == activity_instance_class.name
     assert res["activity_instance_classes"][0]["mandatory"] is True
     assert res["activity_instance_classes"][0]["is_adam_param_specific_enabled"] is True
+    assert res["activity_instance_classes"][0]["is_additional_optional"] is False
+    assert res["activity_instance_classes"][0]["is_default_linked"] is False
     assert res["version"] == "0.1"
     assert res["status"] == "Draft"
     assert res["possible_actions"] == ["approve", "delete", "edit"]
@@ -679,6 +736,8 @@ def test_activity_item_class_versioning(api_client):
                 "uid": activity_instance_class.uid,
                 "mandatory": False,
                 "is_adam_param_specific_enabled": False,
+                "is_additional_optional": False,
+                "is_default_linked": False,
             }
         ],
         approve=False,
@@ -742,6 +801,8 @@ def test_activity_item_class_versioning(api_client):
                 "uid": activity_instance_class.uid,
                 "mandatory": False,
                 "is_adam_param_specific_enabled": False,
+                "is_additional_optional": False,
+                "is_default_linked": False,
             },
         ],
         approve=False,

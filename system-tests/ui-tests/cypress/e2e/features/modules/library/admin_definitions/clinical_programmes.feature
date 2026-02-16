@@ -33,7 +33,7 @@ Feature: Library - Admin Definitions - Clinical Programmes
         And Form save button is clicked
         And Clinical programme is found
         When The 'Delete' option is clicked from the three dot menu list
-        When The continue is clicked in confirmation popup
+        When Action is confirmed by clicking continue
         Then The pop up displays 'Clinical programme deleted'
         And Clinical programme is no longer available
 
@@ -57,5 +57,5 @@ Feature: Library - Admin Definitions - Clinical Programmes
         Given The '/library/clinical_programmes' page is opened
         And Clinical programme is found
         When The 'Delete' option is clicked from the three dot menu list
-        And The continue is clicked in confirmation popup
+        And Action is confirmed by clicking continue
         Then The pop up displays 'Cannot delete Clinical Programme'

@@ -6,11 +6,15 @@ The OpenStudyBuilder is a new approach to working with studies that, once fully 
 
 The OpenStudyBuilder consists of:
 
-- the **OpenStudyBuilder app** (web-based user interface)
-- the new **clinical Metadata Repository** (central repository for all study specification data)
+- the **OpenStudyBuilder application** (web-based user interface)
+- the new **clinical Metadata Repository** database (central repository for all study specification data)
 - the **API layer** (allowing interoperability with other systems)
+- other **External tools** like Noe4j Dashboards and DB browser; a Word addin and some external scripts
+- this **Complete Documentation portal**
 
-The solution design is inspired by the CDISC 360 POC and the intention is for the solution to become compliant with the TransCelerate Digital Data Flow (DDF) reference implementation. The complete OpenStudyBuilder solution is planned to be made available as an Open Source project.
+![Open Study Builder Structure](~@source/images/OSB_Structure.png)
+
+The solution design is inspired by the CDISC 360 POC and the CDISC 360i following project. The intention is for the solution to be more and more compliant with the TransCelerate Digital Data Flow (DDF) reference implementation called the USDM. The complete OpenStudyBuilder solution is available as an Open Source project.
 
 ![Study Builder](~@source/images/studybuilder-system.png)
 
@@ -18,9 +22,9 @@ The solution design is inspired by the CDISC 360 POC and the intention is for th
 
  - One set of controlled standards 
  - Easy maintenance of standards
- - Reuse of elements across trials
+ - Reuse of elements across studies
  - Enhanced search functionality
- - Direct exports of content
+ - Direct exports of content into downstream systems
 
 ![Study Builder](~@source/images/arrow-down.png)
 
@@ -28,7 +32,7 @@ The solution design is inspired by the CDISC 360 POC and the intention is for th
  - Less time spent resolving discrepancies
  - Faster document development
 
-[![Conceptual Model](~@source/images/clinical-mdr-vision-v2.png)](../images/clinical-mdr-vision-v2.png)
+[![Conceptual Model](~@source/images/WhatIsOSB.png)](../images/clinical-mdr-vision-v2.png)
 
 # The OpenStudyBuilder includes
 

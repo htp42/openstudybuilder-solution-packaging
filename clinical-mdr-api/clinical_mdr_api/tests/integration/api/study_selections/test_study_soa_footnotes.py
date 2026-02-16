@@ -133,10 +133,15 @@ def test_data():
     # Create Template Parameter
     TestUtils.create_template_parameter("TextValue")
 
-    activity = TestUtils.create_activity(name="test activity", library_name="Sponsor")
     activity_group = TestUtils.create_activity_group(name="test activity group")
     activity_subgroup = TestUtils.create_activity_subgroup(
-        name="test activity subgroup", activity_groups=[activity_group.uid]
+        name="test activity subgroup"
+    )
+    activity = TestUtils.create_activity(
+        name="test activity",
+        library_name="Sponsor",
+        activity_groups=[activity_group.uid],
+        activity_subgroups=[activity_subgroup.uid],
     )
 
     text_value_1 = TestUtils.create_text_value()
@@ -269,7 +274,7 @@ def test_data():
     # create activities
     general_activity_group = TestUtils.create_activity_group(name="General")
     randomisation_activity_subgroup = TestUtils.create_activity_subgroup(
-        name="Randomisation", activity_groups=[general_activity_group.uid]
+        name="Randomisation"
     )
     randomized_activity = TestUtils.create_activity(
         name="Randomized",
@@ -323,7 +328,7 @@ def test_data():
     )
 
     body_measurements_activity_subgroup = TestUtils.create_activity_subgroup(
-        name="Body Measurements", activity_groups=[general_activity_group.uid]
+        name="Body Measurements"
     )
     weight_activity = TestUtils.create_activity(
         name="Weight",

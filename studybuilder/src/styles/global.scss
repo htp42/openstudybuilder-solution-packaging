@@ -34,9 +34,24 @@ body {
   .v-card {
     .v-card-title {
       padding: 20px 24px 0px;
+
+      .dialog-title {
+        cursor: grab;
+        &:active {
+          cursor: grabbing;
+        }
+      }
     }
     .v-card-text {
       padding: 20px 24px;
+    }
+
+    // Full-screen dialogs should never be draggable
+    &.fullscreen-dialog .v-card-title .dialog-title {
+      cursor: default;
+      &:active {
+        cursor: default;
+      }
     }
   }
 }
@@ -143,6 +158,15 @@ thead.v-data-table-header {
 
 .v-dialog {
   border-radius: 0px;
+}
+
+// Allow text selection through dialog overlays (enables copying text behind dialogs)
+.v-overlay__scrim {
+  pointer-events: none;
+}
+
+.v-overlay__content {
+  pointer-events: auto;
 }
 
 // Breadcrumbs

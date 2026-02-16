@@ -31,18 +31,6 @@ from clinical_mdr_api.domain_repositories.models.generic import (
 )
 
 
-class ActivityValidGroup(ClinicalMdrNodeWithUID):
-    in_group = RelationshipTo(
-        "ActivityGroupValue", "IN_GROUP", model=ClinicalMdrRel, cardinality=One
-    )
-    has_group = RelationshipFrom(
-        "ActivitySubGroupValue", "HAS_GROUP", model=ClinicalMdrRel, cardinality=One
-    )
-    in_subgroup = RelationshipFrom(
-        "ActivityGrouping", "IN_SUBGROUP", model=ClinicalMdrRel, cardinality=One
-    )
-
-
 class ActivityGroupValue(ConceptValue):
     has_latest_value = RelationshipFrom(
         "ActivityGroupRoot", "LATEST", model=ClinicalMdrRel
@@ -50,8 +38,11 @@ class ActivityGroupValue(ConceptValue):
     has_version = RelationshipFrom(
         "ActivityGroupRoot", "HAS_VERSION", model=VersionRelationship
     )
-    in_group = RelationshipFrom(
-        ActivityValidGroup, "IN_GROUP", model=ClinicalMdrRel, cardinality=ZeroOrMore
+    has_selected_group = RelationshipFrom(
+        "ActivityGrouping",
+        "HAS_SELECTED_GROUP",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrMore,
     )
 
 
@@ -80,8 +71,11 @@ class ActivitySubGroupValue(ConceptValue):
     has_version = RelationshipFrom(
         "ActivitySubGroupRoot", "HAS_VERSION", model=VersionRelationship
     )
-    has_group = RelationshipTo(
-        ActivityValidGroup, "HAS_GROUP", model=ClinicalMdrRel, cardinality=OneOrMore
+    has_selected_subgroup = RelationshipFrom(
+        "ActivityGrouping",
+        "HAS_SELECTED_SUBGROUP",
+        model=ClinicalMdrRel,
+        cardinality=OneOrMore,
     )
 
 
@@ -104,8 +98,14 @@ class ActivitySubGroupRoot(ConceptRoot):
 
 
 class ActivityGrouping(ClinicalMdrNodeWithUID):
-    in_subgroup = RelationshipTo(
-        ActivityValidGroup, "IN_SUBGROUP", model=ClinicalMdrRel, cardinality=OneOrMore
+    has_selected_group = RelationshipTo(
+        ActivityGroupValue, "HAS_SELECTED_GROUP", model=ClinicalMdrRel, cardinality=One
+    )
+    has_selected_subgroup = RelationshipTo(
+        ActivitySubGroupValue,
+        "HAS_SELECTED_SUBGROUP",
+        model=ClinicalMdrRel,
+        cardinality=One,
     )
     has_grouping = RelationshipFrom(
         "ActivityValue", "HAS_GROUPING", model=ClinicalMdrRel, cardinality=One
@@ -185,25 +185,6 @@ class ActivityItem(ClinicalMdrNode):
         "HAS_UNIT_DEFINITION",
         model=ClinicalMdrRel,
         cardinality=ZeroOrMore,
-    )
-
-    from clinical_mdr_api.domain_repositories.models.odm import (
-        OdmFormValue,
-        OdmItemGroupValue,
-        OdmItemValue,
-    )
-
-    has_odm_form = RelationshipTo(
-        OdmFormValue, "HAS_ODM_FORM", model=ClinicalMdrRel, cardinality=ZeroOrOne
-    )
-    has_odm_item_group = RelationshipTo(
-        OdmItemGroupValue,
-        "HAS_ODM_ITEM_GROUP",
-        model=ClinicalMdrRel,
-        cardinality=ZeroOrOne,
-    )
-    has_odm_item = RelationshipTo(
-        OdmItemValue, "HAS_ODM_ITEM", model=ClinicalMdrRel, cardinality=ZeroOrOne
     )
 
 

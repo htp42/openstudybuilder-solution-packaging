@@ -12,7 +12,13 @@ from typing import (
     TypeVar,
 )
 
-from pydantic import ConfigDict, Field, field_validator, model_validator
+from pydantic import (
+    ConfigDict,
+    Field,
+    StringConstraints,
+    field_validator,
+    model_validator,
+)
 
 from clinical_mdr_api.domain_repositories.study_selections.study_activity_instance_repository import (
     SelectionHistory as StudyActivityInstanceSelectionHistory,
@@ -174,9 +180,13 @@ STUDY_UID_DESC = "The uid of the study"
 STUDY_ACTIVITY_UID_DESC = "uid for the study activity"
 STUDY_ACTIVITY_INSTANCE_UID_DESC = "uid for the study activity instance"
 STUDY_ARM_UID_DESC = "the uid of the related study arm"
+STUDY_ARM_NAME_DESC = "the name of the related study arm"
 STUDY_EPOCH_UID_DESC = "the uid of the related study epoch"
+STUDY_EPOCH_NAME_DESC = "the name of the related study epoch"
 STUDY_ELEMENT_UID_DESC = "the uid of the related study element"
+STUDY_ELEMENT_NAME_DESC = "the name of the related study element"
 STUDY_BRANCH_ARM_UID_DESC = "the uid of the related study branch arm"
+STUDY_BRANCH_ARM_NAME_DESC = "the name of the related study branch arm"
 STUDY_COHORT_ARM_UID_DESC = "the uid of the related study cohort"
 ARM_UID_DESC = "uid for the study arm"
 ELEMENT_UID_DESC = "uid for the study element"
@@ -2481,6 +2491,16 @@ class StudyActivityReplaceActivityInput(StudySelectionActivityInput):
     activity_uid: Annotated[str, Field()]
 
 
+class StudyActivityReplaceActivityListInput(BaseModel):
+    replacements: Annotated[
+        list[StudyActivityReplaceActivityInput],
+        Field(
+            min_length=1,
+            description="List of activity replacements. First item replaces the original StudyActivity, rest create new ones.",
+        ),
+    ]
+
+
 class StudySelectionActivityRequestEditInput(StudySelectionActivityInput):
     soa_group_term_uid: Annotated[
         str | None, Field(description="flowchart CT term uid")
@@ -2561,7 +2581,7 @@ class StudySelectionActivityReviewBatchInput(BatchInputModel):
 #
 # Study Activity Instance
 #
-class CompactActivity(BaseModel):
+class CompactActivityForSelection(BaseModel):
     uid: Annotated[str, Field(description="Activity UID")]
     name: Annotated[
         str | None,
@@ -2758,7 +2778,7 @@ class StudySelectionActivityInstance(BaseModel):
             json_schema_extra={"nullable": True},
         ),
     ] = None
-    activity: Annotated[CompactActivity, Field()]
+    activity: Annotated[CompactActivityForSelection, Field()]
     activity_instance: Annotated[
         CompactActivityInstance | None, Field(json_schema_extra={"nullable": True})
     ] = None
@@ -2812,11 +2832,40 @@ class StudySelectionActivityInstance(BaseModel):
         ),
     ] = None
     order: Annotated[int | None, Field()] = None
+    # Data supplier and origin fields (L3 SoA)
+    study_data_supplier_uid: Annotated[
+        str | None,
+        Field(
+            description="UID of the study data supplier linked to this activity instance",
+            json_schema_extra={"nullable": True},
+        ),
+    ] = None
+    study_data_supplier_name: Annotated[
+        str | None,
+        Field(
+            description="Name of the study data supplier",
+            json_schema_extra={"nullable": True},
+        ),
+    ] = None
+    origin_type: Annotated[
+        SimpleCodelistTermModel | None,
+        Field(
+            description="Origin type CT term (e.g. Collected, Derived, Assigned)",
+            json_schema_extra={"nullable": True},
+        ),
+    ] = None
+    origin_source: Annotated[
+        SimpleCodelistTermModel | None,
+        Field(
+            description="Origin source CT term (e.g. Sponsor, Investigator, Subject)",
+            json_schema_extra={"nullable": True},
+        ),
+    ] = None
 
     @classmethod
     def _get_state_out_of_activity_and_activity_instance(
         cls,
-        activity: CompactActivity,
+        activity: CompactActivityForSelection,
         activity_instance: CompactActivityInstance | None,
         study_selection: StudySelectionActivityInstanceVO,
         keep_old_version: bool = False,
@@ -2844,7 +2893,7 @@ class StudySelectionActivityInstance(BaseModel):
         study_selection_history: StudyActivityInstanceSelectionHistory,
         study_uid: str,
     ) -> Self:
-        activity = CompactActivity.activity_from_study_activity_instance_vo(
+        activity = CompactActivityForSelection.activity_from_study_activity_instance_vo(
             study_activity_instance_vo=study_selection_history
         )
         activity_instance = (
@@ -2898,6 +2947,28 @@ class StudySelectionActivityInstance(BaseModel):
             author_username=UserInfoService.get_author_username_from_id(
                 study_selection_history.author_id
             ),
+            study_data_supplier_uid=study_selection_history.study_data_supplier_uid,
+            study_data_supplier_name=study_selection_history.study_data_supplier_name,
+            origin_type=(
+                SimpleCodelistTermModel(
+                    term_uid=study_selection_history.origin_type_uid,
+                    term_name=study_selection_history.origin_type_name,
+                    codelist_uid=study_selection_history.origin_type_codelist_uid,
+                )
+                if study_selection_history.origin_type_uid
+                and study_selection_history.origin_type_name
+                else None
+            ),
+            origin_source=(
+                SimpleCodelistTermModel(
+                    term_uid=study_selection_history.origin_source_uid,
+                    term_name=study_selection_history.origin_source_name,
+                    codelist_uid=study_selection_history.origin_source_codelist_uid,
+                )
+                if study_selection_history.origin_source_uid
+                and study_selection_history.origin_source_name
+                else None
+            ),
         )
 
     @classmethod
@@ -2907,8 +2978,10 @@ class StudySelectionActivityInstance(BaseModel):
         study_selection: StudySelectionActivityInstanceVO,
     ) -> Self:
 
-        selected_activity = CompactActivity.activity_from_study_activity_instance_vo(
-            study_activity_instance_vo=study_selection
+        selected_activity = (
+            CompactActivityForSelection.activity_from_study_activity_instance_vo(
+                study_activity_instance_vo=study_selection
+            )
         )
         selected_activity_instance = (
             CompactActivityInstance.activity_instance_from_study_activity_instance_vo(
@@ -3022,6 +3095,27 @@ class StudySelectionActivityInstance(BaseModel):
                 if study_selection.study_activity_instance_baseline_visits
                 else None
             ),
+            study_data_supplier_uid=study_selection.study_data_supplier_uid,
+            study_data_supplier_name=study_selection.study_data_supplier_name,
+            origin_type=(
+                SimpleCodelistTermModel(
+                    term_uid=study_selection.origin_type_uid,
+                    term_name=study_selection.origin_type_name,
+                    codelist_uid=study_selection.origin_type_codelist_uid,
+                )
+                if study_selection.origin_type_uid and study_selection.origin_type_name
+                else None
+            ),
+            origin_source=(
+                SimpleCodelistTermModel(
+                    term_uid=study_selection.origin_source_uid,
+                    term_name=study_selection.origin_source_name,
+                    codelist_uid=study_selection.origin_source_codelist_uid,
+                )
+                if study_selection.origin_source_uid
+                and study_selection.origin_source_name
+                else None
+            ),
         )
 
 
@@ -3039,6 +3133,9 @@ class StudySelectionActivityInstanceCreateInput(PostInputModel):
     ] = False
     is_important: Annotated[bool, Field()] = False
     baseline_visit_uids: Annotated[list[str] | None, Field()] = None
+    study_data_supplier_uid: Annotated[str | None, Field()] = None
+    origin_type_uid: Annotated[str | None, Field()] = None
+    origin_source_uid: Annotated[str | None, Field()] = None
 
 
 class StudySelectionActivityInstanceEditInput(PatchInputModel):
@@ -3056,6 +3153,9 @@ class StudySelectionActivityInstanceEditInput(PatchInputModel):
     ] = False
     is_important: Annotated[bool, Field()] = False
     baseline_visit_uids: Annotated[list[str] | None, Field()] = None
+    study_data_supplier_uid: Annotated[str | None, Field()] = None
+    origin_type_uid: Annotated[str | None, Field()] = None
+    origin_source_uid: Annotated[str | None, Field()] = None
 
 
 class StudySelectionActivityInstanceBatchEditInput(InputModel):
@@ -3070,6 +3170,9 @@ class StudySelectionActivityInstanceBatchEditInput(InputModel):
     ] = False
     is_important: Annotated[bool, Field()] = False
     baseline_visit_uids: Annotated[list[str] | None, Field()] = None
+    study_data_supplier_uid: Annotated[str | None, Field()] = None
+    origin_type_uid: Annotated[str | None, Field()] = None
+    origin_source_uid: Annotated[str | None, Field()] = None
 
 
 class StudySelectionActivityInstanceBatchInput(BatchInputModel):
@@ -3438,6 +3541,11 @@ class StudyDesignCellHistory(BaseModel):
         Field(description=STUDY_ARM_UID_DESC, json_schema_extra={"nullable": True}),
     ] = None
 
+    study_arm_name: Annotated[
+        str | None,
+        Field(description=STUDY_ARM_NAME_DESC, json_schema_extra={"nullable": True}),
+    ] = None
+
     study_branch_arm_uid: Annotated[
         str | None,
         Field(
@@ -3445,11 +3553,30 @@ class StudyDesignCellHistory(BaseModel):
         ),
     ] = None
 
+    study_branch_arm_name: Annotated[
+        str | None,
+        Field(
+            description=STUDY_BRANCH_ARM_NAME_DESC, json_schema_extra={"nullable": True}
+        ),
+    ] = None
+
     study_epoch_uid: Annotated[str, Field(description=STUDY_EPOCH_UID_DESC)]
+
+    study_epoch_name: Annotated[
+        str | None,
+        Field(description=STUDY_EPOCH_NAME_DESC, json_schema_extra={"nullable": True}),
+    ] = None
 
     study_element_uid: Annotated[
         str | None,
         Field(description=STUDY_ELEMENT_UID_DESC, json_schema_extra={"nullable": True}),
+    ] = None
+
+    study_element_name: Annotated[
+        str | None,
+        Field(
+            description=STUDY_ELEMENT_NAME_DESC, json_schema_extra={"nullable": True}
+        ),
     ] = None
 
     transition_rule: Annotated[
@@ -3458,6 +3585,14 @@ class StudyDesignCellHistory(BaseModel):
     ] = None
 
     change_type: Annotated[str | None, CHANGE_TYPE_FIELD] = None
+
+    author_username: Annotated[
+        str | None,
+        Field(
+            description=AUTHOR_FIELD_DESC,
+            json_schema_extra={"nullable": True},
+        ),
+    ] = None
 
     modified: Annotated[
         datetime | None,
@@ -3488,7 +3623,9 @@ class StudyDesignCellCreateInput(PostInputModel):
     study_element_uid: Annotated[str, Field(description=STUDY_ELEMENT_UID_DESC)]
 
     transition_rule: Annotated[
-        str | None, Field(description="Optionally, a transition rule for the cell")
+        str | None,
+        StringConstraints(max_length=200),
+        Field(description="Optionally, a transition rule for the cell"),
     ] = None
 
     order: Annotated[
@@ -3523,6 +3660,7 @@ class StudyDesignCellEditInput(PatchInputModel):
     ] = None
     transition_rule: Annotated[
         str | None,
+        StringConstraints(max_length=200),
         Field(
             json_schema_extra={"nullable": True},
             description=TRANSITION_RULE_DESC,

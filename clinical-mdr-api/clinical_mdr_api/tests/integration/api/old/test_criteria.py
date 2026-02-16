@@ -567,6 +567,18 @@ def test_get_studies(api_client):
         ]
         is None
     )
+    assert (
+        res[0]["current_metadata"]["identification_metadata"]["registry_identifiers"][
+            "eu_pas_number"
+        ]
+        is None
+    )
+    assert (
+        res[0]["current_metadata"]["identification_metadata"]["registry_identifiers"][
+            "eu_pas_number_null_value_code"
+        ]
+        is None
+    )
     assert res[0]["current_metadata"]["version_metadata"]["study_status"] == "DRAFT"
     assert res[0]["current_metadata"]["version_metadata"]["version_number"] is None
     assert res[0]["current_metadata"]["version_metadata"]["version_timestamp"]

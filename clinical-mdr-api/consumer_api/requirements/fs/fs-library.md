@@ -1,6 +1,6 @@
 # Overview
 
-This document describes a set of GET endpoints in the StudyBuilder Consumer API, which expose information about various entities defined in the `Library` section of StudyBuilder.
+This document describes a set of GET endpoints in the OpenStudyBuilder Consumer API, which expose information about various entities defined in the `Library` section of OpenStudyBuilder.
 
 Detailed API specification of each endpoint is found in the `consumer_api/openapi.json` file.
 

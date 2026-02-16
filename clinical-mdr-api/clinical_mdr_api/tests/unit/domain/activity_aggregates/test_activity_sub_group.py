@@ -4,7 +4,6 @@ from typing import Callable
 from clinical_mdr_api.domains.concepts.activities.activity_sub_group import (
     ActivitySubGroupAR,
     ActivitySubGroupVO,
-    SimpleActivityGroupVO,
 )
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemStatus,
@@ -14,13 +13,6 @@ from clinical_mdr_api.tests.unit.domain.utils import AUTHOR_ID, random_str
 from common import exceptions
 
 
-def create_random_simple_activity_group_vo() -> SimpleActivityGroupVO:
-    random_simple_activity_group_vo = SimpleActivityGroupVO(
-        activity_group_uid=random_str()
-    )
-    return random_simple_activity_group_vo
-
-
 def create_random_activity_subgroup_vo() -> ActivitySubGroupVO:
     name = random_str()
     random_activity_subgroup_vo = ActivitySubGroupVO.from_repository_values(
@@ -28,10 +20,6 @@ def create_random_activity_subgroup_vo() -> ActivitySubGroupVO:
         name_sentence_case=name,
         definition=random_str(),
         abbreviation=random_str(),
-        activity_groups=[
-            create_random_simple_activity_group_vo(),
-            create_random_simple_activity_group_vo(),
-        ],
     )
     return random_activity_subgroup_vo
 
@@ -49,9 +37,7 @@ def create_random_activity_subgroup_ar(
             library_name=library, is_editable=is_editable
         ),
         author_id=AUTHOR_ID,
-        concept_exists_by_callback=lambda x, y, z: False,
         concept_exists_by_library_and_name_callback=lambda x, y: False,
-        activity_group_exists=lambda _: True,
     )
 
     return random_activity_subgroup_ar
@@ -86,7 +72,6 @@ class TestActivitySubGroup(unittest.TestCase):
             change_description="Test",
             concept_vo=activity_vo,
             concept_exists_by_library_and_name_callback=lambda x, y: False,
-            activity_group_exists=lambda _: True,
         )
 
         # then
@@ -105,10 +90,6 @@ class TestActivitySubGroup(unittest.TestCase):
         )
         self.assertEqual(
             activity_subgroup_ar.concept_vo.definition, activity_vo.definition
-        )
-        self.assertEqual(
-            set(activity_subgroup_ar.concept_vo.activity_groups),
-            set(activity_vo.activity_groups),
         )
 
     def test__approve__version_created(self):
@@ -197,14 +178,11 @@ class TestActivitySubGroupNegative(unittest.TestCase):
                     name_sentence_case="Different from name",
                     definition=random_str(),
                     abbreviation=random_str(),
-                    activity_groups=[random_str(), random_str()],
                 ),
                 library=LibraryVO.from_repository_values(
                     library_name="library", is_editable=True
                 ),
                 author_id=AUTHOR_ID,
-                concept_exists_by_callback=lambda x, y, z: False,
-                activity_group_exists=lambda _: True,
             )
 
         assert (
@@ -228,10 +206,7 @@ class TestActivitySubGroupNegative(unittest.TestCase):
                     name_sentence_case="Different from name",
                     definition=random_str(),
                     abbreviation=random_str(),
-                    activity_groups=[random_str(), random_str()],
                 ),
-                concept_exists_by_callback=lambda x, y, z: False,
-                activity_group_exists=lambda _: True,
             )
 
         assert (

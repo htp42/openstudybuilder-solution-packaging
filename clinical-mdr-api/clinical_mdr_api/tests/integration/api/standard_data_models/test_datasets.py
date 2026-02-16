@@ -173,7 +173,6 @@ DATASET_FIELDS_ALL = [
     "label",
     "title",
     "description",
-    "catalogue_name",
     "implemented_dataset_class",
     "data_model_ig",
 ]
@@ -181,7 +180,6 @@ DATASET_FIELDS_ALL = [
 DATASET_FIELDS_NOT_NULL = [
     "uid",
     "label",
-    "catalogue_name",
     "implemented_dataset_class",
     "data_model_ig",
 ]
@@ -207,7 +205,6 @@ def test_get_dataset(api_client):
     assert res["uid"] == datasets[0].uid
     assert res["label"] == "Dataset A label"
     assert res["description"] == "Dataset A desc"
-    assert res["catalogue_name"] == data_model_catalogue_name
     assert (
         res["implemented_dataset_class"]["dataset_class_name"]
         == dataset_classes[0].label
@@ -399,11 +396,6 @@ def test_filtering_wildcard(
             "implemented_dataset_class.dataset_class_name",
             "DatasetClass label-1",
         ),
-        pytest.param(
-            '{"catalogue_name": {"v": ["DataModelCatalogue name"]}}',
-            "catalogue_name",
-            "DataModelCatalogue name",
-        ),
     ],
 )
 def test_filtering_exact(
@@ -456,7 +448,6 @@ def test_filtering_exact(
         pytest.param("label"),
         pytest.param("description"),
         pytest.param("data_model_ig.data_model_ig_name"),
-        pytest.param("catalogue_name"),
         pytest.param("implemented_dataset_class.dataset_class_name"),
     ],
 )

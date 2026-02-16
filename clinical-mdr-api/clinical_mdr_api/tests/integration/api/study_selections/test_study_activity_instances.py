@@ -33,6 +33,9 @@ from clinical_mdr_api.models.concepts.activities.activity_instance import (
 from clinical_mdr_api.models.concepts.activities.activity_sub_group import (
     ActivitySubGroup,
 )
+from clinical_mdr_api.models.controlled_terminologies.ct_codelist import CTCodelist
+from clinical_mdr_api.models.controlled_terminologies.ct_term import CTTerm
+from clinical_mdr_api.models.data_suppliers.data_supplier import DataSupplier
 from clinical_mdr_api.models.projects.project import Project
 from clinical_mdr_api.models.study_selections.study import Study
 from clinical_mdr_api.models.study_selections.study_selection import (
@@ -69,7 +72,11 @@ from clinical_mdr_api.tests.integration.utils.method_library import (
     get_unit_uid_by_name,
 )
 from clinical_mdr_api.tests.integration.utils.utils import TestUtils
-from clinical_mdr_api.tests.utils.checks import assert_response_status_code
+from clinical_mdr_api.tests.utils.checks import (
+    assert_response_status_code,
+    parse_json_response,
+)
+from common.config import settings
 
 log = logging.getLogger(__name__)
 
@@ -95,6 +102,14 @@ project: Project
 term_efficacy_uid: str
 study_visit_1: StudyVisit
 study_visit_2: StudyVisit
+# Data supplier and origin fields test data
+supplier_type_codelist: CTCodelist
+supplier_type_term: CTTerm
+origin_source_codelist: CTCodelist
+origin_source_term: CTTerm
+origin_type_codelist: CTCodelist
+origin_type_term: CTTerm
+data_supplier: DataSupplier
 
 
 @pytest.fixture(scope="module")
@@ -137,7 +152,7 @@ def test_data():
 
     activity_group = TestUtils.create_activity_group(name="test activity group")
     activity_subgroup = TestUtils.create_activity_subgroup(
-        name="test activity subgroup", activity_groups=[activity_group.uid]
+        name="test activity subgroup"
     )
     activity = TestUtils.create_activity(
         name="test activity",
@@ -195,7 +210,7 @@ def test_data():
 
     general_activity_group = TestUtils.create_activity_group(name="General")
     randomisation_activity_subgroup = TestUtils.create_activity_subgroup(
-        name="Randomisation", activity_groups=[general_activity_group.uid]
+        name="Randomisation"
     )
     randomized_activity = TestUtils.create_activity(
         name="Randomized",
@@ -254,7 +269,7 @@ def test_data():
         activity_items=[],
     )
     body_measurements_activity_subgroup = TestUtils.create_activity_subgroup(
-        name="Body Measurements", activity_groups=[general_activity_group.uid]
+        name="Body Measurements"
     )
     weight_activity = TestUtils.create_activity(
         name="Weight",
@@ -312,6 +327,71 @@ def test_data():
         project_number="1234",
         description="Base project",
         clinical_programme_uid=clinical_programme.uid,
+    )
+
+    # Setup for data supplier and origin fields tests
+    global supplier_type_codelist
+    global supplier_type_term
+    global origin_source_codelist
+    global origin_source_term
+    global origin_type_codelist
+    global origin_type_term
+    global data_supplier
+
+    supplier_type_codelist = TestUtils.create_ct_codelist(
+        name="Data Supplier Type",
+        sponsor_preferred_name="Data Supplier Type",
+        extensible=True,
+        approve=True,
+        submission_value=settings.data_supplier_type_cl_submval,
+        catalogue_name=settings.sdtm_ct_catalogue_name,
+    )
+    supplier_type_term = TestUtils.create_ct_term(
+        codelist_uid=supplier_type_codelist.codelist_uid,
+        sponsor_preferred_name="Supplier Type",
+        sponsor_preferred_name_sentence_case="supplier type",
+        catalogue_name=settings.sdtm_ct_catalogue_name,
+        approve=True,
+    )
+
+    origin_source_codelist = TestUtils.create_ct_codelist(
+        name="Origin Source",
+        sponsor_preferred_name="Origin Source",
+        extensible=True,
+        approve=True,
+        submission_value=settings.origin_source_cl_submval,
+        catalogue_name=settings.sdtm_ct_catalogue_name,
+    )
+    origin_source_term = TestUtils.create_ct_term(
+        codelist_uid=origin_source_codelist.codelist_uid,
+        sponsor_preferred_name="Investigator",
+        sponsor_preferred_name_sentence_case="investigator",
+        catalogue_name=settings.sdtm_ct_catalogue_name,
+        approve=True,
+    )
+
+    origin_type_codelist = TestUtils.create_ct_codelist(
+        name="Origin Type",
+        sponsor_preferred_name="Origin Type",
+        extensible=True,
+        approve=True,
+        submission_value=settings.origin_type_cl_submval,
+        catalogue_name=settings.sdtm_ct_catalogue_name,
+    )
+    origin_type_term = TestUtils.create_ct_term(
+        codelist_uid=origin_type_codelist.codelist_uid,
+        sponsor_preferred_name="Collected",
+        sponsor_preferred_name_sentence_case="collected",
+        catalogue_name=settings.sdtm_ct_catalogue_name,
+        approve=True,
+    )
+
+    data_supplier = TestUtils.create_data_supplier(
+        name="Test Data Supplier",
+        supplier_type_uid=supplier_type_term.term_uid,
+        origin_source_uid=origin_source_term.term_uid,
+        origin_type_uid=origin_type_term.term_uid,
+        description="Test data supplier for SAI tests",
     )
     yield
 
@@ -447,16 +527,16 @@ def test_delete_study_activity_instance(api_client):
     assert len(res) == 2
     required_study_activity_instance_uid = res[0]["study_activity_instance_uid"]
     assert res[0]["is_reviewed"] is True
-    second_randonmized_activity_instance_uid = res[1]["study_activity_instance_uid"]
+    second_randomized_activity_instance_uid = res[1]["study_activity_instance_uid"]
 
     # Delete one StudyActivityInstance pointing to the Randomized Activity, the whole StudyActivityInstance object should be removed
     # as there exists another StudyActivityInstance pointing to the same Activity
     response = api_client.delete(
-        f"/studies/{test_study.uid}/study-activity-instances/{second_randonmized_activity_instance_uid}",
+        f"/studies/{test_study.uid}/study-activity-instances/{second_randomized_activity_instance_uid}",
     )
     assert_response_status_code(response, 204)
     response = api_client.get(
-        f"/studies/{test_study.uid}/study-activity-instances/{second_randonmized_activity_instance_uid}",
+        f"/studies/{test_study.uid}/study-activity-instances/{second_randomized_activity_instance_uid}",
     )
     assert_response_status_code(response, 404)
 
@@ -737,6 +817,15 @@ def test_edit_study_activity_instance(api_client):
     assert res["baseline_visits"] is None
 
     # Test setting is_important to True
+    # First, ensure the study activity instance is not reviewed or it will fail
+    _ = api_client.patch(
+        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
+        json={
+            "is_reviewed": False,
+        },
+    )
+    expected_audit_trail_length += 1
+
     # Test setting baseline visits
     response = api_client.patch(
         f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
@@ -823,6 +912,71 @@ def test_edit_study_activity_instance(api_client):
         == f"The Study Visit with UID '{unscheduled_visit.uid}' does not correspond to a current StudyActivitySchedule for the parent StudyActivity with UID '{study_activity_uid}'."
     )
 
+    # Test that editing is_important or baseline_visits on a reviewed instance raises error
+    # Set is_reviewed to True with baseline visits
+    response = api_client.patch(
+        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
+        json={
+            "is_reviewed": True,
+            "is_important": False,
+            "baseline_visit_uids": [study_visit_1.uid],
+        },
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert res["is_reviewed"] is True
+    assert res["is_important"] is False
+    assert len(res["baseline_visits"]) == 1
+    expected_audit_trail_length += 1
+
+    # Try to modify is_important on the reviewed instance - should fail
+    response = api_client.patch(
+        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
+        json={
+            "is_important": True,
+        },
+    )
+    assert_response_status_code(response, 400)
+    assert (
+        "Cannot modify 'is_important' property on a reviewed StudyActivityInstance"
+        in response.json()["message"]
+    )
+
+    # Try to modify baseline_visits on a reviewed instance - should fail
+    response = api_client.patch(
+        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
+        json={
+            "baseline_visit_uids": [study_visit_2.uid],
+        },
+    )
+    assert_response_status_code(response, 400)
+    assert (
+        "Cannot modify baseline visits on a reviewed StudyActivityInstance"
+        in response.json()["message"]
+    )
+
+    # Verify that we can still modify other fields on a reviewed instance
+    response = api_client.patch(
+        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
+        json={
+            "show_activity_instance_in_protocol_flowchart": True,
+        },
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert res["show_activity_instance_in_protocol_flowchart"] is True
+    expected_audit_trail_length += 1
+
+    # Set is_reviewed back to False to continue with other tests
+    response = api_client.patch(
+        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
+        json={
+            "is_reviewed": False,
+        },
+    )
+    assert_response_status_code(response, 200)
+    expected_audit_trail_length += 1
+
     # Test cascade deletion of baseline rel for Visit / Schedule deletion
     # Delete schedule 1 - should remove visit 1 from baseline visits
     response = api_client.patch(
@@ -890,7 +1044,7 @@ def test_edit_study_activity_instance(api_client):
     assert_response_status_code(response, 200)
     res = response.json()
     assert len(res) == expected_audit_trail_length
-    assert len([x for x in res if x["baseline_visits"] is None]) == 3
+    assert len([x for x in res if x["baseline_visits"] is None]) == 4
     assert (
         len(
             [
@@ -909,7 +1063,7 @@ def test_edit_study_activity_instance(api_client):
                 if x["baseline_visits"] is not None and len(x["baseline_visits"]) == 1
             ]
         )
-        == expected_audit_trail_length - 5
+        == expected_audit_trail_length - 6
     )
 
     # test detaching from activity instance - should set state to MISSING_SELECTION
@@ -935,7 +1089,10 @@ def test_edit_study_activity_instance(api_client):
 
 
 def test_study_activity_instance_header_endpoint(api_client):
+    # create test Study
     test_study = TestUtils.create_study(project_number=project.project_number)
+
+    # create Study Activities
     response = api_client.post(
         f"/studies/{test_study.uid}/study-activities",
         json={
@@ -946,6 +1103,7 @@ def test_study_activity_instance_header_endpoint(api_client):
         },
     )
     assert_response_status_code(response, 201)
+
     response = api_client.post(
         f"/studies/{test_study.uid}/study-activities",
         json={
@@ -956,6 +1114,7 @@ def test_study_activity_instance_header_endpoint(api_client):
         },
     )
     assert_response_status_code(response, 201)
+
     response = api_client.post(
         f"/studies/{test_study.uid}/study-activities",
         json={
@@ -966,17 +1125,57 @@ def test_study_activity_instance_header_endpoint(api_client):
         },
     )
     assert_response_status_code(response, 201)
-    # get study activity instance headers
+
+    # crate Activity Placeholder
+    response = api_client.post(
+        "/concepts/activities/activities",
+        json={
+            "name": "Hello activity",
+            "is_data_collected": False,
+            "is_request_final": False,
+            "library_name": "Requested",
+            "name_sentence_case": "hello activity",
+            "request_rationale": "tst",
+            "flowchart_group": {"term_uid": term_efficacy_uid},
+        },
+    )
+    res = parse_json_response(response, status=201)
+
+    response = api_client.post(
+        f"/concepts/activities/activities/{res['uid']}/approvals"
+    )
+    res = parse_json_response(response, status=201)
+    hello_activity = Activity(**res)
+
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activities",
+        json={
+            "activity_uid": res["uid"],
+            "soa_group_term_uid": term_efficacy_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
+
+    # get Study Activity Instance name values
     response = api_client.get(
         f"/studies/{test_study.uid}/study-activity-instances/headers?field_name=activity.name",
     )
-    assert_response_status_code(response, 200)
-    res = response.json()
+    res = parse_json_response(response, status=200)
     assert res == [
         randomized_activity.name,
         body_mes_activity.name,
         weight_activity.name,
+        hello_activity.name,
     ]
+
+    # get Study Activity Instance library_name values
+    response = api_client.get(
+        f"/studies/{test_study.uid}/study-activity-instances/headers?field_name=activity.library_name",
+    )
+    res = parse_json_response(response, status=200)
+    assert set(res) == {randomized_activity.library_name, hello_activity.library_name}
+
+    # delete Test Study
     TestUtils.delete_study(test_study.uid)
 
 
@@ -1615,7 +1814,6 @@ def test_study_activity_instances_batch_create(api_client):
             activity_items=[],
         )
         req_activity_instance_uids.append(required_activity_instance.uid)
-    req_activity_instance_uids.append(first_required_activity_instance.uid)
 
     response = api_client.post(
         f"/studies/{test_study.uid}/study-activity-instances/batch",
@@ -1760,6 +1958,12 @@ def test_batch_operations(api_client):
         study_activity_instances[1]["study_activity_instance_uid"]
         == study_activity_instance_uid
     )
+    # Assert sorting by activity instance name succeeds when there exists at least one StudyActivityInstance with no linked ActivityInstance
+    response = api_client.get(
+        f"/studies/{test_study.uid}/study-activity-instances",
+        params={"sort_by": '{"activity_instance.name": true}'},
+    )
+    assert_response_status_code(response, 200)
 
 
 def test_study_activity_instances_review_changes_batch(api_client):
@@ -2063,3 +2267,515 @@ def test_study_activity_instances_invalidate_keep_old_version(api_client):
     assert res["activity_instance"]["status"] == "Final"
     assert res["activity_instance"]["topic_code"] == updated_tc
     assert res["latest_activity_instance"] is None
+
+
+def test_create_study_activity_instance_with_data_supplier_and_origin_fields(
+    api_client,
+):
+    """Test creating a StudyActivityInstance with data supplier and origin fields (L3 SoA)."""
+    test_study = TestUtils.create_study(project_number=project.project_number)
+
+    # First sync the data supplier to the study
+    response = api_client.put(
+        f"/studies/{test_study.uid}/study-data-suppliers/sync",
+        json={
+            "suppliers": [
+                {
+                    "data_supplier_uid": data_supplier.uid,
+                    "study_data_supplier_type_uid": supplier_type_term.term_uid,
+                },
+            ]
+        },
+    )
+    assert_response_status_code(response, 200)
+    study_data_supplier_uid = response.json()[0]["study_data_supplier_uid"]
+
+    # Create a study activity
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activities",
+        json={
+            "activity_uid": randomized_activity.uid,
+            "activity_subgroup_uid": randomisation_activity_subgroup.uid,
+            "activity_group_uid": general_activity_group.uid,
+            "soa_group_term_uid": term_efficacy_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
+    study_activity_uid = response.json()["study_activity_uid"]
+
+    # Get the auto-created study activity instance
+    response = api_client.get(f"/studies/{test_study.uid}/study-activity-instances")
+    assert_response_status_code(response, 200)
+    study_activity_instances = response.json()["items"]
+    assert len(study_activity_instances) == 1
+    # Initially, data supplier and origin fields should be None
+    assert study_activity_instances[0]["study_data_supplier_uid"] is None
+    assert study_activity_instances[0]["study_data_supplier_name"] is None
+    assert study_activity_instances[0]["origin_type"] is None
+    assert study_activity_instances[0]["origin_source"] is None
+
+    # Create a new study activity instance with data supplier and origin fields
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activity-instances",
+        json={
+            "study_activity_uid": study_activity_uid,
+            "activity_instance_uid": second_randomized_activity_instance.uid,
+            "study_data_supplier_uid": study_data_supplier_uid,
+            "origin_type_uid": origin_type_term.term_uid,
+            "origin_source_uid": origin_source_term.term_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
+    res = response.json()
+
+    # Verify the data supplier and origin fields are set
+    assert res["study_data_supplier_uid"] == study_data_supplier_uid
+    assert res["study_data_supplier_name"] == data_supplier.name
+    assert res["origin_type"] is not None
+    assert res["origin_type"]["term_uid"] == origin_type_term.term_uid
+    assert res["origin_type"]["term_name"] == origin_type_term.sponsor_preferred_name
+    assert res["origin_source"] is not None
+    assert res["origin_source"]["term_uid"] == origin_source_term.term_uid
+    assert (
+        res["origin_source"]["term_name"] == origin_source_term.sponsor_preferred_name
+    )
+
+    # Verify via GET endpoint
+    study_activity_instance_uid = res["study_activity_instance_uid"]
+    response = api_client.get(
+        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}"
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert res["study_data_supplier_uid"] == study_data_supplier_uid
+    assert res["study_data_supplier_name"] == data_supplier.name
+    assert res["origin_type"]["term_uid"] == origin_type_term.term_uid
+    assert res["origin_source"]["term_uid"] == origin_source_term.term_uid
+
+    TestUtils.delete_study(test_study.uid)
+
+
+def test_edit_study_activity_instance_data_supplier_and_origin_fields(api_client):
+    """Test editing data supplier and origin fields on a StudyActivityInstance."""
+    test_study = TestUtils.create_study(project_number=project.project_number)
+
+    # Sync data supplier to study
+    response = api_client.put(
+        f"/studies/{test_study.uid}/study-data-suppliers/sync",
+        json={
+            "suppliers": [
+                {
+                    "data_supplier_uid": data_supplier.uid,
+                    "study_data_supplier_type_uid": supplier_type_term.term_uid,
+                },
+            ]
+        },
+    )
+    assert_response_status_code(response, 200)
+    study_data_supplier_uid = response.json()[0]["study_data_supplier_uid"]
+
+    # Create a study activity
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activities",
+        json={
+            "activity_uid": randomized_activity.uid,
+            "activity_subgroup_uid": randomisation_activity_subgroup.uid,
+            "activity_group_uid": general_activity_group.uid,
+            "soa_group_term_uid": term_efficacy_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
+
+    # Get the auto-created study activity instance
+    response = api_client.get(f"/studies/{test_study.uid}/study-activity-instances")
+    assert_response_status_code(response, 200)
+    study_activity_instance_uid = response.json()["items"][0][
+        "study_activity_instance_uid"
+    ]
+
+    # Initially fields should be None
+    response = api_client.get(
+        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}"
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert res["study_data_supplier_uid"] is None
+    assert res["origin_type"] is None
+    assert res["origin_source"] is None
+
+    # PATCH to add data supplier and origin fields
+    response = api_client.patch(
+        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
+        json={
+            "study_data_supplier_uid": study_data_supplier_uid,
+            "origin_type_uid": origin_type_term.term_uid,
+            "origin_source_uid": origin_source_term.term_uid,
+        },
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert res["study_data_supplier_uid"] == study_data_supplier_uid
+    assert res["study_data_supplier_name"] == data_supplier.name
+    assert res["origin_type"]["term_uid"] == origin_type_term.term_uid
+    assert res["origin_source"]["term_uid"] == origin_source_term.term_uid
+
+    # Verify via GET
+    response = api_client.get(
+        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}"
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert res["study_data_supplier_uid"] == study_data_supplier_uid
+    assert res["origin_type"]["term_uid"] == origin_type_term.term_uid
+    assert res["origin_source"]["term_uid"] == origin_source_term.term_uid
+
+    # Note: Clearing these fields via PATCH (setting to None) is not currently supported
+    # due to how fill_missing_values_in_base_model_from_reference_base_model handles
+    # Pydantic's model_fields_set when the explicit value equals the default value.
+
+    TestUtils.delete_study(test_study.uid)
+
+
+def test_study_activity_instance_audit_trail_includes_data_supplier_fields(api_client):
+    """Test that audit trail captures changes to data supplier and origin fields."""
+    test_study = TestUtils.create_study(project_number=project.project_number)
+
+    # Sync data supplier to study
+    response = api_client.put(
+        f"/studies/{test_study.uid}/study-data-suppliers/sync",
+        json={
+            "suppliers": [
+                {
+                    "data_supplier_uid": data_supplier.uid,
+                    "study_data_supplier_type_uid": supplier_type_term.term_uid,
+                },
+            ]
+        },
+    )
+    assert_response_status_code(response, 200)
+    study_data_supplier_uid = response.json()[0]["study_data_supplier_uid"]
+
+    # Create a study activity
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activities",
+        json={
+            "activity_uid": randomized_activity.uid,
+            "activity_subgroup_uid": randomisation_activity_subgroup.uid,
+            "activity_group_uid": general_activity_group.uid,
+            "soa_group_term_uid": term_efficacy_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
+
+    # Get the auto-created study activity instance
+    response = api_client.get(f"/studies/{test_study.uid}/study-activity-instances")
+    assert_response_status_code(response, 200)
+    study_activity_instance_uid = response.json()["items"][0][
+        "study_activity_instance_uid"
+    ]
+
+    # PATCH to add data supplier and origin fields (creates an audit trail entry)
+    response = api_client.patch(
+        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
+        json={
+            "study_data_supplier_uid": study_data_supplier_uid,
+            "origin_type_uid": origin_type_term.term_uid,
+            "origin_source_uid": origin_source_term.term_uid,
+        },
+    )
+    assert_response_status_code(response, 200)
+
+    # Check audit trail for this specific study activity instance
+    response = api_client.get(
+        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}/audit-trail"
+    )
+    assert_response_status_code(response, 200)
+    audit_trail = response.json()
+
+    # Should have at least 2 entries: initial creation and the PATCH
+    assert len(audit_trail) >= 2
+
+    # Most recent entry should have the data supplier and origin fields
+    latest_entry = audit_trail[0]
+    assert latest_entry["study_data_supplier_uid"] == study_data_supplier_uid
+    assert latest_entry["study_data_supplier_name"] == data_supplier.name
+    assert latest_entry["origin_type"]["term_uid"] == origin_type_term.term_uid
+    assert latest_entry["origin_source"]["term_uid"] == origin_source_term.term_uid
+
+    # Previous entry (initial creation) should have None for these fields
+    initial_entry = audit_trail[1]
+    assert initial_entry["study_data_supplier_uid"] is None
+    assert initial_entry["origin_type"] is None
+    assert initial_entry["origin_source"] is None
+
+    TestUtils.delete_study(test_study.uid)
+
+
+def test_batch_create_study_activity_instance_with_data_supplier_and_origin_fields(
+    api_client,
+):
+    """Test batch creating StudyActivityInstances with data supplier and origin fields."""
+    test_study = TestUtils.create_study(project_number=project.project_number)
+
+    # Sync data supplier to study
+    response = api_client.put(
+        f"/studies/{test_study.uid}/study-data-suppliers/sync",
+        json={
+            "suppliers": [
+                {
+                    "data_supplier_uid": data_supplier.uid,
+                    "study_data_supplier_type_uid": supplier_type_term.term_uid,
+                },
+            ]
+        },
+    )
+    assert_response_status_code(response, 200)
+    study_data_supplier_uid = response.json()[0]["study_data_supplier_uid"]
+
+    # Create a study activity
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activities",
+        json={
+            "activity_uid": randomized_activity.uid,
+            "activity_subgroup_uid": randomisation_activity_subgroup.uid,
+            "activity_group_uid": general_activity_group.uid,
+            "soa_group_term_uid": term_efficacy_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
+    study_activity_uid = response.json()["study_activity_uid"]
+
+    # Batch create with data supplier and origin fields
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activity-instances/batch",
+        json=[
+            {
+                "method": "POST",
+                "content": {
+                    "study_activity_uid": study_activity_uid,
+                    "activity_instance_uid": second_randomized_activity_instance.uid,
+                    "study_data_supplier_uid": study_data_supplier_uid,
+                    "origin_type_uid": origin_type_term.term_uid,
+                    "origin_source_uid": origin_source_term.term_uid,
+                },
+            },
+        ],
+    )
+    assert_response_status_code(response, 207)
+
+    # Get all study activity instances and find the one we just created
+    response = api_client.get(f"/studies/{test_study.uid}/study-activity-instances")
+    assert_response_status_code(response, 200)
+    items = response.json()["items"]
+
+    # Find the instance with the second_randomized_activity_instance
+    created_instance = next(
+        (
+            item
+            for item in items
+            if item.get("activity_instance")
+            and item["activity_instance"]["uid"]
+            == second_randomized_activity_instance.uid
+        ),
+        None,
+    )
+    assert created_instance is not None
+    assert created_instance["study_data_supplier_uid"] == study_data_supplier_uid
+    assert created_instance["origin_type"]["term_uid"] == origin_type_term.term_uid
+    assert created_instance["origin_source"]["term_uid"] == origin_source_term.term_uid
+
+    TestUtils.delete_study(test_study.uid)
+
+
+def test_study_activity_instance_headers_for_data_supplier_name(api_client):
+    """Test headers endpoint returns unique study_data_supplier_name values."""
+    test_study = TestUtils.create_study(project_number=project.project_number)
+
+    # Sync data supplier to study
+    response = api_client.put(
+        f"/studies/{test_study.uid}/study-data-suppliers/sync",
+        json={
+            "suppliers": [
+                {
+                    "data_supplier_uid": data_supplier.uid,
+                    "study_data_supplier_type_uid": supplier_type_term.term_uid,
+                },
+            ]
+        },
+    )
+    assert_response_status_code(response, 200)
+    study_data_supplier_uid = response.json()[0]["study_data_supplier_uid"]
+
+    # Create study activities with different data suppliers
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activities",
+        json={
+            "activity_uid": randomized_activity.uid,
+            "activity_subgroup_uid": randomisation_activity_subgroup.uid,
+            "activity_group_uid": general_activity_group.uid,
+            "soa_group_term_uid": term_efficacy_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
+    study_activity_uid = response.json()["study_activity_uid"]
+
+    # Create instance with data supplier
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activity-instances",
+        json={
+            "study_activity_uid": study_activity_uid,
+            "activity_instance_uid": second_randomized_activity_instance.uid,
+            "study_data_supplier_uid": study_data_supplier_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
+
+    # Test headers endpoint for study_data_supplier_name
+    response = api_client.get(
+        f"/studies/{test_study.uid}/study-activity-instances/headers?field_name=study_data_supplier_name"
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert data_supplier.name in res
+
+    TestUtils.delete_study(test_study.uid)
+
+
+@pytest.mark.parametrize(
+    "export_format",
+    [pytest.param("csv"), pytest.param("xml"), pytest.param("excel")],
+)
+def test_study_activity_instances_export_includes_data_supplier_fields(
+    api_client, export_format
+):
+    """Test that CSV/XML/Excel exports include data supplier and origin fields."""
+    test_study = TestUtils.create_study(project_number=project.project_number)
+
+    # Sync data supplier to study
+    response = api_client.put(
+        f"/studies/{test_study.uid}/study-data-suppliers/sync",
+        json={
+            "suppliers": [
+                {
+                    "data_supplier_uid": data_supplier.uid,
+                    "study_data_supplier_type_uid": supplier_type_term.term_uid,
+                },
+            ]
+        },
+    )
+    assert_response_status_code(response, 200)
+    study_data_supplier_uid = response.json()[0]["study_data_supplier_uid"]
+
+    # Create a study activity
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activities",
+        json={
+            "activity_uid": randomized_activity.uid,
+            "activity_subgroup_uid": randomisation_activity_subgroup.uid,
+            "activity_group_uid": general_activity_group.uid,
+            "soa_group_term_uid": term_efficacy_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
+    study_activity_uid = response.json()["study_activity_uid"]
+
+    # Create instance with data supplier and origin fields
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activity-instances",
+        json={
+            "study_activity_uid": study_activity_uid,
+            "activity_instance_uid": second_randomized_activity_instance.uid,
+            "study_data_supplier_uid": study_data_supplier_uid,
+            "origin_type_uid": origin_type_term.term_uid,
+            "origin_source_uid": origin_source_term.term_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
+
+    # Export and verify data contains the new fields
+    url = f"/studies/{test_study.uid}/study-activity-instances"
+    response = api_client.get(f"{url}?export={export_format}")
+    assert_response_status_code(response, 200)
+
+    # For CSV, check that the content includes the field values
+    if export_format == "csv":
+        content = response.text
+        assert "study_data_supplier_uid" in content or "Study Data Supplier" in content
+        assert study_data_supplier_uid in content or data_supplier.name in content
+
+    TestUtils.delete_study(test_study.uid)
+
+
+def test_batch_patch_study_activity_instance_data_supplier_and_origin_fields(
+    api_client,
+):
+    """Test batch PATCH operations on data supplier and origin fields."""
+    test_study = TestUtils.create_study(project_number=project.project_number)
+
+    # Sync data supplier to study
+    response = api_client.put(
+        f"/studies/{test_study.uid}/study-data-suppliers/sync",
+        json={
+            "suppliers": [
+                {
+                    "data_supplier_uid": data_supplier.uid,
+                    "study_data_supplier_type_uid": supplier_type_term.term_uid,
+                },
+            ]
+        },
+    )
+    assert_response_status_code(response, 200)
+    study_data_supplier_uid = response.json()[0]["study_data_supplier_uid"]
+
+    # Create a study activity
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activities",
+        json={
+            "activity_uid": randomized_activity.uid,
+            "activity_subgroup_uid": randomisation_activity_subgroup.uid,
+            "activity_group_uid": general_activity_group.uid,
+            "soa_group_term_uid": term_efficacy_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
+    study_activity_uid = response.json()["study_activity_uid"]
+
+    # Get the auto-created study activity instance
+    response = api_client.get(f"/studies/{test_study.uid}/study-activity-instances")
+    assert_response_status_code(response, 200)
+    study_activity_instance_uid = response.json()["items"][0][
+        "study_activity_instance_uid"
+    ]
+
+    # Batch PATCH to add data supplier and origin fields
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activity-instances/batch",
+        json=[
+            {
+                "method": "PATCH",
+                "content": {
+                    "study_activity_instance_uid": study_activity_instance_uid,
+                    "study_activity_uid": study_activity_uid,
+                    "study_data_supplier_uid": study_data_supplier_uid,
+                    "origin_type_uid": origin_type_term.term_uid,
+                    "origin_source_uid": origin_source_term.term_uid,
+                },
+            },
+        ],
+    )
+    assert_response_status_code(response, 207)
+    batch_results = response.json()
+    assert batch_results[0]["response_code"] == 200
+
+    # Verify the changes
+    response = api_client.get(
+        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}"
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert res["study_data_supplier_uid"] == study_data_supplier_uid
+    assert res["study_data_supplier_name"] == data_supplier.name
+    assert res["origin_type"]["term_uid"] == origin_type_term.term_uid
+    assert res["origin_source"]["term_uid"] == origin_source_term.term_uid
+
+    TestUtils.delete_study(test_study.uid)

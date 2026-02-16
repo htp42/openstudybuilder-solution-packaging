@@ -306,9 +306,15 @@ export default {
 
       const data = this.prepareRequestPayload()
       try {
+        const parentUid = this.studiesGeneralStore.selectedStudy
+          .study_parent_part
+          ? this.studiesGeneralStore.selectedStudy.study_parent_part.uid
+          : null
+
         await this.studiesManageStore.updateStudyIntervention(
           this.studiesGeneralStore.selectedStudy.uid,
-          data
+          data,
+          parentUid
         )
         this.$emit('updated', data)
         this.notificationHub.add({

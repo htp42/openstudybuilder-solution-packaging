@@ -829,6 +829,11 @@ class LibraryItemRepositoryImplBase(
                         latest_matching_relationship is None
                         or latest_matching_relationship.start_date
                         < relationship.start_date
+                        or (
+                            latest_matching_relationship.start_date
+                            == relationship.start_date
+                            and relationship.end_date is None
+                        )
                     ) and relationship.status == status.value:
                         latest_matching_relationship = relationship
                         latest_matching_value = matching_value
@@ -837,6 +842,11 @@ class LibraryItemRepositoryImplBase(
                         latest_matching_relationship is None
                         or latest_matching_relationship.start_date
                         < relationship.start_date
+                        or (
+                            latest_matching_relationship.start_date
+                            == relationship.start_date
+                            and relationship.end_date is None
+                        )
                     ):
                         latest_matching_relationship = relationship
                         latest_matching_value = matching_value
@@ -2087,7 +2097,7 @@ END
             CALL {
                 WITH root, value
                 MATCH (root)-[ver_rel:HAS_VERSION]->()
-                WITH * ORDER BY ver_rel.start_date DESC LIMIT 1
+                WITH * ORDER BY ver_rel.start_date DESC, ver_rel.end_date DESC LIMIT 1
                 WHERE $status <> "Final" OR (ver_rel.status <> "Retired" AND $status = "Final")
                 MATCH (_root)-[ver_rel]->()
                 RETURN _root
@@ -2103,7 +2113,7 @@ END
                 MATCH (_root)-[ver_rel:HAS_VERSION]->(_value)
                 WITH ver_rel, _root, _value
                 {version_where_stmt}
-                RETURN _root, _value, ver_rel ORDER BY ver_rel.start_date DESC LIMIT 1
+                RETURN _root, _value, ver_rel ORDER BY ver_rel.start_date DESC, ver_rel.end_date DESC LIMIT 1
             }}
             WITH _root AS root, _value AS value, library, ver_rel
         """
@@ -2244,7 +2254,7 @@ END
             CALL {
                 WITH root
                 MATCH (root)-[ver_rel:HAS_VERSION]->()
-                WITH * ORDER BY ver_rel.start_date DESC LIMIT 1
+                WITH * ORDER BY ver_rel.start_date DESC, ver_rel.end_date DESC LIMIT 1
                     WHERE 
                         ver_rel.status = "Final" // WHEN THE LATEST VERSION IS FINAL --THEN--> PASS EVERYTHING
                 MATCH (_root)-[ver_rel]->()
@@ -2258,7 +2268,7 @@ END
                 CALL {{
                     WITH root
                     MATCH (root)-[ver_rel:HAS_VERSION]->()
-                    WITH * ORDER BY ver_rel.start_date DESC LIMIT 1
+                    WITH * ORDER BY ver_rel.start_date DESC, ver_rel.end_date DESC LIMIT 1
                     {'''
                         WHERE
                             $status <> "Final"                                      // WHEN THE USER DOESN'T ASK FOR FINAL --THEN--> PASS EVERYTHING
@@ -2299,7 +2309,9 @@ END
         else:
             ver_rel_filtering = """
                 WITH *, NULL as latest_version
-                RETURN _root, _value, ver_rel, latest_version ORDER BY ver_rel.start_date DESC LIMIT 1
+                RETURN _root, _value, ver_rel, latest_version
+                ORDER BY ver_rel.start_date DESC, ver_rel.end_date DESC
+                LIMIT 1
             """
         version_call = f"""
             CALL {{
@@ -2521,12 +2533,16 @@ END
                     return_stmt += " SKIP $page_number * $page_size LIMIT $page_size "
         else:
             if not uid:
-                return_stmt += " ORDER BY ver_rel.start_date DESC "
+                return_stmt += (
+                    " ORDER BY ver_rel.start_date DESC, ver_rel.end_date DESC "
+                )
 
                 if with_pagination:
                     return_stmt += " SKIP $page_number * $page_size LIMIT $page_size "
             else:
-                return_stmt += " ORDER BY ver_rel.start_date DESC "
+                return_stmt += (
+                    " ORDER BY ver_rel.start_date DESC, ver_rel.end_date DESC "
+                )
 
         return match_stmt, return_stmt
 
@@ -2558,26 +2574,26 @@ END
             CALL{
                 WITH root,ver_rel,activity_instance_value
                 WITH *, 
-                 [(root)-[ver_rel]->(activity_instance_value)-[:HAS_ACTIVITY]->(activity_instance_grouping:ActivityGrouping)-[:IN_SUBGROUP]->(activity_valid_group:ActivityValidGroup) | 
+                 [(root)-[ver_rel]->(activity_instance_value)-[:HAS_ACTIVITY]->(activity_instance_grouping:ActivityGrouping) |
                     {
-                        activity: head(apoc.coll.sortMulti([(activity_instance_grouping)-[:HAS_GROUPING]-(activity_value:ActivityValue)<-[has_version:HAS_VERSION]-
-                            (activity_root:ActivityRoot) | 
+                        activity: head(apoc.coll.sortMulti([(activity_instance_grouping)<-[:HAS_GROUPING]-(activity_value:ActivityValue)<-[has_version:HAS_VERSION]-
+                            (activity_root:ActivityRoot) |
                             {
                                 uid: activity_root.uid,
                                 name: activity_value.name,
                                 major_version: toInteger(split(has_version.version,'.')[0]),
                                 minor_version: toInteger(split(has_version.version,'.')[1])
                             }], ['major_version', 'minor_version'])),
-                        activity_subgroup: head(apoc.coll.sortMulti([(activity_valid_group)<-[:HAS_GROUP]-(activity_subgroup_value:ActivitySubGroupValue)<-[has_version:HAS_VERSION]-
-                            (activity_subgroup_root:ActivitySubGroupRoot) | 
+                        activity_subgroup: head(apoc.coll.sortMulti([(activity_instance_grouping)-[:HAS_SELECTED_SUBGROUP]->(activity_subgroup_value:ActivitySubGroupValue)<-[has_version:HAS_VERSION]-
+                            (activity_subgroup_root:ActivitySubGroupRoot) |
                             {
                                 uid: activity_subgroup_root.uid,
                                 name: activity_subgroup_value.name,
                                 major_version: toInteger(split(has_version.version,'.')[0]),
                                 minor_version: toInteger(split(has_version.version,'.')[1])
-                            }], ['major_version', 'minor_version'])), 
-                        activity_group: head(apoc.coll.sortMulti([(activity_valid_group)-[:IN_GROUP]-(activity_group_value:ActivityGroupValue)<-[has_version:HAS_VERSION]-
-                            (activity_group_root:ActivityGroupRoot) | 
+                            }], ['major_version', 'minor_version'])),
+                        activity_group: head(apoc.coll.sortMulti([(activity_instance_grouping)-[:HAS_SELECTED_GROUP]->(activity_group_value:ActivityGroupValue)<-[has_version:HAS_VERSION]-
+                            (activity_group_root:ActivityGroupRoot) |
                             {
                                 uid: activity_group_root.uid,
                                 name: activity_group_value.name,
@@ -2610,21 +2626,48 @@ END
                 }
                 CALL{
                     WITH activity_item
-                    MATCH (activity_item)-[:HAS_ODM_FORM]->(odm_form_root:OdmFormRoot)
+                    MATCH (activity_item)<-[ltai:LINKS_TO_ACTIVITY_ITEM]-(odm_form_root:OdmFormRoot)
                     MATCH (odm_form_root)-[:LATEST]->(odm_form_value:OdmFormValue)
-                    RETURN collect(DISTINCT {uid: odm_form_root.uid, oid: odm_form_value.oid, name: odm_form_value.name}) AS odm_forms
+                    RETURN collect(DISTINCT {
+                        uid: odm_form_root.uid,
+                        oid: odm_form_value.oid,
+                        name: odm_form_value.name,
+                        order: ltai.order,
+                        primary: ltai.primary,
+                        preset_response_value: ltai.preset_response_value,
+                        value_condition: ltai.value_condition,
+                        value_dependent_map: ltai.value_dependent_map
+                    }) AS odm_forms
                 }
                 CALL{
                     WITH activity_item
-                    MATCH (activity_item)-[:HAS_ODM_ITEM_GROUP]->(odm_item_group_root:OdmItemRoot)
+                    MATCH (activity_item)<-[ltai:LINKS_TO_ACTIVITY_ITEM]-(odm_item_group_root:OdmItemRoot)
                     MATCH (odm_item_group_root)-[:LATEST]->(odm_item_group_value:OdmItemValue)
-                    RETURN collect(DISTINCT {uid: odm_item_group_root.uid, oid: odm_item_group_value.oid, name: odm_item_group_value.name}) AS odm_item_groups
+                    RETURN collect(DISTINCT {
+                        uid: odm_item_group_root.uid,
+                        oid: odm_item_group_value.oid,
+                        name: odm_item_group_value.name,
+                        order: ltai.order,
+                        primary: ltai.primary,
+                        preset_response_value: ltai.preset_response_value,
+                        value_condition: ltai.value_condition,
+                        value_dependent_map: ltai.value_dependent_map
+                    }) AS odm_item_groups
                 }
                 CALL{
                     WITH activity_item
-                    MATCH (activity_item)-[:HAS_ODM_ITEM]->(odm_item_root:OdmItemRoot)
+                    MATCH (activity_item)<-[ltai:LINKS_TO_ACTIVITY_ITEM]-(odm_item_root:OdmItemRoot)
                     MATCH (odm_item_root)-[:LATEST]->(odm_item_value:OdmItemValue)
-                    RETURN collect(DISTINCT {uid: odm_item_root.uid, oid: odm_item_value.oid, name: odm_item_value.name}) AS odm_items
+                    RETURN collect(DISTINCT {
+                        uid: odm_item_root.uid,
+                        oid: odm_item_value.oid,
+                        name: odm_item_value.name,
+                        order: ltai.order,
+                        primary: ltai.primary,
+                        preset_response_value: ltai.preset_response_value,
+                        value_condition: ltai.value_condition,
+                        value_dependent_map: ltai.value_dependent_map
+                    }) AS odm_items
                 }
                 RETURN  COLLECT( distinct {
                     activity_item_class_uid: activity_item_class_root.uid, 
@@ -2667,9 +2710,9 @@ END
             CALL
             {
                 WITH root,activity_value,ver_rel
-                WITH *, [(root)-[ver_rel]->(activity_value:ActivityValue)-[:HAS_GROUPING]->(:ActivityGrouping)-[:IN_SUBGROUP]->(activity_valid_group:ActivityValidGroup) | 
+                WITH *, [(root)-[ver_rel]->(activity_value:ActivityValue)-[:HAS_GROUPING]->(activity_grouping:ActivityGrouping) | 
                     {
-                        activity_subgroup: head(apoc.coll.sortMulti([(activity_valid_group)<-[:HAS_GROUP]-(activity_subgroup_value:ActivitySubGroupValue)<-[has_version:HAS_VERSION]-
+                        activity_subgroup: head(apoc.coll.sortMulti([(activity_grouping)-[:HAS_SELECTED_SUBGROUP]->(activity_subgroup_value:ActivitySubGroupValue)<-[has_version:HAS_VERSION]-
                             (activity_subgroup_root:ActivitySubGroupRoot) WHERE has_version.status in ["Final", "Retired"]| 
                             {
                                 uid:activity_subgroup_root.uid,
@@ -2679,7 +2722,7 @@ END
                                 start_date: has_version.start_date,
                                 status: has_version.status
                             }], ['major_version', 'minor_version', 'start_date'])),
-                        activity_group: head(apoc.coll.sortMulti([(activity_valid_group)-[:IN_GROUP]-(activity_group_value:ActivityGroupValue)<-[has_version:HAS_VERSION]-
+                        activity_group: head(apoc.coll.sortMulti([(activity_grouping)-[:HAS_SELECTED_GROUP]->(activity_group_value:ActivityGroupValue)<-[has_version:HAS_VERSION]-
                             (activity_group_root:ActivityGroupRoot) WHERE has_version.status in ["Final", "Retired"] | 
                             {
                                 uid:activity_group_root.uid,
@@ -2712,17 +2755,14 @@ END
             CALL{
                 WITH root
                 WITH *,
-                [(root)-[:LATEST]->(concept_value)-[:HAS_GROUP]->(activity_valid_group:ActivityValidGroup) |
+                apoc.coll.toSet([(root)-[:LATEST]->(concept_value)<-[:HAS_SELECTED_SUBGROUP]-(activity_grouping:ActivityGrouping)-[:HAS_SELECTED_GROUP]->(activity_group_value:ActivityGroupValue)<-[has_version:HAS_VERSION]-
+                    (activity_group_root:ActivityGroupRoot) |
                     {
-                        activity_group:head(apoc.coll.sortMulti([(activity_valid_group)-[:IN_GROUP]-(activity_group_value:ActivityGroupValue)<-[has_version:HAS_VERSION]-
-                            (activity_group_root:ActivityGroupRoot) | 
-                            {
-                                uid:activity_group_root.uid,
-                                major_version: toInteger(split(has_version.version,'.')[0]),
-                                minor_version: toInteger(split(has_version.version,'.')[1]),
-                                name: activity_group_value.name
-                            }], ['major_version', 'minor_version']))
-                    }] AS activity_groups
+                        uid:activity_group_root.uid,
+                        major_version: toInteger(split(has_version.version,'.')[0]),
+                        minor_version: toInteger(split(has_version.version,'.')[1]),
+                        name: activity_group_value.name
+                    }]) AS activity_groups
                 RETURN activity_groups
             }
         """

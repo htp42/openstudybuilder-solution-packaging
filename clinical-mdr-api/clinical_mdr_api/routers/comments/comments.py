@@ -52,17 +52,8 @@ def get_comment_topics(
         If `true`, topics whose topic path partially matches the specified `topic_path` are returned.""",
         ),
     ] = False,
-    page_number: Annotated[
-        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = settings.default_page_number,
-    page_size: Annotated[
-        int,
-        Query(
-            ge=0,
-            le=settings.max_page_size,
-            description=_generic_descriptions.PAGE_SIZE,
-        ),
-    ] = settings.default_page_size,
+    page_number: _generic_descriptions.PAGE_NUMBER_QUERY = settings.default_page_number,
+    page_size: _generic_descriptions.PAGE_SIZE_QUERY = settings.default_page_size,
 ) -> CustomPage[CommentTopic]:
     results = Service().get_all_comment_topics(
         topic_path=topic_path,
@@ -106,17 +97,8 @@ def get_comment_threads(
             description="The status of the comment thread. If not specified, comment threads with any status are returned.",
         ),
     ] = None,
-    page_number: Annotated[
-        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = settings.default_page_number,
-    page_size: Annotated[
-        int,
-        Query(
-            ge=0,
-            le=settings.max_page_size,
-            description=_generic_descriptions.PAGE_SIZE,
-        ),
-    ] = settings.default_page_size,
+    page_number: _generic_descriptions.PAGE_NUMBER_QUERY = settings.default_page_number,
+    page_size: _generic_descriptions.PAGE_SIZE_QUERY = settings.default_page_size,
 ) -> CustomPage[CommentThread]:
     results = Service().get_all_comment_threads(
         topic_path=topic_path,

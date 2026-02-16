@@ -1,7 +1,6 @@
 from typing import Annotated
 
-from fastapi import Body, Query
-from pydantic.types import Json
+from fastapi import Body
 
 from clinical_mdr_api.models.study_selections.study_selection import (
     StudyActivityInstruction,
@@ -34,33 +33,12 @@ from common.models.error import ErrorResponse
     },
 )
 def get_all_activity_instructions_for_all_studies(
-    sort_by: Annotated[
-        Json | None, Query(description=_generic_descriptions.SORT_BY)
-    ] = None,
-    page_number: Annotated[
-        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = settings.default_page_number,
-    page_size: Annotated[
-        int,
-        Query(
-            ge=0,
-            le=settings.max_page_size,
-            description=_generic_descriptions.PAGE_SIZE,
-        ),
-    ] = settings.default_page_size,
-    filters: Annotated[
-        Json | None,
-        Query(
-            description=_generic_descriptions.FILTERS,
-            openapi_examples=_generic_descriptions.FILTERS_EXAMPLE,
-        ),
-    ] = None,
-    operator: Annotated[
-        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = settings.default_filter_operator,
-    total_count: Annotated[
-        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
-    ] = False,
+    sort_by: _generic_descriptions.SORT_BY_QUERY = None,
+    page_number: _generic_descriptions.PAGE_NUMBER_QUERY = settings.default_page_number,
+    page_size: _generic_descriptions.PAGE_SIZE_QUERY = settings.default_page_size,
+    filters: _generic_descriptions.FILTERS_QUERY = None,
+    operator: _generic_descriptions.FILTER_OPERATOR_QUERY = settings.default_filter_operator,
+    total_count: _generic_descriptions.TOTAL_COUNT_QUERY = False,
 ) -> CustomPage[StudyActivityInstruction]:
     service = StudyActivityInstructionService()
     all_selections = service.get_all_instructions_for_all_studies(

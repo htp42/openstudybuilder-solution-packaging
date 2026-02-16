@@ -1,6 +1,5 @@
 import logging
 import logging.config
-import traceback
 
 from fastapi import Request
 
@@ -66,7 +65,10 @@ LOGGING_CONFIG = {
     "loggers": {
         "neo4j.notifications": {
             "level": "ERROR",  # silence warning messages from Neo4j db
-        }
+        },
+        "neo4j.io": {
+            "level": "INFO",  # decrease messages from Neo4j db even if APP_DEBUG is True
+        },
     },
 }
 
@@ -97,14 +99,8 @@ async def log_exception(request: Request, exception: MDRApiBaseException | Excep
             str(getattr(exception, "msg", None) or exception),
         )
 
-    # Log the last 15 entries of the exception's traceback
-    log.info(
-        "\n".join(
-            traceback.format_tb(
-                exception.__traceback__, limit=settings.traceback_max_entries
-            )
-        )
-    )
+    # Log exception traceback with info level
+    log.info(exception, exc_info=True)
 
     if not request._stream_consumed and settings.app_debug:
         curl_cmd = f"curl -X {request.method} '{request.url}'"

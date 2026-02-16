@@ -119,10 +119,8 @@ Feature: Studies - Define Study - Study Structure - Study Visits
     Scenario: [Create][Fields check] User must not be able to select time referece for an anchor visit
         When Get study 'CDISC DEV-9880' uid
         And Select study with uid saved in previous step
-        And [API] Visits group 'V2-V4' is removed
-        And [API] Visits group 'V2,V3,V4' is removed
-        And [API] Visits group 'V1,V2' is removed
-        And [API] Visits group 'V2,V3' is removed
+        And [API] All visit groups uids are fetched
+        And [API] All visit groups are removed
         And [API] Study vists uids are fetched for selected study
         When [API] Study visits in selected study are cleaned-up
         And [API] The epoch with type 'Pre Treatment' and subtype 'Run-in' exists in selected study
@@ -255,7 +253,7 @@ Feature: Studies - Define Study - Study Structure - Study Visits
     @manual_test
     Scenario: User must be able to edit the study information visit with visit 0 to other visit type
         Given The '/studies/Study_000003/study_structure/visits' page is opened
-        And A studty inforamtion visit with visit 0 is created
+        And A study information visit with visit 0 is created
         When This study information visit is edited to be a different visit type
         Then This visit can no longer be Visit 0
         And Reordering will occur of existing visits
@@ -263,7 +261,7 @@ Feature: Studies - Define Study - Study Structure - Study Visits
     @manual_test
     Scenario: User must be able to edit the study information visit with visit 0 to same visit type
         Given The '/studies/Study_000003/study_structure/visits' page is opened
-        And A studty inforamtion visit with visit 0 is created
+        And A study information visit with visit 0 is created
         When This study information visit is edited to the same visit type
         Then This visit should be given the visit number of 0
         When This visit is edited to higher visit timing compare to the Global Anchor time reference
@@ -279,13 +277,75 @@ Feature: Studies - Define Study - Study Structure - Study Visits
     @manual_test
     Scenario: User must be able to delete the study information visit with visit 0
         Given The '/studies/Study_000003/study_structure/visits' page is opened
-        And A studty inforamtion visit with visit 0 is created
+        And A study information visit with visit 0 is created
         When This study information visit is deleted
         Then No reordering of other visits will occur
 
     @manual_test
     Scenario: User must be able to delete the study information visit without visit 0
         Given The '/studies/Study_000003/study_structure/visits' page is opened
-        And A studty inforamtion visit without visit 0 is created
+        And A study information visit without visit 0 is created
         When This study information visit is deleted
         Then The reordering of other visits will occur
+
+    Scenario: [Create][Study Vists][Same Day Visits] User must be able to define two visits with same visit day in the same epoch
+        Given A test study is selected
+        And [API] The epoch with type 'Pre Treatment' and subtype 'Run-in' exists in selected study
+        And [API] The epoch with type 'Treatment' and subtype 'Intervention' exists in selected study
+        And [API] Study vists uids are fetched for current study
+        When [API] Study visits in current study are cleaned-up
+        And [API] The static visit data is fetched
+        And [API] The dynamic visit data is fetched: contact mode 'On Site Visit', time reference 'Global anchor visit', type 'Pre-screening', epoch 'Run-in'
+        And [API] The visit with following attributes is created: isGlobalAnchor 1, visitWeek 0
+        And [API] The visit with following attributes is created: isGlobalAnchor 0, visitWeek 1, minVisitWindow -1, maxVisitWindow 1
+        And The test study '/study_structure/visits' page is opened
+        And The user creates a visit on the same day in the same epoch
+        And Form save button is clicked
+        Then The study visit is created
+
+    Scenario: [Create][Study Vists][Same Day Visits] User must be able to define two visits with same visit day in the neighboring epoch
+        Given A test study is selected
+        And [API] The epoch with type 'Pre Treatment' and subtype 'Run-in' exists in selected study
+        And [API] The epoch with type 'Treatment' and subtype 'Intervention' exists in selected study
+        And [API] Study vists uids are fetched for current study
+        When [API] Study visits in current study are cleaned-up
+        And [API] The static visit data is fetched
+        And [API] The dynamic visit data is fetched: contact mode 'On Site Visit', time reference 'Global anchor visit', type 'Pre-screening', epoch 'Run-in'
+        And [API] The visit with following attributes is created: isGlobalAnchor 1, visitWeek 0
+        And [API] The visit with following attributes is created: isGlobalAnchor 0, visitWeek 1, minVisitWindow -1, maxVisitWindow 1
+        And The test study '/study_structure/visits' page is opened
+        And The user creates a visit on the same day in the neighboring epoch
+        And Form save button is clicked
+        Then The study visit is created
+
+    Scenario: [Create][Study Vists][Same Day Visits] User must not be able to define more than two visits with same visit day in the same epoch
+        Given A test study is selected
+        And [API] The epoch with type 'Pre Treatment' and subtype 'Run-in' exists in selected study
+        And [API] The epoch with type 'Treatment' and subtype 'Intervention' exists in selected study
+        And [API] Study vists uids are fetched for current study
+        When [API] Study visits in current study are cleaned-up
+        And [API] The static visit data is fetched
+        And [API] The dynamic visit data is fetched: contact mode 'On Site Visit', time reference 'Global anchor visit', type 'Pre-screening', epoch 'Run-in'
+        And [API] The visit with following attributes is created: isGlobalAnchor 1, visitWeek 0
+        And [API] The visit with following attributes is created: isGlobalAnchor 0, visitWeek 1, minVisitWindow -1, maxVisitWindow 1
+        And [API] The visit with following attributes is created: isGlobalAnchor 0, visitWeek 1, minVisitWindow -1, maxVisitWindow 1
+        And The test study '/study_structure/visits' page is opened
+        And The user creates a visit on the same day in the same epoch
+        And Form save button is clicked
+        Then The pop up displays 'There already exists a visit with timing set to 7'
+
+    Scenario: [Create][Study Vists][Same Day Visits] User must not be able to define more than two visits with same visit day in the neighboring epoch
+        Given A test study is selected
+        And [API] The epoch with type 'Pre Treatment' and subtype 'Run-in' exists in selected study
+        And [API] The epoch with type 'Treatment' and subtype 'Intervention' exists in selected study
+        And [API] Study vists uids are fetched for current study
+        When [API] Study visits in current study are cleaned-up
+        And [API] The static visit data is fetched
+        And [API] The dynamic visit data is fetched: contact mode 'On Site Visit', time reference 'Global anchor visit', type 'Pre-screening', epoch 'Run-in'
+        And [API] The visit with following attributes is created: isGlobalAnchor 1, visitWeek 0
+        And [API] The visit with following attributes is created: isGlobalAnchor 0, visitWeek 1, minVisitWindow -1, maxVisitWindow 1
+        And [API] The visit with following attributes is created: isGlobalAnchor 0, visitWeek 1, minVisitWindow -1, maxVisitWindow 1
+        And The test study '/study_structure/visits' page is opened
+        And The user creates a visit on the same day in the neighboring epoch
+        And Form save button is clicked
+        Then The pop up displays 'There already exists a visit with timing set to 7'

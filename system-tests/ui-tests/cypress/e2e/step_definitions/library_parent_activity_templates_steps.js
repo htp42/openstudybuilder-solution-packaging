@@ -18,13 +18,9 @@ Then("The validation appears for activity template group field", () => cy.checkI
 
 Then("The validation appears for activity template subgroup field", () => cy.checkIfValidationAppears(`template-activity-sub-group`))
 
-Then("The activity instruction is found", () => cy.searchAndCheckPresence(defaultActivityName, true))
+Then("The activity instruction is searched and found", () => cy.searchAndCheckPresence(defaultActivityName, true))
 
 Then("The parent activity is no longer available", () => cy.searchAndCheckPresence(defaultActivityName, false))
-
-When('The activity instruction is saved and searched for', () => saveActivityInstructionAndSearch())
-
-Then('Activity Instruction is searched for', () => saveActivityInstructionAndSearch(false))
 
 When('The activity instruction template form is filled with already existing name', () => fillTemplateNameAndContinue(defaultActivityName))
 
@@ -50,6 +46,10 @@ When('The activity template metadata update is started', () => fillBaseData(`Upd
 
 When('The activity template edition form is filled with data', () => fillBaseData(`CancelEdit${Date.now()}`))
 
+When('User intercepts activity templates request', () => cy.intercept('/api/activity-instruction-templates?page_number=1&*').as('getTemplate'))
+
+When('User waits for activity templates request', () => cy.wait('@getTemplate', {timeout: 20000}))
+
 Then('[API] Activity Instruction in status Draft exists', () => createActivityInstructionViaApi())
 
 Then('[API] Activity Instruction is approved', () => cy.approveActivityInstruction())
@@ -69,16 +69,9 @@ function createActivityInstructionViaApi(customName = '') {
   cy.getActivityInstructionName().then(name => defaultActivityName = name.replace('<p>', '').replace('</p>', '').trim())
 }
 
-function saveActivityInstructionAndSearch(save = true) {
-  cy.intercept('/api/activity-instruction-templates?page_number=1&*').as('getTemplate')
-  if (save) cy.clickFormActionButton('save')
-  cy.wait('@getTemplate', {timeout: 20000})
-  cy.waitForTable()
-  cy.searchAndCheckPresence(defaultActivityName, true)
-}
-
 function changeMandatoryIndexes() {
   cy.wait(1000)
+  cy.get('[data-cy="template-activity-group"] input').clear().type('AE Requiring Additional Data')
   cy.selectFirstVSelect('template-activity-group')
   changeIndex('template-activity-sub-group', false, false)
 }

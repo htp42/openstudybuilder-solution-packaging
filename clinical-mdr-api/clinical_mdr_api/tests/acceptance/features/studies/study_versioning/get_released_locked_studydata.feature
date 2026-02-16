@@ -1,8 +1,8 @@
 @REQ_ID:1741028
-Feature: Get released or locked study definition data from Clinical MDR API
+Feature: Get released or locked study definition data from OpenStudyBuilder API
 
-    Background: Test user must be able to call the Clinical MDR API and test data exist
-        Given The test user can call the Clinical MDR API
+    Background: Test user must be able to call the OpenStudyBuilder API and test data exist
+        Given The test user can call the OpenStudyBuilder API
         Given a test study identified by 'uid' is in status 'Locked' for the 'study_value_version'
 
     Rule: As an API user; I want the API to return an error code if a POST, PATCH or DELETE call is made on a locked study; So that I am not able to modify a locked study via the API.

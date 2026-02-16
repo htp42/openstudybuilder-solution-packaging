@@ -16,7 +16,6 @@ MDR_MIGRATION_ODM_TEMPLATES = load_env("MDR_MIGRATION_ODM_TEMPLATES")
 MDR_MIGRATION_ODM_FORMS = load_env("MDR_MIGRATION_ODM_FORMS")
 MDR_MIGRATION_ODM_ITEMGROUPS = load_env("MDR_MIGRATION_ODM_ITEMGROUPS")
 MDR_MIGRATION_ODM_ITEMS = load_env("MDR_MIGRATION_ODM_ITEMS")
-MDR_MIGRATION_ODM_ALIAS = load_env("MDR_MIGRATION_ODM_ALIAS")
 MDR_MIGRATION_ODM_TEMPLATE_TO_FORM_RELATIONSHIP = load_env(
     "MDR_MIGRATION_ODM_TEMPLATE_TO_FORM_RELATIONSHIP"
 )
@@ -87,13 +86,7 @@ def odm_form(data):
                     "sponsor_instruction": None,
                 }
             ],
-            "aliases": [
-                {
-                    "name": alias["name"],
-                    "context": alias["context"],
-                }
-                for alias in data.get("aliases", [])
-            ],
+            "aliases": data.get("aliases", []),
         },
     }
 
@@ -124,13 +117,7 @@ def odm_itemgroup(data, domain_uids):
                     "sponsor_instruction": None,
                 },
             ],
-            "aliases": [
-                {
-                    "name": alias["name"],
-                    "context": alias["context"],
-                }
-                for alias in data.get("aliases", [])
-            ],
+            "aliases": data.get("aliases", []),
             "sdtm_domain_uids": domain_uids,
         },
     }
@@ -168,13 +155,7 @@ def odm_item(data, units, terms):
                     "sponsor_instruction": None,
                 },
             ],
-            "aliases": [
-                {
-                    "name": alias["name"],
-                    "context": alias["context"],
-                }
-                for alias in data.get("aliases", [])
-            ],
+            "aliases": data.get("aliases", []),
             "codelist_uid": data["codelist"] if data["codelist"] != "" else None,
             "unit_definitions": units,
             "terms": terms,
@@ -255,6 +236,21 @@ class Crfs(BaseImporter):
                 new_codelist[term["concept_id"]] = term["term_uid"]
                 codelists[codelist] = new_codelist
 
+    def _transform_aliases(self, aliases: str | None):
+        rs = []
+
+        if not aliases:
+            return rs
+
+        for alias in aliases.split("|"):
+            _alias = alias.split(":", maxsplit=1)
+            if not _alias[0]:
+                continue
+            context, name = _alias
+            rs.append({"name": name, "context": context})
+
+        return rs
+
     @open_file()
     def handle_odm_vendor_namespaces(self, csvfile):
         csvdata = csv.DictReader(csvfile)
@@ -306,6 +302,9 @@ class Crfs(BaseImporter):
             if len(row) == 0:
                 continue
             self.log.info(f'Adding odm form {row["name"]}')
+
+            row["aliases"] = self._transform_aliases(row["aliases"])
+
             data = odm_form(row)
 
             # Create template, and leave in draft state (no approve)
@@ -354,6 +353,8 @@ class Crfs(BaseImporter):
                     domains.append(domain_uid)
                 else:
                     self.log.warning(f"Unable to find domain '{domain}'")
+
+            row["aliases"] = self._transform_aliases(row["aliases"])
 
             data = odm_itemgroup(row, domains)
 
@@ -407,6 +408,8 @@ class Crfs(BaseImporter):
                     units.append(unit_dict)
                 else:
                     self.log.warning(f"Unable to find unit {unit}")
+
+            row["aliases"] = self._transform_aliases(row["aliases"])
 
             data = odm_item(row, units, term_dicts)
 

@@ -1,7 +1,8 @@
 <template>
   <SimpleFormDialog
     ref="form"
-    max-width="1000px"
+    width="95vw"
+    max-width="1900px"
     :title="$t('StudyActivityInstances.edit_add_instance')"
     :open="open"
     @close="close"
@@ -64,6 +65,47 @@
               density="compact"
               variant="outlined"
               multiple
+              class="compact-select"
+            />
+          </template>
+          <template #[`item.data_supplier`]="{ item }">
+            <v-select
+              v-model="dataSupplierMap[item.uid]"
+              :items="studyDataSuppliers"
+              item-value="study_data_supplier_uid"
+              item-title="name"
+              density="compact"
+              variant="outlined"
+              clearable
+              class="compact-select"
+              :menu-props="{ width: '280px' }"
+              @update:model-value="onSupplierChange(item.uid, $event)"
+            />
+          </template>
+          <template #[`item.origin_type`]="{ item }">
+            <v-select
+              v-model="originTypeMap[item.uid]"
+              :items="originTypes"
+              item-value="term_uid"
+              item-title="sponsor_preferred_name"
+              density="compact"
+              variant="outlined"
+              clearable
+              class="compact-select"
+              :menu-props="{ width: '280px' }"
+            />
+          </template>
+          <template #[`item.origin_source`]="{ item }">
+            <v-select
+              v-model="originSourceMap[item.uid]"
+              :items="originSources"
+              item-value="term_uid"
+              item-title="sponsor_preferred_name"
+              density="compact"
+              variant="outlined"
+              clearable
+              class="compact-select"
+              :menu-props="{ width: '280px' }"
             />
           </template>
         </v-data-table>
@@ -98,6 +140,8 @@ import statuses from '@/constants/statuses'
 import activities from '@/api/activities'
 import _isEmpty from 'lodash/isEmpty'
 import study from '@/api/study'
+import terms from '@/api/controlledTerminology/terms'
+import dataSuppliers from '@/api/dataSuppliers'
 import { escapeHTML, sanitizeHTML } from '@/utils/sanitize'
 import instancesActions from '@/constants/instancesActions'
 
@@ -117,11 +161,38 @@ const activitiesStore = useStudyActivitiesStore()
 const selectedStudy = computed(() => studiesGeneralStore.selectedStudy)
 
 const headers = [
-  { title: t('StudyActivityInstances.instance'), key: 'name' },
-  { title: t('StudyActivityInstances.details'), key: 'details' },
-  { title: t('StudyActivityInstances.state'), key: 'state' },
-  { title: t('StudyActivityInstances.important'), key: 'important' },
-  { title: t('StudyActivityInstances.baseline_flags'), key: 'baseline_visits' },
+  { title: t('StudyActivityInstances.instance'), key: 'name', width: '150px' },
+  {
+    title: t('StudyActivityInstances.details'),
+    key: 'details',
+    width: '200px',
+  },
+  { title: t('StudyActivityInstances.state'), key: 'state', width: '100px' },
+  {
+    title: t('StudyActivityInstances.important'),
+    key: 'important',
+    width: '90px',
+  },
+  {
+    title: t('StudyActivityInstances.baseline_flags'),
+    key: 'baseline_visits',
+    width: '200px',
+  },
+  {
+    title: t('StudyActivityInstances.data_supplier'),
+    key: 'data_supplier',
+    width: '220px',
+  },
+  {
+    title: t('StudyActivityInstances.origin_type'),
+    key: 'origin_type',
+    width: '200px',
+  },
+  {
+    title: t('StudyActivityInstances.origin_source'),
+    key: 'origin_source',
+    width: '200px',
+  },
 ]
 
 const availableBaselineVisits = ref([])
@@ -130,10 +201,20 @@ const selected = ref([])
 const selectedHolder = ref([])
 const importantMap = ref({})
 const baselineVisitMap = ref({})
+const dataSupplierMap = ref({})
+const originTypeMap = ref({})
+const originSourceMap = ref({})
 const importantMapHolder = ref({})
 const baselineVisitMapHolder = ref({})
+const dataSupplierMapHolder = ref({})
+const originTypeMapHolder = ref({})
+const originSourceMapHolder = ref({})
 const form = ref()
 const loadingBaselineVisits = ref(false)
+const studyDataSuppliers = ref([])
+const libraryDataSuppliers = ref([])
+const originTypes = ref([])
+const originSources = ref([])
 
 const getActivityPath = computed(() => {
   if (!_isEmpty(props.editedActivity)) {
@@ -151,7 +232,66 @@ watch(
 
 onMounted(() => {
   getAvailableInstances()
+  loadDropdownData()
 })
+
+async function loadDropdownData() {
+  // Load study data suppliers
+  study
+    .getStudyDataSuppliers(selectedStudy.value.uid, { page_size: 0 })
+    .then((resp) => {
+      studyDataSuppliers.value = resp.data.items || []
+    })
+
+  // Load library data suppliers (for default origin values)
+  dataSuppliers.get({ params: { page_size: 1000 } }).then((resp) => {
+    libraryDataSuppliers.value = resp.data.items || []
+  })
+
+  // Load origin type CT terms
+  terms.getTermsByCodelist('originType').then((resp) => {
+    originTypes.value = resp.data.items || []
+  })
+
+  // Load origin source CT terms
+  terms.getTermsByCodelist('originSource').then((resp) => {
+    originSources.value = resp.data.items || []
+  })
+}
+
+function onSupplierChange(instanceUid, supplierUid) {
+  if (supplierUid) {
+    // Find the selected Study Data Supplier
+    const selectedStudySupplier = studyDataSuppliers.value.find(
+      (s) => s.study_data_supplier_uid === supplierUid
+    )
+
+    if (selectedStudySupplier) {
+      // Find the linked Library Data Supplier to get defaults
+      const librarySupplier = libraryDataSuppliers.value.find(
+        (s) => s.uid === selectedStudySupplier.data_supplier_uid
+      )
+
+      if (librarySupplier) {
+        // Auto-populate origin type from library supplier defaults
+        const originTypeUid =
+          librarySupplier.origin_type?.term_uid ||
+          librarySupplier.origin_type?.uid
+        if (originTypeUid) {
+          originTypeMap.value[instanceUid] = originTypeUid
+        }
+
+        // Auto-populate origin source from library supplier defaults
+        const originSourceUid =
+          librarySupplier.origin_source?.term_uid ||
+          librarySupplier.origin_source?.uid
+        if (originSourceUid) {
+          originSourceMap.value[instanceUid] = originSourceUid
+        }
+      }
+    }
+  }
+}
 
 async function getAvailableInstances() {
   if (!_isEmpty(props.editedActivity)) {
@@ -170,12 +310,18 @@ async function getAvailableInstances() {
     }
     await activities.get(params, 'activity-instances').then((resp) => {
       instances.value = transformInstances(resp.data.items)
-      // Initialize importantMap
+      // Initialize maps
       importantMap.value = {}
+      dataSupplierMap.value = {}
+      originTypeMap.value = {}
+      originSourceMap.value = {}
       instances.value.forEach((instance) => {
         importantMap.value[instance.uid] = false
+        dataSupplierMap.value[instance.uid] = null
+        originTypeMap.value[instance.uid] = null
+        originSourceMap.value[instance.uid] = null
       })
-      // If editing existing activity instance, set its important status
+      // If editing existing activity instance, set its values
       if (props.editedActivity.activity_instance) {
         const selectedInstance = instances.value.find(
           (instance) =>
@@ -189,6 +335,13 @@ async function getAvailableInstances() {
             baselineVisitMap.value[selectedInstance.uid] =
               props.editedActivity.baseline_visits.map((item) => item.uid)
           }
+          // Set data supplier and origin values
+          dataSupplierMap.value[selectedInstance.uid] =
+            props.editedActivity.study_data_supplier_uid || null
+          originTypeMap.value[selectedInstance.uid] =
+            props.editedActivity.origin_type?.term_uid || null
+          originSourceMap.value[selectedInstance.uid] =
+            props.editedActivity.origin_source?.term_uid || null
         }
       }
     })
@@ -196,6 +349,13 @@ async function getAvailableInstances() {
     importantMapHolder.value = JSON.parse(JSON.stringify(importantMap.value))
     baselineVisitMapHolder.value = JSON.parse(
       JSON.stringify(baselineVisitMap.value)
+    )
+    dataSupplierMapHolder.value = JSON.parse(
+      JSON.stringify(dataSupplierMap.value)
+    )
+    originTypeMapHolder.value = JSON.parse(JSON.stringify(originTypeMap.value))
+    originSourceMapHolder.value = JSON.parse(
+      JSON.stringify(originSourceMap.value)
     )
     if (instances.value.length > 1) {
       const par = {
@@ -290,6 +450,9 @@ function setMultipleActivityInstances(is_reviewed = false) {
           props.editedActivity.study_activity_instance_uid,
         is_important: false,
         baseline_visit_uids: [],
+        study_data_supplier_uid: null,
+        origin_type_uid: null,
+        origin_source_uid: null,
       },
     })
   } else if (selected.value.includes(selectedHolder.value[0])) {
@@ -304,6 +467,11 @@ function setMultipleActivityInstances(is_reviewed = false) {
         is_important: importantMap.value[selectedHolder.value[0]] || false,
         baseline_visit_uids:
           baselineVisitMap.value[selectedHolder.value[0]] || [],
+        study_data_supplier_uid:
+          dataSupplierMap.value[selectedHolder.value[0]] || null,
+        origin_type_uid: originTypeMap.value[selectedHolder.value[0]] || null,
+        origin_source_uid:
+          originSourceMap.value[selectedHolder.value[0]] || null,
       },
     })
     selected.value.splice(selected.value.indexOf(selectedHolder.value[0]), 1)
@@ -316,6 +484,9 @@ function setMultipleActivityInstances(is_reviewed = false) {
           study_activity_uid: props.editedActivity.study_activity_uid,
           is_important: importantMap.value[value] || false,
           baseline_visit_uids: baselineVisitMap.value[value] || [],
+          study_data_supplier_uid: dataSupplierMap.value[value] || null,
+          origin_type_uid: originTypeMap.value[value] || null,
+          origin_source_uid: originSourceMap.value[value] || null,
         },
       })
     })
@@ -330,6 +501,11 @@ function setMultipleActivityInstances(is_reviewed = false) {
           is_important: importantMap.value[selected.value[index]] || false,
           baseline_visit_uids:
             baselineVisitMap.value[selected.value[index]] || [],
+          study_data_supplier_uid:
+            dataSupplierMap.value[selected.value[index]] || null,
+          origin_type_uid: originTypeMap.value[selected.value[index]] || null,
+          origin_source_uid:
+            originSourceMap.value[selected.value[index]] || null,
         },
       }
       if (index === 0) {
@@ -367,6 +543,12 @@ function close() {
   importantMapHolder.value = {}
   baselineVisitMap.value = {}
   baselineVisitMapHolder.value = {}
+  dataSupplierMap.value = {}
+  dataSupplierMapHolder.value = {}
+  originTypeMap.value = {}
+  originTypeMapHolder.value = {}
+  originSourceMap.value = {}
+  originSourceMapHolder.value = {}
   availableBaselineVisits.value = []
   emit('close')
 }
@@ -384,5 +566,15 @@ function close() {
 .suggestion {
   background-color: rgb(217, 201, 106);
   border-radius: 5px;
+}
+.compact-select :deep(.v-field__input) {
+  white-space: normal;
+  min-height: 40px;
+  height: auto;
+}
+.compact-select :deep(.v-select__selection-text) {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
 }
 </style>

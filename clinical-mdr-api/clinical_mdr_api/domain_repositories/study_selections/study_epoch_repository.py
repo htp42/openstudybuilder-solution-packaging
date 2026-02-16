@@ -53,7 +53,7 @@ def get_ctlist_terms_by_name(
     # TODO use effective date on HAS_TERM relationship as well
     cypher_query = f"""
         MATCH (codelist_name_value:CTCodelistNameValue)<-[:LATEST_FINAL]-(:CTCodelistNameRoot)<-[:HAS_NAME_ROOT]-
-        (:CTCodelistRoot)-[ht:HAS_TERM WHERE ht.end_date IS NULL]->(:CTCodelistTerm)-[:HAS_TERM_ROOT]->
+        (:CTCodelistRoot)-[:HAS_TERM]->(:CTCodelistTerm)-[:HAS_TERM_ROOT]->
         (tr:CTTermRoot)-[:HAS_NAME_ROOT]->
         {ctterm_name_match}
         WITH tr.uid as term_uid, collect(codelist_name_value.name) as codelist_names
@@ -86,17 +86,20 @@ class StudyEpochRepository:
         if effective_date:
             subtype_name_value_match = """MATCH (term_subtype_name_root)-[hv:HAS_VERSION]->(term_subtype_name_value:CTTermNameValue)
                 WHERE (hv.start_date<= datetime($effective_date) < hv.end_date) OR (hv.end_date IS NULL AND (hv.start_date <= datetime($effective_date)))
+                AND ht.start_date <= datetime($effective_date) AND (ht.end_date IS NULL OR ht.end_date > datetime($effective_date))
             """
             type_name_value_match = """MATCH (term_type_name_root)-[hv_type:HAS_VERSION]->(term_type_name_value:CTTermNameValue)
                 WHERE (hv_type.start_date<= datetime($effective_date) < hv_type.end_date) OR (hv_type.end_date IS NULL AND (hv_type.start_date <= datetime($effective_date)))
             """
         else:
-            subtype_name_value_match = "MATCH (term_subtype_name_root:CTTermNameRoot)-[:LATEST_FINAL]->(term_subtype_name_value:CTTermNameValue)"
+            subtype_name_value_match = """MATCH (term_subtype_name_root:CTTermNameRoot)-[:LATEST_FINAL]->(term_subtype_name_value:CTTermNameValue)
+                WHERE ht.end_date IS NULL
+            """
             type_name_value_match = "MATCH (term_type_name_root)-[:LATEST_FINAL]->(term_type_name_value:CTTermNameValue)"
 
         cypher_query = f"""
             MATCH (:CTCodelistNameValue {{name: $code_list_name}})<-[:LATEST_FINAL]-(:CTCodelistNameRoot)<-[:HAS_NAME_ROOT]
-            -(:CTCodelistRoot)-[:HAS_TERM]->(:CTCodelistTerm)-[:HAS_TERM_ROOT]->(term_subtype_root:CTTermRoot)-[:HAS_NAME_ROOT]->(term_subtype_name_root:CTTermNameRoot)
+            -(:CTCodelistRoot)-[ht:HAS_TERM]->(:CTCodelistTerm)-[:HAS_TERM_ROOT]->(term_subtype_root:CTTermRoot)-[:HAS_NAME_ROOT]->(term_subtype_name_root:CTTermNameRoot)
             {subtype_name_value_match}
             MATCH (term_subtype_root)-[:HAS_PARENT_TYPE]->(term_type_root:CTTermRoot)-
             [:HAS_NAME_ROOT]->(term_type_name_root)
@@ -161,7 +164,7 @@ class StudyEpochRepository:
             author_id=input_dict.get("study_action").get("author_id"),
             author_username=input_dict["author_username"],
             color_hash=input_dict.get("study_epoch").get("color_hash"),
-            number_of_assigned_visits=input_dict["count_vists"],
+            number_of_assigned_visits=input_dict["count_visits"],
         )
         if not audit_trail:
             return study_epoch_vo
@@ -293,7 +296,7 @@ class StudyEpochRepository:
                 epoch_term,
                 epoch_subtype_term,
                 epoch_type_term,
-                size([(study_epoch)-[:STUDY_EPOCH_HAS_STUDY_VISIT]->(study_visit:StudyVisit)<-[:HAS_STUDY_VISIT]-(:StudyValue) | study_visit]) AS count_vists,
+                size([(study_epoch)-[:STUDY_EPOCH_HAS_STUDY_VISIT]->(study_visit:StudyVisit)<-[:HAS_STUDY_VISIT]-(study_value:StudyValue) | study_visit]) AS count_visits,
                 coalesce(head([(user:User)-[*0]-() WHERE user.user_id=study_action.author_id | user.username]), study_action.author_id) AS author_username
         """
             )

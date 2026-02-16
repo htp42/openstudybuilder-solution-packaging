@@ -37,6 +37,7 @@ from clinical_mdr_api.services._utils import (
 from clinical_mdr_api.services.studies.study_selection_base import StudySelectionMixin
 from common import exceptions
 from common.auth.user import user
+from common.telemetry import trace_calls
 
 
 class StudyArmSelectionService(StudySelectionMixin):
@@ -181,6 +182,7 @@ class StudyArmSelectionService(StudySelectionMixin):
         # Return values for field_name
         return header_values
 
+    @trace_calls
     def get_all_selection(
         self,
         study_uid: str,
@@ -255,7 +257,7 @@ class StudyArmSelectionService(StudySelectionMixin):
                     study_uid=study_uid,
                     branch_arm_uid=i_branch_arm.uid,
                 ):
-                    design_cells_on_branch_arm = self._repos.study_design_cell_repository.get_design_cells_connected_to_branch_arm(
+                    design_cells_on_branch_arm = self._repos.study_design_cell_repository.find_all_design_cells_by_study(
                         study_uid=study_uid, study_branch_arm_uid=i_branch_arm.uid
                     )
                     # if the study_branch_arm is the last StudyBranchArm of its StudyArm root
@@ -269,10 +271,8 @@ class StudyArmSelectionService(StudySelectionMixin):
 
                     # else the study_branch_arm is not last StudyBranchArm of its StudyArm root, so delete studyDesignCells
                     else:
-                        design_cells_to_delete_in_desc_order = sorted(
-                            design_cells_on_branch_arm,
-                            key=lambda dc: dc.order,
-                            reverse=True,
+                        design_cells_to_delete_in_desc_order = reversed(
+                            design_cells_on_branch_arm
                         )
                         for i_design_cell in design_cells_to_delete_in_desc_order:
                             study_design_cell = (
@@ -321,16 +321,12 @@ class StudyArmSelectionService(StudySelectionMixin):
             if repos.study_arm_repository.arm_specific_has_connected_cell(
                 study_uid=study_uid, arm_uid=study_selection_uid
             ):
-                design_cells_on_arm = self._repos.study_design_cell_repository.get_design_cells_connected_to_arm(
+                design_cells_on_arm = self._repos.study_design_cell_repository.find_all_design_cells_by_study(
                     study_uid=study_uid, study_arm_uid=study_selection_uid
                 )
             if design_cells_on_arm or design_cells_to_delete_from_branch_arm:
                 # get design cells to delete that are connected to arm
-                design_cells_to_delete_in_desc_order = sorted(
-                    design_cells_on_arm,
-                    key=lambda dc: dc.order,
-                    reverse=True,
-                )
+                design_cells_to_delete_in_desc_order = reversed(design_cells_on_arm)
                 for i_design_cell in design_cells_to_delete_in_desc_order:
                     study_design_cell = (
                         self._repos.study_design_cell_repository.find_by_uid(

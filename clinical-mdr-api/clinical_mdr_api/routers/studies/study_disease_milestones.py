@@ -1,7 +1,6 @@
 from typing import Annotated, Any
 
-from fastapi import Body, Path, Query, Request
-from pydantic.types import Json
+from fastapi import Body, Path, Request
 
 from clinical_mdr_api.models.study_selections import study_disease_milestone
 from clinical_mdr_api.models.utils import CustomPage
@@ -83,33 +82,12 @@ Possible errors:
 def get_all(
     request: Request,  # request is actually required by the allow_exports decorator
     study_uid: Annotated[str, studyUID],
-    sort_by: Annotated[
-        Json | None, Query(description=_generic_descriptions.SORT_BY)
-    ] = None,
-    page_number: Annotated[
-        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = settings.default_page_number,
-    page_size: Annotated[
-        int,
-        Query(
-            ge=0,
-            le=settings.max_page_size,
-            description=_generic_descriptions.PAGE_SIZE,
-        ),
-    ] = settings.default_page_size,
-    filters: Annotated[
-        Json | None,
-        Query(
-            description=_generic_descriptions.FILTERS,
-            openapi_examples=_generic_descriptions.FILTERS_EXAMPLE,
-        ),
-    ] = None,
-    operator: Annotated[
-        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = settings.default_filter_operator,
-    total_count: Annotated[
-        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
-    ] = False,
+    sort_by: _generic_descriptions.SORT_BY_QUERY = None,
+    page_number: _generic_descriptions.PAGE_NUMBER_QUERY = settings.default_page_number,
+    page_size: _generic_descriptions.PAGE_SIZE_QUERY = settings.default_page_size,
+    filters: _generic_descriptions.FILTERS_QUERY = None,
+    operator: _generic_descriptions.FILTER_OPERATOR_QUERY = settings.default_filter_operator,
+    total_count: _generic_descriptions.TOTAL_COUNT_QUERY = False,
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,
@@ -151,29 +129,15 @@ def get_all(
 )
 # pylint: disable=unused-argument
 def get_distinct_values_for_header(
-    field_name: Annotated[
-        str, Query(description=_generic_descriptions.HEADER_FIELD_NAME)
-    ],
+    field_name: _generic_descriptions.HEADER_FIELD_NAME_QUERY,
     study_uid: Annotated[str, studyUID],  # TODO: Use this argument!
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,
-    search_string: Annotated[
-        str, Query(description=_generic_descriptions.HEADER_SEARCH_STRING)
-    ] = "",
-    filters: Annotated[
-        Json | None,
-        Query(
-            description=_generic_descriptions.FILTERS,
-            openapi_examples=_generic_descriptions.FILTERS_EXAMPLE,
-        ),
-    ] = None,
-    operator: Annotated[
-        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = settings.default_filter_operator,
-    page_size: Annotated[
-        int, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
-    ] = settings.default_header_page_size,
+    search_string: _generic_descriptions.HEADER_SEARCH_STRING_QUERY = "",
+    filters: _generic_descriptions.FILTERS_QUERY = None,
+    operator: _generic_descriptions.FILTER_OPERATOR_QUERY = settings.default_filter_operator,
+    page_size: _generic_descriptions.HEADER_PAGE_SIZE_QUERY = settings.default_header_page_size,
 ) -> list[Any]:
     service = StudyDiseaseMilestoneService()
     return service.get_distinct_values_for_header(

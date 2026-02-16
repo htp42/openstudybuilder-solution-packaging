@@ -1,3 +1,5 @@
+# pylint: disable=too-many-lines
+
 import datetime
 
 from clinical_mdr_api.domains.study_selections.study_selection_base import SoAItemType
@@ -6450,4 +6452,81 @@ ADD_PROTOCOL_SECTION_COLUMN_CASE3 = (
         num_header_rows=0,
         num_header_cols=1,
     ),
+)
+
+TINY_SOA_TABLE = TableWithFootnotes(
+    rows=[
+        TableRow(
+            cells=[
+                TableCell(style="header1"),
+                TableCell(
+                    text="Screening",
+                    style="header1",
+                    refs=[Ref(type="StudyEpoch", uid="epoch-4")],
+                ),
+                TableCell(
+                    text="Treatment",
+                    span=3,
+                    style="header1",
+                    refs=[Ref(type="StudyEpoch", uid="epoch-7")],
+                    footnotes=["a"],
+                ),
+                TableCell(span=0),
+                TableCell(span=0),
+            ],
+            hide=False,
+        ),
+        TableRow(
+            cells=[
+                TableCell(text="Visits"),
+                TableCell(text="V1", refs=[Ref(type="StudyVisit", uid="visit-1")]),
+                TableCell(text="V2", refs=[Ref(type="StudyVisit", uid="visit-2")]),
+                TableCell(text="V3", refs=[Ref(type="StudyVisit", uid="visit-3")]),
+                TableCell(text="V4", refs=[Ref(type="StudyVisit", uid="visit-4")]),
+            ]
+        ),
+        TableRow(
+            cells=[
+                TableCell(text="Study day", style="header3"),
+                TableCell(text="-14", style="header3"),
+                TableCell(text="1", style="header3"),
+                TableCell(text="5", style="header3"),
+                TableCell(text="4", style="header3"),
+            ],
+        ),
+        TableRow(
+            cells=[
+                TableCell(text="Visit window (days)", style="header4"),
+                TableCell(text="1", style="header4"),
+                TableCell(text="-2/+3", style="header4"),
+                TableCell(text="-1/0", style="header4"),
+                TableCell(text="±2", style="header4"),
+            ],
+        ),
+        TableRow(
+            cells=[
+                TableCell(text="Activity-one"),
+                TableCell(text="X", footnotes=["a"]),
+                TableCell(text=""),
+                TableCell(text="X"),
+                TableCell(text="", footnotes=["a"]),
+            ]
+        ),
+    ],
+    num_header_rows=4,
+    num_header_cols=1,
+    title="Study Flowchart",
+    id="soa-1",
+    footnotes={
+        "a": SimpleFootnote(
+            uid="footnote-01",
+            text_html="<p>The beginning is the most important part of the work</p>",
+            text_plain="The beginning is the most important part of the work",
+        ),
+        "b": SimpleFootnote(
+            uid="footnote-12",
+            text_html="<p>For a man to conquer himself is the first and nobles of all victories</p>",
+            text_plain="For a man to conquer himself is the first and nobles of all victories",
+        ),
+    },
 )

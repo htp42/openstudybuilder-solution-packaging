@@ -37,7 +37,7 @@ Feature: Studies - Define Study - Study Properties - Study Attributes
         Given The test study '/study_properties/attributes' page is opened
         When The study intervention type is edited
         And Form save button is clicked
-        And The form is closed
+        And The form is no longer available
         Then The study intervention type data is reflected in the table
 
     @manual_test

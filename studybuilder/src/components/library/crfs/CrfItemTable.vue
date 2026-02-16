@@ -98,6 +98,7 @@
     <v-dialog v-model="showForm" persistent content-class="fullscreen-dialog">
       <CrfItemForm
         :selected-item="selectedItem"
+        :start-step="openStep"
         :read-only-prop="
           selectedItem && selectedItem.status === constants.FINAL
         "
@@ -119,12 +120,6 @@
         @close="closeItemHistory"
       />
     </v-dialog>
-    <CrfActivitiesModelsLinkForm
-      :open="linkForm"
-      :item-to-link="selectedItem"
-      item-type="item"
-      @close="closeLinkForm"
-    />
     <ConfirmDialog ref="confirm" :text-cols="6" :action-cols="5" />
     <CrfNewVersionSummaryConfirmDialog ref="confirmNewVersion" />
   </div>
@@ -138,7 +133,6 @@ import ActionsMenu from '@/components/tools/ActionsMenu.vue'
 import crfs from '@/api/crfs'
 import CrfItemForm from '@/components/library/crfs/CrfItemForm.vue'
 import HistoryTable from '@/components/tools/HistoryTable.vue'
-import CrfActivitiesModelsLinkForm from '@/components/library/crfs/CrfActivitiesModelsLinkForm.vue'
 import constants from '@/constants/statuses'
 import filteringParameters from '@/utils/filteringParameters'
 import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
@@ -158,7 +152,6 @@ export default {
     ActionsMenu,
     CrfItemForm,
     HistoryTable,
-    CrfActivitiesModelsLinkForm,
     ConfirmDialog,
     CrfNewVersionSummaryConfirmDialog,
   },
@@ -199,6 +192,15 @@ export default {
             item.possible_actions.find((action) => action === 'edit'),
           accessRole: this.$roles.LIBRARY_WRITE,
           click: this.edit,
+        },
+        {
+          label: this.$t('CRFItems.manage_activity_instance_links'),
+          icon: 'mdi-link',
+          iconColor: 'primary',
+          condition: (item) =>
+            item.possible_actions.find((action) => action === 'edit'),
+          accessRole: this.$roles.LIBRARY_WRITE,
+          click: this.manageActivityInstancesLinks,
         },
         {
           label: this.$t('_global.view'),
@@ -278,8 +280,8 @@ export default {
       filters: '',
       selectedItem: null,
       showItemHistory: false,
-      linkForm: false,
       itemHistoryItems: [],
+      openStep: null,
     }
   },
   computed: {
@@ -316,8 +318,8 @@ export default {
       return sanitizeHTML(html)
     },
     getDescriptionAttribute(item, attr, short) {
-      const engDesc = item.descriptions.find(
-        (el) => el.language === parameters.ENG
+      const engDesc = item.descriptions.find((el) =>
+        [parameters.EN, parameters.ENG].includes(el.language)
       )
       if (engDesc && engDesc[attr]) {
         return short
@@ -334,6 +336,7 @@ export default {
     closeForm() {
       this.showForm = false
       this.selectedItem = null
+      this.openStep = null
       this.$refs.table.filterTable()
     },
     approve(item) {
@@ -413,6 +416,10 @@ export default {
         this.showForm = true
       })
     },
+    manageActivityInstancesLinks(item) {
+      this.edit(item)
+      this.openStep = 'activity_instance_links'
+    },
     view(item) {
       crfs.getItem(item.uid).then((resp) => {
         this.selectedItem = resp.data
@@ -428,15 +435,6 @@ export default {
     closeItemHistory() {
       this.selectedItem = null
       this.showItemHistory = false
-    },
-    openLinkForm(item) {
-      this.selectedItem = item
-      this.linkForm = true
-    },
-    closeLinkForm() {
-      this.linkForm = false
-      this.selectedItem = null
-      this.$refs.table.filterTable()
     },
     getItems(filters, options, filtersUpdated) {
       if (filters) {

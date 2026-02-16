@@ -160,6 +160,11 @@ Authentication can be turned off with `OAUTH_ENABLED=false` environment variable
 
 When authentication is turned on, all requests to protected API endpoints must provide a valid bearer (JWT) token inside the `Authorization` http header. 
 """,
+    # Putting False here as pydantic v2 separates input and output schemas if it sees any differences in usage the same model between GET and POST/PUT/PATCH flow
+    # but in this case it generates totally the same -Input and -Output models which duplicates model schema in openapi documentation.
+    # Model schema duplication causes issues for open-source users.
+    # For more information please lookup here https://fastapi.tiangolo.com/how-to/separate-openapi-schemas/
+    separate_input_output_schemas=False,
 )
 
 
@@ -570,7 +575,7 @@ app.include_router(
     prefix="/integrations/ms-graph",
     tags=["MS Graph API integrations"],
 )
-app.include_router(routers.ddf_router, prefix="/usdm/v3", tags=["USDM endpoints"])
+app.include_router(routers.ddf_router, prefix="/usdm/v4", tags=["USDM endpoints"])
 app.include_router(
     routers.data_suppliers_router, prefix="/data-suppliers", tags=["Data Suppliers"]
 )
@@ -586,6 +591,7 @@ def custom_openapi():
         openapi_version=app.openapi_version,
         description=app.description,
         routes=app.routes,
+        separate_input_output_schemas=app.separate_input_output_schemas,
     )
 
     openapi_schema["servers"] = [{"url": settings.openapi_schema_api_root_path}]

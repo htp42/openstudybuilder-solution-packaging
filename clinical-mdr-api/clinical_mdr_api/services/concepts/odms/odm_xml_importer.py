@@ -8,9 +8,9 @@ from neomodel import db
 from clinical_mdr_api.domain_repositories.concepts.odms.odm_generic_repository import (
     OdmGenericRepository,
 )
-from clinical_mdr_api.domains._utils import get_iso_lang_data
+from clinical_mdr_api.domains._utils import get_iso_lang_data, is_language_english
 from clinical_mdr_api.domains.concepts.utils import (
-    ENG_LANGUAGE,
+    EN_LANGUAGE,
     RelationType,
     VendorAttributeCompatibleType,
     VendorElementCompatibleType,
@@ -928,9 +928,7 @@ class OdmXmlImporterService:
                     )
                 )
 
-            self.odm_item_group_service.non_transactional_add_items(
-                rs.uid, odm_item_group_items
-            )
+            self.odm_item_group_service.add_items(rs.uid, odm_item_group_items)
 
             self._approve(
                 self._repos.odm_item_group_repository, self.odm_item_group_service, rs
@@ -991,9 +989,7 @@ class OdmXmlImporterService:
                     )
                 )
 
-            self.odm_form_service.non_transactional_add_item_groups(
-                rs.uid, odm_form_item_groups
-            )
+            self.odm_form_service.add_item_groups(rs.uid, odm_form_item_groups)
 
             self._approve(self._repos.odm_form_repository, self.odm_form_service, rs)
 
@@ -1047,7 +1043,7 @@ class OdmXmlImporterService:
     def _create_description(
         self,
         name: str | minidom.Text,
-        lang: str = ENG_LANGUAGE,
+        lang: str = EN_LANGUAGE,
         description: str | None = None,
         instruction: str | None = None,
         sponsor_instruction: str | None = None,
@@ -1068,8 +1064,10 @@ class OdmXmlImporterService:
             name=str(name) or "TBD",
             language=lang,
             description=description,
-            instruction=instruction if lang == ENG_LANGUAGE else None,
-            sponsor_instruction=sponsor_instruction if lang == ENG_LANGUAGE else None,
+            instruction=instruction if is_language_english(lang) else None,
+            sponsor_instruction=(
+                sponsor_instruction if is_language_english(lang) else None
+            ),
         )
 
     def _extract_descriptions(self, elm):
@@ -1116,9 +1114,7 @@ class OdmXmlImporterService:
                             break
 
         for description in descriptions:
-            description["lang"] = get_iso_lang_data(
-                description["lang"] or "en", "639-1", "639-2/B"
-            )
+            description["lang"] = get_iso_lang_data(description["lang"] or EN_LANGUAGE)
 
         return descriptions
 
@@ -1337,8 +1333,6 @@ class OdmXmlImporterService:
         )[0]
 
         rs.sort(key=lambda elm: elm[0].uid)
-        print("ååååå")
-        print(rs)
         return [
             CTTerm.from_ct_term_ars(
                 ct_term_name_ar, ct_term_attributes_ar, ct_term_codelists

@@ -47,6 +47,6 @@ def test_data():
 
 def test_ddf_study(api_client):
     response = api_client.get(
-        f"/usdm/v3/studyDefinitions/{study.uid}",
+        f"/usdm/v4/studyDefinitions/{study.uid}",
     )
     assert_response_status_code(response, 200)

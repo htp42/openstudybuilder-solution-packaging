@@ -755,6 +755,7 @@ const editHeaders = ref([
   { title: t('StudyVisitForm.visit_start_rule'), key: 'start_rule' },
   { title: t('StudyVisitForm.visit_stop_rule'), key: 'end_rule' },
 ])
+const headersHolder = ref([])
 const preferredTimeUnit = ref(studyConstants.STUDY_TIME_UNIT_DAY)
 const preferredTimeUnits = ref([])
 const selectedStudyVisit = ref(null)
@@ -1041,6 +1042,7 @@ function transformItems(items) {
 }
 
 function openEditMode() {
+  headersHolder.value = tableRef.value.selectedColumns
   headers.value = editHeaders.value
   editMode.value = true
 }
@@ -1050,6 +1052,7 @@ function closeEditMode() {
   editMode.value = false
   itemsDisabled.value = false
   headers.value = defaultColumns.value
+  tableRef.value.setExternalColumns(headersHolder.value)
 }
 
 function disableOthers(item) {
@@ -1159,13 +1162,18 @@ function closeForm() {
 
 async function deleteVisit(item) {
   tableLoading.value = true
-  await epochsStore.deleteStudyVisit({
-    studyUid: studiesGeneralStore.selectedStudy.uid,
-    studyVisitUid: item.uid,
-  })
-  tableLoading.value = false
-  notificationHub.add({ msg: t('StudyVisitTable.delete_success') })
-  tableRef.value.filterTable()
+  // Catch possible errors when deleting a study visit
+  // to get out of tableLoading state
+  try {
+    await epochsStore.deleteStudyVisit({
+      studyUid: studiesGeneralStore.selectedStudy.uid,
+      studyVisitUid: item.uid,
+    })
+    notificationHub.add({ msg: t('StudyVisitTable.delete_success') })
+  } finally {
+    tableLoading.value = false
+    tableRef.value.filterTable()
+  }
 }
 
 async function openVisitHistory(visit) {

@@ -408,14 +408,19 @@ class StudyVisitVO:
     def compare_cons_group_equality(
         self,
         other_visit: "StudyVisitVO",
-    ) -> bool:
-        return (
-            self.visit_type == other_visit.visit_type
-            and self.epoch_uid == other_visit.epoch_uid
-            and self.visit_contact_mode == other_visit.visit_contact_mode
-            and self.visit_window_min == other_visit.visit_window_min
-            and self.visit_window_max == other_visit.visit_window_max
-        )
+    ) -> list[str]:
+        different_fields: list[str] = []
+        if self.visit_type != other_visit.visit_type:
+            different_fields.append("visit_type")
+        if self.epoch_uid != other_visit.epoch_uid:
+            different_fields.append("epoch")
+        if self.visit_contact_mode != other_visit.visit_contact_mode:
+            different_fields.append("visit_contact_mode")
+        if self.visit_window_min != other_visit.visit_window_min:
+            different_fields.append("min_visit_window_value")
+        if self.visit_window_max != other_visit.visit_window_max:
+            different_fields.append("max_visit_window_value")
+        return different_fields
 
 
 @dataclass

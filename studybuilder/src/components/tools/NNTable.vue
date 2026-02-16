@@ -228,7 +228,11 @@
                     size="small"
                     :color="header.color"
                     class="mt-1 mr-1"
-                  />
+                    variant="flat"
+                  >
+                    <span>&nbsp;</span>
+                    <span>&nbsp;</span>
+                  </v-chip>
                   <div v-if="!showColumnNames">
                     {{ header.title }}
                   </div>
@@ -612,6 +616,7 @@ const selectedColumnData = ref({})
 const confirm = ref()
 const selectedColumns = ref([])
 const loadFilters = ref(false)
+const externalColumns = ref([])
 
 const headerActions = [
   {
@@ -663,16 +668,22 @@ watch(route, () => {
   updateColumns()
 })
 watch(
-  () => props.loadingWatcher,
+  () => props.headers,
   (value) => {
-    loading.value = value
+    if (externalColumns.value.length > 0) {
+      shownColumns.value = externalColumns.value
+      selectedColumns.value = externalColumns.value
+      externalColumns.value = []
+    } else {
+      shownColumns.value = value
+      selectedColumns.value = value
+    }
   }
 )
 watch(
-  () => props.headers,
+  () => props.loadingWatcher,
   (value) => {
-    shownColumns.value = value
-    selectedColumns.value = value
+    loading.value = value
   }
 )
 watch(
@@ -820,11 +831,11 @@ function getColumnSelectedData(column) {
     : undefined
 }
 function sortAscending(header) {
-  sortBy.value = [{ key: header.key, order: 'asc' }]
+  sortBy.value = [{ key: header.sortKey || header.key, order: 'asc' }]
   filterTable()
 }
 function sortDescending(header) {
-  sortBy.value = [{ key: header.key, order: 'desc' }]
+  sortBy.value = [{ key: header.sortKey || header.key, order: 'desc' }]
   filterTable()
 }
 function disableColumnSwitch(column) {
@@ -959,9 +970,13 @@ function closeHistory() {
 function customSort(data) {
   emit('customSort', data)
 }
+function setExternalColumns(columns) {
+  externalColumns.value = columns
+}
 
 defineExpose({
   filterTable,
+  setExternalColumns,
   search,
   selectedColumns,
 })

@@ -133,8 +133,9 @@ class StudySelectionActivityRepository(
             WITH DISTINCT *
             
             CALL {
-                WITH sa, terms_at_specific_datetime
+                WITH sv, sa, terms_at_specific_datetime
                 MATCH (sa)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(soa_group:StudySoAGroup)-[:HAS_FLOWCHART_GROUP]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(soa_group_term_root:CTTermRoot)
+                WHERE (soa_group)<-[:HAS_STUDY_SOA_GROUP]-(sv)
                 MATCH (soa_group)<-[:AFTER]-(after_action:StudyAction)
                 WITH *
                 ORDER BY after_action.date DESC
@@ -223,7 +224,8 @@ class StudySelectionActivityRepository(
                     order: soa_group.order
                 } AS study_soa_group,
                head(apoc.coll.sortMulti([(sa)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]->(study_activity_subgroup_selection:StudyActivitySubGroup)
-                -[:HAS_SELECTED_ACTIVITY_SUBGROUP]->(activity_subgroup_value:ActivitySubGroupValue)<-[:HAS_VERSION]-(activity_subgroup_root:ActivitySubGroupRoot) |
+                -[:HAS_SELECTED_ACTIVITY_SUBGROUP]->(activity_subgroup_value:ActivitySubGroupValue)<-[:HAS_VERSION]-(activity_subgroup_root:ActivitySubGroupRoot)
+                WHERE (study_activity_subgroup_selection)<-[:HAS_STUDY_ACTIVITY_SUBGROUP]-(sv) |
                     {
                         selection_uid: study_activity_subgroup_selection.uid, 
                         activity_subgroup_uid:activity_subgroup_root.uid,
@@ -233,7 +235,8 @@ class StudySelectionActivityRepository(
                         date: head([(study_activity_subgroup_selection)<-[:AFTER]-(after_action:StudyAction) | after_action.date])
                     }], ['date'])) AS study_activity_subgroup,
                 head(apoc.coll.sortMulti([(sa)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(study_activity_group_selection:StudyActivityGroup)
-                    -[:HAS_SELECTED_ACTIVITY_GROUP]->(activity_group_value:ActivityGroupValue)<-[:HAS_VERSION]-(activity_group_root:ActivityGroupRoot) | 
+                    -[:HAS_SELECTED_ACTIVITY_GROUP]->(activity_group_value:ActivityGroupValue)<-[:HAS_VERSION]-(activity_group_root:ActivityGroupRoot)
+                    WHERE (study_activity_group_selection)<-[:HAS_STUDY_ACTIVITY_GROUP]-(sv) |
                     {
                         selection_uid: study_activity_group_selection.uid, 
                         activity_group_uid: activity_group_root.uid,

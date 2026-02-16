@@ -518,6 +518,12 @@ class TestStudyService(unittest.TestCase):
             _ref_high_level_study_design.trial_phase_null_value_code,
         )
         self.assertEqual(
+            self.get_field_or_simple_term_uid(
+                _res_high_level_study_design.development_stage_code
+            ),
+            _ref_high_level_study_design.development_stage_code,
+        )
+        self.assertEqual(
             [
                 self.get_field_or_simple_term_uid(trial_type_code)
                 for trial_type_code in _res_high_level_study_design.trial_type_codes
@@ -709,6 +715,7 @@ class TestStudyService(unittest.TestCase):
                         national_medical_products_administration_nmpa_number=None,
                         eudamed_srn_number=None,
                         investigational_device_exemption_ide_number=None,
+                        eu_pas_number=None,
                         universal_trial_number_utn_null_value_code=None,
                         japanese_trial_registry_id_japic_null_value_code=None,
                         investigational_new_drug_application_number_ind_null_value_code=None,
@@ -719,6 +726,7 @@ class TestStudyService(unittest.TestCase):
                         national_medical_products_administration_nmpa_number_null_value_code=None,
                         eudamed_srn_number_null_value_code=None,
                         investigational_device_exemption_ide_number_null_value_code=None,
+                        eu_pas_number_null_value_code=None,
                     ),
                 ),
                 study_title_exists_callback=lambda _, study_number: False,
@@ -882,6 +890,7 @@ class TestStudyService(unittest.TestCase):
                     national_medical_products_administration_nmpa_number=None,
                     eudamed_srn_number=None,
                     investigational_device_exemption_ide_number=None,
+                    eu_pas_number=None,
                     ct_gov_id_null_value_code=None,
                     eudract_id_null_value_code=None,
                     universal_trial_number_utn_null_value_code=None,
@@ -894,6 +903,7 @@ class TestStudyService(unittest.TestCase):
                     national_medical_products_administration_nmpa_number_null_value_code=None,
                     eudamed_srn_number_null_value_code=None,
                     investigational_device_exemption_ide_number_null_value_code=None,
+                    eu_pas_number_null_value_code=None,
                 ),
             ),
             initial_high_level_study_design=HighLevelStudyDesignVO.from_input_values(
@@ -903,6 +913,7 @@ class TestStudyService(unittest.TestCase):
                 trial_type_null_value_code=None,
                 trial_phase_code=None,
                 trial_phase_null_value_code=None,
+                development_stage_code=None,
                 is_adaptive_design=False,
                 is_adaptive_design_null_value_code=None,
                 is_extension_trial=False,
@@ -1020,6 +1031,7 @@ class TestStudyService(unittest.TestCase):
                     national_medical_products_administration_nmpa_number=None,
                     eudamed_srn_number=None,
                     investigational_device_exemption_ide_number=None,
+                    eu_pas_number=None,
                     ct_gov_id_null_value_code=None,
                     eudract_id_null_value_code=None,
                     universal_trial_number_utn_null_value_code=None,
@@ -1032,6 +1044,7 @@ class TestStudyService(unittest.TestCase):
                     national_medical_products_administration_nmpa_number_null_value_code=None,
                     eudamed_srn_number_null_value_code=None,
                     investigational_device_exemption_ide_number_null_value_code=None,
+                    eu_pas_number_null_value_code=None,
                 ),
             ),
             study_title_exists_callback=lambda _, study_number: False,
@@ -1159,6 +1172,10 @@ class TestStudyService(unittest.TestCase):
                 sample_study_definition.current_metadata.id_metadata.registry_identifiers.investigational_device_exemption_ide_number,
             )
             self.assertEqual(
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.eu_pas_number,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.eu_pas_number,
+            )
+            self.assertEqual(
                 study_definition_ar.current_metadata.id_metadata.registry_identifiers.eu_trial_number_null_value_code,
                 sample_study_definition.current_metadata.id_metadata.registry_identifiers.eu_trial_number_null_value_code,
             )
@@ -1186,6 +1203,10 @@ class TestStudyService(unittest.TestCase):
             self.assertEqual(
                 study_definition_ar.current_metadata.id_metadata.registry_identifiers.investigational_device_exemption_ide_number_null_value_code,
                 sample_study_definition.current_metadata.id_metadata.registry_identifiers.investigational_device_exemption_ide_number_null_value_code,
+            )
+            self.assertEqual(
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.eu_pas_number_null_value_code,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.eu_pas_number_null_value_code,
             )
             self.assertEqual(
                 study_definition_ar.current_metadata.id_metadata.project_number,
@@ -1239,6 +1260,7 @@ class TestStudyService(unittest.TestCase):
                     national_medical_products_administration_nmpa_number=None,
                     eudamed_srn_number=None,
                     investigational_device_exemption_ide_number=None,
+                    eu_pas_number=None,
                     ct_gov_id_null_value_code=None,
                     eudract_id_null_value_code=None,
                     universal_trial_number_utn_null_value_code=None,
@@ -1251,6 +1273,7 @@ class TestStudyService(unittest.TestCase):
                     national_medical_products_administration_nmpa_number_null_value_code=None,
                     eudamed_srn_number_null_value_code=None,
                     investigational_device_exemption_ide_number_null_value_code=None,
+                    eu_pas_number_null_value_code=None,
                 ),
             ),
             study_title_exists_callback=lambda _, study_number: False,
@@ -1395,6 +1418,10 @@ class TestStudyService(unittest.TestCase):
                 sample_study_definition.current_metadata.id_metadata.registry_identifiers.investigational_device_exemption_ide_number,
             )
             self.assertEqual(
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.eu_pas_number,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.eu_pas_number,
+            )
+            self.assertEqual(
                 study_definition_ar.current_metadata.id_metadata.registry_identifiers.eu_trial_number_null_value_code,
                 sample_study_definition.current_metadata.id_metadata.registry_identifiers.eu_trial_number_null_value_code,
             )
@@ -1422,6 +1449,10 @@ class TestStudyService(unittest.TestCase):
             self.assertEqual(
                 study_definition_ar.current_metadata.id_metadata.registry_identifiers.investigational_device_exemption_ide_number_null_value_code,
                 sample_study_definition.current_metadata.id_metadata.registry_identifiers.investigational_device_exemption_ide_number_null_value_code,
+            )
+            self.assertEqual(
+                study_definition_ar.current_metadata.id_metadata.registry_identifiers.eu_pas_number_null_value_code,
+                sample_study_definition.current_metadata.id_metadata.registry_identifiers.eu_pas_number_null_value_code,
             )
             self.assertEqual(
                 study_definition_ar.current_metadata.id_metadata.project_number,
@@ -1472,6 +1503,7 @@ class TestStudyService(unittest.TestCase):
                     national_medical_products_administration_nmpa_number=None,
                     eudamed_srn_number=None,
                     investigational_device_exemption_ide_number=None,
+                    eu_pas_number=None,
                     ct_gov_id_null_value_code=None,
                     eudract_id_null_value_code=None,
                     universal_trial_number_utn_null_value_code=None,
@@ -1484,6 +1516,7 @@ class TestStudyService(unittest.TestCase):
                     national_medical_products_administration_nmpa_number_null_value_code=None,
                     eudamed_srn_number_null_value_code=None,
                     investigational_device_exemption_ide_number_null_value_code=None,
+                    eu_pas_number_null_value_code=None,
                 ),
             ),
             study_title_exists_callback=lambda _, study_number: False,
@@ -1629,6 +1662,7 @@ class TestStudyService(unittest.TestCase):
                     national_medical_products_administration_nmpa_number=None,
                     eudamed_srn_number=None,
                     investigational_device_exemption_ide_number=None,
+                    eu_pas_number=None,
                     ct_gov_id_null_value_code=None,
                     eudract_id_null_value_code=None,
                     universal_trial_number_utn_null_value_code=None,
@@ -1641,6 +1675,7 @@ class TestStudyService(unittest.TestCase):
                     national_medical_products_administration_nmpa_number_null_value_code=None,
                     eudamed_srn_number_null_value_code=None,
                     investigational_device_exemption_ide_number_null_value_code=None,
+                    eu_pas_number_null_value_code=None,
                 ),
             ),
             study_title_exists_callback=lambda _, study_number: False,
@@ -1786,6 +1821,7 @@ class TestStudyService(unittest.TestCase):
                     national_medical_products_administration_nmpa_number=None,
                     eudamed_srn_number=None,
                     investigational_device_exemption_ide_number=None,
+                    eu_pas_number=None,
                     ct_gov_id_null_value_code=None,
                     eudract_id_null_value_code=None,
                     universal_trial_number_utn_null_value_code=None,
@@ -1798,6 +1834,7 @@ class TestStudyService(unittest.TestCase):
                     national_medical_products_administration_nmpa_number_null_value_code=None,
                     eudamed_srn_number_null_value_code=None,
                     investigational_device_exemption_ide_number_null_value_code=None,
+                    eu_pas_number_null_value_code=None,
                 ),
             ),
             study_title_exists_callback=lambda _, study_number: False,

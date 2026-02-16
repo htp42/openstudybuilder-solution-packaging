@@ -39,7 +39,7 @@
           <DataExchangeStandardsGuideView
             :key="`SDTMIG__MD-${tabKeys.SDTMIG__MD}`"
             :headers="igHeaders"
-            uvalue="SDTMIG__MD"
+            uid="SDTMIG__MD"
             :redirect-guide="redirectGuide"
             @redirect-to-model="redirectToModel"
             @redirect-to-model-with-variable="redirectToModelWithVariable"
@@ -49,7 +49,7 @@
           <DataExchangeStandardsGuideView
             :key="`SENDIG-${tabKeys.SENDIG}`"
             :headers="igHeaders"
-            uvalue="SENDIG"
+            uid="SENDIG"
             :redirect-guide="redirectGuide"
             @redirect-to-model="redirectToModel"
             @redirect-to-model-with-variable="redirectToModelWithVariable"
@@ -59,7 +59,7 @@
           <DataExchangeStandardsGuideView
             :key="`SENDIG__AR-${tabKeys.SENDIG__AR}`"
             :headers="igHeaders"
-            uvalue="SENDIG__AR"
+            uid="SENDIG__AR"
             :redirect-guide="redirectGuide"
             @redirect-to-model="redirectToModel"
             @redirect-to-model-with-variable="redirectToModelWithVariable"
@@ -69,7 +69,7 @@
           <DataExchangeStandardsGuideView
             :key="`SENDIG__DART-${tabKeys.SENDIG__DART}`"
             :headers="igHeaders"
-            uvalue="SENDIG__DART"
+            uid="SENDIG__DART"
             :redirect-guide="redirectGuide"
             @redirect-to-model="redirectToModel"
             @redirect-to-model-with-variable="redirectToModelWithVariable"
@@ -128,7 +128,7 @@ const modelsHeaders = ref([
   { title: t('DataModels.notes'), key: 'notes' },
   { title: t('DataModels.usage_restrictions'), key: 'usage_restrictions' },
   { title: t('_global.description'), key: 'description' },
-  { title: t('DataModels.c_code'), key: 'referenced_codelist.uid' },
+  { title: t('DataModels.c_code'), key: 'referenced_codelists.uid' },
   { title: t('DataModels.examples'), key: 'examples' },
 ])
 const igHeaders = ref([
@@ -138,7 +138,7 @@ const igHeaders = ref([
   { title: t('DataModels.data_type'), key: 'simple_datatype' },
   { title: t('DataModels.role'), key: 'role' },
   { title: t('DataModels.core'), key: 'core' },
-  { title: t('DataModels.codelist'), key: 'referenced_codelist.uid' },
+  { title: t('DataModels.codelist'), key: 'referenced_codelists.uid' },
   { title: t('DataModels.desc_value'), key: 'described_value_domain' },
   { title: t('DataModels.implements'), key: 'implements_variable.uid' },
   { title: t('DataModels.value_list'), key: 'value_list' },

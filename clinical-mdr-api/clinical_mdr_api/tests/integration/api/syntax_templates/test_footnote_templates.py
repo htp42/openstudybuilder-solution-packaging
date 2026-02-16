@@ -88,7 +88,7 @@ def test_data():
 
     activity_group = TestUtils.create_activity_group(name="test activity group")
     activity_subgroup = TestUtils.create_activity_subgroup(
-        name="test activity subgroup", activity_groups=[activity_group.uid]
+        name="test activity subgroup"
     )
     activity = TestUtils.create_activity(
         name="test activity",
@@ -817,7 +817,7 @@ def test_change_footnote_template_indexings(api_client):
     )
     _activity_group = TestUtils.create_activity_group(name="new activity group")
     _activity_subgroup = TestUtils.create_activity_subgroup(
-        name="new activity subgroup", activity_groups=[_activity_group.uid]
+        name="new activity subgroup"
     )
     _activity = TestUtils.create_activity(
         name="test new activity",

@@ -17,7 +17,7 @@
           item-title="submission_value"
           item-value="submission_value"
           density="compact"
-          :disabled="props.disabled"
+          :readonly="props.readOnly"
         />
       </v-col>
       <v-col>
@@ -37,7 +37,7 @@
           "
           return-object
           density="compact"
-          :disabled="props.disabled"
+          :readonly="props.readOnly"
           @update:model-value="autocompleteValues"
         />
       </v-col>
@@ -46,7 +46,7 @@
           color="secondary"
           class="mr-2"
           block
-          :disabled="props.disabled"
+          :readonly="props.readOnly"
           @click="addDescription"
         >
           {{ t('_global.add') }}
@@ -61,7 +61,7 @@
             v-model:content="inputDesc.description"
             content-type="html"
             :toolbar="customToolbar"
-            :read-only="props.disabled"
+            :read-only="props.readOnly"
             :placeholder="
               inputDesc.description ? '' : t('CRFDescriptions.description')
             "
@@ -74,7 +74,7 @@
             v-model:content="inputDesc.sponsor_instruction"
             content-type="html"
             :toolbar="customToolbar"
-            :read-only="props.disabled"
+            :read-only="props.readOnly"
             :placeholder="
               inputDesc.sponsor_instruction
                 ? ''
@@ -89,7 +89,7 @@
             v-model:content="inputDesc.instruction"
             content-type="html"
             :toolbar="customToolbar"
-            :read-only="props.disabled"
+            :read-only="props.readOnly"
             :placeholder="
               inputDesc.instruction ? '' : t('CRFDescriptions.instruction')
             "
@@ -114,9 +114,9 @@
           :items="descriptions"
           hide-default-switches
           hide-export-button
-          :show-select="!disabled"
-          :hide-default-footer="props.disabled"
-          :hide-search-field="props.disabled"
+          :show-select="!readOnly"
+          :hide-default-footer="props.readOnly"
+          :hide-search-field="props.readOnly"
           table-height="400px"
           :items-length="total"
           disable-filtering
@@ -153,7 +153,7 @@ import { sanitizeHTML } from '@/utils/sanitize'
 const { t } = useI18n()
 
 const props = defineProps({
-  disabled: {
+  readOnly: {
     type: Boolean,
     default: false,
   },
@@ -196,7 +196,10 @@ const total = ref(0)
 onMounted(() => {
   terms.getTermsByCodelist('language').then((resp) => {
     languages.value = resp.data.items.filter(
-      (el) => el.submission_value.toLowerCase() !== parameters.ENG
+      (el) =>
+        ![parameters.EN, parameters.ENG].includes(
+          el.submission_value.toLowerCase()
+        )
     )
   })
 
@@ -204,7 +207,7 @@ onMounted(() => {
 })
 
 const getDescriptions = (filters, options, filtersUpdated) => {
-  if (props.disabled) {
+  if (props.readOnly) {
     descriptions.value = [...modelValue.value]
   } else {
     const params = filteringParameters.prepareParameters(

@@ -242,6 +242,18 @@ def test_adding_study1(api_client):
         ]
         is None
     )
+    assert (
+        res["current_metadata"]["identification_metadata"]["registry_identifiers"][
+            "eu_pas_number"
+        ]
+        is None
+    )
+    assert (
+        res["current_metadata"]["identification_metadata"]["registry_identifiers"][
+            "eu_pas_number_null_value_code"
+        ]
+        is None
+    )
     assert res["current_metadata"]["version_metadata"]["study_status"] == "DRAFT"
     assert res["current_metadata"]["version_metadata"]["version_number"] is None
     assert res["current_metadata"]["version_metadata"]["version_timestamp"]

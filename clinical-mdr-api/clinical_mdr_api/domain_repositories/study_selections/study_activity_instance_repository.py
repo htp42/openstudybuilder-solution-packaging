@@ -2,6 +2,9 @@ import datetime
 from dataclasses import dataclass
 from typing import Any
 
+from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_codelist_attributes_repository import (
+    CTCodelistAttributesRepository,
+)
 from clinical_mdr_api.domain_repositories.generic_repository import (
     manage_previous_connected_study_selection_relationships,
 )
@@ -10,11 +13,16 @@ from clinical_mdr_api.domain_repositories.models.activities import (
     ActivityInstanceRoot,
     ActivityInstanceValue,
 )
+from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
+    CTTermContext,
+    CTTermRoot,
+)
 from clinical_mdr_api.domain_repositories.models.study import StudyValue
 from clinical_mdr_api.domain_repositories.models.study_audit_trail import StudyAction
 from clinical_mdr_api.domain_repositories.models.study_selections import (
     StudyActivity,
     StudyActivityInstance,
+    StudyDataSupplier,
     StudySelection,
 )
 from clinical_mdr_api.domain_repositories.models.study_visit import StudyVisit
@@ -30,6 +38,7 @@ from clinical_mdr_api.domains.study_selections.study_selection_activity_instance
     StudySelectionActivityInstanceVO,
 )
 from clinical_mdr_api.models.study_selections.study_visit import SimpleStudyVisit
+from common.config import settings
 from common.exceptions import BusinessLogicException, NotFoundException
 from common.utils import convert_to_datetime
 
@@ -76,6 +85,15 @@ class SelectionHistory:
     change_type: str
     start_date: datetime.datetime
     end_date: datetime.datetime | None
+    # Data supplier and origin fields (L3 SoA)
+    study_data_supplier_uid: str | None = None
+    study_data_supplier_name: str | None = None
+    origin_type_uid: str | None = None
+    origin_type_name: str | None = None
+    origin_type_codelist_uid: str | None = None
+    origin_source_uid: str | None = None
+    origin_source_name: str | None = None
+    origin_source_codelist_uid: str | None = None
 
 
 class StudySelectionActivityInstanceRepository(
@@ -222,6 +240,14 @@ class StudySelectionActivityInstanceRepository(
             study_soa_group_uid=study_soa_group.get("selection_uid"),
             soa_group_term_uid=study_soa_group.get("soa_group_uid"),
             soa_group_term_name=study_soa_group.get("soa_group_name"),
+            study_data_supplier_uid=selection.get("study_data_supplier_uid"),
+            study_data_supplier_name=selection.get("study_data_supplier_name"),
+            origin_type_uid=selection.get("origin_type_uid"),
+            origin_type_name=selection.get("origin_type_name"),
+            origin_type_codelist_uid=selection.get("origin_type_codelist_uid"),
+            origin_source_uid=selection.get("origin_source_uid"),
+            origin_source_name=selection.get("origin_source_name"),
+            origin_source_codelist_uid=selection.get("origin_source_codelist_uid"),
         )
 
     def _order_by_query(self):
@@ -335,6 +361,12 @@ class StudySelectionActivityInstanceRepository(
                 RETURN baseline_visit
             }
             WITH sr, sv, sa, study_activity, activity, activity_instance, latest_activity_instance, collect(baseline_visit) as baseline_visits
+            // Data supplier and origin fields (L3 SoA)
+            OPTIONAL MATCH (sa)-[:HAS_STUDY_DATA_SUPPLIER]->(sds:StudyDataSupplier)-[:HAS_DATA_SUPPLIER]->(dsv:DataSupplierValue)
+            OPTIONAL MATCH (sa)-[:HAS_ORIGIN_TYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(origin_type_root:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(origin_type_name_value:CTTermNameValue)
+            OPTIONAL MATCH (sa)-[:HAS_ORIGIN_TYPE]->(origin_type_ctx:CTTermContext)-[:HAS_SELECTED_CODELIST]->(origin_type_codelist:CTCodelistRoot)
+            OPTIONAL MATCH (sa)-[:HAS_ORIGIN_SOURCE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(origin_source_root:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(origin_source_name_value:CTTermNameValue)
+            OPTIONAL MATCH (sa)-[:HAS_ORIGIN_SOURCE]->(origin_source_ctx:CTTermContext)-[:HAS_SELECTED_CODELIST]->(origin_source_codelist:CTCodelistRoot)
         """
         return base_query
 
@@ -345,12 +377,14 @@ class StudySelectionActivityInstanceRepository(
         activity_group_names = kwargs.get("activity_group_names")
         activity_subgroup_names = kwargs.get("activity_subgroup_names")
         activity_instance_names = kwargs.get("activity_instance_names")
+        has_activity_instance = kwargs.get("has_activity_instance")
         filter_query = ""
         if (
             activity_names is not None
             or activity_group_names is not None
             or activity_subgroup_names is not None
             or activity_instance_names is not None
+            or has_activity_instance is True
         ):
             filter_query += " WHERE "
             filter_list = []
@@ -379,6 +413,11 @@ class StudySelectionActivityInstanceRepository(
                     "WHERE activity_instance_value.name IN $activity_instance_names | activity_instance_value.name]) > 0"
                 )
                 query_parameters["activity_instance_names"] = activity_instance_names
+            if has_activity_instance is True:
+                # Use WITH * WHERE to filter after OPTIONAL MATCH, not pattern WHERE
+                return " WITH * WHERE " + " AND ".join(
+                    filter_list + ["activity_instance.uid IS NOT NULL"]
+                )
             filter_query += " AND ".join(filter_list)
         return filter_query
 
@@ -396,7 +435,8 @@ class StudySelectionActivityInstanceRepository(
                 activity_instance,
                 latest_activity_instance,
                 head([(study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]->(study_activity_subgroup_selection)
-                    -[:HAS_SELECTED_ACTIVITY_SUBGROUP]->(activity_subgroup_value:ActivitySubGroupValue)<-[:HAS_VERSION]-(activity_subgroup_root:ActivitySubGroupRoot) | 
+                    -[:HAS_SELECTED_ACTIVITY_SUBGROUP]->(activity_subgroup_value:ActivitySubGroupValue)<-[:HAS_VERSION]-(activity_subgroup_root:ActivitySubGroupRoot)
+                    WHERE (study_activity_subgroup_selection)<-[:HAS_STUDY_ACTIVITY_SUBGROUP]-(sv) |
                     {
                         selection_uid: study_activity_subgroup_selection.uid, 
                         activity_subgroup_uid:activity_subgroup_root.uid,
@@ -404,7 +444,8 @@ class StudySelectionActivityInstanceRepository(
                         order: study_activity_subgroup_selection.order
                     }]) AS study_activity_subgroup,
                 head([(study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(study_activity_group_selection)
-                    -[:HAS_SELECTED_ACTIVITY_GROUP]->(activity_group_value:ActivityGroupValue)<-[:HAS_VERSION]-(activity_group_root:ActivityGroupRoot) | 
+                    -[:HAS_SELECTED_ACTIVITY_GROUP]->(activity_group_value:ActivityGroupValue)<-[:HAS_VERSION]-(activity_group_root:ActivityGroupRoot)
+                    WHERE (study_activity_group_selection)<-[:HAS_STUDY_ACTIVITY_GROUP]-(sv) |
                     {
                         selection_uid: study_activity_group_selection.uid, 
                         activity_group_uid: activity_group_root.uid,
@@ -412,7 +453,8 @@ class StudySelectionActivityInstanceRepository(
                         order: study_activity_group_selection.order
                     }]) AS study_activity_group,
                 head([(study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(study_soa_group_selection)
-                    -[:HAS_FLOWCHART_GROUP]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(ct_term_root:CTTermRoot)-[:HAS_NAME_ROOT]-(:CTTermNameRoot)-[:LATEST]->(flowchart_value:CTTermNameValue) | 
+                    -[:HAS_FLOWCHART_GROUP]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(ct_term_root:CTTermRoot)-[:HAS_NAME_ROOT]-(:CTTermNameRoot)-[:LATEST]->(flowchart_value:CTTermNameValue)
+                    WHERE (study_soa_group_selection)<-[:HAS_STUDY_SOA_GROUP]-(sv) |
                     {
                         selection_uid: study_soa_group_selection.uid, 
                         soa_group_uid: ct_term_root.uid,
@@ -423,7 +465,15 @@ class StudySelectionActivityInstanceRepository(
                 sac.date AS start_date,
                 sac.author_id AS author_id,
                 COALESCE(head([(user:User)-[*0]-() WHERE user.user_id=sac.author_id | user.username]), sac.author_id) AS author_username,
-                study_activity.order AS study_activity_order
+                study_activity.order AS study_activity_order,
+                sds.uid AS study_data_supplier_uid,
+                dsv.name AS study_data_supplier_name,
+                origin_type_root.uid AS origin_type_uid,
+                origin_type_name_value.name AS origin_type_name,
+                origin_type_codelist.uid AS origin_type_codelist_uid,
+                origin_source_root.uid AS origin_source_uid,
+                origin_source_name_value.name AS origin_source_name,
+                origin_source_codelist.uid AS origin_source_codelist_uid
                 ORDER BY study_soa_group.order, study_activity_group.order, study_activity_subgroup.order, study_activity_order, activity_instance.name
         """
 
@@ -507,6 +557,14 @@ class StudySelectionActivityInstanceRepository(
                 else None
             ),
             end_date=end_date,
+            study_data_supplier_uid=selection.get("study_data_supplier_uid"),
+            study_data_supplier_name=selection.get("study_data_supplier_name"),
+            origin_type_uid=selection.get("origin_type_uid"),
+            origin_type_name=selection.get("origin_type_name"),
+            origin_type_codelist_uid=selection.get("origin_type_codelist_uid"),
+            origin_source_uid=selection.get("origin_source_uid"),
+            origin_source_name=selection.get("origin_source_name"),
+            origin_source_codelist_uid=selection.get("origin_source_codelist_uid"),
         )
 
     def get_audit_trail_query(self, study_selection_uid: str | None):
@@ -591,7 +649,15 @@ class StudySelectionActivityInstanceRepository(
                     MATCH (all_sa)<-[:AFTER]-(asa:StudyAction)
                     OPTIONAL MATCH (all_sa)<-[:BEFORE]-(bsa:StudyAction)
                     WITH all_sa, study_activity, activity, activity_instance, asa, bsa, collect(baseline_visit) as baseline_visits
-                    
+                    // Data supplier and origin fields (L3 SoA)
+                    OPTIONAL MATCH (all_sa)-[:HAS_STUDY_DATA_SUPPLIER]->(sds:StudyDataSupplier)-[:HAS_DATA_SUPPLIER]->(dsv:DataSupplierValue)
+                    OPTIONAL MATCH (all_sa)-[:HAS_ORIGIN_TYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(origin_type_root:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(origin_type_name_value:CTTermNameValue)
+                    OPTIONAL MATCH (all_sa)-[:HAS_ORIGIN_TYPE]->(origin_type_ctx:CTTermContext)-[:HAS_SELECTED_CODELIST]->(origin_type_codelist:CTCodelistRoot)
+                    OPTIONAL MATCH (all_sa)-[:HAS_ORIGIN_SOURCE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(origin_source_root:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(origin_source_name_value:CTTermNameValue)
+                    OPTIONAL MATCH (all_sa)-[:HAS_ORIGIN_SOURCE]->(origin_source_ctx:CTTermContext)-[:HAS_SELECTED_CODELIST]->(origin_source_codelist:CTCodelistRoot)
+                    WITH all_sa, study_activity, activity, activity_instance, asa, bsa, baseline_visits,
+                         sds, dsv, origin_type_root, origin_type_name_value, origin_type_codelist,
+                         origin_source_root, origin_source_name_value, origin_source_codelist
                     ORDER BY all_sa.uid, asa.date DESC
                     RETURN
                         all_sa.uid AS study_selection_uid,
@@ -599,23 +665,23 @@ class StudySelectionActivityInstanceRepository(
                         activity,
                         activity_instance,
                         head([(study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]->(study_activity_subgroup_selection)
-                            -[:HAS_SELECTED_ACTIVITY_SUBGROUP]->(activity_subgroup_value:ActivitySubGroupValue)<-[:HAS_VERSION]-(activity_subgroup_root:ActivitySubGroupRoot) | 
+                            -[:HAS_SELECTED_ACTIVITY_SUBGROUP]->(activity_subgroup_value:ActivitySubGroupValue)<-[:HAS_VERSION]-(activity_subgroup_root:ActivitySubGroupRoot) |
                             {
-                                selection_uid: study_activity_subgroup_selection.uid, 
+                                selection_uid: study_activity_subgroup_selection.uid,
                                 activity_subgroup_uid:activity_subgroup_root.uid,
                                 activity_subgroup_name: activity_subgroup_value.name
                             }]) AS study_activity_subgroup,
                         head([(study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(study_activity_group_selection)
-                            -[:HAS_SELECTED_ACTIVITY_GROUP]->(activity_group_value:ActivityGroupValue)<-[:HAS_VERSION]-(activity_group_root:ActivityGroupRoot) | 
+                            -[:HAS_SELECTED_ACTIVITY_GROUP]->(activity_group_value:ActivityGroupValue)<-[:HAS_VERSION]-(activity_group_root:ActivityGroupRoot) |
                             {
-                                selection_uid: study_activity_group_selection.uid, 
+                                selection_uid: study_activity_group_selection.uid,
                                 activity_group_uid: activity_group_root.uid,
                                 activity_group_name: activity_group_value.name
                             }]) AS study_activity_group,
                         head([(study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(study_soa_group_selection)
-                            -[:HAS_FLOWCHART_GROUP]->(ct_term_root:CTTermRoot)-[:HAS_NAME_ROOT]-(:CTTermNameRoot)-[:LATEST]->(flowchart_value:CTTermNameValue) | 
+                            -[:HAS_FLOWCHART_GROUP]->(ct_term_root:CTTermRoot)-[:HAS_NAME_ROOT]-(:CTTermNameRoot)-[:LATEST]->(flowchart_value:CTTermNameValue) |
                             {
-                                selection_uid: study_soa_group_selection.uid, 
+                                selection_uid: study_soa_group_selection.uid,
                                 soa_group_uid: ct_term_root.uid,
                                 soa_group_name: flowchart_value.name
                             }]) AS study_soa_group,
@@ -625,7 +691,15 @@ class StudySelectionActivityInstanceRepository(
                         asa.author_id AS author_id,
                         labels(asa) AS change_type,
                         bsa.date AS end_date,
-                        baseline_visits
+                        baseline_visits,
+                        sds.uid AS study_data_supplier_uid,
+                        dsv.name AS study_data_supplier_name,
+                        origin_type_root.uid AS origin_type_uid,
+                        origin_type_name_value.name AS origin_type_name,
+                        origin_type_codelist.uid AS origin_type_codelist_uid,
+                        origin_source_root.uid AS origin_source_uid,
+                        origin_source_name_value.name AS origin_source_name,
+                        origin_source_codelist.uid AS origin_source_codelist_uid
                     """
         return audit_trail_cypher
 
@@ -645,6 +719,34 @@ class StudySelectionActivityInstanceRepository(
         last_study_selection_node: StudyActivityInstance,
         for_deletion: bool = False,
     ):
+        # Validate that reviewed instances cannot have is_important or baseline visits changed
+        if last_study_selection_node and last_study_selection_node.is_reviewed:
+            # Check if is_important is being changed
+            is_important_changed = (
+                last_study_selection_node.is_important != selection.is_important
+            )
+
+            # Check if baseline visits are being changed
+            previous_baseline_uids = {
+                visit.uid for visit in last_study_selection_node.has_baseline.all()
+            }
+            new_baseline_uids = {
+                visit["uid"]
+                for visit in (selection.study_activity_instance_baseline_visits or [])
+            }
+            baseline_visits_changed = previous_baseline_uids != new_baseline_uids
+
+            # Raise exception if either field is being changed on a reviewed instance
+            BusinessLogicException.raise_if(
+                is_important_changed,
+                msg=f"Cannot modify 'is_important' property on a reviewed StudyActivityInstance with UID '{selection.study_selection_uid}'.",
+            )
+
+            BusinessLogicException.raise_if(
+                baseline_visits_changed,
+                msg=f"Cannot modify baseline visits on a reviewed StudyActivityInstance with UID '{selection.study_selection_uid}'.",
+            )
+
         # Create new activity selection
         study_activity_instance_selection_node = StudyActivityInstance(
             uid=selection.study_selection_uid,
@@ -724,12 +826,60 @@ class StudySelectionActivityInstanceRepository(
                 baseline_visit_node
             )
 
+        # Connect StudyDataSupplier if provided
+        if selection.study_data_supplier_uid:
+            study_data_supplier_node = StudyDataSupplier.nodes.has(
+                has_before=False
+            ).get_or_none(uid=selection.study_data_supplier_uid)
+            if study_data_supplier_node:
+                study_activity_instance_selection_node.has_study_data_supplier.connect(
+                    study_data_supplier_node
+                )
+
+        # Connect Origin Type CT term if provided
+        if selection.origin_type_uid:
+            origin_type_root = CTTermRoot.nodes.get_or_none(
+                uid=selection.origin_type_uid
+            )
+            if origin_type_root:
+                selected_term_node = (
+                    CTCodelistAttributesRepository().get_or_create_selected_term(
+                        origin_type_root,
+                        codelist_submission_value=settings.origin_type_cl_submval,
+                    )
+                )
+                study_activity_instance_selection_node.has_origin_type.connect(
+                    selected_term_node
+                )
+
+        # Connect Origin Source CT term if provided
+        if selection.origin_source_uid:
+            origin_source_root = CTTermRoot.nodes.get_or_none(
+                uid=selection.origin_source_uid
+            )
+            if origin_source_root:
+                selected_term_node = (
+                    CTCodelistAttributesRepository().get_or_create_selected_term(
+                        origin_source_root,
+                        codelist_submission_value=settings.origin_source_cl_submval,
+                    )
+                )
+                study_activity_instance_selection_node.has_origin_source.connect(
+                    selected_term_node
+                )
+
         if last_study_selection_node:
             manage_previous_connected_study_selection_relationships(
                 previous_item=last_study_selection_node,
                 study_value_node=latest_study_value_node,
                 new_item=study_activity_instance_selection_node,
-                exclude_study_selection_relationships=[StudyActivity, StudyVisit],
+                # StudyDataSupplier and CTTermContext are excluded because they're handled explicitly above
+                exclude_study_selection_relationships=[
+                    StudyActivity,
+                    StudyVisit,
+                    StudyDataSupplier,
+                    CTTermContext,
+                ],
             )
 
     def generate_uid(self) -> str:

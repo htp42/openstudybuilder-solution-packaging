@@ -39,14 +39,11 @@ def test__activity_group_repository__get_linked_activity_subgroup_uids__with_ver
 
     assert mock_cypher_query.called
 
-    # Check for the exact query patterns as they appear in the repository
+    # Check for the exact query patterns as they appear in the repository (new structure)
     query_string = str(mock_cypher_query.call_args_list[0])
     assert (
-        "(avg:ActivityValidGroup)-[:IN_GROUP]->(gv)" in query_string
-    ), "ActivityValidGroup relationship pattern not found"
-    assert (
-        "(sgv:ActivitySubGroupValue)-[:HAS_GROUP]->(avg)" in query_string
-    ), "ActivitySubGroupValue relationship pattern not found"
+        "HAS_SELECTED_GROUP" in query_string or "HAS_SELECTED_SUBGROUP" in query_string
+    ), "New relationship pattern (HAS_SELECTED_GROUP or HAS_SELECTED_SUBGROUP) not found"
     assert any(
         f"'group_uid': '{group_uid}'" in str(call)
         for call in mock_cypher_query.call_args_list
@@ -124,14 +121,11 @@ def test__activity_group_repository__get_linked_activity_subgroup_uids__new_vers
     assert result["subgroups"][2]["status"] == "Draft"
 
     assert mock_cypher_query.called
-    # Check for the exact query patterns as they appear in the repository
+    # Check for the exact query patterns as they appear in the repository (new structure)
     query_string = str(mock_cypher_query.call_args_list[0])
     assert (
-        "(avg:ActivityValidGroup)-[:IN_GROUP]->(gv)" in query_string
-    ), "ActivityValidGroup relationship pattern not found"
-    assert (
-        "(sgv:ActivitySubGroupValue)-[:HAS_GROUP]->(avg)" in query_string
-    ), "ActivitySubGroupValue relationship pattern not found"
+        "HAS_SELECTED_GROUP" in query_string or "HAS_SELECTED_SUBGROUP" in query_string
+    ), "New relationship pattern (HAS_SELECTED_GROUP or HAS_SELECTED_SUBGROUP) not found"
     # No status filter should be present
     assert (
         'sgv_rel.status IN ["Final", "Retired"]' not in query_string
@@ -191,14 +185,11 @@ def test__activity_group_repository__draft_status_subgroups_are_included(
     assert result["subgroups"][2]["status"] == "Draft"
 
     assert mock_cypher_query.called
-    # Check for the exact query patterns as they appear in the repository
+    # Check for the exact query patterns as they appear in the repository (new structure)
     query_string = str(mock_cypher_query.call_args_list[0])
     assert (
-        "(avg:ActivityValidGroup)-[:IN_GROUP]->(gv)" in query_string
-    ), "ActivityValidGroup relationship pattern not found"
-    assert (
-        "(sgv:ActivitySubGroupValue)-[:HAS_GROUP]->(avg)" in query_string
-    ), "ActivitySubGroupValue relationship pattern not found"
+        "HAS_SELECTED_GROUP" in query_string or "HAS_SELECTED_SUBGROUP" in query_string
+    ), "New relationship pattern (HAS_SELECTED_GROUP or HAS_SELECTED_SUBGROUP) not found"
     # No status filter should be present
     assert (
         'sgv_rel.status IN ["Final", "Retired"]' not in query_string

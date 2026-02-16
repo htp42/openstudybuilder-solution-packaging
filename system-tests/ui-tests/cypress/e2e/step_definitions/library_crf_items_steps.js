@@ -2,6 +2,11 @@ const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor")
 
 let crfItemName, crfItemOid
 
+When('User waits for CRF Items data to load', () => {
+    cy.intercept('/api/concepts/odms/items?*').as('getData')
+    cy.wait('@getData', { timeout: 90000 })
+})
+
 When('Created CRF Item is found', () => cy.searchAndCheckPresence(crfItemName, true))
 
 Then('The CRF Item is no longer available', () => cy.searchAndCheckPresence(crfItemName, false))

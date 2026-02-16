@@ -48,10 +48,8 @@ router = APIRouter()
     },
 )
 def get_aliases(
-    page_size: Annotated[
-        int, Query(ge=1, le=settings.max_page_size)
-    ] = settings.default_page_size,
-    page_number: Annotated[int, Query(ge=1)] = 1,
+    page_number: _generic_descriptions.PAGE_NUMBER_QUERY = settings.default_page_number,
+    page_size: _generic_descriptions.PAGE_SIZE_QUERY = settings.default_page_size,
     search: Annotated[
         str | None,
         Query(description="Search by name or context. Search is case insensitive."),
@@ -73,17 +71,8 @@ def get_aliases(
     },
 )
 def get_descriptions(
-    page_number: Annotated[
-        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = settings.default_page_number,
-    page_size: Annotated[
-        int,
-        Query(
-            ge=0,
-            le=settings.max_page_size,
-            description=_generic_descriptions.PAGE_SIZE,
-        ),
-    ] = settings.default_page_size,
+    page_number: _generic_descriptions.PAGE_NUMBER_QUERY = settings.default_page_number,
+    page_size: _generic_descriptions.PAGE_SIZE_QUERY = settings.default_page_size,
     exclude_english: Annotated[
         bool,
         Query(description="Exclude English descriptions (excludes `en` and `eng`)."),
@@ -115,10 +104,8 @@ def get_descriptions(
     },
 )
 def get_formal_expressions(
-    page_size: Annotated[
-        int, Query(ge=1, le=settings.max_page_size)
-    ] = settings.default_page_size,
-    page_number: Annotated[int, Query(ge=1)] = 1,
+    page_size: _generic_descriptions.PAGE_SIZE_QUERY = settings.default_page_size,
+    page_number: _generic_descriptions.PAGE_NUMBER_QUERY = settings.default_page_number,
     search: Annotated[
         str | None,
         Query(
@@ -163,19 +150,17 @@ If `parent` is empty or `*` is given then the mapping will apply to all occurren
     response_class=Response,
 )
 def get_odm_document(
-    target_uids: Annotated[list[str], Query()],
     target_type: TargetType,
+    targets: Annotated[
+        list[str],
+        Query(
+            description="List of UIDs and (optionally) versions separated by comma. E.g. `uid1,v1` or `uid1` for latest version.",
+        ),
+    ],
     allowed_namespaces: Annotated[
         list[str] | None,
         Query(
             description="Names of the Vendor Namespaces to export or `*` to export all available Vendor Namespaces. If not specified, no Vendor Namespaces will be exported."
-        ),
-    ] = None,
-    version: Annotated[
-        str | None,
-        Query(
-            description="Get a specific version of the ODM element",
-            regex="^$|^\\d+\\.\\d+$",
         ),
     ] = None,
     pdf: Annotated[
@@ -192,9 +177,8 @@ def get_odm_document(
     if allowed_namespaces is None:
         allowed_namespaces = []
     odm_xml_export_service = OdmXmlExporterService(
-        target_uids,
         target_type,
-        version or None,
+        targets,
         allowed_namespaces,
         pdf,
         stylesheet,

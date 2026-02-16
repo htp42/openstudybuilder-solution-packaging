@@ -1,13 +1,115 @@
-import { activityInstance_uid } from "../../support/api_requests/library_activities";
+import { activity_placeholder_name } from "./study_activities_steps";
+import { selectedSupplierValue } from "./study_data_suppliers_steps";
+
 const { When, Then } = require("@badeball/cypress-cucumber-preprocessor");
 
 export let activity_activity, current_activity_uid
+let originType, originSource
+
+When('Origin Type and Origin Source are automatically populated in the edition form', () => {
+    cy.get('.v-overlay table thead th').each((header, index) => {
+        if (header.text() == 'Origin Source') {
+            cy.get('.v-overlay table tbody tr td').eq(index).should('not.be.empty').invoke('text').then(text => originSource = text)
+        }
+        if (header.text() == 'Origin Type') {
+            cy.get('.v-overlay table tbody tr td').eq(index).should('not.be.empty').invoke('text').then(text => originType = text)
+        }
+    })
+})
+
+When('Origin Type and Origin Source are automatically populated in the edition mode', () => {
+    cy.get('table thead th').each((header, index) => {
+        if (header.text() == 'Origin Source') {
+            cy.get('table tbody tr td').eq(index).should('not.be.empty').invoke('text').then(text => originSource = text)
+        }
+        if (header.text() == 'Origin Type') {
+            cy.get('table tbody tr td').eq(index).should('not.be.empty').invoke('text').then(text => originType = text)
+        }
+    })
+})
+
+When('{string} dropdown is activated in the edition form', (headerName) => {
+    cy.get('.v-overlay table thead th').each((header, index) => {
+        if (header.text() == headerName) {
+            cy.get('.v-overlay table tbody tr td').eq(index).find('[role="combobox"]').click()
+            return false
+        }
+    })
+})
+
+When('{string} dropdown is activated in the edition mode', (headerName) => {
+    cy.get('table thead th').each((header, index) => {
+        if (header.text() == headerName) {
+            cy.get('table tbody tr td').eq(index).find('[role="combobox"]').click()
+            return false
+        }
+    })
+})
+
+When('Important checkbox is checked in the edition form', () => {
+    cy.get('.v-overlay table thead th').each((header, index) => {
+        if (header.text() == 'Important') {
+            cy.get('.v-overlay table tbody tr td').eq(index).find('input[type="checkbox"]').check()
+            return false
+        }
+    })
+})
+
+When('Important checkbox is checked in the edition mode', () => {
+    cy.get('table thead th').each((header, index) => {
+        if (header.text() == 'Important') {
+            cy.get('table tbody tr td').eq(index).find('input[type="checkbox"]').check()
+            return false
+        }
+    })
+})
+
+When('Important checkbox is unchecked in the edition form', () => {
+    cy.get('.v-overlay table thead th').each((header, index) => {
+        if (header.text() == 'Important') {
+            cy.get('.v-overlay table tbody tr td').eq(index).find('input[type="checkbox"]').uncheck()
+            return false
+        }
+    })
+})
+
+When('Important checkbox is unchecked in the edition mode', () => {
+    cy.get('table thead th').each((header, index) => {
+        if (header.text() == 'Important') {
+            cy.get('table tbody tr td').eq(index).find('input[type="checkbox"]').uncheck()
+            return false
+        }
+    })
+})
+
+When('The Edition mode is enabled', () => cy.get('button .mdi-pencil').click())
+
+When('The Edition mode is saved and closed', () => cy.contains('button', 'Save and Close').click())
+
+When('The Edition mode is canceled and closed', () => cy.contains('button', 'Cancel').click())
+
+When('Data is not available available for Instance Relationship', () => cy.contains('.v-overlay table tbody tr', 'No data available').should('be.visible'))
+
+When('{string} visit is clicked from the dropdown', (visitName) => cy.contains('.v-overlay .v-list-item', visitName).click())
+
+When('{string} visit is clicked from the dropdown in the edition mode', (visitName) => cy.contains('.v-list-item', visitName).click())
+
+When('Previously added Data Supplier is clicked from the dropdown', () => cy.contains('.v-overlay .v-list-item', selectedSupplierValue).click())
+
+When('Previously added Data Supplier is clicked from the dropdown in the edition mode', () => cy.contains('.v-list-item', selectedSupplierValue).click())
+
+When('Baseline flag value is set to {string} in the table', (value) => cy.checkRowByIndex(0, 'Baseline visits', value))
+
+When('Selected data supplier is visible in the table', () => cy.checkRowByIndex(0, 'Data Supplier', selectedSupplierValue))
+
+When('Automatically populated Origin Type is visible in the table', () => cy.checkRowByIndex(0, 'Origin Type', originType))
+
+When('Automatically populated Origin Source is visible in the table', () => cy.checkRowByIndex(0, 'Origin Source', originSource))
 
 When('The activity instance with data-sharing set to {string}, required for activity set to {string} and default for activity set to {string} exists', (isDataSharing, isRequiredForActivity, isDefaultForActivity) => {
     cy.getClassUid()
     cy.createActivityInstance('', isDataSharing, isRequiredForActivity, isDefaultForActivity)
     cy.approveActivityInstance()
-
 })
 
 When('The user selects activity instance', () => {
@@ -93,47 +195,13 @@ Then('The button {string} is not present', (button) => {
     cy.contains(button).should('not.be.visible')
 })
 
-When('The activity instace name is updated', () => {
-    cy.wait(1000)
-    cy.activityInstanceNewVersion(activityInstance_uid)
-    cy.visit(`/library/activities/activity-instances/${activityInstance_uid}/overview`)
-    cy.get('[title="Edit"]').click()
-    cy.wait(1000)
-    cy.clickFormActionButton('continue')
-    cy.wait(1000)
-    cy.clickFormActionButton('continue')
-    cy.fillInput('instanceform-instancename-field', `NewName ${Date.now()}`)
-    cy.clickFormActionButton('save')
-})
+Then('The button {string} is disabled', (button) => cy.contains(button).should('be.disabled'))
 
-When('The activity instace class is updated', () => {
-    cy.wait(1000)
-    cy.activityInstanceNewVersion(activityInstance_uid)
-    cy.visit(`/library/activities/activity-instances/${activityInstance_uid}/overview`)
-    cy.get('[title="Edit"]').click()
-    cy.wait(1000)
-    cy.clickFormActionButton('continue')
-    cy.selectVSelect('instanceform-instanceclass-dropdown', 'Event')
-    cy.clickFormActionButton('continue')
-    cy.clickFormActionButton('save')
-})
+When('The activity instace name is updated', () => cy.fillInput('instanceform-instancename-field', `NewName ${Date.now()}`))
 
-When('The activity instace topic code is updated', () => {
-    cy.wait(1000)
-    cy.activityInstanceNewVersion(activityInstance_uid)
-    cy.visit(`/library/activities/activity-instances/${activityInstance_uid}/overview`)
-    cy.get('[title="Edit"]').click()
-    cy.wait(1000)
-    cy.clickFormActionButton('continue')
-    cy.wait(1000)
-    cy.clickFormActionButton('continue')
-    cy.fillInput('instanceform-topiccode-field', Date.now())
-    cy.clickFormActionButton('save')
-})
+When('The activity instace class is updated', () => cy.selectVSelect('instanceform-instanceclass-dropdown', 'Event'))
 
-When('The activity instace has been retired', () => {
-    cy.inactivateActivityInstance(activityInstance_uid)
-})
+When('The activity instace topic code is updated', () => cy.fillInput('instanceform-topiccode-field', Date.now()))
 
 When('The user declines the activity instance changes', () => {
     cy.get('[data-cy="data-table"]').within(() => {
@@ -149,4 +217,10 @@ When('The user accepts the activity instance changes', () => {
     })
     cy.clickButton('Update Instance to new version')
     cy.contains('button', 'Decline and keep').click()
+})
+
+Then('Correct placeholder data is visible in the study activity instances table', () => {
+    cy.checkRowByIndex(0, 'Library', 'Requested')
+    cy.checkRowByIndex(0, 'Activity', activity_placeholder_name)
+    cy.checkRowByIndex(0, 'Activity instance', '')
 })

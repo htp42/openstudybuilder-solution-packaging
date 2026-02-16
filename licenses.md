@@ -8,10 +8,8 @@ For a preemptive list of all licenses consumed within each sub-component please 
 
 | Package | License | Can be combined |
 |---|---|-|
-| big-integer-1.6.52.tgz | The Unlicense (Public Domain) | OK |
 | jszip-3.10.1.tgz | Dual-licensed as MIT or GPL | OK |
 
-The usage of the Unlicense, which acts as Public Domain poses no issue as it can be viewed as the absolute most permissive license available.
 The dual-licensing of `jszip` allows for using MIT license which is preferred due to the permissive nature of this license.
 **Conclusion**  
 The OpenStudyBuilder App frontend can be released under GPLv3 License.
@@ -21,12 +19,12 @@ The OpenStudyBuilder App frontend can be released under GPLv3 License.
 
 | Package | License | Can be combined |
 |---|---|-|
-| certifi (2025.4.26) | MPL v. 2.0 | OK |
+| certifi (2025.10.5) | MPL v. 2.0 | OK |
 | hypothesis (6.115.6) | MPL v. 2.0 | OK |
 | pyphen (0.17.2) | GPL 2.0+/LGPL 2.1+/MPL 1.1 tri-license | OK |
-| typing_extensions (4.14.0) | Python License | OK |
+| typing_extensions (4.15.0) | Python License | OK |
 | usdm (0.59.0) | GPL 3.0 | OK |
-| yattag (1.16.1) | LGPL 3.0 | OK |
+| yattag (1.16.1) | LGPL 2.1 | OK |
 
 As the licenses consumed within the Clinical MDR API is using MPL version 2.0 it is assessed that it poses no issue to release in combination with GPL and GPL derivatives since version 2.0 of the MPL license was rewritten to allow for combination with the GPL versions as well as derivatives of GPL.  
 The Python Software Foundation License, also referred to as the PSFL, is a permissive license and can be combined with sub-components that are licensed under GPL and GPL derivatives. The GPL 2.0+ includes also all higher GPL version, for this also GPLv3. GPLv3 is compatible with GPLv3.
@@ -44,7 +42,7 @@ The Documentation Portal can be released under GPLv3 License.
 
 | Package | License | Can be combined |
 |---|---|-|
-| certifi 2025.4.26 | MPL v. 2.0 | OK |
+| certifi 2025.8.3 | MPL v. 2.0 | OK |
 
 As the licenses is using MPL version 2.0 it is assessed that it poses no issue to release in combination with GPL and GPL derivatives since version 2.0 of the MPL license was rewritten to allow for combination with the GPL versions as well as derivatives of GPL. 
 **Conclusion**  
@@ -54,7 +52,7 @@ The Neo4j MDR DB can be released under GPLv3 License.
 
 | Package | License | Can be combined |
 |---|---|-|
-| certifi 2025.4.26 | MPL v. 2.0 | OK |
+| certifi 2025.8.3 | MPL v. 2.0 | OK |
 | packaging 25.0 | Dual-licensed as BSD-2-Clause or Apache-2.0 | OK |
 
 As the licenses is using MPL version 2.0 it is assessed that it poses no issue to release in combination with GPL and GPL derivatives since version 2.0 of the MPL license was rewritten to allow for combination with the GPL versions as well as derivatives of GPL. 
@@ -86,9 +84,11 @@ The StudyBuilder Export can be released under GPLv3 License.
 
 | Package | License | Can be combined |
 |---|---|-|
-| certifi 2024.12.14 | MPL v. 2.0 | OK |
+| certifi 2025.8.3 | MPL v. 2.0 | OK |
+| packaging 25.0 | Dual-licensed as BSD-2-Clause or Apache-2.0 | OK |
 
 As the licenses is using MPL version 2.0 it is assessed that it poses no issue to release in combination with GPL and GPL derivatives since version 2.0 of the MPL license was rewritten to allow for combination with the GPL versions as well as derivatives of GPL.
+The `packaging` has the possibility for dual-licensing, where Apache-2.0 is preferrable.
 **Conclusion**  
 The DB Schema Migration can be released under GPLv3 License.
 

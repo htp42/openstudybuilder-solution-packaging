@@ -81,6 +81,11 @@ initialize_ct_data_map: dict[str, Any] = {
         ("C48660", "Not Applicable"),
         ("C49686", "Phase IIa Trial"),
     ],
+    "DevelopmentStage": [
+        ("DevStage_1", "Pilot Stage"),
+        ("DevStage_2", "Pivotal Stage"),
+        ("DevStage_3", "Post-market Stage"),
+    ],
     "StudyStopRules": ("C49698", "Study Stop Rule"),
     "IsExtensionTrial": [("C49488", "Y"), ("C49487", "N")],
     "IsAdaptiveDesign": [("C49488", "Y"), ("C49487", "N")],
@@ -702,6 +707,7 @@ def random_valid_id_metadata(
                 national_medical_products_administration_nmpa_number=None,
                 eudamed_srn_number=None,
                 investigational_device_exemption_ide_number=None,
+                eu_pas_number=None,
                 universal_trial_number_utn_null_value_code=None,
                 japanese_trial_registry_id_japic_null_value_code=None,
                 investigational_new_drug_application_number_ind_null_value_code=None,
@@ -712,6 +718,7 @@ def random_valid_id_metadata(
                 national_medical_products_administration_nmpa_number_null_value_code=None,
                 eudamed_srn_number_null_value_code=None,
                 investigational_device_exemption_ide_number_null_value_code=None,
+                eu_pas_number_null_value_code=None,
             ),
         )
         if condition is None or condition(result):
@@ -771,6 +778,7 @@ class TestIdentificationMetadataVO(unittest.TestCase):
                         national_medical_products_administration_nmpa_number=None,
                         eudamed_srn_number=None,
                         investigational_device_exemption_ide_number=None,
+                        eu_pas_number=None,
                         universal_trial_number_utn_null_value_code=None,
                         japanese_trial_registry_id_japic_null_value_code=None,
                         investigational_new_drug_application_number_ind_null_value_code=None,
@@ -781,6 +789,7 @@ class TestIdentificationMetadataVO(unittest.TestCase):
                         national_medical_products_administration_nmpa_number_null_value_code=None,
                         eudamed_srn_number_null_value_code=None,
                         investigational_device_exemption_ide_number_null_value_code=None,
+                        eu_pas_number_null_value_code=None,
                     ),
                 )
                 # when
@@ -825,6 +834,7 @@ class TestIdentificationMetadataVO(unittest.TestCase):
                         national_medical_products_administration_nmpa_number=None,
                         eudamed_srn_number=None,
                         investigational_device_exemption_ide_number=None,
+                        eu_pas_number=None,
                         universal_trial_number_utn_null_value_code=None,
                         japanese_trial_registry_id_japic_null_value_code=None,
                         investigational_new_drug_application_number_ind_null_value_code=None,
@@ -835,6 +845,7 @@ class TestIdentificationMetadataVO(unittest.TestCase):
                         national_medical_products_administration_nmpa_number_null_value_code=None,
                         eudamed_srn_number_null_value_code=None,
                         investigational_device_exemption_ide_number_null_value_code=None,
+                        eu_pas_number_null_value_code=None,
                     ),
                 )
 
@@ -868,6 +879,7 @@ class TestIdentificationMetadataVO(unittest.TestCase):
                     national_medical_products_administration_nmpa_number=None,
                     eudamed_srn_number=None,
                     investigational_device_exemption_ide_number=None,
+                    eu_pas_number=None,
                     universal_trial_number_utn_null_value_code=None,
                     japanese_trial_registry_id_japic_null_value_code=None,
                     investigational_new_drug_application_number_ind_null_value_code=None,
@@ -878,6 +890,7 @@ class TestIdentificationMetadataVO(unittest.TestCase):
                     national_medical_products_administration_nmpa_number_null_value_code=None,
                     eudamed_srn_number_null_value_code=None,
                     investigational_device_exemption_ide_number_null_value_code=None,
+                    eu_pas_number_null_value_code=None,
                 ),
             )
 
@@ -1000,6 +1013,9 @@ def random_valid_high_level_study_design(
             if use_trial_phase
             else random_opt_c_code(initialize_ct_data_map["NullValueCodes"])
         )
+        development_stage_code = random.choice(
+            initialize_ct_data_map["DevelopmentStage"]
+        )[0]
 
         use_is_extension_trial = random.choice([True, False])
         is_extension_trial = (
@@ -1056,6 +1072,9 @@ def random_valid_high_level_study_design(
                 "is_adaptive_design", is_adaptive_design
             ),
             trial_phase_code=fixed_or_default("trial_phase_code", trial_phase_code),
+            development_stage_code=fixed_or_default(
+                "development_stage_code", development_stage_code
+            ),
             is_extension_trial=fixed_or_default(
                 "is_extension_trial", is_extension_trial
             ),
@@ -1171,6 +1190,7 @@ def test__high_level_study_design__validate__invalid_null_value_code_failure(
         trial_type_null_value_code=trial_type_null_value_code,
         trial_phase_code=None,
         trial_phase_null_value_code=trial_phase_null_value_code,
+        development_stage_code=None,
         is_adaptive_design=None,
         is_adaptive_design_null_value_code=is_adaptive_design_null_value_code,
         is_extension_trial=None,
@@ -1202,6 +1222,7 @@ def test__high_level_study_design__validate__invalid_null_value_code_failure(
     sampled_from([None, "code"]),
     sampled_from([None, "code"]),
     sampled_from([None, "code"]),
+    sampled_from([None, "code"]),
     sampled_from([[], ["code"]]),
     sampled_from([None, "code"]),
     sampled_from([None, True, False]),
@@ -1220,6 +1241,7 @@ def test__high_level_study_design_vo__validate__valid_data__success(
     study_type_null_value_code,
     trial_phase_code,
     trial_phase_null_value_code,
+    development_stage_code,
     trial_type_codes,
     trial_type_null_value_code,
     is_adaptive_design,
@@ -1250,6 +1272,7 @@ def test__high_level_study_design_vo__validate__valid_data__success(
         trial_type_null_value_code=trial_type_null_value_code,
         trial_phase_code=trial_phase_code,
         trial_phase_null_value_code=trial_phase_null_value_code,
+        development_stage_code=development_stage_code,
         is_adaptive_design=is_adaptive_design,
         is_adaptive_design_null_value_code=is_adaptive_design_null_value_code,
         is_extension_trial=is_extension_trial,
@@ -1508,6 +1531,7 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
                 "trial_type_codes": [],
                 "trial_intent_types_codes": [],
                 "trial_phase_code": None,
+                "development_stage_code": None,
                 "is_extension_trial": None,
                 "is_adaptive_design": None,
                 "study_stop_rules": None,
@@ -1544,6 +1568,7 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
                 "trial_type_codes": [],
                 "trial_intent_types_codes": [],
                 "trial_phase_code": None,
+                "development_stage_code": None,
                 "is_extension_trial": None,
                 "is_adaptive_design": None,
                 "study_stop_rules": None,
@@ -1598,6 +1623,7 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
         study_type_code: str | None = random_str()
         trial_type_codes: list[str] = [random_str(), random_str()]
         trial_phase_code: str | None = random_str()
+        development_stage_code: str | None = random_str()
         is_extension_trial: bool | None = None
         is_adaptive_design: bool | None = None
         study_stop_rules: str | None = "some rules"
@@ -1611,6 +1637,7 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
             is_adaptive_design=is_adaptive_design,
             is_extension_trial=is_extension_trial,
             trial_phase_code=trial_phase_code,
+            development_stage_code=development_stage_code,
             study_type_null_value_code=None,
             is_adaptive_design_null_value_code=None,
             study_stop_rules_null_value_code=None,
