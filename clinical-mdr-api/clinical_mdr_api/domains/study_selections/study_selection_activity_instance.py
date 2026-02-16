@@ -80,8 +80,18 @@ class StudySelectionActivityInstanceVO(study_selection_base.StudySelectionBaseVO
     soa_group_term_uid: str | None = None
     soa_group_term_name: str | None = None
     study_selection_uid: str | None = None
+    # Data supplier and origin fields (L3 SoA)
+    study_data_supplier_uid: str | None = None
+    study_data_supplier_name: str | None = None
+    origin_type_uid: str | None = None
+    origin_type_name: str | None = None
+    origin_type_codelist_uid: str | None = None
+    origin_source_uid: str | None = None
+    origin_source_name: str | None = None
+    origin_source_codelist_uid: str | None = None
 
     @classmethod
+    # pylint: disable=too-many-arguments,too-many-locals
     def from_input_values(
         cls,
         study_uid: str,
@@ -133,6 +143,14 @@ class StudySelectionActivityInstanceVO(study_selection_base.StudySelectionBaseVO
         soa_group_term_uid: str | None = None,
         soa_group_term_name: str | None = None,
         study_selection_uid: str | None = None,
+        study_data_supplier_uid: str | None = None,
+        study_data_supplier_name: str | None = None,
+        origin_type_uid: str | None = None,
+        origin_type_name: str | None = None,
+        origin_type_codelist_uid: str | None = None,
+        origin_source_uid: str | None = None,
+        origin_source_name: str | None = None,
+        origin_source_codelist_uid: str | None = None,
     ):
         if study_selection_uid is None:
             study_selection_uid = generate_uid_callback()
@@ -209,6 +227,14 @@ class StudySelectionActivityInstanceVO(study_selection_base.StudySelectionBaseVO
             study_soa_group_uid=study_soa_group_uid,
             soa_group_term_uid=soa_group_term_uid,
             soa_group_term_name=soa_group_term_name,
+            study_data_supplier_uid=study_data_supplier_uid,
+            study_data_supplier_name=study_data_supplier_name,
+            origin_type_uid=origin_type_uid,
+            origin_type_name=origin_type_name,
+            origin_type_codelist_uid=origin_type_codelist_uid,
+            origin_source_uid=origin_source_uid,
+            origin_source_name=origin_source_name,
+            origin_source_codelist_uid=origin_source_codelist_uid,
         )
 
     def validate(

@@ -12,9 +12,6 @@ from clinical_mdr_api.domains.biomedical_concepts.activity_item_class import (
 from clinical_mdr_api.domains.concepts.activities.activity import ActivityGroupingVO
 from clinical_mdr_api.domains.concepts.activities.activity_item import ActivityItemVO
 from clinical_mdr_api.domains.concepts.concept_base import ConceptARBase, ConceptVO
-from clinical_mdr_api.domains.concepts.odms.form import OdmFormAR
-from clinical_mdr_api.domains.concepts.odms.item import OdmItemAR
-from clinical_mdr_api.domains.concepts.odms.item_group import OdmItemGroupAR
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemMetadataVO,
     LibraryVO,
@@ -111,7 +108,7 @@ class ActivityInstanceVO(ConceptVO):
 
         return activity_instance_vo
 
-    def validate(
+    def validate(  # pylint: disable=too-many-locals
         self,
         get_final_activity_value_by_uid_callback: Callable[[str], Node | None],
         activity_subgroup_exists: Callable[[str], bool],
@@ -124,9 +121,6 @@ class ActivityInstanceVO(ConceptVO):
         find_activity_instance_class_by_uid_callback: Callable[
             ..., ActivityInstanceClassAR | None
         ],
-        get_odm_form_by_uid_callback: Callable[..., OdmFormAR],
-        get_odm_item_group_by_uid_callback: Callable[..., OdmItemGroupAR],
-        get_odm_item_by_uid_callback: Callable[..., OdmItemAR],
         get_dimension_names_by_unit_definition_uids: Callable[[list[str]], list[str]],
         activity_instance_exists_by_property_value: Callable[
             [str, str, str], bool
@@ -139,6 +133,8 @@ class ActivityInstanceVO(ConceptVO):
         activity_group_latest_is_final: Callable[[str], bool] = lambda x: True,
         get_activity_subgroup_name: Callable[[str], str | None] = lambda x: None,
         get_activity_group_name: Callable[[str], str | None] = lambda x: None,
+        get_parent_class_uid_callback: Callable[[str], str | None] = lambda _: None,
+        strict_mode: bool = False,
     ) -> None:
         if not preview:
             self.validate_name_sentence_case()
@@ -163,6 +159,12 @@ class ActivityInstanceVO(ConceptVO):
                 self.topic_code,
                 "Topic Code",
             )
+
+        if not self.activity_groupings:
+            raise BusinessLogicException(
+                msg="Activity Instance must have at least one grouping",
+            )
+
         for activity_grouping in self.activity_groupings:
             if activity_grouping.activity_uid is None:
                 raise BusinessLogicException(
@@ -222,6 +224,23 @@ class ActivityInstanceVO(ConceptVO):
                     raise BusinessLogicException(
                         msg=f"Cannot create activity instance: Activity Group {group_str} is currently not in Final status."
                     )
+
+        activity_item_class_uids = [
+            item.activity_item_class_uid for item in self.activity_items
+        ]
+        seen_activity_item_class_uids = []
+        duplicate_activity_item_class_uids = []
+        for activity_item_class_uid in activity_item_class_uids:
+            if activity_item_class_uid in seen_activity_item_class_uids:
+                duplicate_activity_item_class_uids.append(activity_item_class_uid)
+            else:
+                seen_activity_item_class_uids.append(activity_item_class_uid)
+
+        if duplicate_activity_item_class_uids:
+            raise BusinessLogicException(
+                msg=f"The following Activity Item Class(es) have been associated to more than one Activity Item: {",".join(duplicate_activity_item_class_uids)}"
+            )
+
         for activity_item in self.activity_items:
             activity_item_class = find_activity_item_class_by_uid_callback(
                 activity_item.activity_item_class_uid
@@ -274,77 +293,6 @@ class ActivityInstanceVO(ConceptVO):
                     msg=f"{type(self).__name__} tried to connect to non-existent or non-final Unit Definition with UID '{unit.uid}'.",
                 )
 
-            if (
-                activity_item.odm_item_group is not None
-                and activity_item.odm_item_group.uid is not None
-                and activity_item.odm_form is not None
-                and activity_item.odm_form.uid is None
-            ):
-                raise BusinessLogicException(
-                    msg="ODM Form must be provided if ODM Item Group is provided.",
-                )
-            if (
-                activity_item.odm_item is not None
-                and activity_item.odm_item.uid is not None
-                and activity_item.odm_item_group is not None
-                and activity_item.odm_item_group.uid is None
-            ):
-                raise BusinessLogicException(
-                    msg="ODM Item Group must be provided if ODM Item is provided.",
-                )
-
-            odm_form = None
-            if (
-                activity_item.odm_form is not None
-                and activity_item.odm_form.uid is not None
-            ):
-                odm_form = get_odm_form_by_uid_callback(activity_item.odm_form.uid)
-                if not odm_form:
-                    raise BusinessLogicException(
-                        msg=f"ODM Form with UID '{activity_item.odm_form.uid}' doesn't exist."
-                    )
-
-            odm_item_group = None
-            if (
-                activity_item.odm_item_group is not None
-                and activity_item.odm_item_group.uid is not None
-                and odm_form is not None
-            ):
-                if (
-                    activity_item.odm_item_group.uid
-                    not in odm_form.concept_vo.item_group_uids
-                ):
-                    raise BusinessLogicException(
-                        msg=f"ODM Form with UID '{activity_item.odm_form.uid}' doesn't contain the ODM Item Group with UID '{activity_item.odm_item_group.uid}'."
-                    )
-
-                odm_item_group = get_odm_item_group_by_uid_callback(
-                    activity_item.odm_item_group.uid
-                )
-                if not odm_item_group:
-                    raise BusinessLogicException(
-                        msg=f"ODM Item Group with UID '{activity_item.odm_item_group.uid}' doesn't exist."
-                    )
-
-            if (
-                activity_item.odm_item is not None
-                and activity_item.odm_item.uid is not None
-                and odm_item_group is not None
-            ):
-                if (
-                    activity_item.odm_item.uid
-                    not in odm_item_group.concept_vo.item_uids
-                ):
-                    raise BusinessLogicException(
-                        msg=f"ODM Item Group with UID '{activity_item.odm_item_group.uid}' doesn't contain the ODM Item with UID '{activity_item.odm_item.uid}'."
-                    )
-
-                odm_item = get_odm_item_by_uid_callback(activity_item.odm_item.uid)
-                if not odm_item:
-                    raise BusinessLogicException(
-                        msg=f"ODM Item with UID '{activity_item.odm_item.uid}' doesn't exist."
-                    )
-
         activity_instance_class = find_activity_instance_class_by_uid_callback(
             self.activity_instance_class_uid
         )
@@ -354,30 +302,103 @@ class ActivityInstanceVO(ConceptVO):
         )
 
         # Validate that all mandatory Activity Item Classes for the selected
-        # Activity Instance Class are present in the create input
-        # Disabled for now as it is very restrictive.
-        # Might be re-enabled in the future, possibly in some modified way.
-        # required_item_class_uids = {
-        #     rel.uid
-        #     for rel in activity_instance_class.activity_instance_class_vo.activity_item_classes
-        #     if rel.mandatory
-        # }
-        # selected_item_class_uids = {
-        #     activity_item.activity_item_class_uid
-        #     for activity_item in self.activity_items
-        # }
-        # missing_required_uids = required_item_class_uids.difference(
-        #     selected_item_class_uids
-        # )
+        # Activity Instance Class are present in the create input just if strict_mode is True
+        if strict_mode:
+            required_item_class_uids = {
+                rel.uid
+                for rel in activity_instance_class.activity_instance_class_vo.activity_item_classes
+                if rel.mandatory
+            }
+            selected_item_class_uids = {
+                activity_item.activity_item_class_uid
+                for activity_item in self.activity_items
+            }
+            missing_required_uids = required_item_class_uids.difference(
+                selected_item_class_uids
+            )
 
-        # BusinessLogicException.raise_if(
-        #     len(missing_required_uids) > 0,
-        #     msg=(
-        #         "The following mandatory Activity Item Classes must be selected for "
-        #         f"Activity Instance Class '{self.activity_instance_class_uid}': "
-        #         + ", ".join(sorted(missing_required_uids))
-        #     ),
-        # )
+            if missing_required_uids:
+                # Get names for missing item classes
+                missing_item_class_names = []
+                for uid in sorted(missing_required_uids):
+                    item_class = find_activity_item_class_by_uid_callback(uid)
+                    if item_class:
+                        missing_item_class_names.append(item_class.name)
+                    else:
+                        missing_item_class_names.append(
+                            uid
+                        )  # Fallback to UID if not found
+
+                BusinessLogicException.raise_if(
+                    True,
+                    msg=(
+                        "The following mandatory Activity Item Classes must be selected for "
+                        f"Activity Instance Class '{activity_instance_class.name}': "
+                        + ", ".join(missing_item_class_names)
+                    ),
+                )
+
+        # Check parent class mandatory items if current class has level 3 and strict_mode is True
+        current_level = activity_instance_class.activity_instance_class_vo.level
+        if current_level == 3 and strict_mode:
+
+            parent_class_uid = get_parent_class_uid_callback(
+                self.activity_instance_class_uid
+            )
+            if parent_class_uid:
+                parent_class = find_activity_instance_class_by_uid_callback(
+                    parent_class_uid
+                )
+                if parent_class and parent_class.activity_instance_class_vo.level == 2:
+                    # Get mandatory item classes from parent (level 2)
+                    parent_required_item_class_uids = {
+                        rel.uid
+                        for rel in parent_class.activity_instance_class_vo.activity_item_classes
+                        if rel.mandatory
+                    }
+                    # Check that parent mandatory items are selected with CT terms or unit definitions
+                    # (i.e., they exist in activity_items AND have CT terms or unit definitions)
+                    parent_missing_required_uids = []
+                    for required_uid in parent_required_item_class_uids:
+                        # Check if this item class is selected
+                        matching_item = next(
+                            (
+                                item
+                                for item in self.activity_items
+                                if item.activity_item_class_uid == required_uid
+                            ),
+                            None,
+                        )
+                        if not matching_item:
+                            parent_missing_required_uids.append(required_uid)
+                        elif (
+                            not matching_item.ct_terms
+                            and not matching_item.unit_definitions
+                        ):
+                            # Item is selected but has neither CT terms nor unit definitions
+                            parent_missing_required_uids.append(required_uid)
+
+                    if parent_missing_required_uids:
+                        # Get names for missing item classes
+                        parent_missing_item_class_names = []
+                        for uid in sorted(parent_missing_required_uids):
+                            item_class = find_activity_item_class_by_uid_callback(uid)
+                            if item_class:
+                                parent_missing_item_class_names.append(item_class.name)
+                            else:
+                                parent_missing_item_class_names.append(
+                                    uid
+                                )  # Fallback to UID if not found
+
+                        BusinessLogicException.raise_if(
+                            True,
+                            msg=(
+                                "The following mandatory Activity Item Classes from the parent "
+                                f"Activity Instance Class '{parent_class.name}' (level 2) must have CT terms or unit definitions selected for "
+                                f"Activity Instance Class '{activity_instance_class.name}' (level 3): "
+                                + ", ".join(parent_missing_item_class_names)
+                            ),
+                        )
 
         unit_dimension_names = get_dimension_names_by_unit_definition_uids(
             [
@@ -445,9 +466,6 @@ class ActivityInstanceAR(ConceptARBase):
         author_id: str,
         concept_vo: ActivityInstanceVO,
         library: LibraryVO,
-        get_odm_form_by_uid_callback: Callable[..., OdmFormAR],
-        get_odm_item_group_by_uid_callback: Callable[..., OdmItemGroupAR],
-        get_odm_item_by_uid_callback: Callable[..., OdmItemAR],
         concept_exists_by_callback: Callable[
             [str, str, bool], bool
         ] = lambda x, y, z: True,
@@ -470,6 +488,8 @@ class ActivityInstanceAR(ConceptARBase):
         activity_group_latest_is_final: Callable[[str], bool] = lambda x: True,
         get_activity_subgroup_name: Callable[[str], str | None] = lambda x: None,
         get_activity_group_name: Callable[[str], str | None] = lambda x: None,
+        get_parent_class_uid_callback: Callable[[str], str | None] = lambda _: None,
+        strict_mode: bool = False,
         generate_uid_callback: Callable[[], str | None] = lambda: None,
         preview: bool = False,
     ) -> Self:
@@ -490,9 +510,6 @@ class ActivityInstanceAR(ConceptARBase):
             unit_definition_exists_by_uid_callback=unit_definition_exists_by_uid_callback,
             find_activity_item_class_by_uid_callback=find_activity_item_class_by_uid_callback,
             find_activity_instance_class_by_uid_callback=find_activity_instance_class_by_uid_callback,
-            get_odm_form_by_uid_callback=get_odm_form_by_uid_callback,
-            get_odm_item_group_by_uid_callback=get_odm_item_group_by_uid_callback,
-            get_odm_item_by_uid_callback=get_odm_item_by_uid_callback,
             get_dimension_names_by_unit_definition_uids=get_dimension_names_by_unit_definition_uids,
             library_name=library.name,
             preview=preview,
@@ -500,6 +517,8 @@ class ActivityInstanceAR(ConceptARBase):
             activity_group_latest_is_final=activity_group_latest_is_final,
             get_activity_subgroup_name=get_activity_subgroup_name,
             get_activity_group_name=get_activity_group_name,
+            get_parent_class_uid_callback=get_parent_class_uid_callback,
+            strict_mode=strict_mode,
             activity_instance_exists_by_property_value=concept_exists_by_library_and_property_value_callback,
         )
 
@@ -516,9 +535,6 @@ class ActivityInstanceAR(ConceptARBase):
         author_id: str,
         change_description: str,
         concept_vo: ActivityInstanceVO,
-        get_odm_form_by_uid_callback: Callable[..., OdmFormAR],
-        get_odm_item_group_by_uid_callback: Callable[..., OdmItemGroupAR],
-        get_odm_item_by_uid_callback: Callable[..., OdmItemAR],
         concept_exists_by_callback: Callable[
             [str, str, bool], bool
         ] = lambda x, y, z: True,
@@ -541,6 +557,8 @@ class ActivityInstanceAR(ConceptARBase):
         get_dimension_names_by_unit_definition_uids: Callable[
             [list[str]], list[str]
         ] = lambda _: [],
+        get_parent_class_uid_callback: Callable[[str], str | None] = lambda _: None,
+        strict_mode: bool = False,
         perform_validation: bool = True,
     ) -> None:
         """
@@ -555,10 +573,9 @@ class ActivityInstanceAR(ConceptARBase):
                 unit_definition_exists_by_uid_callback=unit_definition_exists_by_uid_callback,
                 find_activity_item_class_by_uid_callback=find_activity_item_class_by_uid_callback,
                 find_activity_instance_class_by_uid_callback=find_activity_instance_class_by_uid_callback,
-                get_odm_form_by_uid_callback=get_odm_form_by_uid_callback,
-                get_odm_item_group_by_uid_callback=get_odm_item_group_by_uid_callback,
-                get_odm_item_by_uid_callback=get_odm_item_by_uid_callback,
                 get_dimension_names_by_unit_definition_uids=get_dimension_names_by_unit_definition_uids,
+                get_parent_class_uid_callback=get_parent_class_uid_callback,
+                strict_mode=strict_mode,
                 activity_instance_exists_by_property_value=concept_exists_by_library_and_property_value_callback,
                 previous_name=self.name,
                 previous_topic_code=self._concept_vo.topic_code,

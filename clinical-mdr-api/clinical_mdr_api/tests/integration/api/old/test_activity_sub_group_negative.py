@@ -47,27 +47,6 @@ def test_get_all_activity_sub_group_non_existent_library_passed1(api_client):
     assert res["message"] == "Library with Name 'non-existent' doesn't exist."
 
 
-def test_post_new_activity_sub_group_non_existent_group(api_client):
-    data = {
-        "name": "name99",
-        "name_sentence_case": "name99",
-        "definition": "definition99",
-        "library_name": "Sponsor",
-        "activity_groups": ["activity_group_root_non_existent"],
-    }
-    response = api_client.post("/concepts/activities/activity-sub-groups", json=data)
-
-    assert_response_status_code(response, 400)
-
-    res = response.json()
-
-    assert res["type"] == "BusinessLogicException"
-    assert (
-        res["message"]
-        == """Activity Subgroup tried to connect to non-existent or non-final concepts [('Concept Name: Activity Group', "uids: {'activity_group_root_non_existent'}")]."""
-    )
-
-
 def test_post_new_activity_sub_group_name_already_exists(api_client):
     data = {
         "name": "name1",
@@ -84,29 +63,6 @@ def test_post_new_activity_sub_group_name_already_exists(api_client):
 
     assert res["type"] == "AlreadyExistsException"
     assert res["message"] == "Activity Subgroup with Name 'name1' already exists."
-
-
-def test_update_activity_non_existent_sub_group1(api_client):
-    data = {
-        "name": "name1",
-        "name_sentence_case": "name1",
-        "change_description": "Test change",
-        "library_name": "Sponsor",
-        "activity_groups": ["activity_group_root_non_existent"],
-    }
-    response = api_client.put(
-        "/concepts/activities/activity-sub-groups/activity_subgroup_root1", json=data
-    )
-
-    assert_response_status_code(response, 400)
-
-    res = response.json()
-
-    assert res["type"] == "BusinessLogicException"
-    assert (
-        res["message"]
-        == """Activity Subgroup tried to connect to non-existent or non-final concepts [('Concept Name: Activity Group', "uids: {'activity_group_root_non_existent'}")]."""
-    )
 
 
 def test_update_activity_name_already_exists1(api_client):

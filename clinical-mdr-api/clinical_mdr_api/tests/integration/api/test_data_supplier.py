@@ -250,7 +250,7 @@ def test_get_data_supplier(api_client):
 
     assert res["uid"] == data_suppliers_all[0].uid
     assert res["name"] == "name A"
-    assert res["order"] == 1
+    assert res["order"] > 0
     assert res["description"] == "Description A"
     assert res["api_base_url"] == "api_base_url"
     assert res["ui_base_url"] == "ui_base_url"
@@ -392,8 +392,12 @@ def test_headers(api_client, field_name):
     log.info("Returned %s", res)
     if expected_result:
         assert len(res) > 0
-        assert len(set(expected_result)) == len(res)
-        assert all(item in res for item in expected_result)
+        if field_name == "order":
+            # Order values are bumped to be unique in the database
+            assert len(res) == len(data_suppliers_all)
+        else:
+            assert len(set(expected_result)) == len(res)
+            assert all(item in res for item in expected_result)
     else:
         assert len(res) == 0
 
@@ -608,3 +612,336 @@ def test_data_supplier_versioning(api_client):
     # successful reactivate
     response = api_client.post(f"/data-suppliers/{data_supplier.uid}/activations")
     assert_response_status_code(response, 200)
+
+
+# =============================================================================
+# Ordering Tests
+# =============================================================================
+
+
+def _create_supplier_with_order(
+    api_client, name: str, order: int | None, type_uid: str
+):
+    """Helper to create a supplier with a specific order."""
+    # Make name unique by appending part of type_uid (unique per test)
+    unique_name = f"{name}_{type_uid[-8:]}"
+    payload = {
+        "name": unique_name,
+        "description": f"Description for {name}",
+        "supplier_type_uid": type_uid,
+        "origin_source_uid": origin_source.term_uid,
+        "origin_type_uid": origin_type.term_uid,
+        "api_base_url": None,
+        "ui_base_url": None,
+        "library_name": "Sponsor",
+    }
+    if order is not None:
+        payload["order"] = order
+    return api_client.post("/data-suppliers", json=payload)
+
+
+def _get_supplier_order(api_client, uid: str) -> int:
+    """Get the current order of a supplier by UID."""
+    response = api_client.get(f"/data-suppliers/{uid}")
+    return response.json()["order"]
+
+
+@pytest.fixture(scope="function")
+def ordering_test_type():
+    """Create a fresh supplier type term for each ordering test."""
+    # Reuse the existing supplier_type_codelist from module setup
+    return TestUtils.create_ct_term(
+        codelist_uid=supplier_type_codelist.codelist_uid,
+        sponsor_preferred_name=f"OrderTestType_{TestUtils.random_str()}",
+    )
+
+
+class TestDataSupplierOrderingCreate:
+    """Tests for data supplier ordering on create."""
+
+    def test_create_with_auto_assigned_order(self, api_client, ordering_test_type):
+        """Create without order - should auto-assign next available."""
+        # Create first supplier without order
+        response = _create_supplier_with_order(
+            api_client, "Auto1", None, ordering_test_type.term_uid
+        )
+        assert_response_status_code(response, 201)
+        assert response.json()["order"] == 1
+
+        # Create second supplier without order
+        response = _create_supplier_with_order(
+            api_client, "Auto2", None, ordering_test_type.term_uid
+        )
+        assert_response_status_code(response, 201)
+        assert response.json()["order"] == 2
+
+    def test_create_with_order_last_plus_one(self, api_client, ordering_test_type):
+        """Create with order = last + 1 - no bumping needed."""
+        # Create two suppliers first
+        r1 = _create_supplier_with_order(
+            api_client, "First", 1, ordering_test_type.term_uid
+        )
+        r2 = _create_supplier_with_order(
+            api_client, "Second", 2, ordering_test_type.term_uid
+        )
+
+        # Create at last + 1 (order 3)
+        response = _create_supplier_with_order(
+            api_client, "Third", 3, ordering_test_type.term_uid
+        )
+        assert_response_status_code(response, 201)
+        assert response.json()["order"] == 3
+
+        # Verify no bumping occurred - original orders should be unchanged
+        assert _get_supplier_order(api_client, r1.json()["uid"]) == 1
+        assert _get_supplier_order(api_client, r2.json()["uid"]) == 2
+
+    def test_create_with_order_last(self, api_client, ordering_test_type):
+        """Create with order = same as last - should bump last."""
+        r1 = _create_supplier_with_order(
+            api_client, "First", 1, ordering_test_type.term_uid
+        )
+        r2 = _create_supplier_with_order(
+            api_client, "Second", 2, ordering_test_type.term_uid
+        )
+
+        # Create at same order as last (2)
+        response = _create_supplier_with_order(
+            api_client, "NewSecond", 2, ordering_test_type.term_uid
+        )
+        assert_response_status_code(response, 201)
+        assert response.json()["order"] == 2
+
+        # Verify bumping: First unchanged, Second bumped to 3
+        assert _get_supplier_order(api_client, r1.json()["uid"]) == 1
+        assert _get_supplier_order(api_client, r2.json()["uid"]) == 3
+
+    def test_create_with_order_in_between(self, api_client, ordering_test_type):
+        """Create with order in between - should bump items >= order."""
+        r1 = _create_supplier_with_order(
+            api_client, "First", 1, ordering_test_type.term_uid
+        )
+        r2 = _create_supplier_with_order(
+            api_client, "Second", 2, ordering_test_type.term_uid
+        )
+        r3 = _create_supplier_with_order(
+            api_client, "Third", 3, ordering_test_type.term_uid
+        )
+
+        # Create at order 2 (in between)
+        response = _create_supplier_with_order(
+            api_client, "NewMiddle", 2, ordering_test_type.term_uid
+        )
+        assert_response_status_code(response, 201)
+        assert response.json()["order"] == 2
+
+        # Verify: First unchanged, Second->3, Third->4
+        assert _get_supplier_order(api_client, r1.json()["uid"]) == 1
+        assert _get_supplier_order(api_client, r2.json()["uid"]) == 3
+        assert _get_supplier_order(api_client, r3.json()["uid"]) == 4
+
+    def test_create_with_order_first(self, api_client, ordering_test_type):
+        """Create with order = 1 (first) - should bump all."""
+        r1 = _create_supplier_with_order(
+            api_client, "First", 1, ordering_test_type.term_uid
+        )
+        r2 = _create_supplier_with_order(
+            api_client, "Second", 2, ordering_test_type.term_uid
+        )
+        r3 = _create_supplier_with_order(
+            api_client, "Third", 3, ordering_test_type.term_uid
+        )
+
+        # Create at order 1 (first position)
+        response = _create_supplier_with_order(
+            api_client, "NewFirst", 1, ordering_test_type.term_uid
+        )
+        assert_response_status_code(response, 201)
+        assert response.json()["order"] == 1
+
+        # Verify all others bumped
+        assert _get_supplier_order(api_client, r1.json()["uid"]) == 2
+        assert _get_supplier_order(api_client, r2.json()["uid"]) == 3
+        assert _get_supplier_order(api_client, r3.json()["uid"]) == 4
+
+    def test_create_with_order_zero_fails(self, api_client, ordering_test_type):
+        """Create with order = 0 should fail validation."""
+        response = _create_supplier_with_order(
+            api_client, "Invalid", 0, ordering_test_type.term_uid
+        )
+        assert_response_status_code(response, 400)
+
+    def test_create_with_negative_order_fails(self, api_client, ordering_test_type):
+        """Create with negative order should fail validation."""
+        response = _create_supplier_with_order(
+            api_client, "Invalid", -1, ordering_test_type.term_uid
+        )
+        assert_response_status_code(response, 400)
+
+
+class TestDataSupplierOrderingUpdate:
+    """Tests for data supplier ordering on update."""
+
+    def _update_order(self, api_client, uid: str, new_order: int):
+        """Helper to update a supplier's order."""
+        return api_client.patch(
+            f"/data-suppliers/{uid}",
+            json={"order": new_order, "change_description": "Order update"},
+        )
+
+    def test_update_order_to_last_plus_one(self, api_client, ordering_test_type):
+        """Update order from first to last + 1."""
+        r1 = _create_supplier_with_order(
+            api_client, "First", 1, ordering_test_type.term_uid
+        )
+        r2 = _create_supplier_with_order(
+            api_client, "Second", 2, ordering_test_type.term_uid
+        )
+        r3 = _create_supplier_with_order(
+            api_client, "Third", 3, ordering_test_type.term_uid
+        )
+        first_uid = r1.json()["uid"]
+
+        # Move first to position 4 (last + 1)
+        response = self._update_order(api_client, first_uid, 4)
+        assert_response_status_code(response, 200)
+        assert response.json()["order"] == 4
+
+        # Verify orders shifted: 2->1, 3->2
+        assert _get_supplier_order(api_client, r2.json()["uid"]) == 1
+        assert _get_supplier_order(api_client, r3.json()["uid"]) == 2
+
+    def test_update_order_to_same_position(self, api_client, ordering_test_type):
+        """Update to same order - no change."""
+        r1 = _create_supplier_with_order(
+            api_client, "First", 1, ordering_test_type.term_uid
+        )
+        r2 = _create_supplier_with_order(
+            api_client, "Second", 2, ordering_test_type.term_uid
+        )
+        first_uid = r1.json()["uid"]
+
+        # Update to same order
+        response = self._update_order(api_client, first_uid, 1)
+        assert_response_status_code(response, 200)
+        assert response.json()["order"] == 1
+
+        # Second should stay at 2
+        assert _get_supplier_order(api_client, r2.json()["uid"]) == 2
+
+    def test_update_order_move_down(self, api_client, ordering_test_type):
+        """Update order moving down (1 -> 3)."""
+        r1 = _create_supplier_with_order(
+            api_client, "First", 1, ordering_test_type.term_uid
+        )
+        r2 = _create_supplier_with_order(
+            api_client, "Second", 2, ordering_test_type.term_uid
+        )
+        r3 = _create_supplier_with_order(
+            api_client, "Third", 3, ordering_test_type.term_uid
+        )
+        first_uid = r1.json()["uid"]
+
+        # Move first to position 3
+        response = self._update_order(api_client, first_uid, 3)
+        assert_response_status_code(response, 200)
+        assert response.json()["order"] == 3
+
+        # Second->1, Third->2
+        assert _get_supplier_order(api_client, r2.json()["uid"]) == 1
+        assert _get_supplier_order(api_client, r3.json()["uid"]) == 2
+
+    def test_update_order_move_up(self, api_client, ordering_test_type):
+        """Update order moving up (3 -> 1)."""
+        r1 = _create_supplier_with_order(
+            api_client, "First", 1, ordering_test_type.term_uid
+        )
+        r2 = _create_supplier_with_order(
+            api_client, "Second", 2, ordering_test_type.term_uid
+        )
+        r3 = _create_supplier_with_order(
+            api_client, "Third", 3, ordering_test_type.term_uid
+        )
+        third_uid = r3.json()["uid"]
+
+        # Move third to position 1
+        response = self._update_order(api_client, third_uid, 1)
+        assert_response_status_code(response, 200)
+        assert response.json()["order"] == 1
+
+        # First->2, Second->3
+        assert _get_supplier_order(api_client, r1.json()["uid"]) == 2
+        assert _get_supplier_order(api_client, r2.json()["uid"]) == 3
+
+    def test_update_order_in_between(self, api_client, ordering_test_type):
+        """Update order from last to middle."""
+        r1 = _create_supplier_with_order(
+            api_client, "First", 1, ordering_test_type.term_uid
+        )
+        r2 = _create_supplier_with_order(
+            api_client, "Second", 2, ordering_test_type.term_uid
+        )
+        r3 = _create_supplier_with_order(
+            api_client, "Third", 3, ordering_test_type.term_uid
+        )
+        r4 = _create_supplier_with_order(
+            api_client, "Fourth", 4, ordering_test_type.term_uid
+        )
+        fourth_uid = r4.json()["uid"]
+
+        # Move fourth to position 2
+        response = self._update_order(api_client, fourth_uid, 2)
+        assert_response_status_code(response, 200)
+        assert response.json()["order"] == 2
+
+        # First stays at 1, Second->3, Third->4
+        assert _get_supplier_order(api_client, r1.json()["uid"]) == 1
+        assert _get_supplier_order(api_client, r2.json()["uid"]) == 3
+        assert _get_supplier_order(api_client, r3.json()["uid"]) == 4
+
+    def test_update_order_to_zero_fails(self, api_client, ordering_test_type):
+        """Update to order 0 should fail validation."""
+        r1 = _create_supplier_with_order(
+            api_client, "First", 1, ordering_test_type.term_uid
+        )
+        first_uid = r1.json()["uid"]
+
+        response = self._update_order(api_client, first_uid, 0)
+        assert_response_status_code(response, 400)
+
+    def test_update_order_to_negative_fails(self, api_client, ordering_test_type):
+        """Update to negative order should fail validation."""
+        r1 = _create_supplier_with_order(
+            api_client, "First", 1, ordering_test_type.term_uid
+        )
+        first_uid = r1.json()["uid"]
+
+        response = self._update_order(api_client, first_uid, -1)
+        assert_response_status_code(response, 400)
+
+
+class TestDataSupplierOrderingDelete:
+    """Tests for data supplier ordering on delete (inactivate)."""
+
+    def test_inactivate_does_not_affect_other_orders(
+        self, api_client, ordering_test_type
+    ):
+        """Inactivating a supplier should not change other suppliers' orders."""
+        r1 = _create_supplier_with_order(
+            api_client, "First", 1, ordering_test_type.term_uid
+        )
+        r2 = _create_supplier_with_order(
+            api_client, "Second", 2, ordering_test_type.term_uid
+        )
+        r3 = _create_supplier_with_order(
+            api_client, "Third", 3, ordering_test_type.term_uid
+        )
+        second_uid = r2.json()["uid"]
+
+        # Inactivate the middle one
+        response = api_client.delete(f"/data-suppliers/{second_uid}/activations")
+        assert_response_status_code(response, 200)
+
+        # First and Third should keep their orders
+        assert _get_supplier_order(api_client, r1.json()["uid"]) == 1
+        assert _get_supplier_order(api_client, r3.json()["uid"]) == 3

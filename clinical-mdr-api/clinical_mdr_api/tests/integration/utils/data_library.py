@@ -42,7 +42,7 @@ version: "1.0"
 } AS final_properties
 MERGE (library:Library {name:"Sponsor", is_editable:true})
 
-MERGE (odm_description1:OdmDescription {name: "name1", language: "eng", description: "description1", instruction: "instruction1", sponsor_instruction: "sponsor_instruction1"})
+MERGE (odm_description1:OdmDescription {name: "name1", language: "en", description: "description1", instruction: "instruction1", sponsor_instruction: "sponsor_instruction1"})
 MERGE (odm_formal_expression1:OdmFormalExpression {context: "context1", expression: "expression1"})
 
 MERGE (library)-[:CONTAINS_CONCEPT]->(odm_condition_root1:ConceptRoot:OdmConditionRoot {uid: "odm_condition1"})
@@ -76,7 +76,7 @@ version: "1.0"
 } AS final_properties
 MERGE (library:Library {name:"Sponsor", is_editable:true})
 
-MERGE (odm_description1:OdmDescription {name: "name1", language: "eng", description: "description1", instruction: "instruction1", sponsor_instruction: "sponsor_instruction1"})
+MERGE (odm_description1:OdmDescription {name: "name1", language: "en", description: "description1", instruction: "instruction1", sponsor_instruction: "sponsor_instruction1"})
 
 MERGE (library)-[:CONTAINS_CONCEPT]->(odm_method_root1:ConceptRoot:OdmMethodRoot {uid: "odm_method1"})
 MERGE (odm_method_value1:ConceptValue:OdmMethodValue {oid: "oid1", name: "name1", method_type: "type1"})
@@ -354,7 +354,7 @@ version: "1.0"
 
 MERGE (library:Library {name:"Sponsor", is_editable:true})
 
-MERGE (odm_description1:OdmDescription {name: "name1", language: "eng", description: "description1", instruction: "instruction1", sponsor_instruction: "sponsor_instruction1"})
+MERGE (odm_description1:OdmDescription {name: "name1", language: "en", description: "description1", instruction: "instruction1", sponsor_instruction: "sponsor_instruction1"})
 
 MERGE (item_root1:ConceptRoot:OdmItemRoot {uid: "odm_item1"})
 MERGE (item_value1:ConceptValue:OdmItemValue {oid: "oid1", name: "name1", datatype: "string", length: 1, significant_digits: 1, sas_field_name: "sasfieldname1", sds_var_name: "sdsvarname1", origin: "origin1", comment: "comment1"})
@@ -385,7 +385,7 @@ version: "1.0"
 } AS final_properties
 MERGE (library:Library {name:"Sponsor", is_editable:true})
 
-MERGE (odm_description1:OdmDescription {name: "name1", language: "eng", description: "description1", instruction: "instruction1", sponsor_instruction: "sponsor_instruction1"})
+MERGE (odm_description1:OdmDescription {name: "name1", language: "en", description: "description1", instruction: "instruction1", sponsor_instruction: "sponsor_instruction1"})
 MERGE (odm_alias1:OdmAlias {context: "context1", name: "name1"})
 
 MERGE (odm_form_root1:ConceptRoot:OdmFormRoot {uid: "odm_form1"})
@@ -1374,9 +1374,6 @@ SET has_version1 = final_properties
 WITH *
 MERGE (activity_group_root1:ConceptRoot:ActivityGroupRoot {uid:"activity_group_root1"})
 -[:LATEST]->(activity_group_value1:ConceptValue:ActivityGroupValue)
-MERGE (avf1:ActivityValidGroup {uid:"ActivityValidGroup_000001"})
-MERGE (avf1)-[:IN_GROUP]->(activity_group_value1)
-MERGE (activity_subgroup_value1)-[:HAS_GROUP]->(avf1)
 MERGE (activity_group_root1)-[group_has_version:HAS_VERSION]->(activity_group_value1)
 SET group_has_version = final_properties
 
@@ -1396,9 +1393,7 @@ MERGE (activity_group_root2:ConceptRoot:ActivityGroupRoot {uid:"activity_group_r
 -[:LATEST]->(activity_group_value2:ConceptValue:ActivityGroupValue)
 MERGE (activity_group_root2)-[hvg2:HAS_VERSION]->(activity_group_value2)
 SET hvg2 = final_properties
-MERGE (avf2:ActivityValidGroup {uid:"ActivityValidGroup_000002"})
-MERGE (avf2)-[:IN_GROUP]->(activity_group_value2)
-MERGE (activity_subgroup_value2)-[:HAS_GROUP]->(avf2)
+
 
 MERGE (library)-[:CONTAINS_CONCEPT]->(activity_subgroup_root3:ConceptRoot:ActivitySubGroupRoot {uid:"activity_subgroup_root3"})
 -[:LATEST]->(activity_subgroup_value3:ConceptValue:ActivitySubGroupValue {
@@ -1414,10 +1409,7 @@ WITH *
 MERGE (activity_group_root3:ConceptRoot:ActivityGroupRoot {uid:"activity_group_root3"})
 -[:LATEST]->(activity_group_value3:ConceptValue:ActivityGroupValue)
 MERGE (activity_group_root3)-[:HAS_VERSION]->(activity_group_value3)
-MERGE (avf3:ActivityValidGroup {uid:"ActivityValidGroup_000003"})
-MERGE (avf3)-[:IN_GROUP]->(activity_group_value3)
-MERGE (activity_subgroup_value3)-[:HAS_GROUP]->(avf3)
-MERGE (:Counter:ActivityValidGroupCounter {count: 3, counterId:'ActivityValidGroupCounter'})
+
 """
 
 STARTUP_ACTIVITIES = """
@@ -1452,22 +1444,16 @@ is_multiple_selection_allowed: true
 MERGE (activity_root1)-[latest_final1:LATEST_FINAL]->(activity_value1)
 MERGE (activity_root1)-[has_version1:HAS_VERSION]->(activity_value1)
 SET has_version1 = final_properties
-MERGE (activity_subgroup_root1:ConceptRoot:ActivitySubGroupRoot {uid:"activity_subgroup_root1"})
+WITH *
+MATCH (activity_subgroup_root1:ConceptRoot:ActivitySubGroupRoot {uid:"activity_subgroup_root1"})
 -[:LATEST]->(activity_subgroup_value1:ConceptValue:ActivitySubGroupValue)
-MERGE (activity_subgroup_root1)-[hvs1:HAS_VERSION]->(activity_subgroup_value1)
-SET hvs1 = final_properties
-MERGE (activity_subgroup_root1)-[:LATEST_FINAL]->(activity_subgroup_value1)
-MERGE (activity_value1)-[:HAS_GROUPING]->(activity_grouping:ActivityGrouping {uid:"ActivityGrouping_000001"})
+MATCH (activity_group_root1:ConceptRoot:ActivityGroupRoot {uid:"activity_group_root1"})
+-[:LATEST]->(activity_group_value1:ConceptValue:ActivityGroupValue)
+MERGE (activity_value1)-[:HAS_GROUPING]->(activity_grouping:ActivityGrouping)
 WITH *
-MERGE (activity_valid_group:ActivityValidGroup {uid:"ActivityValidGroup_000001"})
-MERGE (activity_grouping)-[:IN_SUBGROUP]->(activity_valid_group)
-MERGE (activity_valid_group)<-[:HAS_GROUP]-(activity_subgroup_value1)
+MERGE (activity_grouping)-[:HAS_SELECTED_SUBGROUP]->(activity_subgroup_value1)
+MERGE (activity_grouping)-[:HAS_SELECTED_GROUP]->(activity_group_value1)
 WITH *
-MERGE (activity_group_root:ActivityGroupRoot:ConceptRoot {uid:"activity_group_root1"})-[:LATEST]->(activity_group_value:ActivityGroupValue:ConceptValue)
-MERGE (activity_group_root)-[hvg1:HAS_VERSION]->(activity_group_value)
-SET hvg1 = final_properties
-MERGE (activity_group_root)-[:LATEST_FINAL]->(activity_group_value)
-MERGE (activity_valid_group)-[:IN_GROUP]->(activity_group_value)
 
 MERGE (library)-[:CONTAINS_CONCEPT]->(activity_root2:ConceptRoot:ActivityRoot {uid:"activity_root2"})
 -[:LATEST]->(activity_value2:ConceptValue:ActivityValue {
@@ -1484,20 +1470,16 @@ synonyms: []
 MERGE (activity_root2)-[latest_draft2:LATEST_DRAFT]->(activity_value2)
 MERGE (activity_root2)-[has_version2:HAS_VERSION]->(activity_value2)
 SET has_version2 = draft_properties
-MERGE (activity_subgroup_root2:ConceptRoot:ActivitySubGroupRoot {uid:"activity_subgroup_root2"})
+WITH *
+MATCH (activity_subgroup_root2:ConceptRoot:ActivitySubGroupRoot {uid:"activity_subgroup_root2"})
 -[:LATEST]->(activity_subgroup_value2:ConceptValue:ActivitySubGroupValue)
-MERGE (activity_subgroup_root2)-[hvsg2:HAS_VERSION]->(activity_subgroup_value2)
-SET hvsg2 = final_properties
-MERGE (activity_value2)-[:HAS_GROUPING]->(activity_grouping2:ActivityGrouping {uid:"ActivityGrouping_000002"})
+MATCH (activity_group_root2:ConceptRoot:ActivityGroupRoot {uid:"activity_group_root2"})
+-[:LATEST]->(activity_group_value2:ConceptValue:ActivityGroupValue)
+MERGE (activity_value2)-[:HAS_GROUPING]->(activity_grouping2:ActivityGrouping)
 WITH *
-MERGE (activity_valid_group2:ActivityValidGroup {uid:"ActivityValidGroup_000002"})
-MERGE (activity_grouping2)-[:IN_SUBGROUP]->(activity_valid_group2)
-MERGE (activity_valid_group2)<-[:HAS_GROUP]-(activity_subgroup_value2)
+MERGE (activity_grouping2)-[:HAS_SELECTED_SUBGROUP]->(activity_subgroup_value2)
+MERGE (activity_grouping2)-[:HAS_SELECTED_GROUP]->(activity_group_value2)
 WITH *
-MERGE (activity_group_root2:ActivityGroupRoot:ConceptRoot {uid:"activity_group_root2"})-[:LATEST]->(activity_group_value2:ActivityGroupValue:ConceptValue)
-MERGE (activity_group_root2)-[hvg2:HAS_VERSION]->(activity_group_value2)
-SET hvg2 = final_properties
-MERGE (activity_valid_group2)-[:IN_GROUP]->(activity_group_value2)
 
 MERGE (library)-[:CONTAINS_CONCEPT]->(activity_root3:ConceptRoot:ActivityRoot {uid:"activity_root3"})
 -[:LATEST]->(activity_value3:ConceptValue:ActivityValue {
@@ -1509,24 +1491,16 @@ abbreviation:"abbv"
 MERGE (activity_root3)-[latest_final3:LATEST_FINAL]->(activity_value3)
 MERGE (activity_root3)-[has_version3:HAS_VERSION]->(activity_value3)
 SET has_version3 = final_properties
-MERGE (activity_subgroup_root3:ConceptRoot:ActivitySubGroupRoot {uid:"activity_subgroup_root3"})
+WITH *
+MATCH (activity_subgroup_root33:ConceptRoot:ActivitySubGroupRoot {uid:"activity_subgroup_root3"})
 -[:LATEST]->(activity_subgroup_value3:ConceptValue:ActivitySubGroupValue)
-MERGE (activity_subgroup_root3)-[hvs3:HAS_VERSION]->(activity_subgroup_value3)
-SET hvs3 = final_properties
-MERGE (activity_subgroup_root3)-[:LATEST_FINAL]->(activity_subgroup_value3)
-MERGE (activity_value3)-[:HAS_GROUPING]->(activity_grouping3:ActivityGrouping {uid:"ActivityGrouping_000003"})
+MATCH (activity_group_root3:ConceptRoot:ActivityGroupRoot {uid:"activity_group_root3"})
+-[:LATEST]->(activity_group_value3:ConceptValue:ActivityGroupValue)
+MERGE (activity_value3)-[:HAS_GROUPING]->(activity_grouping3:ActivityGrouping)
 WITH *
-MERGE (activity_valid_group3:ActivityValidGroup {uid:"ActivityValidGroup_000003"})
-MERGE (activity_grouping3)-[:IN_SUBGROUP]->(activity_valid_group3)
-MERGE (activity_valid_group3)<-[:HAS_GROUP]-(activity_subgroup_value3)
-WITH *
-MERGE (activity_group_root3:ConceptRoot:ActivityGroupRoot {uid:"activity_group_root3"})-[:LATEST]->(activity_group_value3:ConceptValue:ActivityGroupValue)
-MERGE (activity_group_root3)-[hvg3:HAS_VERSION]->(activity_group_value3)
-SET hvg3 = final_properties
-MERGE (activity_group_root3)-[:LATEST_FINAL]->(activity_group_value3)
-MERGE (activity_valid_group3)-[:IN_GROUP]->(activity_group_value3)
-MERGE (:Counter:ActivityValidGroupCounter {count: 3, counterId:'ActivityValidGroupCounter'})
-MERGE (:Counter:ActivityGroupingCounter {count: 3, counterId:'ActivityGroupingCounter'})
+MERGE (activity_grouping3)-[:HAS_SELECTED_SUBGROUP]->(activity_subgroup_value3)
+MERGE (activity_grouping3)-[:HAS_SELECTED_GROUP]->(activity_group_value3)
+
 """
 
 STARTUP_DICTIONARY_CODELISTS_CYPHER = """

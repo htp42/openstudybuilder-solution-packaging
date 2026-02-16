@@ -302,8 +302,7 @@ class TimelineAR(BaseTimelineAR):
         """
         Updates visits to a list of visits - used for preparation of adding new visit
         """
-        new_visits = [v for v in self._visits if v.uid != visit.uid]
-        new_visits.append(visit)
+        new_visits = [v if v.uid != visit.uid else visit for v in self._visits]
         self._visits = new_visits
 
     @property

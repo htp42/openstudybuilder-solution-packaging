@@ -29,12 +29,12 @@ def test_increment_api_version_if_needed():
     # API spec changed => version should be auto-increment
     api_spec_new = {
         "openapi": "3.0.2",
-        "info": {"title": "Clinical MDR API", "version": "2.0.0"},
+        "info": {"title": "OpenStudyBuilder API", "version": "2.0.0"},
         "paths": {"/concepts/odms/study-events": {}},
     }
     api_spec_old = {
         "openapi": "3.0.2",
-        "info": {"title": "Clinical MDR API", "version": "2.0.0"},
+        "info": {"title": "OpenStudyBuilder API", "version": "2.0.0"},
         "paths": {"/concepts/odms/study-events-old": {}},
     }
 
@@ -51,12 +51,12 @@ def test_increment_api_version_if_needed():
     # API spec changed, version already manually incremented => no need for auto-increment
     api_spec_new = {
         "openapi": "3.0.2",
-        "info": {"title": "Clinical MDR API", "version": "2.0.2"},
+        "info": {"title": "OpenStudyBuilder API", "version": "2.0.2"},
         "paths": {"/concepts/odms/study-events": {}},
     }
     api_spec_old = {
         "openapi": "3.0.2",
-        "info": {"title": "Clinical MDR API", "version": "2.0.0"},
+        "info": {"title": "OpenStudyBuilder API", "version": "2.0.0"},
         "paths": {"/concepts/odms/study-events-old": {}},
     }
 
@@ -67,12 +67,12 @@ def test_increment_api_version_if_needed():
     # API spec not changed => no need for auto-increment
     api_spec_new = {
         "openapi": "3.0.2",
-        "info": {"title": "Clinical MDR API", "version": "2.0.0"},
+        "info": {"title": "OpenStudyBuilder API", "version": "2.0.0"},
         "paths": {"/concepts/odms/study-events": {}},
     }
     api_spec_old = {
         "openapi": "3.0.2",
-        "info": {"title": "Clinical MDR API", "version": "2.0.0"},
+        "info": {"title": "OpenStudyBuilder API", "version": "2.0.0"},
         "paths": {"/concepts/odms/study-events": {}},
     }
 

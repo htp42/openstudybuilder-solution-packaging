@@ -13,7 +13,7 @@ Feature: Library - Concepts - Activities - Activities - Extended Scope
         Then The user is not able to save the acitivity
         And The validation message appears for activity group
         And The validation message appears for activity name
-        When Select a value for Activity group field
+        When Select value for Activity group field
         And Form save button is clicked
         Then The validation message appears for activity subgroup
 
@@ -78,11 +78,9 @@ Feature: Library - Concepts - Activities - Activities - Extended Scope
         And Subgroup name created through API is found
         And User waits for 2 seconds
         Given The '/library/activities/activities' page is opened
-        And User sets status filter to 'all'
         When The Add activity button is clicked
-        When The activity form is filled in using group and subgroup created through API
-        And Form save button is clicked
-        Then Validation error for 'Draft' group is displayed
+        And Custom group name is typed in activity form
+        Then Not Final group or subgroup is not available during activity creation
 
     Scenario: [Create][Negative case][Retired group] User must not be able to create activity linked to Retired group until it is approved
         And [API] Activity group in status Draft exists
@@ -94,40 +92,31 @@ Feature: Library - Concepts - Activities - Activities - Extended Scope
         And Subgroup name created through API is found
         And User waits for 2 seconds
         Given The '/library/activities/activities' page is opened
-        And User sets status filter to 'all'
         When The Add activity button is clicked
-        When The activity form is filled in using group and subgroup created through API
-        And Form save button is clicked
-        Then Validation error for 'Retired' group is displayed
+        And Custom group name is typed in activity form
+        Then Not Final group or subgroup is not available during activity creation
 
     Scenario: [Create][Negative case][Draft subgroup] User must not be able to create activity linked to Draft subgroup until it is approved
-        And [API] Activity group in status Draft exists
-        And [API] Activity group is approved
         And [API] Activity subgroup is created
-        And Group name created through API is found
         And Subgroup name created through API is found
         And User waits for 2 seconds
         Given The '/library/activities/activities' page is opened
-        And User sets status filter to 'all'
         When The Add activity button is clicked
-        And Custom group name is typed and selected in activity form
-        And Drafted subgroup is not available during activity creation
+        And Select value for Activity group field
+        And Custom subgroup name is typed in activity form
+        And Not Final group or subgroup is not available during activity creation
 
     Scenario: [Create][Negative case][Retired subgroup] User must not be able to create activity linked to Retired subgroup until it is approved
-        And [API] Activity group in status Draft exists
-        And [API] Activity group is approved
         And [API] Activity subgroup is created
         And [API] Activity subgroup is approved
         And [API] Activity subgroup is inactivated
         And Group name created through API is found
         And Subgroup name created through API is found
-        And User waits for 2 seconds
         Given The '/library/activities/activities' page is opened
-        And User sets status filter to 'all'
         When The Add activity button is clicked
-        When The activity form is filled in using group and subgroup created through API
-        And Form save button is clicked
-        Then Validation error for 'Retired' subgroup is displayed
+        And Select value for Activity group field
+        And Custom subgroup name is typed in activity form
+        And Not Final group or subgroup is not available during activity creation
 
     Scenario: [Cancel][Creation] User must be able to Cancel creation of the activity
         Given The '/library/activities/activities' page is opened

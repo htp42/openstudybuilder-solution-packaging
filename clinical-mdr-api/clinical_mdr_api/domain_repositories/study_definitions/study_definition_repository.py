@@ -9,8 +9,14 @@ from neomodel.sync_.match import Collect, NodeNameResolver, Optional, Size
 from clinical_mdr_api.domain_repositories.generic_repository import (
     RepositoryClosureData,
 )
+from clinical_mdr_api.domain_repositories.models._utils import (
+    format_generic_header_values,
+)
 from clinical_mdr_api.domain_repositories.models.study import StudyRoot, StudyValue
-from clinical_mdr_api.domain_repositories.models.study_field import StudyBooleanField
+from clinical_mdr_api.domain_repositories.models.study_field import (
+    StudyArrayField,
+    StudyBooleanField,
+)
 from clinical_mdr_api.domains.study_definition_aggregates.root import (
     StudyDefinitionAR,
     StudyDefinitionSnapshot,
@@ -23,7 +29,12 @@ from clinical_mdr_api.models.study_selections.study import (
     StudySoaPreferencesInput,
 )
 from clinical_mdr_api.models.utils import GenericFilteringReturn
-from clinical_mdr_api.repositories._utils import FilterOperator
+from clinical_mdr_api.repositories._utils import (
+    CypherQueryBuilder,
+    FilterDict,
+    FilterOperator,
+    validate_filters_and_add_search_string,
+)
 from common import exceptions
 from common.telemetry import trace_calls
 from common.utils import convert_to_datetime
@@ -146,6 +157,36 @@ class StudyDefinitionRepository(ABC):
         # and that's it we are done
         return result
 
+    def study_structure_overview_match_clause(self):
+        return """
+MATCH (sr:StudyRoot)-[:LATEST]->(sv:StudyValue)
+WHERE sv.study_id_prefix IS NOT NULL AND sv.study_number IS NOT NULL
+OPTIONAL MATCH (sv)-[:HAS_STUDY_ARM]->(arm:StudyArm)
+OPTIONAL MATCH (sv)-[:HAS_STUDY_EPOCH]->(pre_treatment_epoch:StudyEpoch)-[:HAS_EPOCH_TYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)<-[:HAS_TERM_ROOT]-(:CTCodelistTerm {submission_value: "PRE TREATMENT EPOCH TYPE"})
+OPTIONAL MATCH (sv)-[:HAS_STUDY_EPOCH]->(treatment_epoch:StudyEpoch)-[:HAS_EPOCH_TYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)<-[:HAS_TERM_ROOT]-(:CTCodelistTerm {submission_value: "TREATMENT"})
+OPTIONAL MATCH (sv)-[:HAS_STUDY_EPOCH]->(no_treatment_epoch:StudyEpoch)-[:HAS_EPOCH_TYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)<-[:HAS_TERM_ROOT]-(:CTCodelistTerm {submission_value: "NO TREATMENT EPOCH TYPE"})
+OPTIONAL MATCH (sv)-[:HAS_STUDY_EPOCH]->(post_treatment_epoch:StudyEpoch)-[:HAS_EPOCH_TYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)<-[:HAS_TERM_ROOT]-(:CTCodelistTerm {submission_value: "POST TREATMENT EPOCH TYPE"})
+OPTIONAL MATCH (sv)-[:HAS_STUDY_ELEMENT]->(treatment_element:StudyElement)-[:HAS_ELEMENT_SUBTYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)-[:HAS_PARENT_TYPE]->(:CTTermRoot)<-[:HAS_TERM_ROOT]-(:CTCodelistTerm {submission_value: "TREATMENT ELEMENT TYPE"})
+OPTIONAL MATCH (sv)-[:HAS_STUDY_ELEMENT]->(no_treatment_element:StudyElement)-[:HAS_ELEMENT_SUBTYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)-[:HAS_PARENT_TYPE]->(:CTTermRoot)<-[:HAS_TERM_ROOT]-(:CTCodelistTerm {submission_value: "NO TREATMENT ELEMENT TYPE"})
+OPTIONAL MATCH (sv)-[:HAS_STUDY_COHORT]->(cohort:StudyCohort)
+"""
+
+    def study_structure_overview_alias_clause(self):
+        return """sv,
+COUNT(DISTINCT arm) AS arms,
+COUNT(DISTINCT pre_treatment_epoch) AS pre_treatment_epochs,
+COUNT(DISTINCT treatment_epoch) AS treatment_epochs,
+COUNT(DISTINCT no_treatment_epoch) AS no_treatment_epochs,
+COUNT(DISTINCT post_treatment_epoch) AS post_treatment_epochs,
+COUNT(DISTINCT treatment_element) AS treatment_elements,
+COUNT(DISTINCT no_treatment_element) AS no_treatment_elements,
+CASE COUNT(DISTINCT cohort) WHEN > 0
+  THEN 'Y'
+  ELSE 'N'
+END AS cohorts_in_study,
+sv.study_id_prefix + "-" + sv.study_number AS study_ids
+"""
+
     def get_study_structure_overview(self):
         query = """
 MATCH (sr:StudyRoot)-[:LATEST]->(sv:StudyValue)
@@ -189,6 +230,35 @@ RETURN
         rs = db.cypher_query(query=query)
 
         return rs
+
+    def get_study_structure_overview_headers(
+        self,
+        field_name: str,
+        search_string: str = "",
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
+        page_size: int = 10,
+    ) -> list[str]:
+        match_clause = self.study_structure_overview_match_clause()
+        alias_clause = self.study_structure_overview_alias_clause()
+        filter_by = validate_filters_and_add_search_string(
+            search_string, field_name, filter_by
+        )
+        query = CypherQueryBuilder(
+            filter_by=FilterDict.model_validate({"elements": filter_by}),
+            filter_operator=filter_operator,
+            match_clause=match_clause,
+            alias_clause=alias_clause,
+        )
+        query.full_query = query.build_header_query(
+            header_alias=field_name, page_size=page_size
+        )
+        result_array, _ = query.execute()
+        return (
+            format_generic_header_values(result_array[0][0])
+            if len(result_array) > 0
+            else []
+        )
 
     def get_study_structure_statistics(self, uid: str) -> dict[str, int] | None:
         result = (
@@ -1056,9 +1126,9 @@ return *
         :return: StudyPreferredTimeUnit
         """
 
+    @staticmethod
     @abstractmethod
     def get_soa_preferences(
-        self,
         study_uid: str,
         study_value_version: str | None = None,
         field_names: Sequence[str] | None = None,
@@ -1128,4 +1198,78 @@ return *
 
         Returns:
             bool: True if the study exists, False otherwise.
+        """
+
+    @staticmethod
+    @abstractmethod
+    def get_soa_split_uids(
+        study_uid: str,
+        study_value_version: str | None,
+    ) -> StudyArrayField | None:
+        """
+        Returns StudyArrayField with value as a list of StudyVisit uids for splitting SoA
+
+        Args:
+            study_uid (str): The unique identifier of the study.
+            study_value_version (str | None): The version of the Study. Defaults to None for latest version.
+
+        Raises:
+             NotFoundException: if SoA splitting StudyArrayField does not exist for the given study
+        Returns:
+            StudyArrayField | None: StudyArrayField with value as a list of StudyVisit uids for splitting SoA,
+                                    or None if splitting is not set.
+        """
+
+    @abstractmethod
+    def add_soa_split_uid(
+        self,
+        study_uid: str,
+        uid: str,
+    ) -> StudyArrayField:
+        """
+        Adds StudyVisit uid to StudyArrayField for splitting SoA
+
+        Args:
+            study_uid (str): The unique identifier of the study.
+            uid (str): The StudyVisit uid to add.
+
+        Raises:
+            NotFoundException: if StudyVisit uid does not exist for the given study
+            AlreadyExistsException: if StudyVisit uid is already in the value of SoA splitting StudyArrayField
+        Returns:
+            StudyArrayField: updated StudyArrayField with the new StudyVisit uid added
+        """
+
+    @abstractmethod
+    def remove_soa_split_uid(
+        self,
+        study_uid: str,
+        uid: str,
+    ) -> StudyArrayField | None:
+        """
+        Removes StudyVisit uid from StudyArrayField for splitting SoA
+
+        Args:
+            study_uid (str): The unique identifier of the study.
+            uid (str): The uid to remove.
+
+        Raises:
+            NotFoundException: if StudyVisit uid is not in the value of SoA splitting StudyArrayField
+        Returns:
+            StudyArrayField | None: updated StudyArrayField with the StudyVisit uid removed, or None if no uids remain.
+        """
+
+    @abstractmethod
+    def remove_soa_splits(
+        self,
+        study_uid: str,
+    ) -> None:
+        """
+        Removes StudyArrayField for splitting SoA
+
+        Args:
+            study_uid (str): The unique identifier of the study.
+
+        Returns:
+            None
         """

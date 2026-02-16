@@ -98,11 +98,12 @@ export default {
   },
   getSubGroups(group) {
     const params = {
-      activity_group_uid: group,
       page_size: 0,
       sort_by: { name: true },
     }
-    return repository.get(`${resource}/activity-sub-groups`, { params })
+    return repository.get(`${resource}/activity-groups/${group}/subgroups`, {
+      params,
+    })
   },
   getAllGroups(options) {
     const params = {
@@ -171,6 +172,15 @@ export default {
     }
     return repository.get(
       `${resource}/activity-sub-groups/${activity_subgroup_uid}/activities`,
+      { params }
+    )
+  },
+  getSubgroupGroups(activity_subgroup_uid, options = {}) {
+    const params = {
+      ...options,
+    }
+    return repository.get(
+      `${resource}/activity-sub-groups/${activity_subgroup_uid}/activity-groups`,
       { params }
     )
   },

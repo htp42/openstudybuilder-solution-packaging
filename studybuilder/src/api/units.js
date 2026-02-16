@@ -16,7 +16,7 @@ export default {
   getBySubset(subset) {
     const params = {
       subset: subset,
-      sort_by: { conversion_factor_to_master: true },
+      sort_by: JSON.stringify({ name: true }),
       page_size: 0,
     }
     return repository.get(`${resource}`, { params })

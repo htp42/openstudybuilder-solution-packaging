@@ -207,10 +207,8 @@ class StudyEpochService(StudySelectionMixin):
         # if epoch was previously calculated in preview call then we can just take it from the study_epoch_create_input
         # but we need to synchronize the orders because we don't synchronize them in a preview call
         if study_epoch_create_input.epoch is not None:
-            epoch_ar = self._repos.ct_term_name_repository.find_by_uid(
-                study_epoch_create_input.epoch
-            )
-            epoch = SimpleCTTermNameWithConflictFlag.from_ct_term_ar(epoch_ar)
+            epoch = self.study_epoch_epochs_by_uid[study_epoch_create_input.epoch]
+
             self._synchronize_epoch_orders(
                 epochs_to_synchronize=epochs_in_subtype,
                 all_epochs=all_epochs_in_study,
@@ -346,8 +344,7 @@ class StudyEpochService(StudySelectionMixin):
             # the following section applies if the name of the epoch is the same as the name of the send epoch subtype
             # in such case we should reuse epoch subtype node and add it to the epoch hierarchy
             epoch_uid = subtype.term_uid
-            epoch_ar = self._repos.ct_term_name_repository.find_by_uid(epoch_uid)
-            epoch = SimpleCTTermNameWithConflictFlag.from_ct_term_ar(epoch_ar)
+            epoch = self.study_epoch_subtypes_by_uid[epoch_uid]
 
             try:
                 # adding the epoch sub type term to the epoch codelist
@@ -563,10 +560,7 @@ class StudyEpochService(StudySelectionMixin):
             ]
             epoch_type = self._get_epoch_type_object(subtype=subtype.term_uid)
             if study_epoch_edit_input.epoch is not None:
-                epoch_ar = self._repos.ct_term_name_repository.find_by_uid(
-                    study_epoch_edit_input.epoch
-                )
-                epoch = SimpleCTTermNameWithConflictFlag.from_ct_term_ar(epoch_ar)
+                epoch = self.study_epoch_epochs_by_uid[study_epoch_edit_input.epoch]
             else:
                 epoch = self._get_epoch_object(
                     epochs_in_subtype=epochs_in_subtype, subtype=subtype  # type: ignore[arg-type]
@@ -740,6 +734,15 @@ class StudyEpochService(StudySelectionMixin):
         else:
             created_study_epoch.order = len(all_epochs) + 1
         created_study_epoch.uid = "preview"
+        created_study_epoch.epoch = self.study_epoch_epochs_by_uid[
+            created_study_epoch.epoch.term_uid
+        ]
+        created_study_epoch.subtype = self.study_epoch_subtypes_by_uid[
+            created_study_epoch.subtype.term_uid
+        ]
+        created_study_epoch.epoch_type = self.study_epoch_types_by_uid[
+            created_study_epoch.epoch_type.term_uid
+        ]
 
         return self._transform_all_to_response_model(created_study_epoch)
 
@@ -758,7 +761,13 @@ class StudyEpochService(StudySelectionMixin):
         study_visits = StudyVisitRepository.find_all_visits_by_study_uid(study_uid)
         timeline = TimelineAR(study_uid, _visits=study_visits)
         timeline.collect_visits_to_epochs(self.repo.find_all_epochs_by_study(study_uid))
-
+        study_epoch.epoch = self.study_epoch_epochs_by_uid[study_epoch.epoch.term_uid]
+        study_epoch.subtype = self.study_epoch_subtypes_by_uid[
+            study_epoch.subtype.term_uid
+        ]
+        study_epoch.epoch_type = self.study_epoch_types_by_uid[
+            study_epoch.epoch_type.term_uid
+        ]
         fill_missing_values_in_base_model_from_reference_base_model(
             base_model_with_missing_values=study_epoch_input,
             reference_base_model=self._transform_all_to_response_model(study_epoch),
@@ -768,7 +777,13 @@ class StudyEpochService(StudySelectionMixin):
         )
 
         updated_item = self.repo.save(study_epoch)
-
+        updated_item.epoch = self.study_epoch_epochs_by_uid[updated_item.epoch.term_uid]
+        updated_item.subtype = self.study_epoch_subtypes_by_uid[
+            updated_item.subtype.term_uid
+        ]
+        updated_item.epoch_type = self.study_epoch_types_by_uid[
+            updated_item.epoch_type.term_uid
+        ]
         return self._transform_all_to_response_model(updated_item)
 
     @db.transaction
@@ -841,8 +856,10 @@ class StudyEpochService(StudySelectionMixin):
         if self.repo.epoch_specific_has_connected_design_cell(
             study_uid=study_uid, epoch_uid=study_epoch_uid
         ):
-            design_cells_on_epoch = self._repos.study_design_cell_repository.get_design_cells_connected_to_epoch(
-                study_uid=study_uid, study_epoch_uid=study_epoch_uid
+            design_cells_on_epoch = (
+                self._repos.study_design_cell_repository.find_all_design_cells_by_study(
+                    study_uid=study_uid, study_epoch_uid=study_epoch_uid
+                )
             )
 
         # delete those StudyDesignCells attached to the StudyEpoch

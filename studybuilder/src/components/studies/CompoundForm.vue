@@ -351,15 +351,7 @@ export default {
       helpItems: [
         'StudyCompoundForm.type_of_treatment',
         'StudyCompoundForm.compound',
-        'StudyCompoundForm.compound_alias',
-        'StudyCompoundForm.pharma_class',
-        'StudyCompoundForm.substance',
-        'StudyCompoundForm.unii',
-        'StudyCompoundForm.route_of_admin',
-        'StudyCompoundForm.dosage_form',
-        'StudyCompoundForm.dispensed_in',
-        'StudyCompoundForm.device',
-        'StudyCompoundForm.formulation',
+        'StudyCompoundForm.medicinal_product',
         'StudyCompoundForm.other',
       ],
       form: this.getInitialForm(),
@@ -440,13 +432,17 @@ export default {
               uid: val.compound.uid,
               name: val.compound.name,
             }
-            const filters = {
+            let filters = {
               compound_uid: { v: [val.compound.uid] },
               status: { v: [statuses.FINAL] },
             }
             compoundAliases.getFiltered({ filters }).then((resp) => {
               this.compoundAliases = resp.data.items
             })
+            filters = {
+              'compound.uid': { v: [val.compound.uid] },
+              status: { v: [statuses.FINAL] },
+            }
             medicinalProducts.getFiltered({ filters }).then((resp) => {
               this.medicinalProducts = resp.data.items.map((item) => {
                 item.name = item.name + ' (' + item.dose_frequency?.name + ')'
@@ -509,7 +505,7 @@ export default {
           this.form.compound_alias = null
         }
         this.form.medicinalProduct = null
-        const filters = {
+        let filters = {
           compound_uid: { v: [newValue.uid] },
           status: { v: [statuses.FINAL] },
         }
@@ -517,6 +513,10 @@ export default {
           this.compoundAliases = resp.data.items
           this.showAlerts = true
         })
+        filters = {
+          'compound.uid': { v: [newValue.uid] },
+          status: { v: [statuses.FINAL] },
+        }
         medicinalProducts.getFiltered({ filters }).then((resp) => {
           this.medicinalProducts = resp.data.items.map((item) => {
             item.name = `${item.name} (${item.dose_frequency ? item.dose_frequency.name : ''})`

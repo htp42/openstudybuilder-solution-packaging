@@ -17,7 +17,7 @@ class NoHTTPMethodsWithDisallowedStatusCode(SBLinter):
     }
 
     @classmethod
-    def validate(cls, code_tree: ast.Module) -> list[int]:
+    def validate(cls, code_tree: ast.Module, _file_path: str) -> list[int]:
         """
         Validates the given Python code by checking if it defines any HTTP method calls
         with disallowed status codes.

@@ -183,17 +183,17 @@ const actions = [
     accessRole: roles.STUDY_WRITE,
   },
   {
-    label: t('_global.history'),
-    icon: 'mdi-history',
-    click: openHistory,
-  },
-  {
     label: t('StudyFootnoteTable.remove'),
     icon: 'mdi-delete-outline',
     iconColor: 'error',
     click: deleteStudyFootnote,
     condition: () => !studiesGeneralStore.selectedStudyVersion,
     accessRole: roles.STUDY_WRITE,
+  },
+  {
+    label: t('_global.history'),
+    icon: 'mdi-history',
+    click: openHistory,
   },
 ]
 const footnoteHistoryItems = ref([])

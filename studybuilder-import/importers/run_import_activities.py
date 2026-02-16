@@ -61,19 +61,40 @@ ACTIVITY_INSTANCES = "ActivityInstances"
 ACTIVITY_ITEM_CLASSES = "ActivityItemClasses"
 ACTIVITY_INSTANCE_CLASSES = "ActivityInstanceClasses"
 
+# Column names in activity instances CSV
+COL_GROUP = "Assm. group"
+COL_SUBGROUP = "Assm. subgroup"
+COL_ACTIVITY = "activity"
+COL_ACTIVITY_INSTANCE = "activity_instance"
+COL_GENERAL_DOMAIN_CLASS = "GENERAL_DOMAIN_CLASS"
+COL_SDTM_DOMAIN = "SDTM_DOMAIN"
+COL_SUB_DOMAIN_CLASS = "sub_domain_class"
+COL_SPECIMEN = "specimen"
+COL_SDTM_CAT = "sdtm_cat"
+COL_SDTM_SUB_CAT = "sdtm_sub_cat"
+COL_UNIT_DIMENSION = "unit_dimension"
+COL_LATERALITY = "laterality"
+COL_LOCATION = "location"
+COL_STD_UNIT = "std_unit"
+COL_SDTM_VARIABLE = "sdtm_variable"
+COL_SDTM_VARIABLE_NAME = "sdtm_variable_name"
+COL_SDTM_CODELIST_NAME = "stdm_codelist_name"
+COL_SDTM_CODELIST = "stdm_codelist"
+COL_DEFINITION = "definition"
+COL_ADAM_PARAM_CODE = "adam_param_code"
+COL_LEGACY_DESCRIPTION = "legacy_description"
+COL_TOPIC_CODE = "TOPIC_CD"
+COL_NCI_CONCEPT_ID = "nci_concept_id"
+COL_IS_REQUIRED_FOR_ACTIVITY = "is_required_for_activity"
+COL_IS_DEFAULT_SELECTED_FOR_ACTIVITY = "is_default_selected_for_activity"
+COL_IS_DATA_SHARING = "is_data_sharing"
+COL_IS_LEGACY_USAGE = "is_legacy_usage"
+
+NULL_DEFINITIONS = ("", "TBD", "null")
+
 
 class ConflictingItemError(ValueError):
     pass
-
-
-# TODO delete! Queries to clear groups and subgroups
-"""
-MATCH (root:ActivityGroupRoot)-[]->(value:ActivityGroupValue) DETACH DELETE root, value;
-MATCH (root:ActivitySubGroupRoot)-[]->(value:ActivitySubGroupValue)-[:HAS_GROUP]-(avg:ActivityValidGroup) DETACH DELETE root, value, avg;
-MATCH (n:ActivityGroupCounter) DETACH DELETE n;
-MATCH (n:ActivitySubGroupCounter) DETACH DELETE n;
-MATCH (n:ActivityValidGroupCounter) DETACH DELETE n;
-"""
 
 
 # Activities with instances, groups and subgroups in sponsor library
@@ -83,6 +104,26 @@ class Activities(BaseImporter):
     def __init__(self, api=None, metrics_inst=None):
         super().__init__(api=api, metrics_inst=metrics_inst)
         self._limit_import_to = None
+
+    def compare_properties(self, new, existing, properties_to_compare):
+        for prop_name in properties_to_compare:
+            if prop_name not in existing and prop_name.endswith("_uid"):
+                # For properties ending with _uid, the existing value is nested
+                existing_prop_name = prop_name[0:-4]
+                existing_value = existing.get(existing_prop_name, {}).get("uid")
+            else:
+                existing_value = existing.get(prop_name)
+
+            # Treat empty or "TBD" definitions as None to avoid unnecessary updates
+            if prop_name == "definition" and existing_value in NULL_DEFINITIONS:
+                existing_value = None
+            new_value = new.get(prop_name)
+            if existing_value != new_value:
+                self.log.debug(
+                    f"Difference found in property '{prop_name}': Existing='{existing_value}', New='{new_value}'"
+                )
+                return False
+        return True
 
     def limit_import_to(self, limit):
         if limit is not None:
@@ -165,37 +206,46 @@ class Activities(BaseImporter):
         self.terms_for_codelist_submval = result
 
     @open_file_async()
-    async def handle_activity_groups(self, csvfile, session):
+    async def handle_activity_groups_or_subgroups(self, csvfile, session, group_type):
         # Populate then activity groups in sponsor library
         csv_data = csv.DictReader(csvfile)
         api_tasks = []
 
+        if group_type == "group":
+            col_name = COL_GROUP
+            api_endpoint = ACTIVITY_GROUPS_PATH
+        elif group_type == "subgroup":
+            col_name = COL_SUBGROUP
+            api_endpoint = ACTIVITY_SUBGROUPS_PATH
+        else:
+            raise ValueError("group_type must be either 'group' or 'subgroup'")
+
         existing_rows = self.api.get_all_identifiers(
-            self.api.get_all_from_api(ACTIVITY_GROUPS_PATH),
+            self.api.get_all_from_api(api_endpoint),
             identifier="name",
             value="uid",
         )
 
-        unique_groups = {}
+        unique_items = {}
         for row in csv_data:
-            group_name = row["Assm. group"]
-            if group_name and group_name not in unique_groups:
-                unique_groups[group_name] = {
-                    "name": group_name,
-                    "name_sentence_case": group_name.lower(),
-                    "definition": "Definition not provided",
+            item_name = row[col_name].strip()
+            if item_name and item_name not in unique_items:
+                unique_items[item_name] = {
+                    "name": item_name,
+                    "name_sentence_case": item_name.lower(),
+                    "definition": None,
                     "library_name": "Sponsor",
                 }
 
-        for _key, itemdata in unique_groups.items():
+        for _key, itemdata in unique_items.items():
             data = {
-                "path": ACTIVITY_GROUPS_PATH,
-                "approve_path": ACTIVITY_GROUPS_PATH,
+                "path": api_endpoint,
+                "approve_path": api_endpoint,
                 "body": itemdata,
             }
             if not existing_rows.get(data["body"]["name"]):
                 self.log.info(
-                    f"Add activity group '{data['body']['name']}' to library '{data['body']['library_name']}'"
+                    f"Add activity {group_type} '{data['body']['name']}' to library '{data['body']['library_name']}'"
                 )
                 api_tasks.append(
                     self.api.post_then_approve(data=data, session=session, approve=True)
@@ -204,117 +254,7 @@ class Activities(BaseImporter):
                 # Already exists, skip.
                 # Do we need patch functionality here?
                 self.log.info(
-                    f"Item '{data['body']['name']}' already exists in library '{data['body']['library_name']}'"
-                )
-        await asyncio.gather(*api_tasks)
-
-    @open_file_async()
-    async def handle_activity_subgroups(self, csvfile, session):
-        # Populate then activity subgroups in sponsor library
-        csv_data = csv.DictReader(csvfile)
-
-        existing_groups = sample_from_dict(
-            self.api.get_all_identifiers(
-                self.api.get_all_from_api(ACTIVITY_GROUPS_PATH),
-                identifier="name",
-                value="uid",
-            ),
-            sample=10,
-        )
-
-        existing_sub_groups = {}
-
-        for item in self.api.get_all_from_api(ACTIVITY_SUBGROUPS_PATH):
-            existing_sub_groups[item["name"]] = {
-                "uid": item["uid"],
-                "activity_groups": item["activity_groups"],
-            }
-
-        api_tasks = []
-
-        unique_subgroups = {}
-
-        for row in csv_data:
-            group_name = row["Assm. group"]
-            subgroup_name = row["Assm. subgroup"]
-            if not group_name or not subgroup_name:
-                self.log.warning(f"Skipping incomplete row: {row}")
-                continue
-            if group_name not in existing_groups:
-                self.log.warning(
-                    f"Group name not found: '{group_name}', skipping row for: '{subgroup_name}'"
-                )
-                continue
-            if subgroup_name not in unique_subgroups:
-                self.log.info(
-                    f"New subgroup: '{subgroup_name}', in group: '{group_name}'"
-                )
-                unique_subgroups[subgroup_name] = {
-                    "name": subgroup_name,
-                    "name_sentence_case": subgroup_name.lower(),
-                    "library_name": "Sponsor",
-                    "activity_groups": [existing_groups[group_name]],
-                }
-            else:
-                existing_data = unique_subgroups[subgroup_name]
-                group_uid = existing_groups[group_name]
-                if group_uid not in existing_data["activity_groups"]:
-                    self.log.info(
-                        f"Adding subgroup: '{subgroup_name}' to group: '{group_name}'"
-                    )
-                    existing_data["activity_groups"].append(group_uid)
-                else:
-                    self.log.info(
-                        f"No changes: '{subgroup_name}' in group: '{group_name}'"
-                    )
-
-        for subgroup_name, item_data in unique_subgroups.items():
-            # Check if subgroup exists
-            if subgroup_name in existing_sub_groups:
-                existing_groups = set(
-                    item["uid"]
-                    for item in existing_sub_groups[subgroup_name]["activity_groups"]
-                )
-                if set(item_data["activity_groups"]) == existing_groups:
-                    self.log.info(
-                        f"Subgroup '{subgroup_name}' already has groups '{item_data['activity_groups']}'"
-                    )
-                    continue
-                data = {
-                    "path": ACTIVITY_SUBGROUPS_PATH,
-                    "patch_path": path_join(
-                        ACTIVITY_SUBGROUPS_PATH,
-                        existing_sub_groups[subgroup_name]["uid"],
-                    ),
-                    "new_path": path_join(
-                        ACTIVITY_SUBGROUPS_PATH,
-                        existing_sub_groups[subgroup_name]["uid"],
-                        "versions",
-                    ),
-                    "approve_path": ACTIVITY_SUBGROUPS_PATH,
-                    "body": item_data,
-                }
-                data["body"]["change_description"] = "Migration modification"
-                self.log.info(
-                    f"Patching subgroup '{subgroup_name}' to group '{group_name}'"
-                )
-                api_tasks.append(
-                    self.api.new_version_patch_then_approve(
-                        data=data, session=session, approve=True
-                    )
-                )
-            else:
-                # Create the new subgroup
-                data = {
-                    "path": ACTIVITY_SUBGROUPS_PATH,
-                    "approve_path": ACTIVITY_SUBGROUPS_PATH,
-                    "body": item_data,
-                }
-                self.log.info(
-                    f"Adding subgroup '{subgroup_name}' to groups '{group_name}'"
-                )
-                api_tasks.append(
-                    self.api.post_then_approve(data=data, session=session, approve=True)
+                    f"Activity {group_type} '{data['body']['name']}' already exists in library '{data['body']['library_name']}'"
                 )
         await asyncio.gather(*api_tasks)
 
@@ -332,11 +272,17 @@ class Activities(BaseImporter):
     def _are_activities_equal(self, old, new):
         existing_groupings = old["activity_groupings"]
         new_groupings = new["activity_groupings"]
+
+        # Treat empty or "TBD" definitions as None to avoid unnecessary updates
+        old_definition = old.get("definition")
+        if old_definition in NULL_DEFINITIONS:
+            old_definition = None
+
         return (
             old.get("nci_concept_id") == new.get("nci_concept_id")
             and old.get("is_data_collected") == new.get("is_data_collected")
             and old.get("name_sentence_case") == new.get("name_sentence_case")
-            and old.get("definition") == new.get("definition")
+            and old_definition == new.get("definition")
             and self._are_groupings_equal(existing_groupings, new_groupings)
         )
 
@@ -370,7 +316,7 @@ class Activities(BaseImporter):
                 "name_sentence_case": item["name_sentence_case"],
                 "is_data_collected": item["is_data_collected"],
                 "nci_concept_id": item["nci_concept_id"] or None,
-                "definition": item["definition"] or "TBD",
+                "definition": item["definition"] or None,
                 "activity_groupings": item["activity_groupings"],
                 "library_name": item["library_name"],
                 "status": item["status"],
@@ -381,9 +327,9 @@ class Activities(BaseImporter):
         unique_activities = {}
 
         for row in csv_data:
-            activity_name = row["activity"]
-            group_name = row["Assm. group"]
-            subgroup_name = row["Assm. subgroup"]
+            activity_name = row[COL_ACTIVITY].strip()
+            group_name = row[COL_GROUP].strip()
+            subgroup_name = row[COL_SUBGROUP].strip()
 
             if not activity_name or not group_name or not subgroup_name:
                 self.log.warning(f"Skipping incomplete row: {row}")
@@ -564,19 +510,20 @@ class Activities(BaseImporter):
             )
             new_parent_uid = new.get("parent_uid") if new.get("parent_uid") else None
             new_order = int(new.get("order")) if new.get("order") else None
-            try:
-                new_is_specific = map_boolean(
-                    new.get("is_domain_specific"), raise_exception=True
-                )
-            except ValueError:
-                new_is_specific = None
+            new_is_specific = map_boolean(new.get("is_domain_specific"), default=False)
+
+            # Treat empty or "TBD" definitions as None to avoid unnecessary updates
+            existing_definition = existing.get("definition")
+            if existing_definition in NULL_DEFINITIONS:
+                existing_definition = None
+
             result = (
                 existing_parent_uid == new_parent_uid
                 and existing.get("name") == new.get("name")
                 and existing.get("level") == new.get("level")
                 and existing.get("library_name") == new.get("library_name")
                 and existing.get("is_domain_specific") == new_is_specific
-                and existing.get("definition") == new.get("definition")
+                and existing_definition == new.get("definition")
                 and existing.get("order") == new_order
             )
             return result
@@ -675,7 +622,7 @@ class Activities(BaseImporter):
                     "level": 3,
                     "parent_uid": existing_rows.get(ac_2_level_name, {}).get("uid"),
                     "is_domain_specific": row[headers.index("DOMAIN_SPECIFIC")],
-                    "definition": row[headers.index("DEFINITION")] or "TBD",
+                    "definition": row[headers.index("DEFINITION")] or None,
                     "order": row[headers.index("ORDER")],
                     "library_name": "Sponsor",
                 },
@@ -695,7 +642,7 @@ class Activities(BaseImporter):
                         "level": 4,
                         "parent_uid": existing_rows.get(ac_3_level_name, {}).get("uid"),
                         "is_domain_specific": row[headers.index("DOMAIN_SPECIFIC")],
-                        "definition": row[headers.index("DEFINITION")] or "TBD",
+                        "definition": row[headers.index("DEFINITION")] or None,
                         "order": row[headers.index("ORDER")],
                         "library_name": "Sponsor",
                     },
@@ -724,7 +671,15 @@ class Activities(BaseImporter):
         for row in readCSV:
             for i in range(1, 4):
                 current_class_name = row[headers.index(f"LEVEL_{i}_CLASS")]
-                current_uid = existing_rows.get(current_class_name, {}).get("uid")
+                current_class = existing_rows.get(current_class_name)
+                if current_class is not None:
+                    current_uid = current_class.get("uid")
+                    current_parent_uid = (current_class.get("parent_class") or {}).get(
+                        "uid"
+                    )
+                else:
+                    current_uid = None
+                    current_parent_uid = None
                 parent_class_name = row[headers.index(f"LEVEL_{i-1}_CLASS")]
                 parent_uid = existing_rows.get(parent_class_name, {}).get("uid")
 
@@ -742,66 +697,57 @@ class Activities(BaseImporter):
                         "parent_uid": parent_uid,
                     },
                 }
-                self.log.info(
-                    f"Patch activity instance class '{current_class_name}' by connecting to parent '{parent_class_name}'"
-                )
-                response = await self.api.new_version_patch_then_approve(
-                    data=data, session=session, approve=True
-                )
-                if response:
-                    existing_rows[current_class_name] = response
+                if current_parent_uid == parent_uid:
+                    self.log.info(
+                        f"Activity instance class '{current_class_name}' already connected to parent '{parent_class_name}'"
+                    )
+                else:
+                    self.log.info(
+                        f"Patch activity instance class '{current_class_name}' by connecting to parent '{parent_class_name}'"
+                    )
+                    response = await self.api.new_version_patch_then_approve(
+                        data=data, session=session, approve=True
+                    )
+                    if response:
+                        existing_rows[current_class_name] = response
 
     def are_item_classes_equal(self, new, existing):
-        def are_instance_classes_equal():
-            _new = []
+        def are_instance_classes_covered():
+            _new = set()
             for i in new.get("activity_instance_classes") or []:
-                _new.append(
-                    {
-                        "name": i["name"],
-                        "mandatory": i["mandatory"],
-                        "is_adam_param_specific_enabled": i[
-                            "is_adam_param_specific_enabled"
-                        ],
-                    }
-                )
-            _new = sorted(_new, key=json.dumps)
+                _new.add(i["name"])
 
-            _existing = []
+            _existing = set()
             for i in existing.get("activity_instance_classes") or []:
-                _existing.append(
-                    {
-                        "name": i["name"],
-                        "mandatory": i["mandatory"],
-                        "is_adam_param_specific_enabled": i[
-                            "is_adam_param_specific_enabled"
-                        ],
-                    }
-                )
-            _existing = sorted(_existing, key=json.dumps)
+                _existing.add(i["name"])
 
-            return _new == _existing
+            return _new.issubset(_existing)
 
-        new_order = int(new.get("order")) if new.get("order") else None
-        result = (
-            existing.get("name") == new.get("name")
-            and existing.get("library_name") == new.get("library_name")
-            and existing.get("mandatory") == new.get("mandatory")
-            and existing.get("definition") == new.get("definition")
-            and existing.get("nci_concept_id") == new.get("nci_concept_id")
-            and existing.get("order") == new_order
-            and existing.get("role").get("uid") == new.get("role_uid")
-            and existing.get("data_type").get("uid") == new.get("data_type_uid")
-            and [codelist["uid"] for codelist in existing.get("codelists") or []]
-            == new.get("codelist_uids", [])
-            and are_instance_classes_equal()
-        )
-        return result
+        properties_to_compare = [
+            "name",
+            "display_name",
+            "library_name",
+            "mandatory",
+            "definition",
+            "nci_concept_id",
+            "order",
+            "role_uid",
+            "data_type_uid",
+        ]
+
+        if self.compare_properties(new, existing, properties_to_compare) is False:
+            self.log.debug("Difference found in basic properties")
+            return False
+        if not are_instance_classes_covered():
+            self.log.debug("Instance classes are not covered")
+            return False
+
+        return True
 
     @open_file_async()
     async def handle_activity_item_classes(self, csvfile, session):
         # Populate then activity item classes in sponsor library
-        readCSV = csv.reader(csvfile, delimiter=",")
-        headers = next(readCSV)
+        readCSV = csv.DictReader(csvfile, delimiter=",")
         api_tasks = []
 
         existing_rows = self.api.response_to_dict(
@@ -827,11 +773,11 @@ class Activities(BaseImporter):
 
         activity_item_data = {}
         for row in readCSV:
-            activity_instance_class_name = row[headers.index("ACTIVITY_INSTANCE_CLASS")]
+            activity_instance_class_name = row["ACTIVITY_INSTANCE_CLASS"]
             instance_class_uid = available_instance_classes.get(
                 activity_instance_class_name
             )
-            role = row[headers.index("SEMANTIC_ROLE")]
+            role = row["SEMANTIC_ROLE"]
             if role in semantic_roles:
                 role_uid = semantic_roles[role]
             else:
@@ -839,7 +785,7 @@ class Activities(BaseImporter):
                     f"The role ({role}) wasn't found for the following ActivityInstanceClass ({activity_instance_class_name})"
                 )
                 continue
-            data_type = row[headers.index("SEMANTIC_DATA_TYPE")]
+            data_type = row["SEMANTIC_DATA_TYPE"]
             if data_type in data_types:
                 data_type_uid = data_types[data_type]
             else:
@@ -847,7 +793,7 @@ class Activities(BaseImporter):
                     f"The data_type ({data_type}) wasn't found for the following ActivityInstanceClass ({activity_instance_class_name})"
                 )
                 continue
-            activity_item_class_name = row[headers.index("ACTIVITY_ITEM_CLASS")]
+            activity_item_class_name = row["ACTIVITY_ITEM_CLASS"]
             if instance_class_uid is None:
                 self.log.warning(
                     f"Activity instance class '{activity_instance_class_name}' "
@@ -855,53 +801,48 @@ class Activities(BaseImporter):
                 )
                 continue
 
-            codelist_uids = []
-            codelist_submission_values = [
-                value.strip()
-                for value in row[headers.index("CODELIST")].split(";")
-                if value.strip()
-            ]
-            for codelist_submission_value in codelist_submission_values:
-                _codelist = self.api.find_object_by_key(
-                    codelist_submission_value,
-                    "ct/codelists/attributes",
-                    "submission_value",
-                )
-                if _codelist:
-                    codelist_uids.append(_codelist["codelist_uid"])
-                else:
-                    self.log.warning(
-                        f"The codelist ({codelist_submission_value}) wasn't found for the following ActivityItemClass ({activity_item_class_name})"
-                    )
+            order = int(row["ORDER"]) if row["ORDER"] else None
 
             data = {
                 "path": ACTIVITY_ITEM_CLASSES_PATH,
                 "approve_path": ACTIVITY_ITEM_CLASSES_PATH,
                 "body": {
                     "name": activity_item_class_name,
-                    "order": row[headers.index("ORDER")],
-                    "definition": row[headers.index("DEFINITION")] or "TBD",
-                    "nci_concept_id": row[headers.index("NCI_C_CODE")] or None,
+                    "display_name": row["DISPLAY_LABEL"],
+                    "order": order,
+                    "definition": (
+                        row["DEFINITION"].strip() if row["DEFINITION"] else None
+                    ),
+                    "nci_concept_id": row["NCI_C_CODE"] or None,
                     "activity_instance_classes": [
                         {
                             "uid": instance_class_uid,
                             "name": activity_instance_class_name,
-                            "mandatory": map_boolean(row[headers.index("MANDATORY")]),
+                            "mandatory": map_boolean(row["MANDATORY"]),
                             "is_adam_param_specific_enabled": map_boolean(
-                                row[headers.index("IS_ADAM_PARAM_SPECIFIC_ENABLED")]
+                                row["IS_ADAM_PARAM_SPECIFIC_ENABLED"]
+                            ),
+                            "is_additional_optional": map_boolean(
+                                row["ADDITIONAL_OPTIONAL_ACTIVITY_ITEM"]
+                            ),
+                            "is_default_linked": map_boolean(
+                                row["DEFAULT_LINKED_TO_INSTANCE"]
                             ),
                         }
                     ],
                     "activity_instance_class_names": [activity_instance_class_name],
                     "role_uid": role_uid,
                     "data_type_uid": data_type_uid,
-                    "codelist_uids": codelist_uids,
                     "library_name": "Sponsor",
                 },
             }
             if activity_item_class_name not in activity_item_data:
                 activity_item_data[activity_item_class_name] = data
             else:
+                self.log.info(
+                    f"Trying to link {activity_item_class_name} "
+                    f"to additional instance class {activity_instance_class_name}"
+                )
                 current_instance_classes = (
                     activity_item_data[activity_item_class_name]["body"][
                         "activity_instance_classes"
@@ -913,21 +854,21 @@ class Activities(BaseImporter):
                         {
                             "uid": instance_class_uid,
                             "name": activity_instance_class_name,
-                            "mandatory": map_boolean(row[headers.index("MANDATORY")]),
+                            "mandatory": map_boolean(row["MANDATORY"]),
                             "is_adam_param_specific_enabled": map_boolean(
-                                row[headers.index("IS_ADAM_PARAM_SPECIFIC_ENABLED")]
+                                row["IS_ADAM_PARAM_SPECIFIC_ENABLED"]
+                            ),
+                            "is_additional_optional": map_boolean(
+                                row["ADDITIONAL_OPTIONAL_ACTIVITY_ITEM"]
+                            ),
+                            "is_default_linked": map_boolean(
+                                row["DEFAULT_LINKED_TO_INSTANCE"]
                             ),
                         }
                     )
                     activity_item_data[activity_item_class_name]["body"][
                         "activity_instance_class_names"
                     ].append(activity_instance_class_name)
-
-            if activity_item_class_name in activity_item_data:
-                self.log.info(
-                    f"Trying to link {activity_item_class_name} "
-                    f"to additional instance class {activity_instance_class_name}"
-                )
 
         for item_name, item_data in activity_item_data.items():
             if item_name not in existing_rows:
@@ -1013,30 +954,41 @@ class Activities(BaseImporter):
         return new_groupings == old_groupings
 
     def are_instances_equal(self, new, existing):
-        result = (
-            existing.get("activity_instance_class").get("uid")
-            == new.get("activity_instance_class_uid")
-            and existing.get("library_name") == new.get("library_name")
-            and existing.get("name_sentence_case") == new.get("name_sentence_case")
-            and existing.get("definition") == new.get("definition")
-            and existing.get("adam_param_code") == new.get("adam_param_code")
-            and existing.get("legacy_description") == new.get("legacy_description")
-            and existing.get("topic_code") == new.get("topic_code")
-            and existing.get("nci_concept_id") == new.get("nci_concept_id")
-            and existing.get("is_required_for_activity")
-            == new.get("is_required_for_activity")
-            and existing.get("is_default_selected_for_activity")
-            == new.get("is_default_selected_for_activity")
-            and existing.get("is_data_sharing") == new.get("is_data_sharing")
-            and existing.get("is_legacy_usage") == new.get("is_legacy_usage")
-            and self.compare_instance_items(
-                existing["activity_items"], new["activity_items"]
-            )
-            and self.compare_instance_groupings(
-                existing["activity_groupings"], new["activity_groupings"]
-            )
-        )
-        return result
+        # Define properties to compare directly
+        properties_to_compare = [
+            "activity_instance_class_uid",
+            "library_name",
+            "name_sentence_case",
+            "definition",
+            "adam_param_code",
+            "legacy_description",
+            "topic_code",
+            "nci_concept_id",
+            "is_required_for_activity",
+            "is_default_selected_for_activity",
+            "is_data_sharing",
+            "is_legacy_usage",
+        ]
+
+        # Compare all properties
+        if self.compare_properties(new, existing, properties_to_compare) is False:
+            self.log.debug("Difference found in simple properties")
+            return False
+
+        # Compare complex structures
+        if not self.compare_instance_items(
+            existing["activity_items"], new["activity_items"]
+        ):
+            self.log.debug("Difference found in activity_items")
+            return False
+
+        if not self.compare_instance_groupings(
+            existing["activity_groupings"], new["activity_groupings"]
+        ):
+            self.log.debug("Difference found in activity_groupings")
+            return False
+
+        return True
 
     @open_file_async()
     async def handle_activity_instances(self, csvfile, session):
@@ -1107,10 +1059,10 @@ class Activities(BaseImporter):
         file_data = sample_from_list(file_data, sample=10)
         all_data = {}
         for row in file_data:
-            activity_instance_name = row["activity_instance"]
-            activity = row["activity"]
-            group = row["Assm. group"]
-            subgroup = row["Assm. subgroup"]
+            activity_instance_name = row[COL_ACTIVITY_INSTANCE].strip()
+            activity = row[COL_ACTIVITY].strip()
+            group = row[COL_GROUP].strip()
+            subgroup = row[COL_SUBGROUP].strip()
             if not activity or not group or not subgroup:
                 self.log.warning(f"Skipping incomplete row: {row}")
                 continue
@@ -1143,11 +1095,11 @@ class Activities(BaseImporter):
                     self.log.warning(f"Subgroup '{subgroup}' not found")
                 continue
 
-            domain = row["GENERAL_DOMAIN_CLASS"]
-            sdtm_domain = row["SDTM_DOMAIN"]
+            domain = row[COL_GENERAL_DOMAIN_CLASS]
+            sdtm_domain = row[COL_SDTM_DOMAIN]
 
             # find related Activity Instance Class
-            sub_domain_class = row["sub_domain_class"]
+            sub_domain_class = row[COL_SUB_DOMAIN_CLASS]
             instance_class_name = sub_domain_class.title().replace(" ", "")
             activity_instance_class_uid = all_activity_instance_classes.get(
                 instance_class_name
@@ -1160,24 +1112,24 @@ class Activities(BaseImporter):
                 continue
 
             item_cols = [
-                "specimen",
-                "SDTM_DOMAIN",
-                "sdtm_cat",
-                "sdtm_sub_cat",
-                "unit_dimension",
-                "laterality",
-                "location",
-                "std_unit",
-                "sdtm_variable",
-                "sdtm_variable_name",
+                COL_SPECIMEN,
+                COL_SDTM_DOMAIN,
+                COL_SDTM_CAT,
+                COL_SDTM_SUB_CAT,
+                COL_UNIT_DIMENSION,
+                COL_LATERALITY,
+                COL_LOCATION,
+                COL_STD_UNIT,
+                COL_SDTM_VARIABLE,
+                COL_SDTM_VARIABLE_NAME,
             ]
             item_data = []
             for col in item_cols:
                 value = row[col]
-                if col == "sdtm_variable_name":
-                    sdtm_codelist = row["stdm_codelist_name"]
+                if col == COL_SDTM_VARIABLE_NAME:
+                    sdtm_codelist = row[COL_SDTM_CODELIST_NAME]
                 else:
-                    sdtm_codelist = row["stdm_codelist"]
+                    sdtm_codelist = row[COL_SDTM_CODELIST]
                 if not value:
                     continue
                 if "|" in value:
@@ -1215,24 +1167,24 @@ class Activities(BaseImporter):
                     "activity_instance_class_uid": activity_instance_class_uid,
                     "name": activity_instance_name,
                     "name_sentence_case": activity_instance_name.lower(),
-                    "definition": row.get("definition") or "TBD",
-                    "adam_param_code": row["adam_param_code"] or None,
+                    "definition": row.get(COL_DEFINITION) or None,
+                    "adam_param_code": row[COL_ADAM_PARAM_CODE] or None,
                     "activity_groupings": activity_groupings,
                     "activity_items": item_data,
-                    "legacy_description": row["legacy_description"] or None,
-                    "topic_code": row["TOPIC_CD"] or None,
+                    "legacy_description": row[COL_LEGACY_DESCRIPTION] or None,
+                    "topic_code": row[COL_TOPIC_CODE] or None,
                     "library_name": "Sponsor",
-                    "nci_concept_id": row.get("nci_concept_id") or None,
+                    "nci_concept_id": row.get(COL_NCI_CONCEPT_ID) or None,
                     "is_required_for_activity": map_boolean(
-                        row.get("is_required_for_activity")
+                        row.get(COL_IS_REQUIRED_FOR_ACTIVITY)
                     ),
                     "is_default_selected_for_activity": map_boolean(
-                        row.get("is_default_selected_for_activity")
+                        row.get(COL_IS_DEFAULT_SELECTED_FOR_ACTIVITY)
                     ),
                     "is_data_sharing": map_boolean(
-                        row.get("is_data_sharing"), default=True
+                        row.get(COL_IS_DATA_SHARING), default=True
                     ),
-                    "is_legacy_usage": map_boolean(row.get("is_legacy_usage")),
+                    "is_legacy_usage": map_boolean(row.get(COL_IS_LEGACY_USAGE)),
                 },
             }
             if activity_instance_name not in all_data:
@@ -1324,29 +1276,29 @@ class Activities(BaseImporter):
 
     # Get the item class for combination of column name and domain
     def _get_item_class(self, col, domain):
-        if col in ("specimen", "location", "laterality", "unit_dimension"):
+        if col in (COL_SPECIMEN, COL_LOCATION, COL_LATERALITY, COL_UNIT_DIMENSION):
             return col
-        if col == "SDTM_DOMAIN":
+        if col == COL_SDTM_DOMAIN:
             return "domain"
-        if col == "sdtm_cat":
+        if col == COL_SDTM_CAT:
             if domain == "FINDINGS":
                 return "finding_category"
             if domain == "EVENTS":
                 return "event_category"
             if domain == "INTERVENTIONS":
                 return "intervention_category"
-        if col == "sdtm_sub_cat":
+        if col == COL_SDTM_SUB_CAT:
             if domain == "FINDINGS":
                 return "finding_subcategory"
             if domain == "EVENTS":
                 return "event_subcategory"
             if domain == "INTERVENTIONS":
                 return "intervention_subcategory"
-        if col == "sdtm_variable" and domain == "FINDINGS":
+        if col == COL_SDTM_VARIABLE and domain == "FINDINGS":
             return "test_code"
-        if col == "sdtm_variable_name" and domain == "FINDINGS":
+        if col == COL_SDTM_VARIABLE_NAME and domain == "FINDINGS":
             return "test_name"
-        if col == "std_unit":
+        if col == COL_STD_UNIT:
             return "standard_unit"
 
     # Helper to create a single activity item
@@ -1391,7 +1343,7 @@ class Activities(BaseImporter):
                     )
                 )
 
-                if column in ["sdtm_variable", "sdtm_variable_name"]:
+                if column in [COL_SDTM_VARIABLE, COL_SDTM_VARIABLE_NAME]:
                     # SDTM variable, the codelist is given by the "sdtm_codelist" or "stdm_codelist_name" column
                     codelist = codelists_with_terms.get(sdtm_codelist)
                     if codelist is None:
@@ -1428,7 +1380,7 @@ class Activities(BaseImporter):
                     for cl_submval, codelist in codelists_with_terms.items():
                         # For sdtm_cat and sdtm_sub_cat, make sure to use the appropriate codelist,
                         # for example DECAT for domain DE.
-                        if column in ("sdtm_cat", "sdtm_sub_cat"):
+                        if column in (COL_SDTM_CAT, COL_SDTM_SUB_CAT):
                             if not cl_submval.startswith(sdtm_domain):
                                 continue
                         term = next(
@@ -1548,8 +1500,8 @@ class Activities(BaseImporter):
                 self._limit_import_to is None
                 or ACTIVITY_GROUPS in self._limit_import_to
             ):
-                await self.handle_activity_groups(
-                    mdr_migration_activity_instances, session
+                await self.handle_activity_groups_or_subgroups(
+                    mdr_migration_activity_instances, session, "group"
                 )
             else:
                 self.log.info("Skipping activity groups import")
@@ -1559,8 +1511,8 @@ class Activities(BaseImporter):
                 self._limit_import_to is None
                 or ACTIVITY_SUBGROUPS in self._limit_import_to
             ):
-                await self.handle_activity_subgroups(
-                    mdr_migration_activity_instances, session
+                await self.handle_activity_groups_or_subgroups(
+                    mdr_migration_activity_instances, session, "subgroup"
                 )
             else:
                 self.log.info("Skipping activity subgroups import")

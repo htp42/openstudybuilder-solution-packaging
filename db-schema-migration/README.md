@@ -305,6 +305,7 @@ python upload_to_wiki.py correction_change_logs/summary.correction.md
 ```
 
 # Extracting test data
+Start by looking at the [example queries](tests/extract_queries.md).
 Test data can be extracted as Cypher statements using `apoc.export.cyper.query()`.
 
 Example, extract a small set of terms with their names and attributes:
@@ -320,7 +321,7 @@ RETURN cypherStatements;
 Create a file in `test/data` called `db_before_migration_{number}.py`
 with a number that matches the migration script you are working on.
 
-Copy the Cypher statements out put by the extract queries into strings.
+Copy the Cypher statements output by the extract queries into strings.
 Then join them together to one string called `TEST_DATA`:
 
 ```py

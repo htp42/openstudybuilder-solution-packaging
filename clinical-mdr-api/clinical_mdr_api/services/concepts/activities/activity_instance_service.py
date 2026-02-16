@@ -24,9 +24,6 @@ from clinical_mdr_api.models.concepts.activities.activity_instance import (
     SimplifiedActivityItem,
 )
 from clinical_mdr_api.models.concepts.activities.activity_item import (
-    CompactOdmForm,
-    CompactOdmItem,
-    CompactOdmItemGroup,
     CompactUnitDefinition,
 )
 from clinical_mdr_api.services.concepts import constants
@@ -41,6 +38,11 @@ class ActivityInstanceService(ConceptGenericService[ActivityInstanceAR]):
     aggregate_class = ActivityInstanceAR
     repository_interface = ActivityInstanceRepository
     version_class = ActivityInstanceVersion
+
+    def _get_parent_class_uid(self, uid: str) -> str | None:
+        """Get parent class UID for a given activity instance class UID"""
+        parent = self._repos.activity_instance_class_repository.get_parent_class(uid)
+        return parent[0] if parent else None
 
     def _transform_aggregate_root_to_pydantic_model(
         self, item_ar: ActivityInstanceAR
@@ -83,9 +85,6 @@ class ActivityInstanceService(ConceptGenericService[ActivityInstanceAR]):
                         activity_item_class_name=None,
                         ct_terms=ct_terms,
                         unit_definitions=unit_definitions,
-                        odm_form=CompactOdmForm(uid=item.odm_form_uid),
-                        odm_item_group=CompactOdmItemGroup(uid=item.odm_item_group_uid),
-                        odm_item=CompactOdmItem(uid=item.odm_item_uid),
                     )
                 )
 
@@ -133,9 +132,6 @@ class ActivityInstanceService(ConceptGenericService[ActivityInstanceAR]):
             concept_exists_by_library_and_property_value_callback=self._repos.activity_instance_repository.latest_concept_in_library_exists_by_property_value,
             ct_term_exists_by_uid_callback=self._repos.ct_term_name_repository.term_exists,
             unit_definition_exists_by_uid_callback=self._repos.unit_definition_repository.final_concept_exists,
-            get_odm_form_by_uid_callback=self._repos.odm_form_repository.find_by_uid_2,
-            get_odm_item_group_by_uid_callback=self._repos.odm_item_group_repository.find_by_uid_2,
-            get_odm_item_by_uid_callback=self._repos.odm_item_repository.find_by_uid_2,
             get_final_activity_value_by_uid_callback=self._repos.activity_repository.final_concept_value,
             activity_group_exists=self._repos.activity_group_repository.final_concept_exists,
             activity_subgroup_exists=self._repos.activity_subgroup_repository.final_concept_exists,
@@ -147,6 +143,8 @@ class ActivityInstanceService(ConceptGenericService[ActivityInstanceAR]):
             find_activity_instance_class_by_uid_callback=self._repos.activity_instance_class_repository.find_by_uid_2,
             preview=preview,
             get_dimension_names_by_unit_definition_uids=self._repos.unit_definition_repository.get_dimension_names_by_unit_definition_uids,
+            get_parent_class_uid_callback=self._get_parent_class_uid,
+            strict_mode=getattr(concept_input, "strict_mode", False),
         )
 
     def _edit_aggregate(
@@ -206,11 +204,6 @@ class ActivityInstanceService(ConceptGenericService[ActivityInstanceAR]):
                             activity_item_class_name=None,
                             ct_terms=ct_terms,
                             unit_definitions=unit_definitions,
-                            odm_form=CompactOdmForm(uid=activity_item.odm_form_uid),
-                            odm_item_group=CompactOdmItemGroup(
-                                uid=activity_item.odm_item_group_uid
-                            ),
-                            odm_item=CompactOdmItem(uid=activity_item.odm_item_uid),
                         )
                     )
         else:
@@ -283,15 +276,18 @@ class ActivityInstanceService(ConceptGenericService[ActivityInstanceAR]):
             concept_exists_by_library_and_property_value_callback=self._repos.activity_instance_repository.latest_concept_in_library_exists_by_property_value,
             ct_term_exists_by_uid_callback=self._repos.ct_term_name_repository.term_exists,
             unit_definition_exists_by_uid_callback=self._repos.unit_definition_repository.final_concept_exists,
-            get_odm_form_by_uid_callback=self._repos.odm_form_repository.find_by_uid_2,
-            get_odm_item_group_by_uid_callback=self._repos.odm_item_group_repository.find_by_uid_2,
-            get_odm_item_by_uid_callback=self._repos.odm_item_repository.find_by_uid_2,
             get_final_activity_value_by_uid_callback=self._repos.activity_repository.final_concept_value,
             activity_group_exists=self._repos.activity_group_repository.final_concept_exists,
             activity_subgroup_exists=self._repos.activity_subgroup_repository.final_concept_exists,
             find_activity_item_class_by_uid_callback=self._repos.activity_item_class_repository.find_by_uid_2,
             find_activity_instance_class_by_uid_callback=self._repos.activity_instance_class_repository.find_by_uid_2,
             get_dimension_names_by_unit_definition_uids=self._repos.unit_definition_repository.get_dimension_names_by_unit_definition_uids,
+            get_parent_class_uid_callback=self._get_parent_class_uid,
+            strict_mode=(
+                concept_edit_input.strict_mode
+                if concept_edit_input.strict_mode is not None
+                else False
+            ),
             perform_validation=perform_validation,
         )
         return item

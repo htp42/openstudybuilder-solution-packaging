@@ -1,6 +1,6 @@
 <template>
-  <div>
-    <v-row v-if="editMode">
+  <div class="">
+    <v-row v-if="editMode" class="d-flex align-center">
       <v-select
         v-model="element"
         :items="studyElements"
@@ -10,11 +10,23 @@
         density="compact"
         clearable
         class="mt-6 cellWidth"
+        variant="outlined"
+        rounded="lg"
         @update:model-value="updateElement"
         @click:clear="deleteElement"
       />
+      <v-btn
+        v-if="props.transitionRulesMode && element"
+        variant="outlined"
+        class="ml-2 text-none"
+        rounded="lg"
+        hide-details
+        @click="openTransitionRuleForm"
+      >
+        <span>{{ truncatedTransitionRule }}</span>
+      </v-btn>
     </v-row>
-    <div v-else>
+    <div v-else class="d-flex justify-space-between">
       <v-tooltip bottom>
         <template #activator="{ props }">
           <span v-bind="props">
@@ -27,142 +39,214 @@
             >
               {{ getElementShortName(element) }}
             </router-link>
-            <div v-else>{{ getElementShortName(element) }}</div>
           </span>
         </template>
         <span>{{ getElementName(element) }}</span>
       </v-tooltip>
+      <v-tooltip v-if="props.transitionRulesMode" bottom>
+        <template #activator="{ props }">
+          <span v-bind="props">{{ truncatedTransitionRule }}</span>
+        </template>
+        <span>{{ cell?.transition_rule }}</span>
+      </v-tooltip>
     </div>
+    <SimpleFormDialog
+      :title="$t('ElementDropdownList.transition_rule_form_title')"
+      :open="showTransitionRuleForm"
+      :action-label="$t('_global.accept')"
+      @close="closeTransitionRuleForm"
+      @submit="setTransitionRule"
+    >
+      <template #body>
+        <v-form ref="observer">
+          <v-textarea
+            v-model="transitionRule"
+            :rules="[(value) => formRules.max(value, 200)]"
+            variant="outlined"
+            density="compact"
+            rounded="lg"
+            hide-details="auto"
+          />
+        </v-form>
+      </template>
+    </SimpleFormDialog>
   </div>
 </template>
-<script>
-import { useStudiesGeneralStore } from '@/stores/studies-general'
-import { useAccessGuard } from '@/composables/accessGuard'
 
-export default {
-  props: {
-    epoch: {
-      type: String,
-      default: '',
-    },
-    arm: {
-      type: String,
-      default: '',
-    },
-    armBranch: {
-      type: String,
-      default: '',
-    },
-    studyElements: {
-      type: Array,
-      default: () => [],
-    },
-    cells: {
-      type: Object,
-      default: undefined,
-    },
-    editMode: Boolean,
-    saveObject: {
-      type: Boolean,
-      default: undefined,
-    },
+<script setup>
+import { computed, inject, onMounted, ref, watch } from 'vue'
+import { useStudiesGeneralStore } from '@/stores/studies-general'
+import SimpleFormDialog from '@/components/tools/SimpleFormDialog.vue'
+
+const props = defineProps({
+  epoch: {
+    type: String,
+    default: '',
   },
-  emits: ['addToObject'],
-  setup() {
-    const studiesGeneralStore = useStudiesGeneralStore()
-    return {
-      ...useAccessGuard(),
-      selectedStudy: studiesGeneralStore.selectedStudy,
+  arm: {
+    type: String,
+    default: '',
+  },
+  armBranch: {
+    type: String,
+    default: '',
+  },
+  studyElements: {
+    type: Array,
+    default: () => [],
+  },
+  cells: {
+    type: Object,
+    default: undefined,
+  },
+  editMode: Boolean,
+  transitionRulesMode: Boolean,
+  saveObject: {
+    type: Boolean,
+    default: undefined,
+  },
+})
+const emit = defineEmits(['addToObject'])
+const formRules = inject('formRules')
+
+const studiesGeneralStore = useStudiesGeneralStore()
+
+const selectedStudy = computed(() => studiesGeneralStore.selectedStudy)
+const truncatedTransitionRule = computed(() => {
+  let text
+  if (props.editMode) {
+    text = transitionRule.value
+  } else {
+    if (!cell.value) return ''
+    text = cell.value.transition_rule
+  }
+  if (text < 5) {
+    return text
+  }
+  return text.substring(0, 5) + '...'
+})
+
+const element = ref(null)
+const cell = ref({})
+const data = ref({})
+const showTransitionRuleForm = ref(false)
+const transitionRule = ref('')
+
+watch(
+  () => props.saveObject,
+  (value) => {
+    if (value) {
+      emit('addToObject', data.value)
+      data.value = {}
     }
-  },
-  data() {
-    return {
-      element: '',
-      cell: {},
-      data: {},
+  }
+)
+watch(
+  () => props.cells,
+  (value) => {
+    cell.value = value.data.find(findCell)
+    if (cell.value) {
+      element.value = cell.value.study_element_uid
     }
-  },
-  watch: {
-    saveObject(value) {
-      if (value) {
-        this.$emit('addToObject', this.data)
-        this.data = {}
+  }
+)
+
+watch(
+  () => props.editMode,
+  (value) => {
+    if (value) {
+      if (cell.value) {
+        transitionRule.value = cell.value.transition_rule
       }
-    },
-    cells(value) {
-      this.cell = value.data.find(this.findCell)
-      if (this.cell) {
-        this.element = this.cell.study_element_uid
-      }
-    },
-  },
-  mounted() {
-    if (this.cells.data) {
-      this.cell = this.cells.data.find(this.findCell)
     }
-    if (this.cell) {
-      this.element = this.cell.study_element_uid
+  }
+)
+
+onMounted(() => {
+  if (props.cells.data) {
+    cell.value = props.cells.data.find(findCell)
+  }
+  if (cell.value) {
+    element.value = cell.value.study_element_uid
+  }
+})
+
+function updateElement() {
+  if (cell.value && element.value) {
+    data.value = {
+      method: 'PATCH',
+      content: {
+        study_element_uid: element.value,
+        study_design_cell_uid: cell.value.design_cell_uid,
+        transition_rule: transitionRule.value,
+      },
     }
-  },
-  methods: {
-    updateElement() {
-      if (this.cell && this.element) {
-        this.data = {
-          method: 'PATCH',
-          content: {
-            study_element_uid: this.element,
-            study_design_cell_uid: this.cell.design_cell_uid,
-          },
-        }
-        this.armBranch
-          ? (this.data.study_branch_arm_uid = this.armBranch)
-          : (this.data.study_arm_uid = this.arm)
-      } else if (this.element) {
-        this.data = {
-          method: 'POST',
-          content: {
-            study_arm_uid: this.arm,
-            study_epoch_uid: this.epoch,
-            study_element_uid: this.element,
-            study_branch_arm_uid: this.armBranch,
-          },
-        }
-      }
-    },
-    deleteElement() {
-      if (this.cell) {
-        this.data = {
-          method: 'DELETE',
-          content: {
-            uid: this.cell.design_cell_uid,
-          },
-        }
-        this.cell = undefined
-      }
-    },
-    findCell(cell) {
-      return (
-        cell.study_epoch_uid === this.epoch &&
-        (cell.study_arm_uid
-          ? cell.study_arm_uid === this.arm
-          : cell.study_branch_arm_uid === this.armBranch)
-      )
-    },
-    getElementShortName(elementUid) {
-      const element = this.studyElements.find(
-        (el) => el.element_uid === elementUid
-      )
-      return element ? element.short_name : ''
-    },
-    getElementName(elementUid) {
-      const element = this.studyElements.find(
-        (el) => el.element_uid === elementUid
-      )
-      return element ? element.name : ''
-    },
-  },
+    props.armBranch
+      ? (data.value.study_branch_arm_uid = props.armBranch)
+      : (data.value.study_arm_uid = props.arm)
+  } else if (element.value) {
+    data.value = {
+      method: 'POST',
+      content: {
+        study_arm_uid: props.arm,
+        study_epoch_uid: props.epoch,
+        study_element_uid: element.value,
+        study_branch_arm_uid: props.armBranch,
+        transition_rule: transitionRule.value,
+      },
+    }
+  }
+}
+
+function deleteElement() {
+  if (cell.value) {
+    data.value = {
+      method: 'DELETE',
+      content: {
+        uid: cell.value.design_cell_uid,
+      },
+    }
+    cell.value = undefined
+  }
+}
+function findCell(cell) {
+  return (
+    cell.study_epoch_uid === props.epoch &&
+    (cell.study_arm_uid
+      ? cell.study_arm_uid === props.arm
+      : cell.study_branch_arm_uid === props.armBranch)
+  )
+}
+function getElementShortName(elementUid) {
+  const element = props.studyElements.find(
+    (el) => el.element_uid === elementUid
+  )
+  return element ? element.short_name : ''
+}
+function getElementName(elementUid) {
+  const element = props.studyElements.find(
+    (el) => el.element_uid === elementUid
+  )
+  return element ? element.name : ''
+}
+
+function openTransitionRuleForm() {
+  showTransitionRuleForm.value = true
+}
+
+function closeTransitionRuleForm() {
+  showTransitionRuleForm.value = false
+}
+
+function setTransitionRule() {
+  if (cell.value) {
+    cell.value.transition_rule = transitionRule.value
+  }
+  updateElement()
+  closeTransitionRuleForm()
 }
 </script>
+
 <style scoped>
 .cellWidth {
   max-width: 250px;

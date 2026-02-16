@@ -58,8 +58,8 @@ Feature: Studies - Study List - Study List
     @smoke_test
     Scenario: [Table][Search][Positive case] User must be able to search in table
         Given The '/studies/select_or_add_study/active' page is opened
-        When The user is searching for 'CDISC DEV' value
-        Then The results are shown in the table
+        And User waits for table to load
+        Then User searches for 'CDISC DEV'
 
     Scenario: [Export][CSV] User must be able to export the data in CSV format
         Given The '/studies/select_or_add_study/active' page is opened
@@ -91,5 +91,6 @@ Feature: Studies - Study List - Study List
     Scenario: [Create][Positive case] User must be able to add a new Study
         Given The '/studies/select_or_add_study/active' page is opened
         When A new study is added
+        And Form save button is clicked
         And Study is found
         Then The study is visible within the table

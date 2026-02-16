@@ -292,8 +292,13 @@ class StudyEndpointSelectionService(StudySelectionMixin):
         finally:
             repos.close()
 
-    def non_transactional_make_selection_create_endpoint(
-        self, study_uid: str, selection_create_input: StudySelectionEndpointCreateInput
+    @ensure_transaction(db)
+    def make_selection_create_endpoint(
+        self,
+        study_uid: str,
+        selection_create_input: (
+            StudySelectionEndpointCreateInput | StudySelectionEndpointInput
+        ),
     ) -> StudySelectionEndpoint:
         repos = self._repos
         try:
@@ -427,14 +432,6 @@ class StudyEndpointSelectionService(StudySelectionMixin):
         finally:
             repos.close()
 
-    @db.transaction
-    def make_selection_create_endpoint(
-        self, study_uid: str, selection_create_input: StudySelectionEndpointCreateInput
-    ) -> StudySelectionEndpoint:
-        return self.non_transactional_make_selection_create_endpoint(
-            study_uid, selection_create_input
-        )
-
     @ensure_transaction(db)
     def batch_select_endpoint_template(
         self,
@@ -542,7 +539,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                         if template_input.parameter_terms is not None
                         else []
                     )
-                    new_selection = self.non_transactional_make_selection_create_endpoint(
+                    new_selection = self.make_selection_create_endpoint(
                         study_uid=study_uid,
                         selection_create_input=StudySelectionEndpointCreateInput(
                             endpoint_data=EndpointCreateInput(

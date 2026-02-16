@@ -136,6 +136,12 @@ class ActivityVO(ConceptVO):
             msg=f"Following Activities already have the provided synonyms: {existing_synonyms_with_uids}",
         )
 
+        if library_name == "Sponsor":
+            BusinessLogicException.raise_if_not(
+                self.activity_groupings,
+                msg="Sponsor activities must have at least one grouping.",
+            )
+
         for activity_grouping in self.activity_groupings:
             BusinessLogicException.raise_if_not(
                 activity_subgroup_exists(activity_grouping.activity_subgroup_uid),

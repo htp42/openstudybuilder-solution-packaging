@@ -47,5 +47,6 @@ def test_get_study_protocol_title_information(api_client):
     assert res["eudract_id"] == "2019-123456-42"
     assert res["universal_trial_number_utn"] is None
     assert res["trial_phase_code"] is None
+    assert res["development_stage_code"] is None
     assert res["ind_number"] == "ind-number-777"
     assert res["substance_name"] == "name"

@@ -228,7 +228,7 @@ def study_activities(request, tst_study) -> list[StudySelectionActivity]:
     activity_group = TestUtils.create_activity_group(name="activity_group_test")
 
     activity_subgroup = TestUtils.create_activity_subgroup(
-        name="activity_subgroup_test", activity_groups=[activity_group.uid]
+        name="activity_subgroup_test"
     )
 
     activities_all = []
@@ -257,7 +257,7 @@ def study_activities(request, tst_study) -> list[StudySelectionActivity]:
 def study_visits(request, tst_study, study_activities) -> list[StudyVisit]:
     general_activity_group = TestUtils.create_activity_group(name="General")
     randomisation_activity_subgroup = TestUtils.create_activity_subgroup(
-        name="Randomisation", activity_groups=[general_activity_group.uid]
+        name="Randomisation"
     )
     randomized_activity = TestUtils.create_activity(
         name="Randomized",

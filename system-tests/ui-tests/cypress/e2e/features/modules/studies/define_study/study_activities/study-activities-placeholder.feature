@@ -10,6 +10,7 @@ Feature: Studies - Define Study - Study Activities - Study Activities Placeholde
         When Study activity add button is clicked
         And Activity from placeholder is selected
         And Form continue button is clicked
+        And User selects option to create placeholder without submitting
         When Activity placeholder data is filled in
         And Selected study id is saved
         And Form save button is clicked
@@ -23,6 +24,7 @@ Feature: Studies - Define Study - Study Activities - Study Activities Placeholde
         And Activity placeholder is searched for
         And The existing activity request is selected
         And Form save button is clicked
+        And The form is no longer available
         And Activity placeholder is found
         And The 'Edit' option is clicked from the three dot menu list
         And The study activity request is edited
@@ -40,6 +42,7 @@ Feature: Studies - Define Study - Study Activities - Study Activities Placeholde
         When Study activity add button is clicked
         And Activity from placeholder is selected
         And Form continue button is clicked
+        And User selects option to create placeholder without submitting
         When Activity placeholder data is filled in
         And Selected study id is saved
         And Form save button is clicked
@@ -52,6 +55,7 @@ Feature: Studies - Define Study - Study Activities - Study Activities Placeholde
         And Activity placeholder is searched for
         And The existing activity request is selected
         And Form save button is clicked
+        And The form is no longer available
         And Activity placeholder is found
         And The 'Edit' option is clicked from the three dot menu list
         And The study activity request is edited
@@ -69,6 +73,7 @@ Feature: Studies - Define Study - Study Activities - Study Activities Placeholde
         When Study activity add button is clicked
         And Activity from placeholder is selected
         And Form continue button is clicked
+        And User selects option to create placeholder without submitting
         When Activity placeholder data is filled in
         And Selected study id is saved
         And Form save button is clicked
@@ -81,6 +86,7 @@ Feature: Studies - Define Study - Study Activities - Study Activities Placeholde
         And Activity placeholder is searched for
         And The existing activity request is selected
         And Form save button is clicked
+        And The form is no longer available
         And Activity placeholder is found
         And The 'Edit' option is clicked from the three dot menu list
         And The study activity request is edited
@@ -98,6 +104,7 @@ Feature: Studies - Define Study - Study Activities - Study Activities Placeholde
         When Study activity add button is clicked
         And Activity from placeholder is selected
         And Form continue button is clicked
+        And User selects option to create placeholder without submitting
         When Activity placeholder data is filled in
         And Selected study id is saved
         And Form save button is clicked
@@ -111,6 +118,7 @@ Feature: Studies - Define Study - Study Activities - Study Activities Placeholde
         And Activity placeholder is searched for
         And The existing activity request is selected
         And Form save button is clicked
+        And The form is no longer available
         And User waits for table to load
         And Activity placeholder is found
         And The 'Edit' option is clicked from the three dot menu list
@@ -125,6 +133,7 @@ Feature: Studies - Define Study - Study Activities - Study Activities Placeholde
         When Study activity add button is clicked
         And Activity from placeholder is selected
         And Form continue button is clicked
+        And User selects option to create placeholder without submitting
         When Activity placeholder data is filled in
         And Selected study id is saved
         And Form save button is clicked
@@ -138,6 +147,7 @@ Feature: Studies - Define Study - Study Activities - Study Activities Placeholde
         And Activity placeholder is searched for
         And The existing activity request is selected
         And Form save button is clicked
+        And The form is no longer available
         And Activity placeholder is found
         And The 'Edit' option is clicked from the three dot menu list
         And The study activity request data collection field is edited
@@ -151,6 +161,7 @@ Feature: Studies - Define Study - Study Activities - Study Activities Placeholde
         When Study activity add button is clicked
         And Activity from placeholder is selected
         And Form continue button is clicked
+        And User selects option to create placeholder without submitting
         When Activity placeholder data is filled in
         And Selected study id is saved
         And Form save button is clicked
@@ -164,6 +175,7 @@ Feature: Studies - Define Study - Study Activities - Study Activities Placeholde
         And Activity placeholder is searched for
         And The existing activity request is selected
         And Form save button is clicked
+        And The form is no longer available
         And Activity placeholder is found
         And The 'Edit' option is clicked from the three dot menu list
         And The study activity request rationale for activity field is edited

@@ -383,6 +383,7 @@ export const useAppStore = defineStore('app', {
                   params: { study_id: studyId },
                 },
                 studyRequired: true,
+                featureFlag: 'study_data_suppliers',
               },
             ],
           },

@@ -8,14 +8,13 @@
           :label="$t('ActivityInstanceForm.activity_item_class')"
           :items="compatibleActivityItemClasses"
           bg-color="white"
-          item-title="name"
+          item-title="display_name"
           item-value="uid"
           return-object
           :disabled="selectValueOnly || props.disabled"
           variant="outlined"
           density="compact"
           class="w-50"
-          hide-details
           @update:model-value="resetAndUpdate"
         />
         <SelectActivityItemTermField
@@ -48,7 +47,6 @@
           variant="outlined"
           density="compact"
           class="ml-4 w-50"
-          hide-details
           :loading="loading"
           :disabled="props.disabled"
           :rules="[formRules.required]"

@@ -1,10 +1,14 @@
 import { activityName } from "./library_activities_steps";
 import { activity_uid, subgroup_uid, group_uid, group_name } from "../../support/api_requests/library_activities";
-import { getCurrentStudyId } from "./../../support/helper_functions";
+import { getCurrentStudyId, getCurrStudyUid } from "./../../support/helper_functions";
+import { apiActivityName } from "./api_library_steps";
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
 
-export let activity_activity, current_activity_uid
-let activity_placeholder_name, activity_library, activity_soa_group, activity_group, activity_sub_group, edit_placeholder_name, current_study, new_activity_name
+export let activity_activity, current_activity_uid, study_activity_uid, activity_placeholder_name
+export let exchangedActivities = []
+let activity_library, activity_soa_group, activity_group, activity_sub_group, edit_placeholder_name, current_study, new_activity_name
+
+When('Name of Activity from Library for exchaning placeholder is saved', () => cy.getActivityNameByUid().then(name => exchangedActivities.push(name)))
 
 When('Study activity add button is clicked', () => cy.clickButton('add-study-activity'))
 
@@ -12,9 +16,22 @@ Then('The Study Activity is found', () => cy.searchAndCheckPresence(activity_act
 
 When('Activity placeholder is found', () => cy.searchAndCheckPresence(activity_placeholder_name, true))
 
+When('{int} Activity that exchanged the placeholder is found in Study Activities table', (index) => cy.searchAndCheckPresence(exchangedActivities[index -1], true))
+
 Then('The Study Activity Placeholder is no longer available', () => cy.searchAndCheckPresence(activity_placeholder_name, false))
 
 When('Activity placeholder is searched for', () => cy.searchForInPopUp(activity_placeholder_name))
+
+When('{int} Activity for exchanging the placeholder is searched in filters', (index) => cy.get('.v-list [placeholder="Search"]').click().clear().type(exchangedActivities[index - 1]))
+
+When('{int} Activity is found and click in the filters', (index) => cy.contains('.v-overlay .v-list-item', exchangedActivities[index - 1]).find('input').check())
+
+//TODO: Issue with finding the filter by the name
+When('Activity filter with index {int} is enabled in the form window', (index) => cy.get('.v-overlay [data-cy="filter-field"]').eq(index).click())
+
+When('User clears list of exchanged activities', () => exchangedActivities = [])
+
+When('The second activity is disabled for selection', () => cy.contains('.v-overlay table tbody tr', exchangedActivities[1]).find('input[type=checkbox]').should('be.disabled'))
 
 Given('Study activities for selected study are loaded', () => {
     cy.intercept(`/api/studies/${Cypress.env('TEST_STUDY_UID')}/study-activities?*`).as('getData')
@@ -38,11 +55,17 @@ When('User selects first available activity and SoA group', () => selectActivity
 
 When('Study with id value {string} is selected', (value) => cy.selectVSelect('select-study-for-activity-by-id', value))
 
+When('Type study acronym value {string}', (value) => cy.get('[data-cy="select-study-for-activity-by-acronym"] input').type(value))
+
 When('Study with acronym value {string} is selected', (value) => cy.selectVSelect('select-study-for-activity-by-acronym', value))
 
 Then('The Study Activity is visible in table', () => checkIfTableContainsActivity())
 
 Then('The Activity in Draft status is not found', () => cy.contains('.v-sheet table tbody tr', 'No data available'))
+
+When('User selects option to create placeholder without submitting', () => cy.contains('.choice .text', 'Create a placeholder activity without submitting for approval').click())
+
+When('User selects option to create placeholder with submitting', () => cy.contains('.choice .text', 'Request and submit for approval').click())
 
 When('Activity placeholder data is filled in', () => fillPlaceholderData())
 
@@ -55,7 +78,7 @@ When('Data collection flag is checked', () => cy.get('input[aria-label="Data col
 Then('The Study Activity placeholder is visible within the Study Activities table', () => {
     cy.tableContains('Requested')
     cy.tableContains('INFORMED CONSENT')
-    cy.tableContains('General')
+    cy.tableContains('AE Requiring Additional Data')
     cy.tableContains(activity_placeholder_name)
 })
 
@@ -148,18 +171,17 @@ Then('The activity request is removed from the study', () => {
     cy.searchAndCheckPresence(activity_placeholder_name, false)
 })
 
+Then('[API] Activity is assigned to the visit {int}', (visitIndex) => cy.assignActivityToVisit(Cypress.env('TEST_STUDY_UID'), study_activity_uid, visitIndex))
+
 Then('[API] All Activities are deleted from study', () => {
     cy.getExistingStudyActivities(Cypress.env('TEST_STUDY_UID')).then(uids => uids.forEach(uid => cy.deleteActivityFromStudy(Cypress.env('TEST_STUDY_UID'), uid)))
 })
 
 Then('[API] Get SoA Group {string} id', (name) => cy.getSoaGroupUid(name))
 
-Then('[API] Activity is added to the study', () => {
-    cy.addActivityToStudy(Cypress.env('TEST_STUDY_UID'), activity_uid, group_uid, subgroup_uid).then((response) => {
-        activity_activity = response.body[0].content.activity.name
-        current_activity_uid = response.body[0].content.activity.uid
-    })
-})
+Then('[API] Activity is added to the study', () => addActivityToStudyAndGetValues(Cypress.env('TEST_STUDY_UID')))
+
+Then('[API] Activity is added to the selected study', () => addActivityToStudyAndGetValues(getCurrStudyUid()))
 
 When('The activity has been retired', () => {
     cy.inactivateActivity(current_activity_uid)
@@ -203,6 +225,7 @@ When('The activity name is updated for that study activity', () => {
     cy.activityNewVersion(current_activity_uid)
     cy.visit(`library/activities/activities/${current_activity_uid}/overview`)
     cy.get('[title="Edit"]').click()
+    cy.get('[data-cy="activityform-activity-name-field"] input').should('have.value', apiActivityName)
     cy.fillInput('activityform-activity-name-field', new_activity_name = `NewName${Date.now()}`)
     cy.clickButton('save-button')
 })
@@ -303,6 +326,10 @@ When('The activity group has been retired and has no replacement', () => {
     cy.wait(3000)
 })
 
+When('User selects {int} activity from Library to exchange placeholder with', (index) => cy.get('.v-data-table__td--select-row input').eq(index - 1).check())
+
+When('Sets SoA Group as {string} for {int} Activity', (soaGroup, index) => selectSoAGroup(index -1, soaGroup))
+
 function getActivityData(rowIndex, getSoAGroupValue) {
     cy.getCellValueInPopUp(rowIndex, 'Library').then((text) => activity_library = text)
     if (getSoAGroupValue) cy.getCellValueInPopUp(rowIndex, 'SoA group').then((text) => activity_soa_group = text)
@@ -334,10 +361,7 @@ function selectActivityAndGetItsData(activity_soa_group = null) {
     cy.get('.v-data-table__td--select-row input').each((el, index) => {
         if (el.is(':enabled')) {
             cy.wrap(el).check()
-            if (activity_soa_group) {
-                cy.get('[data-cy="flowchart-group"]').eq(index).click()
-                cy.contains('.v-overlay .v-list-item-title', activity_soa_group).click({ force: true })
-            }
+            if (activity_soa_group) selectSoAGroup(index, activity_soa_group)
             getActivityData(index, !activity_soa_group)
             return false
         }
@@ -345,12 +369,24 @@ function selectActivityAndGetItsData(activity_soa_group = null) {
 }
 
 function fillPlaceholderData() {
-    activity_placeholder_name = `Placeholder Instance Name ${Date.now()}`
-    cy.contains('.choice .text', 'Create a placeholder activity without submitting for approval').click()
+    activity_placeholder_name = `Placeholder ${Date.now()}`
     cy.selectVSelect('flowchart-group', 'INFORMED CONSENT')
-    cy.get('[data-cy="activity-group"] input').type('General')
+    cy.get('[data-cy="activity-group"] input').clear().type('AE Requiring Additional Data')
     cy.selectFirstVSelect('activity-group')
     cy.selectFirstVSelect('activity-subgroup')
     cy.fillInput('instance-name', activity_placeholder_name)
     cy.fillInput('activity-rationale', 'Placeholder Test Rationale')
+}
+
+function selectSoAGroup(rowIndex, soaGroup) {
+    cy.get('[data-cy="flowchart-group"]').eq(rowIndex).click()
+    cy.contains('.v-overlay .v-list-item-title', soaGroup).click({ force: true })
+}
+
+function addActivityToStudyAndGetValues(studyUid) {
+    cy.addActivityToStudy(studyUid, activity_uid, group_uid, subgroup_uid).then((response) => {
+        activity_activity = response.body[0].content.activity.name
+        current_activity_uid = response.body[0].content.activity.uid
+        study_activity_uid = response.body[0].content.study_activity_uid
+    })
 }

@@ -178,8 +178,6 @@ When('The Codelist sponsor values are edited', () => {
     cy.wait(1000)
     cy.fillInput('sponsor-preffered-name', termSponsorName)
     cy.fillInput('change-description', `Description edited of the change`)
-    cy.clickButton('save-button')
-    cy.waitForFormSave()
 })
 
 Then('The term page is opened and showing correct data', () => verifyTerm())

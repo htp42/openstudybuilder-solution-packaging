@@ -115,7 +115,11 @@ const title = computed(() => {
     : t('PharmaceuticalProductForm.add_title')
 })
 
-const helpItems = []
+const helpItems = [
+  'PharmaceuticalProduct.dosage_form',
+  'PharmaceuticalProduct.route_of_administration',
+  'PharmaceuticalProductForm.ingredients',
+]
 
 watch(
   () => props.pharmaceuticalProductUid,

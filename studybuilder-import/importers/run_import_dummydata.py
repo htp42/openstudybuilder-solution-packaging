@@ -94,7 +94,7 @@ def activity_group_payload(nbr):
     }
 
 
-def activity_subgroup_payload(nbr, groups):
+def activity_subgroup_payload(nbr):
     return {
         "path": "/concepts/activities/activity-sub-groups",
         "body": {
@@ -103,7 +103,6 @@ def activity_subgroup_payload(nbr, groups):
             "definition": f"Definition of subgroup {nbr}",
             "abbreviation": f"Abb {nbr}",
             "library_name": LIBRARY_NAME_SPONSOR,
-            "activity_groups": groups,
         },
     }
 
@@ -667,21 +666,27 @@ class DummyData(BaseImporter):
         )
 
         for n in range(total, total + create):
-            group = self.activity_groups[n % len(self.activity_groups)]
-            payload = activity_subgroup_payload(n, [group])
+            payload = activity_subgroup_payload(n)
             self.simple_post_and_approve(payload)
 
-        self.activity_groupings = [
-            (None, activity_group["uid"], item["uid"])
-            for item in self.simple_get(
-                "/concepts/activities/activity-sub-groups",
-                {"page_size": 0},
-                return_key="items",
-            )
-            for activity_group in item["activity_groups"]
-        ]
-
     def create_activities(self):
+        all_groups = self.simple_get(
+            "/concepts/activities/activity-groups",
+            {
+                "page_size": 0,
+                "filters": json.dumps({"status": {"v": ["Final"]}}),
+            },
+            return_key="items",
+        )
+        all_subgroups = self.simple_get(
+            "/concepts/activities/activity-sub-groups",
+            {
+                "page_size": 0,
+                "filters": json.dumps({"status": {"v": ["Final"]}}),
+            },
+            return_key="items",
+        )
+
         total = self.simple_get(
             "/concepts/activities/activities",
             {
@@ -705,11 +710,13 @@ class DummyData(BaseImporter):
         )
         libs = [LIBRARY_NAME_REQUESTED, LIBRARY_NAME_SPONSOR]
         for n in range(total, total + create):
-            grouping = self.activity_groupings[n % len(self.activity_groupings)]
+            group = all_groups[n % len(all_groups)]
+            subgroup = all_subgroups[n % len(all_subgroups)]
+            grouping = [group["uid"], subgroup["uid"]]
             payload = activity_payload(
                 n,
                 libs[n % 2],
-                *grouping[1:],
+                *grouping,
             )
             self.simple_post_and_approve(payload)
 
@@ -718,9 +725,8 @@ class DummyData(BaseImporter):
             {
                 "filters": json.dumps(
                     {
-                        "library_name": {
-                            "v": [LIBRARY_NAME_REQUESTED, LIBRARY_NAME_SPONSOR]
-                        }
+                        "library_name": {"v": [LIBRARY_NAME_SPONSOR]},
+                        "status": {"v": ["Final"]},
                     }
                 ),
                 "page_size": 0,

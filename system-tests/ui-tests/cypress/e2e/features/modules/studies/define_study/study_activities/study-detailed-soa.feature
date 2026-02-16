@@ -83,6 +83,10 @@ Feature: Studies - Define Study - Study Activities - Schedule of Activities - De
         And User expand table
         Then Activity SoA group, group, subgroup and name are visible in the detailed view
 
+    Scenario: [Table][Complexity Score][Detailed SoA]User must be presented with complexity score for given study
+        Given The test study '/activities/soa' page is opened
+        Then The complexity score presents current score for study based on existing acitvities
+
     Scenario: [Table][Structure][Epochs][Detailed SoA] User must be able to view the study epochs in the protocol SoA table matrix
         When The test study '/activities/soa' page is opened
         Then Epoch 'Run-in' and epoch 'Intervention' are visible in the detailed view
@@ -202,34 +206,55 @@ Feature: Studies - Define Study - Study Activities - Schedule of Activities - De
         And Form save button is clicked
         Then The pop up displays 'Study activity added'
         And User expand table
-        And The Activity is visible in the SoA
+        When User search added activity in detailed SoA
+        Then The Activity is visible in the SoA
 
     Scenario: [Actions][Add Activity][From Study][By Id] User must be able to add Study Activity from Detailed SoA selecting From Study
-        And The test study '/activities/soa' page is opened
+        And [API] Study Activity is created and approved
+        And [API] Get SoA Group 'INFORMED CONSENT' id
+        And [API] Activity is added to the study
+        When Get study 'CDISC DEV-9881' uid
+        And Select study with uid saved in previous step
+        And The page 'activities/list' is opened for selected study
+        And Study activity add button is clicked
+        And The user goes through selection from library form
+        And Form save button is clicked
+        And The page 'activities/soa' is opened for selected study
         And User expand table
-        When Action 'Add activity' is selected for study activity
+        And Action 'Add activity' is selected for first study activity
         And Activity from studies is selected
-        And Study with id value '999-3000' is selected
+        And Study with id value 'CDISC DEV-9876' is selected
         And Form continue button is clicked
         And User selects first available activity
         And Form save button is clicked
         Then The pop up displays 'Study activity added'
         And User expand table
-        And The Activity is visible in the SoA
+        When User search added activity in detailed SoA
+        Then The Activity is visible in the SoA
 
     Scenario: [Actions][Add Activity][From Study][By Acronym] User must be able to add Study Activity from Detailed SoA selecting From Study
-        And The test study '/activities/soa' page is opened
+        And [API] Study Activity is created and approved
+        And [API] Get SoA Group 'INFORMED CONSENT' id
+        And [API] Activity is added to the study
+        When Get study 'CDISC DEV-9881' uid
+        And Select study with uid saved in previous step
+        And The page 'activities/list' is opened for selected study
+        And Study activity add button is clicked
+        And The user goes through selection from library form
+        And Form save button is clicked
+        And The page 'activities/soa' is opened for selected study
         And User expand table
-        When Action 'Add activity' is selected for study activity
+        And Action 'Add activity' is selected for first study activity
         And Activity from studies is selected
-        And Study with acronym value 'DummyStudy 0' is selected
+        And Type study acronym value 'E2E Main Test Study'
+        And Study with acronym value 'E2E Main Test Study' is selected
         And Form continue button is clicked
         And User selects first available activity
         And Form save button is clicked
         Then The pop up displays 'Study activity added'
-        And The Study Activity is found
         And User expand table
-        And The Activity is visible in the SoA
+        When User search added activity in detailed SoA
+        Then The Activity is visible in the SoA
 
     Scenario: [Actions][Remove Activity] User must be able to remove Study Activity from Detailed SoA
         And The test study '/activities/soa' page is opened
@@ -276,7 +301,39 @@ Feature: Studies - Define Study - Study Activities - Schedule of Activities - De
         And Form save button is clicked
         And The page is reloaded
         And User expand table
+        And User search for new study activity
         Then The newly selected activity replaces previous activity in study
+        When User clears study activity search
+        And User search study activity
+        Then The old activity is no longer available
+
+    Scenario: [Placeholder][Submitted] User must be able to see highlighted (yellow) submitted placeholder in the Detailed SoA
+        Given The test study '/activities/list' page is opened
+        When Study activity add button is clicked
+        And Activity from placeholder is selected
+        And Form continue button is clicked
+        And User selects option to create placeholder with submitting
+        When Activity placeholder data is filled in
+        And Form save button is clicked
+        And The form is no longer available
+        And The test study '/activities/soa' page is opened
+        And User expand table
+        And User search study activity placeholder
+        Then Row containing submitted placeholder is highlighted with yellow color
+
+    Scenario: [Placeholder][Not-Submitted] User must be able to see highlighted (orange) not-submitted placeholder in the Detailed SoA
+        Given The test study '/activities/list' page is opened
+        When Study activity add button is clicked
+        And Activity from placeholder is selected
+        And Form continue button is clicked
+        And User selects option to create placeholder without submitting
+        When Activity placeholder data is filled in
+        And Form save button is clicked
+        And The form is no longer available
+        And The test study '/activities/soa' page is opened
+        And User expand table
+        And User search study activity placeholder
+        Then Row containing unsubmitted placeholder is highlighted with orange color
 
     @manual_test
     Scenario: User must be able to exchange activity in given Study in Detailed SoA by creating an placeholder for new Activity Request
@@ -380,6 +437,7 @@ Feature: Studies - Define Study - Study Activities - Schedule of Activities - De
     Scenario: [New study] User must be able to see buttons for adding new activity or visit when Study is empty
         Given The '/studies/select_or_add_study/active' page is opened
         When A new study is added
+        And Form save button is clicked
         And [API] Study uid is fetched
         And Go to created study
         Then Text about no added visits and activities is displayed

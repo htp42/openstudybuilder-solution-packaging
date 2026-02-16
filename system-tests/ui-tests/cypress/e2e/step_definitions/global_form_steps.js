@@ -20,6 +20,6 @@ When('Form continue button is clicked', () => cy.clickFormActionButton('continue
 
 When('Modal window {string} button is clicked', (value) => cy.contains('.v-card-actions button', value).click())
 
-When('The overlay is not closed', () => cy.get('.v-overlay').should('be.visible'))
-
 When('User goes to Change description step', () => cy.contains('.v-stepper-item', 'Change description', {matchCase: false}).click())
+
+When('User waits for form data to load', () => cy.get('.v-skeleton-loader').should('not.exist'))

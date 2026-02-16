@@ -24,9 +24,6 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryVO,
 )
 from clinical_mdr_api.models.concepts.activities.activity_item import (
-    CompactOdmForm,
-    CompactOdmItem,
-    CompactOdmItemGroup,
     CompactUnitDefinition,
 )
 from clinical_mdr_api.tests.unit.domain.utils import (
@@ -87,9 +84,6 @@ def create_random_activity_instance_vo() -> ActivityInstanceVO:
                     )
                 ],
                 is_adam_param_specific=False,
-                odm_form=CompactOdmForm(),
-                odm_item_group=CompactOdmItemGroup(),
-                odm_item=CompactOdmItem(),
             ),
             ActivityItemVO.from_repository_values(
                 activity_item_class_uid=random_str(),
@@ -105,9 +99,6 @@ def create_random_activity_instance_vo() -> ActivityInstanceVO:
                     )
                 ],
                 is_adam_param_specific=False,
-                odm_form=CompactOdmForm(),
-                odm_item_group=CompactOdmItemGroup(),
-                odm_item=CompactOdmItem(),
             ),
         ],
     )
@@ -136,9 +127,6 @@ def create_random_activity_instance_ar(
         unit_definition_exists_by_uid_callback=lambda _: True,
         find_activity_item_class_by_uid_callback=lambda _: _get_activity_item_class_mock(),
         find_activity_instance_class_by_uid_callback=lambda _: _get_activity_instance_class_mock(),
-        get_odm_form_by_uid_callback=lambda _: None,
-        get_odm_item_group_by_uid_callback=lambda _: None,
-        get_odm_item_by_uid_callback=lambda _: None,
         get_dimension_names_by_unit_definition_uids=lambda _: [],
     )
 
@@ -161,6 +149,7 @@ def _get_activity_item_class_mock():
         ),
         _activity_item_class_vo=ActivityItemClassVO(
             name="xyz",
+            display_name="xyz",
             definition="xyz",
             nci_concept_id=None,
             order=1,
@@ -333,21 +322,6 @@ class TestActivityInstanceNegative(unittest.TestCase):
                                 )
                             ],
                             is_adam_param_specific=False,
-                            odm_form=CompactOdmForm(
-                                uid=random_str(),
-                                oid=random_str(),
-                                name=random_str(),
-                            ),
-                            odm_item_group=CompactOdmItemGroup(
-                                uid=random_str(),
-                                oid=random_str(),
-                                name=random_str(),
-                            ),
-                            odm_item=CompactOdmItem(
-                                uid=random_str(),
-                                oid=random_str(),
-                                name=random_str(),
-                            ),
                         ),
                         ActivityItemVO.from_repository_values(
                             activity_item_class_uid=random_str(),
@@ -360,21 +334,6 @@ class TestActivityInstanceNegative(unittest.TestCase):
                                 )
                             ],
                             is_adam_param_specific=False,
-                            odm_form=CompactOdmForm(
-                                uid=random_str(),
-                                oid=random_str(),
-                                name=random_str(),
-                            ),
-                            odm_item_group=CompactOdmItemGroup(
-                                uid=random_str(),
-                                oid=random_str(),
-                                name=random_str(),
-                            ),
-                            odm_item=CompactOdmItem(
-                                uid=random_str(),
-                                oid=random_str(),
-                                name=random_str(),
-                            ),
                         ),
                     ],
                 ),
@@ -393,9 +352,6 @@ class TestActivityInstanceNegative(unittest.TestCase):
                 ct_term_exists_by_uid_callback=lambda _: True,
                 unit_definition_exists_by_uid_callback=lambda _: True,
                 get_dimension_names_by_unit_definition_uids=lambda _: [],
-                get_odm_form_by_uid_callback=lambda _: None,
-                get_odm_item_group_by_uid_callback=lambda _: None,
-                get_odm_item_by_uid_callback=lambda _: None,
             )
 
         assert (

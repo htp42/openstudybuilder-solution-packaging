@@ -2,6 +2,8 @@ const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor")
 
 let epochDescription = `Epoch ${Date.now()}`
 
+When('User waits for epochs data', () => cy.waitForData('study-epochs'))
+
 When('User waits for epochs to load', () => {
     cy.intercept(`**/study-epochs?page_size=0`).as('getEpochs')
     cy.wait('@getEpochs').its('response.statusCode').should('eq', 200)
@@ -17,7 +19,6 @@ When('A new Study Epoch is added', () => {
     cy.selectAutoComplete('epoch-type', 'Post Treatment')
     cy.selectAutoComplete('epoch-subtype', 'Elimination')
     fillRulesAndDecscription('D10', 'D99')
-    save()
 })
 
 Then('The new Study Epoch is available within the table', () => {
@@ -33,7 +34,6 @@ When('The Study Epoch is edited', () => {
     epochDescription = `Edited epoch ${Date.now()}`
     cy.wait(1000)
     fillRulesAndDecscription('D22', 'D33')
-    save()
 })
 
 Then('The Type and Subtype fields are disabled', () => {
@@ -46,12 +46,6 @@ Then('The edited Study Epoch with updated values is available within the table',
     cy.checkRowByIndex(0, 'Start rule', 'D22')
     cy.checkRowByIndex(0, 'End rule', 'D33')
 })
-
-function save() {
-    cy.clickButton('save-button')
-    cy.waitForFormSave()
-    cy.waitForData('study-epochs')
-}
 
 function fillRulesAndDecscription(startRule, endRule) {
     cy.fillInput('description', epochDescription)

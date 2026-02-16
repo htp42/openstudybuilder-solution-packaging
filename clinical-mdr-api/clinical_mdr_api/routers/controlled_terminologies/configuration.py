@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Body, Depends, Path, Query, Request
+from fastapi import APIRouter, Body, Path, Query, Request
 
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.models.controlled_terminologies.configuration import (
@@ -74,9 +74,8 @@ CodelistConfigUID = Path(description="The unique id of configuration.")
 # pylint: disable=unused-argument
 def get_all(
     request: Request,  # request is actually required by the allow_exports decorator
-    service: Annotated[CTConfigService, Depends(CTConfigService)],
 ) -> list[CTConfigOGM]:
-    return service.get_all()
+    return CTConfigService().get_all()
 
 
 @router.get(
@@ -96,7 +95,6 @@ def get_all(
     },
 )
 def get_by_uid(
-    service: Annotated[CTConfigService, Depends(CTConfigService)],
     configuration_uid: Annotated[str, CodelistConfigUID],
     at_specified_date_time: Annotated[
         datetime | None,
@@ -127,7 +125,7 @@ def get_by_uid(
         ),
     ] = None,
 ) -> CTConfigModel:
-    return service.get_by_uid(
+    return CTConfigService().get_by_uid(
         configuration_uid,
         version=version,
         status=status,
@@ -189,10 +187,9 @@ def get_by_uid(
 #  pylint: disable=unused-argument
 def get_versions(
     request: Request,  # request is actually required by the allow_exports decorator
-    service: Annotated[CTConfigService, Depends(CTConfigService)],
     configuration_uid: Annotated[str, CodelistConfigUID],
 ) -> list[CTConfigModel]:
-    return service.get_versions(configuration_uid)
+    return CTConfigService().get_versions(configuration_uid)
 
 
 @router.post(
@@ -219,12 +216,11 @@ If the request succeeds:
     },
 )
 def post(
-    service: Annotated[CTConfigService, Depends(CTConfigService)],
     post_input: Annotated[
         CTConfigPostInput, Body(description="The configuration that shall be created.")
-    ],
+    ]
 ) -> CTConfigModel:
-    return service.post(post_input)  # type: ignore
+    return CTConfigService().post(post_input)  # type: ignore
 
 
 @router.patch(
@@ -255,7 +251,6 @@ If the request succeeds:
     },
 )
 def patch(
-    service: Annotated[CTConfigService, Depends(CTConfigService)],
     configuration_uid: Annotated[str, CodelistConfigUID],
     patch_input: Annotated[
         CTConfigPatchInput,
@@ -264,7 +259,7 @@ def patch(
         ),
     ],
 ) -> CTConfigModel:
-    return service.patch(configuration_uid, patch_input)
+    return CTConfigService().patch(configuration_uid, patch_input)
 
 
 @router.post(
@@ -296,10 +291,9 @@ If the request succeeds:
     },
 )
 def new_version(
-    service: Annotated[CTConfigService, Depends(CTConfigService)],
     configuration_uid: Annotated[str, CodelistConfigUID],
 ) -> CTConfigModel:
-    return service.new_version(configuration_uid)
+    return CTConfigService().new_version(configuration_uid)
 
 
 @router.post(
@@ -330,10 +324,9 @@ If the request succeeds:
     },
 )
 def approve(
-    service: Annotated[CTConfigService, Depends(CTConfigService)],
     configuration_uid: Annotated[str, CodelistConfigUID],
 ) -> CTConfigModel:
-    return service.approve(configuration_uid)
+    return CTConfigService().approve(configuration_uid)
 
 
 @router.delete(
@@ -364,10 +357,9 @@ If the request succeeds:
     },
 )
 def inactivate(
-    service: Annotated[CTConfigService, Depends(CTConfigService)],
     configuration_uid: Annotated[str, CodelistConfigUID],
 ) -> CTConfigModel:
-    return service.inactivate(configuration_uid)
+    return CTConfigService().inactivate(configuration_uid)
 
 
 @router.post(
@@ -398,10 +390,9 @@ If the request succeeds:
     },
 )
 def reactivate(
-    service: Annotated[CTConfigService, Depends(CTConfigService)],
     configuration_uid: Annotated[str, CodelistConfigUID],
 ) -> CTConfigModel:
-    return service.reactivate(configuration_uid)
+    return CTConfigService().reactivate(configuration_uid)
 
 
 @router.delete(
@@ -431,7 +422,6 @@ def reactivate(
     },
 )
 def delete(
-    service: Annotated[CTConfigService, Depends(CTConfigService)],
     configuration_uid: Annotated[str, CodelistConfigUID],
 ):
-    service.delete(configuration_uid)
+    CTConfigService().delete(configuration_uid)

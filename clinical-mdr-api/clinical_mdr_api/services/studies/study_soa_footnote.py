@@ -31,6 +31,7 @@ from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services._utils import (
     calculate_diffs,
     calculate_diffs_history,
+    ensure_transaction,
     extract_filtering_values,
     service_level_generic_filtering,
     service_level_generic_header_filtering,
@@ -441,7 +442,8 @@ class StudySoAFootnoteService:
                 msg=f"The SoaFootnote already exists for the Footnote with Name '{existing_footnote}'.",
             )
 
-    def non_transactional_edit(
+    @ensure_transaction(db)
+    def edit(
         self,
         study_uid: str,
         study_soa_footnote_uid: str,
@@ -546,24 +548,7 @@ class StudySoAFootnoteService:
 
         return self._transform_vo_to_pydantic_model(new_footnote_vo)
 
-    @db.transaction
-    def edit(
-        self,
-        study_uid: str,
-        study_soa_footnote_uid: str,
-        footnote_edit_input: StudySoAFootnoteEditInput,
-        accept_version: bool = False,
-        sync_latest_version: bool = False,
-    ):
-        return self.non_transactional_edit(
-            study_uid=study_uid,
-            study_soa_footnote_uid=study_soa_footnote_uid,
-            footnote_edit_input=footnote_edit_input,
-            accept_version=accept_version,
-            sync_latest_version=sync_latest_version,
-        )
-
-    @db.transaction
+    @ensure_transaction(db)
     def batch_edit(
         self,
         study_uid: str,
@@ -572,7 +557,7 @@ class StudySoAFootnoteService:
         results = []
         for edit_payload in edit_payloads:
             try:
-                item = self.non_transactional_edit(
+                item = self.edit(
                     study_uid=study_uid,
                     study_soa_footnote_uid=edit_payload.study_soa_footnote_uid,
                     footnote_edit_input=edit_payload,

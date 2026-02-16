@@ -419,6 +419,7 @@ class StudyActivitySelectionBaseService(
         filter_operator: FilterOperator = FilterOperator.AND,
         page_size: int = 10,
         study_value_version: str | None = None,
+        include_placeholders: bool = False,
     ):
         all_items = self.get_all_selection(
             study_uid=study_uid,
@@ -426,6 +427,7 @@ class StudyActivitySelectionBaseService(
             filter_by=filter_by,
             filter_operator=filter_operator,
             for_field_name=field_name,
+            include_placeholders=include_placeholders,
         )
         if isinstance(all_items, list):
             # We got a list of StudySelectionBaseAR,

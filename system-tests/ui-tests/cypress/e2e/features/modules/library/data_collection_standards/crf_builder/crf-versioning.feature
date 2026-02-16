@@ -49,6 +49,8 @@ Feature: Library - Data Collection Standards - CRF Versioning
         And Form save button is clicked
         Then The item has status 'Draft' and version '0.2'
         When The '/library/crf-builder/items' page is opened
+        And User waits for CRF Items data to load
+        And User waits for the table
         And I search for the existed item
         When The 'Edit' option is clicked from the three dot menu list
         And I update the item and click on the Save button
@@ -82,6 +84,8 @@ Feature: Library - Data Collection Standards - CRF Versioning
         When Action is confirmed by clicking continue
         Then The item has status 'Draft' and version '1.1'
         And The '/library/crf-builder/items' page is opened
+        And User waits for CRF Items data to load
+        And User waits for the table
         When I search for the existed item
         And The 'New version' option is clicked from the three dot menu list
         Then The New version popup window is displayed
@@ -129,6 +133,8 @@ Feature: Library - Data Collection Standards - CRF Versioning
         And Form save button is clicked
         Then The item has status 'Draft' and version '0.2'
         When The '/library/crf-builder/items' page is opened
+        And User waits for CRF Items data to load
+        And User waits for the table
         And I search for the existed item
         When The 'Edit' option is clicked from the three dot menu list
         And I update the item and click on the Save button
@@ -162,6 +168,8 @@ Feature: Library - Data Collection Standards - CRF Versioning
         When Action is confirmed by clicking continue
         Then The item has status 'Draft' and version '1.1'
         And The '/library/crf-builder/items' page is opened
+        And User waits for CRF Items data to load
+        And User waits for the table
         When I search for the existed item
         And The 'New version' option is clicked from the three dot menu list
         Then The New version popup window is displayed

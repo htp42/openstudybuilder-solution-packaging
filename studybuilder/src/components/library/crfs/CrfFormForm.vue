@@ -8,6 +8,7 @@
     :form-url="formUrl"
     :editable="isEdit()"
     :save-from-any-step="isEdit()"
+    :read-only="isReadOnly"
     @close="close"
     @save="submit"
   >
@@ -24,8 +25,8 @@
                 :label="$t('CRFForms.name') + '*'"
                 data-cy="form-oid-name"
                 density="compact"
-                clearable
-                :disabled="isDisabled"
+                :clearable="!isReadOnly"
+                :readonly="isReadOnly"
                 :rules="[formRules.required]"
               />
             </v-col>
@@ -35,8 +36,8 @@
                 :label="$t('CRFForms.oid')"
                 data-cy="form-oid"
                 density="compact"
-                clearable
-                :disabled="isDisabled"
+                :clearable="!isReadOnly"
+                :readonly="isReadOnly"
               />
             </v-col>
           </v-row>
@@ -45,7 +46,7 @@
               <v-radio-group
                 v-model="form.repeating"
                 :label="$t('CRFForms.repeating')"
-                :disabled="isDisabled"
+                :readonly="isReadOnly"
               >
                 <v-radio :label="$t('_global.yes')" value="Yes" />
                 <v-radio :label="$t('_global.no')" value="No" />
@@ -60,7 +61,7 @@
                   v-model:content="engDescription.description"
                   content-type="html"
                   :toolbar="customToolbar"
-                  :read-only="isDisabled"
+                  :read-only="isReadOnly"
                 />
               </div>
             </v-col>
@@ -73,7 +74,7 @@
                   v-model:content="engDescription.sponsor_instruction"
                   content-type="html"
                   :toolbar="customToolbar"
-                  :read-only="isDisabled"
+                  :read-only="isReadOnly"
                   data-cy="help-for-sponsor"
                 />
               </div>
@@ -91,8 +92,8 @@
                 :label="$t('CRFDescriptions.name')"
                 data-cy="form-oid-displayed-text"
                 density="compact"
-                clearable
-                :disabled="isDisabled"
+                :clearable="!isReadOnly"
+                :readonly="isReadOnly"
               />
             </v-col>
             <v-col cols="9">
@@ -104,7 +105,7 @@
                   v-model:content="engDescription.instruction"
                   content-type="html"
                   :toolbar="customToolbar"
-                  :read-only="isDisabled"
+                  :read-only="isReadOnly"
                   data-cy="form-help-for-site"
                 />
               </div>
@@ -116,19 +117,19 @@
     <template #[`step.extensions`]>
       <CrfExtensionsManagementTable
         type="FormDef"
-        :read-only="isDisabled"
+        :read-only="isReadOnly"
         :edit-extensions="selectedExtensions"
         @set-extensions="setExtensions"
       />
     </template>
     <template #[`step.alias`]="{ step }">
       <v-form :ref="`observer_${step}`">
-        <CrfAliasSelection v-model="form.aliases" :disabled="isDisabled" />
+        <CrfAliasSelection v-model="form.aliases" :read-only="isReadOnly" />
       </v-form>
     </template>
     <template #[`step.description`]="{ step }">
       <v-form :ref="`observer_${step}`">
-        <CrfDescriptionSelection v-model="desc" :disabled="isDisabled" />
+        <CrfDescriptionSelection v-model="desc" :read-only="isReadOnly" />
       </v-form>
     </template>
     <template #[`step.change_description`]="{ step }">
@@ -139,7 +140,8 @@
               v-model="form.change_description"
               :label="$t('CRFForms.change_desc')"
               data-cy="form-change-description"
-              clearable
+              :clearable="!isReadOnly"
+              :readonly="isReadOnly"
               :rules="[formRules.required]"
             />
           </v-col>
@@ -154,12 +156,6 @@
       />
     </template>
   </HorizontalStepperForm>
-  <CrfActivitiesModelsLinkForm
-    :open="linkForm"
-    :item-to-link="selectedForm"
-    item-type="form"
-    @close="closeLinkForm"
-  />
   <ConfirmDialog ref="confirm" :text-cols="6" :action-cols="5" />
   <CrfApprovalSummaryConfirmDialog ref="confirmApproval" />
   <CrfNewVersionSummaryConfirmDialog ref="confirmNewVersion" />
@@ -174,7 +170,6 @@ import constants from '@/constants/libraries'
 import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
 import ActionsMenu from '@/components/tools/ActionsMenu.vue'
-import CrfActivitiesModelsLinkForm from '@/components/library/crfs/CrfActivitiesModelsLinkForm.vue'
 import actions from '@/constants/actions'
 import parameters from '@/constants/parameters'
 import CrfExtensionsManagementTable from '@/components/library/crfs/CrfExtensionsManagementTable.vue'
@@ -194,7 +189,6 @@ export default {
     CrfDescriptionSelection,
     QuillEditor,
     ActionsMenu,
-    CrfActivitiesModelsLinkForm,
     CrfExtensionsManagementTable,
     ConfirmDialog,
     CrfApprovalSummaryConfirmDialog,
@@ -278,9 +272,8 @@ export default {
         [{ script: 'sub' }, { script: 'super' }],
         [{ list: 'ordered' }, { list: 'bullet' }],
       ],
-      engDescription: { language: parameters.ENG },
+      engDescription: { language: parameters.EN },
       readOnly: this.readOnlyProp,
-      linkForm: false,
       selectedExtensions: [],
       actions: [
         {
@@ -309,18 +302,11 @@ export default {
               : false,
           click: this.delete,
         },
-        {
-          label: this.$t('CRFLinkingForm.link_activities'),
-          icon: 'mdi-plus',
-          iconColor: 'primary',
-          condition: () => this.readOnly,
-          click: this.openLinkForm,
-        },
       ],
     }
   },
   computed: {
-    isDisabled() {
+    isReadOnly() {
       return this.readOnly || !this.checkPermission(this.$roles.LIBRARY_WRITE)
     },
     title() {
@@ -358,7 +344,7 @@ export default {
     selectedForm: {
       handler(value) {
         if (this.isEdit()) {
-          this.steps = this.readOnly ? this.createSteps : this.editSteps
+          this.steps = this.editSteps
           this.initForm(value)
         } else {
           this.steps = this.createSteps
@@ -374,7 +360,7 @@ export default {
   },
   async mounted() {
     if (this.isEdit()) {
-      this.steps = this.readOnly ? this.createSteps : this.editSteps
+      this.steps = this.editSteps
     } else {
       this.steps = this.createSteps
     }
@@ -389,13 +375,6 @@ export default {
       crfs.getForm(this.selectedForm.uid).then((resp) => {
         this.initForm(resp.data)
       })
-    },
-    openLinkForm() {
-      this.linkForm = true
-    },
-    closeLinkForm() {
-      this.linkForm = false
-      this.getForm()
     },
     async newVersion() {
       if (
@@ -478,7 +457,7 @@ export default {
         aliases: [],
       }
       this.engDescription = {
-        language: parameters.ENG,
+        language: parameters.EN,
       }
       this.desc = []
       this.selectedExtensions = []
@@ -486,7 +465,7 @@ export default {
       this.$emit('close')
     },
     async submit() {
-      if (this.isDisabled) {
+      if (this.isReadOnly) {
         this.close()
         return
       }
@@ -600,13 +579,17 @@ export default {
       this.form = item
       this.form.aliases = item.aliases
       this.form.change_description = this.$t('_global.draft_change')
-      if (item.descriptions.find((el) => el.language === parameters.ENG)) {
-        this.engDescription = item.descriptions.find(
-          (el) => el.language === parameters.ENG
+      if (
+        item.descriptions.some((el) =>
+          [parameters.EN, parameters.ENG].includes(el.language)
+        )
+      ) {
+        this.engDescription = item.descriptions.find((el) =>
+          [parameters.EN, parameters.ENG].includes(el.language)
         )
       }
       this.desc = item.descriptions.filter(
-        (el) => el.language !== parameters.ENG
+        (el) => ![parameters.EN, parameters.ENG].includes(el.language)
       )
       item.vendor_attributes.forEach((attr) => (attr.type = 'attr'))
       item.vendor_elements.forEach((element) => {

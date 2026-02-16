@@ -127,7 +127,7 @@ class ComplexityScoreService:
             if not visit:
                 visit = SoaRow.Visit(
                     uid=row["visit_uid"],
-                    short_name=row["visit_short_name"],
+                    short_name=str(row["visit_short_name"]),
                     visit_contact_mode=(
                         row["visit_contact_mode"]
                         if "visit_contact_mode" in row

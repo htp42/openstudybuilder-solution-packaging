@@ -54,9 +54,27 @@ class ParentActivityItemClass(BaseModel):
             }
         ),
     ] = None
+    is_additional_optional: Annotated[
+        bool | None,
+        Field(
+            json_schema_extra={
+                "source": "parent_class.has_activity_item_class|is_additional_optional",
+                "nullable": True,
+            }
+        ),
+    ] = False
+    is_default_linked: Annotated[
+        bool | None,
+        Field(
+            json_schema_extra={
+                "source": "parent_class.has_activity_item_class|is_default_linked",
+                "nullable": True,
+            }
+        ),
+    ] = False
 
 
-class CompactActivityItemClass(BaseModel):
+class CompactActivityItemClassForInstanceClass(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     uid: Annotated[
@@ -73,6 +91,15 @@ class CompactActivityItemClass(BaseModel):
         Field(
             json_schema_extra={
                 "source": "has_activity_item_class.has_latest_value.name",
+                "nullable": True,
+            }
+        ),
+    ] = None
+    display_name: Annotated[
+        str | None,
+        Field(
+            json_schema_extra={
+                "source": "has_activity_item_class.has_latest_value.display_name",
                 "nullable": True,
             }
         ),
@@ -95,6 +122,24 @@ class CompactActivityItemClass(BaseModel):
             }
         ),
     ] = None
+    is_additional_optional: Annotated[
+        bool | None,
+        Field(
+            json_schema_extra={
+                "source": "has_activity_item_class|is_additional_optional",
+                "nullable": True,
+            }
+        ),
+    ] = False
+    is_default_linked: Annotated[
+        bool | None,
+        Field(
+            json_schema_extra={
+                "source": "has_activity_item_class|is_default_linked",
+                "nullable": True,
+            }
+        ),
+    ] = False
 
 
 class CompactActivityInstanceClass(BaseModel):

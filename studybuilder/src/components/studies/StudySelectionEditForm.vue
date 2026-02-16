@@ -373,24 +373,39 @@ export default {
       const templateUid = this.newTemplate
         ? this.newTemplate.uid
         : this.template.uid
-      this.templateApi
-        .getParameters(templateUid, { study_uid: this.selectedStudy.uid })
-        .then((resp) => {
-          if (this.parameters.length) {
-            resp.data.forEach((param, index) => {
-              const a = this.parameters.find((el) => el.name === param.name)
-              if (a) {
-                resp.data[index] = a
-              }
-            })
-          }
-          this.parameters = resp.data
-          this.loadingParameters = false
-          const instance = this.getObjectFromSelection(this.studySelection)
-          if (!forceLoading && instance) {
-            this.showParametersFromObject(instance)
-          }
-        })
+      try {
+        this.templateApi
+          .getParameters(templateUid, { study_uid: this.selectedStudy.uid })
+          .then((resp) => {
+            if (this.parameters.length) {
+              resp.data.forEach((param, index) => {
+                if (this.parameters.length) {
+                  const found = this.parameters?.find(
+                    (el) => el.name === param.name
+                  )
+                  const foundParam = found
+                    ? JSON.parse(JSON.stringify(found))
+                    : null
+                  if (foundParam) {
+                    resp.data[index] = foundParam
+                    const foundParamIndex = this.parameters.findIndex(
+                      (param) => param.name === foundParam.name
+                    )
+                    this.parameters.splice(foundParamIndex, 1)
+                  }
+                }
+              })
+            }
+            this.parameters = resp.data
+            this.loadingParameters = false
+            const instance = this.getObjectFromSelection(this.studySelection)
+            if (!forceLoading && instance) {
+              this.showParametersFromObject(instance)
+            }
+          })
+      } catch (error) {
+        console.error(error)
+      }
     },
     async submit() {
       const { valid } = await this.$refs.observer_2.validate()

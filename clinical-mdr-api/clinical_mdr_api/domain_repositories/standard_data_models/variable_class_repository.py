@@ -116,8 +116,9 @@ class VariableClassRepository(StandardDataModelRepository):
                 (:DatasetClassInstance)<-[:HAS_DATASET_CLASS]-(model_value:DataModelValue)
                 | model_value.name]) AS data_model_names,
             head([(standard_root)<-[:HAS_VARIABLE_CLASS]-(catalogue:DataModelCatalogue) | catalogue.name]) AS catalogue_name,
-            head([(standard_value)-[:REFERENCES_CODELIST]->(codelist_root:CTCodelistRoot)-[:HAS_NAME_ROOT]-()-[:LATEST]->
-                (codelist_value:CTCodelistNameValue) | {uid:codelist_root.uid, name:codelist_value.name }]) AS referenced_codelist,
-            head([(standard_value)-[:HAS_MAPPING_TARGET]->(class_variable_value:VariableClassInstance)
-            <-[:HAS_INSTANCE]-(class_variable_root:VariableClass) | {uid:class_variable_root.uid, name:class_variable_value.label}]) AS has_mapping_target
+            [(standard_value)-[:REFERENCES_CODELIST]->(codelist_root:CTCodelistRoot)-[:HAS_NAME_ROOT]-()-[:LATEST]->
+                (codelist_value:CTCodelistNameValue) | {uid:codelist_root.uid, name:codelist_value.name }] AS referenced_codelists,
+            head([(standard_value)-[mt_rel:HAS_MAPPING_TARGET]->(class_variable_value:VariableClassInstance)
+                <-[:HAS_INSTANCE]-(class_variable_root:VariableClass) WHERE mt_rel.version_number=$data_model_version
+                | {uid:class_variable_root.uid, name:class_variable_value.label}]) AS has_mapping_target
         """

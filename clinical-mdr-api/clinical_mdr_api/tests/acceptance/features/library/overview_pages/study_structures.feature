@@ -1,9 +1,9 @@
 @REQ_ID:xxx
 
-Feature: Manage and maintain Study Structure Overview Pages in Clinical MDR API
+Feature: Manage and maintain Study Structure Overview Pages in OpenStudyBuilder API
 
-    Background: Test user must be able to call the Clinical MDR API and the test data exists
-        Given The test user can call the Clinical MDR API
+    Background: Test user must be able to call the OpenStudyBuilder API and the test data exists
+        Given The test user can call the OpenStudyBuilder API
 
 Scenario: User must be able to get all the studies when calling the API endpoint '/studies/structure-overview'
     When the user calls the API endpoint '/studies/structure-overview'

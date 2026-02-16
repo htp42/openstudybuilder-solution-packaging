@@ -24,10 +24,12 @@ class TestRegistryIdentifiers(unittest.TestCase):
                 "national-medical-products-administration-nmpa-number",
                 "eudamed-srn-number",
                 "investigational-device-exemption-ide-number",
+                "eu_pas_number",
                 None,
             ),
             (
                 "ct-gov-id",
+                None,
                 None,
                 None,
                 None,
@@ -55,11 +57,13 @@ class TestRegistryIdentifiers(unittest.TestCase):
                 None,
                 None,
                 None,
+                None,
             ),
             (
                 None,
                 None,
                 "universal-trial-number-UTN",
+                None,
                 None,
                 None,
                 None,
@@ -85,6 +89,7 @@ class TestRegistryIdentifiers(unittest.TestCase):
                 None,
                 None,
                 None,
+                None,
             ),
             (
                 None,
@@ -92,6 +97,7 @@ class TestRegistryIdentifiers(unittest.TestCase):
                 None,
                 None,
                 "investigational-new-drug-application-number-IND",
+                None,
                 None,
                 None,
                 None,
@@ -115,6 +121,7 @@ class TestRegistryIdentifiers(unittest.TestCase):
                 None,
                 None,
                 None,
+                None,
             ),
             (
                 None,
@@ -124,6 +131,7 @@ class TestRegistryIdentifiers(unittest.TestCase):
                 None,
                 None,
                 "civ-id-sin-number",
+                None,
                 None,
                 None,
                 None,
@@ -145,6 +153,7 @@ class TestRegistryIdentifiers(unittest.TestCase):
                 None,
                 None,
                 None,
+                None,
             ),
             (
                 None,
@@ -156,6 +165,7 @@ class TestRegistryIdentifiers(unittest.TestCase):
                 None,
                 None,
                 "japanese-trial-registry-number-jrct",
+                None,
                 None,
                 None,
                 None,
@@ -175,6 +185,7 @@ class TestRegistryIdentifiers(unittest.TestCase):
                 None,
                 None,
                 None,
+                None,
             ),
             (
                 None,
@@ -188,6 +199,7 @@ class TestRegistryIdentifiers(unittest.TestCase):
                 None,
                 None,
                 "eudamed-srn-number",
+                None,
                 None,
                 None,
             ),
@@ -205,8 +217,26 @@ class TestRegistryIdentifiers(unittest.TestCase):
                 None,
                 "investigational-device-exemption-ide-number",
                 None,
+                None,
             ),
             (
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                "eu_pas_number",
+                None,
+            ),
+            (
+                None,
                 None,
                 None,
                 None,
@@ -237,24 +267,26 @@ class TestRegistryIdentifiers(unittest.TestCase):
                     national_medical_products_administration_nmpa_number=test_tuple[9],
                     eudamed_srn_number=test_tuple[10],
                     investigational_device_exemption_ide_number=test_tuple[11],
-                    ct_gov_id_null_value_code=test_tuple[12],
-                    eudract_id_null_value_code=test_tuple[12],
-                    universal_trial_number_utn_null_value_code=test_tuple[12],
-                    japanese_trial_registry_id_japic_null_value_code=test_tuple[12],
+                    eu_pas_number=test_tuple[12],
+                    ct_gov_id_null_value_code=test_tuple[13],
+                    eudract_id_null_value_code=test_tuple[13],
+                    universal_trial_number_utn_null_value_code=test_tuple[13],
+                    japanese_trial_registry_id_japic_null_value_code=test_tuple[13],
                     investigational_new_drug_application_number_ind_null_value_code=test_tuple[
-                        12
+                        13
                     ],
-                    eu_trial_number_null_value_code=test_tuple[12],
-                    civ_id_sin_number_null_value_code=test_tuple[12],
-                    national_clinical_trial_number_null_value_code=test_tuple[12],
-                    japanese_trial_registry_number_jrct_null_value_code=test_tuple[12],
+                    eu_trial_number_null_value_code=test_tuple[13],
+                    civ_id_sin_number_null_value_code=test_tuple[13],
+                    national_clinical_trial_number_null_value_code=test_tuple[13],
+                    japanese_trial_registry_number_jrct_null_value_code=test_tuple[13],
                     national_medical_products_administration_nmpa_number_null_value_code=test_tuple[
-                        12
+                        13
                     ],
-                    eudamed_srn_number_null_value_code=test_tuple[12],
+                    eudamed_srn_number_null_value_code=test_tuple[13],
                     investigational_device_exemption_ide_number_null_value_code=test_tuple[
-                        12
+                        13
                     ],
+                    eu_pas_number_null_value_code=test_tuple[13],
                 )
                 registry_identifier.validate()
 
@@ -273,10 +305,12 @@ class TestRegistryIdentifiers(unittest.TestCase):
                 "national-medical-products-administration-nmpa-number",
                 "eudamed-srn-number",
                 "investigational-device-exemption-ide-number",
+                "eu-pas-number",
                 "missing-reason",
             ),
             (
                 "ct-gov-id",
+                None,
                 None,
                 None,
                 None,
@@ -303,12 +337,14 @@ class TestRegistryIdentifiers(unittest.TestCase):
                 None,
                 None,
                 None,
+                None,
                 "missing-reason",
             ),
             (
                 None,
                 None,
                 "universal-trial-number-UTN",
+                None,
                 None,
                 None,
                 None,
@@ -333,6 +369,7 @@ class TestRegistryIdentifiers(unittest.TestCase):
                 None,
                 None,
                 None,
+                None,
                 "missing-reason",
             ),
             (
@@ -341,6 +378,7 @@ class TestRegistryIdentifiers(unittest.TestCase):
                 None,
                 None,
                 "investigational-new-drug-application-number-IND",
+                None,
                 None,
                 None,
                 None,
@@ -363,6 +401,7 @@ class TestRegistryIdentifiers(unittest.TestCase):
                 None,
                 None,
                 None,
+                None,
                 "missing-reason",
             ),
             (
@@ -373,6 +412,7 @@ class TestRegistryIdentifiers(unittest.TestCase):
                 None,
                 None,
                 "civ-id-sin-number",
+                None,
                 None,
                 None,
                 None,
@@ -393,6 +433,7 @@ class TestRegistryIdentifiers(unittest.TestCase):
                 None,
                 None,
                 None,
+                None,
                 "missing-reason",
             ),
             (
@@ -405,6 +446,7 @@ class TestRegistryIdentifiers(unittest.TestCase):
                 None,
                 None,
                 "japanese-trial-registry-number-jrct",
+                None,
                 None,
                 None,
                 None,
@@ -423,6 +465,7 @@ class TestRegistryIdentifiers(unittest.TestCase):
                 "national-medical-products-administration-nmpa-number",
                 None,
                 None,
+                None,
                 "missing-reason",
             ),
             (
@@ -437,6 +480,7 @@ class TestRegistryIdentifiers(unittest.TestCase):
                 None,
                 None,
                 "eudamed-srn-number",
+                None,
                 None,
                 "missing-reason",
             ),
@@ -453,6 +497,23 @@ class TestRegistryIdentifiers(unittest.TestCase):
                 None,
                 None,
                 "investigational-device-exemption-ide-number",
+                None,
+                "missing-reason",
+            ),
+            (
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                "eu-pas-number",
                 "missing-reason",
             ),
         ]
@@ -471,24 +532,26 @@ class TestRegistryIdentifiers(unittest.TestCase):
                     national_medical_products_administration_nmpa_number=test_tuple[9],
                     eudamed_srn_number=test_tuple[10],
                     investigational_device_exemption_ide_number=test_tuple[11],
-                    ct_gov_id_null_value_code=test_tuple[12],
-                    eudract_id_null_value_code=test_tuple[12],
-                    universal_trial_number_utn_null_value_code=test_tuple[12],
-                    japanese_trial_registry_id_japic_null_value_code=test_tuple[12],
+                    eu_pas_number=test_tuple[12],
+                    ct_gov_id_null_value_code=test_tuple[13],
+                    eudract_id_null_value_code=test_tuple[13],
+                    universal_trial_number_utn_null_value_code=test_tuple[13],
+                    japanese_trial_registry_id_japic_null_value_code=test_tuple[13],
                     investigational_new_drug_application_number_ind_null_value_code=test_tuple[
-                        12
+                        13
                     ],
-                    eu_trial_number_null_value_code=test_tuple[12],
-                    civ_id_sin_number_null_value_code=test_tuple[12],
-                    national_clinical_trial_number_null_value_code=test_tuple[12],
-                    japanese_trial_registry_number_jrct_null_value_code=test_tuple[12],
+                    eu_trial_number_null_value_code=test_tuple[13],
+                    civ_id_sin_number_null_value_code=test_tuple[13],
+                    national_clinical_trial_number_null_value_code=test_tuple[13],
+                    japanese_trial_registry_number_jrct_null_value_code=test_tuple[13],
                     national_medical_products_administration_nmpa_number_null_value_code=test_tuple[
-                        12
+                        13
                     ],
-                    eudamed_srn_number_null_value_code=test_tuple[12],
+                    eudamed_srn_number_null_value_code=test_tuple[13],
                     investigational_device_exemption_ide_number_null_value_code=test_tuple[
-                        12
+                        13
                     ],
+                    eu_pas_number_null_value_code=test_tuple[13],
                 )
                 with self.assertRaises(exceptions.ValidationException):
                     registry_identifier.validate()

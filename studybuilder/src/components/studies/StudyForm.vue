@@ -208,6 +208,7 @@ function initForm(value) {
 
 function updateProject(value) {
   project.value = value
+  form.value.project_number = value.project_number
 }
 
 async function addStudy() {
@@ -259,4 +260,5 @@ async function submit() {
     formRef.value.working = false
   }
 }
+studiesManageStore.fetchProjects()
 </script>

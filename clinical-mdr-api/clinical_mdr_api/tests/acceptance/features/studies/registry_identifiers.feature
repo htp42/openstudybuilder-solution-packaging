@@ -1,8 +1,8 @@
 @REQ_ID:1074253
-Feature: Manage Registry Identifiers in Clinical MDR API
+Feature: Manage Registry Identifiers in OpenStudyBuilder API
 
-    Background: Test user must be able to call the Clinical MDR API and test data exist
-        Given The test user can call the Clinical MDR API
+    Background: Test user must be able to call the OpenStudyBuilder API and test data exist
+        Given The test user can call the OpenStudyBuilder API
         Given a test study identified by 'uid' is in status 'Locked' for the 'study_value_version'
 
     Rule: As an API user,

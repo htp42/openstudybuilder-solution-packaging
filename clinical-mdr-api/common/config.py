@@ -52,7 +52,7 @@ class Settings(BaseSettings):
         return value.casefold().strip() in ("true", "1", "on", "yes", "y", "enabled")
 
     # Application Configuration
-    app_name: str = "StudyBuilder API"
+    app_name: str = "OpenStudyBuilder API"
     openapi_schema_api_root_path: str = Field(default="/", alias="UVICORN_ROOT_PATH")
     app_debug: bool = False
     color_logs: bool = Field(
@@ -90,10 +90,12 @@ class Settings(BaseSettings):
 
     # Pagination Configuration
     default_page_number: int = 1
+    default_page_number_consumer_api: int = 1
     default_page_size: int = 10
     default_header_page_size: int = 10
     default_filter_operator: str = "and"
     max_page_size: int = 1000
+    max_page_number: int = 1000000000
     page_size_100: int = 100
     consumer_api_audit_trail_max_rows: int = 10000
 
@@ -109,7 +111,9 @@ class Settings(BaseSettings):
     trace_request_body_truncate_bytes: int = 2048
     trace_query_max_len: int = 4000
     traceback_max_entries: int = Field(
-        default=15, description="Limit number of stack trace entries in tracebacks"
+        default=15,
+        description="Limit tracebacks to the N innermost/latest frames",
+        ge=0,
     )
     appinsights_connection: str = Field(
         default="", alias="APPLICATIONINSIGHTS_CONNECTION_STRING"
@@ -244,6 +248,9 @@ class Settings(BaseSettings):
         study_field_soa_show_milestones,
         study_field_soa_baseline_as_time_zero,
     )
+    study_soa_split_uids_field: str = "soa_split_uids"
+
+    soa_insert_space_after_commas_length: int = 8
 
     study_visit_contact_mode_name: str = "Visit Contact Mode"
     study_visit_epoch_allocation_name: str = "Epoch Allocation"

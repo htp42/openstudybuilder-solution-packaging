@@ -111,6 +111,7 @@
         :title="historyTitle"
         :headers="historyHeaders"
         :items="historyItems"
+        :items-total="historyItems.length"
         @close="closeHistory"
       />
     </v-dialog>
@@ -199,7 +200,7 @@ export default {
         {
           label: this.$t('_global.edit'),
           icon: 'mdi-pencil-outline',
-          iconColor: 'nnActionBlue',
+          iconColor: 'nnBaseBlue',
           condition:
             this.item &&
             this.item.possible_actions.find((action) => action === 'edit'),
@@ -209,7 +210,7 @@ export default {
         {
           label: this.$t('_global.new_version'),
           icon: 'mdi-plus-circle-outline',
-          iconColor: 'nnActionBlue',
+          iconColor: 'nnBaseBlue',
           condition:
             this.item &&
             this.item.possible_actions.find(
@@ -221,7 +222,7 @@ export default {
         {
           label: this.$t('_global.inactivate'),
           icon: 'mdi-close-octagon-outline',
-          iconColor: 'nnActionBlue',
+          iconColor: 'nnBaseBlue',
           condition:
             this.item &&
             this.item.possible_actions.find(
@@ -233,7 +234,7 @@ export default {
         {
           label: this.$t('_global.reactivate'),
           icon: 'mdi-undo-variant',
-          iconColor: 'nnActionBlue',
+          iconColor: 'nnBaseBlue',
           condition:
             this.item &&
             this.item.possible_actions.find(
@@ -254,7 +255,7 @@ export default {
         },
         {
           label: this.$t('_global.history'),
-          iconColor: 'nnActionBlue',
+          iconColor: 'nnBaseBlue',
           icon: 'mdi-history',
           condition: true,
           accessRole: this.$roles.LIBRARY_READ,
@@ -262,7 +263,7 @@ export default {
         },
         {
           label: this.$t('_global.close'),
-          iconColor: 'nnActionBlue',
+          iconColor: 'nnBaseBlue',
           icon: 'mdi-close',
           condition: true,
           accessRole: this.$roles.LIBRARY_READ,

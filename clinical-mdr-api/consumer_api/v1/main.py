@@ -1,4 +1,4 @@
-# RESTful API endpoints used by consumers that want to extract data from StudyBuilder
+# RESTful API endpoints used by consumers that want to extract data from OpenStudyBuilder
 # pylint: disable=invalid-name
 # pylint: disable=redefined-builtin
 from datetime import datetime
@@ -11,6 +11,7 @@ from common.auth.dependencies import security
 from common.config import settings
 from common.models.error import ErrorResponse
 from common.utils import BaseTimelineAR
+from consumer_api.shared.common import PAGE_NUMBER_QUERY, PAGE_SIZE_QUERY
 from consumer_api.shared.responses import (
     PaginatedResponse,
     PaginatedResponseWithStudyVersion,
@@ -32,10 +33,10 @@ def get_studies(
     request: Request,
     sort_by: models.SortByStudies = models.SortByStudies.UID,
     sort_order: models.SortOrder = models.SortOrder.ASC,
-    page_size: Annotated[
-        int, Query(ge=1, le=settings.max_page_size)
-    ] = settings.default_page_size,
-    page_number: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, PAGE_SIZE_QUERY] = settings.default_page_size,
+    page_number: Annotated[
+        int, PAGE_NUMBER_QUERY
+    ] = settings.default_page_number_consumer_api,
     id: Annotated[
         str | None,
         Query(
@@ -88,10 +89,10 @@ def get_study_visits(
     uid: Annotated[str, Path(description="Study UID")],
     sort_by: models.SortByStudyVisits = models.SortByStudyVisits.UNIQUE_VISIT_NUMBER,
     sort_order: models.SortOrder = models.SortOrder.ASC,
-    page_size: Annotated[
-        int, Query(ge=1, le=settings.max_page_size)
-    ] = settings.page_size_100,
-    page_number: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, PAGE_SIZE_QUERY] = settings.page_size_100,
+    page_number: Annotated[
+        int, PAGE_NUMBER_QUERY
+    ] = settings.default_page_number_consumer_api,
     study_version_number: Annotated[
         str | None, Query(description="Study Version Number", example="2.1")
     ] = None,
@@ -113,7 +114,7 @@ def get_study_visits(
         study_uid=uid,
         sort_by=sort_by,
         sort_order=sort_order,
-        page_size=1000000,
+        page_size=settings.max_page_size,
         page_number=1,
         study_version_number=study_version_number,
     )
@@ -156,10 +157,10 @@ def get_study_activities(
     uid: Annotated[str, Path(description="Study UID")],
     sort_by: models.SortByStudyActivities = models.SortByStudyActivities.UID,
     sort_order: models.SortOrder = models.SortOrder.ASC,
-    page_size: Annotated[
-        int, Query(ge=1, le=settings.max_page_size)
-    ] = settings.page_size_100,
-    page_number: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, PAGE_SIZE_QUERY] = settings.page_size_100,
+    page_number: Annotated[
+        int, PAGE_NUMBER_QUERY
+    ] = settings.default_page_number_consumer_api,
     study_version_number: Annotated[
         str | None, Query(description="Study Version Number", example="2.1")
     ] = None,
@@ -218,10 +219,10 @@ def get_study_activity_instances(
     uid: Annotated[str, Path(description="Study UID")],
     sort_by: models.SortByStudyActivityInstances = models.SortByStudyActivityInstances.UID,
     sort_order: models.SortOrder = models.SortOrder.ASC,
-    page_size: Annotated[
-        int, Query(ge=1, le=settings.max_page_size)
-    ] = settings.page_size_100,
-    page_number: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, PAGE_SIZE_QUERY] = settings.page_size_100,
+    page_number: Annotated[
+        int, PAGE_NUMBER_QUERY
+    ] = settings.default_page_number_consumer_api,
     study_version_number: Annotated[
         str | None, Query(description="Study Version Number", example="2.1")
     ] = None,
@@ -280,10 +281,10 @@ def get_study_detailed_soa(
     uid: Annotated[str, Path(description="Study UID")],
     sort_by: models.SortByStudyDetailedSoA = models.SortByStudyDetailedSoA.ACTIVITY_NAME,
     sort_order: models.SortOrder = models.SortOrder.ASC,
-    page_size: Annotated[
-        int, Query(ge=1, le=settings.max_page_size)
-    ] = settings.page_size_100,
-    page_number: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, PAGE_SIZE_QUERY] = settings.page_size_100,
+    page_number: Annotated[
+        int, PAGE_NUMBER_QUERY
+    ] = settings.default_page_number_consumer_api,
     study_version_number: Annotated[
         str | None, Query(description="Study Version Number", example="2.1")
     ] = None,
@@ -343,10 +344,10 @@ def get_study_operational_soa(
     uid: Annotated[str, Path(description="Study UID")],
     sort_by: models.SortByStudyOperationalSoA = models.SortByStudyOperationalSoA.ACTIVITY_NAME,
     sort_order: models.SortOrder = models.SortOrder.ASC,
-    page_size: Annotated[
-        int, Query(ge=1, le=settings.max_page_size)
-    ] = settings.page_size_100,
-    page_number: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, PAGE_SIZE_QUERY] = settings.page_size_100,
+    page_number: Annotated[
+        int, PAGE_NUMBER_QUERY
+    ] = settings.default_page_number_consumer_api,
     study_version_number: Annotated[
         str | None, Query(description="Study Version Number", example="2.1")
     ] = None,
@@ -407,10 +408,10 @@ def get_library_activities(
         models.SortByLibraryItem, Query()
     ] = models.SortByLibraryItem.NAME,
     sort_order: models.SortOrder = models.SortOrder.ASC,
-    page_size: Annotated[
-        int, Query(ge=1, le=settings.max_page_size)
-    ] = settings.page_size_100,
-    page_number: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, PAGE_SIZE_QUERY] = settings.page_size_100,
+    page_number: Annotated[
+        int, PAGE_NUMBER_QUERY
+    ] = settings.default_page_number_consumer_api,
     library: models.Library | None = None,
     status: models.LibraryItemStatus | None = None,
 ) -> PaginatedResponse[models.LibraryActivity]:
@@ -462,10 +463,10 @@ def get_library_activity_instances(
         models.SortByLibraryItem, Query()
     ] = models.SortByLibraryItem.NAME,
     sort_order: models.SortOrder = models.SortOrder.ASC,
-    page_size: Annotated[
-        int, Query(ge=1, le=settings.max_page_size)
-    ] = settings.page_size_100,
-    page_number: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, PAGE_SIZE_QUERY] = settings.page_size_100,
+    page_number: Annotated[
+        int, PAGE_NUMBER_QUERY
+    ] = settings.default_page_number_consumer_api,
     library: models.Library | None = None,
     status: models.LibraryItemStatus | None = None,
     activity_uid: Annotated[
@@ -593,7 +594,9 @@ def get_studies_audit_trail(
             description="List of study IDs to exclude (case-insensitive partial match), for example `CDISC DEV`."
         ),
     ] = ["CDISC DEV"],
-    page_number: Annotated[int, Query(ge=1)] = 1,
+    page_number: Annotated[
+        int, PAGE_NUMBER_QUERY
+    ] = settings.default_page_number_consumer_api,
 ) -> Response:
     """
     Returns study audit trail entries between `from_ts` timestamp (including) and `to_ts` timestamp (excluding).

@@ -9,16 +9,16 @@ from neomodel import db
 
 from clinical_mdr_api.main import app
 from clinical_mdr_api.tests.data.odm_xml import (
-    clinspark_input,
-    clinspark_output,
-    import_input1,
-    import_input2,
-    import_input3,
-    import_input4,
-    import_input5,
-    import_input6,
-    import_output1,
-    import_output2,
+    CLINSPARK_INPUT,
+    CLINSPARK_OUTPUT,
+    IMPORT_INPUT1,
+    IMPORT_INPUT2,
+    IMPORT_INPUT3,
+    IMPORT_INPUT4,
+    IMPORT_INPUT5,
+    IMPORT_INPUT6,
+    IMPORT_OUTPUT1,
+    IMPORT_OUTPUT2,
 )
 from clinical_mdr_api.tests.integration.utils.api import drop_db, inject_and_clear_db
 from clinical_mdr_api.tests.integration.utils.data_library import (
@@ -58,21 +58,21 @@ def test_data():
 def test_import_odm_xml(api_client):
     response = api_client.post(
         "concepts/odms/metadata/xmls/import",
-        files={"xml_file": ("odm.xml", import_input1, CONTENT_TYPE)},
+        files={"xml_file": ("odm.xml", IMPORT_INPUT1, CONTENT_TYPE)},
     )
 
     assert_response_status_code(response, 201)
 
     res = response.json()
 
-    assert_with_key_exclusion(import_output1, res, ["start_date"])
+    assert_with_key_exclusion(IMPORT_OUTPUT1, res, ["start_date"])
 
 
 def test_import_odm_vendor_with_csv_mapper(api_client):
     response = api_client.post(
         "concepts/odms/metadata/xmls/import",
         files={
-            "xml_file": ("odm.xml", import_input2, CONTENT_TYPE),
+            "xml_file": ("odm.xml", IMPORT_INPUT2, CONTENT_TYPE),
             "mapper_file": (
                 "mapper.csv",
                 "type,parent,from_name,to_name,to_alias,from_alias,alias_context\n"
@@ -91,21 +91,21 @@ def test_import_odm_vendor_with_csv_mapper(api_client):
 
     res = response.json()
 
-    assert_with_key_exclusion(import_output2, res, ["start_date"])
+    assert_with_key_exclusion(IMPORT_OUTPUT2, res, ["start_date"])
 
 
 def test_import_clinspark_odm_xml(api_client):
     db.cypher_query("MERGE (:CTCatalogue {name:'CDASH CT'})")
     response = api_client.post(
         "concepts/odms/metadata/xmls/import?exporter=clinspark",
-        files={"xml_file": ("clinspark.xml", clinspark_input, CONTENT_TYPE)},
+        files={"xml_file": ("clinspark.xml", CLINSPARK_INPUT, CONTENT_TYPE)},
     )
 
     assert_response_status_code(response, 201)
 
     res = response.json()
 
-    assert_with_key_exclusion(clinspark_output, res, ["start_date"])
+    assert_with_key_exclusion(CLINSPARK_OUTPUT, res, ["start_date"])
 
 
 def test_throw_exception_if_file_is_not_xml(api_client):
@@ -131,7 +131,7 @@ def test_throw_exception_if_file_is_not_xml(api_client):
 def test_throw_exception_if_vendor_attributes_dont_match_their_regex(api_client):
     response = api_client.post(
         "concepts/odms/metadata/xmls/import",
-        files={"xml_file": ("odm.xml", import_input4, CONTENT_TYPE)},
+        files={"xml_file": ("odm.xml", IMPORT_INPUT4, CONTENT_TYPE)},
     )
 
     assert_response_status_code(response, 400)
@@ -148,7 +148,7 @@ def test_throw_exception_if_vendor_attributes_dont_match_their_regex(api_client)
 def test_throw_exception_if_ref_vendor_attributes_dont_match_their_regex(api_client):
     response = api_client.post(
         "concepts/odms/metadata/xmls/import",
-        files={"xml_file": ("odm.xml", import_input5, CONTENT_TYPE)},
+        files={"xml_file": ("odm.xml", IMPORT_INPUT5, CONTENT_TYPE)},
     )
 
     assert_response_status_code(response, 400)
@@ -165,7 +165,7 @@ def test_throw_exception_if_ref_vendor_attributes_dont_match_their_regex(api_cli
 def test_throw_exception_if_measurementunits_dont_exist(api_client):
     response = api_client.post(
         "concepts/odms/metadata/xmls/import",
-        files={"xml_file": ("odm.xml", import_input3, CONTENT_TYPE)},
+        files={"xml_file": ("odm.xml", IMPORT_INPUT3, CONTENT_TYPE)},
     )
 
     assert_response_status_code(response, 400)
@@ -183,7 +183,7 @@ def test_throw_exception_if_measurementunitref_refers_to_non_present_measurement
 ):
     response = api_client.post(
         "concepts/odms/metadata/xmls/import",
-        files={"xml_file": ("odm.xml", import_input6, CONTENT_TYPE)},
+        files={"xml_file": ("odm.xml", IMPORT_INPUT6, CONTENT_TYPE)},
     )
 
     assert_response_status_code(response, 400)

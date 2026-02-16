@@ -42,7 +42,7 @@ def trace_block(
 
     with tracer.span(name) as span:
         if annotation_description:
-            span.add_annotation(annotation_description, **annotation_kwargs)
+            span.add_annotation(annotation_description, **(annotation_kwargs or {}))
 
         for k, v in attributes.items():
             span.add_attribute(k, v)

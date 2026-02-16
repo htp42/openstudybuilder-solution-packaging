@@ -3,7 +3,7 @@ import argparse
 from datetime import datetime, timezone
 from os import environ
 
-from mdr_standards_import.scripts.utils import get_sentence_case_string
+from mdr_standards_import.scripts.utils import get_sentence_case_string, create_user, get_author_id
 
 from neo4j import GraphDatabase
 
@@ -24,6 +24,7 @@ NEO4J_STAGING_DATABASE = environ.get("NEO4J_CDISC_IMPORT_DATABASE")
 
 
 IMPORT_USERNAME = environ.get("IMPORT_USERNAME", "testuser")
+IMPORT_AUTHOR_ID = "testuser"
 SIDELOAD_SUFFIX = "_sideload"
 
 # Check SB db environment variables
@@ -141,6 +142,33 @@ def create_indexes(session, sideload_data: bool = False):
     for query in queries:
         run_single_query(session, query)
 
+# check if sb-import user exists in SB database
+def check_sb_import_exists(sb_db_driver):
+    query = """
+        MATCH (u:User {username: 'sb-import'})
+        RETURN u
+        """
+    result = run_single_query_auto(
+        sb_db_driver.session(),
+        query,
+        parameters={"username": "sb-import"},
+    )
+    return len(result) > 0
+
+# get sb-import user id from SB database
+def get_import_user_id(sb_db_driver):
+    query = """
+        MATCH (u:User {username: 'sb-import'})
+        RETURN u.user_id AS user_id
+        """
+    result = run_single_query_auto(
+        sb_db_driver.session(),
+        query,
+        parameters={"username": IMPORT_AUTHOR_ID},
+    )
+    if len(result) == 0:
+        raise ValueError("sb-import user not found in SB database")
+    return result[0]["user_id"]
 
 ###### Libraries, catalogues and packages
 def merge_library(session, name, editable):
@@ -166,12 +194,12 @@ def merge_catalogue(session, library_name, catalogue_name, sideload_data: bool =
     )
 
 
-def merge_package(session, package, import_username, sideload_data: bool = False):
+def merge_package(session, package, author_id, sideload_data: bool = False):
     suffix = SIDELOAD_SUFFIX if sideload_data else ""
     query = f"""
         MATCH (cat:CTCatalogue{suffix} {{name: $package.catalogue_name}})
         MERGE (cat)-[:CONTAINS_PACKAGE]->(pak:CTPackage{suffix} {{uid: $package.uid, name: $package.name}})
-        ON CREATE SET pak.import_date = datetime(), pak.user_initials = $import_username, pak.effective_date = datetime($package.effectiveDate)
+        ON CREATE SET pak.import_date = datetime(), pak.author_id = $author_id, pak.effective_date = datetime($package.effectiveDate)
         WITH pak
         MATCH (prevpak:CTPackage{suffix} {{name: $package.prior_version_name}})
         MERGE (pak)<-[:NEXT_PACKAGE]-(prevpak)
@@ -180,7 +208,7 @@ def merge_package(session, package, import_username, sideload_data: bool = False
     run_single_query(
         session,
         query,
-        parameters={"package": package, "import_username": import_username},
+        parameters={"package": package, "author_id": author_id},
     )
 
 
@@ -218,7 +246,7 @@ def merge_libraries_catalogues_packages(
         for cat in cats:
             merge_catalogue(sb_session, "CDISC", cat, sideload_data)
         for pack in packages:
-            merge_package(sb_session, pack, IMPORT_USERNAME, sideload_data)
+            merge_package(sb_session, pack, IMPORT_AUTHOR_ID, sideload_data)
 
 
 ###### Codelists
@@ -301,7 +329,7 @@ def merge_codelist_versions(session, codelist, stats=None, sideload_data: bool =
     create_attrs_query = f"""
     MATCH (clar:CTCodelistAttributesRoot{suffix})<-[:HAS_ATTRIBUTES_ROOT]-(clr:CTCodelistRoot{suffix} {{uid: $codelist_uid}})
     WITH clr, clar
-    CREATE (clar)-[:HAS_VERSION {{start_date: datetime($attr.start_date), end_date: datetime($attr.end_date), version: $attr.version, status: "Final", user_initials: $user_initials}}]->(clav:CTCodelistAttributesValue{suffix} {{name: $attr.value.name, preferred_term: $attr.value.preferred_term, submission_value: $attr.value.submission_value, definition: $attr.value.definition, concept_id: $attr.value.concept_id, extensible: $attr.value.extensible, synonyms: $attr.value.synonyms}})
+    CREATE (clar)-[:HAS_VERSION {{start_date: datetime($attr.start_date), end_date: datetime($attr.end_date), version: $attr.version, status: "Final", author_id: $author_id}}]->(clav:CTCodelistAttributesValue{suffix} {{name: $attr.value.name, preferred_term: $attr.value.preferred_term, submission_value: $attr.value.submission_value, definition: $attr.value.definition, concept_id: $attr.value.concept_id, extensible: $attr.value.extensible, synonyms: $attr.value.synonyms}})
     WITH clar, clav
     MATCH (ctpcl:CTPackageCodelist{suffix}) WHERE ctpcl.uid IN $attr.package_codelist_uids
     MERGE (clav)<-[:CONTAINS_ATTRIBUTES]-(ctpcl)
@@ -336,7 +364,7 @@ def merge_codelist_versions(session, codelist, stats=None, sideload_data: bool =
     create_name_query = f"""
     MATCH (clnr:CTCodelistNameRoot{suffix})<-[:HAS_NAME_ROOT]-(clr:CTCodelistRoot{suffix} {{uid: $codelist_uid}})
     WITH clnr
-    CREATE (clnr)-[:HAS_VERSION {{start_date: datetime($name.start_date), end_date: datetime($name.end_date), version: $name.version, status: "Final", user_initials: $user_initials}}]->(clnv:CTCodelistNameValue{suffix} {{name: $name.value.name, name_sentence_case: $name.value.name_sentence_case}})
+    CREATE (clnr)-[:HAS_VERSION {{start_date: datetime($name.start_date), end_date: datetime($name.end_date), version: $name.version, status: "Final", author_id: $author_id}}]->(clnv:CTCodelistNameValue{suffix} {{name: $name.value.name, name_sentence_case: $name.value.name_sentence_case}})
     WITH clnr, clnv
     CALL {{
         WITH clnr, clnv
@@ -450,7 +478,7 @@ def merge_codelist_versions(session, codelist, stats=None, sideload_data: bool =
                     parameters={
                         "codelist_uid": codelist["vcl"]["conceptId"],
                         "attr": attr,
-                        "user_initials": IMPORT_USERNAME,
+                        "author_id": IMPORT_AUTHOR_ID,
                     },
                 )
                 stats["attrs_created"] += 1
@@ -462,7 +490,7 @@ def merge_codelist_versions(session, codelist, stats=None, sideload_data: bool =
                 parameters={
                     "codelist_uid": codelist["vcl"]["conceptId"],
                     "attr": attr,
-                    "user_initials": IMPORT_USERNAME,
+                    "author_id": IMPORT_AUTHOR_ID,
                 },
             )
             stats["attrs_created"] += 1
@@ -534,7 +562,7 @@ def merge_codelist_versions(session, codelist, stats=None, sideload_data: bool =
                     parameters={
                         "codelist_uid": codelist["vcl"]["conceptId"],
                         "name": name,
-                        "user_initials": IMPORT_USERNAME,
+                        "author_id": IMPORT_AUTHOR_ID,
                     },
                 )
                 stats["names_created"] += 1
@@ -547,7 +575,7 @@ def merge_codelist_versions(session, codelist, stats=None, sideload_data: bool =
                 parameters={
                     "codelist_uid": codelist["vcl"]["conceptId"],
                     "name": name,
-                    "user_initials": IMPORT_USERNAME,
+                    "author_id": IMPORT_AUTHOR_ID,
                 },
             )
             stats["names_created"] += 1
@@ -754,7 +782,7 @@ def merge_term_versions(session, term, stats=None, sideload_data: bool = False):
     create_attrs_query = f"""
     MATCH (tar:CTTermAttributesRoot{suffix})<-[:HAS_ATTRIBUTES_ROOT]-(tr:CTTermRoot{suffix} {{uid: $term_uid}})
     WITH tr, tar
-    CREATE (tar)-[:HAS_VERSION {{start_date: datetime($attr.start_date), end_date: datetime($attr.end_date), version: $attr.version, status: "Final", user_initials: $user_initials}}]->(tav:CTTermAttributesValue{suffix} {{preferred_term: $attr.value.preferred_term, definition: $attr.value.definition, concept_id: $attr.value.concept_id, synonyms: $attr.value.synonyms}})
+    CREATE (tar)-[:HAS_VERSION {{start_date: datetime($attr.start_date), end_date: datetime($attr.end_date), version: $attr.version, status: "Final", author_id: $author_id}}]->(tav:CTTermAttributesValue{suffix} {{preferred_term: $attr.value.preferred_term, definition: $attr.value.definition, concept_id: $attr.value.concept_id, synonyms: $attr.value.synonyms}})
     WITH tar, tav
     MATCH (ctpt:CTPackageTerm{suffix}) WHERE ctpt.uid IN $attr.package_term_uids
     MERGE (tav)<-[:CONTAINS_ATTRIBUTES]-(ctpt)
@@ -789,7 +817,7 @@ def merge_term_versions(session, term, stats=None, sideload_data: bool = False):
     create_name_query = f"""
     MATCH (tnr:CTTermNameRoot{suffix})<-[:HAS_NAME_ROOT]-(tr:CTTermRoot{suffix} {{uid: $term_uid}})
     WITH tnr
-    CREATE (tnr)-[:HAS_VERSION {{start_date: datetime($name.start_date), end_date: datetime($name.end_date), version: $name.version, status: "Final", user_initials: $user_initials}}]->(tnv:CTTermNameValue{suffix} {{name: $name.value.name, name_sentence_case: $name.value.name_sentence_case}})
+    CREATE (tnr)-[:HAS_VERSION {{start_date: datetime($name.start_date), end_date: datetime($name.end_date), version: $name.version, status: "Final", author_id: $author_id}}]->(tnv:CTTermNameValue{suffix} {{name: $name.value.name, name_sentence_case: $name.value.name_sentence_case}})
     WITH tnr, tnv
     CALL {{
         WITH tnr, tnv
@@ -903,7 +931,7 @@ def merge_term_versions(session, term, stats=None, sideload_data: bool = False):
                     parameters={
                         "term_uid": term["term"]["conceptId"],
                         "attr": attr,
-                        "user_initials": IMPORT_USERNAME,
+                        "author_id": IMPORT_AUTHOR_ID,
                     },
                 )
                 stats["attrs_created"] += 1
@@ -915,7 +943,7 @@ def merge_term_versions(session, term, stats=None, sideload_data: bool = False):
                 parameters={
                     "term_uid": term["term"]["conceptId"],
                     "attr": attr,
-                    "user_initials": IMPORT_USERNAME,
+                    "author_id": IMPORT_AUTHOR_ID,
                 },
             )
             # raise ValueError("stop")
@@ -986,7 +1014,7 @@ def merge_term_versions(session, term, stats=None, sideload_data: bool = False):
                     parameters={
                         "term_uid": term["term"]["conceptId"],
                         "name": name,
-                        "user_initials": IMPORT_USERNAME,
+                        "author_id": IMPORT_AUTHOR_ID,
                     },
                 )
                 stats["names_created"] += 1
@@ -999,7 +1027,7 @@ def merge_term_versions(session, term, stats=None, sideload_data: bool = False):
                 parameters={
                     "term_uid": term["term"]["conceptId"],
                     "name": name,
-                    "user_initials": IMPORT_USERNAME,
+                    "author_id": IMPORT_AUTHOR_ID,
                 },
             )
             # raise ValueError("stop")
@@ -1129,6 +1157,8 @@ def link_terms_to_codelists(
 
 
 def main():
+    global IMPORT_AUTHOR_ID
+
     # Get sideload boolean argument
     parser = argparse.ArgumentParser(description="Process CDISC data.")
     parser.add_argument(
@@ -1145,6 +1175,14 @@ def main():
 
     with sb_db_driver.session() as sb_session:
         create_indexes(sb_session, sideload_data=sideload_data)
+    
+    if check_sb_import_exists(sb_db_driver):
+        LOGGER.info("Using system import user already present in OSB database")
+        IMPORT_AUTHOR_ID = get_import_user_id(sb_db_driver)
+        
+    else:
+        with sb_db_driver.session() as sb_session:
+            sb_session.write_transaction(create_user, IMPORT_USERNAME)
 
     merge_libraries_catalogues_packages(
         staging_db_driver, sb_db_driver, sideload_data=sideload_data

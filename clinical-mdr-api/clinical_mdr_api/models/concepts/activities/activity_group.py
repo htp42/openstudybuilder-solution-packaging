@@ -84,6 +84,7 @@ class SimpleSubGroup(BaseModel):
     name: Annotated[str, Field()]
     version: Annotated[str, Field()]
     status: Annotated[str, Field()]
+    start_date: Annotated[str, Field()]
     definition: Annotated[str | None, Field()] = None
 
 

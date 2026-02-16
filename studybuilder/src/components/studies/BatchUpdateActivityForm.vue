@@ -10,6 +10,13 @@
   >
     <template #[`step.review`]>
       <v-form ref="reviewForm">
+        <v-alert
+          density="compact"
+          type="info"
+          rounded="lg"
+          class="text-white mb-2 ml-1 mr-1"
+          :text="$t('StudyActivityUpdateForms.no_requested_in_batch_info')"
+        />
         <v-data-table
           class="elevation-0"
           :items="studyActivities"
@@ -373,6 +380,7 @@ import filteringParameters from '@/utils/filteringParameters'
 import { useStudyActivitiesStore } from '@/stores/studies-activities'
 import study from '@/api/study'
 import statuses from '@/constants/statuses'
+import libraries from '@/constants/libraries'
 
 const notificationHub = inject('notificationHub')
 const { t } = useI18n()
@@ -466,6 +474,10 @@ async function getStudyActivitiesForUpdate(filters, options, filtersUpdated) {
     is_activity_updated: { v: [true] },
     keep_old_version: { v: [false] },
     'latest_activity.is_request_rejected': { v: [false] },
+    'latest_activity.library_name': {
+      v: [libraries.LIBRARY_REQUESTED],
+      op: 'ne',
+    },
   }
 
   params.filter_out_retired_groupings = true

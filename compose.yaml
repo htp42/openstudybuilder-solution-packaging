@@ -6,7 +6,7 @@ services:
   database:
     build:
       args:
-        NEO4J_IMAGE: ${NEO4J_IMAGE:-neo4j:5.19.0-enterprise}
+        NEO4J_IMAGE: ${NEO4J_IMAGE:-neo4j:5.26.18-enterprise}
         PYTHON_IMAGE: ${PYTHON_IMAGE:-python:3.13.0-slim}
         NEO4J_server_memory_heap_initial__size: "3G"
         NEO4J_server_memory_heap_max__size: "3G"

@@ -41,6 +41,7 @@ from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import 
 )
 from clinical_mdr_api.models.study_selections.study import Study as OSBStudy
 from clinical_mdr_api.services.ddf.usdm_utils import IdManager
+from common.telemetry import trace_calls
 
 DDF_CT_PACKAGE_EFFECTIVE_DATE = "2023-12-15"
 DDF_STUDY_ARM_DATA_ORIGIN_TYPE_GENERATED_WITHIN_STUDY = "C188866"
@@ -76,7 +77,7 @@ def get_ddf_timing_iso_duration_value(time_value: int, time_unit_name: str) -> s
 
 
 def extract_c_code_from_simple_term(term_uid: str) -> str | None:
-    regex_match = re.search("(^C[0-9]+)_", term_uid)
+    regex_match = re.search(r"(^C\d+)_?", term_uid)
     if regex_match:
         return regex_match.group(1)
     return None
@@ -109,6 +110,7 @@ def _update_ddf_encounter_scheduled_at(encounters, schedule_timelines):
 
 
 class USDMMapper:
+    @trace_calls
     def __init__(
         self,
         get_osb_study_design_cells: Callable,
@@ -140,11 +142,12 @@ class USDMMapper:
             instanceType="Code",
         )
 
+    @trace_calls(args=[1], kwargs=["concept_id"])
     def get_ct_package_term_as_usdm_code(self, concept_id: str | None) -> USDMCode:
         if concept_id is None:
             return self.get_void_usdm_code()
         query = """
-            MATCH (l:Library)-[:CONTAINS_TERM]->(cttr:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]->()-[:LATEST]->(cttav)
+            MATCH (l:Library)-[:CONTAINS_TERM]->(cttr:CTTermRoot)-[:HAS_NAME_ROOT]->()-[:LATEST]->(cttav)
             WHERE cttr.uid STARTS WITH $concept_id
             RETURN l, cttav
         """
@@ -157,17 +160,18 @@ class USDMMapper:
         if len(result) == 0:
             return self.get_void_usdm_code()
         library = result[0][0]
-        ct_term_attributes_value = result[0][1]
+        ct_term_name_value = result[0][1]
         code = USDMCode(
             id=self._id_manager.get_id(USDMCode.__name__, concept_id),
             code=concept_id,
             codeSystem=library["name"],
             codeSystemVersion=str(date.today()),
-            decode=ct_term_attributes_value["preferred_term"],
+            decode=ct_term_name_value["name"],
             instanceType="Code",
         )
         return code
 
+    @trace_calls(args=[1], kwargs=["time_unit_name"])
     def get_ddf_study_population_duration_unit_from_name_as_code(
         self, time_unit_name: str
     ) -> USDMCode:
@@ -236,6 +240,7 @@ class USDMMapper:
             DDF_TIME_RELATIVE_TO_FROM_START_TO_START
         )
 
+    @trace_calls
     def get_dictionary_term_as_usdm_code(self, term_uid: str) -> USDMCode:
         if term_uid is None:
             return self.get_void_usdm_code()
@@ -264,6 +269,7 @@ class USDMMapper:
         )
         return code
 
+    @trace_calls
     def map(self, study: OSBStudy) -> dict[str, Any]:
         usdm_study = USDMStudy(name=self._get_study_name(study), instanceType="Study")
         usdm_study.id = uuid.uuid4()
@@ -317,6 +323,7 @@ class USDMMapper:
 
         return wrapped_study
 
+    @trace_calls
     def _get_intervention_model(self, study: OSBStudy):
         osb_current_metadata = getattr(study, "current_metadata", None)
         osb_study_intervention = getattr(
@@ -333,6 +340,7 @@ class USDMMapper:
             )
         return self.get_void_usdm_code()
 
+    @trace_calls
     def _get_study_arms(self, study: OSBStudy):
         osb_study_arms = self._get_osb_study_arms(study.uid).items
         return [
@@ -354,6 +362,7 @@ class USDMMapper:
             for sa in osb_study_arms
         ]
 
+    @trace_calls
     def _get_study_cells(self, study: OSBStudy):
         osb_design_cells = self._get_osb_study_design_cells(study.uid)
         return [
@@ -375,12 +384,14 @@ class USDMMapper:
             and dc.study_element_uid is not None
         ]
 
+    @trace_calls
     def _get_study_description(self, study: OSBStudy):
         study_description = getattr(
             getattr(study, "current_metadata", None), "study_description", None
         )
         return getattr(study_description, "study_title", None)
 
+    @trace_calls
     def _get_study_designs(self, study: OSBStudy):
         # Create DDF study design and set intervention model
         ddf_study_design = USDMStudyDesign(
@@ -446,6 +457,7 @@ class USDMMapper:
 
         return [ddf_study_design]
 
+    @trace_calls
     def _get_study_activities(self, study: OSBStudy):
         osb_study_activities = self._get_osb_study_activities(study.uid).items
         return [
@@ -479,6 +491,7 @@ class USDMMapper:
             for a in osb_study_activities
         ]
 
+    @trace_calls
     def _get_study_elements(self, study: OSBStudy):
         osb_study_elements = self._get_osb_study_elements(study.uid).items
         ddf_study_elements = []
@@ -496,6 +509,7 @@ class USDMMapper:
             ddf_study_elements.append(ddf_se)
         return ddf_study_elements
 
+    @trace_calls
     def _get_study_epochs(self, study: OSBStudy):
         osb_study_epochs = self._get_osb_study_epochs(study.uid).items
 
@@ -539,6 +553,7 @@ class USDMMapper:
         ]
         return ddf_study_epochs
 
+    @trace_calls
     def _get_study_name(self, study: OSBStudy):
         osb_identification_metadata = getattr(
             getattr(study, "current_metadata", None), "identification_metadata", None
@@ -546,6 +561,7 @@ class USDMMapper:
         osb_study_id = getattr(osb_identification_metadata, "study_id", "")
         return osb_study_id
 
+    @trace_calls
     def _get_study_identifiers(self, study: OSBStudy):
         osb_identification_metadata = getattr(
             getattr(study, "current_metadata", None), "identification_metadata", None
@@ -567,6 +583,7 @@ class USDMMapper:
             "national_clinical_trial_number",
             "national_medical_products_administration_nmpa_number",
             "universal_trial_number_utn",
+            "eu_pas_number",
         ]
 
         return [
@@ -580,6 +597,7 @@ class USDMMapper:
             if (osb_curr_id := getattr(osb_registry_identifiers, selected_id, None))
         ]
 
+    @trace_calls
     def _get_study_indications(self, study: OSBStudy):
         osb_study_population = getattr(
             getattr(study, "current_metadata", None), "study_population", None
@@ -613,6 +631,7 @@ class USDMMapper:
                 ddf_study_indications.append(ddf_study_indication)
         return ddf_study_indications
 
+    @trace_calls
     def _get_study_interventions(self, study: OSBStudy):
         osb_study_intervention = study.current_metadata.study_intervention
         usdm_study_intervention_codes = []
@@ -678,12 +697,14 @@ class USDMMapper:
             )
         ]
 
+    @trace_calls
     def _get_study_label(self, study: OSBStudy):
         if study.current_metadata is not None:
             if study.current_metadata.study_description is not None:
                 return study.current_metadata.study_description.study_short_title
         return None
 
+    @trace_calls
     def _get_study_objectives(self, study: OSBStudy):
         osb_study_endpoints = self._get_osb_study_endpoints(
             study.uid, no_brackets=True
@@ -750,6 +771,7 @@ class USDMMapper:
             if se.study_objective is not None
         ]
 
+    @trace_calls
     def _get_study_phase(self, study: OSBStudy):
         osb_study_design = getattr(
             getattr(study, "current_metadata", None), "high_level_study_design", None
@@ -768,6 +790,7 @@ class USDMMapper:
         )
         return study_phase
 
+    @trace_calls
     def _get_study_population(self, study: OSBStudy):
         osb_study_population = study.current_metadata.study_population
         planned_sex_usdm_code = None
@@ -835,9 +858,9 @@ class USDMMapper:
                     isApproximate=False,
                     instanceType="Range",
                 )
-        planned_enrollment_number_quantity = None
+        planned_enrollment_number = None
         if osb_study_population.number_of_expected_subjects is not None:
-            planned_enrollment_number_quantity = USDMQuantity(
+            planned_enrollment_number = USDMQuantity(
                 id=self._id_manager.get_id(USDMQuantity.__name__),
                 value=osb_study_population.number_of_expected_subjects,
                 unit=USDMAliasCode(
@@ -855,7 +878,7 @@ class USDMMapper:
             id=self._id_manager.get_id(USDMStudyDesignPopulation.__name__),
             name="Study Design Population",
             plannedSex=[planned_sex_usdm_code],
-            plannedEnrollmentNumberQuantity=planned_enrollment_number_quantity,
+            plannedEnrollmentNumber=planned_enrollment_number,
             plannedAge=planned_age,
             includesHealthySubjects=(
                 osb_study_population.healthy_subject_indicator
@@ -891,6 +914,7 @@ class USDMMapper:
 
         return population
 
+    @trace_calls
     def _get_study_definition_document(self, study: OSBStudy):
         ddf_study_definition_document = USDMStudyDefinitionDocument(
             id=self._id_manager.get_id(USDMStudyDefinitionDocument.__name__),
@@ -931,6 +955,7 @@ class USDMMapper:
         ddf_study_definition_document.versions = [ddf_study_definition_document_version]
         return ddf_study_definition_document
 
+    @trace_calls
     def _get_study_schedule_timelines(self, study):
         osb_study_activity_schedules = self._get_osb_activity_schedules(study.uid)
         osb_study_visits = self._get_osb_study_visits(study.uid).items
@@ -1059,6 +1084,7 @@ class USDMMapper:
         usdm_timeline.instances = timeline_instances
         return [usdm_timeline]
 
+    @trace_calls
     def _get_study_title(self, study: OSBStudy):
         osb_current_metadata = getattr(study, "current_metadata", None)
         study_title = getattr(
@@ -1068,6 +1094,7 @@ class USDMMapper:
             return study_title
         return "Study title not available"
 
+    @trace_calls
     def _get_study_type(self, study: OSBStudy):
         osb_study_design = getattr(
             getattr(study, "current_metadata", None), "high_level_study_design", None
@@ -1079,6 +1106,7 @@ class USDMMapper:
             )
         return self.get_void_usdm_code()
 
+    @trace_calls
     def _get_study_version(self, study: OSBStudy):
         osb_current_metadata = getattr(study, "current_metadata", None)
         return str(
@@ -1089,6 +1117,7 @@ class USDMMapper:
             )
         )
 
+    @trace_calls
     def _get_study_encounters(self, study: OSBStudy):
         osb_study_visits = self._get_osb_study_visits(study.uid).items
         ordered_osb_study_visits = sorted(
@@ -1134,6 +1163,7 @@ class USDMMapper:
 
         return ddf_encounters
 
+    @trace_calls
     def _get_therapeutic_areas(self, study):
         osb_current_metadata = getattr(study, "current_metadata", None)
         osb_study_population = getattr(osb_current_metadata, "study_population", None)
@@ -1146,6 +1176,7 @@ class USDMMapper:
             ]
         return []
 
+    @trace_calls
     def _get_trial_intent_types_codes(self, study):
         osb_current_metadata = getattr(study, "current_metadata", None)
         osb_study_intervention = getattr(
@@ -1165,6 +1196,7 @@ class USDMMapper:
             ]
         return []
 
+    @trace_calls
     def _get_trial_type_codes(self, study: OSBStudy):
         return [
             (

@@ -1,9 +1,9 @@
 @REQ_ID:2383812
 
-Feature: Manage Clinical Programmes in Clinical MDR API
+Feature: Manage Clinical Programmes in OpenStudyBuilder API
 
-    Background: Test user must be able to call the Clinical MDR API
-        Given The test user can call the Clinical MDR API
+    Background: Test user must be able to call the OpenStudyBuilder API
+        Given The test user can call the OpenStudyBuilder API
 
     Rule: As an API user,
         I want the system to ensure [Scenario],

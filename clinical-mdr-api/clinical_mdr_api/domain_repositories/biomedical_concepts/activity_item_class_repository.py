@@ -88,6 +88,7 @@ class ActivityItemClassRepository(ConceptGenericRepository[ActivityItemClassAR])
                 concept_value.nci_concept_id AS nci_concept_id,
                 concept_value.name AS name,
                 concept_value.definition AS definition,
+                concept_value.display_name AS display_name,
                 library_name,
                 is_library_editable,
                 version_rel.version AS version,
@@ -110,6 +111,8 @@ class ActivityItemClassRepository(ConceptGenericRepository[ActivityItemClassAR])
                 is_adam_param_specific_enabled=aic.get(
                     "is_adam_param_specific_enabled", False
                 ),
+                is_additional_optional=aic.get("is_additional_optional", False),
+                is_default_linked=aic.get("is_default_linked", False),
             )
             for aic in input_dict.get("activity_instance_classes", [])
         ]
@@ -140,6 +143,7 @@ class ActivityItemClassRepository(ConceptGenericRepository[ActivityItemClassAR])
                 role=role,
                 data_type=data_type,
                 variable_class_uids=input_dict.get("variable_class_uids", []),
+                display_name=input_dict.get("display_name"),
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=input_dict.get("library_name", "Unknown"),
@@ -169,7 +173,9 @@ class ActivityItemClassRepository(ConceptGenericRepository[ActivityItemClassAR])
                 uid: activity_instance_class_root.uid,
                 name: activity_instance_class_value.name,
                 mandatory: rel.mandatory,
-                is_adam_param_specific_enabled: rel.is_adam_param_specific_enabled
+                is_adam_param_specific_enabled: rel.is_adam_param_specific_enabled,
+                is_additional_optional: rel.is_additional_optional,
+                is_default_linked: rel.is_default_linked
             }] AS activity_instance_classes,
 
             COLLECT {
@@ -194,6 +200,7 @@ class ActivityItemClassRepository(ConceptGenericRepository[ActivityItemClassAR])
             order=ar.activity_item_class_vo.order,
             definition=ar.activity_item_class_vo.definition,
             nci_concept_id=ar.activity_item_class_vo.nci_concept_id,
+            display_name=ar.activity_item_class_vo.display_name,
         )
         return new_value
 
@@ -285,6 +292,8 @@ class ActivityItemClassRepository(ConceptGenericRepository[ActivityItemClassAR])
                     "uid": node.uid,
                     "mandatory": rel.mandatory,
                     "is_adam_param_specific_enabled": rel.is_adam_param_specific_enabled,
+                    "is_additional_optional": rel.is_additional_optional,
+                    "is_default_linked": rel.is_default_linked,
                 }
             )
         existing_activity_instance_classes.sort(key=json.dumps)
@@ -318,6 +327,7 @@ class ActivityItemClassRepository(ConceptGenericRepository[ActivityItemClassAR])
             or ar.activity_item_class_vo.definition != value.definition
             or ar.activity_item_class_vo.nci_concept_id != value.nci_concept_id
             or ar.activity_item_class_vo.order != value.order
+            or ar.activity_item_class_vo.display_name != value.display_name
             or new_activity_instance_classes != existing_activity_instance_classes
             or (
                 ar.activity_item_class_vo.role.uid,
@@ -347,6 +357,7 @@ class ActivityItemClassRepository(ConceptGenericRepository[ActivityItemClassAR])
             order=ar.activity_item_class_vo.order,
             definition=ar.activity_item_class_vo.definition,
             nci_concept_id=ar.activity_item_class_vo.nci_concept_id,
+            display_name=ar.activity_item_class_vo.display_name,
         )
         self._db_save_node(new_value)
         for (
@@ -361,6 +372,10 @@ class ActivityItemClassRepository(ConceptGenericRepository[ActivityItemClassAR])
                 rel.is_adam_param_specific_enabled = (
                     activity_instance_class_uid.is_adam_param_specific_enabled
                 )
+                rel.is_additional_optional = (
+                    activity_instance_class_uid.is_additional_optional
+                )
+                rel.is_default_linked = activity_instance_class_uid.is_default_linked
                 rel.save()
             else:
                 root.has_activity_instance_class.connect(
@@ -368,6 +383,8 @@ class ActivityItemClassRepository(ConceptGenericRepository[ActivityItemClassAR])
                     {
                         "mandatory": activity_instance_class_uid.mandatory,
                         "is_adam_param_specific_enabled": activity_instance_class_uid.is_adam_param_specific_enabled,
+                        "is_additional_optional": activity_instance_class_uid.is_additional_optional,
+                        "is_default_linked": activity_instance_class_uid.is_default_linked,
                     },
                 )
 
@@ -427,6 +444,7 @@ class ActivityItemClassRepository(ConceptGenericRepository[ActivityItemClassAR])
                 definition=value.definition,
                 nci_concept_id=value.nci_concept_id,
                 order=value.order,
+                display_name=value.display_name,
                 activity_instance_classes=[
                     ActivityInstanceClassActivityItemClassRelVO(
                         uid=activity_instance_class.uid,
@@ -436,6 +454,12 @@ class ActivityItemClassRepository(ConceptGenericRepository[ActivityItemClassAR])
                         is_adam_param_specific_enabled=activity_instance_class.has_activity_item_class.relationship(
                             root
                         ).is_adam_param_specific_enabled,
+                        is_additional_optional=activity_instance_class.has_activity_item_class.relationship(
+                            root
+                        ).is_additional_optional,
+                        is_default_linked=activity_instance_class.has_activity_item_class.relationship(
+                            root
+                        ).is_default_linked,
                     )
                     for activity_instance_class in activity_instance_classes
                 ],
@@ -630,6 +654,8 @@ class ActivityItemClassRepository(ConceptGenericRepository[ActivityItemClassAR])
                 WITH aic.uid as uid,
                        instanceData.value.name as name,
                        instanceData.rel.is_adam_param_specific_enabled as adam_param_specific_enabled,
+                       instanceData.rel.is_additional_optional as is_additional_optional,
+                       instanceData.rel.is_default_linked as is_default_linked,
                        instanceData.rel.mandatory as mandatory,
                        instanceData.ver.status as status,
                        instanceData.ver.version as version,
@@ -651,6 +677,8 @@ class ActivityItemClassRepository(ConceptGenericRepository[ActivityItemClassAR])
                 WITH aic.uid as uid,
                        aicValue.name as name,
                        rel.is_adam_param_specific_enabled as adam_param_specific_enabled,
+                       rel.is_additional_optional as is_additional_optional,
+                       rel.is_default_linked as is_default_linked,
                        rel.mandatory as mandatory,
                        latest_ver.status as status,
                        latest_ver.version as version,
@@ -678,7 +706,7 @@ class ActivityItemClassRepository(ConceptGenericRepository[ActivityItemClassAR])
         final_query = (
             query
             + """
-                RETURN uid, name, adam_param_specific_enabled, mandatory,
+                RETURN uid, name, adam_param_specific_enabled, is_additional_optional, is_default_linked, mandatory,
                        status, version, modified_date, modified_by
             """
         )

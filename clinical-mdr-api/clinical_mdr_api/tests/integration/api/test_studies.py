@@ -402,6 +402,29 @@ def test_get_snapshot_history(api_client):
         == "Lock 1"
     )
 
+    # Test filtering studies by study_id and study_acronym with OR operator
+    filters = json.dumps(
+        {
+            "current_metadata.identification_metadata.study_id": {
+                "v": ["123-3"],
+                "op": "co",
+            },
+            "current_metadata.identification_metadata.study_acronym": {
+                "v": ["st-9349574170"],
+                "op": "co",
+            },
+        }
+    )
+    response = api_client.get(
+        "/studies", params={"page_size": 0, "filters": filters, "operator": "or"}
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert "items" in res
+    assert "total" in res
+    assert "page" in res
+    assert "size" in res
+
     # Unlock
     response = api_client.delete(f"/studies/{study_with_history.uid}/locks")
     assert_response_status_code(response, 200)
@@ -946,6 +969,8 @@ def test_create_study_subpart(api_client):
             "eudamed_srn_number_null_value_code": None,
             "investigational_device_exemption_ide_number": None,
             "investigational_device_exemption_ide_number_null_value_code": None,
+            "eu_pas_number": None,
+            "eu_pas_number_null_value_code": None,
         },
     }
     assert post_res["study_subpart_uids"] == []
@@ -984,6 +1009,8 @@ def test_create_study_subpart(api_client):
             "eudamed_srn_number_null_value_code": None,
             "investigational_device_exemption_ide_number": None,
             "investigational_device_exemption_ide_number_null_value_code": None,
+            "eu_pas_number": None,
+            "eu_pas_number_null_value_code": None,
         },
     }
     assert post_res["current_metadata"]["version_metadata"]["study_status"] == "DRAFT"
@@ -1034,6 +1061,8 @@ def test_create_study_subpart(api_client):
             "eudamed_srn_number_null_value_code": None,
             "investigational_device_exemption_ide_number": None,
             "investigational_device_exemption_ide_number_null_value_code": None,
+            "eu_pas_number": None,
+            "eu_pas_number_null_value_code": None,
         },
     }
     assert get_res["study_subpart_uids"] == []
@@ -1072,6 +1101,8 @@ def test_create_study_subpart(api_client):
             "eudamed_srn_number_null_value_code": None,
             "investigational_device_exemption_ide_number": None,
             "investigational_device_exemption_ide_number_null_value_code": None,
+            "eu_pas_number": None,
+            "eu_pas_number_null_value_code": None,
         },
     }
     assert get_res["current_metadata"]["version_metadata"]["study_status"] == "DRAFT"
@@ -1150,6 +1181,8 @@ def test_use_an_already_existing_study_as_a_study_subpart(api_client):
             "eudamed_srn_number_null_value_code": None,
             "investigational_device_exemption_ide_number": None,
             "investigational_device_exemption_ide_number_null_value_code": None,
+            "eu_pas_number": None,
+            "eu_pas_number_null_value_code": None,
         },
     }
     assert post_res["study_subpart_uids"] == []
@@ -1188,6 +1221,8 @@ def test_use_an_already_existing_study_as_a_study_subpart(api_client):
             "eudamed_srn_number_null_value_code": None,
             "investigational_device_exemption_ide_number": None,
             "investigational_device_exemption_ide_number_null_value_code": None,
+            "eu_pas_number": None,
+            "eu_pas_number_null_value_code": None,
         },
     }
     assert post_res["current_metadata"]["version_metadata"]["study_status"] == "DRAFT"
@@ -1251,6 +1286,8 @@ def test_use_an_already_existing_study_as_a_study_subpart(api_client):
             "eudamed_srn_number_null_value_code": None,
             "investigational_device_exemption_ide_number": None,
             "investigational_device_exemption_ide_number_null_value_code": None,
+            "eu_pas_number": None,
+            "eu_pas_number_null_value_code": None,
         },
     }
     assert get_res["study_subpart_uids"] == []
@@ -1289,6 +1326,8 @@ def test_use_an_already_existing_study_as_a_study_subpart(api_client):
             "eudamed_srn_number_null_value_code": None,
             "investigational_device_exemption_ide_number": None,
             "investigational_device_exemption_ide_number_null_value_code": None,
+            "eu_pas_number": None,
+            "eu_pas_number_null_value_code": None,
         },
     }
     assert get_res["current_metadata"]["version_metadata"]["study_status"] == "DRAFT"
@@ -1347,6 +1386,7 @@ def test_cascade_of_study_parent_part(api_client):
                         "national_medical_products_administration_nmpa_number": "national_medical_products_administration_nmpa_number",
                         "eudamed_srn_number": "eudamed_srn_number",
                         "investigational_device_exemption_ide_number": "investigational_device_exemption_ide_number",
+                        "eu_pas_number": "eu_pas_number",
                     }
                 },
                 "study_description": {
@@ -1409,6 +1449,8 @@ def test_cascade_of_study_parent_part(api_client):
             "eudamed_srn_number_null_value_code": None,
             "investigational_device_exemption_ide_number": "investigational_device_exemption_ide_number",
             "investigational_device_exemption_ide_number_null_value_code": None,
+            "eu_pas_number": "eu_pas_number",
+            "eu_pas_number_null_value_code": None,
         }
 
     TestUtils.set_study_standard_version(study_uid=parent_study.uid)
@@ -1680,6 +1722,8 @@ def test_remove_study_subpart_from_parent_part(api_client):
             "eudamed_srn_number_null_value_code": None,
             "investigational_device_exemption_ide_number": None,
             "investigational_device_exemption_ide_number_null_value_code": None,
+            "eu_pas_number": None,
+            "eu_pas_number_null_value_code": None,
         },
     }
     assert res["study_subpart_uids"] == []
@@ -1718,6 +1762,8 @@ def test_remove_study_subpart_from_parent_part(api_client):
             "eudamed_srn_number_null_value_code": None,
             "investigational_device_exemption_ide_number": None,
             "investigational_device_exemption_ide_number_null_value_code": None,
+            "eu_pas_number": None,
+            "eu_pas_number_null_value_code": None,
         },
     }
     assert res["current_metadata"]["version_metadata"]["study_status"] == "DRAFT"
@@ -1776,6 +1822,8 @@ def test_remove_study_subpart_from_parent_part(api_client):
             "eudamed_srn_number_null_value_code": None,
             "investigational_device_exemption_ide_number": None,
             "investigational_device_exemption_ide_number_null_value_code": None,
+            "eu_pas_number": None,
+            "eu_pas_number_null_value_code": None,
         },
     }
     assert res["current_metadata"]["version_metadata"]["study_status"] == "DRAFT"
@@ -1904,7 +1952,7 @@ def test_get_audit_trail_of_all_study_subparts_of_study(api_client):
             "study_parent_part_uid": None,
             "current_metadata": {
                 "identification_metadata": {
-                    "study_number": "3333",
+                    "study_number": None,
                 }
             },
         },
@@ -2095,7 +2143,7 @@ def test_cannot_delete_study_parent_part(api_client):
     assert res["type"] == "BusinessLogicException"
     assert (
         res["message"]
-        == f"Study {study.uid}: cannot delete a Study having Study Subparts: ['Study_000053', 'Study_000011']."
+        == f"Study {study.uid}: cannot delete a Study having Study Subparts: ['Study_000011', 'Study_000053']."
     )
 
 
@@ -2265,15 +2313,18 @@ def test_cannot_remove_study_subpart_from_parent_part_and_provide_an_existing_st
             "study_parent_part_uid": None,
             "current_metadata": {
                 "identification_metadata": {
-                    "study_number": "1111",
+                    "study_number": "8772",
                 }
             },
         },
     )
-    assert_response_status_code(response, 409)
+    assert_response_status_code(response, 400)
     res = response.json()
-    assert res["type"] == "AlreadyExistsException"
-    assert res["message"] == "Study with Study Number '1111' already exists."
+    assert res["type"] == "BusinessLogicException"
+    assert (
+        res["message"]
+        == "When removing a Study Subpart from its Study Parent Part the Study Number must be set to null."
+    )
 
 
 def test_study_metadata_version_selecting_ct_package(api_client):
@@ -2344,6 +2395,8 @@ def test_study_metadata_version_selecting_ct_package(api_client):
                         eudamed_srn_number_null_value_code=new_name_ctterm,
                         investigational_device_exemption_ide_number=None,
                         investigational_device_exemption_ide_number_null_value_code=new_name_ctterm,
+                        eu_pas_number=None,
+                        eu_pas_number_null_value_code=new_name_ctterm,
                     ),
                 )
             )
@@ -2904,7 +2957,7 @@ def test_study_structure_overview_grouping(api_client):
     assert_response_status_code(response, 200)
     res = response.json()
 
-    assert len(res["items"][0]["study_ids"]) == 62
+    assert len(res["items"][0]["study_ids"]) == 61
     assert res["items"][0]["arms"] == 0
     assert res["items"][0]["pre_treatment_epochs"] == 0
     assert res["items"][0]["treatment_epochs"] == 0

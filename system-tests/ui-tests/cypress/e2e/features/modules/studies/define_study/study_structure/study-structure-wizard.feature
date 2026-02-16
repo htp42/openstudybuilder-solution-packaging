@@ -24,6 +24,9 @@ Feature: Studies - Define Study - Study Structure Wizard
         Given The study for testing study structure is selected
         When The study 'arms' page is opened for that study
         And The user removes arms from the study through Study with cohorts, branch arms and subpopulations section
+        And Action is confirmed by clicking continue
+        And User waits for 1 seconds
+        And User saved changes made in the study structure stepper
         Then The arms are removed from the study
 
     Scenario: User must be able to create cohorts using stepper wizrd
@@ -42,6 +45,9 @@ Feature: Studies - Define Study - Study Structure Wizard
         Given The study for testing study structure is selected
         When The study 'cohorts' page is opened for that study
         And The user removes cohorts from the study through Study with cohorts, branch arms and subpopulations section
+        And Action is confirmed by clicking continue
+        And User waits for 1 seconds
+        And User saved changes made in the study structure stepper
         Then The cohorts are removed from the study
 
     Scenario: User must be able to define number of participants in branches using stepper wizard

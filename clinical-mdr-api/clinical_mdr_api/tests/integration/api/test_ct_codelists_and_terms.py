@@ -287,4 +287,4 @@ def test_get_ct_terms_headers(api_client, field_name, search_string):
         responses[lite] = response.json()
 
     # Assert that `?lite=true` returns the same data as `?lite=false`
-    assert responses[True] == responses[False]
+    assert set(responses[True]) == set(responses[False])

@@ -63,8 +63,8 @@ def test_get_aliases(
     [
         pytest.param("nAme1", {"name": "name1"}, 1),
         pytest.param("mE1", {"name": "name1"}, 1),
-        pytest.param("eNg", {"language": "eng"}, 1),
-        pytest.param("Ng", {"language": "eng"}, 1),
+        pytest.param("eN", {"language": "en"}, 1),
+        pytest.param("N", {"language": "en"}, 1),
         pytest.param("dEscription1", {"description": "description1"}, 1),
         pytest.param("ptIon1", {"description": "description1"}, 1),
         pytest.param("inStruction1", {"instruction": "instruction1"}, 1),

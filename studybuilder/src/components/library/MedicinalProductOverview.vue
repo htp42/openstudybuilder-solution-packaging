@@ -77,7 +77,7 @@
                   {{ $t('PharmaceuticalProduct.title') }}
                 </div>
                 <div class="text-body-2 font-weight-bold">
-                  {{ pharmaProduct.uid }}
+                  {{ getPharmaProductName(pharmaProduct) }}
                 </div>
               </div>
               <div style="width: 23%">
@@ -230,6 +230,13 @@ function getPharmaProductIngredients(pharmaProduct) {
     .flatMap((x) => x)
     .sort((a, b) => a.title.localeCompare(b.title))
   return productIngredients
+}
+
+function getPharmaProductName(pharmaProduct) {
+  const ingredientNames = getPharmaProductIngredients(pharmaProduct).map(
+    (ingredient) => ingredient.title
+  )
+  return ingredientNames.join(', ')
 }
 
 watch(medProductExpanded, async (value) => {

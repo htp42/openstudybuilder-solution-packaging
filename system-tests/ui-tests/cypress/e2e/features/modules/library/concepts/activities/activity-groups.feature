@@ -60,6 +60,7 @@ Feature: Library - Concepts - Activities - Activity Groups
 
     Scenario: [Create][Sentence case name validation] System must default value for 'Sentence case name' to lower case value of 'Activity group name'
         When The add activity group button is clicked
+        And User waits for 1 seconds
         And The user enters a value for Activity group name
         Then The field for Sentence case name will be defaulted to the lower case value of the Activity group name
 

@@ -111,7 +111,7 @@ def cypher_tracing(query: str, params: Mapping):
         # span.add_attribute("cypher.params", params)
 
         # run the query (or any wrapped code) as a distinct operation (logical tracing block == Span)
-        yield
+        yield span
 
     # update cypher query metrics of the request
     if metrics:
@@ -143,8 +143,8 @@ def patch_neomodel_database():
             retry_on_session_expire,
             resolve_objects,
         ):
-            with cypher_tracing(query, params):
-                return func(
+            with cypher_tracing(query, params) as span:
+                results, meta = func(
                     self,
                     session=session,
                     query=query,
@@ -153,6 +153,8 @@ def patch_neomodel_database():
                     retry_on_session_expire=retry_on_session_expire,
                     resolve_objects=resolve_objects,
                 )
+                span.add_attribute("cypher.num_results", len(results) if results else 0)
+                return results, meta
 
         return _run_cypher_query
 

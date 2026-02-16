@@ -74,7 +74,8 @@ class ExceptionTracebackMiddleware:
                 COMMON_ATTRIBUTES["STACKTRACE"],
                 "\n".join(
                     traceback.format_tb(
-                        exception.__traceback__, limit=settings.traceback_max_entries
+                        exception.__traceback__,
+                        limit=settings.traceback_max_entries * -1,
                     )
                 ),
             )

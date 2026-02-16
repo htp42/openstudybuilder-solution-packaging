@@ -1,11 +1,11 @@
 @REQ_ID:1975905
 
-Feature: Manage Library Concept Activity Instances in Clinical MDR API 
+Feature: Manage Library Concept Activity Instances in OpenStudyBuilder API 
 
     As a API user, I want to manage the activity instance in the Concepts Library API endpoints
 
-    Background: Test user must be able to call the Clinical MDR API and the test data exists
-        Given The test user can call the Clinical MDR API
+    Background: Test user must be able to call the OpenStudyBuilder API and the test data exists
+        Given The test user can call the OpenStudyBuilder API
 
     Scenario: User must be able to get activity instance details
         When the user requests to get the details of an activity instance with a specific UID

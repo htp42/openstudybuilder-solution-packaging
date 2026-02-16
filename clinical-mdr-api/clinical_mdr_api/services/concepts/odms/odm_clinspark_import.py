@@ -157,7 +157,7 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
             )
 
             if submission_value not in existing_codelist_submission_values:
-                ct_codelist = self.ct_codelist_service.non_transactional_create(
+                ct_codelist = self.ct_codelist_service.create(
                     CTCodelistCreateInput(
                         catalogue_names=["CDASH CT"],
                         name=codelist.getAttribute("Name"),
@@ -173,12 +173,8 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
                         terms=[],
                     )
                 )
-                self.ct_codelist_name_service.non_transactional_approve(
-                    ct_codelist.codelist_uid
-                )
-                self.ct_codelist_attributes_service.non_transactional_approve(
-                    ct_codelist.codelist_uid
-                )
+                self.ct_codelist_name_service.approve(ct_codelist.codelist_uid)
+                self.ct_codelist_attributes_service.approve(ct_codelist.codelist_uid)
                 new_codelist_uids.add(ct_codelist.codelist_uid)
                 existing_codelist_submission_values.add(submission_value)
 
@@ -199,7 +195,7 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
                     # the codelist_uid field on CTCodelistAttributes is optional
                     return None
 
-                ct_term = self.ct_term_service.non_transactional_create(
+                ct_term = self.ct_term_service.create(
                     CTTermCreateInput(
                         catalogue_names=["CDASH CT"],
                         codelists=[
@@ -218,10 +214,8 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
                         library_name="Sponsor",
                     )
                 )
-                self.ct_term_name_service.non_transactional_approve(ct_term.term_uid)
-                self.ct_term_attributes_service.non_transactional_approve(
-                    ct_term.term_uid
-                )
+                self.ct_term_name_service.approve(ct_term.term_uid)
+                self.ct_term_attributes_service.approve(ct_term.term_uid)
                 term_attribute_uids.add(ct_term.term_uid)
                 term_submission_value = next(
                     (
@@ -247,7 +241,7 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
                     term_attribute_uids.add(item.uid)
                     return True
 
-                self.ct_codelist_service.non_transactional_add_term(
+                self.ct_codelist_service.add_term(
                     active_codelist.codelist_uid,
                     item.uid,
                     idx,
@@ -336,7 +330,7 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
     def _get_odm_item_post_input(self, item_def):
         descriptions = self._extract_descriptions(item_def)
 
-        plausible_duplicates = self.odm_item_service.non_transactional_get_all_concepts(
+        plausible_duplicates = self.odm_item_service.get_all_concepts(
             filter_by={"name": {"v": [item_def.getAttribute("Name")], "op": "co"}}
         ).items
 
@@ -421,13 +415,9 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
     def _get_odm_item_group_post_input(self, item_group_def):
         descriptions = self._extract_descriptions(item_group_def)
 
-        plausible_duplicates = (
-            self.odm_item_group_service.non_transactional_get_all_concepts(
-                filter_by={
-                    "name": {"v": [item_group_def.getAttribute("Name")], "op": "co"}
-                }
-            ).items
-        )
+        plausible_duplicates = self.odm_item_group_service.get_all_concepts(
+            filter_by={"name": {"v": [item_group_def.getAttribute("Name")], "op": "co"}}
+        ).items
 
         return OdmItemGroupPostInput(
             oid=item_group_def.getAttribute("OID"),
@@ -455,7 +445,7 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
     def _get_odm_form_post_input(self, form_def):
         descriptions = self._extract_descriptions(form_def)
 
-        plausible_duplicates = self.odm_form_service.non_transactional_get_all_concepts(
+        plausible_duplicates = self.odm_form_service.get_all_concepts(
             filter_by={"name": {"v": [form_def.getAttribute("Name")], "op": "co"}}
         ).items
 

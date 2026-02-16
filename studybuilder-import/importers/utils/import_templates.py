@@ -876,7 +876,6 @@ activity_subgroups = {
     "definition": "string",
     "abbreviation": "string",
     "library_name": "string",
-    "activity_groups": [],
 }
 
 ct_term = {

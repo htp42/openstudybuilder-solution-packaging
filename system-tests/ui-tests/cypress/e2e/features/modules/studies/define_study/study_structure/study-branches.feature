@@ -72,7 +72,7 @@ Feature: Studies - Define Study - Study Structure - Manually Defined Study Branc
         And The 'Edit' option is clicked from the three dot menu list
         When The study branch arm is edited
         And Form save button is clicked
-        And The form is closed
+        And The form is no longer available
         Then The pop up displays 'Branch Arm updated'
         And The Study Branch is found
         Then The study branch arm is visible within the table
@@ -82,7 +82,7 @@ Feature: Studies - Define Study - Study Structure - Manually Defined Study Branc
         And The first available arm is selected for the branch
         When The form for new study branch arm is filled
         And Form save button is clicked
-        And The form is closed
+        And The form is no longer available
         And The Study Branch is found
         And The 'Edit' option is clicked from the three dot menu list
         Then The stady arm field is disabled
@@ -119,7 +119,7 @@ Feature: Studies - Define Study - Study Structure - Manually Defined Study Branc
         And The first available arm is selected for the branch
         And The form for new study branch arm is filled
         And Form save button is clicked
-        And The form is closed
+        And The form is no longer available
         And Add branch button is clicked
         And The first available arm is selected for the branch
         And Another Study Branch Arm is created with the same arm name
@@ -132,7 +132,7 @@ Feature: Studies - Define Study - Study Structure - Manually Defined Study Branc
         And The first available arm is selected for the branch
         And The form for new study branch arm is filled
         And Form save button is clicked
-        And The form is closed
+        And The form is no longer available
         And Add branch button is clicked
         And The first available arm is selected for the branch
         And Another Study Branch Arm is created with the same branch arm short name

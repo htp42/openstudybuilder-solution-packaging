@@ -79,6 +79,8 @@ class StudyDefinitionSnapshot:
         eudamed_srn_number_null_value_code: str | None = None
         investigational_device_exemption_ide_number: str | None = None
         investigational_device_exemption_ide_number_null_value_code: str | None = None
+        eu_pas_number: str | None = None
+        eu_pas_number_null_value_code: str | None = None
         version_timestamp: datetime | None = None
         version_author: str | None = None
         version_description: str | None = None
@@ -91,6 +93,7 @@ class StudyDefinitionSnapshot:
         trial_type_null_value_code: str | None = None
         trial_phase_code: str | None = None
         trial_phase_null_value_code: str | None = None
+        development_stage_code: str | None = None
         is_extension_trial: bool | None = None
         is_extension_trial_null_value_code: str | None = None
         is_adaptive_design: bool | None = None
@@ -191,6 +194,7 @@ _DEF_INITIAL_HIGH_LEVEL_STUDY_DESIGN = HighLevelStudyDesignVO(
     is_adaptive_design=None,
     trial_type_codes=[],
     trial_phase_code=None,
+    development_stage_code=None,
     is_extension_trial=None,
     is_adaptive_design_null_value_code=None,
     study_stop_rules_null_value_code=None,
@@ -444,18 +448,18 @@ class StudyDefinitionAR:
                         investigational_device_exemption_ide_number_null_value_code=(
                             new_id_metadata.registry_identifiers.investigational_device_exemption_ide_number_null_value_code
                         ),
+                        eu_pas_number=new_id_metadata.registry_identifiers.eu_pas_number,
+                        eu_pas_number_null_value_code=(
+                            new_id_metadata.registry_identifiers.eu_pas_number_null_value_code
+                        ),
                     ),
                 )
             else:
                 # if the study has locked versions study_id_prefix stays the same
                 new_id_metadata = StudyIdentificationMetadataVO(
-                    _study_id_prefix=self.current_metadata.id_metadata.study_id_prefix,  # here comes the substitution
+                    _study_id_prefix=self.current_metadata.id_metadata.study_id_prefix,
                     project_number=new_id_metadata.project_number,
-                    study_number=(
-                        new_id_metadata.study_number
-                        if is_subpart or previous_is_subpart
-                        else self.current_metadata.id_metadata.study_number
-                    ),
+                    study_number=new_id_metadata.study_number,
                     subpart_id=new_id_metadata.subpart_id,
                     study_acronym=new_id_metadata.study_acronym,
                     study_subpart_acronym=new_id_metadata.study_subpart_acronym,
@@ -501,10 +505,13 @@ class StudyDefinitionAR:
                         investigational_device_exemption_ide_number_null_value_code=(
                             new_id_metadata.registry_identifiers.investigational_device_exemption_ide_number_null_value_code
                         ),
+                        eu_pas_number=new_id_metadata.registry_identifiers.eu_pas_number,
+                        eu_pas_number_null_value_code=(
+                            new_id_metadata.registry_identifiers.eu_pas_number_null_value_code
+                        ),
                     ),
                 )
 
-            assert new_id_metadata is not None  # making linter happy
             if new_id_metadata != self.current_metadata.id_metadata:
                 new_id_metadata.validate(
                     uid=self.uid,
@@ -944,6 +951,10 @@ class StudyDefinitionAR:
                             investigational_device_exemption_ide_number_null_value_code=(
                                 study_metadata_snapshot.investigational_device_exemption_ide_number_null_value_code
                             ),
+                            eu_pas_number=study_metadata_snapshot.eu_pas_number,
+                            eu_pas_number_null_value_code=(
+                                study_metadata_snapshot.eu_pas_number_null_value_code
+                            ),
                         ),
                     )
                     study_creation_dict[value_object_name] = id_metadata
@@ -967,6 +978,7 @@ class StudyDefinitionAR:
             assert study_snapshot.current_metadata is not None
             assert study_snapshot.study_status in (
                 StudyStatus.DRAFT.value,
+                StudyStatus.LOCKED.value,
                 StudyStatus.RELEASED.value,
             ) or (
                 study_snapshot.locked_metadata_versions[
@@ -1043,6 +1055,7 @@ class StudyDefinitionAR:
         trial_intent_type_exists_callback: Callable[[str], bool] = lambda _: True,
         trial_type_exists_callback: Callable[[str], bool] = lambda _: True,
         trial_phase_exists_callback: Callable[[str], bool] = lambda _: True,
+        development_stage_exists_callback: Callable[[str], bool] = lambda _: True,
         null_value_exists_callback: Callable[[str], bool] = lambda _: True,
         intervention_type_exists_callback: Callable[[str], bool] = lambda _: True,
         control_type_exists_callback: Callable[[str], bool] = lambda _: True,
@@ -1088,6 +1101,8 @@ class StudyDefinitionAR:
         :param trial_type_exists_callback: (optional) callback for checking trail_type_codes
 
         :param trial_phase_exists_callback: (optional) callback for checking trial_phase_codes
+
+        :param development_stage_exists_callback: (optional) callback for checking development_stage_code
 
         :param null_value_exists_callback: (optional) callback for checking null_value_codes
 
@@ -1165,6 +1180,10 @@ class StudyDefinitionAR:
                 investigational_device_exemption_ide_number_null_value_code=(
                     initial_id_metadata.registry_identifiers.investigational_device_exemption_ide_number_null_value_code
                 ),
+                eu_pas_number=initial_id_metadata.registry_identifiers.eu_pas_number,
+                eu_pas_number_null_value_code=(
+                    initial_id_metadata.registry_identifiers.eu_pas_number_null_value_code
+                ),
             ),
             _study_id_prefix=initial_id_metadata.project_number,
         )
@@ -1186,6 +1205,7 @@ class StudyDefinitionAR:
         initial_study_metadata.validate(
             study_type_exists_callback=study_type_exists_callback,
             trial_phase_exists_callback=trial_phase_exists_callback,
+            development_stage_exists_callback=development_stage_exists_callback,
             trial_type_exists_callback=trial_type_exists_callback,
             trial_intent_type_exists_callback=trial_intent_type_exists_callback,
             project_exists_callback=project_exists_callback,

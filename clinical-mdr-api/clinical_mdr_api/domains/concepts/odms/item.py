@@ -39,6 +39,7 @@ class OdmItemVO(ConceptVO):
     vendor_attribute_uids: list[str]
     vendor_element_uids: list[str]
     vendor_element_attribute_uids: list[str]
+    activity_instances: list[dict[str, Any]]
 
     @classmethod
     def from_repository_values(
@@ -61,6 +62,7 @@ class OdmItemVO(ConceptVO):
         vendor_element_uids: list[str],
         vendor_attribute_uids: list[str],
         vendor_element_attribute_uids: list[str],
+        activity_instances: list[dict[str, Any]],
     ) -> Self:
         return cls(
             oid=oid,
@@ -81,6 +83,7 @@ class OdmItemVO(ConceptVO):
             vendor_element_uids=vendor_element_uids,
             vendor_attribute_uids=vendor_attribute_uids,
             vendor_element_attribute_uids=vendor_element_attribute_uids,
+            activity_instances=activity_instances,
             name_sentence_case=None,
             definition=None,
             abbreviation=None,
@@ -97,6 +100,7 @@ class OdmItemVO(ConceptVO):
         find_all_terms_callback: Callable[
             [str], GenericFilteringReturn[CTTermNameAR] | None
         ],
+        find_activity_instance_callback: Callable[[str], Any] = lambda _: None,
         odm_uid: str | None = None,
         library_name: str | None = None,
     ) -> None:
@@ -155,6 +159,27 @@ class OdmItemVO(ConceptVO):
                     term_uid not in codelist_term_uids,
                     msg=f"Term with UID '{term_uid}' doesn't belong to the specified Codelist with UID '{self.codelist_uid}'.",
                 )
+
+        if self.activity_instances:
+            for activity_instance in self.activity_instances:
+                db_activity_instance = find_activity_instance_callback(
+                    activity_instance["activity_instance_uid"]
+                )
+
+                if not db_activity_instance:
+                    raise BusinessLogicException(
+                        msg=f"ODM Item tried to connect to non-existent Activity Instance with UID '{activity_instance["activity_instance_uid"]}'."
+                    )
+
+                if activity_instance["activity_item_class_uid"] not in [
+                    activity_item.activity_item_class_uid
+                    for activity_item in db_activity_instance.concept_vo.activity_items
+                ]:
+                    raise BusinessLogicException(
+                        msg=(
+                            f"Activity Item Class with UID '{activity_instance["activity_item_class_uid"]}' isn't present in Activity Instance with UID '{activity_instance["activity_instance_uid"]}'"
+                        )
+                    )
 
 
 @dataclass
@@ -243,6 +268,7 @@ class OdmItemAR(OdmARBase):
         find_all_terms_callback: Callable[
             [str], GenericFilteringReturn[CTTermNameAR] | None
         ] = lambda _: None,
+        find_activity_instance_callback: Callable[[str], Any] = lambda _: None,
     ) -> None:
         """
         Creates a new draft version for the object.
@@ -252,6 +278,7 @@ class OdmItemAR(OdmARBase):
             unit_definition_exists_by_callback=unit_definition_exists_by_callback,
             find_codelist_attribute_callback=find_codelist_attribute_callback,
             find_all_terms_callback=find_all_terms_callback,
+            find_activity_instance_callback=find_activity_instance_callback,
             odm_uid=self.uid,
         )
 

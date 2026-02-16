@@ -32,6 +32,7 @@ from clinical_mdr_api.domains.study_selections.study_selection_arm import (
 )
 from common.config import settings
 from common.exceptions import BusinessLogicException
+from common.telemetry import trace_calls
 from common.utils import convert_to_datetime, get_db_result_as_dict
 
 
@@ -305,6 +306,9 @@ class StudySelectionArmRepository:
             )
         return selection_aggregates
 
+    @trace_calls(
+        args=[1, 2, 3], kwargs=["study_uid", "for_update", "study_value_version"]
+    )
     def find_by_study(
         self,
         study_uid: str,

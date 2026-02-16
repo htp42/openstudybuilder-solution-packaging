@@ -113,7 +113,7 @@ def is_language_supported(value: str):
     for key in keys:
         try:
             # This function will throw an exception if the language isn't found
-            get_iso_lang_data(query=value, key=key, return_key=key)  # type: ignore[call-overload]
+            get_iso_lang_data(query=value, return_key=key)  # type: ignore[call-overload]
             return value
         except ValidationException:
             if key == keys[-1]:

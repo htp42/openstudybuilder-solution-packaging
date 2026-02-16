@@ -101,6 +101,8 @@ initial_ct_term_study_standard_test: ct_term.CTTerm
 generic_study_visit: StudyVisit
 term_efficacy_uid: str
 informed_consent_uid: str
+activity_group: ActivityGroup
+activity_subgroup: ActivitySubGroup
 
 
 @pytest.fixture(scope="module")
@@ -139,10 +141,11 @@ def test_data():
     TestUtils.create_template_parameter("StudyActivityInstruction")
 
     text_value_1 = TestUtils.create_text_value()
-
+    global activity_group
     activity_group = TestUtils.create_activity_group(name="test activity group")
+    global activity_subgroup
     activity_subgroup = TestUtils.create_activity_subgroup(
-        name="test activity subgroup", activity_groups=[activity_group.uid]
+        name="test activity subgroup"
     )
     activity = TestUtils.create_activity(
         name="test activity",
@@ -200,7 +203,7 @@ def test_data():
 
     general_activity_group = TestUtils.create_activity_group(name="General")
     randomisation_activity_subgroup = TestUtils.create_activity_subgroup(
-        name="Randomisation", activity_groups=[general_activity_group.uid]
+        name="Randomisation"
     )
     randomized_activity = TestUtils.create_activity(
         name="Randomized",
@@ -232,7 +235,7 @@ def test_data():
         library_name="Sponsor",
     )
     body_measurements_activity_subgroup = TestUtils.create_activity_subgroup(
-        name="Body Measurements", activity_groups=[general_activity_group.uid]
+        name="Body Measurements"
     )
     weight_activity = TestUtils.create_activity(
         name="Weight",
@@ -1152,12 +1155,9 @@ def test_reusing_study_activity_group_study_activity_subgroup_study_soa_group(
 ):
     activity_group_1 = TestUtils.create_activity_group(name="activity_group_1")
     activity_group_2 = TestUtils.create_activity_group(name="activity_group_2")
-    activity_subgroup_1 = TestUtils.create_activity_subgroup(
-        name="activity_subgroup_1", activity_groups=[activity_group_1.uid]
-    )
+    activity_subgroup_1 = TestUtils.create_activity_subgroup(name="activity_subgroup_1")
     activity_subgroup_2 = TestUtils.create_activity_subgroup(
         name="activity_subgroup_2",
-        activity_groups=[activity_group_1.uid, activity_group_2.uid],
     )
     activity_1 = TestUtils.create_activity(
         name="activity_1",
@@ -1503,9 +1503,7 @@ def test_modify_visibility_flag_in_protocol_flowchart(
     api_client,
 ):
     activity_group = TestUtils.create_activity_group(name="AG")
-    activity_subgroup = TestUtils.create_activity_subgroup(
-        name="AS", activity_groups=[activity_group.uid]
-    )
+    activity_subgroup = TestUtils.create_activity_subgroup(name="AS")
     activity = TestUtils.create_activity(
         name="Act",
         library_name="Sponsor",
@@ -2091,7 +2089,10 @@ def test_only_placeholder_study_activity_can_have_subgroup_and_group_not_specifi
     api_client,
 ):
     activity_request = TestUtils.create_activity(
-        name="activity request for study activity purpose"
+        name="activity request for study activity purpose",
+        library_name="Sponsor",
+        activity_groups=[activity_group.uid],
+        activity_subgroups=[activity_subgroup.uid],
     )
     response = api_client.post(
         f"/studies/{study.uid}/study-activities",
@@ -2404,21 +2405,15 @@ def test_edit_study_activity_groupings(api_client):
     vital_signs_activity_group = TestUtils.create_activity_group(name="Vital Signs")
     incorrect_activity_group = TestUtils.create_activity_group(name="Incorrect Group")
     # create activity subgroup
-    blood_activity_subgroup = TestUtils.create_activity_subgroup(
-        name="Blood", activity_groups=[lab_assessment_activity_group.uid]
-    )
+    blood_activity_subgroup = TestUtils.create_activity_subgroup(name="Blood")
     blood_secondary_activity_subgroup = TestUtils.create_activity_subgroup(
         name="BloodTwo",
-        activity_groups=[
-            vital_signs_activity_group.uid,
-            lab_assessment_activity_group.uid,
-        ],
     )
     blood_incorrect_activity_subgroup = TestUtils.create_activity_subgroup(
-        name="Blood Incorrect", activity_groups=[incorrect_activity_group.uid]
+        name="Blood Incorrect"
     )
     blood_tertiary_activity_subgroup = TestUtils.create_activity_subgroup(
-        name="BloodThree", activity_groups=[vital_signs_activity_group.uid]
+        name="BloodThree"
     )
 
     # create activity
@@ -2792,7 +2787,7 @@ def test_sync_study_activity_to_latest_version_of_activity(api_client):
         name="Adverse Events"
     )
     adverse_events_activity_subgroup = TestUtils.create_activity_subgroup(
-        name="Adverse Events", activity_groups=[adverse_events_activity_group.uid]
+        name="Adverse Events"
     )
     # create new draft version for activity with different groupings
     response = api_client.post(
@@ -2996,14 +2991,21 @@ def test_study_activity_replacement_with_different_activities(api_client):
     response = api_client.patch(
         f"/studies/{study.uid}/study-activities/{study_activity.study_activity_uid}/activity-replacements",
         json={
-            "activity_uid": some_new_activity_in_same_groupings.uid,
-            "activity_subgroup_uid": randomisation_activity_subgroup.uid,
-            "activity_group_uid": general_activity_group.uid,
-            "soa_group_term_uid": term_efficacy_uid,
+            "replacements": [
+                {
+                    "activity_uid": some_new_activity_in_same_groupings.uid,
+                    "activity_subgroup_uid": randomisation_activity_subgroup.uid,
+                    "activity_group_uid": general_activity_group.uid,
+                    "soa_group_term_uid": term_efficacy_uid,
+                }
+            ]
         },
     )
     assert_response_status_code(response, 200)
     res = response.json()
+    assert isinstance(res, list)
+    assert len(res) == 1
+    res = res[0]
     assert res["activity"]["uid"] == some_new_activity_in_same_groupings.uid
     assert (
         res["study_activity_group"]["activity_group_uid"] == general_activity_group.uid
@@ -3092,7 +3094,7 @@ def test_study_activity_replacement_with_different_activities(api_client):
 
     new_activity_group = TestUtils.create_activity_group(name="new activity group")
     new_activity_subgroup = TestUtils.create_activity_subgroup(
-        name="new activity subgroup", activity_groups=[new_activity_group.uid]
+        name="new activity subgroup"
     )
     some_new_activity_in_different_groupings = TestUtils.create_activity(
         name="new activity in different grouping",
@@ -3119,14 +3121,21 @@ def test_study_activity_replacement_with_different_activities(api_client):
     response = api_client.patch(
         f"/studies/{study.uid}/study-activities/{study_activity.study_activity_uid}/activity-replacements",
         json={
-            "activity_uid": some_new_activity_in_different_groupings.uid,
-            "activity_subgroup_uid": new_activity_subgroup.uid,
-            "activity_group_uid": new_activity_group.uid,
-            "soa_group_term_uid": term_efficacy_uid,
+            "replacements": [
+                {
+                    "activity_uid": some_new_activity_in_different_groupings.uid,
+                    "activity_subgroup_uid": new_activity_subgroup.uid,
+                    "activity_group_uid": new_activity_group.uid,
+                    "soa_group_term_uid": term_efficacy_uid,
+                }
+            ]
         },
     )
     assert_response_status_code(response, 200)
     res = response.json()
+    assert isinstance(res, list)
+    assert len(res) == 1
+    res = res[0]
     assert res["activity"]["uid"] == some_new_activity_in_different_groupings.uid
     assert res["study_activity_group"]["activity_group_uid"] == new_activity_group.uid
     assert (
@@ -3213,6 +3222,311 @@ def test_study_activity_replacement_with_different_activities(api_client):
         f"/studies/{study.uid}/study-activities/{study_activity.study_activity_uid}"
     )
     assert_response_status_code(response, 204)
+
+
+def test_study_activity_placeholder_replacement_with_multiple_activities(api_client):
+    """
+    Test replacing a placeholder StudyActivity (activity in Requested library) with multiple activities.
+    Verifies that:
+    - Exactly 2 study activities are created (not more)
+    - The data matches the replacement request (activity, activity group, activity subgroup, soa group)
+    - All study activities have the same schedules replicated (and not more)
+    """
+    study_visit_uid = generic_study_visit.uid
+
+    # Create an activity in the Requested library (placeholder)
+    placeholder_activity = TestUtils.create_activity(
+        name="Placeholder Activity Request",
+        library_name=settings.requested_library_name,
+        activity_subgroups=[randomisation_activity_subgroup.uid],
+        activity_groups=[general_activity_group.uid],
+    )
+
+    # Create a StudyActivity placeholder with the Requested activity
+    response = api_client.post(
+        f"/studies/{study.uid}/study-activities",
+        json={
+            "activity_uid": placeholder_activity.uid,
+            "activity_subgroup_uid": None,
+            "activity_group_uid": None,
+            "soa_group_term_uid": term_efficacy_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
+    res = response.json()
+    placeholder_study_activity_uid = res["study_activity_uid"]
+    assert res["activity"]["uid"] == placeholder_activity.uid
+    assert res["activity"]["library_name"] == settings.requested_library_name
+
+    # Create schedules for the placeholder StudyActivity
+    response = api_client.post(
+        f"/studies/{study.uid}/study-activity-schedules",
+        json={
+            "study_activity_uid": placeholder_study_activity_uid,
+            "study_visit_uid": study_visit_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
+
+    # Create a second visit for additional schedule
+    visit_to_create = generate_default_input_data_for_visit().copy()
+    visit_to_create.update(
+        {
+            "visit_type_uid": generic_study_visit.visit_type_uid,
+        }
+    )
+    second_visit = TestUtils.create_study_visit(
+        study_uid=study.uid, study_epoch_uid=epoch_uid, **visit_to_create
+    )
+    response = api_client.post(
+        f"/studies/{study.uid}/study-activity-schedules",
+        json={
+            "study_activity_uid": placeholder_study_activity_uid,
+            "study_visit_uid": second_visit.uid,
+        },
+    )
+    assert_response_status_code(response, 201)
+
+    # Verify schedules exist before replacement
+    response = api_client.get(
+        f"/studies/{study.uid}/study-activity-schedules",
+        params={
+            "filters": json.dumps(
+                {
+                    "study_activity_uid": {
+                        "v": [placeholder_study_activity_uid],
+                        "op": "eq",
+                    }
+                }
+            ),
+            "page_size": 0,
+        },
+    )
+    assert_response_status_code(response, 200)
+    schedules_response = response.json()
+    # Handle both list and dict with items key
+    schedules_before = (
+        schedules_response["items"]
+        if isinstance(schedules_response, dict)
+        else schedules_response
+    )
+    assert len(schedules_before) == 2
+
+    # Create two sponsor activities to replace the placeholder
+    replacement_activity_1 = TestUtils.create_activity(
+        name="Replacement Activity 1",
+        activity_subgroups=[randomisation_activity_subgroup.uid],
+        activity_groups=[general_activity_group.uid],
+        library_name="Sponsor",
+    )
+    replacement_activity_2 = TestUtils.create_activity(
+        name="Replacement Activity 2",
+        activity_subgroups=[randomisation_activity_subgroup.uid],
+        activity_groups=[general_activity_group.uid],
+        library_name="Sponsor",
+    )
+
+    # Replace placeholder with 2 activities
+    response = api_client.patch(
+        f"/studies/{study.uid}/study-activities/{placeholder_study_activity_uid}/activity-replacements",
+        json={
+            "replacements": [
+                {
+                    "activity_uid": replacement_activity_1.uid,
+                    "activity_subgroup_uid": randomisation_activity_subgroup.uid,
+                    "activity_group_uid": general_activity_group.uid,
+                    "soa_group_term_uid": term_efficacy_uid,
+                },
+                {
+                    "activity_uid": replacement_activity_2.uid,
+                    "activity_subgroup_uid": randomisation_activity_subgroup.uid,
+                    "activity_group_uid": general_activity_group.uid,
+                    "soa_group_term_uid": term_efficacy_uid,
+                },
+            ]
+        },
+    )
+    assert_response_status_code(response, 200)
+    replacement_res = response.json()
+    # Handle case where response might be wrapped
+    if isinstance(replacement_res, dict) and "items" in replacement_res:
+        replacement_res = replacement_res["items"]
+    assert isinstance(
+        replacement_res, list
+    ), f"Expected list, got {type(replacement_res)}: {replacement_res}"
+    assert len(replacement_res) == 2, "Exactly 2 study activities should be created"
+
+    # Verify first replacement (replaced the original placeholder)
+    replaced_study_activity = replacement_res[0]
+    assert replaced_study_activity["activity"]["uid"] == replacement_activity_1.uid
+    assert (
+        replaced_study_activity["study_activity_group"]["activity_group_uid"]
+        == general_activity_group.uid
+    )
+    assert (
+        replaced_study_activity["study_activity_subgroup"]["activity_subgroup_uid"]
+        == randomisation_activity_subgroup.uid
+    )
+    assert (
+        replaced_study_activity["study_soa_group"]["soa_group_term_uid"]
+        == term_efficacy_uid
+    )
+    assert (
+        replaced_study_activity["study_activity_uid"] == placeholder_study_activity_uid
+    ), "First replacement should keep the same study_activity_uid"
+
+    # Verify second replacement (newly created)
+    new_study_activity = replacement_res[1]
+    assert new_study_activity["activity"]["uid"] == replacement_activity_2.uid
+    assert (
+        new_study_activity["study_activity_group"]["activity_group_uid"]
+        == general_activity_group.uid
+    )
+    assert (
+        new_study_activity["study_activity_subgroup"]["activity_subgroup_uid"]
+        == randomisation_activity_subgroup.uid
+    )
+    assert (
+        new_study_activity["study_soa_group"]["soa_group_term_uid"] == term_efficacy_uid
+    )
+    assert (
+        new_study_activity["study_activity_uid"] != placeholder_study_activity_uid
+    ), "Second replacement should have a new study_activity_uid"
+
+    # Verify that exactly 2 study activities exist (not more)
+    response = api_client.get(
+        f"/studies/{study.uid}/study-activities",
+        params={
+            "filters": json.dumps(
+                {
+                    "study_soa_group.soa_group_term_uid": {
+                        "v": [term_efficacy_uid],
+                        "op": "eq",
+                    }
+                }
+            ),
+            "page_size": 0,
+        },
+    )
+    assert_response_status_code(response, 200)
+    all_study_activities = response.json()["items"]
+    # Filter to only the ones we care about (the 2 replacements)
+    relevant_activities = [
+        sa
+        for sa in all_study_activities
+        if sa["study_activity_uid"]
+        in [
+            replaced_study_activity["study_activity_uid"],
+            new_study_activity["study_activity_uid"],
+        ]
+    ]
+    assert (
+        len(relevant_activities) == 2
+    ), "There should be exactly 2 study activities created, not more"
+
+    # Verify schedules are replicated to both study activities
+    # Check schedules for the first (replaced) study activity
+    response = api_client.get(
+        f"/studies/{study.uid}/study-activity-schedules",
+        params={
+            "filters": json.dumps(
+                {
+                    "study_activity_uid": {
+                        "v": [replaced_study_activity["study_activity_uid"]],
+                        "op": "eq",
+                    }
+                }
+            ),
+            "page_size": 0,
+        },
+    )
+    assert_response_status_code(response, 200)
+    schedules_response = response.json()
+    schedules_replaced = (
+        schedules_response["items"]
+        if isinstance(schedules_response, dict)
+        else schedules_response
+    )
+    # Filter to only schedules for the replaced StudyActivity to avoid any duplicates
+    schedules_replaced = [
+        s
+        for s in schedules_replaced
+        if s["study_activity_uid"] == replaced_study_activity["study_activity_uid"]
+    ]
+    assert (
+        len(schedules_replaced) == 2
+    ), f"Replaced study activity should have 2 schedules, but found {len(schedules_replaced)}. Schedules: {[s['study_activity_schedule_uid'] for s in schedules_replaced]}"
+    schedule_visit_uids_replaced = {
+        schedule["study_visit_uid"] for schedule in schedules_replaced
+    }
+    assert study_visit_uid in schedule_visit_uids_replaced
+    assert second_visit.uid in schedule_visit_uids_replaced
+
+    # Check schedules for the second (newly created) study activity
+    response = api_client.get(
+        f"/studies/{study.uid}/study-activity-schedules",
+        params={
+            "filters": json.dumps(
+                {
+                    "study_activity_uid": {
+                        "v": [new_study_activity["study_activity_uid"]],
+                        "op": "eq",
+                    }
+                }
+            ),
+            "page_size": 0,
+        },
+    )
+    assert_response_status_code(response, 200)
+    schedules_response = response.json()
+    schedules_new = (
+        schedules_response["items"]
+        if isinstance(schedules_response, dict)
+        else schedules_response
+    )
+    # Filter to only schedules for the new StudyActivity
+    schedules_new = [
+        s
+        for s in schedules_new
+        if s["study_activity_uid"] == new_study_activity["study_activity_uid"]
+    ]
+    assert (
+        len(schedules_new) == 2
+    ), f"Newly created study activity should have 2 schedules, but found {len(schedules_new)}. Schedules: {[s['study_activity_schedule_uid'] for s in schedules_new]}"
+    schedule_visit_uids_new = {
+        schedule["study_visit_uid"] for schedule in schedules_new
+    }
+    assert study_visit_uid in schedule_visit_uids_new
+    assert second_visit.uid in schedule_visit_uids_new
+
+    # Verify that no extra schedules were created (total should be 4: 2 for each activity)
+    response = api_client.get(
+        f"/studies/{study.uid}/study-activity-schedules",
+        params={
+            "filters": json.dumps(
+                {
+                    "study_activity_uid": {
+                        "v": [
+                            replaced_study_activity["study_activity_uid"],
+                            new_study_activity["study_activity_uid"],
+                        ],
+                        "op": "in",
+                    }
+                }
+            ),
+            "page_size": 0,
+        },
+    )
+    assert_response_status_code(response, 200)
+    schedules_response = response.json()
+    all_schedules = (
+        schedules_response["items"]
+        if isinstance(schedules_response, dict)
+        else schedules_response
+    )
+    assert (
+        len(all_schedules) == 4
+    ), "Total schedules should be exactly 4 (2 for each of the 2 study activities), not more"
 
 
 def test_study_activity_create_in_soa_with_reorder(api_client):

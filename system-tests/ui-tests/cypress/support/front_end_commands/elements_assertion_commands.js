@@ -13,7 +13,3 @@ Cypress.Commands.add('checkIfValidationAppears', (locator, message = 'This field
 Cypress.Commands.add('checkIfValidationNotPresent', (locator, message = 'This field is required') => {
     cy.contains(`[data-cy="${locator}"]`, message).should('not.exist')
 })
-
-Cypress.Commands.add('checkIfFormIsClosed', () => {
-    cy.get('[data-cy="form-body"]').should('not.exist')
-})

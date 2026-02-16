@@ -1,20 +1,29 @@
+import datetime
 from dataclasses import dataclass
-from typing import Any, Mapping
+from textwrap import dedent
+from typing import Any, Iterable, Mapping
 
 from cachetools import TTLCache
-from neomodel import RelationshipDefinition, RelationshipManager
+from neomodel import RelationshipDefinition, RelationshipManager, StructuredNode, db
 
 from clinical_mdr_api.domain_repositories.models.generic import (
     ClinicalMdrNode,
     VersionRelationship,
     VersionRoot,
 )
-from clinical_mdr_api.domain_repositories.models.study_audit_trail import StudyAction
+from clinical_mdr_api.domain_repositories.models.study import StudyRoot, StudyValue
+from clinical_mdr_api.domain_repositories.models.study_audit_trail import (
+    Create,
+    Delete,
+    Edit,
+    StudyAction,
+)
 from clinical_mdr_api.domain_repositories.models.study_field import StudyField
 from clinical_mdr_api.domain_repositories.models.study_selections import StudySelection
 from clinical_mdr_api.repositories._utils import sb_clear_cache
 from common.config import settings
 from common.exceptions import ValidationException
+from common.telemetry import trace_calls
 
 
 class EntityNotFoundError(LookupError):
@@ -78,6 +87,7 @@ class RepositoryImpl:
             root_node.latest_retired,
         )
 
+    @trace_calls
     @sb_clear_cache(caches=["cache_store_item_by_uid"])
     def _db_create_and_link_nodes(
         self,
@@ -113,6 +123,7 @@ class RepositoryImpl:
             latest_final = self._db_create_relationship(latest_final, value)
         return root, value, latest_value, latest_draft, latest_final
 
+    @trace_calls
     @sb_clear_cache(caches=["cache_store_item_by_uid"])
     def _db_save_node(self, node: ClinicalMdrNode) -> ClinicalMdrNode:
         """
@@ -123,6 +134,7 @@ class RepositoryImpl:
             node.save()
         return node
 
+    @trace_calls
     @sb_clear_cache(caches=["cache_store_item_by_uid"])
     def _db_create_relationship(
         self,
@@ -141,6 +153,7 @@ class RepositoryImpl:
             return origin.connect(destination, parameters)
         return origin.connect(destination)
 
+    @trace_calls
     @sb_clear_cache(caches=["cache_store_item_by_uid"])
     def _db_remove_relationship(
         self, relationship: RelationshipManager, value: ClinicalMdrNode | None = None
@@ -159,6 +172,7 @@ class RepositoryImpl:
         return self.root_class.get_next_free_uid_and_increment_counter()
 
 
+@trace_calls
 def get_connected_node_by_rel_name_and_study_value(
     node: Any,
     connected_rel_name: str,
@@ -209,6 +223,7 @@ def get_connected_node_by_rel_name_and_study_value(
     )
 
 
+@trace_calls
 def manage_previous_connected_study_selection_relationships(
     previous_item: Any,
     study_value_node: Any,
@@ -298,3 +313,157 @@ def manage_previous_connected_study_selection_relationships(
             msg=f"The modified version of '{previous_item.uid}' of type '{previous_item.__label__}' is not connected to any StudyValue node.",
         )
         getattr(previous_item, study_value_rel_name).disconnect(study_value_node)
+
+
+@trace_calls
+def _manage_versioning_with_relations(
+    study_root: StudyRoot | str,
+    action_type: type[StudyAction],
+    before: StructuredNode | None = None,
+    after: StructuredNode | None = None,
+    exclude_relationships: Iterable[
+        type[StructuredNode] | type[RelationshipDefinition] | str
+    ] = tuple(),
+    **properties,
+) -> StudyAction:
+    """
+    Manages versioning of StudySelection nodes: Creates StudyAction, and copies relationships from `before` to `after`.
+
+    Relationship from StudyValue to `after` node should be connected outside of this method.
+    Otherwise, this method is meant to replace `manage_previous_connected_study_selection_relationships`
+    with better performance due to batching multiple statements into less Cypher queries.
+
+    Args:
+        study_root (StudyRoot | str): The StudyRoot node or its uid.
+        action_type (type[StudyAction]): The StudyAction node type to create (Create, Edit, Delete).
+        before (StructuredNode | None): The 'before' node (for Edit, Delete).
+        after (StructuredNode | None): The 'after' node (for Edit, Create).
+        exclude_relationships (Iterable[type[StructuredNode] | type[RelationshipDefinition] | str ]):
+            Node-types and relationships to exclude when copying relationships from `before` to `after` node.
+            Relationships from StudyAction and StudyValue nodes are always excluded, never copied.
+        **properties: Additional properties for the StudyAction node.
+            `date` will be set to current UTC time if not provided.
+    Returns:
+        StudyAction: The created StudyAction node.
+    Raises:
+        RuntimeError: If action_type is not StudyAction or required nodes are missing.
+    """
+
+    if not (isinstance(action_type, type) and issubclass(action_type, StudyAction)):
+        raise RuntimeError("Action type must be StudyAction.")
+
+    if before is None and action_type in {Edit, Delete}:
+        raise RuntimeError(f"{action_type.__name__} action must have a 'before' node.")
+
+    if after is None and action_type in {Edit, Create}:
+        raise RuntimeError(f"{action_type.__name__} action must have an 'after' node.")
+
+    # Match StudyRoot node
+    if isinstance(study_root, StructuredNode):
+        query = [
+            "MATCH (study_root:StudyRoot)-[:LATEST]->(study_value:StudyValue)",
+            f"WHERE {db.get_id_method()}(study_root) = $_study_root",
+        ]
+        params = {"_study_root": study_root.element_id}
+    else:
+        query = [
+            "MATCH (study_root:StudyRoot {uid: $_study_root})-[:LATEST]->(study_value:StudyValue)"
+        ]
+        params = {"_study_root": study_root}
+
+    # Create StudyAction node
+    if "date" not in properties:
+        properties["date"] = datetime.datetime.now(datetime.timezone.utc)
+    properties = action_type.deflate(properties, skip_empty=True)
+    query.append(
+        dedent(
+            f"""
+        CREATE (action:{':'.join(action_type.inherited_labels())}:StudyAction {{{', '.join(f'{k}: ${k}' for k in properties)}}})<-[:AUDIT_TRAIL]-(study_root)
+        WITH *
+    """
+        ).strip()
+    )
+
+    # Match & link previous node
+    if before:
+        query.append(f"MATCH (before) WHERE {db.get_id_method()}(before) = $_before")
+        params["_before"] = before.element_id
+        query.append("CREATE (action)-[:BEFORE]->(before)")
+        query.append("WITH *")
+
+    # Match & link new node
+    if after:
+        query.append(f"MATCH (after) WHERE {db.get_id_method()}(after) = $_after")
+        params["_after"] = after.element_id
+        query.append("CREATE (action)-[:AFTER]->(after)")
+        query.append("WITH *")
+
+    # Copy relationships
+    if before and after:
+        _exclude_relationships = set()
+        _exclude_labels = {
+            StudyValue.__name__,  # exclude (HAS_...) relations from StudyValue node
+            StudyAction.__name__,  # exclude (BEFORE/AFTER) relations from StudyAction node
+        }
+        for rel in exclude_relationships:
+            if isinstance(rel, str):
+                _exclude_relationships.add(rel)
+            elif issubclass(rel, StructuredNode):
+                _exclude_labels.add(rel.__name__)
+            elif issubclass(rel, RelationshipDefinition):
+                _exclude_relationships.add(rel.definition["relation_type"])
+            else:
+                raise RuntimeError(
+                    "exclude_relationships must be an iterable of StructuredNode subclasses or relationship type strings."
+                )
+
+        query.append(
+            dedent(
+                """
+            CALL {
+                WITH before, after
+                MATCH (before)-[r]->(target)
+                WHERE NOT (type(r) IN $_exclude_relationships OR any(label IN labels(target) WHERE label IN $_exclude_labels))
+                CALL apoc.create.relationship(after, type(r), properties(r), target) YIELD rel
+                RETURN count(rel) AS num_rels_out
+            }
+            CALL {
+                WITH before, after
+                MATCH (before)<-[r]-(source)
+                WHERE NOT (type(r) IN $_exclude_relationships OR any(label IN labels(source) WHERE label IN $_exclude_labels))
+                CALL apoc.create.relationship(source, type(r), properties(r), after) YIELD rel
+                RETURN count(rel) AS num_rels_in
+            }
+        """
+            ).strip()
+        )
+        params["_exclude_relationships"] = tuple(_exclude_relationships)
+        params["_exclude_labels"] = tuple(_exclude_labels)
+
+    # Unlink previous relationship from latest StudyValue
+    if before:
+        query.append(
+            dedent(
+                """
+            CALL {
+                WITH study_value, before
+                MATCH (study_value)-[rel]->(before)
+                DELETE rel
+                RETURN count(rel) AS num_rels_del
+            }
+        """
+            ).strip()
+        )
+
+    # Execute query
+    query.append("RETURN action")
+
+    query_str = "\n".join(query)
+    params.update(properties)
+
+    result, _ = db.cypher_query(query_str, params)
+
+    # Return the inflated StudyAction-type node (Create, Edit, Delete)
+    node = result[0][0]
+    node = action_type.inflate(node)
+    return node

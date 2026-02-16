@@ -10,7 +10,7 @@ class NoTypeHintsWithImplicitAny(SBLinter):
     NO_IMPLICIT_ANY_TYPES = ["list", "dict", "set", "tuple"]
 
     @classmethod
-    def validate(cls, code_tree: ast.Module) -> list[int]:
+    def validate(cls, code_tree: ast.Module, _file_path: str) -> list[int]:
         """
         Validates the given Python code by checking if it contains type hints with implicit Any.
 

@@ -1,4 +1,9 @@
+import json
+import typing
+from typing import Annotated, Any, cast
+
 from fastapi import Query
+from pydantic import BeforeValidator
 
 from clinical_mdr_api.models.validators import FLOAT_REGEX
 from common.config import settings
@@ -41,6 +46,26 @@ def study_fields_audit_trail_section_description(desc: str):
 
 LIBRARY_NAME = "Library name"
 
+
+def _parse_json_validator(value: typing.Any) -> typing.Any:
+    """
+    Validator function that automatically parses JSON string to dict.
+    Used with BeforeValidator to parse query parameters (filters, sort_by, etc.).
+    """
+    if value is None:
+        return None
+    if isinstance(value, dict):
+        return value  # Already parsed
+    if isinstance(value, str):
+        if not value.strip():
+            return None
+        try:
+            return json.loads(value)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"Invalid JSON format: {value}") from exc
+    raise ValueError(f"Invalid type: {type(value)}")
+
+
 SORT_BY = """
 JSON dictionary of field names and boolean flags specifying the sort order. Supported values for sort order are:
 - `true` - ascending order\n
@@ -55,11 +80,29 @@ Functionality: Sorts the results by `field_1` with sort order indicated by its b
 Example: `{"topic_code": true, "name": false}` sorts the returned list by `topic_code ascending`, then by `name descending`.
 """
 
+# Base Query definition for sort_by (for OpenAPI schema)
+_SORT_BY_QUERY_BASE = Query(description=SORT_BY)
+
+# Reusable Query parameter for sort_by - automatically parses JSON string to dict
+# Usage: sort_by: SORT_BY_QUERY = None
+# The validator automatically parses the JSON string to a dict
+# Note: Using Any as the type to work with FastAPI query parameters, validator converts to dict | None
+SORT_BY_QUERY = Annotated[
+    Any,
+    BeforeValidator(_parse_json_validator),
+    _SORT_BY_QUERY_BASE,
+]
+
 PAGE_NUMBER = """
 Page number of the returned list of entities.\n
 Functionality : provided together with `page_size`, selects a page to retrieve for paginated results.\n
 Errors: `page_size` not provided, `page_number` must be equal or greater than 1.
 """
+
+# Reusable Query parameter for page_number with maximum constraint
+PAGE_NUMBER_QUERY = Annotated[
+    int, Query(ge=1, le=settings.max_page_number, description=PAGE_NUMBER)
+]
 
 PAGE_SIZE = f"""
 Number of items to be returned per page.\n
@@ -68,6 +111,16 @@ Functionality: Provided together with `page_number`, selects the number of resul
 In case the value is set to `0`, all rows will be returned.\n
 Errors: `page_number` not provided.
 """
+
+# Reusable Query parameter for page_size with maximum constraint (allows page_size=0 for "all rows")
+PAGE_SIZE_QUERY = Annotated[
+    int, Query(ge=0, le=settings.max_page_size, description=PAGE_SIZE)
+]
+
+# Reusable Query parameter for page_size with minimum constraint of 1 (does not allow page_size=0)
+PAGE_SIZE_QUERY_MIN_1 = Annotated[
+    int, Query(ge=1, le=settings.max_page_size, description=PAGE_SIZE)
+]
 
 FILTERS = """
 JSON dictionary of field names and search strings, with a choice of operators for building complex filtering queries.
@@ -113,11 +166,14 @@ FILTER_OPERATOR = (
     "Functionality: `and` will return entities having all filters matching, `or` will return entities with any matches.\n\n"
 )
 
+# Reusable Query parameter for operator
+FILTER_OPERATOR_QUERY = Annotated[str, Query(description=FILTER_OPERATOR)]
+
 FILTERS_EXAMPLE = {
     "none": {
         "summary": "No Filters",
         "description": "No filters are applied.",
-        "value": {},
+        "value": "{}",
     },
     "wildcard": {
         "summary": "Wildcard Filter",
@@ -151,16 +207,22 @@ TOTAL_COUNT = (
     "Functionality: retrieve total count of queried entities.\n\n"
 )
 
+# Reusable Query parameter for total_count
+TOTAL_COUNT_QUERY = Annotated[bool, Query(description=TOTAL_COUNT)]
+
 HEADER_FIELD_NAME = (
     "The field name for which to lookup possible values in the database.\n\n"
     "Functionality: searches for possible values (aka 'headers') of this field in the database."
     "Errors: invalid field name specified"
 )
+HEADER_FIELD_NAME_QUERY = Annotated[str, Query(description=HEADER_FIELD_NAME)]
 
 HEADER_SEARCH_STRING = """Optionally, a (part of the) text for a given field.
 The query result will be values of the field that contain the provided search string."""
+HEADER_SEARCH_STRING_QUERY = Annotated[str, Query(description=HEADER_SEARCH_STRING)]
 
 HEADER_PAGE_SIZE = "Optionally, the number of results to return. Default = 10."
+HEADER_PAGE_SIZE_QUERY = Annotated[int, Query(description=HEADER_PAGE_SIZE)]
 
 HEADERS_QUERY_LITE = "Whether to use the lightweight implementation of this endpoint, which doesn't support `filters` and `operator` parameters."
 
@@ -174,7 +236,7 @@ by sending the `Accept` http request header with one of the following values:
   - `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`\n
 """
 
-STUDY_VALUE_VERSION_QUERY = Query(
+STUDY_VALUE_VERSION_QUERY: Any = Query(
     description="""If specified, study data with specified version is returned.
 
     Only exact matches are considered. 
@@ -202,3 +264,39 @@ SYNTAX_FILTERS = (
 If any provided search term for a given field name is other than a string type, then equal operator will automatically be applied overriding any provided operator.
 """
 )
+
+
+# Alias for backward compatibility - use _parse_json_validator instead
+_parse_filters_validator = _parse_json_validator
+
+
+# Base Query definitions (for OpenAPI schema)
+_FILTERS_QUERY_BASE = Query(
+    description=FILTERS,
+    openapi_examples=cast("dict[str, Any]", FILTERS_EXAMPLE),
+)
+
+_SYNTAX_FILTERS_QUERY_BASE = Query(
+    description=SYNTAX_FILTERS,
+    openapi_examples=cast("dict[str, Any]", FILTERS_EXAMPLE),
+)
+
+# Reusable Query parameter for filters - automatically parses JSON string to dict
+# Usage: filters: FILTERS_QUERY = None
+# The validator automatically parses the JSON string to a dict
+# Note: Using Any as the type to work with FastAPI query parameters, validator converts to dict | None
+FILTERS_QUERY = Annotated[
+    Any,
+    BeforeValidator(_parse_filters_validator),
+    _FILTERS_QUERY_BASE,
+]
+
+# Reusable Query parameter for syntax filters - automatically parses JSON string to dict
+# Usage: filters: SYNTAX_FILTERS_QUERY = None
+# The validator automatically parses the JSON string to a dict
+# Note: Using Any as the type to work with FastAPI query parameters, validator converts to dict | None
+SYNTAX_FILTERS_QUERY = Annotated[
+    Any,
+    BeforeValidator(_parse_filters_validator),
+    _SYNTAX_FILTERS_QUERY_BASE,
+]

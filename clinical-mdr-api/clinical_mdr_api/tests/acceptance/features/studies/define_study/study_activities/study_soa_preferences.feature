@@ -1,10 +1,10 @@
 @REQ_ID:1074260
-Feature: Manage and Maintain Study SOA preferences functionality in Clinical MDR API
+Feature: Manage and Maintain Study SOA preferences functionality in OpenStudyBuilder API
 
 # All the scenarios in this Gherkin specification, with flowchart (SoA), will include testing Protocal SoA, Detailed SoA and Operational SoA. 
 
-    Background: Test user must be able to call the Clinical MDR API and test data exist
-        Given The test user can call the Clinical MDR API
+    Background: Test user must be able to call the OpenStudyBuilder API and test data exist
+        Given The test user can call the OpenStudyBuilder API
         Given A test study identified by 'uid' is available holding test data
 
     Scenario Outline: User must be able to request for the flowchart (SoA) with preferred time unit as day

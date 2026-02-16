@@ -4,8 +4,10 @@ import urllib.parse
 from enum import Enum
 from typing import Any
 
+from fastapi import Query
 from neomodel.sync_.core import db
 
+from common.config import settings
 from common.exceptions import ValidationException
 from common.utils import filter_sort_valid_keys_re, get_db_result_as_dict
 
@@ -97,3 +99,18 @@ def get_api_version() -> str:
     version_path = os.path.join("./consumer_api", "apiVersion")
     with open(version_path, "r", encoding="utf-8") as file:
         return file.read().strip()
+
+
+# Reusable Query parameter for page_number with maximum constraint
+PAGE_NUMBER_QUERY = Query(
+    ge=1,
+    le=settings.max_page_number,
+    description="Page number of the returned list of entities. Must be between 1 and the maximum allowed page number.",
+)
+
+# Reusable Query parameter for page_size with maximum constraint (allows page_size=0 for "all rows")
+PAGE_SIZE_QUERY = Query(
+    ge=1,
+    le=settings.max_page_size,
+    description="Number of items to be returned per page. Must be between 1 and the maximum allowed page size.",
+)

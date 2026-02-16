@@ -667,12 +667,17 @@ export default {
     }
     return repository.patch(`${resource}/${uid}`, payload)
   },
-  updateStudyIntervention(studyUid, data) {
+  updateStudyIntervention(studyUid, data, parentUid) {
     const payload = {
       current_metadata: {
         study_intervention: data,
       },
     }
+
+    if (parentUid) {
+      payload.study_parent_part_uid = parentUid
+    }
+
     return repository.patch(`${resource}/${studyUid}`, payload)
   },
   updateStudyDescription(studyUid, data) {
@@ -699,6 +704,15 @@ export default {
       responseType: 'blob',
       params,
     })
+  },
+  splitSoA(studyUid, params) {
+    return repository.put(`${resource}/${studyUid}/soa-splits`, params)
+  },
+  removeSoASplit(studyUid, visitUid) {
+    return repository.delete(`${resource}/${studyUid}/soa-splits/${visitUid}`)
+  },
+  getSoASplits(studyUid) {
+    return repository.get(`${resource}/${studyUid}/soa-splits`)
   },
   exportStudyDetailedSoa(studyUid) {
     const headers = { Accept: 'text/csv' }
@@ -903,10 +917,10 @@ export default {
     )
   },
   getDdfUsdmJson(studyUid) {
-    return repository.get(`usdm/v3/studyDefinitions/${studyUid}`)
+    return repository.get(`usdm/v4/studyDefinitions/${studyUid}`)
   },
   getDdfIchM11(studyUid) {
-    return repository.get(`usdm/v3/studyDefinitions/${studyUid}/m11`)
+    return repository.get(`usdm/v4/studyDefinitions/${studyUid}/m11`)
   },
   getStudyStandardVersions(studyUid) {
     return repository.get(`${resource}/${studyUid}/study-standard-versions`)
@@ -1007,5 +1021,8 @@ export default {
     return repository.put(`studies/${studyUid}/study-data-suppliers/sync`, {
       suppliers,
     })
+  },
+  getStudyCrfForms(studyUid) {
+    return repository.get(`studies/${studyUid}/odm-forms`)
   },
 }

@@ -369,9 +369,7 @@ def test_data(api_client):
     )
 
     activity_group_uid = TestUtils.create_activity_group("Activity Group").uid
-    activity_subgroup_uid = TestUtils.create_activity_subgroup(
-        "Activity Sub Group", activity_groups=[activity_group_uid]
-    ).uid
+    activity_subgroup_uid = TestUtils.create_activity_subgroup("Activity Sub Group").uid
 
     study_activities = []
 
@@ -598,9 +596,12 @@ def test_get_studies_invalid_pagination_params(api_client):
         f"{BASE_URL}/studies?page_number={settings.max_int_neo4j + 1}&page_size=1"
     )
     assert_response_status_code(response, 400)
+    response_data = response.json()
+    assert response_data["message"] == "The request failed due to validation errors"
+    assert response_data["details"][0]["error_code"] == "less_than_equal"
     assert (
-        response.json()["message"]
-        == f"(page_number * page_size) value cannot be bigger than {settings.max_int_neo4j}"
+        response_data["details"][0]["msg"]
+        == "Input should be less than or equal to 1000000000"
     )
 
 

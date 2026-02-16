@@ -96,6 +96,7 @@ class StudySelectionMixin:
             term_uids=list(ctterm_uids),
             at_specific_date=terms_at_specific_datetime,
             return_simple_object=True,
+            include_retired_versions=True,
         )
 
         self.study_epoch_types_by_uid = {

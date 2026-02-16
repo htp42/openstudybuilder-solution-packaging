@@ -317,7 +317,7 @@ def test_post_approve_child_codelist(api_client):
 def test_post_add_term_to_child_codelist(api_client):
     data = {
         "term_uid": "term1",
-        "submission_value": "Submission value with parent",
+        "submission_value": "term1 submission value",
         "order": 999999,
     }
     response = api_client.post("/ct/codelists/CTCodelist_000002/terms", json=data)

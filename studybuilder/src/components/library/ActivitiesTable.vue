@@ -3,7 +3,7 @@
     <!-- Status filter tabs -->
     <div
       v-if="!requested && showStatusTabs"
-      class="d-flex justify-center mb-4 mt-4"
+      class="d-flex flex-column align-center mb-4 mt-4"
     >
       <v-btn-toggle
         v-model="selectedStatusTab"
@@ -19,11 +19,18 @@
           {{ tab.label }}
         </v-btn>
       </v-btn-toggle>
+      <v-progress-linear
+        v-if="isStatusLoading"
+        indeterminate
+        color="nnBaseBlue"
+        class="mt-2"
+        style="width: 200px"
+      />
     </div>
 
     <NNTable
       ref="tableRef"
-      :key="`activities-table-${selectedStatusTab}-${source}`"
+      :key="`activities-table-${source}`"
       :headers="currentHeaders"
       :items="activities"
       export-object-label="Activities"
@@ -576,11 +583,9 @@ import NCIConceptLink from '@/components/tools/NCIConceptLink.vue'
 import filteringParameters from '@/utils/filteringParameters'
 import statuses from '@/constants/statuses'
 import _isEmpty from 'lodash/isEmpty'
-import { useLibraryActivitiesStore } from '@/stores/library-activities'
 import { useFeatureFlagsStore } from '@/stores/feature-flags'
-import { computed, inject, onMounted, ref } from 'vue'
+import { computed, inject, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import filters from '@/filters'
 import { sanitizeHTML, escapeHTML } from '@/utils/sanitize'
 
 const props = defineProps({
@@ -596,7 +601,6 @@ const props = defineProps({
 
 const { t } = useI18n()
 const accessGuard = useAccessGuard()
-const activitiesStore = useLibraryActivitiesStore()
 const featureFlagsStore = useFeatureFlagsStore()
 const notificationHub = inject('notificationHub')
 const roles = inject('roles')
@@ -870,12 +874,6 @@ const activityGroupHeaders = [
 const activitySubgroupHeaders = [
   { title: '', key: 'actions', width: '1%' },
   {
-    title: t('ActivityTable.activity_group'),
-    key: 'activity_groups',
-    historyFilter: filters.names,
-    externalFilterSource: 'concepts/activities/activity-groups$name',
-  },
-  {
     title: t('ActivityTable.activity_subgroup'),
     key: 'name',
     externalFilterSource: 'concepts/activities/activity-sub-groups$name',
@@ -905,6 +903,7 @@ const showSponsorFromRequestedForm = ref(false)
 const activeItem = ref(null)
 const showFinalised = ref(false)
 const selectedStatusTab = ref('final') // Default to 'final' tab
+const isStatusLoading = ref(false)
 
 const statusTabs = [
   { value: 'all', label: 'All' },
@@ -980,10 +979,6 @@ const showStatusTabs = computed(() => {
     'activity-sub-groups',
     'activity-instances',
   ].includes(props.source)
-})
-
-onMounted(() => {
-  activitiesStore.getGroupsAndSubgroups()
 })
 
 function getActivitySubgroupUID(item) {
@@ -1120,6 +1115,7 @@ function transformItems(items) {
 
 function onStatusTabChange() {
   // Trigger a new fetch when tab changes
+  isStatusLoading.value = true
   if (tableRef.value) {
     tableRef.value.filterTable()
   }
@@ -1231,8 +1227,8 @@ function fetchActivities(filters, options, filtersUpdated) {
     let statusFilter = {}
 
     if (selectedStatusTab.value === 'final') {
-      // Show only Sponsored and Final status
-      statusFilter = { status: { v: ['Sponsored', statuses.FINAL] } }
+      // Show only Final status
+      statusFilter = { status: { v: [statuses.FINAL] } }
     } else if (selectedStatusTab.value === 'retired') {
       statusFilter = { status: { v: [statuses.RETIRED] } }
     } else if (selectedStatusTab.value === 'draft') {
@@ -1278,6 +1274,7 @@ function fetchActivities(filters, options, filtersUpdated) {
   activitiesApi.get(params, source).then((resp) => {
     activities.value = transformItems(resp.data.items)
     total.value = resp.data.total
+    isStatusLoading.value = false
   })
   if (groupFormRef.value) {
     groupFormRef.value.getGroups()
@@ -1339,8 +1336,8 @@ function modifyFilters(jsonFilter, params) {
   // Apply status filtering based on selected tab for filter dropdowns
   if (!props.requested && showStatusTabs.value) {
     if (selectedStatusTab.value === 'final') {
-      // Show only Sponsored and Final status
-      jsonFilter.status = { v: ['Sponsored', statuses.FINAL] }
+      // Show only Final status
+      jsonFilter.status = { v: [statuses.FINAL] }
     } else if (selectedStatusTab.value === 'retired') {
       jsonFilter.status = { v: [statuses.RETIRED] }
     } else if (selectedStatusTab.value === 'draft') {
@@ -1457,31 +1454,11 @@ function approveItem(item, source) {
   ) {
     options.cascade_edit_and_approve = true
   }
-  activitiesApi.approve(item.uid, source, options).then((resp) => {
-    if (source === 'activity-sub-groups') {
-      if (resp.data.was_cascade_update_performed) {
-        notificationHub.add({
-          msg: t(`ActivitiesTable.approve_activity-sub-groups_success_cascade`),
-          type: 'success',
-        })
-        notificationHub.add({
-          msg: t(`ActivitiesTable.approve_${props.source}_success`),
-          type: 'success',
-        })
-      } else {
-        notificationHub.add({
-          msg: t(
-            `ActivitiesTable.approve_activity-sub-groups_success_no_cascade`
-          ),
-          type: 'warning',
-        })
-      }
-    } else {
-      notificationHub.add({
-        msg: t(`ActivitiesTable.approve_${props.source}_success`),
-        type: 'success',
-      })
-    }
+  activitiesApi.approve(item.uid, source, options).then(() => {
+    notificationHub.add({
+      msg: t(`ActivitiesTable.approve_${props.source}_success`),
+      type: 'success',
+    })
     tableRef.value.filterTable()
   })
 }

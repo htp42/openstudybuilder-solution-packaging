@@ -1,4 +1,6 @@
-from neomodel import NodeSet
+from typing import Any
+
+from neomodel import NodeSet, db
 from neomodel.sync_.match import (
     Collect,
     Last,
@@ -96,22 +98,40 @@ class DataSupplierRepository(  # type: ignore[misc]
             initial_context=[NodeNameResolver("self")],
         )
 
-    def extend_distinct_headers_query(self, nodeset: NodeSet) -> NodeSet:
-        return nodeset.subquery(
-            self.root_class.nodes.fetch_relations("has_version")
-            .intermediate_transform(
-                {"rel": {"source": RelationNameResolver("has_version")}},
-                ordering=[
-                    RawCypher("toInteger(split(rel.version, '.')[0])"),
-                    RawCypher("toInteger(split(rel.version, '.')[1])"),
-                    "rel.end_date",
-                    "rel.start_date",
-                ],
+    def extend_distinct_headers_query(
+        self,
+        nodeset: NodeSet,
+        field_name: str,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+    ) -> NodeSet:
+        # Get version relationship properties dynamically
+        version_properties = set(VersionRelationship.defined_properties().keys())
+        # Map author_id to author_username as it's exposed that way in the API
+        version_fields = version_properties | {"author_username"}
+        version_fields.discard("author_id")
+
+        # Check if we need version data
+        need_latest_version = field_name in version_fields
+        if not need_latest_version and filter_by:
+            need_latest_version = any(key in version_fields for key in filter_by.keys())
+
+        if need_latest_version:
+            return nodeset.subquery(
+                self.root_class.nodes.fetch_relations("has_version")
+                .intermediate_transform(
+                    {"rel": {"source": RelationNameResolver("has_version")}},
+                    ordering=[
+                        RawCypher("toInteger(split(rel.version, '.')[0])"),
+                        RawCypher("toInteger(split(rel.version, '.')[1])"),
+                        "rel.end_date",
+                        "rel.start_date",
+                    ],
+                )
+                .annotate(latest_version=Last(Collect("rel"))),
+                ["latest_version"],
+                initial_context=[NodeNameResolver("self")],
             )
-            .annotate(latest_version=Last(Collect("rel"))),
-            ["latest_version"],
-            initial_context=[NodeNameResolver("self")],
-        )
+        return nodeset
 
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
@@ -262,3 +282,74 @@ class DataSupplierRepository(  # type: ignore[misc]
 
     def generate_uid(self) -> str:
         return DataSupplierRoot.get_next_free_uid_and_increment_counter()
+
+    def get_next_available_order(self, supplier_type_uid: str) -> int:
+        query = """
+            MATCH (root:DataSupplierRoot)-[:LATEST]->(value:DataSupplierValue)
+            MATCH (value)-[:HAS_DATA_SUPPLIER_TYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(type:CTTermRoot {uid: $type_uid})
+            RETURN max(value.order)
+        """
+        results, _ = db.cypher_query(query, {"type_uid": supplier_type_uid})
+        max_order = results[0][0]
+        return (max_order + 1) if max_order is not None else 1
+
+    def bump_orders(self, supplier_type_uid: str, start_order: int) -> None:
+        query = """
+            MATCH (root:DataSupplierRoot)-[:LATEST]->(value:DataSupplierValue)
+            MATCH (value)-[:HAS_DATA_SUPPLIER_TYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(type:CTTermRoot {uid: $type_uid})
+            WHERE value.order >= $start_order
+            SET value.order = value.order + 1
+        """
+        db.cypher_query(
+            query, {"type_uid": supplier_type_uid, "start_order": start_order}
+        )
+
+    def reorder(self, supplier_type_uid: str, old_order: int, new_order: int) -> None:
+        if new_order > old_order:
+            # Moving down: Shift intermediate items UP (decrement their order)
+            # Example: 1, [2], 3, 4 -> Move 2 to 3 -> 1, 3, [2], 4
+            # Items at 3 (old 3) needs to become 2.
+            query = """
+                MATCH (root:DataSupplierRoot)-[:LATEST]->(value:DataSupplierValue)
+                MATCH (value)-[:HAS_DATA_SUPPLIER_TYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(type:CTTermRoot {uid: $type_uid})
+                WHERE value.order > $old_order AND value.order <= $new_order
+                SET value.order = value.order - 1
+            """
+            db.cypher_query(
+                query,
+                {
+                    "type_uid": supplier_type_uid,
+                    "old_order": old_order,
+                    "new_order": new_order,
+                },
+            )
+        elif new_order < old_order:
+            # Moving up: Shift intermediate items DOWN (increment their order)
+            # Example: 1, 2, [3], 4 -> Move 3 to 2 -> 1, [3], 2, 4
+            # Item at 2 needs to become 3.
+            query = """
+                MATCH (root:DataSupplierRoot)-[:LATEST]->(value:DataSupplierValue)
+                MATCH (value)-[:HAS_DATA_SUPPLIER_TYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(type:CTTermRoot {uid: $type_uid})
+                WHERE value.order >= $new_order AND value.order < $old_order
+                SET value.order = value.order + 1
+            """
+            db.cypher_query(
+                query,
+                {
+                    "type_uid": supplier_type_uid,
+                    "old_order": old_order,
+                    "new_order": new_order,
+                },
+            )
+
+    def close_gap(self, supplier_type_uid: str, gap_order: int) -> None:
+        """
+        Decrements the order of all items after the gap_order to fill the hole.
+        """
+        query = """
+            MATCH (root:DataSupplierRoot)-[:LATEST]->(value:DataSupplierValue)
+            MATCH (value)-[:HAS_DATA_SUPPLIER_TYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(type:CTTermRoot {uid: $type_uid})
+            WHERE value.order > $gap_order
+            SET value.order = value.order - 1
+        """
+        db.cypher_query(query, {"type_uid": supplier_type_uid, "gap_order": gap_order})

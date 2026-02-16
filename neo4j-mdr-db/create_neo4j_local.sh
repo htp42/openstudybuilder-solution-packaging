@@ -73,7 +73,7 @@ docker run -d \
     -e NEO4J_server_https_listen__address=:"$NEO4J_MDR_HTTPS_PORT" \
     -e NEO4J_server_metrics_enabled=false \
     --env=NEO4J_PLUGINS='["apoc"]' \
-    neo4j:5.19.0-enterprise
+    neo4j:5.26.18-enterprise
 # If you see some 'Unable to find the transaction entry for the given change identifier' coming from
 # capture_changes in data corrections please add the below configuration to the container setup above.
 # This will extend the size of the stored logs so that capture_changes can find a transaction identifier.

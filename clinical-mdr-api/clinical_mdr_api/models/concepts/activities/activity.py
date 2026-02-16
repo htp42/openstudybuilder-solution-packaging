@@ -155,47 +155,6 @@ class ActivityBase(Concept):
         return []
 
 
-class CompactActivity(BaseModel):
-    uid: Annotated[str, Field()]
-    name: Annotated[str, Field()]
-    definition: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
-        None
-    )
-    synonyms: Annotated[
-        list[str] | None,
-        Field(json_schema_extra={"nullable": True, "remove_from_wildcard": True}),
-    ] = None
-    abbreviation: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
-        None
-    )
-    is_data_collected: Annotated[bool, Field()]
-    is_used_by_legacy_instances: Annotated[bool, Field()]
-    activity_group_uid: Annotated[str, Field()]
-    activity_group_name: Annotated[str, Field()]
-    activity_subgroup_uid: Annotated[str, Field()]
-    activity_subgroup_name: Annotated[str, Field()]
-    status: Annotated[str, Field()]
-    library_name: Annotated[str, Field()]
-
-    @classmethod
-    def from_repository_output(cls, data: dict[str, Any]) -> Self:
-        return cls(
-            uid=data["uid"],
-            name=data["name"],
-            definition=data.get("definition"),
-            synonyms=data.get("synonyms") or [],
-            abbreviation=data.get("abbreviation"),
-            is_data_collected=data["is_data_collected"],
-            is_used_by_legacy_instances=data["is_used_by_legacy_instances"],
-            activity_group_uid=data["activity_group_uid"],
-            activity_group_name=data["activity_group_name"],
-            activity_subgroup_uid=data["activity_subgroup_uid"],
-            activity_subgroup_name=data["activity_subgroup_name"],
-            status=data["status"],
-            library_name=data["library_name"],
-        )
-
-
 class Activity(ActivityBase):
     nci_concept_id: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
@@ -590,6 +549,9 @@ class SimpleActivity(BaseModel):
     end_date: Annotated[
         datetime.datetime | None, Field(json_schema_extra={"nullable": True})
     ] = None
+    author_username: Annotated[
+        str | None, Field(json_schema_extra={"nullable": True})
+    ] = None
 
 
 class SimpleActivitySubGroup(BaseModel):
@@ -617,7 +579,7 @@ class SimpleActivityGrouping(BaseModel):
     activity_subgroup: Annotated[SimpleActivitySubGroup, Field()]
 
 
-class SimpleActivityInstanceClass(BaseModel):
+class SimpleActivityInstanceClassForActivity(BaseModel):
     name: Annotated[str, Field()]
 
 
@@ -653,7 +615,7 @@ class SimpleActivityInstance(BaseModel):
         float | None, Field(json_schema_extra={"nullable": True})
     ] = None
     library_name: Annotated[str, Field()]
-    activity_instance_class: Annotated[SimpleActivityInstanceClass, Field()]
+    activity_instance_class: Annotated[SimpleActivityInstanceClassForActivity, Field()]
     version: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
     status: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
     start_date: Annotated[
@@ -661,6 +623,9 @@ class SimpleActivityInstance(BaseModel):
     ] = None
     end_date: Annotated[
         datetime.datetime | None, Field(json_schema_extra={"nullable": True})
+    ] = None
+    author_username: Annotated[
+        str | None, Field(json_schema_extra={"nullable": True})
     ] = None
 
 
@@ -699,6 +664,7 @@ class ActivityOverview(BaseModel):
                 end_date=convert_to_datetime(
                     overview.get("has_version", {}).get("end_date")
                 ),
+                author_username=overview.get("has_version", {}).get("author_username"),
             ),
             activity_groupings=[
                 SimpleActivityGrouping(
@@ -746,7 +712,7 @@ class ActivityOverview(BaseModel):
                     library_name=activity_instance.get(
                         "activity_instance_library_name"
                     ),
-                    activity_instance_class=SimpleActivityInstanceClass(
+                    activity_instance_class=SimpleActivityInstanceClassForActivity(
                         name=activity_instance.get("activity_instance_class").get(
                             "name"
                         )

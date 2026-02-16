@@ -1,4 +1,4 @@
-# RESTful API endpoints used by consumers that want to extract data from StudyBuilder
+# RESTful API endpoints used by consumers that want to extract data from OpenStudyBuilder
 # This file is a placeholder for version 2 of the consumer api,
 # and should be replaced by the real v2 code once that needs to be implemented.
 

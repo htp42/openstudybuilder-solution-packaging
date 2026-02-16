@@ -27,6 +27,8 @@ from clinical_mdr_api.models.study_selections.study import (
     StudySimple,
     StudySoaPreferences,
     StudySoaPreferencesInput,
+    StudySoaSplit,
+    StudySoaSplitInput,
     StudyStructureOverview,
     StudyStructureStatistics,
     StudySubpartAuditTrail,
@@ -42,7 +44,10 @@ from clinical_mdr_api.routers._generic_descriptions import (
     study_section_description,
 )
 from clinical_mdr_api.services.studies.complexity_score import ComplexityScoreService
-from clinical_mdr_api.services.studies.study import StudyService
+from clinical_mdr_api.services.studies.study import (
+    StudyService,
+    validate_if_study_is_not_locked,
+)
 from clinical_mdr_api.services.studies.study_pharma_cm import StudyPharmaCMService
 from common.auth import rbac
 from common.auth.dependencies import security
@@ -163,33 +168,12 @@ def get_all(
             description="Optionally, filter studies based on the existence of related sTudy Activity Instruction or not",
         ),
     ] = None,
-    sort_by: Annotated[
-        Json | None, Query(description=_generic_descriptions.SORT_BY)
-    ] = None,
-    page_number: Annotated[
-        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = settings.default_page_number,
-    page_size: Annotated[
-        int,
-        Query(
-            ge=0,
-            le=settings.max_page_size,
-            description=_generic_descriptions.PAGE_SIZE,
-        ),
-    ] = settings.default_page_size,
-    filters: Annotated[
-        Json | None,
-        Query(
-            description=_generic_descriptions.FILTERS,
-            openapi_examples=_generic_descriptions.FILTERS_EXAMPLE,
-        ),
-    ] = None,
-    operator: Annotated[
-        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = settings.default_filter_operator,
-    total_count: Annotated[
-        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
-    ] = False,
+    sort_by: _generic_descriptions.SORT_BY_QUERY = None,
+    page_number: _generic_descriptions.PAGE_NUMBER_QUERY = settings.default_page_number,
+    page_size: _generic_descriptions.PAGE_SIZE_QUERY = settings.default_page_size,
+    filters: _generic_descriptions.FILTERS_QUERY = None,
+    operator: _generic_descriptions.FILTER_OPERATOR_QUERY = settings.default_filter_operator,
+    total_count: _generic_descriptions.TOTAL_COUNT_QUERY = False,
     deleted: Annotated[
         bool,
         Query(
@@ -328,31 +312,12 @@ Allowed parameters include : filter on fields, sort by field name with sort dire
 # pylint: disable=unused-argument
 def get_study_structure_overview(
     request: Request,  # request is actually required by the allow_exports decorator
-    sort_by: Annotated[Json, Query(description=_generic_descriptions.SORT_BY)] = None,
-    page_number: Annotated[
-        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = settings.default_page_number,
-    page_size: Annotated[
-        int,
-        Query(
-            ge=0,
-            le=settings.max_page_size,
-            description=_generic_descriptions.PAGE_SIZE,
-        ),
-    ] = settings.default_page_size,
-    filters: Annotated[
-        Json | None,
-        Query(
-            description=_generic_descriptions.FILTERS,
-            openapi_examples=_generic_descriptions.FILTERS_EXAMPLE,
-        ),
-    ] = None,
-    operator: Annotated[
-        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = settings.default_filter_operator,
-    total_count: Annotated[
-        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
-    ] = False,
+    sort_by: Annotated[Json, _generic_descriptions.SORT_BY_QUERY] = None,
+    page_number: _generic_descriptions.PAGE_NUMBER_QUERY = settings.default_page_number,
+    page_size: _generic_descriptions.PAGE_SIZE_QUERY = settings.default_page_size,
+    filters: _generic_descriptions.FILTERS_QUERY = None,
+    operator: _generic_descriptions.FILTER_OPERATOR_QUERY = settings.default_filter_operator,
+    total_count: _generic_descriptions.TOTAL_COUNT_QUERY = False,
 ) -> CustomPage[StudyStructureOverview]:
     study_service = StudyService()
     results = study_service.get_study_structure_overview(
@@ -385,25 +350,11 @@ def get_study_structure_overview(
     },
 )
 def get_study_structure_overview_header(
-    field_name: Annotated[
-        str, Query(description=_generic_descriptions.HEADER_FIELD_NAME)
-    ],
-    search_string: Annotated[
-        str, Query(description=_generic_descriptions.HEADER_SEARCH_STRING)
-    ] = "",
-    filters: Annotated[
-        Json | None,
-        Query(
-            description=_generic_descriptions.FILTERS,
-            openapi_examples=_generic_descriptions.FILTERS_EXAMPLE,
-        ),
-    ] = None,
-    operator: Annotated[
-        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = settings.default_filter_operator,
-    page_size: Annotated[
-        int, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
-    ] = settings.default_header_page_size,
+    field_name: _generic_descriptions.HEADER_FIELD_NAME_QUERY,
+    search_string: _generic_descriptions.HEADER_SEARCH_STRING_QUERY = "",
+    filters: _generic_descriptions.FILTERS_QUERY = None,
+    operator: _generic_descriptions.FILTER_OPERATOR_QUERY = settings.default_filter_operator,
+    page_size: _generic_descriptions.HEADER_PAGE_SIZE_QUERY = settings.default_header_page_size,
 ) -> list[Any]:
     study_service = StudyService()
     return study_service.get_study_structure_overview_header(
@@ -431,25 +382,11 @@ def get_study_structure_overview_header(
     },
 )
 def get_distinct_values_for_header(
-    field_name: Annotated[
-        str, Query(description=_generic_descriptions.HEADER_FIELD_NAME)
-    ],
-    search_string: Annotated[
-        str, Query(description=_generic_descriptions.HEADER_SEARCH_STRING)
-    ] = "",
-    filters: Annotated[
-        Json | None,
-        Query(
-            description=_generic_descriptions.FILTERS,
-            openapi_examples=_generic_descriptions.FILTERS_EXAMPLE,
-        ),
-    ] = None,
-    operator: Annotated[
-        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = settings.default_filter_operator,
-    page_size: Annotated[
-        int, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
-    ] = settings.default_header_page_size,
+    field_name: _generic_descriptions.HEADER_FIELD_NAME_QUERY,
+    search_string: _generic_descriptions.HEADER_SEARCH_STRING_QUERY = "",
+    filters: _generic_descriptions.FILTERS_QUERY = None,
+    operator: _generic_descriptions.FILTER_OPERATOR_QUERY = settings.default_filter_operator,
+    page_size: _generic_descriptions.HEADER_PAGE_SIZE_QUERY = settings.default_header_page_size,
 ) -> list[Any]:
     study_service = StudyService()
     return study_service.get_distinct_values_for_header(
@@ -812,33 +749,12 @@ def patch(
 )
 def get_snapshot_history(
     study_uid: Annotated[str, StudyUID],  # ,
-    sort_by: Annotated[
-        Json | None, Query(description=_generic_descriptions.SORT_BY)
-    ] = None,
-    page_number: Annotated[
-        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = settings.default_page_number,
-    page_size: Annotated[
-        int,
-        Query(
-            ge=0,
-            le=settings.max_page_size,
-            description=_generic_descriptions.PAGE_SIZE,
-        ),
-    ] = settings.default_page_size,
-    filters: Annotated[
-        Json | None,
-        Query(
-            description=_generic_descriptions.FILTERS,
-            openapi_examples=_generic_descriptions.FILTERS_EXAMPLE,
-        ),
-    ] = None,
-    operator: Annotated[
-        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = settings.default_filter_operator,
-    total_count: Annotated[
-        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
-    ] = False,
+    sort_by: _generic_descriptions.SORT_BY_QUERY = None,
+    page_number: _generic_descriptions.PAGE_NUMBER_QUERY = settings.default_page_number,
+    page_size: _generic_descriptions.PAGE_SIZE_QUERY = settings.default_page_size,
+    filters: _generic_descriptions.FILTERS_QUERY = None,
+    operator: _generic_descriptions.FILTER_OPERATOR_QUERY = settings.default_filter_operator,
+    total_count: _generic_descriptions.TOTAL_COUNT_QUERY = False,
 ) -> CustomPage[CompactStudy]:
     study_service = StudyService()
     snapshot_history = study_service.get_study_snapshot_history(
@@ -1223,6 +1139,111 @@ def patch_soa_preferences(
     return study_service.patch_study_soa_preferences(
         study_uid=study_uid,
         soa_preferences=soa_preferences,
+    )
+
+
+@router.get(
+    "/{study_uid}/soa-splits",
+    dependencies=[security, rbac.STUDY_READ],
+    summary="Get SoA split uids",
+    status_code=200,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - study with the specified 'study_uid' doesn't exist or has no SoA splits configured",
+        },
+    },
+)
+def get_soa_splits(
+    study_uid: Annotated[str, StudyUID],
+    study_value_version: Annotated[
+        str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
+    ] = None,
+) -> list[StudySoaSplit]:
+    study_service = StudyService()
+    return study_service.get_study_soa_splits(
+        study_uid=study_uid,
+        study_value_version=study_value_version,
+    )
+
+
+@router.put(
+    "/{study_uid}/soa-splits",
+    dependencies=[security, rbac.STUDY_WRITE],
+    summary="Add a uid to SoA splits",
+    status_code=200,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - study with the specified 'study_uid' doesn't exist",
+        },
+        409: {
+            "model": ErrorResponse,
+            "description": "Conflict - The uid to add is already in the SoA splits",
+        },
+    },
+)
+@validate_if_study_is_not_locked("study_uid", 1)
+def put_soa_split(
+    study_uid: Annotated[str, StudyUID],
+    soa_splits_input: Annotated[
+        StudySoaSplitInput, Body(description="SoA split input")
+    ],
+) -> list[StudySoaSplit]:
+    study_service = StudyService()
+    return study_service.add_study_soa_split(
+        study_uid=study_uid,
+        soa_split_input=soa_splits_input,
+    )
+
+
+@router.delete(
+    "/{study_uid}/soa-splits/{study_visit_uid}",
+    dependencies=[security, rbac.STUDY_WRITE],
+    summary="Remove a uid from SoA splits",
+    status_code=200,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - study with the specified 'study_uid' doesn't exist",
+        },
+    },
+)
+@validate_if_study_is_not_locked("study_uid", 1)
+def remove_soa_split(
+    study_uid: Annotated[str, StudyUID],
+    study_visit_uid: Annotated[str, Path(description="SoA split uid")],
+) -> list[StudySoaSplit]:
+    study_service = StudyService()
+    return study_service.remove_study_soa_split(
+        study_uid=study_uid,
+        uid=study_visit_uid,
+    )
+
+
+@router.delete(
+    "/{study_uid}/soa-splits",
+    dependencies=[security, rbac.STUDY_WRITE],
+    summary="Remove all SoA splits",
+    status_code=204,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - study with the specified 'study_uid' doesn't exist",
+        },
+    },
+)
+@validate_if_study_is_not_locked("study_uid", 1)
+def remove_soa_splits(
+    study_uid: Annotated[str, StudyUID],
+) -> None:
+    study_service = StudyService()
+    study_service.remove_study_soa_splits(
+        study_uid=study_uid,
     )
 
 

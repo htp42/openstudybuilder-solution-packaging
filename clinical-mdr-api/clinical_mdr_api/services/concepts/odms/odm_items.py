@@ -87,6 +87,7 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
                 ],
                 codelist_uid=concept_input.codelist_uid,
                 term_uids=[term.uid for term in concept_input.terms],
+                activity_instances=[],
                 vendor_element_uids=[],
                 vendor_attribute_uids=[],
                 vendor_element_attribute_uids=[],
@@ -102,6 +103,31 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
     def _edit_aggregate(
         self, item: OdmItemAR, concept_edit_input: OdmItemPatchInput
     ) -> OdmItemAR:
+        if concept_edit_input.activity_instances:
+            parent_item_groups = self.get_active_relationships(item.uid).get(
+                "OdmItemGroup", []
+            )
+
+            for activity_instance in concept_edit_input.activity_instances:
+                if activity_instance.odm_item_group_uid not in parent_item_groups:
+                    raise BusinessLogicException(
+                        msg=f"Cannot assign Activity Instance ({activity_instance.activity_instance_uid}, {activity_instance.activity_item_class_uid}) "
+                        f"to ODM Item with UID '{item.uid}' because it isn't part of ODM Item Group with UID '{activity_instance.odm_item_group_uid}'"
+                    )
+
+                parent_forms = (
+                    self._repos.odm_item_group_repository.get_active_relationships(
+                        activity_instance.odm_item_group_uid, ["item_group_ref"]
+                    ).get("OdmForm", [])
+                )
+
+                if activity_instance.odm_form_uid not in parent_forms:
+                    raise BusinessLogicException(
+                        msg=f"Cannot assign Activity Instance ({activity_instance.activity_instance_uid}, {activity_instance.activity_item_class_uid}) "
+                        f"to ODM Item with UID '{item.uid}' because its Item Group with UID '{activity_instance.odm_item_group_uid}' "
+                        f"isn't part of ODM Form with UID '{activity_instance.odm_form_uid}'"
+                    )
+
         item.edit_draft(
             author_id=self.author_id,
             change_description=concept_edit_input.change_description,
@@ -124,6 +150,10 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
                 ],
                 codelist_uid=concept_edit_input.codelist_uid,
                 term_uids=[term.uid for term in concept_edit_input.terms],
+                activity_instances=[
+                    model.model_dump()
+                    for model in concept_edit_input.activity_instances
+                ],
                 vendor_element_uids=item.concept_vo.vendor_element_uids,
                 vendor_attribute_uids=item.concept_vo.vendor_attribute_uids,
                 vendor_element_attribute_uids=item.concept_vo.vendor_element_attribute_uids,
@@ -132,6 +162,7 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
             unit_definition_exists_by_callback=self._repos.unit_definition_repository.exists_by,
             find_codelist_attribute_callback=self._repos.ct_codelist_attribute_repository.find_by_uid,
             find_all_terms_callback=self._repos.ct_term_name_repository.find_all,
+            find_activity_instance_callback=self._repos.activity_instance_repository.find_by_uid_2,
         )
         return item
 
@@ -579,7 +610,7 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
 
         return self.get_by_uid(uid)
 
-    @db.transaction
+    @ensure_transaction(db)
     def get_active_relationships(self, uid: str):
         NotFoundException.raise_if_not(
             self._repos.odm_item_repository.exists_by("uid", uid, True),
@@ -591,6 +622,6 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
             uid, ["item_ref"]
         )
 
-    @db.transaction
+    @ensure_transaction(db)
     def get_items_that_belongs_to_item_groups(self):
         return self._repos.odm_item_repository.get_if_has_relationship("item_ref")

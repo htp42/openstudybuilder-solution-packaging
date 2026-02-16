@@ -51,6 +51,11 @@ export default {
   getAllStudyCells(uid) {
     return repository.get(`${resource}/${uid}/study-design-cells`)
   },
+  getStudyCellsHistory(studyUid) {
+    return repository.get(
+      `${resource}/${studyUid}/study-design-cells/audit-trail/`
+    )
+  },
   createStudyCell(uid, data) {
     return repository.post(`${resource}/${uid}/study-design-cells`, data)
   },

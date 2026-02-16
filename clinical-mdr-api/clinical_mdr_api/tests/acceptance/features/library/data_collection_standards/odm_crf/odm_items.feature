@@ -1,9 +1,9 @@
 @REQ_ID:1070683
-Feature: Manage ODM Items in Clinical MDR API
-    As an API user, I want to manage ODM Items through the Clinical MDR API endpoints.
+Feature: Manage ODM Items in OpenStudyBuilder API
+    As an API user, I want to manage ODM Items through the OpenStudyBuilder API endpoints.
 
-    Background: Test user must be able to call the Clinical MDR API, and the test data exists
-        Given The test user can call the Clinical MDR API
+    Background: Test user must be able to call the OpenStudyBuilder API, and the test data exists
+        Given The test user can call the OpenStudyBuilder API
 
     Scenario: User must be able to get an empty list of ODM items
         When the user calls the API endpoint 'concepts/odms/items'

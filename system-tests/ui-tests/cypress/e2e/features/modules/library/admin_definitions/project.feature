@@ -50,7 +50,7 @@ Feature: Library - Admin Definitions - Projects
         And Form save button is clicked
         And Test project is found
         When The 'Delete' option is clicked from the three dot menu list
-        When The continue is clicked in confirmation popup
+        When Action is confirmed by clicking continue
         Then The pop up displays 'Project deleted'
         And Test project is no longer available
 
@@ -66,5 +66,5 @@ Feature: Library - Admin Definitions - Projects
         Given The '/library/projects' page is opened
         And Test project with linked study is found
         When The 'Delete' option is clicked from the three dot menu list
-        When The continue is clicked in confirmation popup
+        When Action is confirmed by clicking continue
         Then The pop up displays 'Cannot delete Project'

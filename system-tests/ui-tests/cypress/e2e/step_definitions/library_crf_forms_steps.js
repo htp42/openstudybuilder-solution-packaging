@@ -13,11 +13,9 @@ When('The Form definition container is filled with data', () => changeFormData(`
 When('The Form metadata are updated and saved', () => changeFormData(`Update ${formNameDefault}`, `Update ${formOidDefault}`))
 
 Then('The New version popup window is displayed', () => {
-    // Check that the dialog is visible
-    cy.get('.v-card.v-theme--NNCustomLightTheme')
-      .should('be.visible') // Assert that the dialog is visible
-      .and('contain', 'Creating a new version can affect the following parent elements:'); // Check that it contains the specific text
-});
+    cy.contains('.v-overlay__content .v-card-title', 'Creating a new version can affect the following parent elements:').should('be.visible')
+    cy.get('.v-skeleton-loader', { timeout: 30000 }).should('not.exist')
+})
 
 function changeFormData(formName, formOid) {
     formOidDefault = formName

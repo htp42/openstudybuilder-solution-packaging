@@ -3,6 +3,14 @@ export function usePharmaceuticalProducts() {
     const substanceName = ingredient.active_substance.inn
       ? ingredient.active_substance.inn
       : ingredient.active_substance.long_number
+        ? ingredient.active_substance.long_number
+        : ingredient.active_substance.short_number
+          ? ingredient.active_substance.short_number
+          : ingredient.active_substance.unii
+            ? ingredient.active_substance.unii.substance_unii
+            : ingredient.active_substance.analyte_number
+              ? ingredient.active_substance.analyte_number
+              : '?'
     let result = substanceName
     if (ingredient.formulation_name) {
       result += ` ${ingredient.formulation_name}`

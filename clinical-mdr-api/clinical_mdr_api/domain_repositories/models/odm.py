@@ -9,6 +9,7 @@ from neomodel import (
     ZeroOrMore,
 )
 
+from clinical_mdr_api.domain_repositories.models.activities import ActivityItem
 from clinical_mdr_api.domain_repositories.models.concepts import (
     ConceptRoot,
     ConceptValue,
@@ -153,6 +154,9 @@ class OdmFormValue(ConceptValue):
     oid = StringProperty()
     repeating = BooleanProperty()
     sdtm_version = StringProperty()
+
+    links_to_activity_item = RelationshipTo(ActivityItem, "LINKS_TO_ACTIVITY_ITEM")
+
     has_description = RelationshipTo(
         OdmDescription, "HAS_DESCRIPTION", model=ClinicalMdrRel
     )
@@ -211,6 +215,9 @@ class OdmItemGroupValue(ConceptValue):
     origin = StringProperty()
     purpose = StringProperty()
     comment = StringProperty()
+
+    links_to_activity_item = RelationshipTo(ActivityItem, "LINKS_TO_ACTIVITY_ITEM")
+
     has_description = RelationshipTo(
         OdmDescription, "HAS_DESCRIPTION", model=ClinicalMdrRel
     )
@@ -269,6 +276,14 @@ class OdmItemUnitDefinitionRelationship(ClinicalMdrRel):
     order = IntegerProperty()
 
 
+class ActivityItemRel(ClinicalMdrRel):
+    order = IntegerProperty()
+    primary = BooleanProperty()
+    preset_response_value = StringProperty()
+    value_condition = StringProperty()
+    value_dependent_map = StringProperty()
+
+
 class OdmItemValue(ConceptValue):
     oid = StringProperty()
     prompt = StringProperty()
@@ -279,6 +294,11 @@ class OdmItemValue(ConceptValue):
     sds_var_name = StringProperty()
     origin = StringProperty()
     comment = StringProperty()
+
+    links_to_activity_item = RelationshipTo(
+        ActivityItem, "LINKS_TO_ACTIVITY_ITEM", model=ActivityItemRel
+    )
+
     has_description = RelationshipTo(
         OdmDescription, "HAS_DESCRIPTION", model=ClinicalMdrRel
     )

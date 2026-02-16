@@ -58,86 +58,34 @@ def test_data():
         definition="Definition for group 2",
     )
 
-    # Create activity subgroups with links to groups
+    # Create activity subgroups
     global activity_subgroup_1, activity_subgroup_2
-    activity_subgroup_1 = TestUtils.create_activity_subgroup(
-        name="Test Subgroup 1", activity_groups=[activity_group_1.uid]
-    )
+    activity_subgroup_1 = TestUtils.create_activity_subgroup(name="Test Subgroup 1")
     activity_subgroup_2 = TestUtils.create_activity_subgroup(
         name="Test Subgroup 2",
-        activity_groups=[activity_group_1.uid, activity_group_2.uid],
     )
 
+    # Create an activity that links subgroup 2 with both groups 1 and 2
+    TestUtils.create_activity(
+        name="Activity 1",
+        activity_groups=[activity_group_1.uid, activity_group_2.uid],
+        activity_subgroups=[activity_subgroup_2.uid, activity_subgroup_2.uid],
+    )
     yield
 
 
-def test_activity_subgroup_shows_linked_groups(api_client):
-    """Test that an activity subgroup correctly shows its linked groups"""
-    # Request the activity subgroup
+def test_activity_subgroup_groups_listing(api_client):
+    """Test that activity subgroup group listing includes detailed information about linked groups"""
+    # Request the activity subgroup group listing
     response = api_client.get(
-        f"/concepts/activities/activity-sub-groups/{activity_subgroup_1.uid}"
+        f"/concepts/activities/activity-sub-groups/{activity_subgroup_2.uid}/activity-groups"
     )
     assert_response_status_code(response, 200)
 
-    subgroup_data = response.json()
+    groups_json = response.json()
+    groups = groups_json["items"]
 
-    # Verify the response includes activity_groups
-    assert (
-        "activity_groups" in subgroup_data
-    ), "Activity subgroup response should include activity_groups field"
-    groups = subgroup_data["activity_groups"]
-
-    # Subgroup 1 should be linked to group 1
-    assert len(groups) == 1, f"Expected 1 linked group, got {len(groups)}"
-
-    # Verify group details
-    assert (
-        groups[0]["uid"] == activity_group_1.uid
-    ), "Group UID does not match expected value"
-    assert (
-        groups[0]["name"] == "Test Group 1"
-    ), "Group name does not match expected value"
-
-    # Check subgroup 2 which should be linked to both groups
-    response = api_client.get(
-        f"/concepts/activities/activity-sub-groups/{activity_subgroup_2.uid}"
-    )
-    assert_response_status_code(response, 200)
-
-    subgroup2_data = response.json()
-    groups2 = subgroup2_data["activity_groups"]
-
-    # Subgroup 2 should be linked to groups 1 and 2
-    assert len(groups2) == 2, f"Expected 2 linked groups, got {len(groups2)}"
-
-    # Verify group UIDs are correct
-    group_uids = [g["uid"] for g in groups2]
-    assert (
-        activity_group_1.uid in group_uids
-    ), f"Group 1 ({activity_group_1.uid}) not found in linked groups"
-    assert (
-        activity_group_2.uid in group_uids
-    ), f"Group 2 ({activity_group_2.uid}) not found in linked groups"
-
-
-def test_activity_subgroup_overview_includes_groups(api_client):
-    """Test that activity subgroup overview includes detailed information about linked groups"""
-    # Request the activity subgroup overview
-    response = api_client.get(
-        f"/concepts/activities/activity-sub-groups/{activity_subgroup_2.uid}/overview"
-    )
-    assert_response_status_code(response, 200)
-
-    overview_data = response.json()
-
-    # Check that the response contains the activity groups within the activity_subgroup field
-    assert (
-        "activity_subgroup" in overview_data
-    ), "Response should include activity_subgroup field"
-    assert (
-        "activity_groups" in overview_data["activity_subgroup"]
-    ), "Activity subgroup overview should include activity_groups field"
-    groups = overview_data["activity_subgroup"]["activity_groups"]
+    # Check that the response contains the expected activity groups
 
     # Subgroup 2 should be linked to both groups
     assert len(groups) == 2, f"Expected 2 linked groups in overview, got {len(groups)}"
@@ -154,7 +102,7 @@ def test_activity_subgroup_overview_includes_groups(api_client):
     group_1 = next((g for g in groups if g["uid"] == activity_group_1.uid), None)
     assert (
         group_1 is not None
-    ), f"Group 1 ({activity_group_1.uid}) not found in overview"
+    ), f"Group 1 ({activity_group_1.uid}) not found in groups listing"
     assert (
         group_1["name"] == "Test Group 1"
     ), "Group 1 name does not match expected value"
@@ -162,14 +110,57 @@ def test_activity_subgroup_overview_includes_groups(api_client):
     group_2 = next((g for g in groups if g["uid"] == activity_group_2.uid), None)
     assert (
         group_2 is not None
-    ), f"Group 2 ({activity_group_2.uid}) not found in overview"
+    ), f"Group 2 ({activity_group_2.uid}) not found in groups listing"
     assert (
         group_2["name"] == "Test Group 2"
     ), "Group 2 name does not match expected value"
 
 
-def test_activity_subgroup_versioning_preserves_group_relationships(api_client):
-    """Test that creating a new version of an activity subgroup preserves group relationships"""
+def test_draft_status_groups_are_included(api_client):
+    """Test that Draft status groups ARE included in linked groups (per user requirement)"""
+    # Create a new draft group
+    draft_group = TestUtils.create_activity_group(
+        name="Draft Group", definition="Definition for draft group"
+    )
+
+    # Create a new subgroup linked to the draft group and an existing Final group
+    test_subgroup = TestUtils.create_activity_subgroup(
+        name="Test Subgroup for Draft Group",
+    )
+    TestUtils.create_activity(
+        name="Activity linking Draft Group",
+        activity_groups=[draft_group.uid, activity_group_1.uid],
+        activity_subgroups=[test_subgroup.uid, test_subgroup.uid],
+    )
+
+    # Update the group status after creation
+    TestUtils.update_entity_status(draft_group.uid, "Draft", "ActivityGroup")
+
+    # Request the groups linked to the activity subgroup
+    response = api_client.get(
+        f"/concepts/activities/activity-sub-groups/{test_subgroup.uid}/activity-groups"
+    )
+    assert_response_status_code(response, 200)
+
+    subgroup_data = response.json()
+
+    # Check the response contains both the Draft and Final status groups
+    groups = subgroup_data["items"]
+
+    # Both Draft and Final status groups should be included (per user requirement)
+    group_uids = [g["uid"] for g in groups]
+    # Both groups should be present
+    assert (
+        activity_group_1.uid in group_uids
+    ), "Final group should be included in linked groups"
+    assert (
+        draft_group.uid in group_uids
+    ), "Draft group should be included in linked groups (per user requirement)"
+
+
+def test_specific_activity_subgroup_version_shows_correct_groups(api_client):
+    """Test that requesting a specific version of an activity subgroup shows the correct linked groups"""
+
     # Create new version of the activity subgroup
     response = api_client.post(
         f"/concepts/activities/activity-sub-groups/{activity_subgroup_2.uid}/versions",
@@ -191,9 +182,6 @@ def test_activity_subgroup_versioning_preserves_group_relationships(api_client):
             ],  # Use exactly the same name to avoid case sensitivity validation
             "name_sentence_case": current_data["name_sentence_case"],
             "library_name": current_data["library_name"],
-            "activity_groups": [
-                group["uid"] for group in current_data["activity_groups"]
-            ],
             "definition": "Updated definition for subgroup 2",
             "change_description": "Updated subgroup definition",
         },
@@ -206,73 +194,6 @@ def test_activity_subgroup_versioning_preserves_group_relationships(api_client):
     )
     assert_response_status_code(response, 201)
 
-    # Request the updated activity subgroup
-    response = api_client.get(
-        f"/concepts/activities/activity-sub-groups/{activity_subgroup_2.uid}"
-    )
-    assert_response_status_code(response, 200)
-
-    subgroup_data = response.json()
-    assert subgroup_data["version"] == "2.0", "Expected version to be updated to 2.0"
-    assert (
-        subgroup_data["definition"] == "Updated definition for subgroup 2"
-    ), "Subgroup definition should be updated"
-
-    # Verify the subgroup still has the same linked groups
-    groups = subgroup_data["activity_groups"]
-    assert (
-        len(groups) == 2
-    ), f"Expected 2 linked groups after versioning, got {len(groups)}"
-
-    # Verify group UIDs are correct
-    group_uids = [g["uid"] for g in groups]
-    assert (
-        activity_group_1.uid in group_uids
-    ), "Group 1 not found in linked groups after versioning"
-    assert (
-        activity_group_2.uid in group_uids
-    ), "Group 2 not found in linked groups after versioning"
-
-
-def test_draft_status_groups_are_included(api_client):
-    """Test that Draft status groups ARE included in linked groups (per user requirement)"""
-    # Create a new draft group
-    draft_group = TestUtils.create_activity_group(
-        name="Draft Group", definition="Definition for draft group"
-    )
-    # Update the status after creation
-    TestUtils.update_entity_status(draft_group.uid, "Draft", "ActivityGroup")
-
-    # Create a new subgroup linked to the draft group and an existing Final group
-    test_subgroup = TestUtils.create_activity_subgroup(
-        name="Test Subgroup for Draft Group",
-        activity_groups=[draft_group.uid, activity_group_1.uid],
-    )
-
-    # Request the activity subgroup
-    response = api_client.get(
-        f"/concepts/activities/activity-sub-groups/{test_subgroup.uid}"
-    )
-    assert_response_status_code(response, 200)
-
-    subgroup_data = response.json()
-
-    # Check the response contains both the Draft and Final status groups
-    groups = subgroup_data["activity_groups"]
-
-    # Both Draft and Final status groups should be included (per user requirement)
-    group_uids = [g["uid"] for g in groups]
-    # Both groups should be present
-    assert (
-        activity_group_1.uid in group_uids
-    ), "Final group should be included in linked groups"
-    assert (
-        draft_group.uid in group_uids
-    ), "Draft group should be included in linked groups (per user requirement)"
-
-
-def test_specific_activity_subgroup_version_shows_correct_groups(api_client):
-    """Test that requesting a specific version of an activity subgroup shows the correct linked groups"""
     # First, get the available versions to confirm they exist
     response = api_client.get(
         f"/concepts/activities/activity-sub-groups/{activity_subgroup_2.uid}/versions"
@@ -295,45 +216,25 @@ def test_specific_activity_subgroup_version_shows_correct_groups(api_client):
 
     # Request version 1.0 of the activity subgroup (use the correct endpoint format)
     response = api_client.get(
-        f"/concepts/activities/activity-sub-groups/{activity_subgroup_2.uid}/overview?version=1.0"
+        f"/concepts/activities/activity-sub-groups/{activity_subgroup_2.uid}/activity-groups?version=1.0"
     )
     assert_response_status_code(response, 200)
-    version_v1 = response.json()
+    version_v1 = response.json()["items"]
 
     # Request version 2.0 of the activity subgroup
     response = api_client.get(
-        f"/concepts/activities/activity-sub-groups/{activity_subgroup_2.uid}/overview?version=2.0"
+        f"/concepts/activities/activity-sub-groups/{activity_subgroup_2.uid}/activity-groups?version=2.0"
     )
     assert_response_status_code(response, 200)
-    version_v2 = response.json()
+    version_v2 = response.json()["items"]
 
-    # Extract activity groups from response data while handling various response structures
-    def extract_groups(response_data):
-        if not isinstance(response_data, dict):
-            return []
-        if "activity_groups" in response_data and isinstance(
-            response_data["activity_groups"], list
-        ):
-            return response_data["activity_groups"]
-        if "activity_subgroup" in response_data and isinstance(
-            response_data["activity_subgroup"], dict
-        ):
-            if "activity_groups" in response_data["activity_subgroup"] and isinstance(
-                response_data["activity_subgroup"]["activity_groups"], list
-            ):
-                return response_data["activity_subgroup"]["activity_groups"]
-        return []
+    # Extract group uids from both versions
+    group_uids_v1 = [g["uid"] for g in version_v1]
+    group_uids_v2 = [g["uid"] for g in version_v2]
 
-    # Extract groups from both version responses
-    v1_groups = extract_groups(version_v1)
-    v2_groups = extract_groups(version_v2)
-
-    # Extract and compare groups from both versions
-    group_uids_v1 = [g["uid"] for g in v1_groups if isinstance(g, dict) and "uid" in g]
-    group_uids_v2 = [g["uid"] for g in v2_groups if isinstance(g, dict) and "uid" in g]
-
-    # Only assert if we have groups to compare
-    if group_uids_v1 and group_uids_v2:
-        assert set(group_uids_v1) == set(
-            group_uids_v2
-        ), "Both versions should have the same linked groups"
+    assert len(group_uids_v1) == 2, "Version 1.0 should have 2 linked groups"
+    assert len(group_uids_v2) == 0, "Version 2.0 should have no linked groups"
+    assert set(group_uids_v1) == {
+        activity_group_1.uid,
+        activity_group_2.uid,
+    }, "Version 1.0 linked groups do not match expected groups"

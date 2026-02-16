@@ -37,15 +37,7 @@
         </div>
 
         <!-- Activity Groups Section -->
-        <div v-if="isLoadingGroups" class="my-5">
-          <div class="section-header mb-1">
-            <h3 class="text-h6 font-weight-bold text-primary">
-              {{ $t('ActivityOverview.activity_group') }}
-            </h3>
-          </div>
-          <v-skeleton-loader type="table" />
-        </div>
-        <div v-else class="my-5">
+        <div class="my-5">
           <div class="section-header mb-1">
             <h3 class="text-h6 font-weight-bold text-primary">
               {{ $t('ActivityOverview.activity_group') }}
@@ -55,26 +47,26 @@
             :headers="groupsHeaders"
             :items="groups"
             :items-length="groupsTotal"
-            :items-per-page="tableOptions.itemsPerPage"
+            :items-per-page="groupsTableOptions.itemsPerPage"
+            :page="groupsTableOptions.page"
             :hide-export-button="false"
             :hide-default-switches="true"
             :disable-filtering="true"
-            :hide-search-field="false"
+            :hide-search-field="true"
             :modifiable-table="true"
-            :use-cached-filtering="false"
             :no-padding="true"
             elevation="0"
             class="groups-table"
             item-value="uid"
             :initial-sort="initialSort"
-            :disable-sort="false"
+            :disable-sort="true"
             :loading="false"
             :export-data-url="`concepts/activities/activity-sub-groups/${props.itemUid}/activity-groups`"
             export-object-label="Activity Groups"
             @filter="
               (filters, options) => handleFilter(filters, options, 'groups')
             "
-            @update:options="updateTableOptions"
+            @update:options="updateGroupsTableOptions"
           >
             <template #[`item.name`]="{ item }">
               <router-link
@@ -100,15 +92,7 @@
         </div>
 
         <!-- Activities Section -->
-        <div v-if="isLoadingActivities" class="my-5">
-          <div class="section-header mb-1">
-            <h3 class="text-h6 font-weight-bold text-primary">
-              {{ $t('ActivityOverview.activities') }}
-            </h3>
-          </div>
-          <v-skeleton-loader type="table" />
-        </div>
-        <div v-else class="my-5">
+        <div class="my-5">
           <div class="section-header mb-1">
             <h3 class="text-h6 font-weight-bold text-primary">
               {{ $t('ActivityOverview.activities') }}
@@ -117,10 +101,10 @@
           <NNTable
             ref="activitiesTableRef"
             :headers="activitiesHeaders"
-            :items="activitiesList"
+            :items="activities"
             :items-length="activitiesTotal"
-            :items-per-page="activitiesPagination.itemsPerPage"
-            :page="activitiesPagination.page"
+            :items-per-page="activitiesTableOptions.itemsPerPage"
+            :page="activitiesTableOptions.page"
             :hide-export-button="false"
             :export-data-url="`concepts/activities/activity-sub-groups/${props.itemUid}/activities`"
             export-object-label="Activities"
@@ -133,13 +117,12 @@
             class="activities-table"
             item-value="uid"
             :initial-sort="initialSort"
-            :disable-sort="false"
-            :loading="false"
-            :use-cached-filtering="false"
+            :disable-sort="true"
+            :loading="isLoadingActivities"
             @filter="
               (filters, options) => handleFilter(filters, options, 'activities')
             "
-            @update:options="updateActivitiesOptions"
+            @update:options="updateActivitiesTableOptions"
           >
             <template #[`item.name`]="{ item }">
               <router-link
@@ -225,30 +208,22 @@ const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
 const appStore = useAppStore()
-const overview = ref()
-const groupFormRef = ref()
-const activitiesTableRef = ref()
 
 // Table data and loading states
-const groups = ref([])
-const allActivities = ref([]) // Store all activities from API
-const activitiesList = ref([]) // Filtered activities for display
-const groupsTotal = ref(0)
+const activities = ref([])
 const activitiesTotal = ref(0)
-const isLoadingGroups = ref(true)
 const isLoadingActivities = ref(true)
-const isFetchingActivities = ref(false)
-let fetchRequestId = 0
-const tableOptions = ref({
-  search: '',
-  sortBy: [],
-  sortDesc: [],
-  page: 1,
-  itemsPerPage: 10,
-})
+const groups = ref([])
+const groupsTotal = ref(0)
+const isLoadingGroups = ref(true)
 
 // Separate setting just for activities pagination
-const activitiesPagination = ref({
+const activitiesTableOptions = ref({
+  page: 1,
+  itemsPerPage: 10,
+  searchString: '',
+})
+const groupsTableOptions = ref({
   page: 1,
   itemsPerPage: 10,
 })
@@ -305,22 +280,7 @@ async function changeVersion(subgroup, version) {
   emit('refresh')
 }
 
-function itemMatchesSearch(item, searchTerm) {
-  if (!searchTerm || searchTerm === '') return true
-
-  const term = searchTerm.toLowerCase()
-
-  if (item.name?.toLowerCase().includes(term)) return true
-  if (item.version && item.version.toString().toLowerCase().includes(term))
-    return true
-  if (item.status?.toLowerCase().includes(term)) return true
-
-  return false
-}
-
 function handleFilter(filters, options, targetTable) {
-  tableOptions.value.page = 1
-
   const searchTerm =
     options && options.search && typeof options.search === 'string'
       ? options.search.toLowerCase()
@@ -329,114 +289,74 @@ function handleFilter(filters, options, targetTable) {
         : ''
 
   if (targetTable === 'groups') {
-    if (searchTerm) {
-      const filteredGroups =
-        props.itemOverview.activity_subgroup.activity_groups.filter((group) => {
-          return itemMatchesSearch(group, searchTerm)
-        })
-      groups.value = filteredGroups
-      groupsTotal.value = filteredGroups.length
-    } else {
-      groups.value = [...props.itemOverview.activity_subgroup.activity_groups]
-      groupsTotal.value =
-        props.itemOverview.activity_subgroup.activity_groups.length
-    }
+    isLoadingGroups.value = true
+    groupsTableOptions.value.page = options.page
+    groupsTableOptions.value.itemsPerPage = options.itemsPerPage
+    fetchGroups()
   } else if (targetTable === 'activities') {
-    // Client-side filtering like ActivityInstancesTable
-    if (searchTerm) {
-      const filteredActivities = allActivities.value.filter((activity) => {
-        return itemMatchesSearch(activity, searchTerm)
-      })
-      activitiesList.value = filteredActivities
-      activitiesTotal.value = filteredActivities.length
-    } else {
-      // Show all activities when search is cleared
-      activitiesList.value = [...allActivities.value]
-      activitiesTotal.value = allActivities.value.length
-    }
+    isLoadingActivities.value = true
+    activitiesTableOptions.value.searchString = searchTerm
+    activitiesTableOptions.value.page = options.page
+    activitiesTableOptions.value.itemsPerPage = options.itemsPerPage
+    fetchActivities()
   }
 }
 
 // Handles pagination for groups table
-function updateTableOptions(options) {
+function updateGroupsTableOptions(options) {
   if (!options) return
 
   // Store sort options separately to prevent losing them
   if (options.sortBy && options.sortBy.length > 0) {
-    tableOptions.value.sortBy = [...options.sortBy]
+    groupsTableOptions.value.sortBy = [...options.sortBy]
   }
 
   // Update page and items per page
-  tableOptions.value.page = options.page
-  tableOptions.value.itemsPerPage = options.itemsPerPage
+  groupsTableOptions.value.page = options.page
+  groupsTableOptions.value.itemsPerPage = options.itemsPerPage
 }
 
 // Handles pagination for activities table
-function updateActivitiesOptions(options) {
+function updateActivitiesTableOptions(options) {
   if (!options) return
 
-  // Just update pagination values for display
-  activitiesPagination.value.page = options.page
-  activitiesPagination.value.itemsPerPage = options.itemsPerPage
+  // Store sort options separately to prevent losing them
+  if (options.sortBy && options.sortBy.length > 0) {
+    activitiesTableOptions.value.sortBy = [...options.sortBy]
+  }
 
-  // No need to fetch since all data is already loaded
+  // Just update pagination values for display
+  activitiesTableOptions.value.page = options.page
+  activitiesTableOptions.value.itemsPerPage = options.itemsPerPage
 }
 
 async function fetchActivities() {
-  // Prevent concurrent fetches
-  if (isFetchingActivities.value) {
-    return
+  const params = {
+    version: props.itemOverview?.activity_subgroup?.version,
+    total_count: true,
+    search_string: activitiesTableOptions.value.searchString,
+    page_number: activitiesTableOptions.value.page,
+    page_size: activitiesTableOptions.value.itemsPerPage,
   }
-
-  const currentRequestId = ++fetchRequestId
-
-  isFetchingActivities.value = true
-  isLoadingActivities.value = true
-
-  try {
-    const options = {
-      version: props.itemOverview?.activity_subgroup?.version,
-      total_count: true,
-      // Fetch all activities at once for client-side filtering
-      page_size: 1000, // Get all activities
-    }
-
-    const response = await activitiesApi.getSubgroupActivities(
-      props.itemUid,
-      options
-    )
-
-    if (response && response.data) {
-      // Check if this is still the latest request
-      if (currentRequestId !== fetchRequestId) {
-        return
-      }
-
-      // Store all activities for filtering
-      if (response.data.items) {
-        allActivities.value = response.data.items
-        activitiesList.value = [...response.data.items]
-        activitiesTotal.value =
-          response.data.total || response.data.items.length
-      } else {
-        // Handle legacy non-paginated response
-        allActivities.value = response.data
-        activitiesList.value = [...response.data]
-        activitiesTotal.value = response.data.length
-      }
-    } else {
-      allActivities.value = []
-      activitiesList.value = []
-      activitiesTotal.value = 0
-    }
-  } catch (error) {
-    allActivities.value = []
-    activitiesList.value = []
-    activitiesTotal.value = 0
-  } finally {
+  activitiesApi.getSubgroupActivities(props.itemUid, params).then((resp) => {
+    activities.value = resp.data.items
+    activitiesTotal.value = resp.data.total
     isLoadingActivities.value = false
-    isFetchingActivities.value = false
+  })
+}
+
+async function fetchGroups() {
+  const params = {
+    version: props.itemOverview?.activity_subgroup?.version,
+    total_count: true,
+    page_number: groupsTableOptions.value.page,
+    page_size: groupsTableOptions.value.itemsPerPage,
   }
+  activitiesApi.getSubgroupGroups(props.itemUid, params).then((resp) => {
+    groups.value = resp.data.items
+    groupsTotal.value = resp.data.total
+    isLoadingGroups.value = false
+  })
 }
 
 function allVersions(item) {
@@ -448,18 +368,17 @@ let lastFetchedVersion = null
 watch(
   () => props.itemOverview?.activity_subgroup,
   (newSubgroup) => {
-    if (newSubgroup && newSubgroup.activity_groups) {
-      isLoadingGroups.value = true
-      groups.value = [...newSubgroup.activity_groups]
-      groupsTotal.value = newSubgroup.activity_groups.length
-      isLoadingGroups.value = false
-
+    if (newSubgroup) {
       const currentVersion = newSubgroup.version
       if (lastFetchedVersion !== currentVersion) {
         lastFetchedVersion = currentVersion
         // Reset to page 1 when version changes
-        activitiesPagination.value.page = 1
+        activitiesTableOptions.value.page = 1
+        groupsTableOptions.value.page = 1
+        isLoadingActivities.value = true
+        isLoadingGroups.value = true
         fetchActivities()
+        fetchGroups()
       }
     } else {
       groups.value = []
@@ -469,14 +388,7 @@ watch(
   { immediate: true }
 )
 
-let hasInitiallyFetchedActivities = false
-
 onMounted(() => {
-  if (!hasInitiallyFetchedActivities) {
-    hasInitiallyFetchedActivities = true
-    fetchActivities()
-  }
-
   appStore.addBreadcrumbsLevel(
     t('Sidebar.library.concepts'),
     { name: 'Activities' },

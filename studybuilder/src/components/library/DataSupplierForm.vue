@@ -55,9 +55,14 @@
             <v-number-input
               v-model="dataSupplier.order"
               :label="t('DataSupplierView.DataSupplierForm.order')"
+              :placeholder="
+                t('DataSupplierView.DataSupplierForm.order_placeholder')
+              "
+              :hint="t('_help.DataSupplierView.DataSupplierForm.order_hint')"
+              persistent-hint
               data-cy="data-supplier-order"
               density="compact"
-              :min="0"
+              :min="1"
             />
           </v-col>
         </v-row>

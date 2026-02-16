@@ -265,6 +265,9 @@ class StudyActivityInstanceSelectionService(
             generate_uid_callback=self.repository.generate_uid,
             is_reviewed=activity_instance_ar.concept_vo.is_required_for_activity
             or selection_create_input.is_reviewed,
+            study_data_supplier_uid=selection_create_input.study_data_supplier_uid,
+            origin_type_uid=selection_create_input.origin_type_uid,
+            origin_source_uid=selection_create_input.origin_source_uid,
         )
         return new_selection
 
@@ -379,6 +382,9 @@ class StudyActivityInstanceSelectionService(
                 baseline_visit["uid"]
                 for baseline_visit in current_object.study_activity_instance_baseline_visits
             ],
+            study_data_supplier_uid=current_object.study_data_supplier_uid,
+            origin_type_uid=current_object.origin_type_uid,
+            origin_source_uid=current_object.origin_source_uid,
         )
         keep_old_version_date = None
         if request_object.keep_old_version is True:
@@ -431,6 +437,9 @@ class StudyActivityInstanceSelectionService(
             activity_uid=current_object.activity_uid,
             activity_subgroup_uid=current_object.activity_subgroup_uid,
             activity_group_uid=current_object.activity_group_uid,
+            study_data_supplier_uid=request_object.study_data_supplier_uid,
+            origin_type_uid=request_object.origin_type_uid,
+            origin_source_uid=request_object.origin_source_uid,
         )
 
     def get_specific_selection(
@@ -513,6 +522,9 @@ class StudyActivityInstanceSelectionService(
                             is_reviewed=operation.content.is_reviewed,
                             is_important=operation.content.is_important,
                             baseline_visit_uids=operation.content.baseline_visit_uids,
+                            study_data_supplier_uid=operation.content.study_data_supplier_uid,
+                            origin_type_uid=operation.content.origin_type_uid,
+                            origin_source_uid=operation.content.origin_source_uid,
                         ),
                     )
                     response_code = status.HTTP_200_OK
@@ -525,6 +537,9 @@ class StudyActivityInstanceSelectionService(
                             is_reviewed=operation.content.is_reviewed,
                             is_important=operation.content.is_important,
                             baseline_visit_uids=operation.content.baseline_visit_uids,
+                            study_data_supplier_uid=operation.content.study_data_supplier_uid,
+                            origin_type_uid=operation.content.origin_type_uid,
+                            origin_source_uid=operation.content.origin_source_uid,
                         ),
                     )
                     response_code = status.HTTP_201_CREATED
@@ -543,6 +558,7 @@ class StudyActivityInstanceSelectionService(
                         content=BatchErrorResponse(message=str(error)),
                     )
                 )
+                raise error
         return results
 
     @ensure_transaction(db)

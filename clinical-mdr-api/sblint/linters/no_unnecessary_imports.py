@@ -19,7 +19,7 @@ class NoUnnecessaryImports(SBLinter):
     ]
 
     @classmethod
-    def validate(cls, code_tree: ast.Module) -> list[int]:
+    def validate(cls, code_tree: ast.Module, _file_path: str) -> list[int]:
         """
         Validates the given Python code by checking if it contains any
         imports that are deemed unnecessary based on the `cls.UNNECESSARY_IMPORTS`

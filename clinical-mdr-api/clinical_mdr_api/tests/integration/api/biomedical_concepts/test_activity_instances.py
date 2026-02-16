@@ -5,7 +5,6 @@ Tests for /concepts/activities/activity-instances endpoints
 import json
 import logging
 import uuid
-from copy import deepcopy
 from functools import reduce
 from operator import itemgetter
 from typing import Any
@@ -30,22 +29,8 @@ from clinical_mdr_api.models.concepts.activities.activity_item import ActivityIt
 from clinical_mdr_api.models.concepts.activities.activity_sub_group import (
     ActivitySubGroup,
 )
-from clinical_mdr_api.models.concepts.odms.odm_common_models import (
-    OdmRefVendorPostInput,
-)
-from clinical_mdr_api.models.concepts.odms.odm_form import (
-    OdmForm,
-    OdmFormItemGroupPostInput,
-)
-from clinical_mdr_api.models.concepts.odms.odm_item import OdmItem
-from clinical_mdr_api.models.concepts.odms.odm_item_group import (
-    OdmItemGroup,
-    OdmItemGroupItemPostInput,
-)
 from clinical_mdr_api.models.controlled_terminologies.ct_codelist import CTCodelist
 from clinical_mdr_api.models.controlled_terminologies.ct_term import CTTerm
-from clinical_mdr_api.services.concepts.odms.odm_forms import OdmFormService
-from clinical_mdr_api.services.concepts.odms.odm_item_groups import OdmItemGroupService
 from clinical_mdr_api.tests.integration.utils.api import (
     inject_and_clear_db,
     inject_base_data,
@@ -74,9 +59,6 @@ activity_items: list[ActivityItem]
 activity_item_classes: list[ActivityItemClass]
 codelist: CTCodelist
 ct_terms: list[CTTerm]
-odm_form: OdmForm
-odm_item_group: OdmItemGroup
-odm_item: OdmItem
 role_term: CTTerm
 data_type_term: CTTerm
 base_test_data: dict[str, Any]
@@ -101,9 +83,7 @@ def test_data():
     activity_group = TestUtils.create_activity_group(name="activity_group")
 
     global activity_subgroup
-    activity_subgroup = TestUtils.create_activity_subgroup(
-        name="activity_subgroup", activity_groups=[activity_group.uid]
-    )
+    activity_subgroup = TestUtils.create_activity_subgroup(name="activity_subgroup")
     global activities
     activities = [
         TestUtils.create_activity(
@@ -167,6 +147,8 @@ def test_data():
                     "uid": activity_instance_classes[0].uid,
                     "mandatory": True,
                     "is_adam_param_specific_enabled": True,
+                    "is_additional_optional": False,
+                    "is_default_linked": False,
                 }
             ],
             role_uid=role_term.term_uid,
@@ -180,6 +162,8 @@ def test_data():
                     "uid": activity_instance_classes[1].uid,
                     "mandatory": True,
                     "is_adam_param_specific_enabled": True,
+                    "is_additional_optional": False,
+                    "is_default_linked": False,
                 }
             ],
             role_uid=role_term.term_uid,
@@ -193,6 +177,8 @@ def test_data():
                     "uid": activity_instance_classes[2].uid,
                     "mandatory": True,
                     "is_adam_param_specific_enabled": False,
+                    "is_additional_optional": False,
+                    "is_default_linked": False,
                 }
             ],
             role_uid=role_term.term_uid,
@@ -200,9 +186,9 @@ def test_data():
         ),
     ]
     global ct_terms
-    global odm_form
-    global odm_item_group
-    global odm_item
+    # global odm_form
+    # global odm_item_group
+    # global odm_item
     global codelist
 
     codelist = TestUtils.create_ct_codelist(extensible=True, approve=True)
@@ -216,33 +202,6 @@ def test_data():
             sponsor_preferred_name="Activity item term2",
         ),
     ]
-    odm_form = TestUtils.create_odm_form(name="ODM Form 1", approve=False)
-    odm_item_group = TestUtils.create_odm_item_group(
-        name="ODM Item Group 1", approve=False
-    )
-    odm_item = TestUtils.create_odm_item(name="ODM Item 1", approve=False)
-    OdmFormService().add_item_groups(
-        odm_form.uid,
-        [
-            OdmFormItemGroupPostInput(
-                uid=odm_item_group.uid,
-                order_number=1,
-                mandatory="yes",
-                vendor=OdmRefVendorPostInput(attributes=[]),
-            )
-        ],
-    )
-    OdmItemGroupService().add_items(
-        odm_item_group.uid,
-        [
-            OdmItemGroupItemPostInput(
-                uid=odm_item.uid,
-                order_number=1,
-                mandatory="yes",
-                vendor=OdmRefVendorPostInput(attributes=[]),
-            )
-        ],
-    )
     global activity_items
     activity_items = [
         {
@@ -252,9 +211,6 @@ def test_data():
                 base_test_data["day_unit"].uid,
             ],
             "is_adam_param_specific": True,
-            "odm_form_uid": odm_form.uid,
-            "odm_item_group_uid": odm_item_group.uid,
-            "odm_item_uid": odm_item.uid,
         },
         {
             "activity_item_class_uid": activity_item_classes[1].uid,
@@ -266,9 +222,6 @@ def test_data():
             ],
             "unit_definition_uids": [],
             "is_adam_param_specific": False,
-            "odm_form_uid": odm_form.uid,
-            "odm_item_group_uid": odm_item_group.uid,
-            "odm_item_uid": odm_item.uid,
         },
         {
             "activity_item_class_uid": activity_item_classes[2].uid,
@@ -284,9 +237,6 @@ def test_data():
             ],
             "unit_definition_uids": [],
             "is_adam_param_specific": False,
-            "odm_form_uid": odm_form.uid,
-            "odm_item_group_uid": odm_item_group.uid,
-            "odm_item_uid": odm_item.uid,
         },
     ]
     global activity_instances_all
@@ -528,15 +478,6 @@ def test_get_activity_instance(api_client):
         res["activity_items"][0]["unit_definitions"][0]["dimension_name"]
         == base_test_data["unit_dimension_terms"][0].sponsor_preferred_name
     )
-    expected_odm_form_uid = activity_items[0]["odm_form_uid"]
-    actual_odm_form_uid = res["activity_items"][0]["odm_form"]["uid"]
-    assert expected_odm_form_uid == actual_odm_form_uid
-    expected_odm_item_group_uid = activity_items[0]["odm_item_group_uid"]
-    actual_odm_item_group_uid = res["activity_items"][0]["odm_item_group"]["uid"]
-    assert expected_odm_item_group_uid == actual_odm_item_group_uid
-    expected_odm_item_uid = activity_items[0]["odm_item_uid"]
-    actual_odm_item_uid = res["activity_items"][0]["odm_item"]["uid"]
-    assert expected_odm_item_uid == actual_odm_item_uid
 
     assert res["library_name"] == "Sponsor"
     assert res["version"] == "1.0"
@@ -944,7 +885,8 @@ def test_edit_activity_instance(api_client):
     )
     assert activity_instance_preview.adam_param_code == ""
     assert activity_instance_preview.name == "Activity (BU)"
-    assert activity_instance_preview.name_sentence_case == "activity (BU)"
+    # TODO: standard_unit detection disabled for now, it will be added in the future, so the response should be in lower case
+    assert activity_instance_preview.name_sentence_case == "activity (bu)"
     assert activity_instance_preview.topic_code == "ACTIVITY_BU"
     activity_instance = TestUtils.create_activity_instance(
         name="Activity Instance",
@@ -1057,15 +999,6 @@ def test_edit_activity_instance(api_client):
     )
     actual_unit_uids = set(unit["uid"] for unit in items[0]["unit_definitions"])
     assert expected_unit_uids == actual_unit_uids
-    expected_odm_form_uid = activity_items[0]["odm_form_uid"]
-    actual_odm_form_uid = items[0]["odm_form"]["uid"]
-    assert expected_odm_form_uid == actual_odm_form_uid
-    expected_odm_item_group_uid = activity_items[0]["odm_item_group_uid"]
-    actual_odm_item_group_uid = items[0]["odm_item_group"]["uid"]
-    assert expected_odm_item_group_uid == actual_odm_item_group_uid
-    expected_odm_item_uid = activity_items[0]["odm_item_uid"]
-    actual_odm_item_uid = items[0]["odm_item"]["uid"]
-    assert expected_odm_item_uid == actual_odm_item_uid
 
     assert items[1]["activity_item_class"]["uid"] == activity_item_classes[1].uid
     expected_term_uids = set(
@@ -1081,15 +1014,6 @@ def test_edit_activity_instance(api_client):
     )
     actual_unit_uids = set(unit["uid"] for unit in items[1]["unit_definitions"])
     assert expected_unit_uids == actual_unit_uids
-    expected_odm_form_uid = activity_items[1]["odm_form_uid"]
-    actual_odm_form_uid = items[1]["odm_form"]["uid"]
-    assert expected_odm_form_uid == actual_odm_form_uid
-    expected_odm_form_uid = activity_items[1]["odm_form_uid"]
-    actual_odm_form_uid = items[1]["odm_form"]["uid"]
-    assert expected_odm_form_uid == actual_odm_form_uid
-    expected_odm_item_uid = activity_items[1]["odm_item_uid"]
-    actual_odm_item_uid = items[1]["odm_item"]["uid"]
-    assert expected_odm_item_uid == actual_odm_item_uid
 
     assert res["version"] == "0.3"
     assert res["status"] == "Draft"
@@ -1244,15 +1168,6 @@ def test_post_activity_instance(api_client):
         unit["uid"] for unit in res["activity_items"][0]["unit_definitions"]
     )
     assert expected_unit_uids == actual_unit_uids
-    expected_odm_form_uid = item_to_post["odm_form_uid"]
-    actual_odm_form_uid = res["activity_items"][0]["odm_form"]["uid"]
-    assert expected_odm_form_uid == actual_odm_form_uid
-    expected_odm_item_group_uid = item_to_post["odm_item_group_uid"]
-    actual_odm_item_group_uid = res["activity_items"][0]["odm_item_group"]["uid"]
-    assert expected_odm_item_group_uid == actual_odm_item_group_uid
-    expected_odm_item_uid = item_to_post["odm_item_uid"]
-    actual_odm_item_uid = res["activity_items"][0]["odm_item"]["uid"]
-    assert expected_odm_item_uid == actual_odm_item_uid
 
     assert res["name_sentence_case"] == "activity instance name"
     assert res["topic_code"] is None
@@ -1390,6 +1305,8 @@ def verify_instance_overview_content(res: dict[Any, Any]):
     assert res["activity_instance"]["is_derived"] is False
     assert res["activity_instance"]["topic_code"] == "topic code XXX"
     assert res["activity_instance"]["library_name"] == LIBRARY_NAME
+    assert "author_username" in res["activity_instance"]
+    assert res["activity_instance"]["author_username"] is not None
 
     # activity instance class
     assert (
@@ -1410,18 +1327,6 @@ def verify_instance_overview_content(res: dict[Any, Any]):
     assert len(items[0]["unit_definitions"]) == 1
     assert items[0]["unit_definitions"][0]["uid"] == base_test_data["day_unit"].uid
     assert items[0]["unit_definitions"][0]["name"] == base_test_data["day_unit"].name
-    assert items[0]["odm_form"]
-    assert items[0]["odm_form"]["uid"] == odm_form.uid
-    assert items[0]["odm_form"]["oid"] == odm_form.oid
-    assert items[0]["odm_form"]["name"] == odm_form.name
-    assert items[0]["odm_item_group"]
-    assert items[0]["odm_item_group"]["uid"] == odm_item_group.uid
-    assert items[0]["odm_item_group"]["oid"] == odm_item_group.oid
-    assert items[0]["odm_item_group"]["name"] == odm_item_group.name
-    assert items[0]["odm_item"]
-    assert items[0]["odm_item"]["uid"] == odm_item.uid
-    assert items[0]["odm_item"]["oid"] == odm_item.oid
-    assert items[0]["odm_item"]["name"] == odm_item.name
     assert items[0]["activity_item_class"]["name"] == "Activity Item Class name1"
     assert items[0]["activity_item_class"]["role_name"] == "Role"
     assert items[0]["activity_item_class"]["data_type_name"] == "Data type"
@@ -1431,15 +1336,6 @@ def verify_instance_overview_content(res: dict[Any, Any]):
     assert items[1]["ct_terms"][0]["uid"] == ct_terms[1].term_uid
     assert items[1]["ct_terms"][0]["name"] == ct_terms[1].sponsor_preferred_name
     assert len(items[1]["unit_definitions"]) == 0
-    assert items[1]["odm_form"]["uid"] == odm_form.uid
-    assert items[1]["odm_form"]["oid"] == odm_form.oid
-    assert items[1]["odm_form"]["name"] == odm_form.name
-    assert items[1]["odm_item_group"]["uid"] == odm_item_group.uid
-    assert items[1]["odm_item_group"]["oid"] == odm_item_group.oid
-    assert items[1]["odm_item_group"]["name"] == odm_item_group.name
-    assert items[1]["odm_item"]["uid"] == odm_item.uid
-    assert items[1]["odm_item"]["oid"] == odm_item.oid
-    assert items[1]["odm_item"]["name"] == odm_item.name
     assert items[1]["activity_item_class"]["name"] == "Activity Item Class name2"
     assert items[1]["activity_item_class"]["role_name"] == "Role"
     assert items[1]["activity_item_class"]["data_type_name"] == "Data type"
@@ -1454,15 +1350,6 @@ def verify_instance_overview_content(res: dict[Any, Any]):
     assert terms[1]["name"] == ct_terms[1].sponsor_preferred_name
     assert len(items[2]["unit_definitions"]) == 0
     assert len(items[0]["unit_definitions"]) == 1
-    assert items[2]["odm_form"]["uid"] == odm_form.uid
-    assert items[2]["odm_form"]["oid"] == odm_form.oid
-    assert items[2]["odm_form"]["name"] == odm_form.name
-    assert items[2]["odm_item_group"]["uid"] == odm_item_group.uid
-    assert items[2]["odm_item_group"]["oid"] == odm_item_group.oid
-    assert items[2]["odm_item_group"]["name"] == odm_item_group.name
-    assert items[2]["odm_item"]["uid"] == odm_item.uid
-    assert items[2]["odm_item"]["oid"] == odm_item.oid
-    assert items[2]["odm_item"]["name"] == odm_item.name
     assert items[2]["activity_item_class"]["name"] == "Activity Item Class name3"
     assert items[2]["activity_item_class"]["role_name"] == "Role"
     assert items[2]["activity_item_class"]["data_type_name"] == "Data type"
@@ -1575,9 +1462,7 @@ def test_updating_parents(api_client):
     # ==== Create group, subgroup, activity and activity instance ====
     group = TestUtils.create_activity_group(name=original_group_name)
 
-    subgroup = TestUtils.create_activity_subgroup(
-        name=original_subgroup_name, activity_groups=[group.uid]
-    )
+    subgroup = TestUtils.create_activity_subgroup(name=original_subgroup_name)
     activity = TestUtils.create_activity(
         name=original_activity_name,
         activity_subgroups=[subgroup.uid],
@@ -1651,11 +1536,6 @@ def test_updating_parents(api_client):
 
     assert_response_status_code(response, 200)
     res = response.json()
-
-    assert len(res["activity_groups"]) == 1
-    assert res["activity_groups"][0]["uid"] == group.uid
-
-    assert res["activity_groups"][0]["name"] == original_group_name
 
     assert res["version"] == "1.0"
     assert res["status"] == "Final"
@@ -1829,9 +1709,7 @@ def test_updating_instance_to_new_activity(api_client):
     # ==== Create group, subgroup, activity and activity instance ====
     group = TestUtils.create_activity_group(name=group_name)
 
-    subgroup = TestUtils.create_activity_subgroup(
-        name=subgroup_name, activity_groups=[group.uid]
-    )
+    subgroup = TestUtils.create_activity_subgroup(name=subgroup_name)
     activity = TestUtils.create_activity(
         name=original_activity_name,
         activity_subgroups=[subgroup.uid],
@@ -2029,9 +1907,7 @@ def test_instance_to_activity_without_data_collection(api_client):
     # ==== Create group, subgroup, activity and activity instance ====
     group = TestUtils.create_activity_group(name=group_name)
 
-    subgroup = TestUtils.create_activity_subgroup(
-        name=subgroup_name, activity_groups=[group.uid]
-    )
+    subgroup = TestUtils.create_activity_subgroup(name=subgroup_name)
     activity = TestUtils.create_activity(
         name=activity_name,
         activity_subgroups=[subgroup.uid],
@@ -2115,7 +1991,13 @@ def test_cannot_provide_is_adam_param_specific_if_is_adam_param_specific_enabled
         json={
             "name": "local activity instance name",
             "name_sentence_case": "local activity instance name",
-            "activity_groupings": [],
+            "activity_groupings": [
+                {
+                    "activity_uid": activities[0].uid,
+                    "activity_subgroup_uid": activity_subgroup.uid,
+                    "activity_group_uid": activity_group.uid,
+                }
+            ],
             "activity_instance_class_uid": activity_instance_classes[2].uid,
             "activity_items": [
                 {
@@ -2128,9 +2010,6 @@ def test_cannot_provide_is_adam_param_specific_if_is_adam_param_specific_enabled
                     ],
                     "unit_definition_uids": [],
                     "is_adam_param_specific": True,
-                    "odm_form_uid": None,
-                    "odm_item_group_uid": None,
-                    "odm_item_uid": None,
                 }
             ],
             "is_required_for_activity": True,
@@ -2236,9 +2115,6 @@ def create_activity_instance_with_molecular_weight(
                             ).term_uid,
                         ).uid
                     ],
-                    "odm_form_uid": None,
-                    "odm_item_group_uid": None,
-                    "odm_item_uid": None,
                     "is_adam_param_specific": False,
                 }
             ],
@@ -2258,7 +2134,6 @@ def test_create_activity_instance_with_non_final_subgroup_fails(api_client, test
     # Create a subgroup that will be retired
     retired_subgroup = TestUtils.create_activity_subgroup(
         name="Subgroup to Retire",
-        activity_groups=[activity_group.uid],
         library_name=LIBRARY_NAME,
     )
 
@@ -2312,18 +2187,12 @@ def test_create_activity_instance_with_non_final_subgroup_fails(api_client, test
     )
 
 
-def test_cannot_connect_odm_item_group_of_other_forms(api_client):
-    item_to_post = deepcopy(activity_items[1])
-
-    _odm_item_group = TestUtils.create_odm_item_group("New Item Group", approve=False)
-
-    item_to_post["odm_item_group_uid"] = _odm_item_group.uid
-
+def test_cannot_connect_to_activity_items_with_same_activity_item_class(api_client):
     response = api_client.post(
         "/concepts/activities/activity-instances",
         json={
-            "name": "testing odm item group",
-            "name_sentence_case": "testing odm item group",
+            "name": "contains duplicates of activity item class",
+            "name_sentence_case": "contains duplicates of activity item class",
             "nci_concept_id": "000",
             "activity_groupings": [
                 {
@@ -2333,7 +2202,7 @@ def test_cannot_connect_odm_item_group_of_other_forms(api_client):
                 }
             ],
             "activity_instance_class_uid": activity_instance_classes[0].uid,
-            "activity_items": [item_to_post],
+            "activity_items": [activity_items[0], activity_items[0]],
             "is_required_for_activity": True,
             "is_derived": True,
             "library_name": "Sponsor",
@@ -2344,35 +2213,35 @@ def test_cannot_connect_odm_item_group_of_other_forms(api_client):
     assert res["type"] == "BusinessLogicException"
     assert (
         res["message"]
-        == f"ODM Form with UID '{item_to_post["odm_form_uid"]}' doesn't contain the ODM Item Group with UID '{item_to_post["odm_item_group_uid"]}'."
+        == "The following Activity Item Class(es) have been associated to more than one Activity Item: ActivityItemClass_000001"
     )
 
 
-def test_cannot_connect_odm_item_of_other_forms(api_client):
-    item_to_post = deepcopy(activity_items[1])
-
-    _odm_item = TestUtils.create_odm_item("New Item", approve=False)
-
-    item_to_post["odm_item_uid"] = _odm_item.uid
-
+def test_cannot_connect_instance_to_multiple_activities(api_client):
     response = api_client.post(
         "/concepts/activities/activity-instances",
         json={
-            "name": "testing odm item group",
-            "name_sentence_case": "testing odm item group",
-            "nci_concept_id": "000",
+            "name": "instance connected to multiple activities",
+            "name_sentence_case": "instance connected to multiple activities",
+            "nci_concept_id": "aabbccdd",
             "activity_groupings": [
                 {
                     "activity_uid": activities[0].uid,
                     "activity_subgroup_uid": activity_subgroup.uid,
                     "activity_group_uid": activity_group.uid,
-                }
+                },
+                {
+                    "activity_uid": activities[1].uid,
+                    "activity_subgroup_uid": activity_subgroup.uid,
+                    "activity_group_uid": activity_group.uid,
+                },
             ],
             "activity_instance_class_uid": activity_instance_classes[0].uid,
-            "activity_items": [item_to_post],
-            "is_required_for_activity": True,
-            "is_derived": True,
+            "activity_items": [activity_items[0]],
+            "is_required_for_activity": False,
+            "is_derived": False,
             "library_name": "Sponsor",
+            "topic_code": "some topic code",
         },
     )
     assert_response_status_code(response, 400)
@@ -2380,5 +2249,166 @@ def test_cannot_connect_odm_item_of_other_forms(api_client):
     assert res["type"] == "BusinessLogicException"
     assert (
         res["message"]
-        == f"ODM Item Group with UID '{item_to_post["odm_item_group_uid"]}' doesn't contain the ODM Item with UID '{item_to_post["odm_item_uid"]}'."
+        == "Instances are not allowed to link to several different activities"
     )
+
+
+def test_cannot_create_instance_without_groupings(api_client):
+    response = api_client.post(
+        "/concepts/activities/activity-instances",
+        json={
+            "name": "instance without groupings",
+            "name_sentence_case": "instance without groupings",
+            "nci_concept_id": "aabbccdd",
+            "activity_groupings": [],
+            "activity_instance_class_uid": activity_instance_classes[0].uid,
+            "activity_items": [activity_items[0]],
+            "is_required_for_activity": False,
+            "is_derived": False,
+            "library_name": "Sponsor",
+            "topic_code": "some topic code",
+        },
+    )
+    assert_response_status_code(response, 400)
+    res = response.json()
+    assert res["type"] == "BusinessLogicException"
+    assert res["message"] == "Activity Instance must have at least one grouping"
+
+
+def test_level_3_activity_instance_missing_parent_mandatory_item_class_strict_mode(
+    api_client,
+):
+    """Test that creating a level 3 activity instance fails when parent level 2 mandatory item is missing and strict_mode=True"""
+    response = api_client.post(
+        "/concepts/activities/activity-instances",
+        json={
+            "name": "level 3 instance missing parent mandatory",
+            "name_sentence_case": "level 3 instance missing parent mandatory",
+            "activity_groupings": [
+                {
+                    "activity_uid": activities[0].uid,
+                    "activity_subgroup_uid": activity_subgroup.uid,
+                    "activity_group_uid": activity_group.uid,
+                }
+            ],
+            "activity_instance_class_uid": activity_instance_classes[2].uid,  # level 3
+            "activity_items": [
+                {
+                    # Only including level 3 mandatory item, missing parent level 2 mandatory
+                    "activity_item_class_uid": activity_item_classes[2].uid,
+                    "ct_terms": [
+                        {
+                            "term_uid": ct_terms[0].term_uid,
+                            "codelist_uid": codelist.codelist_uid,
+                        }
+                    ],
+                    "unit_definition_uids": [],
+                    "is_adam_param_specific": False,
+                }
+            ],
+            "strict_mode": True,  # Strict mode - validation should run
+            "library_name": "Sponsor",
+        },
+    )
+    assert_response_status_code(response, 400)
+    res = response.json()
+    assert res["type"] == "BusinessLogicException"
+    assert "mandatory Activity Item Classes from the parent" in res["message"]
+    assert "Activity instance class 2" in res["message"]  # parent level 2 class name
+    assert (
+        "Activity Item Class name2" in res["message"]
+    )  # parent mandatory item class name
+
+
+def test_level_3_activity_instance_missing_parent_mandatory_item_class_relaxed_mode(
+    api_client,
+):
+    """Test that creating a level 3 activity instance succeeds when parent level 2 mandatory item is missing and strict_mode=False (default)"""
+    response = api_client.post(
+        "/concepts/activities/activity-instances",
+        json={
+            "name": "level 3 instance missing parent mandatory relaxed",
+            "name_sentence_case": "level 3 instance missing parent mandatory relaxed",
+            "activity_groupings": [
+                {
+                    "activity_uid": activities[0].uid,
+                    "activity_subgroup_uid": activity_subgroup.uid,
+                    "activity_group_uid": activity_group.uid,
+                }
+            ],
+            "activity_instance_class_uid": activity_instance_classes[2].uid,  # level 3
+            "activity_items": [
+                {
+                    # Only including level 3 mandatory item, missing parent level 2 mandatory
+                    "activity_item_class_uid": activity_item_classes[2].uid,
+                    "ct_terms": [
+                        {
+                            "term_uid": ct_terms[0].term_uid,
+                            "codelist_uid": codelist.codelist_uid,
+                        }
+                    ],
+                    "unit_definition_uids": [],
+                    "is_adam_param_specific": False,
+                }
+            ],
+            "strict_mode": False,  # Relaxed mode - validation should be skipped
+            "library_name": "Sponsor",
+        },
+    )
+    assert_response_status_code(response, 201)
+    res = response.json()
+    assert res["name"] == "level 3 instance missing parent mandatory relaxed"
+    assert res["activity_instance_class"]["uid"] == activity_instance_classes[2].uid
+    assert len(res["activity_items"]) == 1
+
+
+def test_level_3_activity_instance_with_parent_mandatory_item_success(api_client):
+    """Test that creating a level 3 activity instance succeeds when parent level 2 mandatory item has CT terms"""
+    response = api_client.post(
+        "/concepts/activities/activity-instances",
+        json={
+            "name": "level 3 instance with parent mandatory",
+            "name_sentence_case": "level 3 instance with parent mandatory",
+            "activity_groupings": [
+                {
+                    "activity_uid": activities[0].uid,
+                    "activity_subgroup_uid": activity_subgroup.uid,
+                    "activity_group_uid": activity_group.uid,
+                }
+            ],
+            "activity_instance_class_uid": activity_instance_classes[2].uid,  # level 3
+            "activity_items": [
+                {
+                    # Level 3 mandatory item with CT terms
+                    "activity_item_class_uid": activity_item_classes[2].uid,
+                    "ct_terms": [
+                        {
+                            "term_uid": ct_terms[0].term_uid,
+                            "codelist_uid": codelist.codelist_uid,
+                        }
+                    ],
+                    "unit_definition_uids": [],
+                    "is_adam_param_specific": False,
+                },
+                {
+                    # Parent level 2 mandatory item with CT terms
+                    "activity_item_class_uid": activity_item_classes[1].uid,
+                    "ct_terms": [
+                        {
+                            "term_uid": ct_terms[1].term_uid,
+                            "codelist_uid": codelist.codelist_uid,
+                        }
+                    ],
+                    "unit_definition_uids": [],
+                    "is_adam_param_specific": False,
+                },
+            ],
+            "strict_mode": True,  # Strict mode - validation should run and pass
+            "library_name": "Sponsor",
+        },
+    )
+    assert_response_status_code(response, 201)
+    res = response.json()
+    assert res["name"] == "level 3 instance with parent mandatory"
+    assert res["activity_instance_class"]["uid"] == activity_instance_classes[2].uid
+    assert len(res["activity_items"]) == 2

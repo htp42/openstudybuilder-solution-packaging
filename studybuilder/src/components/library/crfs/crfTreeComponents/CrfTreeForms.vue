@@ -249,7 +249,7 @@ export default {
       actions: [
         {
           label: this.$t('CRFTree.open_def'),
-          icon: 'mdi-arrow-left',
+          icon: 'mdi-eye-outline',
           click: this.openDefinition,
         },
         {

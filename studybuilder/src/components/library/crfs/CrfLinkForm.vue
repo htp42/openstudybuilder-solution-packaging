@@ -114,14 +114,14 @@ export default {
       return sanitizeHTML(html)
     },
     getDescription(item) {
-      const engDesc = item.descriptions.find(
-        (el) => el.language === constants.ENG
+      const engDesc = item.descriptions.find((el) =>
+        [constants.EN, constants.ENG].includes(el.language)
       )
       return engDesc ? engDesc.description : ''
     },
     getNotes(item) {
-      const engDesc = item.descriptions.find(
-        (el) => el.language === constants.ENG
+      const engDesc = item.descriptions.find((el) =>
+        [constants.EN, constants.ENG].includes(el.language)
       )
       return engDesc ? engDesc.sponsor_instruction : ''
     },

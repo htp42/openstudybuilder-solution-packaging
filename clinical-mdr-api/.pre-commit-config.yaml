@@ -14,5 +14,33 @@ repos:
       entry: ./.git-hooks/check-openapi-changes.sh
       language: system
       require_serial: true
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy
+        entry: pipenv
+        language: system
+        types: [python]
+        pass_filenames: false
+        args:
+          [
+            "run",
+            "mypy",
+          ]
+  - repo: local
+    hooks:
+      - id: pylint
+        name: pylint
+        entry: pipenv
+        language: system
+        types: [python]
+        require_serial: true
+        args:
+          [
+            "run",
+            "pylint",
+            "-rn", # Only display messages
+            "-sn", # Don't display the score
+          ]
 default_language_version:
   python: python3.13

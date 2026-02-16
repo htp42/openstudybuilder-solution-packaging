@@ -64,6 +64,8 @@ def generate_registry_identifiers_json_model() -> RegistryIdentifiersJsonModel:
         eudamed_srn_number_null_value_code=None,
         investigational_device_exemption_ide_number="some ide",
         investigational_device_exemption_ide_number_null_value_code=None,
+        eu_pas_number="some eupn",
+        eu_pas_number_null_value_code=None,
     )
 
 
@@ -88,6 +90,7 @@ def generate_high_level_study_design_json_model() -> HighLevelStudyDesignJsonMod
         trial_type_null_value_code=None,
         trial_phase_code=None,
         trial_phase_null_value_code=None,
+        development_stage_code=None,
         is_extension_trial=False,
         is_extension_trial_null_value_code=None,
         is_adaptive_design=False,
@@ -202,6 +205,8 @@ def registry_identifiers_json_model_to_vo(
         eudamed_srn_number_null_value_code=json_model.eudamed_srn_number_null_value_code,  # type: ignore[arg-type]
         investigational_device_exemption_ide_number=json_model.investigational_device_exemption_ide_number,
         investigational_device_exemption_ide_number_null_value_code=json_model.investigational_device_exemption_ide_number_null_value_code,  # type: ignore[arg-type]
+        eu_pas_number=json_model.eu_pas_number,
+        eu_pas_number_null_value_code=json_model.eu_pas_number_null_value_code,  # type: ignore[arg-type]
     )
 
 
@@ -217,6 +222,7 @@ def high_level_study_design_json_model_to_vo(
         trial_type_null_value_code=json_model.trial_type_null_value_code,  # type: ignore[arg-type]
         trial_phase_code=json_model.trial_phase_code,  # type: ignore[arg-type]
         trial_phase_null_value_code=json_model.trial_phase_null_value_code,  # type: ignore[arg-type]
+        development_stage_code=json_model.development_stage_code,  # type: ignore[arg-type]
         is_extension_trial=json_model.is_extension_trial,
         is_extension_trial_null_value_code=json_model.is_extension_trial_null_value_code,  # type: ignore[arg-type]
         is_adaptive_design=json_model.is_adaptive_design,

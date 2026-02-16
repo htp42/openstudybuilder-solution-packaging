@@ -34,11 +34,11 @@ def test__activity_sub_group_repository__get_linked_activity_group_uids__with_ve
     mock_cypher_query.assert_called_once()
 
     assert mock_cypher_query.called
-    assert any(
-        "(sgv)-[:HAS_GROUP]->(avg:ActivityValidGroup)-[:IN_GROUP]->(agv:ActivityGroupValue)"
-        in str(call)
-        for call in mock_cypher_query.call_args_list
-    )
+    # Check for new relationship pattern
+    query_string = str(mock_cypher_query.call_args_list[0])
+    assert (
+        "HAS_SELECTED_GROUP" in query_string or "HAS_SELECTED_SUBGROUP" in query_string
+    ), "New relationship pattern (HAS_SELECTED_GROUP or HAS_SELECTED_SUBGROUP) not found"
     assert any(
         f"'uid': '{subgroup_uid}'" in str(call)
         for call in mock_cypher_query.call_args_list

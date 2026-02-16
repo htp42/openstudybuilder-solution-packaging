@@ -39,12 +39,6 @@ When('The {string} is not listed after the dropdown {string} is clicked', (link,
 
 Then('The form is not closed', () => cy.get('[data-cy="form-body"]').should('be.visible'))
 
-Then('The form is closed', () => cy.get('[data-cy="form-body"]').should('not.exist'))
-
-When('The continue is clicked in confirmation popup', () => {
-    cy.clickButton('continue-popup')
-})
-
 When('The online help button is clicked', () => {
     cy.get('.page-title').within(() => {
         cy.get('.mdi-help-circle-outline').click()

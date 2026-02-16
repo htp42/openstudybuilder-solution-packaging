@@ -337,11 +337,17 @@ apoc.coll.toSet([vendor_element_attribute in vendor_element_attributes | vendor_
         rs, _ = db.cypher_query(
             """
             MATCH (:OdmFormRoot {uid: $form_uid})-[:HAS_VERSION {version: $form_version}]->(:OdmFormValue)
-            -[ref:ITEM_GROUP_REF]->(value:OdmItemGroupValue)<-[hv_rel:HAS_VERSION]-(:OdmItemGroupRoot {uid: $uid})
+            -[ref:ITEM_GROUP_REF]->(value:OdmItemGroupValue)
+
+            MATCH (value)<-[hv_rel:HAS_VERSION]-(:OdmItemGroupRoot {uid: $uid})
+            WITH value, ref, hv_rel
+            ORDER BY hv_rel.start_date DESC
+            WITH value, ref, collect(hv_rel) AS hv_rels            
+            
             RETURN
                 value.oid AS oid,
                 value.name AS name,
-                hv_rel.version AS version,
+                hv_rels[0].version AS version,
                 ref.order_number AS order_number,
                 ref.mandatory AS mandatory,
                 ref.collection_exception_condition_oid AS collection_exception_condition_oid,
@@ -368,34 +374,47 @@ apoc.coll.toSet([vendor_element_attribute in vendor_element_attributes | vendor_
         self, root: VersionRoot, _: VersionValue
     ) -> None:
         """
-        Upgrades all incoming ITEM_GROUP_REF relationships to the second latest version to
+        - Upgrades all incoming ITEM_GROUP_REF relationships to the second latest version to
         point to the latest version of OdmItemGroupValue, preserving relationship properties.
+        - Ensures the new OdmItemGroupValue node is connected to all ActivityItem nodes that any
+        of its child OdmItemValue nodes are connected to.
         """
-        query = f"""
-        MATCH (root:{self.root_class.__name__} {{uid: $root_uid}})-[ver_rel:HAS_VERSION]->(value:{self.value_class.__name__})
+        db.cypher_query(
+            f"""
+            MATCH (root:{self.root_class.__name__} {{uid: $root_uid}})-[ver_rel:HAS_VERSION]->(value:{self.value_class.__name__})
 
-        WITH root, ver_rel, value
-        ORDER BY ver_rel.start_date DESC
-        LIMIT 2
-        WITH root, collect(value) AS values
-        WITH root, values[0] as latest_value, values[1] as second_latest_value
+            WITH root, ver_rel, value
+            ORDER BY ver_rel.start_date DESC, ver_rel.end_date DESC
+            LIMIT 2
+            WITH root, collect(value) AS values
+            WITH root, values[0] as latest_value, values[1] as second_latest_value
 
-        MATCH (:OdmFormRoot)-[p_ver_rel:HAS_VERSION]->(parent_value:OdmFormValue)-[ref_rel:ITEM_GROUP_REF]->(second_latest_value)
-        WHERE p_ver_rel.end_date IS NULL AND p_ver_rel.status = "Draft"
+            MATCH (:OdmFormRoot)-[p_ver_rel:HAS_VERSION]->(parent_value:OdmFormValue)-[ref_rel:ITEM_GROUP_REF]->(second_latest_value)
+            WHERE p_ver_rel.end_date IS NULL AND p_ver_rel.status = "Draft"
 
-        WITH latest_value, ref_rel, parent_value,
-            ref_rel.order_number AS order_number,
-            ref_rel.mandatory AS mandatory,
-            ref_rel.collection_exception_condition_oid AS collection_exception_condition_oid,
-            ref_rel.vendor AS vendor
+            WITH latest_value, ref_rel, parent_value,
+                ref_rel.order_number AS order_number,
+                ref_rel.mandatory AS mandatory,
+                ref_rel.collection_exception_condition_oid AS collection_exception_condition_oid,
+                ref_rel.vendor AS vendor
 
-        CREATE (parent_value)-[new_ref_rel:ITEM_GROUP_REF]->(latest_value)
+            CREATE (parent_value)-[new_ref_rel:ITEM_GROUP_REF]->(latest_value)
 
-        SET new_ref_rel.order_number = order_number,
-            new_ref_rel.mandatory = mandatory,
-            new_ref_rel.collection_exception_condition_oid = collection_exception_condition_oid,
-            new_ref_rel.vendor = vendor
+            SET new_ref_rel.order_number = order_number,
+                new_ref_rel.mandatory = mandatory,
+                new_ref_rel.collection_exception_condition_oid = collection_exception_condition_oid,
+                new_ref_rel.vendor = vendor
 
-        DELETE ref_rel
-        """
-        db.cypher_query(query, {"root_uid": root.uid})
+            DELETE ref_rel
+            """,
+            {"root_uid": root.uid},
+        )
+
+        db.cypher_query(
+            f"""
+            MATCH (:{self.root_class.__name__} {{uid: $root_uid}})-[:LATEST]->(value:{self.value_class.__name__})
+            MATCH (value)-[:ITEM_REF]->(:OdmItemValue)-[:LINKS_TO_ACTIVITY_ITEM]->(activity_item:ActivityItem)
+            MERGE (value)-[:LINKS_TO_ACTIVITY_ITEM]->(activity_item)
+            """,
+            {"root_uid": root.uid},
+        )

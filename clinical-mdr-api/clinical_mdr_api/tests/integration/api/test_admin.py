@@ -146,6 +146,13 @@ def test_patch_user(api_client):
             assert item["username"] == new_username
             break
 
+    # Revert username change - we have mysterious test isolation issues
+    response = api_client.patch(
+        f"/admin/users/{user_id}", json={"username": "unknown-user@example.com"}
+    )
+    assert_response_status_code(response, 200)
+    assert response.json()["username"] == "unknown-user@example.com"
+
 
 def test_complexity_score_post_burdens(api_client):
     """Test POST /admin/complexity-scores/burdens"""
@@ -168,12 +175,11 @@ def test_complexity_score_post_burdens(api_client):
 
 def test_complexity_score_put_activity_burdens(api_client):
     """Test PUT /admin/complexity-scores/burdens/activity-burdens/{activity_subgroup_id}"""
-    activity_group = TestUtils.create_activity_group(
+    _activity_group = TestUtils.create_activity_group(
         name="Test Activity Group",
     )
 
     activity_subgroup = TestUtils.create_activity_subgroup(
-        activity_groups=[activity_group.uid],
         name="Test Activity Subgroup",
     )
 

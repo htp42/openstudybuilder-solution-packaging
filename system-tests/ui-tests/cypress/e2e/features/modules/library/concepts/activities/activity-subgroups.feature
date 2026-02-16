@@ -30,7 +30,6 @@ Feature: Library - Concepts - Activities - Activity Subgroups
     Scenario: [Table][Columns][Names] User must be able to see the columns list on the main page as below
         Then A table is visible with following headers
             | headers            |
-            | Activity group     |
             | Activity subgroup  |
             | Sentence case name |
             | Abbreviation       |
@@ -54,16 +53,16 @@ Feature: Library - Concepts - Activities - Activity Subgroups
 
     Scenario: [Create][Mandatory fields] User must not be able to save new activity subgroup without filling mandatory fields of 'Group name', 'Subgroup name', 'Sentence case name' and 'Definition'
         When The Add activity subgroup button is clicked
-        And The Activity groups, Subgroup name, Sentence case name and Definition fields are not filled with data
+        And The Activity Subgroup name, Sentence case name and Definition fields are not filled with data
         And Form save button is clicked
         Then The user is not able to save the acitivity subgroup
         And The validation appears for missing subgroup
-        And The validation appears for missing group
         And The validation appears for missing subgroup name
         And The validation appears for missing subgroup definition
 
     Scenario: [Create][Sentence case name validation] System must default value for 'Sentence case name' to lower case value of 'Activity subgroup name'
         When The Add activity subgroup button is clicked
+        And User waits for 1 seconds
         And The user enters a value for Activity subgroup name
         Then The field for Sentence case name will be defaulted to the lower case value of the Activity subgroup name
 
@@ -95,10 +94,20 @@ Feature: Library - Concepts - Activities - Activity Subgroups
         When The 'Approve' option is clicked from the three dot menu list
         Then The item has status 'Final' and version '2.0'
 
-    Scenario: Activity groups and activity instances must remain linked to activity subgroup when activity subgroup has been edited
+    Scenario: [Linkage] Activity groups and activity instances must remain linked to activity subgroup when activity subgroup has been edited
         And [API] Study Activity is created and approved
+        And Group name created through API is found
         And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
+        And [API] Activity subgroup gets new version
+        And Overview page for subgroup created via API is opened
+        When I click 'Edit' button
         And The current activity subgroup is edited
+        And Form save button is clicked
+        Then The pop up displays 'Subgroup updated'
+        Then The status displayed on the summary has value 'Draft' and version is '1.2'
+        And User waits for 1 seconds
+        When I click 'Approve' button
+        Then The status displayed on the summary has value 'Final' and version is '2.0'
         Then The activity groups previously linked to that subgroup remain linked
 
     Scenario: [Actions][Inactivate] User must be able to inactivate the approved version of the activity subgroup
@@ -136,41 +145,6 @@ Feature: Library - Concepts - Activities - Activity Subgroups
         And Activity subgroup is searched for and found
         When The 'Delete' option is clicked from the three dot menu list
         Then Activity subgroup is searched for and not found
-
-    Scenario: [Create][Negative case][Draft group] User must not be able to create subgroup linked to Drafted group until it is approved
-        Given [API] Activity group in status Draft exists
-        And Group name created through API is found
-        When The Add activity subgroup button is clicked
-        And Custom group name is typed
-        Then Drafted or Retired group is not available during subgroup creation
-        And Modal window form is closed by clicking cancel button
-        Then [API] Activity group is approved
-        When The Add activity subgroup button is clicked
-        And Custom group name is typed
-        And The activity subgroup form is filled with data
-        And Activity subgroup is saved and snackbar message says it is 'created'
-        And Activity subgroup is searched for and found
-        And The newly added activity subgroup is visible in the the table
-        And The item has status 'Draft' and version '0.1'
-
-    Scenario: [Create][Negative case][Retired group] User must not be able to create subgroup linked to Retired group until it is approved
-        Given [API] Activity group in status Draft exists
-        And [API] Activity group is approved
-        And [API] Activity group is inactivated
-        And Group name created through API is found
-        And User waits for 1 seconds
-        When The Add activity subgroup button is clicked
-        And Custom group name is typed
-        Then Drafted or Retired group is not available during subgroup creation
-        And Modal window form is closed by clicking cancel button
-        Then [API] Activity group is reactivated
-        When The Add activity subgroup button is clicked
-        And Custom group name is typed
-        And The activity subgroup form is filled with data
-        And Activity subgroup is saved and snackbar message says it is 'created'
-        And Activity subgroup is searched for and found
-        And The newly added activity subgroup is visible in the the table
-        And The item has status 'Draft' and version '0.1'
     
     Scenario: [Cancel][Creation] User must be able to Cancel creation of the activity subgroup
         Given The Add activity subgroup button is clicked
@@ -304,7 +278,6 @@ Feature: Library - Concepts - Activities - Activity Subgroups
 
         Examples:
         | name                  |
-        | Activity group        |
         | Activity subgroup     |
         | Sentence case name    |
         | Abbreviation          |

@@ -42,7 +42,10 @@ Feature: Library - Data Collection Standards - CRF Builder - CRF Collections
     Scenario: [Create][Positive case] User must be able to add a new CRF Collection
         Given The '/library/crf-builder/collections' page is opened
         When The 'add-crf-collection' button is clicked
-        And The CRF Collection definition container is filled with data and saved
+        And The CRF Collection definition container is filled with data
+        And Form save button is clicked
+		And The form is no longer available
+        Then The pop up displays 'Collection created'
         And Created CRF Collection is found
         Then The CRF Collection is visible in the table
         And The item has status 'Draft' and version '0.1'
@@ -57,7 +60,10 @@ Feature: Library - Data Collection Standards - CRF Builder - CRF Collections
         Given The '/library/crf-builder/collections' page is opened
         And Created CRF Collection is found
         When The 'Edit' option is clicked from the three dot menu list
-        And The CRF Collection metadata are updated and saved
+        And The CRF Collection metadata are updated
+        And Form save button is clicked
+		And The form is no longer available
+        Then The pop up displays 'Collection updated'
         Then The CRF Collection is visible in the table
         And The item has status 'Draft' and version '0.2'
 

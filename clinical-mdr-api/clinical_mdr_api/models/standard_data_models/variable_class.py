@@ -8,12 +8,12 @@ from clinical_mdr_api.models.standard_data_models.dataset_variable import (
 from clinical_mdr_api.models.utils import BaseModel
 
 
-class SimpleReferencedCodelist(BaseModel):
+class SimpleReferencedCodelistForVariableClass(BaseModel):
     uid: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
     name: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
 
 
-class SimpleDatasetClass(BaseModel):
+class SimpleDatasetClassForVariableClass(BaseModel):
     ordinal: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
     dataset_class_name: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
@@ -58,7 +58,7 @@ class VariableClass(BaseModel):
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
     examples: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
-    dataset_class: Annotated[SimpleDatasetClass, Field()]
+    dataset_class: Annotated[SimpleDatasetClassForVariableClass, Field()]
     dataset_variable_name: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
@@ -67,8 +67,9 @@ class VariableClass(BaseModel):
     has_mapping_target: Annotated[
         SimpleMappingTarget | None, Field(json_schema_extra={"nullable": True})
     ] = None
-    referenced_codelist: Annotated[
-        SimpleReferencedCodelist | None, Field(json_schema_extra={"nullable": True})
+    referenced_codelists: Annotated[
+        list[SimpleReferencedCodelistForVariableClass] | None,
+        Field(json_schema_extra={"nullable": True}),
     ] = None
     qualifies_variable: Annotated[
         SimpleVariableClass | None, Field(json_schema_extra={"nullable": True})
@@ -104,7 +105,7 @@ class VariableClass(BaseModel):
             ),
             examples=input_dict.get("standard_value").get("examples"),
             catalogue_name=input_dict["catalogue_name"],
-            dataset_class=SimpleDatasetClass(
+            dataset_class=SimpleDatasetClassForVariableClass(
                 dataset_class_name=input_dict.get("dataset_class").get(
                     "dataset_class_name"
                 ),
@@ -112,13 +113,15 @@ class VariableClass(BaseModel):
             ),
             dataset_variable_name=input_dict.get("dataset_variable_name"),
             data_model_names=input_dict["data_model_names"],
-            referenced_codelist=(
-                SimpleReferencedCodelist(
-                    uid=input_dict.get("referenced_codelist").get("uid"),
-                    name=input_dict.get("referenced_codelist").get("name"),
-                )
-                if input_dict.get("referenced_codelist")
-                else None
+            referenced_codelists=(
+                [
+                    SimpleReferencedCodelistForVariableClass(
+                        uid=cl.get("uid"),
+                        name=cl.get("name"),
+                    )
+                    for cl in input_dict.get("referenced_codelists")
+                ]
+                or None
             ),
             has_mapping_target=(
                 SimpleMappingTarget(

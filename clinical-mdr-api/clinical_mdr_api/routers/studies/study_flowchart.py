@@ -4,7 +4,7 @@ import io
 import os
 from typing import Annotated, Any
 
-from fastapi import Path, Query
+from fastapi import Path, Query, Response, status
 from fastapi.responses import HTMLResponse, StreamingResponse
 from starlette.requests import Request
 
@@ -344,20 +344,9 @@ def get_detailed_soa_html(
 )
 def get_detailed_soa_history(
     study_uid: Annotated[str, STUDY_UID_PATH],
-    page_number: Annotated[
-        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = settings.default_page_number,
-    page_size: Annotated[
-        int,
-        Query(
-            ge=0,
-            le=settings.max_page_size,
-            description=_generic_descriptions.PAGE_SIZE,
-        ),
-    ] = settings.default_page_size,
-    total_count: Annotated[
-        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
-    ] = False,
+    page_number: _generic_descriptions.PAGE_NUMBER_QUERY = settings.default_page_number,
+    page_size: _generic_descriptions.PAGE_SIZE_QUERY = settings.default_page_size,
+    total_count: _generic_descriptions.TOTAL_COUNT_QUERY = False,
 ) -> CustomPage[DetailedSoAHistory]:
     detailed_soa_history = StudyActivitySelectionService().get_detailed_soa_history(
         study_uid=study_uid,
@@ -530,6 +519,58 @@ def export_protocol_soa_content(
         protocol_flowchart=True,
     )
     return soa_content
+
+
+@router.get(
+    "/{study_uid}/flowchart/snapshot",
+    dependencies=[security, rbac.ADMIN_READ],
+    summary="Retrieve the saved SoA snapshot for a study version. If no SoA snapshot saved, returns 404.",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_404_NOT_FOUND: _generic_descriptions.ERROR_404,
+    },
+    response_model=TableWithFootnotes,
+    response_model_exclude_none=True,
+    tags=["Data Migration"],
+)
+def get_soa_snapshot(
+    study_uid: Annotated[str, STUDY_UID_PATH],
+    study_value_version: Annotated[
+        str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
+    ] = None,
+    layout: Annotated[SoALayout, LAYOUT_QUERY] = SoALayout.PROTOCOL,
+) -> TableWithFootnotes:
+    return StudyFlowchartService().load_soa_snapshot(
+        study_uid=study_uid,
+        study_value_version=study_value_version,
+        layout=layout,
+    )
+
+
+@router.post(
+    "/{study_uid}/flowchart/snapshot",
+    dependencies=[security, rbac.ADMIN_WRITE],
+    summary="Update SoA snapshot for a study version based on the recent SoA rules (intended for data migration only)",
+    responses={
+        status.HTTP_201_CREATED: {"model": None, "description": "SoA snapshot updated"},
+        status.HTTP_404_NOT_FOUND: _generic_descriptions.ERROR_404,
+    },
+    response_model=None,
+    tags=["Data Migration"],
+)
+def update_soa_snapshot(
+    study_uid: Annotated[str, STUDY_UID_PATH],
+    study_value_version: Annotated[
+        str, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
+    ],
+    layout: Annotated[SoALayout, LAYOUT_QUERY] = SoALayout.PROTOCOL,
+) -> Response:
+    StudyFlowchartService().update_soa_snapshot(
+        study_uid=study_uid,
+        study_value_version=study_value_version,
+        layout=layout,
+    )
+    return Response(content=None, status_code=status.HTTP_201_CREATED)
 
 
 def _get_study_id(study_uid, study_value_version):

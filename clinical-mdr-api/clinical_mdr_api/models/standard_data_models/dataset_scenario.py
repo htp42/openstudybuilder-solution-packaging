@@ -2,7 +2,9 @@ from typing import Annotated, Any
 
 from pydantic import Field
 
-from clinical_mdr_api.models.standard_data_models.dataset_variable import SimpleDataset
+from clinical_mdr_api.models.standard_data_models.dataset_variable import (
+    SimpleDatasetForDatasetVariable,
+)
 from clinical_mdr_api.models.utils import BaseModel
 
 
@@ -10,7 +12,7 @@ class DatasetScenario(BaseModel):
     uid: Annotated[str, Field()]
     label: Annotated[str, Field()]
     catalogue_name: Annotated[str, Field()]
-    dataset: Annotated[SimpleDataset, Field()]
+    dataset: Annotated[SimpleDatasetForDatasetVariable, Field()]
     data_model_ig_names: Annotated[list[str], Field()]
 
     @classmethod
@@ -19,7 +21,7 @@ class DatasetScenario(BaseModel):
             uid=input_dict["uid"],
             label=input_dict.get("standard_value").get("label"),
             catalogue_name=input_dict["catalogue_name"],
-            dataset=SimpleDataset(
+            dataset=SimpleDatasetForDatasetVariable(
                 ordinal=input_dict.get("dataset").get("ordinal"),
                 uid=input_dict.get("dataset").get("uid"),
             ),

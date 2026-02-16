@@ -8,6 +8,7 @@
     :form-url="formUrl"
     :editable="isEdit()"
     :save-from-any-step="isEdit()"
+    :read-only="isReadOnly"
     @close="close"
     @save="submit"
   >
@@ -24,8 +25,8 @@
                 :label="$t('CRFItemGroups.name') + '*'"
                 data-cy="item-group-name"
                 density="compact"
-                clearable
-                :disabled="isDisabled"
+                :clearable="!isReadOnly"
+                :readonly="isReadOnly"
                 :rules="[formRules.required]"
               />
             </v-col>
@@ -35,8 +36,8 @@
                 :label="$t('CRFItemGroups.oid')"
                 data-cy="item-group-oid"
                 density="compact"
-                clearable
-                :disabled="isDisabled"
+                :clearable="!isReadOnly"
+                :readonly="isReadOnly"
               />
             </v-col>
           </v-row>
@@ -46,7 +47,7 @@
                 v-model="form.repeating"
                 class="mt-2"
                 :label="$t('CRFItemGroups.repeating')"
-                :disabled="isDisabled"
+                :readonly="isReadOnly"
               >
                 <v-radio :label="$t('_global.yes')" value="Yes" />
                 <v-radio :label="$t('_global.no')" value="No" />
@@ -61,7 +62,7 @@
                   v-model:content="engDescription.description"
                   content-type="html"
                   :toolbar="customToolbar"
-                  :read-only="isDisabled"
+                  :read-only="isReadOnly"
                 />
               </div>
             </v-col>
@@ -75,7 +76,7 @@
                   content-type="html"
                   :toolbar="customToolbar"
                   data-cy="crf-item-group-help-for-sponsor"
-                  :read-only="isDisabled"
+                  :read-only="isReadOnly"
                 />
               </div>
             </v-col>
@@ -92,8 +93,8 @@
                 :label="$t('CRFDescriptions.name')"
                 data-cy="crf-item-group-displayed-text"
                 density="compact"
-                clearable
-                :disabled="isDisabled"
+                :clearable="!isReadOnly"
+                :readonly="isReadOnly"
               />
             </v-col>
             <v-col cols="9">
@@ -106,7 +107,7 @@
                   content-type="html"
                   :toolbar="customToolbar"
                   data-cy="crf-item-group-help-for-site"
-                  :read-only="isDisabled"
+                  :read-only="isReadOnly"
                 />
               </div>
             </v-col>
@@ -126,9 +127,10 @@
                 :item-props="sdtmDataDomainProps"
                 density="compact"
                 single-line
-                clearable
+                :clearable="!isReadOnly"
                 return-object
                 multiple
+                :readonly="isReadOnly"
               >
                 <template #item="{ props }">
                   <v-list-item
@@ -187,8 +189,8 @@
                 :label="$t('CRFItemGroups.sas_dataset')"
                 data-cy="item-group-sas-dataset-name"
                 density="compact"
-                clearable
-                :disabled="isDisabled"
+                :clearable="!isReadOnly"
+                :readonly="isReadOnly"
               />
             </v-col>
           </v-row>
@@ -198,7 +200,7 @@
                 v-model="form.is_reference_data"
                 class="mt-2"
                 :label="$t('CRFItemGroups.is_referential')"
-                :disabled="isDisabled"
+                :readonly="isReadOnly"
               >
                 <v-radio :label="$t('_global.yes')" value="Yes" />
                 <v-radio :label="$t('_global.no')" value="No" />
@@ -213,8 +215,8 @@
                 item-title="nci_preferred_name"
                 item-value="nci_preferred_name"
                 density="compact"
-                clearable
-                :disabled="isDisabled"
+                :clearable="!isReadOnly"
+                :readonly="isReadOnly"
               />
             </v-col>
           </v-row>
@@ -225,8 +227,8 @@
                 :label="$t('CRFItemGroups.purpose')"
                 data-cy="item-group-purpose"
                 density="compact"
-                clearable
-                :disabled="isDisabled"
+                :clearable="!isReadOnly"
+                :readonly="isReadOnly"
               />
             </v-col>
             <v-col cols="6">
@@ -235,8 +237,8 @@
                 :label="$t('CRFItemGroups.comment')"
                 data-cy="item-group-comment"
                 density="compact"
-                clearable
-                :disabled="isDisabled"
+                :clearable="!isReadOnly"
+                :readonly="isReadOnly"
               />
             </v-col>
           </v-row>
@@ -246,19 +248,19 @@
     <template #[`step.extensions`]>
       <CrfExtensionsManagementTable
         type="ItemGroupDef"
-        :read-only="isDisabled"
+        :read-only="isReadOnly"
         :edit-extensions="selectedExtensions"
         @set-extensions="setExtensions"
       />
     </template>
     <template #[`step.alias`]="{ step }">
       <v-form :ref="`observer_${step}`">
-        <CrfAliasSelection v-model="form.aliases" :disabled="isDisabled" />
+        <CrfAliasSelection v-model="form.aliases" :read-only="isReadOnly" />
       </v-form>
     </template>
     <template #[`step.description`]="{ step }">
       <v-form :ref="`observer_${step}`">
-        <CrfDescriptionSelection v-model="desc" :disabled="isDisabled" />
+        <CrfDescriptionSelection v-model="desc" :read-only="isReadOnly" />
       </v-form>
     </template>
     <template #[`step.change_description`]="{ step }">
@@ -269,8 +271,8 @@
               v-model="form.change_description"
               :label="$t('CRFForms.change_desc')"
               data-cy="item-group-change-description"
-              clearable
-              :disabled="isDisabled"
+              :clearable="!isReadOnly"
+              :readonly="isReadOnly"
               :rules="[formRules.required]"
             />
           </v-col>
@@ -285,12 +287,6 @@
       />
     </template>
   </HorizontalStepperForm>
-  <CrfActivitiesModelsLinkForm
-    :open="linkForm"
-    :item-to-link="selectedGroup"
-    item-type="itemGroup"
-    @close="closeLinkForm"
-  />
   <ConfirmDialog ref="confirm" :text-cols="6" :action-cols="5" />
   <CrfApprovalSummaryConfirmDialog ref="confirmApproval" />
   <CrfNewVersionSummaryConfirmDialog ref="confirmNewVersion" />
@@ -306,7 +302,6 @@ import CrfDescriptionSelection from '@/components/library/crfs/CrfDescriptionSel
 import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
 import ActionsMenu from '@/components/tools/ActionsMenu.vue'
-import CrfActivitiesModelsLinkForm from '@/components/library/crfs/CrfActivitiesModelsLinkForm.vue'
 import actions from '@/constants/actions'
 import parameters from '@/constants/parameters'
 import CrfExtensionsManagementTable from '@/components/library/crfs/CrfExtensionsManagementTable.vue'
@@ -326,7 +321,6 @@ export default {
     CrfDescriptionSelection,
     QuillEditor,
     ActionsMenu,
-    CrfActivitiesModelsLinkForm,
     CrfExtensionsManagementTable,
     ConfirmDialog,
     CrfApprovalSummaryConfirmDialog,
@@ -408,14 +402,13 @@ export default {
       ],
       origins: [],
       domains: [],
-      engDescription: { language: parameters.ENG },
+      engDescription: { language: parameters.EN },
       customToolbar: [
         ['bold', 'italic', 'underline'],
         [{ script: 'sub' }, { script: 'super' }],
         [{ list: 'ordered' }, { list: 'bullet' }],
       ],
       readOnly: this.readOnlyProp,
-      linkForm: false,
       actions: [
         {
           label: this.$t('_global.approve'),
@@ -443,19 +436,12 @@ export default {
               : false,
           click: this.delete,
         },
-        {
-          label: this.$t('CRFLinkingForm.link_activity_sub_groups'),
-          icon: 'mdi-plus',
-          iconColor: 'primary',
-          condition: () => this.readOnly,
-          click: this.openLinkForm,
-        },
       ],
       domainSearch: '',
     }
   },
   computed: {
-    isDisabled() {
+    isReadOnly() {
       return this.readOnly || !this.checkPermission(this.$roles.LIBRARY_WRITE)
     },
     title() {
@@ -493,7 +479,7 @@ export default {
     selectedGroup: {
       handler(value) {
         if (this.isEdit()) {
-          this.steps = this.readOnly ? this.createSteps : this.editSteps
+          this.steps = this.editSteps
           this.initForm(value)
         } else {
           this.steps = this.createSteps
@@ -515,7 +501,7 @@ export default {
     this.filterSdtmDomains()
 
     if (this.isEdit()) {
-      this.steps = this.readOnly ? this.createSteps : this.editSteps
+      this.steps = this.editSteps
     } else {
       this.steps = this.createSteps
     }
@@ -580,13 +566,6 @@ export default {
       crfs.getItemGroup(this.selectedGroup.uid).then((resp) => {
         this.initForm(resp.data)
       })
-    },
-    openLinkForm() {
-      this.linkForm = true
-    },
-    closeLinkForm() {
-      this.linkForm = false
-      this.getGroup()
     },
     async newVersion() {
       if (
@@ -673,13 +652,13 @@ export default {
       this.desc = []
       this.selectedExtensions = []
       this.engDescription = {
-        language: parameters.ENG,
+        language: parameters.EN,
       }
       this.$refs.stepper.reset()
       this.$emit('close')
     },
     async submit() {
-      if (this.isDisabled) {
+      if (this.isReadOnly) {
         this.close()
         return
       }
@@ -797,13 +776,17 @@ export default {
       this.form.aliases = item.aliases
       this.form.sdtm_domains = item.sdtm_domains
       this.form.change_description = this.$t('_global.draft_change')
-      if (item.descriptions.find((el) => el.language === parameters.ENG)) {
-        this.engDescription = item.descriptions.find(
-          (el) => el.language === parameters.ENG
+      if (
+        item.descriptions.some((el) =>
+          [parameters.EN, parameters.ENG].includes(el.language)
+        )
+      ) {
+        this.engDescription = item.descriptions.find((el) =>
+          [parameters.EN, parameters.ENG].includes(el.language)
         )
       }
       this.desc = item.descriptions.filter(
-        (el) => el.language !== parameters.ENG
+        (el) => ![parameters.EN, parameters.ENG].includes(el.language)
       )
       item.vendor_attributes.forEach((attr) => (attr.type = 'attr'))
       item.vendor_elements.forEach((element) => {

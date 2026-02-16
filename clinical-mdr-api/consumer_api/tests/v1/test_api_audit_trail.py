@@ -3,11 +3,13 @@
 # pylint: disable=too-many-arguments
 import csv
 import time
+from collections import Counter
 from datetime import datetime
 from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
+from neomodel.sync_.core import Database
 
 from clinical_mdr_api.services.studies.study import StudyService
 from clinical_mdr_api.services.studies.study_flowchart import StudyFlowchartService
@@ -18,6 +20,7 @@ from clinical_mdr_api.tests.integration.utils.factory_visit import (
 )
 from clinical_mdr_api.tests.integration.utils.method_library import (
     create_study_epoch,
+    edit_study_epoch,
     input_metadata_in_study,
 )
 from clinical_mdr_api.tests.integration.utils.utils import TestUtils
@@ -29,6 +32,7 @@ BASE_URL = "/v1"
 
 
 # Global variables shared between fixtures and tests
+db: Database
 rand: str
 studies: list[models.Study]
 total_studies: int = 25
@@ -62,7 +66,8 @@ def api_client(test_data):
 def test_data(api_client):
     """Initialize test data"""
     db_name = "consumer-api-v1-studies-audit-trail"
-    set_db(db_name)
+    global db
+    db = set_db(db_name)
     study, _test_data_dict = inject_base_data()
     create_study_visit_codelists(create_unit_definitions=False, use_test_utils=True)
     global rand
@@ -84,6 +89,7 @@ def test_data(api_client):
         studies.append(TestUtils.create_study(acronym=f"ACR-{rand}"))  # type: ignore[arg-type]
 
     study_epoch = create_study_epoch("EpochSubType_0001", study_uid=studies[0].uid)
+    study_epoch = edit_study_epoch(study_epoch.uid, study_uid=studies[0].uid)
 
     visit_to_create = generate_default_input_data_for_visit().copy()
     study_visits = []
@@ -134,9 +140,7 @@ def test_data(api_client):
     )
 
     activity_group_uid = TestUtils.create_activity_group("Activity Group").uid
-    activity_subgroup_uid = TestUtils.create_activity_subgroup(
-        "Activity Sub Group", activity_groups=[activity_group_uid]
-    ).uid
+    activity_subgroup_uid = TestUtils.create_activity_subgroup("Activity Sub Group").uid
 
     study_activities = []
 
@@ -233,8 +237,24 @@ STUDY_AUDIT_TRAIL_FIELDS_NOT_NULL = [
 
 
 def test_get_study_audit_trail(api_client):
+    from_ts_very_old = datetime.fromtimestamp(
+        time.time() - 1000000000
+    ).isoformat()  # 1000000000 seconds ago
     from_ts = datetime.fromtimestamp(time.time() - 86400).isoformat()  # 24 hours ago
     to_ts = datetime.fromtimestamp(time.time() + 86400).isoformat()  # 24 hours from now
+
+    db.cypher_query(
+        """
+        MATCH 
+            (sr:StudyRoot)-[h_v:HAS_VERSION]->
+            (sv:StudyValue)<-[:AFTER]-
+            (sa:StudyAction)
+        WITH sr,sv,sa,h_v ORDER BY sa.date DESC LIMIT 1
+        SET sa.date = datetime($from_ts_very_old)
+        SET h_v.start_date = datetime($from_ts_very_old)
+    """,
+        params={"from_ts_very_old": from_ts_very_old},
+    )
 
     response = api_client.get(
         f"{BASE_URL}/studies/audit-trail", params={"from_ts": from_ts, "to_ts": to_ts}
@@ -245,6 +265,24 @@ def test_get_study_audit_trail(api_client):
     csv_reader = csv.DictReader(csv_content.splitlines())
     rows = list(csv_reader)
     assert len(rows) > 0
+
+    response = api_client.get(
+        f"{BASE_URL}/studies/audit-trail", params={"from_ts": from_ts, "to_ts": to_ts}
+    )
+    assert_response_status_code(response, 200)
+
+    csv_content = response.content.decode("utf-8")
+    csv_reader = csv.DictReader(csv_content.splitlines())
+    rows = list(csv_reader)
+    assert len(rows) > 0
+
+    # Count unique studies in the audit trail
+    unique_studies = set(row["study_uid"] for row in rows if row.get("study_uid"))
+    study_count = len(unique_studies)
+    print(f"\nNumber of unique studies in audit trail: {study_count}")
+    assert (
+        study_count == total_studies
+    ), f"Expected {total_studies} studies, but found {study_count}"
 
     for row in rows:
         TestUtils.assert_response_shape_ok(
@@ -265,6 +303,125 @@ def test_get_study_audit_trail(api_client):
             assert all(
                 char in "0123456789abcdef" for char in row["author"]
             ), "Author hash should be valid hexadecimal"
+
+
+def test_count_create_and_edit_actions_per_entity_type(api_client):
+    """Count the number of times each entity_type appears with 'Create' and 'Edit' actions.
+
+    This test counts Create and Edit actions per entity_type and asserts the results.
+    """
+    from_ts = datetime.fromtimestamp(time.time() - 86400).isoformat()  # 24 hours ago
+    to_ts = datetime.fromtimestamp(time.time() + 86400).isoformat()  # 24 hours from now
+
+    response = api_client.get(
+        f"{BASE_URL}/studies/audit-trail", params={"from_ts": from_ts, "to_ts": to_ts}
+    )
+    assert_response_status_code(response, 200)
+
+    csv_content = response.content.decode("utf-8")
+    csv_reader = csv.DictReader(csv_content.splitlines())
+    rows = list(csv_reader)
+    assert len(rows) > 0
+
+    create_counts: Counter[str] = Counter()
+    edit_counts: Counter[str] = Counter()
+
+    for row in rows:
+        entity_type = row["entity_type"]
+        action = row["action"]
+
+        if action == "Create":
+            create_counts[entity_type] += 1
+        elif action == "Edit":
+            edit_counts[entity_type] += 1
+
+    all_entity_types = set(create_counts.keys()) | set(edit_counts.keys())
+
+    # Sort by total count (Create + Edit) descending, then by entity_type
+    sorted_entity_types = sorted(
+        all_entity_types, key=lambda x: (-(create_counts[x] + edit_counts[x]), x)
+    )
+
+    # Print results for manual inspection
+    print("\n" + "=" * 100)
+    print("Count of 'Create' and 'Edit' actions per entity_type:")
+    print("=" * 100)
+    print(f"Total number of 'Create' actions: {sum(create_counts.values())}")
+    print(f"Total number of 'Edit' actions: {sum(edit_counts.values())}")
+    print(f"Number of unique entity_type values: {len(all_entity_types)}")
+    print("\n" + f"{'Entity Type':<60} {'Create':<10} {'Edit':<10} {'Total':<10}")
+    print("-" * 100)
+
+    for entity_type in sorted_entity_types:
+        create_count = create_counts[entity_type]
+        edit_count = edit_counts[entity_type]
+        total_count = create_count + edit_count
+        print(
+            f"{entity_type:<60} {create_count:<10} {edit_count:<10} {total_count:<10}"
+        )
+
+    print("=" * 100 + "\n")
+
+    # Assertions based on expected counts per entity_type
+    # StudyField|StudyBooleanField: Create=76, Edit=0
+    assert create_counts["StudyField|StudyBooleanField"] == 76
+    assert edit_counts["StudyField|StudyBooleanField"] == 0
+
+    # StudyField|StudyTimeField: Create=50, Edit=0
+    assert create_counts["StudyField|StudyTimeField"] == 50
+    assert edit_counts["StudyField|StudyTimeField"] == 0
+
+    # StudyProjectField|StudyField: Create=25, Edit=1
+    assert create_counts["StudyProjectField|StudyField"] == 25
+    assert edit_counts["StudyProjectField|StudyField"] == 1
+
+    # StudySelection|StudyActivity: Create=26, Edit=0
+    assert create_counts["StudySelection|StudyActivity"] == 26
+    assert edit_counts["StudySelection|StudyActivity"] == 0
+
+    # StudySelection|StudyActivityInstance: Create=26, Edit=0
+    assert create_counts["StudySelection|StudyActivityInstance"] == 26
+    assert edit_counts["StudySelection|StudyActivityInstance"] == 0
+
+    # StudySelection|StudyActivitySchedule: Create=26, Edit=0
+    assert create_counts["StudySelection|StudyActivitySchedule"] == 26
+    assert edit_counts["StudySelection|StudyActivitySchedule"] == 0
+
+    # StudySelection|StudyVisit: Create=26, Edit=0
+    assert create_counts["StudySelection|StudyVisit"] == 26
+    assert edit_counts["StudySelection|StudyVisit"] == 0
+
+    # StudyValue: Create=25, Edit=0
+    assert create_counts["StudyValue"] == 25
+    assert edit_counts["StudyValue"] == 0  # should be 0 because now it's from the 1990'
+
+    # StudyField|StudyTextField: Create=2, Edit=0
+    assert create_counts["StudyField|StudyTextField"] == 2
+    assert edit_counts["StudyField|StudyTextField"] == 0
+
+    # StudySelection|StudyEpoch: Create=1, Edit=1
+    assert create_counts["StudySelection|StudyEpoch"] == 1
+    assert edit_counts["StudySelection|StudyEpoch"] == 1
+
+    # StudySelection|StudyActivityGroup: Create=1, Edit=0
+    assert create_counts["StudySelection|StudyActivityGroup"] == 1
+    assert edit_counts["StudySelection|StudyActivityGroup"] == 0
+
+    # StudySelection|StudyActivitySubGroup: Create=1, Edit=0
+    assert create_counts["StudySelection|StudyActivitySubGroup"] == 1
+    assert edit_counts["StudySelection|StudyActivitySubGroup"] == 0
+
+    # StudySelection|StudySoAGroup: Create=1, Edit=0
+    assert create_counts["StudySelection|StudySoAGroup"] == 1
+    assert edit_counts["StudySelection|StudySoAGroup"] == 0
+
+    # StudyStandardVersion|StudySelection: Create=1, Edit=0
+    assert create_counts["StudyStandardVersion|StudySelection"] == 1
+    assert edit_counts["StudyStandardVersion|StudySelection"] == 0
+
+    # Basic assertions that we have some actions
+    assert sum(create_counts.values()) > 0, "Expected at least one 'Create' action"
+    assert sum(edit_counts.values()) > 0, "Expected at least one 'Edit' action"
 
 
 def _add_study_activity(

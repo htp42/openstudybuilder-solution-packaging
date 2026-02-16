@@ -24,18 +24,15 @@
         @click.stop="showForm = true"
       />
     </template>
-    <template #[`item.uid`]="{ item }">
+    <template #[`item.ingredients`]="{ item }">
       <router-link
         :to="{
           name: 'PharmaceuticalProductOverview',
           params: { id: item.uid },
         }"
       >
-        {{ item.uid }}
+        {{ item.ingredients }}
       </router-link>
-    </template>
-    <template #[`item.ingredients`]="{ item }">
-      {{ displayIngredients(item) }}
     </template>
     <template #[`item.actions`]="{ item }">
       <ActionsMenu :actions="actions" :item="item" />
@@ -175,9 +172,8 @@ const actions = [
 ]
 const headers = [
   { title: '', key: 'actions', width: '5%' },
-  { title: t('_global.uid'), key: 'uid' },
   {
-    title: t('PharmaceuticalProduct.ingredients'),
+    title: t('PharmaceuticalProduct.title'),
     key: 'ingredients',
     noFilter: true,
   },
@@ -295,7 +291,6 @@ async function openHistory(item) {
   selectedItem.value = item
   const resp = await api.getVersions(selectedItem.value.uid)
   historyItems.value = transformItems(resp.data)
-  console.log(historyItems.value)
   showHistory.value = true
 }
 
@@ -310,6 +305,7 @@ function transformItems(items) {
       newItem.route_of_administration =
         item.routes_of_administration[0].term_name
     }
+    newItem.ingredients = displayIngredients(item)
     result.push(newItem)
   }
   return result

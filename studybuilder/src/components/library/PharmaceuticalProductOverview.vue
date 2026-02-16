@@ -32,6 +32,9 @@
                   {{ $t('Formulation.strength') }}
                 </th>
                 <th scope="col">
+                  {{ $t('Formulation.half-life') }}
+                </th>
+                <th scope="col">
                   {{ $t('Formulation.lag_times') }}
                 </th>
               </tr>
@@ -48,6 +51,10 @@
                 <td>
                   {{ ingredient.strength?.value }}
                   {{ ingredient.strength?.unit_label }}
+                </td>
+                <td>
+                  {{ ingredient.half_life?.value }}
+                  {{ ingredient.half_life?.unit_label }}
                 </td>
                 <td>{{ displayLagTimes(ingredient) }}</td>
               </tr>

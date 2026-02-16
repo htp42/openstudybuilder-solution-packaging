@@ -13,10 +13,6 @@ Cypress.Commands.add('waitForPage', () => {
     cy.get('.v-container', {timeout: 20000}).should('be.visible')
 })
 
-Cypress.Commands.add('waitForFormSave', () => {
-    cy.get('[data-cy="form-body"]').should('not.be.visible')
-})
-
 Cypress.Commands.add('waitForData', (dataName) => {
     cy.intercept('**/' + dataName + '**').as('waitingForThisRequest')
     cy.wait('@waitingForThisRequest')

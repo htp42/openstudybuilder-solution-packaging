@@ -11,6 +11,13 @@ OpenStudyBuilder is the open source version of the internal StudyBuilder solutio
 
 For further information on the OpenStudyBuilder solution, please refer to the [OpenStudyBuilder homepage](https://openstudybuilder.com).
 
+## Related Repositories
+
+The following repositories are related to OpenStudyBuilder
+
+- [OpenStudyBuilder-Word-Add-In](https://github.com/NovoNordisk-OpenSource/openstudybuilder-word-addin)
+- [OpenStudyBuilder-accelerators](https://github.com/NovoNordisk-OpenSource/openstudybuilder-accelerators)
+
 
 # Introduction
 

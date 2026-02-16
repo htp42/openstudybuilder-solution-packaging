@@ -72,7 +72,7 @@
           rounded="xl"
           @click="cancel"
         >
-          {{ $t('_global.cancel') }}
+          {{ readOnly ? $t('_global.close') : $t('_global.cancel') }}
         </v-btn>
       </v-col>
       <v-spacer />
@@ -105,7 +105,9 @@
               {{ $t('_global.continue') }}
             </v-btn>
           </v-col>
-          <v-col v-if="currentStep >= steps.length || saveFromAnyStep">
+          <v-col
+            v-if="!readOnly && (currentStep >= steps.length || saveFromAnyStep)"
+          >
             <v-btn
               data-cy="save-button"
               color="secondary"
@@ -160,6 +162,10 @@ const props = defineProps({
     default: undefined,
   },
   editable: {
+    type: Boolean,
+    default: false,
+  },
+  readOnly: {
     type: Boolean,
     default: false,
   },
@@ -280,7 +286,7 @@ async function validateStepObserver(step) {
   }
   return true
 }
-async function goToNextStep() {
+async function goToStep(step) {
   if (!(await validateStepObserver(currentStep.value))) {
     return
   }
@@ -289,10 +295,20 @@ async function goToNextStep() {
       return
     }
   }
-  currentStep.value += 1
+
+  if (typeof step === 'number') {
+    currentStep.value = step
+  } else {
+    currentStep.value =
+      props.steps.indexOf(props.steps.find((s) => s.name === step) || {}) + 1
+  }
+
   nextTick(() => {
     emit('stepLoaded', currentStep.value)
   })
+}
+async function goToNextStep() {
+  await goToStep(currentStep.value + 1)
 }
 async function submit() {
   if (!(await validateStepObserver(currentStep.value))) {
@@ -310,6 +326,7 @@ defineExpose({
   cancel,
   validateStepObserver,
   goToNextStep,
+  goToStep,
 })
 </script>
 

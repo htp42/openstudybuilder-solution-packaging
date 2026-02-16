@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Annotated, Any, Callable, Self
+from typing import Annotated, Any, Self
 
 from pydantic import Field
 
@@ -8,11 +8,7 @@ from clinical_mdr_api.domain_repositories.models._utils import convert_to_dateti
 from clinical_mdr_api.domains.concepts.activities.activity_sub_group import (
     ActivitySubGroupAR,
 )
-from clinical_mdr_api.domains.concepts.concept_base import ConceptARBase
-from clinical_mdr_api.models.concepts.activities.activity import (
-    ActivityBase,
-    ActivityHierarchySimpleModel,
-)
+from clinical_mdr_api.models.concepts.activities.activity import ActivityBase
 from clinical_mdr_api.models.concepts.concept import ExtendedConceptPostInput
 from clinical_mdr_api.models.libraries.library import Library
 from clinical_mdr_api.models.utils import BaseModel, EditInputModel
@@ -23,23 +19,7 @@ class ActivitySubGroup(ActivityBase):
     def from_activity_ar(
         cls,
         activity_subgroup_ar: ActivitySubGroupAR,
-        find_activity_by_uid: Callable[[str], ConceptARBase | None],
-        was_cascade_update_performed: bool | None = None,
     ) -> Self:
-        activity_groups = []
-        for activity_group in activity_subgroup_ar.concept_vo.activity_groups:
-            if activity_group.activity_group_name:
-                translation = ActivityHierarchySimpleModel(
-                    uid=activity_group.activity_group_uid,
-                    name=activity_group.activity_group_name,
-                )
-            else:
-                translation = ActivityHierarchySimpleModel.from_activity_uid(
-                    uid=activity_group.activity_group_uid,
-                    version=activity_group.activity_group_version,
-                    find_activity_by_uid=find_activity_by_uid,
-                )
-            activity_groups.append(translation)
 
         return cls(
             uid=activity_subgroup_ar.uid,
@@ -47,7 +27,6 @@ class ActivitySubGroup(ActivityBase):
             name_sentence_case=activity_subgroup_ar.concept_vo.name_sentence_case,
             definition=activity_subgroup_ar.concept_vo.definition,
             abbreviation=activity_subgroup_ar.concept_vo.abbreviation,
-            activity_groups=activity_groups,
             library_name=Library.from_library_vo(activity_subgroup_ar.library).name,
             start_date=activity_subgroup_ar.item_metadata.start_date,
             end_date=activity_subgroup_ar.item_metadata.end_date,
@@ -58,11 +37,7 @@ class ActivitySubGroup(ActivityBase):
             possible_actions=sorted(
                 [_.value for _ in activity_subgroup_ar.get_possible_actions()]
             ),
-            was_cascade_update_performed=was_cascade_update_performed,
         )
-
-    activity_groups: Annotated[list[ActivityHierarchySimpleModel], Field()]
-    was_cascade_update_performed: Annotated[bool | None, Field()] = None
 
 
 class ActivitySubGroupCreateInput(ExtendedConceptPostInput):
@@ -74,7 +49,6 @@ class ActivitySubGroupCreateInput(ExtendedConceptPostInput):
         ),
     ]
     name_sentence_case: Annotated[str, Field(min_length=1)]
-    activity_groups: Annotated[list[str] | None, Field()] = None
     library_name: Annotated[str, Field(min_length=1)]
 
 
@@ -90,7 +64,7 @@ class ActivitySubGroupVersion(ActivitySubGroup):
     changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)
 
 
-class ActivityGroup(BaseModel):
+class ActivityGroupForActivitySubGroup(BaseModel):
     uid: Annotated[str, Field()]
     name: Annotated[str, Field()]
     version: Annotated[str | None, Field()] = None
@@ -109,7 +83,6 @@ class ActivitySubGroupDetail(BaseModel):
     possible_actions: Annotated[list[str] | None, Field()] = None
     change_description: Annotated[str, Field()]
     author_username: Annotated[str | None, Field()] = None
-    activity_groups: Annotated[list[ActivityGroup], Field()]
 
 
 class ActivitySubGroupOverview(BaseModel):
@@ -139,7 +112,6 @@ class ActivitySubGroupOverview(BaseModel):
                 end_date=convert_to_datetime(version_data.get("end_date")),
                 status=version_data.get("status"),
                 version=version_data.get("version"),
-                activity_groups=version_data.get("activity_groups", {}),
                 possible_actions=version_data.get("possible_actions"),
                 change_description=version_data["change_description"],
             ),

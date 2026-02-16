@@ -1,4 +1,4 @@
-import { activity_activity } from "./study_activities_steps";
+import { activity_activity, activity_placeholder_name, exchangedActivities } from "./study_activities_steps";
 
 const { When, Then } = require("@badeball/cypress-cucumber-preprocessor");
 
@@ -10,8 +10,18 @@ When ('{string} view is available in SoA', (viewName) => cy.contains('.layoutSel
 
 When ('{string} view is not available in SoA', (viewName) => cy.contains('.layoutSelector button', viewName).should('not.exist'))
 
+When('Action {string} is selected for first study activity', (action) => {
+    cy.get('table tbody tr.bg-white').eq(0).within(() => cy.clickButton('table-item-action-button'))
+    cy.clickButton(action)
+})
+
 When('Action {string} is selected for study activity', (action) => {
     cy.contains('table tbody tr.bg-white', activityName).within(() => cy.clickButton('table-item-action-button'))
+    cy.clickButton(action)
+})
+
+When('Action {string} is selected for study activity placeholder', (action) => {
+    cy.contains('table tbody tr', activity_placeholder_name).within(() => cy.clickButton('table-item-action-button'))
     cy.clickButton(action)
 })
 
@@ -29,10 +39,9 @@ When('The user goes through selection from library form', () => {
     cy.get('.v-list-item').filter(':visible').first().click()
 })
 
-Then('The newly selected activity replaces previous activity in study', () => {
-    cy.contains('table tbody tr.bg-white', new RegExp(`^(${activityName})$`, "g")).should('not.exist')
-    cy.contains('table tbody tr.bg-white', new RegExp(`^(${new_activity_name})$`, "g")).should('exist')
-})
+Then('The newly selected activity replaces previous activity in study', () => cy.contains('table tbody tr.bg-white', new RegExp(`^(${new_activity_name})$`, "g")).should('exist'))
+
+Then('The old activity is no longer available', () => cy.contains('table tbody tr.bg-white', new RegExp(`^(${activityName})$`, "g")).should('not.exist'))
 
 Then('The Activity is visible in the SoA', () => cy.contains(activity_activity.substring(0, 40)).should('be.visible'))
 
@@ -102,11 +111,21 @@ Then('No activities are found', () => cy.get('table[aria-label="SoA table"] .bg-
 
 Then('Activity is found in table', () => cy.contains('table[aria-label="SoA table"] .bg-white', activityName).should('exist'))
 
+Then('{int} Activity that exchanged the placeholder is found in table', (index) => cy.contains('table[aria-label="SoA table"] .bg-white', exchangedActivities[index - 1]).should('exist'))
+
 When('User search for non-existing activity', () => cy.contains('.v-input__control', 'Search Activities').type('xxx'))
 
 When('User search for {int} activity on the list', (index) => cy.contains('.v-input__control', 'Search Activities').type(activity_list[index]))
 
+When('User search study activity placeholder', () => cy.contains('.v-input__control', 'Search Activities').type(activity_placeholder_name))
+
+When('User search {int} activity that exchanged the placeholder', (index) => cy.contains('.v-input__control', 'Search Activities').find('input').type(exchangedActivities[index - 1]))
+
+When('User search added activity in detailed SoA', () => cy.contains('.v-input__control', 'Search Activities').type(activity_activity))
+
 When('User search study activity', () => cy.contains('.v-input__control', 'Search Activities').type(activityName))
+
+When('User search for new study activity', () => cy.contains('.v-input__control', 'Search Activities').type(new_activity_name))
 
 When('User search study activity in lowercase', () => cy.contains('.v-input__control', 'Search Activities').type(activityName.toLowerCase()))
 
@@ -116,7 +135,15 @@ When('User search study activity by subgroup', () => cy.contains('.v-input__cont
 
 When('User search study activity by group', () => cy.contains('.v-input__control', 'Search Activities').type('API_Group'))
 
-When('User expand table', () => cy.contains('.v-selection-control', 'Expand table').click())
+When('User clears study activity search', () => cy.contains('.v-input__control', 'Search Activities').find('input').clear())
+
+When('User expand table', () => cy.contains('.v-selection-control', 'Expand table').find('input').check())
+
+When('Row containing submitted placeholder is highlighted with yellow color', () => cy.contains('tr[id*="StudyActivity_"].bg-yellow', activity_placeholder_name).should('be.visible'))
+
+When('Row containing unsubmitted placeholder is highlighted with orange color', () => cy.contains('tr[id*="StudyActivity_"].bg-warning', activity_placeholder_name).should('be.visible'))
+
+When('Placeholder is no longer available', () => cy.contains('tr[id*="StudyActivity_"]', activity_placeholder_name).should('not.exist'))
 
 When('User selects visits {string}', (visitList) => {
     const visitListArray = visitList.split(',')

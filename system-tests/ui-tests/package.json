@@ -11,7 +11,8 @@
         "test:run": "cypress run  --env allure=true,allureResultsPath=results/allure,host=$cypresshost --spec cypress/e2e/**/*.feature --headless",
         "test:run-chrome": "cypress run  --env allure=true,allureResultsPath=results/allure,host=$cypresshost --spec cypress/e2e/**/*.feature --headless --browser chrome",
         "test:junit": "cypress run  --env allure=false,host=$cypresshost --spec cypress/e2e/**/*.feature --headless",
-        "test:junit-chrome": "cypress run  --env allure=false,host=$cypresshost --spec cypress/e2e/**/*.feature --headless --browser chrome"
+        "test:junit-chrome": "cypress run  --env allure=false,host=$cypresshost --spec cypress/e2e/**/*.feature --headless --browser chrome",
+        "build-sbom": "python3 ../assbom.py --yarn --fallback-dir doc/licenses --level 2 --output sbom.md"
     },
     "dependencies": {
         "@4tw/cypress-drag-drop": "^2.3.0",

@@ -30,10 +30,7 @@ def _query(
 
     validate_max_skip_clause(page_number=page_number, page_size=page_size)
 
-    params: dict[str, list[Any] | str | int] = {
-        "skip": page_size * (page_number - 1),
-        "limit": page_size,
-    }
+    params: dict[str, list[Any] | str | int] = {}
 
     where_stmt = ""
 
@@ -69,6 +66,13 @@ def _query(
     )
     """
 
+    if page_size > 0:
+        limit = "SKIP $skip LIMIT $limit"
+        params["skip"] = page_size * (page_number - 1)
+        params["limit"] = page_size
+    else:
+        limit = ""
+
     results, columns = db.cypher_query(
         dedent(
             f"""
@@ -77,7 +81,7 @@ def _query(
         {exclude_old}
         RETURN DISTINCT {', '.join([f'n.{field} AS {field}' for field in fields])}
         ORDER BY n.{fields[0]}
-        SKIP $skip LIMIT $limit
+        {limit}
         """
         ),
         params=params,

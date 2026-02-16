@@ -1,11 +1,11 @@
 @REQ_ID:1070683
 
-Feature: Manage Library Concept Activities in Clinical MDR API
+Feature: Manage Library Concept Activities in OpenStudyBuilder API
 
     As a API user, I want to manage the Activities in the Concepts Library API endpoints
 
-    Background: Test user must be able to call the Clinical MDR API and the test data exists
-        Given The test user can call the Clinical MDR API
+    Background: Test user must be able to call the OpenStudyBuilder API and the test data exists
+        Given The test user can call the OpenStudyBuilder API
 
     Scenario: User must be able to get all the studies when calling the API endpoint '/studies/structure-overview'
         When the user calls the API endpoint '/studies/structure-overview'

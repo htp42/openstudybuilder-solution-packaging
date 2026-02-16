@@ -50,7 +50,7 @@
         single-line
         class="filterAutocompleteLabel ml-1"
         :loading="loading"
-        @input="getColumnData(item.key)"
+        @input="getColumnData(item.columnDataKey || item.key)"
         @update:model-value="filterTable"
       >
         <template #item="{ props }">
@@ -189,7 +189,7 @@ const loading = ref(false)
 watch(searchString, () => {
   if (timeout.value) clearTimeout(timeout.value)
   timeout.value = setTimeout(() => {
-    getColumnData(props.item.key)
+    getColumnData(props.item.columnDataKey || props.item.key)
   }, 500)
 })
 watch(
@@ -201,7 +201,7 @@ watch(
 watch(
   () => props.loadFilters,
   () => {
-    getColumnData(props.item.key)
+    getColumnData(props.item.columnDataKey || props.item.key)
   }
 )
 
@@ -285,9 +285,6 @@ function getColumnData(value) {
   if (props.item.disableColumnFilters) {
     params.filters = {}
   }
-  if (props.item.split_activity_by_groupings) {
-    params.split_activity_by_groupings = true
-  }
   columnData.getHeaderData(params, externalFilter).then((resp) => {
     items.value = booleanValidator(resp.data)
     items.value = items.value.filter((element) => {
@@ -327,7 +324,10 @@ function filterDate() {
       data.value.length <= 1 ? data.value[0] : data.value[data.value.length - 1]
     ),
   ]
-  emit('filter', { column: props.item.key, data: dateData })
+  emit('filter', {
+    column: props.item.columnDataKey || props.item.key,
+    data: dateData,
+  })
 }
 
 function formatDate(date) {
@@ -367,21 +367,21 @@ function filterTable() {
     emit('filter', {
       column: props.item.filteringName
         ? props.item.filteringName
-        : props.item.key,
+        : props.item.columnDataKey || props.item.key,
       data: requestData,
     })
   } else {
     emit('filter', {
       column: props.item.filteringName
         ? props.item.filteringName
-        : props.item.key,
+        : props.item.columnDataKey || props.item.key,
       data: data.value,
     })
   }
 }
 
 if (!props.initialData && props.tableItems && props.tableItems.length) {
-  getColumnData(props.item.key)
+  getColumnData(props.item.columnDataKey || props.item.key)
 } else if (props.initialData) {
   items.value = [...props.initialData]
 }

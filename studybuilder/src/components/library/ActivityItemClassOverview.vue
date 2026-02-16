@@ -53,7 +53,9 @@
               <template #[`item.instance_name`]="{ item }">
                 <router-link
                   :to="{
-                    name: 'ActivityInstanceClassOverview',
+                    name: item.parent_class
+                      ? 'ActivityInstanceClassOverview'
+                      : 'ActivityInstanceParentClassOverview',
                     params: { id: item.uid, version: item.version },
                   }"
                   class="d-block text-primary"

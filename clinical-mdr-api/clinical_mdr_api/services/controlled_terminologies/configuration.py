@@ -19,6 +19,7 @@ from clinical_mdr_api.models.controlled_terminologies.configuration import (
 )
 from clinical_mdr_api.models.utils import BaseModel
 from clinical_mdr_api.services._meta_repository import MetaRepository
+from common.auth.user import user
 from common.exceptions import NotFoundException
 
 
@@ -26,13 +27,9 @@ class CTConfigService:
     _repos: MetaRepository
     _author_id: str
 
-    def __init__(
-        self,
-        *,
-        author_id: str = "unknown-user",
-    ):
+    def __init__(self):
         self._repos = MetaRepository()
-        self._author_id = author_id
+        self._author_id = user().id()
 
     @db.transaction
     def get_all(self) -> list[CTConfigOGM]:

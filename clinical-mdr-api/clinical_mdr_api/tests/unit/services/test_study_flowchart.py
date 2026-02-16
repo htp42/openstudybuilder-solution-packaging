@@ -32,6 +32,7 @@ from clinical_mdr_api.tests.unit.services.soa_test_data import (
     STUDY_ACTIVITIES,
     STUDY_ACTIVITY_SCHEDULES,
     STUDY_VISITS,
+    TINY_SOA_TABLE,
 )
 from common.config import settings
 
@@ -831,3 +832,123 @@ def test_add_protocol_section_column(test_table, expected_table):
     table = deepcopy(test_table)
     StudyFlowchartService.add_protocol_section_column(table)
     assert table.dict() == expected_table.dict()
+
+
+@pytest.mark.parametrize("uids", [[], ["nonexistent-uid"]])
+def test_split_flowchart_table_no_splits(
+    uids: list[str], table: TableWithFootnotes = TINY_SOA_TABLE
+):
+    """Test StudyFlowchartService.split_flowchart_table when no split UIDs are provided"""
+
+    slices = StudyFlowchartService.split_flowchart_table(table, uids)
+
+    # Should return the original table as a single slice
+    assert len(slices) == 1
+    assert slices[0] == table
+
+
+def test_split_flowchart_table_with_splits(table: TableWithFootnotes = TINY_SOA_TABLE):
+    """Test StudyFlowchartService.split_flowchart_table with a single split UID"""
+
+    slices = StudyFlowchartService.split_flowchart_table(table, ["visit-2"])
+
+    # Should split at visit-2, creating 2 slices
+    assert len(slices) == 2
+
+    # First slice: Visits, V1
+    slice0 = slices[0]
+    # includes all rows
+    assert len(slice0.rows) == len(table.rows)
+    # same number of header rows/columns
+    assert slice0.num_header_rows == table.num_header_rows
+    assert slice0.num_header_cols == table.num_header_cols
+    # same title and id
+    assert slice0.title == table.title
+    assert slice0.id == table.id
+    # first slice has footnotes comment
+    assert list(slice0.footnotes.keys()) == [""]
+    # contains columns 0 and 1 (by index)
+    for slice_row, orig_row in zip(slice0.rows, table.rows):
+        assert slice_row.cells == orig_row.cells[:2]
+
+    # Second slice: Visits, V2, V3
+    slice1 = slices[1]
+    # includes all rows
+    assert len(slice1.rows) == len(table.rows)
+    # same number of header rows/columns
+    assert slice1.num_header_rows == table.num_header_rows
+    assert slice1.num_header_cols == table.num_header_cols
+    # same title and id
+    assert slice1.title == table.title
+    assert slice1.id == table.id
+    # last slice has all the footnotes
+    assert slice1.footnotes == table.footnotes
+    # contains columns 0, 2, 3 and 4 (by index)
+    for slice_row, orig_row in zip(slice1.rows, table.rows):
+        assert slice_row.cells == [orig_row.cells[0]] + orig_row.cells[2:]
+
+
+def test_split_flowchart_table_with_two_splits(
+    table: TableWithFootnotes = TINY_SOA_TABLE,
+):
+    """Test StudyFlowchartService.split_flowchart_table with a single split UID"""
+
+    slices = StudyFlowchartService.split_flowchart_table(table, ["visit-2", "visit-4"])
+
+    # Should split at visit-2, creating 2 slices
+    assert len(slices) == 3
+
+    # First slice: Visits, V1
+    slice0 = slices[0]
+    # includes all rows
+    assert len(slice0.rows) == len(table.rows)
+    # same number of header rows/columns
+    assert slice0.num_header_rows == table.num_header_rows
+    assert slice0.num_header_cols == table.num_header_cols
+    # same title and id
+    assert slice0.title == table.title
+    assert slice0.id == table.id
+    # first slice has footnotes comment
+    assert list(slice0.footnotes.keys()) == [""]
+    # contains columns 0 and 1 (by index)
+    for slice_row, orig_row in zip(slice0.rows, table.rows):
+        assert slice_row.cells == orig_row.cells[:2]
+
+    # Second slice: Visits, V2, V3
+    slice1 = slices[1]
+    # includes all rows
+    assert len(slice1.rows) == len(table.rows)
+    # same number of header rows/columns
+    assert slice1.num_header_rows == table.num_header_rows
+    assert slice1.num_header_cols == table.num_header_cols
+    # same title and id
+    assert slice1.title == table.title
+    assert slice1.id == table.id
+    # second slice has footnotes comment
+    assert list(slice0.footnotes.keys()) == [""]
+    # contains columns 0, 2 and 3 (by index)
+    for i, (slice_row, orig_row) in enumerate(zip(slice1.rows, table.rows)):
+        if i == 0:
+            orig_row = orig_row.model_copy(deep=True)
+            orig_row.cells[2].span = 2
+        assert slice_row.cells == [orig_row.cells[0]] + orig_row.cells[2:4]
+
+    # Third slice: Visits, V4
+    slice2 = slices[2]
+    # includes all rows
+    assert len(slice2.rows) == len(table.rows)
+    # same number of header rows/columns
+    assert slice2.num_header_rows == table.num_header_rows
+    assert slice2.num_header_cols == table.num_header_cols
+    # same title and id
+    assert slice2.title == table.title
+    assert slice2.id == table.id
+    # last slice has all the footnotes
+    assert slice2.footnotes == table.footnotes
+    # contains columns 0, 2 and 3 (by index)
+    for i, (slice_row, orig_row) in enumerate(zip(slice2.rows, table.rows)):
+        if i == 0:
+            orig_row = orig_row.model_copy(deep=True)
+            orig_row.cells[4] = orig_row.cells[2]
+            orig_row.cells[4].span = 1
+        assert slice_row.cells == [orig_row.cells[0], orig_row.cells[4]]

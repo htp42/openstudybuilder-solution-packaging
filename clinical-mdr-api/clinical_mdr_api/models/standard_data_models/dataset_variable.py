@@ -15,8 +15,8 @@ class SimpleImplementsVariable(BaseModel):
     name: Annotated[str, Field()]
 
 
-class SimpleDataset(BaseModel):
-    ordinal: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
+class SimpleDatasetForDatasetVariable(BaseModel):
+    ordinal: Annotated[int | None, Field(json_schema_extra={"nullable": True})] = None
     uid: Annotated[str, Field()]
 
 
@@ -73,7 +73,7 @@ class DatasetVariable(BaseModel):
     analysis_variable_set: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
-    dataset: Annotated[SimpleDataset, Field()]
+    dataset: Annotated[SimpleDatasetForDatasetVariable, Field()]
     data_model_ig_names: Annotated[
         list[str],
         Field(
@@ -86,9 +86,9 @@ class DatasetVariable(BaseModel):
     has_mapping_target: Annotated[
         SimpleMappingTarget | None, Field(json_schema_extra={"nullable": True})
     ] = None
-    catalogue_name: Annotated[str, Field()]
-    referenced_codelist: Annotated[
-        SimpleReferencedCodelist | None, Field(json_schema_extra={"nullable": True})
+    referenced_codelists: Annotated[
+        list[SimpleReferencedCodelist] | None,
+        Field(json_schema_extra={"nullable": True}),
     ] = None
 
     @classmethod
@@ -109,9 +109,8 @@ class DatasetVariable(BaseModel):
             described_value_domain=input_dict.get("described_value_domain"),
             value_list=input_dict.get("value_list") or [],
             analysis_variable_set=input_dict.get("analysis_variable_set"),
-            catalogue_name=input_dict["catalogue_name"],
             data_model_ig_names=input_dict["data_model_ig_names"],
-            dataset=SimpleDataset(
+            dataset=SimpleDatasetForDatasetVariable(
                 uid=input_dict.get("dataset").get("uid"),
                 ordinal=input_dict.get("dataset").get("ordinal"),
             ),
@@ -131,12 +130,14 @@ class DatasetVariable(BaseModel):
                 if input_dict.get("has_mapping_target")
                 else None
             ),
-            referenced_codelist=(
-                SimpleReferencedCodelist(
-                    uid=input_dict.get("referenced_codelist").get("uid"),
-                    name=input_dict.get("referenced_codelist").get("name"),
-                )
-                if input_dict.get("referenced_codelist")
-                else None
+            referenced_codelists=(
+                [
+                    SimpleReferencedCodelist(
+                        uid=cl.get("uid"),
+                        name=cl.get("name"),
+                    )
+                    for cl in input_dict.get("referenced_codelists")
+                ]
+                or None
             ),
         )

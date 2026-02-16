@@ -1,5 +1,5 @@
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
-import { stringToBoolean } from '../../support/helper_functions'
+import { getCurrStudyUid, stringToBoolean } from '../../support/helper_functions'
 
 let studyType = 'Expanded Access', trialType = 'Adhesion Performance Study', phaseClassification = 'Phase 0 Trial'
 let extensionStudy = 'Yes', adaptiveDesign = 'Yes', postAuthSafetyIndicator = 'Yes'
@@ -7,9 +7,9 @@ let confirmedResponseMinValue = '50', confirmedResponseUnit = 'days', stopRules 
 
 When('The study type is fully defined', () => {
     cy.nullStudyType(Cypress.env('TEST_STUDY_UID'))
-    cy.wait(5000)
+    cy.wait(1000)
     cy.reload()
-    cy.wait(3000)
+    cy.wait(1000)
     startEdition()
     cy.selectAutoComplete('study-type', studyType)
     cy.selectMultipleSelect('trial-type', trialType)
@@ -101,6 +101,23 @@ Then('All the informations are overwritten in the study type', () => {
         cy.tableContains(stringToBoolean(request.body.current_metadata.high_level_study_design.is_extension_trial))
         cy.tableContains(stringToBoolean(request.body.current_metadata.high_level_study_design.is_adaptive_design))
         cy.tableContains(request.body.current_metadata.high_level_study_design.study_stop_rules)
+    })
+})
+
+When('The study type is not defined', () => {
+    cy.nullStudyType(getCurrStudyUid())
+})
+
+When('The user sets study development stage to {string}', (stage) => {
+    startEdition()
+    cy.selectVSelect('development_stage', stage)
+    cy.intercept('**?include_sections=high_level_study_design').as('studyDesignRequest')
+    cy.clickButton('save-button')
+})
+
+When('The study development stage is {string}', (stage) => {
+    cy.wait('@studyDesignRequest').then((request) => {
+        expect(request.response.body.current_metadata.high_level_study_design.development_stage_code.sponsor_preferred_name).to.eq(stage)
     })
 })
 

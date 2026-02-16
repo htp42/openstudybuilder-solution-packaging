@@ -308,8 +308,13 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
         finally:
             repos.close()
 
-    def non_transactional_make_selection_create_objective(
-        self, study_uid: str, selection_create_input: StudySelectionObjectiveCreateInput
+    @ensure_transaction(db)
+    def make_selection_create_objective(
+        self,
+        study_uid: str,
+        selection_create_input: (
+            StudySelectionObjectiveCreateInput | StudySelectionObjectiveInput
+        ),
     ) -> StudySelectionObjective:
         repos = self._repos
         try:
@@ -406,14 +411,6 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
             )
         finally:
             repos.close()
-
-    @db.transaction
-    def make_selection_create_objective(
-        self, study_uid: str, selection_create_input: StudySelectionObjectiveCreateInput
-    ) -> StudySelectionObjective:
-        return self.non_transactional_make_selection_create_objective(
-            study_uid, selection_create_input
-        )
 
     @ensure_transaction(db)
     def batch_select_objective_template(
@@ -515,7 +512,7 @@ class StudyObjectiveSelectionService(StudySelectionMixin):
                         if template_input.parameter_terms is not None
                         else []
                     )
-                    new_selection = self.non_transactional_make_selection_create_objective(
+                    new_selection = self.make_selection_create_objective(
                         study_uid=study_uid,
                         selection_create_input=StudySelectionObjectiveCreateInput(
                             objective_data=ObjectiveCreateInput(

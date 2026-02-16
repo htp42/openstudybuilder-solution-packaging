@@ -12,6 +12,9 @@ Feature: Studies - Define Study - Study Data Specifications - Operational SoA
         Given The user is logged in
         And A test study is selected
 
+    Scenario: [TestData] All activities are deleted from test study
+        And [API] All Activities are deleted from study
+
     @smoke_test
     Scenario: [Navigation] User must be able to navigate to Operational SoA page using side menu
         Given The '/studies' page is opened
@@ -33,6 +36,34 @@ Feature: Studies - Define Study - Study Data Specifications - Operational SoA
             | Topic Code          |
             | ADaM Param Code     |
 
+
+    Scenario: [Placeholder][Submitted] User must be able to see highlighted (yellow) submitted placeholder in the Operational SoA
+        Given The test study '/activities/list' page is opened
+        When Study activity add button is clicked
+        And Activity from placeholder is selected
+        And Form continue button is clicked
+        And User selects option to create placeholder with submitting
+        When Activity placeholder data is filled in
+        And Form save button is clicked
+        And The form is no longer available
+        And The test study '/data_specifications/operational' page is opened
+        And User waits Operational SoA table
+        And User expand table
+        Then Row containing submitted placeholder is highlighted with yellow color in Operational SoA 
+
+    Scenario: [Placeholder][Not-Submitted] User must be able to see highlighted (orange) not-submitted placeholder in the Operational SoA
+        Given The test study '/activities/list' page is opened
+        When Study activity add button is clicked
+        And Activity from placeholder is selected
+        And Form continue button is clicked
+        And User selects option to create placeholder without submitting
+        When Activity placeholder data is filled in
+        And Form save button is clicked
+        And The form is no longer available
+        And The test study '/data_specifications/operational' page is opened
+        And User waits Operational SoA table
+        And User expand table
+        Then Row containing unsubmitted placeholder is highlighted with orange color in Operational SoA
 
     @pending_implementation
     Scenario: User must be able to view the study activity instances in the Operational SoA table matrix including SoA groups

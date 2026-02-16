@@ -1226,10 +1226,11 @@ class TestStudyVisitManagement(unittest.TestCase):
                 study_visit_uid=unscheduled_visit.uid,
                 study_visit_input=edit_input,
             )
-            self.assertEqual(
-                f"There's already and exists Non Visit in Study {self.study.uid}",
-                message.exception.msg,
-            )
+        self.assertEqual(
+            f"There's already and exists Non Visit in Study {self.study.uid}",
+            message.exception.msg,
+        )
+
         updated_description = "Updated description"
         unscheduled_visit_input.update(
             {"uid": unscheduled_visit.uid, "description": updated_description}
@@ -1334,9 +1335,9 @@ class TestStudyVisitManagement(unittest.TestCase):
         self.assertEqual(len(all_visits), 4)
         self.assertEqual(all_visits[0].time_value, 0)
         self.assertEqual(all_visits[1].time_value, 10)
-        self.assertEqual(all_visits[2].time_value, None)
-        self.assertEqual(all_visits[2].time_reference_uid, None)
-        self.assertEqual(all_visits[2].time_reference, None)
+        self.assertIsNone(all_visits[2].time_value)
+        self.assertIsNone(all_visits[2].time_reference_uid)
+        self.assertIsNone(all_visits[2].time_reference)
         self.assertEqual(all_visits[2].visit_number, special_visit_anchor.visit_number)
         self.assertEqual(
             all_visits[2].visit_short_name, special_visit_anchor.visit_short_name + "A"
@@ -1347,10 +1348,11 @@ class TestStudyVisitManagement(unittest.TestCase):
             visit_service.delete(
                 study_uid=self.study.uid, study_visit_uid=special_visit_anchor.uid
             )
-            self.assertEqual(
-                f"The Visit can't be deleted as other visits ([{special_visit.uid}]) are referencing this Visit",
-                message.exception.msg,
-            )
+        self.assertEqual(
+            f"The Visit can't be deleted as other visits (['{special_visit.visit_short_name}']) are referencing this Visit",
+            message.exception.msg,
+        )
+
         visit_service.delete(
             study_uid=self.study.uid, study_visit_uid=special_visit.uid
         )
@@ -1358,7 +1360,7 @@ class TestStudyVisitManagement(unittest.TestCase):
             study_uid=self.study.uid, study_visit_uid=special_visit_anchor.uid
         )
 
-    def test__visit_group_in_range_format(self):
+    def test__visit_group_in_list_format(self):
         visit_service: StudyVisitService = StudyVisitService(study_uid=self.study.uid)
         create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
@@ -1414,23 +1416,40 @@ class TestStudyVisitManagement(unittest.TestCase):
             ]
         )
         self.assertEqual(len(all_visits), 4)
-        self.assertEqual(all_visits[0].consecutive_visit_group, None)
-        self.assertEqual(all_visits[1].consecutive_visit_group, None)
+        self.assertIsNone(all_visits[0].consecutive_visit_group_uid)
+        self.assertIsNone(all_visits[1].consecutive_visit_group_uid)
         self.assertEqual(all_visits[2].consecutive_visit_group, consecutive_visit_group)
         self.assertEqual(all_visits[3].consecutive_visit_group, consecutive_visit_group)
 
+        # The call to create visit in the middle of V3,V4 group should succeed as the group is grouped in the LIST format
+        visit_after_third_and_before_fourth = create_visit_with_update(
+            study_epoch_uid=self.epoch1.uid,
+            visit_type_uid="VisitType_0002",
+            time_reference_uid="VisitSubType_0005",
+            time_value=17,
+            time_unit_uid=self.day_uid,
+            is_global_anchor_visit=False,
+            visit_class="SINGLE_VISIT",
+            visit_subclass="SINGLE_VISIT",
+        )
+        self.assertIsNotNone(visit_after_third_and_before_fourth.uid)
+
         visit_service.delete(study_uid=self.study.uid, study_visit_uid=second_vis.uid)
         all_visits = visit_service.get_all_visits(study_uid=self.study.uid).items
-        self.assertEqual(len(all_visits), 3)
+        self.assertEqual(len(all_visits), 4)
+
+        # There was another visit created in between V1 and V3, so the new group name should be 'V1,V3'
         updated_consecutive_group_name = ",".join(
-            [all_visits[1].visit_short_name, all_visits[2].visit_short_name]
+            [all_visits[1].visit_short_name, all_visits[3].visit_short_name]
         )
-        self.assertEqual(all_visits[0].consecutive_visit_group, None)
+        self.assertIsNone(all_visits[0].consecutive_visit_group_uid)
         self.assertEqual(
             all_visits[1].consecutive_visit_group, updated_consecutive_group_name
         )
+        self.assertIsNone(all_visits[2].consecutive_visit_group_uid)
+        self.assertEqual(all_visits[2].uid, visit_after_third_and_before_fourth.uid)
         self.assertEqual(
-            all_visits[2].consecutive_visit_group, updated_consecutive_group_name
+            all_visits[3].consecutive_visit_group, updated_consecutive_group_name
         )
 
     def test__group_subsequent_visits_in_consecutive_group(self):
@@ -1503,11 +1522,10 @@ class TestStudyVisitManagement(unittest.TestCase):
                 visits_to_assign=[second_vis.uid, fourth_visit.uid],
                 overwrite_visit_from_template=None,
             )
-            self.assertEqual(
-                f"The {fourth_visit.uid} that is trying to be assigned to {consecutive_visit_group} "
-                f"consecutive visit group is not subsequent with other visits",
-                message.exception.msg,
-            )
+        self.assertEqual(
+            "To create visits group please select consecutive visits.",
+            message.exception.msg,
+        )
 
         visit_service.assign_visit_consecutive_group(
             study_uid=self.study.uid,
@@ -1515,10 +1533,22 @@ class TestStudyVisitManagement(unittest.TestCase):
             overwrite_visit_from_template=None,
         )
         all_visits = visit_service.get_all_visits(study_uid=self.study.uid).items
-
         self.assertEqual(len(all_visits), 4)
         self.assertEqual(all_visits[1].consecutive_visit_group, consecutive_visit_group)
         self.assertEqual(all_visits[2].consecutive_visit_group, consecutive_visit_group)
+
+        # It shouldn't be possible to create a visit in the middle of a consecutive visit group which is grouped in the RANGE format
+        with self.assertRaises(ValidationException) as message:
+            visit_input = generate_default_input_data_for_visit()
+            visit_input.update(time_value=12, time_unit_uid=self.day_uid)
+            TestUtils.create_study_visit(
+                study_uid=self.study.uid, study_epoch_uid=self.epoch1.uid, **visit_input
+            )
+        self.assertEqual(
+            f"The visit can't be placed in the middle of Visit Group '{consecutive_visit_group}' which is grouped in the Range way. Uncollapse the '{consecutive_visit_group}' Visit Group first.",
+            message.exception.msg,
+        )
+
         with self.assertRaises(BusinessLogicException) as message:
             edit_input = {
                 "uid": third_visit.uid,
@@ -1537,10 +1567,10 @@ class TestStudyVisitManagement(unittest.TestCase):
                 study_visit_uid=third_visit.uid,
                 study_visit_input=StudyVisitEditInput(**edit_input),
             )
-            self.assertEqual(
-                f"The study visit can't be edited as it is part of visit group {third_visit.consecutive_visit_group}. The visit group should be uncollapsed first.",
-                message.exception.msg,
-            )
+        self.assertEqual(
+            f"The study visit can't be edited as it is part of visit group {consecutive_visit_group}. The visit group should be uncollapsed first.",
+            message.exception.msg,
+        )
 
     def test__group_visits_in_consecutive_group__visits_are_not_equal(self):
         visit_service: StudyVisitService = StudyVisitService(study_uid=self.study.uid)
@@ -1585,9 +1615,7 @@ class TestStudyVisitManagement(unittest.TestCase):
         )
         # assign some study activity schedule
         activity_group = TestUtils.create_activity_group(name="activity_group")
-        activity_subgroup = TestUtils.create_activity_subgroup(
-            name="activity_subgroup", activity_groups=[activity_group.uid]
-        )
+        activity_subgroup = TestUtils.create_activity_subgroup(name="activity_subgroup")
         ar1 = TestUtils.create_activity(
             name="ar1",
             library_name="Sponsor",
@@ -1707,10 +1735,17 @@ class TestStudyVisitManagement(unittest.TestCase):
                 visits_to_assign=[second_visit.uid, third_visit.uid],
                 overwrite_visit_from_template=None,
             )
-            self.assertEqual(
-                f"Visit '{second_visit.visit_short_name}' is not the same as '{third_visit.visit_short_name}'",
-                message.exception.msg,
-            )
+        different_properties = [
+            "visit_type",
+            "visit_contact_mode",
+            "min_visit_window_value",
+            "max_visit_window_value",
+        ]
+        self.assertEqual(
+            f"Visit '{second_visit.visit_short_name}' and '{third_visit.visit_short_name}' have the following properties different {str(different_properties)}",
+            message.exception.msg,
+        )
+
         edit_input = {
             "uid": third_visit.uid,
             "study_epoch_uid": third_visit.study_epoch_uid,
@@ -1726,7 +1761,6 @@ class TestStudyVisitManagement(unittest.TestCase):
             "visit_subclass": third_visit.visit_subclass,
             "show_visit": third_visit.show_visit,
         }
-
         visit_service.edit(
             study_uid=third_visit.study_uid,
             study_visit_uid=third_visit.uid,
@@ -1740,10 +1774,10 @@ class TestStudyVisitManagement(unittest.TestCase):
                 visits_to_assign=[second_visit.uid, third_visit.uid],
                 overwrite_visit_from_template=None,
             )
-            self.assertEqual(
-                f"The following visit {second_visit.visit_name} has different schedules assigned than {third_visit.visit_name}",
-                message.exception.msg,
-            )
+        self.assertEqual(
+            f"Visit with Name '{second_visit.visit_name}' has different schedules assigned than {third_visit.visit_name}",
+            message.exception.msg,
+        )
         visit_service.assign_visit_consecutive_group(
             study_uid=self.study.uid,
             visits_to_assign=[second_visit.uid, third_visit.uid],
@@ -1878,15 +1912,23 @@ class TestStudyVisitManagement(unittest.TestCase):
                 visits_to_assign=[second_visit.uid, third_visit.uid, fourth_visit.uid],
                 overwrite_visit_from_template=None,
             )
-            self.assertEqual(
-                f"The following visit {second_visit.uid} already has consecutive group {cons_visit_group}",
-                message.exception.msg,
-            )
+        self.assertEqual(
+            f"Visit with UID '{second_visit.uid}' already has consecutive group {cons_visit_group}",
+            message.exception.msg,
+        )
 
         all_available_consecutive_groups = visit_service.get_consecutive_groups(
             study_uid=self.study.uid
         )
-        self.assertEqual(all_available_consecutive_groups, {cons_visit_group})
+        self.assertEqual(len(all_available_consecutive_groups), 1)
+        self.assertEqual(
+            all_available_consecutive_groups[0].group_name, cons_visit_group
+        )
+
+        visit_service.remove_visit_consecutive_group(
+            study_uid=self.study.uid,
+            consecutive_visit_group_uid=second_visit.consecutive_visit_group_uid,
+        )
 
         consecutive_visit_group = (
             f"{second_visit.visit_short_name}-{fourth_visit.visit_short_name}"
@@ -1906,9 +1948,12 @@ class TestStudyVisitManagement(unittest.TestCase):
         all_available_consecutive_groups = visit_service.get_consecutive_groups(
             study_uid=self.study.uid
         )
-        self.assertEqual(all_available_consecutive_groups, {consecutive_visit_group})
+        self.assertEqual(len(all_available_consecutive_groups), 1)
+        self.assertEqual(
+            all_available_consecutive_groups[0].group_name, consecutive_visit_group
+        )
 
-    def test__consecutive_visits_should_be_subsequent(
+    def test__visit_groups_can_be_but_not_have_to_be_subsequent(
         self,
     ):
         visit_service: StudyVisitService = StudyVisitService(study_uid=self.study.uid)
@@ -1971,21 +2016,39 @@ class TestStudyVisitManagement(unittest.TestCase):
                 visits_to_assign=[first_visit.uid, second_visit.uid],
                 overwrite_visit_from_template=None,
             )
-            self.assertEqual(
-                f"Given Visits can't be collapsed as they exist in different Epochs [{first_visit.study_epoch.sponsor_preferred_name, second_visit.study_epoch.sponsor_preferred_name}]",
-                message.exception.msg,
-            )
+        epoch_names = sorted(
+            [
+                first_visit.study_epoch.sponsor_preferred_name,
+                second_visit.study_epoch.sponsor_preferred_name,
+            ]
+        )
+        self.assertEqual(
+            f"Given Visits can't be collapsed as they exist in different Epochs {epoch_names}",
+            message.exception.msg,
+        )
 
         with self.assertRaises(BusinessLogicException) as message:
             visit_service.assign_visit_consecutive_group(
                 study_uid=self.study.uid,
-                visits_to_assign=[first_visit.uid, third_visit.uid],
+                visits_to_assign=[second_visit.uid, second_subv.uid],
                 overwrite_visit_from_template=None,
             )
-            self.assertEqual(
-                "To create visits group please select consecutive visits.",
-                message.exception.msg,
-            )
+        self.assertEqual(
+            "To create visits group please select consecutive visits.",
+            message.exception.msg,
+        )
+
+        # It is possible to group non-consecutive visits if they are in the same epoch and grouped in the LIST format
+        grouped_visits = visit_service.assign_visit_consecutive_group(
+            study_uid=self.study.uid,
+            visits_to_assign=[second_visit.uid, second_subv.uid],
+            overwrite_visit_from_template=None,
+            group_format=VisitGroupFormat.LIST,
+        )
+        visit_service.remove_visit_consecutive_group(
+            study_uid=self.study.uid,
+            consecutive_visit_group_uid=grouped_visits[0].consecutive_visit_group_uid,
+        )
 
         first_consecutive_visit_group = (
             f"{second_visit.visit_short_name}-{third_visit.visit_short_name}"
@@ -2005,8 +2068,10 @@ class TestStudyVisitManagement(unittest.TestCase):
         all_available_consecutive_groups = visit_service.get_consecutive_groups(
             study_uid=self.study.uid
         )
+        self.assertEqual(len(all_available_consecutive_groups), 1)
         self.assertEqual(
-            all_available_consecutive_groups, {first_consecutive_visit_group}
+            all_available_consecutive_groups[0].group_name,
+            first_consecutive_visit_group,
         )
 
         second_consecutive_visit_group = (
@@ -2027,9 +2092,14 @@ class TestStudyVisitManagement(unittest.TestCase):
         all_available_consecutive_groups = visit_service.get_consecutive_groups(
             study_uid=self.study.uid
         )
+        self.assertEqual(len(all_available_consecutive_groups), 2)
         self.assertEqual(
-            sorted(all_available_consecutive_groups),
-            [first_consecutive_visit_group, second_consecutive_visit_group],
+            all_available_consecutive_groups[0].group_name,
+            first_consecutive_visit_group,
+        )
+        self.assertEqual(
+            all_available_consecutive_groups[1].group_name,
+            second_consecutive_visit_group,
         )
 
     def test__remove_consecutive_visit_group(self):
@@ -2100,24 +2170,28 @@ class TestStudyVisitManagement(unittest.TestCase):
         all_available_consecutive_groups = visit_service.get_consecutive_groups(
             study_uid=self.study.uid
         )
-        self.assertEqual(all_available_consecutive_groups, {consecutive_visit_group})
+        self.assertEqual(len(all_available_consecutive_groups), 1)
+        self.assertEqual(
+            all_available_consecutive_groups[0].group_name, consecutive_visit_group
+        )
 
         # locking and unlocking to create multiple study value relationships on the existent StudySelections
         TestUtils.create_study_fields_configuration()
         TestUtils.lock_and_unlock_study(study_uid=self.study.uid)
 
         visit_service.remove_visit_consecutive_group(
-            study_uid=self.study.uid, consecutive_visit_group=consecutive_visit_group
+            study_uid=self.study.uid,
+            consecutive_visit_group_uid=all_available_consecutive_groups[0].uid,
         )
         all_visits = visit_service.get_all_visits(study_uid=self.study.uid).items
         self.assertEqual(len(all_visits), 3)
-        self.assertEqual(all_visits[1].consecutive_visit_group, None)
-        self.assertEqual(all_visits[2].consecutive_visit_group, None)
+        self.assertIsNone(all_visits[1].consecutive_visit_group_uid)
+        self.assertIsNone(all_visits[2].consecutive_visit_group_uid)
 
         all_available_consecutive_groups = visit_service.get_consecutive_groups(
             study_uid=self.study.uid
         )
-        self.assertEqual(all_available_consecutive_groups, set())
+        self.assertEqual(len(all_available_consecutive_groups), 0)
 
     def test_get_anchor_visit_for_special_visit(self):
         visit_service: StudyVisitService = StudyVisitService(study_uid=self.study.uid)

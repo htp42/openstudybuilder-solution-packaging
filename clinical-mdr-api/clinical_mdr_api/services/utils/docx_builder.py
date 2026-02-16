@@ -221,3 +221,6 @@ class DocxBuilder:
         style = self.styles.get(style, (None,))[0]
         container.add_paragraph(text, style=style)
         self.delete_paragraph(container.paragraphs[0])
+
+    def add_page_break(self):
+        self.document.add_page_break()

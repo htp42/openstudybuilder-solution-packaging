@@ -695,6 +695,7 @@ const routes = [
         meta: {
           authRequired: true,
           studyRequired: true,
+          featureFlag: 'study_data_suppliers',
         },
       },
       {
@@ -704,6 +705,7 @@ const routes = [
         meta: {
           authRequired: true,
           studyRequired: true,
+          featureFlag: 'study_data_suppliers',
         },
       },
       {

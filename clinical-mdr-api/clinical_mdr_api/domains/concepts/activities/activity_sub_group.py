@@ -10,13 +10,6 @@ from common.exceptions import AlreadyExistsException, BusinessLogicException
 
 
 @dataclass(frozen=True)
-class SimpleActivityGroupVO:
-    activity_group_uid: str
-    activity_group_name: str | None = None
-    activity_group_version: str | None = None
-
-
-@dataclass(frozen=True)
 class ActivitySubGroupVO(ConceptVO):
     """
     The ActivitySubGroupVO acts as the value object for a single ActivitySubGroup aggregate
@@ -24,7 +17,6 @@ class ActivitySubGroupVO(ConceptVO):
 
     name: str
     name_sentence_case: str
-    activity_groups: list[SimpleActivityGroupVO]
 
     @classmethod
     def from_repository_values(
@@ -33,7 +25,6 @@ class ActivitySubGroupVO(ConceptVO):
         name_sentence_case: str,
         definition: str | None,
         abbreviation: str | None,
-        activity_groups: list[SimpleActivityGroupVO],
     ) -> Self:
         activity_subgroup_vo = cls(
             name=name,
@@ -41,14 +32,12 @@ class ActivitySubGroupVO(ConceptVO):
             definition=definition,
             abbreviation=abbreviation,
             is_template_parameter=True,
-            activity_groups=activity_groups,
         )
 
         return activity_subgroup_vo
 
     def validate(
         self,
-        activity_group_exists: Callable[[str], bool],
         activity_subgroup_exists_by_name_callback: Callable[
             [str, str], bool
         ] = lambda x, y: True,
@@ -65,12 +54,6 @@ class ActivitySubGroupVO(ConceptVO):
                 "Activity Subgroup",
                 self.name,
                 "Name",
-            )
-        for activity_group in self.activity_groups:
-            BusinessLogicException.raise_if_not(
-                activity_group_exists(activity_group.activity_group_uid),
-                msg="Activity Subgroup tried to connect to non-existent or non-final concepts "
-                f"""[('Concept Name: Activity Group', "uids: {{'{activity_group.activity_group_uid}'}}")].""",
             )
 
 
@@ -97,13 +80,9 @@ class ActivitySubGroupAR(ConceptARBase):
         concept_vo: ActivitySubGroupVO,
         library: LibraryVO,
         generate_uid_callback: Callable[[], str | None] = lambda: None,
-        concept_exists_by_callback: Callable[
-            [str, str, bool], bool
-        ] = lambda x, y, z: True,
         concept_exists_by_library_and_name_callback: Callable[
             [str, str], bool
         ] = lambda x, y: True,
-        activity_group_exists: Callable[[str], bool] = lambda _: False,
     ) -> Self:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(
             author_id=author_id
@@ -116,7 +95,6 @@ class ActivitySubGroupAR(ConceptARBase):
 
         concept_vo.validate(
             activity_subgroup_exists_by_name_callback=concept_exists_by_library_and_name_callback,
-            activity_group_exists=activity_group_exists,
             library_name=library.name,
         )
 
@@ -139,19 +117,15 @@ class ActivitySubGroupAR(ConceptARBase):
         concept_exists_by_library_and_name_callback: Callable[
             [str, str], bool
         ] = lambda x, y: True,
-        activity_group_exists: Callable[[str], bool] = lambda _: True,
-        perform_validation: bool = True,
     ) -> None:
         """
         Creates a new draft version for the object.
         """
-        if perform_validation:
-            concept_vo.validate(
-                activity_subgroup_exists_by_name_callback=concept_exists_by_library_and_name_callback,
-                activity_group_exists=activity_group_exists,
-                previous_name=self.name,
-                library_name=self.library.name,
-            )
+        concept_vo.validate(
+            activity_subgroup_exists_by_name_callback=concept_exists_by_library_and_name_callback,
+            previous_name=self.name,
+            library_name=self.library.name,
+        )
         if self._concept_vo != concept_vo:
             super()._edit_draft(
                 change_description=change_description, author_id=author_id

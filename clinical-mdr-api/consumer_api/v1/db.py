@@ -462,7 +462,7 @@ def get_study_detailed_soa(
             activity_group.value.name AS activity_group_name,
             activity_group.uid AS activity_group_uid,
             term_name_value.name AS soa_group_name,
-            coalesce(activity.is_data_collected, False) AS is_data_collected
+            coalesce(activity.value.is_data_collected, False) AS is_data_collected
         """
 
     full_query = " ".join(
@@ -596,9 +596,9 @@ def get_library_activities(
         {status_filter}
 
         WITH lib, act_root, act_val, last_version_rel,
-            apoc.coll.toSet([(act_val)-[:HAS_GROUPING]->(:ActivityGrouping)-[:IN_SUBGROUP]->(activity_valid_group:ActivityValidGroup)
+            apoc.coll.toSet([(act_val)-[:HAS_GROUPING]->(activity_grouping:ActivityGrouping)
              | {{
-                 activity_subgroup: head(apoc.coll.sortMulti([(activity_valid_group)<-[:HAS_GROUP]-(activity_subgroup_value:ActivitySubGroupValue)
+                 activity_subgroup: head(apoc.coll.sortMulti([(activity_grouping)-[:HAS_SELECTED_SUBGROUP]->(activity_subgroup_value:ActivitySubGroupValue)
                  <-[has_version:HAS_VERSION]-(activity_subgroup_root:ActivitySubGroupRoot)
                     | {{
                         uid:activity_subgroup_root.uid,
@@ -606,7 +606,7 @@ def get_library_activities(
                         minor_version: toInteger(split(has_version.version,'.')[1]),
                         name:activity_subgroup_value.name
                     }}], ['major_version', 'minor_version'])),
-                    activity_group: head(apoc.coll.sortMulti([(activity_valid_group)-[:IN_GROUP]->(activity_group_value:ActivityGroupValue)
+                    activity_group: head(apoc.coll.sortMulti([(activity_grouping)-[:HAS_SELECTED_GROUP]->(activity_group_value:ActivityGroupValue)
                     <-[has_version:HAS_VERSION]-(activity_group_root:ActivityGroupRoot)
                     | {{
                         uid:activity_group_root.uid,
@@ -703,8 +703,7 @@ def get_library_activity_instances(
                 last_version_rel.version AS version,
                 concept_value.topic_code AS topic_code,
                 concept_value.adam_param_code AS param_code,
-                apoc.coll.toSet([(concept_value)-[:HAS_ACTIVITY]->(activity_grouping:ActivityGrouping)-[:IN_SUBGROUP]->(activity_valid_group:ActivityValidGroup)
-                <-[:HAS_GROUP]-(activity_subgroup_value)<-[:HAS_VERSION]-(activity_subgroup_root:ActivitySubGroupRoot)
+                apoc.coll.toSet([(concept_value)-[:HAS_ACTIVITY]->(activity_grouping:ActivityGrouping)
                 | {{
                     activity: head(apoc.coll.sortMulti([(activity_grouping)<-[:HAS_GROUPING]-(activity_value:ActivityValue)<-[has_version:HAS_VERSION]-
                         (activity_root:ActivityRoot) |
@@ -714,7 +713,7 @@ def get_library_activity_instances(
                             major_version: toInteger(split(has_version.version,'.')[0]),
                             minor_version: toInteger(split(has_version.version,'.')[1])
                         }}], ['major_version', 'minor_version'])),
-                    activity_subgroup: head(apoc.coll.sortMulti([(activity_valid_group)<-[:HAS_GROUP]-(activity_subgroup_value:ActivitySubGroupValue)<-[has_version:HAS_VERSION]-
+                    activity_subgroup: head(apoc.coll.sortMulti([(activity_grouping)-[:HAS_SELECTED_SUBGROUP]->(activity_subgroup_value:ActivitySubGroupValue)<-[has_version:HAS_VERSION]-
                         (activity_subgroup_root:ActivitySubGroupRoot) |
                         {{
                             uid: activity_subgroup_root.uid,
@@ -722,7 +721,7 @@ def get_library_activity_instances(
                             major_version: toInteger(split(has_version.version,'.')[0]),
                             minor_version: toInteger(split(has_version.version,'.')[1])
                         }}], ['major_version', 'minor_version'])),
-                    activity_group: head(apoc.coll.sortMulti([(activity_valid_group)-[:IN_GROUP]->(activity_group_value:ActivityGroupValue)<-[has_version:HAS_VERSION]-
+                    activity_group: head(apoc.coll.sortMulti([(activity_grouping)-[:HAS_SELECTED_GROUP]->(activity_group_value:ActivityGroupValue)<-[has_version:HAS_VERSION]-
                         (activity_group_root:ActivityGroupRoot) |
                         {{
                             uid: activity_group_root.uid,
@@ -847,7 +846,9 @@ def get_studies_audit_trail(
 
     if entity_type:
         params["entity_type"] = entity_type.value.strip()
-        filters.append("$entity_type IN entity_labels")
+        entity_type_filter = "$entity_type IN entity_labels"
+    else:
+        entity_type_filter = ""
 
     if exclude_study_ids:
         for idx, sid in enumerate(exclude_study_ids):
@@ -856,28 +857,69 @@ def get_studies_audit_trail(
                 filters.append(f"NOT study_id CONTAINS $exclude_study_ids_{idx}")
 
     base_query = f"""
-        MATCH (sa:StudyAction)-[:AFTER]->(obj_after)
-        OPTIONAL MATCH (sa)-[:BEFORE]->(obj_before)
-        MATCH (sa)-[:AUDIT_TRAIL]-(sr:StudyRoot)-[:LATEST]->(sv:StudyValue)
-        WHERE sa.date >= datetime($from_ts) AND sa.date < datetime($to_ts)
+        MATCH 
+            (sr:StudyRoot)-[:LATEST]->
+            (sv:StudyValue)<-[:AFTER]-
+            (study_sa:StudyAction)
         
         WITH DISTINCT
-            sa.date AS ts,
+            sr,
+            sv,
             sr.uid AS study_uid,
             CASE sv.subpart_id
-                WHEN IS NULL THEN toUpper(COALESCE(sv.study_id_prefix, '') + "-" + COALESCE(sv.study_number, ''))
-                ELSE toUpper(COALESCE(sv.study_id_prefix, '') + "-" + COALESCE(sv.study_number, '')) + "-" + sv.subpart_id
-            END AS study_id,
-            [label IN labels(sa) WHERE label <> 'StudyAction'][0] as action,
+                WHEN IS NULL 
+                    THEN 
+                        toUpper(
+                            COALESCE(sv.study_id_prefix, '') 
+                            + "-" 
+                            + COALESCE(sv.study_number, '')
+                        )
+                ELSE toUpper(
+                        COALESCE(sv.study_id_prefix, '') 
+                        + "-" 
+                        + COALESCE(sv.study_number, '')
+                    ) 
+                    + "-" 
+                    + sv.subpart_id
+            END AS study_id
+            
+        { 'WHERE ' + ' AND '.join(filters) if filters else ''}
+
+        WITH distinct sr, sv, study_uid, study_id
+
+        MATCH 
+            (obj_after)<-[:AFTER]-
+            (sa:StudyAction)<-[:AUDIT_TRAIL]- 
+            (sr)-[:LATEST]->
+            (sv)
+            WHERE 
+                sa.date >= datetime($from_ts) 
+                AND 
+                sa.date < datetime($to_ts)
+
+        OPTIONAL MATCH 
+            (sa)-[:BEFORE]->
+            (obj_before)
+
+        WITH DISTINCT
+            sa.date AS ts,
+            study_uid,
+            study_id,
+            [
+                label IN labels(sa) 
+                    WHERE label <> 'StudyAction'
+            ][0] as action,
             obj_after.uid as entity_uid,
             labels(obj_after) as entity_labels,
-            [key IN keys(obj_after) WHERE obj_after[key] <> obj_before[key]] AS changed_properties,
+            [
+                key IN keys(obj_after) 
+                    WHERE obj_after[key] <> obj_before[key]
+            ] AS changed_properties,
             CASE WHEN sa.author_id IS NOT NULL AND sa.author_id <> ''
                 THEN apoc.util.md5([sa.author_id])
                 ELSE ''
             END AS author
-            
-        { 'WHERE ' + ' AND '.join(filters) if filters else ''}
+            { 'WHERE ' + entity_type_filter if entity_type_filter else ''}
 
         RETURN DISTINCT
             ts,

@@ -1,6 +1,6 @@
 <template>
   <NNTable
-    key="studyActivityInstancesTable"
+    :key="`studyActivityInstancesTable-${editMode}`"
     ref="tableRef"
     export-object-label="ActivityInstances"
     :headers="headers"
@@ -17,6 +17,7 @@
   >
     <template #headerCenter="">
       <v-btn-toggle
+        v-if="!editMode"
         v-model="selectedStatusTab"
         mandatory
         density="compact"
@@ -31,9 +32,32 @@
           {{ tab.label }}
         </v-btn>
       </v-btn-toggle>
+      <v-btn
+        v-if="editMode"
+        variant="outlined"
+        color="nnBaseBlue"
+        prepend-icon="mdi-content-save-outline"
+        :loading="savingAll"
+        :disabled="savingAll"
+        class="mr-2"
+        @click="saveAllAndClose()"
+      >
+        {{ $t('_global.save_and_close') }}
+      </v-btn>
+      <v-btn
+        v-if="editMode"
+        variant="outlined"
+        color="error"
+        prepend-icon="mdi-close"
+        :disabled="savingAll"
+        @click="discardChanges()"
+      >
+        {{ $t('_global.cancel') }}
+      </v-btn>
     </template>
     <template #actions="">
       <v-btn
+        v-if="!editMode"
         variant="outlined"
         color="nnBaseBlue"
         :disabled="
@@ -42,10 +66,23 @@
         "
         rounded="xl"
         prepend-icon="mdi-exclamation"
+        class="mr-2"
         @click="openBatchUpdateForm()"
       >
         {{ $t('StudyActivityTable.review_instances') }}
       </v-btn>
+      <v-btn
+        v-if="!editMode"
+        size="small"
+        variant="outlined"
+        color="nnBaseBlue"
+        :disabled="
+          !accessGuard.checkPermission($roles.STUDY_WRITE) ||
+          studiesGeneralStore.selectedStudyVersion !== null
+        "
+        icon="mdi-pencil"
+        @click="openEditMode()"
+      />
     </template>
     <template #[`item.actions`]="{ item }">
       <ActionsMenu
@@ -99,10 +136,158 @@
       />
     </template>
     <template #[`item.is_important`]="{ item }">
-      {{ item.is_important ? $t('_global.yes') : '' }}
+      <template v-if="editMode">
+        <v-checkbox
+          v-model="item.is_important"
+          class="mt-2 mb-n4"
+          :disabled="
+            !item.study_activity_instance_uid ||
+            !item.activity?.is_data_collected ||
+            item.is_reviewed
+          "
+          @update:model-value="markItemModified(item)"
+        />
+      </template>
+      <template v-else>
+        {{ item.is_important ? $t('_global.yes') : '' }}
+      </template>
     </template>
     <template #[`item.baseline_visits`]="{ item }">
-      {{ displayVisits(item.baseline_visits) }}
+      <template v-if="editMode">
+        <v-select
+          v-model="item.baseline_visit_uids"
+          class="cellWidthWide"
+          :items="item._availableBaselineVisits || []"
+          item-title="visit_name"
+          item-value="uid"
+          density="compact"
+          multiple
+          chips
+          closable-chips
+          clearable
+          :loading="item._loadingBaselineVisits"
+          :disabled="!item.study_activity_instance_uid || item.is_reviewed"
+          @click="loadBaselineVisitsForItem(item)"
+          @update:model-value="markItemModified(item)"
+        >
+          <template #chip="{ item: chipItem, props: chipProps }">
+            <v-tooltip
+              :text="chipItem.title"
+              location="top"
+              :disabled="!isChipTextTruncated(chipItem.title)"
+            >
+              <template #activator="{ props: tooltipProps }">
+                <v-chip
+                  v-bind="{ ...chipProps, ...tooltipProps }"
+                  closable
+                  size="small"
+                >
+                  {{ chipItem.title }}
+                </v-chip>
+              </template>
+            </v-tooltip>
+          </template>
+        </v-select>
+      </template>
+      <template v-else>
+        {{ displayVisits(item.baseline_visits) }}
+      </template>
+    </template>
+    <template #[`item.study_data_supplier_name`]="{ item }">
+      <template v-if="editMode">
+        <v-select
+          v-model="item.study_data_supplier_uid"
+          class="cellWidthWide"
+          :items="studyDataSuppliers"
+          item-title="name"
+          item-value="study_data_supplier_uid"
+          density="compact"
+          clearable
+          :disabled="!item.study_activity_instance_uid"
+          @update:model-value="onSupplierChange(item, $event)"
+        >
+          <template #selection="{ item: selectedItem }">
+            <v-tooltip
+              :text="selectedItem.title"
+              location="top"
+              :disabled="!isTextTruncated(selectedItem.title)"
+            >
+              <template #activator="{ props }">
+                <div v-bind="props" class="selection-tooltip-wrapper">
+                  {{ selectedItem.title }}
+                </div>
+              </template>
+            </v-tooltip>
+          </template>
+        </v-select>
+      </template>
+      <template v-else>
+        {{ item.study_data_supplier_name }}
+      </template>
+    </template>
+    <template #[`item.origin_type.term_name`]="{ item }">
+      <template v-if="editMode">
+        <v-select
+          v-model="item.origin_type_uid"
+          class="cellWidthWide"
+          :items="originTypes"
+          item-title="sponsor_preferred_name"
+          item-value="term_uid"
+          density="compact"
+          clearable
+          :disabled="!item.study_activity_instance_uid"
+          @update:model-value="markItemModified(item)"
+        >
+          <template #selection="{ item: selectedItem }">
+            <v-tooltip
+              :text="selectedItem.title"
+              location="top"
+              :disabled="!isTextTruncated(selectedItem.title)"
+            >
+              <template #activator="{ props }">
+                <div v-bind="props" class="selection-tooltip-wrapper">
+                  {{ selectedItem.title }}
+                </div>
+              </template>
+            </v-tooltip>
+          </template>
+        </v-select>
+      </template>
+      <template v-else>
+        {{ item.origin_type?.term_name }}
+      </template>
+    </template>
+    <template #[`item.origin_source.term_name`]="{ item }">
+      <template v-if="editMode">
+        <v-select
+          v-model="item.origin_source_uid"
+          class="cellWidthWide"
+          :items="originSources"
+          item-title="sponsor_preferred_name"
+          item-value="term_uid"
+          density="compact"
+          clearable
+          :disabled="!item.study_activity_instance_uid"
+          @update:model-value="markItemModified(item)"
+        >
+          <template #selection="{ item: selectedItem }">
+            <v-tooltip
+              :text="selectedItem.title"
+              location="top"
+              :disabled="!isTextTruncated(selectedItem.title)"
+            >
+              <template #activator="{ props }">
+                <div v-bind="props" class="selection-tooltip-wrapper">
+                  {{ selectedItem.title }}
+                </div>
+              </template>
+            </v-tooltip>
+          </template>
+        </v-select>
+      </template>
+      <template v-else>
+        {{ item.origin_source?.term_name }}
+      </template>
     </template>
   </NNTable>
   <StudyActivityInstancesEditForm
@@ -134,11 +319,13 @@
   <ConfirmDialog ref="confirmRef" :text-cols="6" :action-cols="5" />
 </template>
 <script setup>
-import { computed, inject, ref } from 'vue'
+import { computed, inject, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 import { useStudyActivitiesStore } from '@/stores/studies-activities'
 import study from '@/api/study'
+import dataSuppliers from '@/api/dataSuppliers'
+import terms from '@/api/controlledTerminology/terms'
 import filteringParameters from '@/utils/filteringParameters'
 import NNTable from '@/components/tools/NNTable.vue'
 import ActionsMenu from '@/components/tools/ActionsMenu.vue'
@@ -160,7 +347,16 @@ const roles = inject('roles')
 const tableRef = ref()
 const confirmRef = ref()
 
-const headers = [
+// Edit mode state
+const editMode = ref(false)
+const itemsDisabled = ref(false)
+const savingAll = ref(false)
+const studyDataSuppliers = ref([])
+const libraryDataSuppliers = ref([])
+const originTypes = ref([])
+const originSources = ref([])
+
+const allHeaders = [
   { title: '', key: 'actions', width: '1%' },
   { title: t('StudyActivityInstances.state_actions'), key: 'state' },
   { title: t('StudyActivityInstances.reviewed'), key: 'is_reviewed' },
@@ -214,7 +410,38 @@ const headers = [
     title: t('StudyActivityInstances.baseline_visits'),
     key: 'baseline_visits',
   },
+  {
+    title: t('StudyActivityInstances.data_supplier'),
+    key: 'study_data_supplier_name',
+  },
+  {
+    title: t('StudyActivityInstances.origin_type'),
+    key: 'origin_type.term_name',
+  },
+  {
+    title: t('StudyActivityInstances.origin_source'),
+    key: 'origin_source.term_name',
+  },
 ]
+
+// Columns to hide in edit mode
+const editModeHiddenKeys = [
+  'actions',
+  'state',
+  'is_reviewed',
+  'activity_instance.topic_code',
+  'activity_instance.test_name_code',
+  'activity_instance.specimen',
+  'activity_instance.standard_unit',
+  'activity_instance.adam_param_code',
+]
+
+const headers = computed(() => {
+  if (editMode.value) {
+    return allHeaders.filter((h) => !editModeHiddenKeys.includes(h.key))
+  }
+  return allHeaders
+})
 const studyActivitiesInstances = ref([])
 const total = ref(0)
 const activeActivity = ref({})
@@ -251,19 +478,6 @@ const actions = [
     accessRole: roles.STUDY_WRITE,
   },
   {
-    label: (item) =>
-      item.is_important
-        ? t('StudyActivityInstances.unmark_as_important')
-        : t('StudyActivityInstances.mark_as_important'),
-    icon: 'mdi-alert-octagon-outline',
-    condition: (item) =>
-      !studiesGeneralStore.selectedStudyVersion &&
-      item.activity_instance &&
-      item.activity.is_data_collected,
-    click: toggleImportant,
-    accessRole: roles.STUDY_WRITE,
-  },
-  {
     label: t('_global.history'),
     icon: 'mdi-history',
     click: openHistory,
@@ -276,11 +490,8 @@ const statusTabs = [
   { value: 'reviewed', icon: 'mdi-alert-outline', color: 'warning' },
 ]
 const defaultFilters = computed(() => {
-  return headers
-    .filter((a) => a.key !== 'actions')
-    .filter((a) => a.key !== 'test_name_code')
-    .filter((a) => a.key !== 'specimen')
-    .filter((a) => a.key !== 'standard_unit')
+  // Use the current headers (already filtered by editMode) and exclude actions
+  return headers.value.filter((a) => a.key !== 'actions')
 })
 const exportDataUrl = computed(() => {
   return `studies/${studiesGeneralStore.selectedStudy.uid}/study-activity-instances`
@@ -378,8 +589,24 @@ function getStudyActivityInstances(filters, options, filtersUpdated) {
     }
   }
   params.studyUid = studiesGeneralStore.selectedStudy.uid
+  // In edit mode, only show rows with linked activity instances
+  if (editMode.value) {
+    params.has_activity_instance = true
+  }
   activitiesStore.fetchStudyActivityInstances(params).then((resp) => {
-    studyActivitiesInstances.value = resp.data.items
+    // Initialize uid fields for edit mode dropdowns
+    const items = resp.data.items.map((item) => ({
+      ...item,
+      study_data_supplier_uid: item.study_data_supplier_uid || null,
+      origin_type_uid: item.origin_type?.term_uid || null,
+      origin_source_uid: item.origin_source?.term_uid || null,
+      baseline_visit_uids: item.baseline_visits?.map((v) => v.uid) || [],
+      _modified: false,
+      _saving: false,
+      _availableBaselineVisits: item.baseline_visits || [],
+      _loadingBaselineVisits: false,
+    }))
+    studyActivitiesInstances.value = items
     total.value = resp.data.total
   })
 }
@@ -532,34 +759,192 @@ function onStatusTabChange() {
     tableRef.value.filterTable()
   }
 }
-async function toggleImportant(item) {
-  const newImportantStatus = !item.is_important
-  const data = {
-    is_important: newImportantStatus,
-  }
+// Edit mode functions
+function openEditMode() {
+  editMode.value = true
+}
 
-  try {
-    await study.updateStudyActivityInstance(
-      studiesGeneralStore.selectedStudy.uid,
-      item.study_activity_instance_uid,
-      data
+function closeEditMode() {
+  editMode.value = false
+  itemsDisabled.value = false
+  tableRef.value.filterTable()
+}
+
+function discardChanges() {
+  // Simply close edit mode - filterTable() will reload original data from API
+  closeEditMode()
+}
+
+function markItemModified(item) {
+  item._modified = true
+}
+
+function onSupplierChange(item, supplierUid) {
+  item._modified = true
+
+  // Default to clearing origin type and source - will be set below if supplier has defaults
+  let newOriginTypeUid = null
+  let newOriginSourceUid = null
+
+  if (supplierUid) {
+    // Find the selected Study Data Supplier
+    const selectedStudySupplier = studyDataSuppliers.value.find(
+      (s) => s.study_data_supplier_uid === supplierUid
     )
 
-    const messageKey = newImportantStatus
-      ? 'StudyActivityInstances.instance_marked_important'
-      : 'StudyActivityInstances.instance_unmarked_important'
+    if (selectedStudySupplier) {
+      // Find the linked Library Data Supplier to get defaults
+      // Study Data Supplier has data_supplier_uid that links to Library Data Supplier
+      const librarySupplier = libraryDataSuppliers.value.find(
+        (s) => s.uid === selectedStudySupplier.data_supplier_uid
+      )
 
-    notificationHub.add({ msg: t(messageKey), type: 'success' })
+      if (librarySupplier) {
+        // Auto-populate origin type from library supplier defaults
+        // Check both term_uid (CT term) and uid (generic) field names
+        newOriginTypeUid =
+          librarySupplier.origin_type?.term_uid ||
+          librarySupplier.origin_type?.uid ||
+          null
 
-    // Refresh the table to show updated data
-    tableRef.value.filterTable()
+        // Auto-populate origin source from library supplier defaults
+        // Check both term_uid (CT term) and uid (generic) field names
+        newOriginSourceUid =
+          librarySupplier.origin_source?.term_uid ||
+          librarySupplier.origin_source?.uid ||
+          null
+      }
+    }
+  }
+
+  // Always update the origin fields (either with new defaults or null to clear)
+  item.origin_type_uid = newOriginTypeUid
+  item.origin_source_uid = newOriginSourceUid
+}
+
+async function saveItem(item) {
+  const data = {
+    study_data_supplier_uid: item.study_data_supplier_uid || null,
+    origin_type_uid: item.origin_type_uid || null,
+    origin_source_uid: item.origin_source_uid || null,
+    baseline_visit_uids: item.baseline_visit_uids || [],
+  }
+  // Only include is_important if activity collects data
+  if (item.activity?.is_data_collected) {
+    data.is_important = item.is_important || false
+  }
+
+  await study.updateStudyActivityInstance(
+    studiesGeneralStore.selectedStudy.uid,
+    item.study_activity_instance_uid,
+    data
+  )
+  item._modified = false
+}
+
+async function saveAllAndClose() {
+  const modifiedItems = studyActivitiesInstances.value.filter(
+    (item) => item._modified && item.study_activity_instance_uid
+  )
+
+  if (modifiedItems.length === 0) {
+    closeEditMode()
+    return
+  }
+
+  savingAll.value = true
+  try {
+    await Promise.all(modifiedItems.map((item) => saveItem(item)))
+    notificationHub.add({
+      msg: t('StudyActivityInstances.instances_updated', {
+        count: modifiedItems.length,
+      }),
+      type: 'success',
+    })
+    closeEditMode()
   } catch (error) {
-    // Error notification is handled by the repository interceptor
-    console.error('Failed to toggle important status:', error)
+    console.error('Failed to save items:', error)
+    notificationHub.add({
+      msg: t('StudyActivityInstances.instances_update_failed'),
+      type: 'error',
+    })
+  } finally {
+    savingAll.value = false
   }
 }
+
+// Check if text would be truncated in a 220px cell (approx 18 chars visible)
+function isTextTruncated(text) {
+  return text && text.length > 18
+}
+
+// Check if chip text would be truncated (chips are smaller, approx 12 chars)
+function isChipTextTruncated(text) {
+  return text && text.length > 12
+}
+
+async function loadBaselineVisitsForItem(item) {
+  if (
+    !item.study_activity_instance_uid ||
+    item._availableBaselineVisits?.length > 0
+  ) {
+    return
+  }
+  item._loadingBaselineVisits = true
+  try {
+    const resp = await study.getBaselineVisitsForStudyActivityInstance(
+      studiesGeneralStore.selectedStudy.uid,
+      item.study_activity_instance_uid
+    )
+    item._availableBaselineVisits = resp.data || []
+  } catch (error) {
+    console.error('Failed to load baseline visits:', error)
+    item._availableBaselineVisits = []
+  }
+  item._loadingBaselineVisits = false
+}
+
+// Load dropdown data
+onMounted(() => {
+  // Load study data suppliers for current study
+  study
+    .getStudyDataSuppliers(studiesGeneralStore.selectedStudy.uid, {
+      page_size: 0,
+    })
+    .then((resp) => {
+      studyDataSuppliers.value = resp.data.items || []
+    })
+
+  // Load library data suppliers (for default origin values)
+  dataSuppliers.get({ params: { page_size: 1000 } }).then((resp) => {
+    libraryDataSuppliers.value = resp.data.items || []
+  })
+
+  // Load origin type CT terms
+  terms.getTermsByCodelist('originType').then((resp) => {
+    originTypes.value = resp.data.items || []
+  })
+
+  // Load origin source CT terms
+  terms.getTermsByCodelist('originSource').then((resp) => {
+    originSources.value = resp.data.items || []
+  })
+})
 </script>
 <style scoped>
+.cellWidth {
+  min-width: 180px;
+}
+.cellWidthWide {
+  min-width: 220px;
+}
+.selection-tooltip-wrapper {
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
 .reviewed {
   background-color: darkseagreen;
   border-radius: 5px;

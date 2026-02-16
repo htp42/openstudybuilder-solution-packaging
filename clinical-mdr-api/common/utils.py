@@ -511,3 +511,28 @@ def get_db_result_as_dict(row: list[Any], columns: list[str]) -> dict[str, Any]:
 filter_sort_valid_keys_re = re.compile(
     r"^_?[A-Za-z][A-Za-z0-9_]*(\[[0-9]+])?(?:\.[A-Za-z_][A-Za-z0-9_]*(\[[0-9]+])?)*$"
 )
+
+
+def insert_space_after_commas(text: str, n: int, space=" ") -> str:
+    """Inserts a whitespace after the next comma after every n characters, not counting commas.
+
+    The purpose is to make long comma-separated strings line-breakable by injecting spaces after about every N chars,
+    (not counting commas).
+    """
+
+    parts = text.split(",")
+    result = [parts[0]]
+    parts_len = len(parts[0])
+
+    for part in parts[1:]:
+        result.append(",")
+
+        if parts_len >= n:
+            result.append(space)
+            parts_len = len(part)
+        else:
+            parts_len += len(part)
+
+        result.append(part)
+
+    return "".join(result)

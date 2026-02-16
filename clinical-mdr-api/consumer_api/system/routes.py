@@ -27,7 +27,7 @@ def root(request: Request):
         {
             "request": request,
             "data": {
-                "app_name": "StudyBuilder Consumer API",
+                "app_name": "OpenStudyBuilder Consumer API",
                 "version": get_api_version(),
                 "root_path": root_path,
             },

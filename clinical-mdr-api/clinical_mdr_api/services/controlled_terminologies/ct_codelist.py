@@ -55,7 +55,8 @@ class CTCodelistService:
     def __del__(self):
         self._repos.close()
 
-    def non_transactional_create(
+    @ensure_transaction(db)
+    def create(
         self,
         codelist_input: CTCodelistCreateInput,
         start_date: datetime | None = None,
@@ -216,17 +217,6 @@ class CTCodelistService:
             paired_names_codelist_uid=codelist_input.paired_names_codelist_uid,
         )
 
-    @ensure_transaction(db)
-    def create(
-        self,
-        codelist_input: CTCodelistCreateInput,
-        start_date: datetime | None = None,
-        approve: bool = False,
-    ) -> CTCodelist:
-        return self.non_transactional_create(
-            codelist_input, start_date=start_date, approve=approve
-        )
-
     def get_all_codelists(
         self,
         catalogue_name: str | None = None,
@@ -363,8 +353,9 @@ class CTCodelistService:
 
         return header_values
 
-    def non_transactional_add_term(
-        self, codelist_uid: str, term_uid: str, order: int, submission_value: str
+    @ensure_transaction(db)
+    def add_term(
+        self, codelist_uid: str, term_uid: str, order: int | None, submission_value: str
     ) -> CTCodelist:
         ct_codelist_attributes_ar = (
             self._repos.ct_codelist_attribute_repository.find_by_uid(
@@ -414,6 +405,54 @@ class CTCodelistService:
                 codelist_uid=codelist_uid
             )
         )
+
+        # Validation logic for adding terms to codelists
+        # Get library name for the term to check if it's CDISC or Sponsor
+        term_library_name = (
+            self._repos.ct_term_name_repository.get_library_name_for_term(term_uid)
+        )
+
+        # Get all existing submission values for this term
+        existing_submission_values = (
+            self._repos.ct_term_name_repository.get_submission_values_for_term(term_uid)
+        )
+
+        # Validation for CDISC terms (library = "CDISC")
+        if term_library_name == "CDISC":
+            # CDISC terms: all possible submission values are already defined, no new submission values can be added
+            BusinessLogicException.raise_if(
+                submission_value not in existing_submission_values,
+                msg=f"Term with UID '{term_uid}' is a CDISC term. Cannot add a new submission value '{submission_value}'. All possible submission values are already defined.",
+            )
+        else:
+            # Sponsor terms validation
+            if submission_value not in existing_submission_values:
+                # New submission value:
+                # Either it is a term with no pre-existing submission value
+                # Or it is targeting a paired codelist
+                # If it is neither, then it is not allowed
+
+                # This means it is not a term with no pre-existing submission value
+                if len(existing_submission_values) > 0:
+                    # Check if is targeting a paired codelist
+                    paired_codelist_uid = self._repos.ct_codelist_attribute_repository.get_paired_codelist_uid(
+                        codelist_uid
+                    )
+
+                    term_in_paired = False
+                    if paired_codelist_uid:
+                        # Check if term is in the paired codelist with the same submission value
+                        term_in_paired = self._repos.ct_codelist_attribute_repository.is_term_in_codelist(
+                            term_uid, paired_codelist_uid
+                        )
+
+                    # If so, continue to creation ; otherwise raise an exception
+                    BusinessLogicException.raise_if(
+                        not term_in_paired,
+                        # pylint: disable=line-too-long
+                        msg=f"Term with UID '{term_uid}' is already part of a codelist with submission value '{existing_submission_values[0]}'. Cannot add a new submission value '{submission_value}', except for a paired codelist. Please reuse the existing submission value.",
+                    )
+
         self._repos.ct_codelist_attribute_repository.add_term(
             codelist_uid=codelist_uid,
             term_uid=term_uid,
@@ -432,14 +471,6 @@ class CTCodelistService:
             ct_codelist_attributes_ar,
             paired_codes_codelist_uid=paired_codes_codelist_uid,
             paired_names_codelist_uid=paired_names_codelist_uid,
-        )
-
-    @db.transaction
-    def add_term(
-        self, codelist_uid: str, term_uid: str, order: int, submission_value: str
-    ) -> CTCodelist:
-        return self.non_transactional_add_term(
-            codelist_uid, term_uid, order, submission_value
         )
 
     @db.transaction

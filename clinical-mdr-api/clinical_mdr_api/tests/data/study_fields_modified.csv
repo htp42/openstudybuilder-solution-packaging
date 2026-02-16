@@ -29,6 +29,8 @@ registry,eudamed_srn_number,eudamed_srn_number_null_value_code,,,,id_metadata.re
 text,eudamed_srn_number_null_value_code,,,,,id_metadata.registry_identifiers,eudamed_srn_number_null_value_code,False
 registry,investigational_device_exemption_ide_number,investigational_device_exemption_ide_number_null_value_code,,,,id_metadata.registry_identifiers,investigational_device_exemption_ide_number,False
 text,investigational_device_exemption_ide_number_null_value_code,,,,,id_metadata.registry_identifiers,investigational_device_exemption_ide_number_null_value_code,False
+registry,eu_pas_number,eu_pas_number_null_value_code,,,,id_metadata.registry_identifiers,eu_pas_number,False
+text,eu_pas_number_null_value_code,,,,,id_metadata.registry_identifiers,eu_pas_number_null_value_code,False
 date,version_timestamp,,,,,ver_metadata,version_timestamp,False
 project,project_number,,,,,id_metadata,project_number,False
 text,version_description,,,,,ver_metadata,version_description,False
@@ -38,6 +40,7 @@ text,study_type_code,study_type_null_value_code,C99077,,,high_level_study_design
 text,study_type_null_value_code,,,,,high_level_study_design,study_type_null_value_code,False
 text,trial_phase_code,trial_phase_null_value_code,C66737,,,high_level_study_design,trial_phase_code,False
 text,trial_phase_null_value_code,,,,,high_level_study_design,trial_phase_null_value_code,False
+text,development_stage_code,,,,,high_level_study_design,development_stage_code,False
 multiselect,trial_intent_types_codes,trial_intent_type_null_value_code,C66736,,,study_intervention,trial_intent_types_codes,False
 text,trial_intent_type_null_value_code,,,,,study_intervention,trial_intent_type_null_value_code,False
 multiselect,trial_type_codes,trial_type_null_value_code,C66739,,,high_level_study_design,trial_type_codes,False

@@ -12,7 +12,7 @@ from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatu
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository  # type: ignore
-from clinical_mdr_api.services._utils import calculate_diffs
+from clinical_mdr_api.services._utils import calculate_diffs, ensure_transaction
 from clinical_mdr_api.utils import normalize_string
 from common.auth.user import user
 from common.exceptions import NotFoundException
@@ -177,17 +177,14 @@ class CTCodelistGenericService(Generic[_AggregateRootType], abc.ABC):
     def edit_draft(self, codelist_uid: str, codelist_input: BaseModel) -> BaseModel:
         raise NotImplementedError()
 
-    def non_transactional_approve(self, codelist_uid: str) -> BaseModel:
+    @ensure_transaction(db)
+    def approve(self, codelist_uid: str) -> BaseModel:
         item = self._find_by_uid_or_raise_not_found(
             codelist_uid=codelist_uid, for_update=True
         )
         item.approve(author_id=self.author_id)
         self.repository.save(item)
         return self._transform_aggregate_root_to_pydantic_model(item)
-
-    @db.transaction
-    def approve(self, codelist_uid: str) -> BaseModel:
-        return self.non_transactional_approve(codelist_uid)
 
     def enforce_catalogue_library_package(
         self,

@@ -158,6 +158,7 @@ class RegistryIdentifiersListingModel(BaseModel):
     nmpa: Annotated[str, Field()]
     esn: Annotated[str, Field()]
     ide: Annotated[str, Field()]
+    eupn: Annotated[str, Field()]
 
     @classmethod
     def from_study_registry_identifiers_vo(
@@ -191,6 +192,7 @@ class RegistryIdentifiersListingModel(BaseModel):
             ide=none_to_empty_str(
                 registry_identifiers_vo.investigational_device_exemption_ide_number
             ),
+            eupn=none_to_empty_str(registry_identifiers_vo.eu_pas_number),
         )
 
 

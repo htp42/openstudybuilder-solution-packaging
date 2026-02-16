@@ -56,11 +56,10 @@ function activateDropdown(dropdownName, innerLocator) {
 }
 
 function performSelection(action) {
-    cy.get('.v-list')
+    cy.get('.v-overlay__content .v-list', {timeout: 20000})
         .filter(':visible')
         .should('not.contain', 'No data available')
         .within(() => action())
-    cy.wait(500)
 }
 
 function defocusOnForm() {

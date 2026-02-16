@@ -1,6 +1,10 @@
+import { apiGroupName } from './api_library_steps'
+
 const { Given, When, Then } = require('@badeball/cypress-cucumber-preprocessor')
 
 let indicationSelected, categorySelected, subCategorySelected, parameterSelected, sequenceNumber
+
+When('The activity group data is loaded in the edit indexing form', () => cy.get('[data-cy="template-activity-group"]').should('contain.text', apiGroupName))
 
 When('The Add template button is clicked', () => cy.clickButton('add-template'))
 
@@ -52,6 +56,7 @@ When('The new template name is prepared with a parameters', () => {
 })
 
 When('The indication indexes edition is initiated', () => {
+  cy.wait(1000)
   changeIndex('template-indication-dropdown', true)
   cy.getText('[data-cy="template-indication-dropdown"] [class$="selection-text"]').then(text => indicationSelected = text)
 })

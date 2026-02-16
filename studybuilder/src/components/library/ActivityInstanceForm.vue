@@ -84,6 +84,26 @@
             @update:model-value="filterActivityInstanceClasses"
           />
         </div>
+        <div class="d-flex w-50">
+          <SelectCTTermField
+            v-model="step2Form.data_category"
+            :label="$t('ActivityInstanceForm.data_category')"
+            codelist="findingCategoryDefinition"
+            item-title="submission_value"
+            class="mr-4 w-50"
+            clearable
+            hide-details="auto"
+          />
+          <SelectCTTermField
+            v-model="step2Form.data_subcategory"
+            :label="$t('ActivityInstanceForm.data_subcategory')"
+            codelist="findingSubCategoryDefinition"
+            item-title="submission_value"
+            class="w-50"
+            clearable
+            hide-details
+          />
+        </div>
         <template
           v-if="
             ((testCodeAic && testNameAic) ||
@@ -91,7 +111,7 @@
             step2Form.data_domain
           "
         >
-          <div class="dialog-title mb-4">
+          <div class="dialog-title my-4">
             {{ $t('ActivityInstanceForm.step2_long_title') }}
           </div>
           <template v-if="!testCodeAic && !testNameAic">
@@ -152,6 +172,9 @@
             density="compact"
             class="w-50"
             suffix="g/mol"
+            :rules="[validateMolecularWeight]"
+            :hint="$t('ActivityInstanceForm.molecular_weight_hint')"
+            persistent-hint
           />
         </template>
       </v-form>
@@ -295,23 +318,6 @@
         {{ $t('ActivityInstanceForm.step4_long_title') }}
       </div>
       <v-form ref="step4FormRef">
-        <div class="d-flex w-50">
-          <SelectCTTermField
-            v-model="step4Form.data_category"
-            :label="$t('ActivityInstanceForm.data_category')"
-            codelist="findingCategoryDefinition"
-            item-title="submission_value"
-            class="mr-4"
-            clearable
-          />
-          <SelectCTTermField
-            v-model="step4Form.data_subcategory"
-            :label="$t('ActivityInstanceForm.data_subcategory')"
-            codelist="findingSubCategoryDefinition"
-            item-title="submission_value"
-            clearable
-          />
-        </div>
         <v-alert
           color="nnLightBlue200"
           icon="$info"
@@ -411,6 +417,7 @@
 import { computed, inject, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { useFeatureFlagsStore } from '@/stores/feature-flags'
 import _debounce from 'lodash/debounce'
 import ActivityItemClassField from './ActivityItemClassField.vue'
 import HorizontalStepperForm from '@/components/tools/HorizontalStepperForm.vue'
@@ -438,6 +445,7 @@ const router = useRouter()
 const { t } = useI18n()
 const notificationHub = inject('notificationHub')
 const formRules = inject('formRules')
+const featureFlagsStore = useFeatureFlagsStore()
 
 const activityInstanceClasses = ref([])
 const activities = ref([])
@@ -468,11 +476,21 @@ const title = computed(() => {
     : t('ActivityInstanceForm.add_title')
 })
 
-const allowedInstanceClasses = [
-  'CategoricFindings',
-  'NumericFindings',
-  'TextualFindings',
-]
+const allowedInstanceClasses = ['NumericFindings']
+if (
+  featureFlagsStore.getFeatureFlag(
+    'activity_instance_wizard_stepper_categoric_findings'
+  ) === true
+) {
+  allowedInstanceClasses.unshift('CategoricFindings')
+}
+if (
+  featureFlagsStore.getFeatureFlag(
+    'activity_instance_wizard_stepper_textual_findings'
+  ) === true
+) {
+  allowedInstanceClasses.push('TextualFindings')
+}
 
 const dataDomains = computed(() => {
   if (!datasets.value.length) {
@@ -531,6 +549,7 @@ const optionalActivityItemClasses = computed(() => {
   return filteredActivityItemClasses.value.filter(
     (item) =>
       !item.mandatory &&
+      item.is_adam_param_specific_enabled &&
       !activityItemClassExceptions.value.includes(item.name) &&
       step3Form.value.activityItems.find(
         (selection) => selection.activity_item_class_uid === item.uid
@@ -540,7 +559,7 @@ const optionalActivityItemClasses = computed(() => {
 const otherAvailableActivityItemClasses = computed(() => {
   return filteredActivityItemClasses.value.filter(
     (item) =>
-      !item.mandatory &&
+      item.is_additional_optional &&
       !activityItemClassExceptions.value.includes(item.name) &&
       step3Form.value.activityItems.find(
         (selection) => selection.activity_item_class_uid === item.uid
@@ -548,6 +567,12 @@ const otherAvailableActivityItemClasses = computed(() => {
       step4Form.value.activityItems.find(
         (selection) => selection.activity_item_class_uid === item.uid
       ) === undefined
+  )
+})
+
+const defaultLinkedActivityItemClasses = computed(() => {
+  return filteredActivityItemClasses.value.filter(
+    (item) => item.is_default_linked
   )
 })
 
@@ -621,15 +646,21 @@ const activitiesHeaders = [
     title: t('ActivityInstanceForm.activity_group'),
     key: 'activity_groupings.0.activity_group_name',
     externalFilterSource: 'concepts/activities/activity-groups$name',
+    exludeFromHeader: ['name', 'activity_groupings.0.activity_subgroup_name'],
   },
   {
     title: t('ActivityInstanceForm.activity_subgroup'),
     key: 'activity_groupings.0.activity_subgroup_name',
     externalFilterSource: 'concepts/activities/activity-sub-groups$name',
+    exludeFromHeader: ['name', 'activity_groupings.0.activity_group_name'],
   },
   {
     title: t('ActivityInstanceForm.activity_name'),
     key: 'name',
+    exludeFromHeader: [
+      'activity_groupings.0.activity_subgroup_name',
+      'activity_groupings.0.activity_group_name',
+    ],
   },
   {
     title: t('ActivityInstanceForm.activity_instances'),
@@ -860,6 +891,37 @@ function close() {
   notificationHub.clearErrors()
 }
 
+function validateMolecularWeight(value) {
+  // Allow empty values (field is optional)
+  if (value === null || value === undefined || value === '') {
+    return true
+  }
+  // Convert to string and validate
+  const strValue = String(value).trim()
+  if (strValue === '' || strValue === '.') {
+    return t('ActivityInstanceForm.molecular_weight_hint')
+  }
+  // Check for invalid patterns
+  if (
+    strValue === 'NaN' ||
+    strValue.toLowerCase() === 'nan' ||
+    strValue === 'Infinity' ||
+    strValue === '-Infinity'
+  ) {
+    return t('ActivityInstanceForm.molecular_weight_hint')
+  }
+  // Check if it's a valid number
+  const numValue = Number(strValue)
+  if (isNaN(numValue) || !isFinite(numValue)) {
+    return t('ActivityInstanceForm.molecular_weight_hint')
+  }
+  // Check if it matches decimal pattern (allows decimals)
+  if (!/^[0-9]*\.?[0-9]+$/.test(strValue)) {
+    return t('ActivityInstanceForm.molecular_weight_hint')
+  }
+  return true
+}
+
 function getObserver(step) {
   const observers = {
     1: step1FormRef,
@@ -912,25 +974,26 @@ async function prepareCreationPayload(forPreview) {
     ])
   }
 
-  if (step4Form.value.data_category) {
+  if (step2Form.value.data_category) {
     const resp = await codelistsApi.getAll({
       filters: { 'attributes.submission_value': { v: ['FINDCAT'] } },
     })
     if (resp.data.items.length) {
       const codelistUid = resp.data.items[0].codelist_uid
       addActivityItem(categoryAic.value.uid, codelistUid, [
-        step4Form.value.data_category,
+        step2Form.value.data_category,
       ])
     }
   }
-  if (step4Form.value.data_subcategory) {
+
+  if (step2Form.value.data_subcategory) {
     const resp = await codelistsApi.getAll({
       filters: { 'attributes.submission_value': { v: ['FINDSCAT'] } },
     })
     if (resp.data.items.length) {
       const codelistUid = resp.data.items[0].codelist_uid
       addActivityItem(subcategoryAic.value.uid, codelistUid, [
-        step4Form.value.data_subcategory,
+        step2Form.value.data_subcategory,
       ])
     }
   }
@@ -941,6 +1004,12 @@ async function prepareCreationPayload(forPreview) {
       activityItemClassesConstants.sdtmDomainAbbreviationCodelistUid,
       [dataDomainCTTermUid.value]
     )
+  }
+
+  if (defaultLinkedActivityItemClasses.value.length) {
+    for (const aic of defaultLinkedActivityItemClasses.value) {
+      addActivityItem(aic.uid, null, [])
+    }
   }
 
   const result = {
@@ -961,6 +1030,7 @@ async function prepareCreationPayload(forPreview) {
         activity_uid: activityUid,
       },
     ],
+    strict_mode: true,
   }
   if (step2Form.value.molecular_weight) {
     result.molecular_weight = step2Form.value.molecular_weight

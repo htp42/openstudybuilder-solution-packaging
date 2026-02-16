@@ -84,3 +84,134 @@ def test_missing_retired_relationships():
     assert (
         len(res) == 0
     ), f"Found {len(res)} retired HAS_VERSION relationships without corresponding Final or Draft relationships"
+
+
+def test_duplicate_term_submission_values():
+    """
+    Verify that there are no duplicate submission values within any codelist.
+    """
+    query = """
+        MATCH (clr:CTCodelistRoot)-[ht:HAS_TERM]->(clt:CTCodelistTerm)
+        WHERE ht.end_date IS NULL
+        WITH clr, collect(clt.submission_value) AS term_submvals
+        WITH clr, apoc.coll.duplicates(term_submvals) AS duplicates
+        WHERE size(duplicates) > 0
+        RETURN clr.uid, duplicates
+    """
+    res, _ = run_cypher_query(DB_DRIVER, query)
+
+    total_duplicates = 0
+    for record in res:
+        total_duplicates += len(record[1])
+
+    assert (
+        len(res) == 0
+    ), f"Found {len(res)} codelists with a total of {total_duplicates} duplicate term submission values"
+
+
+def test_negative_duration_has_term():
+    """
+    Verify that there are no HAS_TERM relationships with negative duration.
+    """
+    query = """
+        MATCH (clr:CTCodelistRoot)-[ht:HAS_TERM]->(clt:CTCodelistTerm)
+        WHERE ht.end_date IS NOT NULL AND ht.start_date > ht.end_date
+        RETURN clr.uid, clt.submission_value, ht.start_date, ht.end_date
+    """
+    res, _ = run_cypher_query(DB_DRIVER, query)
+
+    assert (
+        len(res) == 0
+    ), f"Found {len(res)} HAS_TERM relationships with negative duration"
+
+
+def test_duplicate_term_names():
+    """
+    Verify that there are no duplicate term names within any codelist.
+    """
+    query = """
+        MATCH (clr:CTCodelistRoot)-[ht:HAS_TERM]->(clt:CTCodelistTerm)-[:HAS_TERM_ROOT]->(tr:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(tnv:CTTermNameValue)
+        WHERE ht.end_date IS NULL AND clr.uid <> 'C67497'
+        WITH clr, collect(tnv.name) AS term_names
+        WITH clr, apoc.coll.duplicates(term_names) AS duplicates
+        WHERE size(duplicates) > 0
+        RETURN clr.uid, duplicates
+    """
+    res, _ = run_cypher_query(DB_DRIVER, query)
+
+    total_duplicates = 0
+    for record in res:
+        total_duplicates += len(record[1])
+    assert (
+        len(res) == 0
+    ), f"Found {len(res)} codelists with a total of {total_duplicates} duplicate term names"
+
+
+def test_not_latest_has_version_lacks_end_date():
+    """
+    Verify that there are no HAS_VERSION relationships that are not latest and lack an end date.
+    """
+    query = """
+        MATCH (root)-[:HAS_VERSION]->()
+        WHERE none(label in labels(root) WHERE label IN [
+            'ClassVariableRoot',
+            'DataModelIGRoot',
+            'DatasetClassRoot',
+            'DatasetRoot',
+            'DatasetScenarioRoot',
+            'DatasetVariableRoot',
+            'StudyRoot'
+        ])
+        CALL {
+                WITH root
+                MATCH (root)-[hv:HAS_VERSION]-()
+                WITH hv
+                // Sort by version and dates
+                ORDER BY
+                    toInteger(split(hv.version, '.')[0]) DESC,
+                    toInteger(split(hv.version, '.')[1]) DESC,
+                    hv.end_date DESC,
+                    hv.start_date DESC
+                WITH collect(hv) as hvs
+                // Return all except the very latest
+                RETURN tail(hvs) as not_latest
+            }
+        WITH root WHERE any(v IN not_latest WHERE v.end_date IS NULL)
+        RETURN *
+    """
+    res, _ = run_cypher_query(DB_DRIVER, query)
+    assert (
+        len(res) == 0
+    ), f"Found {len(res)} HAS_VERSION relationships that are not latest and lack an end date"
+
+def test_remove_isolated_orphan_nodes():
+    """
+    Bug #3473052: Verify no isolated orphan nodes exist.
+    Check that there are no StudyAction or StudyActivitySchedule
+    nodes with zero relationships.
+    """
+    query = """
+        MATCH (n)
+        WHERE NOT EXISTS ((n)--())
+        AND (n:StudyAction OR n:StudyActivitySchedule)
+        RETURN count(n) AS orphan_count
+    """
+    res, _ = run_cypher_query(DB_DRIVER, query)
+
+    assert res[0][0] == 0, f"Found {res[0][0]} isolated orphan nodes"
+
+
+def test_remove_orphan_study_selection_nodes():
+    """
+    Bug #3473115: Verify no orphan StudySelection nodes exist.
+    Check that all StudySelection nodes are connected to audit trail
+    via AFTER relationship from StudyAction.
+    """
+    query = """
+        MATCH (ss:StudySelection)
+        WHERE NOT (:StudyAction)-[:AFTER]->(ss)
+        RETURN count(ss) AS orphan_count
+    """
+    res, _ = run_cypher_query(DB_DRIVER, query)
+
+    assert res[0][0] == 0, f"Found {res[0][0]} orphan StudySelection nodes"

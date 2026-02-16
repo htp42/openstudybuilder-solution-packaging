@@ -41,10 +41,14 @@
               :label="$t('MedicinalProduct.pharmaceutical_product')"
               density="compact"
               :items="pharmaceuticalProducts"
-              item-title="uid"
+              :item-title="
+                (item) =>
+                  displayIngredients(item) + ', ' + displayDosageForms(item)
+              "
               item-value="uid"
               variant="outlined"
               :rules="[formRules.required]"
+              :filter-keys="['raw.searchable_text']"
             >
               <template #item="{ props, item }">
                 <v-list-item
@@ -186,7 +190,14 @@ const title = computed(() => {
     : t('MedicinalProductForm.add_title')
 })
 
-const helpItems = []
+const helpItems = [
+  'MedicinalProduct.compound',
+  'MedicinalProduct.pharmaceutical_product',
+  'MedicinalProduct.frequency',
+  'MedicinalProduct.delivery_device',
+  'MedicinalProduct.dispenser',
+  'MedicinalProductForm.dose_values',
+]
 
 watch(
   () => props.medicinalProductUid,
@@ -306,7 +317,11 @@ compoundsApi
 pharmaceuticalProductsApi
   .getFiltered({ page_size: 0, filters: { status: { v: [statuses.FINAL] } } })
   .then((resp) => {
-    pharmaceuticalProducts.value = resp.data.items
+    pharmaceuticalProducts.value = resp.data.items.map((item) => {
+      item.searchable_text =
+        displayDosageForms(item) + ' ' + displayIngredients(item)
+      return item
+    })
   })
 termsApi.getTermsByCodelist('frequency', { all: true }).then((resp) => {
   frequencies.value = resp.data.items

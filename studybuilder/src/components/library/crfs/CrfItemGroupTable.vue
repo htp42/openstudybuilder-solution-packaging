@@ -122,12 +122,6 @@
         @close="closeGroupHistory"
       />
     </v-dialog>
-    <CrfActivitiesModelsLinkForm
-      :open="linkForm"
-      :item-to-link="selectedGroup"
-      item-type="itemGroup"
-      @close="closeLinkForm"
-    />
     <ConfirmDialog ref="confirm" :text-cols="6" :action-cols="5" />
     <CrfApprovalSummaryConfirmDialog ref="confirmApproval" />
     <CrfNewVersionSummaryConfirmDialog ref="confirmNewVersion" />
@@ -141,7 +135,6 @@ import ActionsMenu from '@/components/tools/ActionsMenu.vue'
 import crfs from '@/api/crfs'
 import CrfItemGroupForm from '@/components/library/crfs/CrfItemGroupForm.vue'
 import HistoryTable from '@/components/tools/HistoryTable.vue'
-import CrfActivitiesModelsLinkForm from '@/components/library/crfs/CrfActivitiesModelsLinkForm.vue'
 import constants from '@/constants/statuses'
 import filteringParameters from '@/utils/filteringParameters'
 import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
@@ -161,7 +154,6 @@ export default {
     ActionsMenu,
     CrfItemGroupForm,
     HistoryTable,
-    CrfActivitiesModelsLinkForm,
     ConfirmDialog,
     CrfApprovalSummaryConfirmDialog,
     CrfNewVersionSummaryConfirmDialog,
@@ -285,7 +277,6 @@ export default {
       selectedGroup: null,
       filters: '',
       showGroupHistory: false,
-      linkForm: false,
       groupHistoryItems: [],
     }
   },
@@ -327,8 +318,8 @@ export default {
       return sanitizeHTML(html)
     },
     getDescriptionAttribute(item, attr, short) {
-      const engDesc = item.descriptions.find(
-        (el) => el.language === parameters.ENG
+      const engDesc = item.descriptions.find((el) =>
+        [parameters.EN, parameters.ENG].includes(el.language)
       )
       if (engDesc && engDesc[attr]) {
         return short
@@ -444,15 +435,6 @@ export default {
     },
     async closeForm() {
       this.showForm = false
-      this.selectedGroup = null
-      this.$refs.table.filterTable()
-    },
-    openLinkForm(item) {
-      this.selectedGroup = item
-      this.linkForm = true
-    },
-    closeLinkForm() {
-      this.linkForm = false
       this.selectedGroup = null
       this.$refs.table.filterTable()
     },

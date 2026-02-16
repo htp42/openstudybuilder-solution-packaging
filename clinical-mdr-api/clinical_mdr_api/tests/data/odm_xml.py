@@ -1,5 +1,5 @@
 # pylint: disable=too-many-lines, line-too-long
-export_form = """<?xml version="1.0" encoding="utf-8"?>
+EXPORT_FORM = """<?xml version="1.0" encoding="utf-8"?>
 <ODM xmlns:odm="http://www.cdisc.org/ns/odm/v1.3" xmlns:osb="url2" xmlns:prefix="url1" ODMVersion="1.3.2" FileType="Snapshot" FileOID="OID.1653902417076" CreationDateTime="2022-09-22T08:02:21.594676" Granularity="All">
     <Study OID="name1-odm_form1">
         <GlobalVariables>
@@ -27,7 +27,7 @@ export_form = """<?xml version="1.0" encoding="utf-8"?>
                 <osb:DomainColor>XX:#bfffff !important;</osb:DomainColor>
                 <osb:DomainColor>YY:#ffff96 !important;</osb:DomainColor>
                 <Description>
-                    <TranslatedText xml:lang="en">description1</TranslatedText>
+                    <TranslatedText xml:lang="eng">description1</TranslatedText>
                 </Description>
                 <Alias Name="name1" Context="context1" />
                 <ItemRef ItemOID="oid1" Mandatory="Yes" OrderNumber="1" MethodOID="oid1" CollectionExceptionConditionOID="oid1" prefix:nameThree="No" />
@@ -71,7 +71,7 @@ export_form = """<?xml version="1.0" encoding="utf-8"?>
         </MetaDataVersion>
     </Study>
 </ODM>"""
-export_forms = """<?xml version="1.0" encoding="utf-8"?>
+EXPORT_FORMS = """<?xml version="1.0" encoding="utf-8"?>
 <ODM xmlns:odm="http://www.cdisc.org/ns/odm/v1.3" xmlns:osb="url2" xmlns:prefix="url1" ODMVersion="1.3.2" FileType="Snapshot" FileOID="OID.1653902417076" CreationDateTime="2022-09-22T08:02:21.594676" Granularity="All">
     <Study OID="name1-odm_form1">
         <GlobalVariables>
@@ -106,7 +106,7 @@ export_forms = """<?xml version="1.0" encoding="utf-8"?>
                 <osb:DomainColor>XX:#bfffff !important;</osb:DomainColor>
                 <osb:DomainColor>YY:#ffff96 !important;</osb:DomainColor>
                 <Description>
-                    <TranslatedText xml:lang="en">description1</TranslatedText>
+                    <TranslatedText xml:lang="eng">description1</TranslatedText>
                 </Description>
                 <Alias Name="name1" Context="context1" />
                 <ItemRef ItemOID="oid1" Mandatory="Yes" OrderNumber="1" MethodOID="oid1" CollectionExceptionConditionOID="oid1" prefix:nameThree="No" />
@@ -150,7 +150,7 @@ export_forms = """<?xml version="1.0" encoding="utf-8"?>
         </MetaDataVersion>
     </Study>
 </ODM>"""
-export_item_group = """<?xml version="1.0" encoding="utf-8"?>
+EXPORT_ITEM_GROUP = """<?xml version="1.0" encoding="utf-8"?>
 <ODM xmlns:odm="http://www.cdisc.org/ns/odm/v1.3" xmlns:osb="url2" xmlns:prefix="url1" ODMVersion="1.3.2" FileType="Snapshot" FileOID="OID.1653902417076" CreationDateTime="2022-09-22T08:02:21.594676" Granularity="All">
     <Study OID="name1-odm_item_group1">
         <GlobalVariables>
@@ -170,7 +170,7 @@ export_item_group = """<?xml version="1.0" encoding="utf-8"?>
                 <osb:DomainColor>XX:#bfffff !important;</osb:DomainColor>
                 <osb:DomainColor>YY:#ffff96 !important;</osb:DomainColor>
                 <Description>
-                    <TranslatedText xml:lang="en">description1</TranslatedText>
+                    <TranslatedText xml:lang="eng">description1</TranslatedText>
                 </Description>
                 <Alias Name="name1" Context="context1" />
                 <ItemRef ItemOID="oid1" Mandatory="Yes" OrderNumber="1" MethodOID="oid1" CollectionExceptionConditionOID="oid1" prefix:nameThree="No" />
@@ -208,7 +208,7 @@ export_item_group = """<?xml version="1.0" encoding="utf-8"?>
         </MetaDataVersion>
     </Study>
 </ODM>"""
-export_item = """<?xml version="1.0" encoding="utf-8"?>
+EXPORT_ITEM = """<?xml version="1.0" encoding="utf-8"?>
                 <ODM xmlns:odm="http://www.cdisc.org/ns/odm/v1.3" xmlns:osb="url2" xmlns:prefix="url1" ODMVersion="1.3.2"
                 FileType="Snapshot" FileOID="OID.1653902417076" CreationDateTime="2022-09-22T08:02:21.594676" Granularity="All">
                     <Study OID="name1-odm_item1">
@@ -247,7 +247,7 @@ export_item = """<?xml version="1.0" encoding="utf-8"?>
                         </MetaDataVersion>
                     </Study>
                 </ODM>"""
-export_with_csv = """<?xml version="1.0" encoding="utf-8"?>
+EXPORT_WITH_CSV = """<?xml version="1.0" encoding="utf-8"?>
 <ODM xmlns:odm="http://www.cdisc.org/ns/odm/v1.3" xmlns:osb="url2" xmlns:prefix="url1" ODMVersion="1.3.2" FileType="Snapshot" FileOID="OID.1653902417076" CreationDateTime="2022-09-22T08:02:21.594676" Granularity="All">
     <Study OID="name1-odm_form1">
         <GlobalVariables>
@@ -277,7 +277,7 @@ export_with_csv = """<?xml version="1.0" encoding="utf-8"?>
                 <DomainColor>XX:#bfffff !important;</DomainColor>
                 <DomainColor>YY:#ffff96 !important;</DomainColor>
                 <Description>
-                    <TranslatedText xml:lang="en">description1</TranslatedText>
+                    <TranslatedText xml:lang="eng">description1</TranslatedText>
                 </Description>
                 <Alias Name="name1" Context="context1" />
                 <osb:ItemRef ItemOID="oid1" Mandatory="Yes" OrderNumber="1" MethodOID="oid1" CollectionExceptionConditionOID="oid1" prefix:nameThree="No" />
@@ -325,7 +325,7 @@ export_with_csv = """<?xml version="1.0" encoding="utf-8"?>
         </MetaDataVersion>
     </Study>
 </ODM>"""
-export_with_namespace = """<?xml version="1.0" encoding="utf-8"?>
+EXPORT_WITH_NAMESPACE = """<?xml version="1.0" encoding="utf-8"?>
 <ODM xmlns:odm="http://www.cdisc.org/ns/odm/v1.3" xmlns:prefix="url1" ODMVersion="1.3.2" FileType="Snapshot" FileOID="OID.1653902417076" CreationDateTime="2022-09-22T08:02:21.594676" Granularity="All">
     <Study OID="name1-odm_form1">
         <GlobalVariables>
@@ -351,7 +351,7 @@ export_with_namespace = """<?xml version="1.0" encoding="utf-8"?>
             </FormDef>
             <ItemGroupDef OID="oid1" Name="name1" Repeating="No" Purpose="purpose1" SASDatasetName="sas_dataset_name1" Domain="XX:Domain XX|YY:Domain YY">
                 <Description>
-                    <TranslatedText xml:lang="en">description1</TranslatedText>
+                    <TranslatedText xml:lang="eng">description1</TranslatedText>
                 </Description>
                 <Alias Name="name1" Context="context1" />
                 <ItemRef ItemOID="oid1" Mandatory="Yes" OrderNumber="1" MethodOID="oid1" CollectionExceptionConditionOID="oid1" prefix:nameThree="No" />
@@ -397,7 +397,7 @@ export_with_namespace = """<?xml version="1.0" encoding="utf-8"?>
 </ODM>"""
 
 
-import_input1 = """<?xml version="1.0" encoding="utf-8"?>
+IMPORT_INPUT1 = """<?xml version="1.0" encoding="utf-8"?>
         <?xml-stylesheet type="text/xsl" href="odm_study_event_sdtmcrf.xsl"?>
         <ODM xmlns:odm="http://www.cdisc.org/ns/odm/v1.3" ODMVersion="1.3.2" FileType="Snapshot" FileOID="OID.1666353293513" CreationDateTime="2022-10-21 13:54:53.513447" Granularity="All" xmlns:osb="url2" xmlns:clinspark="https://www.clinspark.com">
             <Study OID="ODM version 1.3.2 with DoB-T.ODM-1-3-2-V1">
@@ -695,10 +695,10 @@ import_input1 = """<?xml version="1.0" encoding="utf-8"?>
                     <ConditionDef OID="C.OID2" Name="Condition2">
                         <Description>
                             <TranslatedText xml:lang="en">Condition 2 Description</TranslatedText>
-                            <TranslatedText xml:lang="da">Condition 3 Description</TranslatedText>
+                            <TranslatedText xml:lang="dan">Condition 3 Description</TranslatedText>
                         </Description>
                         <Question>
-                            <TranslatedText xml:lang="da">Condition 3 Description Name</TranslatedText>
+                            <TranslatedText xml:lang="dan">Condition 3 Description Name</TranslatedText>
                             <TranslatedText xml:lang="en">Condition 2 Description Name</TranslatedText>
                             <TranslatedText xml:lang="ar">Condition 4 Description Name</TranslatedText>
                         </Question>
@@ -743,7 +743,7 @@ import_input1 = """<?xml version="1.0" encoding="utf-8"?>
                 </MetaDataVersion>
             </Study>
         </ODM>"""
-import_output1 = {
+IMPORT_OUTPUT1 = {
     "vendor_namespaces": [
         {
             "start_date": "2022-12-01T13:06:35.864543+00:00",
@@ -1175,7 +1175,7 @@ import_output1 = {
             "descriptions": [
                 {
                     "name": "Informed Consent and Demography form",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Informed Consent and Demography form",
                     "instruction": "form instruction",
                     "sponsor_instruction": "form sponsor instruction",
@@ -1272,7 +1272,7 @@ import_output1 = {
             "descriptions": [
                 {
                     "name": "Vital signs form",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Vital signs form",
                     "instruction": "form instruction",
                     "sponsor_instruction": "form sponsor instruction",
@@ -1284,7 +1284,7 @@ import_output1 = {
                     "uid": "OdmItemGroup_000004",
                     "oid": "G.VS.VS",
                     "name": "Vital Signs",
-                    "version": "0.1",
+                    "version": "1.0",
                     "order_number": 1,
                     "mandatory": "Yes",
                     "collection_exception_condition_oid": "",
@@ -1359,7 +1359,7 @@ import_output1 = {
             "descriptions": [
                 {
                     "name": "Blood pressure and pulse",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Blood pressure and pulse",
                     "instruction": "item group instruction",
                     "sponsor_instruction": "item group sponsor instruction",
@@ -1397,7 +1397,7 @@ import_output1 = {
                     "uid": "OdmItem_000023",
                     "oid": "I.SYSBP",
                     "name": "Systolic blood pressure",
-                    "version": "0.1",
+                    "version": "1.0",
                     "order_number": 1,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -1484,7 +1484,7 @@ import_output1 = {
                     "oid": "I.LATERALITY",
                     "name": "Laterality",
                     "order_number": 4,
-                    "version": "0.1",
+                    "version": "1.0",
                     "mandatory": "Yes",
                     "key_sequence": "None",
                     "method_oid": None,
@@ -1510,7 +1510,7 @@ import_output1 = {
                     "oid": "I.LOC",
                     "name": "Anatomical Location",
                     "order_number": 5,
-                    "version": "0.1",
+                    "version": "1.0",
                     "mandatory": "Yes",
                     "key_sequence": "None",
                     "method_oid": None,
@@ -1592,7 +1592,7 @@ import_output1 = {
             "descriptions": [
                 {
                     "name": "General Demographic item group",
-                    "language": "eng",
+                    "language": "en",
                     "description": "General Demographic item group",
                     "instruction": "item group instruction",
                     "sponsor_instruction": "item group sponsor instruction",
@@ -1670,7 +1670,7 @@ import_output1 = {
                     "uid": "OdmItem_000001",
                     "oid": "I.AGE",
                     "name": "Age",
-                    "version": "0.1",
+                    "version": "1.0",
                     "order_number": 3,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -1722,7 +1722,7 @@ import_output1 = {
                     "uid": "OdmItem_000019",
                     "oid": "I.SEXDEA",
                     "name": "Sex [de-activated]",
-                    "version": "0.1",
+                    "version": "1.0",
                     "order_number": 5,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -1748,7 +1748,7 @@ import_output1 = {
                     "uid": "OdmItem_000010",
                     "oid": "I.ETHNIC",
                     "name": "Ethnicity",
-                    "version": "0.1",
+                    "version": "1.0",
                     "order_number": 6,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -1909,7 +1909,7 @@ import_output1 = {
             "descriptions": [
                 {
                     "name": "Informed Consent item group",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Informed Consent item group",
                     "instruction": "item group instruction",
                     "sponsor_instruction": "item group sponsor instruction",
@@ -1987,7 +1987,7 @@ import_output1 = {
                     "uid": "OdmItem_000024",
                     "oid": "I.RFICTIM",
                     "name": "Time informed consent obtained",
-                    "version": "0.1",
+                    "version": "1.0",
                     "order_number": 3,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -2039,7 +2039,7 @@ import_output1 = {
                     "uid": "OdmItem_000011",
                     "oid": "I.RFICTIMLAR1",
                     "name": "Informed Consent TIME obtained by Parents/Legally Acceptable Representative (LAR) [de-activated]",
-                    "version": "0.1",
+                    "version": "1.0",
                     "order_number": 5,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -2091,7 +2091,7 @@ import_output1 = {
                     "uid": "OdmItem_000012",
                     "oid": "I.RFICTIMLAR2",
                     "name": "Informed Consent Time obtained by Parents/Legally Acceptable Representative (LAR) Only to be completed in countries where Informed Consent from both parents is required [de-activated]",
-                    "version": "0.1",
+                    "version": "1.0",
                     "order_number": 7,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -2148,7 +2148,7 @@ import_output1 = {
             "descriptions": [
                 {
                     "name": "Vital signs",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Vital signs",
                     "instruction": "item group instruction",
                     "sponsor_instruction": "item group sponsor instruction",
@@ -2274,7 +2274,7 @@ import_output1 = {
             "descriptions": [
                 {
                     "name": "Age",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Age",
                     "instruction": "item instruction",
                     "sponsor_instruction": "item sponsor instruction",
@@ -2312,6 +2312,7 @@ import_output1 = {
                     "submission_value": "submission_value_1",
                 }
             ],
+            "activity_instances": [],
             "vendor_elements": [
                 {
                     "uid": "OdmVendorElement_000001",
@@ -2363,7 +2364,7 @@ import_output1 = {
             "descriptions": [
                 {
                     "name": "Anatomical Location",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Anatomical Location of the measurement",
                     "instruction": "item instruction",
                     "sponsor_instruction": "item sponsor instruction",
@@ -2373,6 +2374,7 @@ import_output1 = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [
                 {
                     "uid": "OdmVendorElement_000001",
@@ -2424,7 +2426,7 @@ import_output1 = {
             "descriptions": [
                 {
                     "name": "Date informed consent obtained",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Informed Consent DATE",
                     "instruction": "item instruction",
                     "sponsor_instruction": "item sponsor instruction",
@@ -2434,6 +2436,7 @@ import_output1 = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -2461,7 +2464,7 @@ import_output1 = {
             "descriptions": [
                 {
                     "name": "Date informed consent obtained by Parents/Legally Acceptable Representative (LAR) Only to be completed in countries where Informed Consent from both parents is required [de-activated ]",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Informed Consent DATE (Legal or authorised representative 2)",
                     "instruction": "item instruction",
                     "sponsor_instruction": "item sponsor instruction",
@@ -2471,6 +2474,7 @@ import_output1 = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -2498,7 +2502,7 @@ import_output1 = {
             "descriptions": [
                 {
                     "name": "Date informed consent obtained by Parents/Legally Acceptable Representative (LAR) [de-activated ]",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Informed Consent Date (Legal or authorised representative 1)",
                     "instruction": "item instruction",
                     "sponsor_instruction": "item sponsor instruction",
@@ -2508,6 +2512,7 @@ import_output1 = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -2535,7 +2540,7 @@ import_output1 = {
             "descriptions": [
                 {
                     "name": "Date of birth",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Date of birth",
                     "instruction": "item instruction",
                     "sponsor_instruction": "item sponsor instruction",
@@ -2545,6 +2550,7 @@ import_output1 = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -2572,7 +2578,7 @@ import_output1 = {
             "descriptions": [
                 {
                     "name": "Date of birth (only for Argus interface) [hidden ]",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Date of birth (only for Argus interface) [hidden ]",
                     "instruction": "item instruction",
                     "sponsor_instruction": "item sponsor instruction",
@@ -2597,6 +2603,7 @@ import_output1 = {
                     "submission_value": "codelistitem codedvalue",
                 }
             ],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -2624,7 +2631,7 @@ import_output1 = {
             "descriptions": [
                 {
                     "name": "Date of examination",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Date of examination [de-activated ]",
                     "instruction": "item instruction",
                     "sponsor_instruction": "item sponsor instruction",
@@ -2634,6 +2641,7 @@ import_output1 = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -2661,7 +2669,7 @@ import_output1 = {
             "descriptions": [
                 {
                     "name": "Diastolic blood pressure",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Diastolic blood pressure",
                     "instruction": "item instruction",
                     "sponsor_instruction": "item sponsor instruction",
@@ -2684,6 +2692,7 @@ import_output1 = {
             ],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -2711,7 +2720,7 @@ import_output1 = {
             "descriptions": [
                 {
                     "name": "Ethnicity",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Ethinicity",
                     "instruction": "item instruction",
                     "sponsor_instruction": "item sponsor instruction",
@@ -2721,6 +2730,7 @@ import_output1 = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -2748,7 +2758,7 @@ import_output1 = {
             "descriptions": [
                 {
                     "name": "Informed Consent TIME obtained by Parents/Legally Acceptable Representative (LAR) [de-activated ]",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Informed Consent Time (Legal or authorised representative 1)",
                     "instruction": "item instruction",
                     "sponsor_instruction": "item sponsor instruction",
@@ -2758,6 +2768,7 @@ import_output1 = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -2785,7 +2796,7 @@ import_output1 = {
             "descriptions": [
                 {
                     "name": "Informed Consent Time obtained by Parents/Legally Acceptable Representative (LAR) Only to be completed in countries where Informed Consent from both parents is required [de-activated ]",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Informed Consent Time (Legal or authorised representative 2)",
                     "instruction": "item instruction",
                     "sponsor_instruction": "item sponsor instruction",
@@ -2795,6 +2806,7 @@ import_output1 = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -2822,7 +2834,7 @@ import_output1 = {
             "descriptions": [
                 {
                     "name": "Laterality",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Laterality of the measurement",
                     "instruction": "item instruction",
                     "sponsor_instruction": "item sponsor instruction",
@@ -2832,6 +2844,7 @@ import_output1 = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -2859,7 +2872,7 @@ import_output1 = {
             "descriptions": [
                 {
                     "name": "Position",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Position of the subject",
                     "instruction": "item instruction",
                     "sponsor_instruction": "item sponsor instruction",
@@ -2869,6 +2882,7 @@ import_output1 = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -2896,7 +2910,7 @@ import_output1 = {
             "descriptions": [
                 {
                     "name": "Previous Subject No.",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Previous Subject No.",
                     "instruction": "item instruction",
                     "sponsor_instruction": "item sponsor instruction",
@@ -2906,6 +2920,7 @@ import_output1 = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -2933,7 +2948,7 @@ import_output1 = {
             "descriptions": [
                 {
                     "name": "Pulse",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Pulse",
                     "instruction": "item instruction",
                     "sponsor_instruction": "item sponsor instruction",
@@ -2956,6 +2971,7 @@ import_output1 = {
             ],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -2983,7 +2999,7 @@ import_output1 = {
             "descriptions": [
                 {
                     "name": "Race",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Race",
                     "instruction": "item instruction",
                     "sponsor_instruction": "item sponsor instruction",
@@ -2993,6 +3009,7 @@ import_output1 = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -3020,7 +3037,7 @@ import_output1 = {
             "descriptions": [
                 {
                     "name": "Race other",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Race other",
                     "instruction": "item instruction",
                     "sponsor_instruction": "item sponsor instruction",
@@ -3030,6 +3047,7 @@ import_output1 = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -3057,7 +3075,7 @@ import_output1 = {
             "descriptions": [
                 {
                     "name": "Sex [de-activated ]",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Sex [de-activated ]",
                     "instruction": "item instruction",
                     "sponsor_instruction": "item sponsor instruction",
@@ -3067,6 +3085,7 @@ import_output1 = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -3094,7 +3113,7 @@ import_output1 = {
             "descriptions": [
                 {
                     "name": "Sex [read-only ]",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Sex [read-only ]",
                     "instruction": "item instruction",
                     "sponsor_instruction": "item sponsor instruction",
@@ -3104,6 +3123,7 @@ import_output1 = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -3131,7 +3151,7 @@ import_output1 = {
             "descriptions": [
                 {
                     "name": "Study ID",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Study Identifier",
                     "instruction": "item instruction",
                     "sponsor_instruction": "item sponsor instruction",
@@ -3156,6 +3176,7 @@ import_output1 = {
                     "submission_value": "submission_value_1",
                 }
             ],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -3183,7 +3204,7 @@ import_output1 = {
             "descriptions": [
                 {
                     "name": "Subject No. [read-only ]",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Subject No.",
                     "instruction": "item instruction",
                     "sponsor_instruction": "item sponsor instruction",
@@ -3193,6 +3214,7 @@ import_output1 = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -3220,7 +3242,7 @@ import_output1 = {
             "descriptions": [
                 {
                     "name": "Systolic blood pressure",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Systolic blood pressure",
                     "instruction": "item instruction",
                     "sponsor_instruction": "item sponsor instruction",
@@ -3243,6 +3265,7 @@ import_output1 = {
             ],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -3270,7 +3293,7 @@ import_output1 = {
             "descriptions": [
                 {
                     "name": "Time informed consent obtained",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Informed Consent time",
                     "instruction": "item instruction",
                     "sponsor_instruction": "item sponsor instruction",
@@ -3280,6 +3303,7 @@ import_output1 = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -3304,7 +3328,7 @@ import_output1 = {
             "descriptions": [
                 {
                     "name": "Condition 1 Description Name",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Condition 1 Description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -3330,7 +3354,7 @@ import_output1 = {
             "descriptions": [
                 {
                     "name": "Condition 2 Description Name",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Condition 2 Description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -3344,7 +3368,7 @@ import_output1 = {
                 },
                 {
                     "name": "Condition 4 Description Name",
-                    "language": "ara",
+                    "language": "ar",
                     "description": "Please update this description",
                     "instruction": None,
                     "sponsor_instruction": None,
@@ -3373,21 +3397,21 @@ import_output1 = {
             "descriptions": [
                 {
                     "name": "Method 1 Description Name",
-                    "language": "ara",
+                    "language": "ar",
                     "description": "Please update this description",
                     "instruction": None,
                     "sponsor_instruction": None,
                 },
                 {
                     "name": "Method 2 Description Name",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Method 1 Description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
                 },
                 {
                     "name": "Method 3 Description Name",
-                    "language": "dan",
+                    "language": "da",
                     "description": "Method 2 Description",
                     "instruction": None,
                     "sponsor_instruction": None,
@@ -3442,7 +3466,7 @@ import_output1 = {
         }
     ],
 }
-import_input2 = """<?xml version="1.0" encoding="utf-8"?>
+IMPORT_INPUT2 = """<?xml version="1.0" encoding="utf-8"?>
         <ODM xmlns:odm="http://www.cdisc.org/ns/odm/v1.3" xmlns:osb="url2" xmlns:cs="http://clinspark.org" ODMVersion="1.3.2" FileType="Snapshot" FileOID="OID.1666353293513" CreationDateTime="2022-10-21 13:54:53.513447" Granularity="All">
             <Study OID="ODM version 1.3.2 with DoB-T.ODM-1-3-2-V1">
                 <GlobalVariables>
@@ -3463,7 +3487,7 @@ import_input2 = """<?xml version="1.0" encoding="utf-8"?>
                 </MetaDataVersion>
             </Study>
         </ODM>"""
-import_output2 = {
+IMPORT_OUTPUT2 = {
     "vendor_namespaces": [
         {
             "start_date": "2022-11-18T11:01:34.916840",
@@ -3648,7 +3672,7 @@ import_output2 = {
             "descriptions": [
                 {
                     "name": "description1",
-                    "language": "eng",
+                    "language": "en",
                     "description": "description1",
                     "instruction": "instruction1",
                     "sponsor_instruction": "sponsor_instruction1",
@@ -3684,7 +3708,7 @@ import_output2 = {
     "codelists": [],
     "terms": [],
 }
-import_input3 = """<?xml version="1.0" encoding="utf-8"?>
+IMPORT_INPUT3 = """<?xml version="1.0" encoding="utf-8"?>
         <ODM ODMVersion="1.3.2" FileType="Snapshot" FileOID="OID.1666353293513" CreationDateTime="2022-10-21 13:54:53.513447" Granularity="All">
             <Study OID="ODM version 1.3.2 with DoB-T.ODM-1-3-2-V1">
                 <GlobalVariables>
@@ -3712,7 +3736,7 @@ import_input3 = """<?xml version="1.0" encoding="utf-8"?>
                 </MetaDataVersion>
             </Study>
         </ODM>"""
-import_input4 = """<?xml version="1.0" encoding="utf-8"?>
+IMPORT_INPUT4 = """<?xml version="1.0" encoding="utf-8"?>
         <ODM ODMVersion="1.3.2" FileType="Snapshot" FileOID="OID.1666353293513" CreationDateTime="2022-10-21 13:54:53.513447" Granularity="All" xmlns:prefix="url1">
             <Study OID="ODM version 1.3.2 with DoB-T.ODM-1-3-2-V1">
                 <GlobalVariables>
@@ -3726,7 +3750,7 @@ import_input4 = """<?xml version="1.0" encoding="utf-8"?>
                 </MetaDataVersion>
             </Study>
         </ODM>"""
-import_input5 = """<?xml version="1.0" encoding="utf-8"?>
+IMPORT_INPUT5 = """<?xml version="1.0" encoding="utf-8"?>
         <ODM ODMVersion="1.3.2" FileType="Snapshot" FileOID="OID.1666353293513" CreationDateTime="2022-10-21 13:54:53.513447" Granularity="All" xmlns:prefix="url1">
             <Study OID="ODM version 1.3.2 with DoB-T.ODM-1-3-2-V1">
                 <GlobalVariables>
@@ -3743,7 +3767,7 @@ import_input5 = """<?xml version="1.0" encoding="utf-8"?>
                 </MetaDataVersion>
             </Study>
         </ODM>"""
-import_input6 = """<?xml version="1.0" encoding="utf-8"?>
+IMPORT_INPUT6 = """<?xml version="1.0" encoding="utf-8"?>
         <?xml-stylesheet type="text/xsl" href="odm_study_event_sdtmcrf.xsl"?>
         <ODM xmlns:odm="http://www.cdisc.org/ns/odm/v1.3" ODMVersion="1.3.2" FileType="Snapshot" FileOID="OID.1666353293513" CreationDateTime="2022-10-21 13:54:53.513447" Granularity="All" xmlns:osb="url2" xmlns:clinspark="https://www.clinspark.com">
             <Study OID="ODM version 1.3.2 with DoB-T.ODM-1-3-2-V1">
@@ -3780,7 +3804,7 @@ import_input6 = """<?xml version="1.0" encoding="utf-8"?>
             </Study>
         </ODM>"""
 
-clinspark_input = """<?xml version="1.0" encoding="UTF-8"?>
+CLINSPARK_INPUT = """<?xml version="1.0" encoding="UTF-8"?>
 <ODM xmlns="http://www.cdisc.org/ns/odm/v1.3" FileType="Snapshot" Granularity="Metadata" FileOID="ODM.1665487443144" CreationDateTime="2022-10-11T13:24:03+02:00" ODMVersion="1.3.2" xmlns:prefix="url1">
    <Study OID="S.2">
       <GlobalVariables>
@@ -4593,7 +4617,7 @@ clinspark_input = """<?xml version="1.0" encoding="UTF-8"?>
       </MetaDataVersion>
    </Study>
 </ODM>"""
-clinspark_output = {
+CLINSPARK_OUTPUT = {
     "vendor_namespaces": [
         {
             "start_date": "2022-12-21T11:35:18.111000+00:00",
@@ -5023,7 +5047,7 @@ clinspark_output = {
                 {
                     "uid": "OdmForm_000005",
                     "name": "Administration of <Investigational medicinal product> 1",
-                    "version": "0.1",
+                    "version": "1.0",
                     "order_number": 999999,
                     "mandatory": "Yes",
                     "locked": "No",
@@ -5041,7 +5065,7 @@ clinspark_output = {
                 {
                     "uid": "OdmForm_000002",
                     "name": "Demography 1",
-                    "version": "0.1",
+                    "version": "1.0",
                     "order_number": 999999,
                     "mandatory": "Yes",
                     "locked": "No",
@@ -5050,7 +5074,7 @@ clinspark_output = {
                 {
                     "uid": "OdmForm_000001",
                     "name": "Informed Consent 1",
-                    "version": "0.1",
+                    "version": "1.0",
                     "order_number": 999999,
                     "mandatory": "Yes",
                     "locked": "No",
@@ -5100,7 +5124,7 @@ clinspark_output = {
                     "uid": "OdmItemGroup_000006",
                     "oid": "IG.98",
                     "name": "Preparation for dosing 1",
-                    "version": "0.1",
+                    "version": "1.0",
                     "order_number": 2,
                     "mandatory": "Yes",
                     "collection_exception_condition_oid": "",
@@ -5110,7 +5134,7 @@ clinspark_output = {
                     "uid": "OdmItemGroup_000007",
                     "oid": "IG.99",
                     "name": "Administration of <Investigational medicinal product> 1",
-                    "version": "0.1",
+                    "version": "1.0",
                     "order_number": 3,
                     "mandatory": "Yes",
                     "collection_exception_condition_oid": "",
@@ -5120,7 +5144,7 @@ clinspark_output = {
                     "uid": "OdmItemGroup_000008",
                     "oid": "IG.267",
                     "name": "Post dose 1",
-                    "version": "0.1",
+                    "version": "1.0",
                     "order_number": 4,
                     "mandatory": "Yes",
                     "collection_exception_condition_oid": "",
@@ -5148,7 +5172,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Body Measurements form including weight, height and BMI calculation. Expected use for screening visit.",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Body Measurements form including weight, height and BMI calculation. Expected use for screening visit.",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -5160,7 +5184,7 @@ clinspark_output = {
                     "uid": "OdmItemGroup_000003",
                     "oid": "IG.153",
                     "name": "Body Measurements 1",
-                    "version": "0.1",
+                    "version": "1.0",
                     "order_number": 2,
                     "mandatory": "Yes",
                     "collection_exception_condition_oid": "",
@@ -5192,7 +5216,7 @@ clinspark_output = {
                     "uid": "OdmItemGroup_000002",
                     "oid": "IG.262",
                     "name": "Demography 1",
-                    "version": "0.1",
+                    "version": "1.0",
                     "order_number": 1,
                     "mandatory": "Yes",
                     "collection_exception_condition_oid": "",
@@ -5325,7 +5349,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Exposure as Collected",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Exposure as Collected",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -5428,7 +5452,7 @@ clinspark_output = {
                     "uid": "OdmItem_000040",
                     "oid": "I.578",
                     "name": "EC_specify_reason_ECREASOC 1",
-                    "version": "0.1",
+                    "version": "1.0",
                     "order_number": 7,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5443,7 +5467,7 @@ clinspark_output = {
                     "uid": "OdmItem_000041",
                     "oid": "I.576",
                     "name": "EC_type_of_treatment_ECSCAT 1",
-                    "version": "0.1",
+                    "version": "1.0",
                     "order_number": 8,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5459,7 +5483,7 @@ clinspark_output = {
                     "oid": "I.580",
                     "name": "EC_bleed_no_ECXB 1",
                     "order_number": 9,
-                    "version": "0.1",
+                    "version": "1.0",
                     "mandatory": "Yes",
                     "key_sequence": "None",
                     "method_oid": None,
@@ -5474,7 +5498,7 @@ clinspark_output = {
                     "oid": "I.581",
                     "name": "EC_surgery_no_ECPR 1",
                     "order_number": 10,
-                    "version": "0.1",
+                    "version": "1.0",
                     "mandatory": "Yes",
                     "key_sequence": "None",
                     "method_oid": None,
@@ -5504,7 +5528,7 @@ clinspark_output = {
                     "oid": "I.583",
                     "name": "EC_end_datetime_ECENDTC 1",
                     "order_number": 12,
-                    "version": "0.1",
+                    "version": "1.0",
                     "mandatory": "Yes",
                     "key_sequence": "None",
                     "method_oid": None,
@@ -5534,7 +5558,7 @@ clinspark_output = {
                     "oid": "I.561",
                     "name": "EC_dose_form_ECDOSFRM 1",
                     "order_number": 14,
-                    "version": "0.1",
+                    "version": "1.0",
                     "mandatory": "Yes",
                     "key_sequence": "None",
                     "method_oid": None,
@@ -5549,7 +5573,7 @@ clinspark_output = {
                     "oid": "I.562",
                     "name": "EC_route_ECROUTE 1",
                     "order_number": 15,
-                    "version": "0.1",
+                    "version": "1.0",
                     "mandatory": "Yes",
                     "key_sequence": "None",
                     "method_oid": None,
@@ -5579,7 +5603,7 @@ clinspark_output = {
                     "oid": "I.564",
                     "name": "EC_inj_site_ECLOC 1",
                     "order_number": 17,
-                    "version": "0.1",
+                    "version": "1.0",
                     "mandatory": "Yes",
                     "key_sequence": "None",
                     "method_oid": None,
@@ -5615,7 +5639,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Body Measurements",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Body Measurements",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -5673,7 +5697,7 @@ clinspark_output = {
                     "uid": "OdmItem_000009",
                     "oid": "I.600",
                     "name": "VS_height_VSTESTCD-VSORRES 1",
-                    "version": "0.1",
+                    "version": "1.0",
                     "order_number": 4,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5703,7 +5727,7 @@ clinspark_output = {
                     "uid": "OdmItem_000011",
                     "oid": "I.621",
                     "name": "VS_BMI_VSORRES-VSTESTCD 1",
-                    "version": "0.1",
+                    "version": "1.0",
                     "order_number": 6,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5740,7 +5764,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Demographics",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Demographics",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -5783,7 +5807,7 @@ clinspark_output = {
                     "uid": "OdmItem_000014",
                     "oid": "I.1058",
                     "name": "DM Race - American Indian Or Alaska Native 1",
-                    "version": "0.1",
+                    "version": "1.0",
                     "order_number": 3,
                     "mandatory": "No",
                     "key_sequence": "None",
@@ -5813,7 +5837,7 @@ clinspark_output = {
                     "uid": "OdmItem_000016",
                     "oid": "I.1060",
                     "name": "DM Race - Black Or African American 1",
-                    "version": "0.1",
+                    "version": "1.0",
                     "order_number": 5,
                     "mandatory": "No",
                     "key_sequence": "None",
@@ -5828,7 +5852,7 @@ clinspark_output = {
                     "uid": "OdmItem_000017",
                     "oid": "I.1061",
                     "name": "DM Race - Native Hawaiian Or Other Pacific Islander 1",
-                    "version": "0.1",
+                    "version": "1.0",
                     "order_number": 6,
                     "mandatory": "No",
                     "key_sequence": "None",
@@ -5843,7 +5867,7 @@ clinspark_output = {
                     "uid": "OdmItem_000018",
                     "oid": "I.1062",
                     "name": "DM Race - White 1",
-                    "version": "0.1",
+                    "version": "1.0",
                     "order_number": 7,
                     "mandatory": "No",
                     "key_sequence": "None",
@@ -5858,7 +5882,7 @@ clinspark_output = {
                     "uid": "OdmItem_000019",
                     "oid": "I.1063",
                     "name": "DM Ethnicity 1",
-                    "version": "0.1",
+                    "version": "1.0",
                     "order_number": 8,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5930,7 +5954,7 @@ clinspark_output = {
                     "uid": "OdmItem_000002",
                     "oid": "I.661",
                     "name": "DS_DSDECOD 1",
-                    "version": "0.1",
+                    "version": "1.0",
                     "order_number": 2,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -5945,7 +5969,7 @@ clinspark_output = {
                     "uid": "OdmItem_000003",
                     "oid": "I.566",
                     "name": "ICFVER_eS 1",
-                    "version": "0.1",
+                    "version": "1.0",
                     "order_number": 3,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -6026,7 +6050,7 @@ clinspark_output = {
                     "uid": "OdmItem_000050",
                     "oid": "I.589",
                     "name": "EC_admin_by_eS 1",
-                    "version": "0.1",
+                    "version": "1.0",
                     "order_number": 1,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -6056,7 +6080,7 @@ clinspark_output = {
                     "uid": "OdmItem_000052",
                     "oid": "I.594",
                     "name": "EC_comment_eS 1",
-                    "version": "0.1",
+                    "version": "1.0",
                     "order_number": 3,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -6098,7 +6122,7 @@ clinspark_output = {
                     "uid": "OdmItem_000034",
                     "oid": "I.585",
                     "name": "EC_req_met_eS 1",
-                    "version": "0.1",
+                    "version": "1.0",
                     "order_number": 1,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -6128,7 +6152,7 @@ clinspark_output = {
                     "uid": "OdmItem_000036",
                     "oid": "I.588",
                     "name": "EC_dun_eS 1",
-                    "version": "0.1",
+                    "version": "1.0",
                     "order_number": 3,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -6143,7 +6167,7 @@ clinspark_output = {
                     "uid": "OdmItem_000037",
                     "oid": "I.592",
                     "name": "EC_no_inj_eS 1",
-                    "version": "0.1",
+                    "version": "1.0",
                     "order_number": 4,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -6195,7 +6219,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Exposure as Collected",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Exposure as Collected",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -6298,7 +6322,7 @@ clinspark_output = {
                     "uid": "OdmItem_000032",
                     "oid": "I.559",
                     "name": "EC_prescribed_dose_ECDOSE 1",
-                    "version": "0.1",
+                    "version": "1.0",
                     "order_number": 7,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -6313,7 +6337,7 @@ clinspark_output = {
                     "uid": "OdmItem_000033",
                     "oid": "I.561",
                     "name": "EC_dose_form_ECDOSFRM 1",
-                    "version": "0.1",
+                    "version": "1.0",
                     "order_number": 8,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -6350,7 +6374,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Vital Signs",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Vital Signs",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -6363,7 +6387,7 @@ clinspark_output = {
                     "uid": "OdmItem_000021",
                     "oid": "I.406",
                     "name": "VS_VSCAT 2",
-                    "version": "0.1",
+                    "version": "1.0",
                     "order_number": 1,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -6408,7 +6432,7 @@ clinspark_output = {
                     "uid": "OdmItem_000024",
                     "oid": "I.356",
                     "name": "VS_diast_blood_pres_ORRES_DIABP 1",
-                    "version": "0.1",
+                    "version": "1.0",
                     "order_number": 5,
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -6464,7 +6488,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Subject self-reported ethnicity",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Ethnicity",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -6474,6 +6498,7 @@ clinspark_output = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -6501,7 +6526,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Subject self-reported race - American Indian Or Alaska Native",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Race - American Indian Or Alaska Native",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -6511,6 +6536,7 @@ clinspark_output = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -6538,7 +6564,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Subject self-reported race - Asian",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Race - Asian",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -6548,6 +6574,7 @@ clinspark_output = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -6575,7 +6602,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Subject self-reported race - Black or African American",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Race - Black Or African American",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -6585,6 +6612,7 @@ clinspark_output = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -6612,7 +6640,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Subject self-reported race - Native Hawaiian or Other Pacific Islander",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Race - Native Hawaiian Or Other Pacific Islander",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -6622,6 +6650,7 @@ clinspark_output = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -6649,7 +6678,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Subject self-reported race - White",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Race - White",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -6659,6 +6688,7 @@ clinspark_output = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -6686,7 +6716,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Sex",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Sex",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -6720,6 +6750,7 @@ clinspark_output = {
                     "version": "1.0",
                 },
             ],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -6747,7 +6778,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Age",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Age",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -6770,6 +6801,7 @@ clinspark_output = {
             ],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -6797,7 +6829,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Previous Subject No.",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -6807,6 +6839,7 @@ clinspark_output = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -6834,7 +6867,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "DSCAT",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -6877,6 +6910,7 @@ clinspark_output = {
                     "version": "1.0",
                 },
             ],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -6904,7 +6938,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "DSDECOD",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -7001,6 +7035,7 @@ clinspark_output = {
                     "version": "1.0",
                 },
             ],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -7028,7 +7063,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Date and time informed consent obtained",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -7038,6 +7073,7 @@ clinspark_output = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -7065,7 +7101,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "<Investigational medicinal product>",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -7108,6 +7144,7 @@ clinspark_output = {
                     "version": "1.0",
                 },
             ],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -7135,7 +7172,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "ECCAT",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -7160,6 +7197,7 @@ clinspark_output = {
                     "version": "1.0",
                 }
             ],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -7187,7 +7225,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "ECMOOD",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -7221,6 +7259,7 @@ clinspark_output = {
                     "version": "1.0",
                 },
             ],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -7248,7 +7287,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "ECPRESP",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -7273,6 +7312,7 @@ clinspark_output = {
                     "version": "1.0",
                 }
             ],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -7300,7 +7340,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Has the investigational medicinal product been administered to the subject?",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -7334,6 +7374,7 @@ clinspark_output = {
                     "version": "1.0",
                 },
             ],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -7361,7 +7402,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Administered by",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -7371,6 +7412,7 @@ clinspark_output = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -7398,7 +7440,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Bleeding episode no.",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -7408,6 +7450,7 @@ clinspark_output = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -7435,7 +7478,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Checked by",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -7445,6 +7488,7 @@ clinspark_output = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -7472,7 +7516,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Comment",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -7482,6 +7526,7 @@ clinspark_output = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -7509,7 +7554,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Start date and time of prescription",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -7519,6 +7564,7 @@ clinspark_output = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -7546,7 +7592,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Actual Dose",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -7556,6 +7602,7 @@ clinspark_output = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -7583,7 +7630,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Dose form",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -7617,6 +7664,7 @@ clinspark_output = {
                     "version": "1.0",
                 },
             ],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -7644,7 +7692,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "DUN (Dispensing Unit No.)",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -7654,6 +7702,7 @@ clinspark_output = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -7681,7 +7730,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "End date and time of administration",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -7691,6 +7740,7 @@ clinspark_output = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -7718,7 +7768,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Injection site",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -7761,6 +7811,7 @@ clinspark_output = {
                     "version": "1.0",
                 },
             ],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -7788,7 +7839,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Laterality",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -7822,6 +7873,7 @@ clinspark_output = {
                     "version": "1.0",
                 },
             ],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -7849,7 +7901,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Morphology of injection site",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -7859,6 +7911,7 @@ clinspark_output = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -7886,7 +7939,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Number of injections",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -7896,6 +7949,7 @@ clinspark_output = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -7923,7 +7977,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Prescribed dose",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -7933,6 +7987,7 @@ clinspark_output = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -7960,7 +8015,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Requirements for dosing met?",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -7994,6 +8049,7 @@ clinspark_output = {
                     "version": "1.0",
                 },
             ],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -8021,7 +8077,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Route",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -8055,6 +8111,7 @@ clinspark_output = {
                     "version": "1.0",
                 },
             ],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -8082,7 +8139,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Seq. no.",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -8092,6 +8149,7 @@ clinspark_output = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -8119,7 +8177,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Specify reason",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -8129,6 +8187,7 @@ clinspark_output = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -8156,7 +8215,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Start date and time of administration",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -8166,6 +8225,7 @@ clinspark_output = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -8193,7 +8253,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Surgery no.",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -8203,6 +8263,7 @@ clinspark_output = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -8230,7 +8291,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Type of treatment",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -8300,6 +8361,7 @@ clinspark_output = {
                     "version": "1.0",
                 },
             ],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -8327,7 +8389,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Volume administered",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -8350,6 +8412,7 @@ clinspark_output = {
             ],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -8377,7 +8440,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "ICF Notes",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -8387,6 +8450,7 @@ clinspark_output = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -8414,7 +8478,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "ICF Version",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -8424,6 +8488,7 @@ clinspark_output = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -8451,7 +8516,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "BMI",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -8474,6 +8539,7 @@ clinspark_output = {
             ],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -8501,7 +8567,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "VSCAT",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -8535,6 +8601,7 @@ clinspark_output = {
                     "version": "1.0",
                 },
             ],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -8562,7 +8629,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "VSCAT",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -8596,6 +8663,7 @@ clinspark_output = {
                     "version": "1.0",
                 },
             ],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -8623,7 +8691,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Date and time of examination",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -8633,6 +8701,7 @@ clinspark_output = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -8660,7 +8729,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Date of examination",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -8670,6 +8739,7 @@ clinspark_output = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -8697,7 +8767,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Diastolic blood pressure",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -8720,6 +8790,7 @@ clinspark_output = {
             ],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -8747,7 +8818,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Was the subject fasting when the body measurement was done?",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -8781,6 +8852,7 @@ clinspark_output = {
                     "version": "1.0",
                 },
             ],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -8808,7 +8880,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Height",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -8831,6 +8903,7 @@ clinspark_output = {
             ],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -8858,7 +8931,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Pulse",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -8868,6 +8941,7 @@ clinspark_output = {
             "unit_definitions": [],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -8895,7 +8969,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Systolic blood pressure",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -8918,6 +8992,7 @@ clinspark_output = {
             ],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -8945,7 +9020,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Body weight",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Please update this description",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",
@@ -8968,6 +9043,7 @@ clinspark_output = {
             ],
             "codelist": None,
             "terms": [],
+            "activity_instances": [],
             "vendor_elements": [],
             "vendor_attributes": [],
             "vendor_element_attributes": [],
@@ -8997,7 +9073,7 @@ clinspark_output = {
             "descriptions": [
                 {
                     "name": "Calculation of BMI based on height and weight",
-                    "language": "eng",
+                    "language": "en",
                     "description": "Calculation of BMI based on height and weight",
                     "instruction": "Please update this instruction",
                     "sponsor_instruction": "Please update this sponsor instruction",

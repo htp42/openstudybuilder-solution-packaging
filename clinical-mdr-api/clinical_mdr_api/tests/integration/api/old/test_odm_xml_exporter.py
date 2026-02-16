@@ -11,12 +11,12 @@ from neomodel import db
 
 from clinical_mdr_api.main import app
 from clinical_mdr_api.tests.data.odm_xml import (
-    export_form,
-    export_forms,
-    export_item,
-    export_item_group,
-    export_with_csv,
-    export_with_namespace,
+    EXPORT_FORM,
+    EXPORT_FORMS,
+    EXPORT_ITEM,
+    EXPORT_ITEM_GROUP,
+    EXPORT_WITH_CSV,
+    EXPORT_WITH_NAMESPACE,
 )
 from clinical_mdr_api.tests.integration.utils.api import drop_db, inject_and_clear_db
 from clinical_mdr_api.tests.integration.utils.data_library import (
@@ -69,12 +69,12 @@ def test_data():
 
 def test_get_odm_xml_form(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/xmls/export?target_uids=odm_form1&target_type=form&stylesheet=blank&allowed_namespaces=*",
+        "concepts/odms/metadata/xmls/export?targets=odm_form1&target_type=form&stylesheet=blank&allowed_namespaces=*",
     )
     assert_response_status_code(response, 200)
     assert_response_content_type(response, CONTENT_TYPE)
 
-    expected_xml = ET.fromstring(export_form)
+    expected_xml = ET.fromstring(EXPORT_FORM)
     actual_xml = ET.fromstring(response.content)
 
     expected_xml.set("FileOID", actual_xml.attrib["FileOID"])
@@ -87,12 +87,48 @@ def test_get_odm_xml_form(api_client):
 
 def test_get_odm_xml_forms(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/xmls/export?target_uids=odm_form1&target_uids=odm_form2&target_type=form&stylesheet=blank&allowed_namespaces=*",
+        "concepts/odms/metadata/xmls/export?targets=odm_form1&targets=odm_form2&target_type=form&stylesheet=blank&allowed_namespaces=*",
     )
     assert_response_status_code(response, 200)
     assert_response_content_type(response, CONTENT_TYPE)
 
-    expected_xml = ET.fromstring(export_forms)
+    expected_xml = ET.fromstring(EXPORT_FORMS)
+    actual_xml = ET.fromstring(response.content)
+
+    expected_xml.set("FileOID", actual_xml.attrib["FileOID"])
+    expected_xml.set("CreationDateTime", actual_xml.attrib["CreationDateTime"])
+
+    assert '<?xml-stylesheet type="text/xsl" href="blank"?>' in response.text
+
+    xml_diff(expected_xml, actual_xml)
+
+
+def test_get_odm_xml_forms_with_specific_version(api_client):
+    response = api_client.post(
+        "concepts/odms/metadata/xmls/export?targets=odm_form1,1.0&targets=odm_form2,1.0&target_type=form&stylesheet=blank&allowed_namespaces=*",
+    )
+    assert_response_status_code(response, 200)
+    assert_response_content_type(response, CONTENT_TYPE)
+
+    expected_xml = ET.fromstring(EXPORT_FORMS)
+    actual_xml = ET.fromstring(response.content)
+
+    expected_xml.set("FileOID", actual_xml.attrib["FileOID"])
+    expected_xml.set("CreationDateTime", actual_xml.attrib["CreationDateTime"])
+
+    assert '<?xml-stylesheet type="text/xsl" href="blank"?>' in response.text
+
+    xml_diff(expected_xml, actual_xml)
+
+
+def test_get_odm_xml_forms_without_specific_version(api_client):
+    response = api_client.post(
+        "concepts/odms/metadata/xmls/export?targets=odm_form1,&targets=odm_form2,&target_type=form&stylesheet=blank&allowed_namespaces=*",
+    )
+    assert_response_status_code(response, 200)
+    assert_response_content_type(response, CONTENT_TYPE)
+
+    expected_xml = ET.fromstring(EXPORT_FORMS)
     actual_xml = ET.fromstring(response.content)
 
     expected_xml.set("FileOID", actual_xml.attrib["FileOID"])
@@ -105,12 +141,12 @@ def test_get_odm_xml_forms(api_client):
 
 def test_get_odm_xml_item_group(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/xmls/export?target_uids=odm_item_group1&target_type=item_group&stylesheet=blank&allowed_namespaces=*",
+        "concepts/odms/metadata/xmls/export?targets=odm_item_group1&target_type=item_group&stylesheet=blank&allowed_namespaces=*",
     )
     assert_response_status_code(response, 200)
     assert_response_content_type(response, CONTENT_TYPE)
 
-    expected_xml = ET.fromstring(export_item_group)
+    expected_xml = ET.fromstring(EXPORT_ITEM_GROUP)
     actual_xml = ET.fromstring(response.content)
 
     expected_xml.set("FileOID", actual_xml.attrib["FileOID"])
@@ -123,12 +159,12 @@ def test_get_odm_xml_item_group(api_client):
 
 def test_get_odm_xml_item(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/xmls/export?target_uids=odm_item1&target_type=item&stylesheet=blank&allowed_namespaces=*",
+        "concepts/odms/metadata/xmls/export?targets=odm_item1&target_type=item&stylesheet=blank&allowed_namespaces=*",
     )
     assert_response_status_code(response, 200)
     assert_response_content_type(response, CONTENT_TYPE)
 
-    expected_xml = ET.fromstring(export_item)
+    expected_xml = ET.fromstring(EXPORT_ITEM)
     actual_xml = ET.fromstring(response.content)
 
     expected_xml.set("FileOID", actual_xml.attrib["FileOID"])
@@ -141,12 +177,12 @@ def test_get_odm_xml_item(api_client):
 
 def test_get_odm_xml_with_allowed_namespaces(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/xmls/export?target_uids=odm_form1&target_type=form&allowed_namespaces=prefix",
+        "concepts/odms/metadata/xmls/export?targets=odm_form1&target_type=form&allowed_namespaces=prefix",
     )
     assert_response_status_code(response, 200)
     assert_response_content_type(response, CONTENT_TYPE)
 
-    expected_xml = ET.fromstring(export_with_namespace)
+    expected_xml = ET.fromstring(EXPORT_WITH_NAMESPACE)
     actual_xml = ET.fromstring(response.content)
     expected_xml.set("FileOID", actual_xml.attrib["FileOID"])
     expected_xml.set("CreationDateTime", actual_xml.attrib["CreationDateTime"])
@@ -156,7 +192,7 @@ def test_get_odm_xml_with_allowed_namespaces(api_client):
 
 def test_get_odm_xml_with_mapper_csv(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/xmls/export?target_type=form&target_uids=odm_form1&allowed_namespaces=*",
+        "concepts/odms/metadata/xmls/export?target_type=form&targets=odm_form1&allowed_namespaces=*",
         files={
             "mapper_file": (
                 "mapper.csv",
@@ -177,7 +213,7 @@ def test_get_odm_xml_with_mapper_csv(api_client):
     assert_response_status_code(response, 200)
     assert_response_content_type(response, CONTENT_TYPE)
 
-    expected_xml = ET.fromstring(export_with_csv)
+    expected_xml = ET.fromstring(EXPORT_WITH_CSV)
     actual_xml = ET.fromstring(response.content)
 
     expected_xml.set("FileOID", actual_xml.attrib["FileOID"])
@@ -188,7 +224,7 @@ def test_get_odm_xml_with_mapper_csv(api_client):
 
 def test_get_odm_xml_pdf_version(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/xmls/export?target_type=form&target_uids=odm_form1&pdf=true&stylesheet=blank"
+        "concepts/odms/metadata/xmls/export?target_type=form&targets=odm_form1&pdf=true&stylesheet=blank"
     )
     assert_response_status_code(response, 200)
     assert_response_content_type(response, "application/pdf")
@@ -196,7 +232,7 @@ def test_get_odm_xml_pdf_version(api_client):
 
 def test_throw_exception_if_target_type_is_not_supported(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/xmls/export?target_uids=study&target_type=study",
+        "concepts/odms/metadata/xmls/export?targets=study&target_type=study",
     )
 
     assert_response_status_code(response, 400)
@@ -208,7 +244,7 @@ def test_throw_exception_if_target_type_is_not_supported(api_client):
 
 def test_throw_exception_if_mapper_is_non_csv(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/xmls/export?target_uids=odm_form1&target_type=form",
+        "concepts/odms/metadata/xmls/export?targets=odm_form1&target_type=form",
         files={
             "mapper_file": (
                 "mapper.json",
@@ -226,7 +262,7 @@ def test_throw_exception_if_mapper_is_non_csv(api_client):
 
 def test_throw_exception_if_csv_header_missing(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/xmls/export?target_uids=odm_form1&target_type=form",
+        "concepts/odms/metadata/xmls/export?targets=odm_form1&target_type=form",
         files={
             "mapper_file": (
                 "mapper.csv",

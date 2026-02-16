@@ -1,10 +1,46 @@
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
+const { activity_placeholder_name } = require("./study_activities_steps");
 
-let topicCode, instanceName
+let topicCode, instanceName, activityName
+let existingInstanceName, existingTopicCode, selectedActivityName, selectedCodeSubmissionValue
 
-Then("Topic code is changed to the unique one", () => cy.contains('.v-stepper-window-item .v-input', 'Topic code').clear().type(Date.now()))
+Then('User can see which activity was selected in the previous step', () => cy.get('.v-alert__content').should('contain.text', activityName))
 
-Then("Created activity is visible in table", () => cy.searchAndCheckPresence(instanceName, true))
+When('User intercepts available activities requests', () => cy.intercept('/api/concepts/activities/activities?page_number=1&page_size=*').as('getActivities'))
+
+When('User intecepts codelist submission value request', () => cy.intercept('/api/ct/codelists?filters=*').as('codelistRequest'))
+
+When('User intecepts preview request', () => cy.intercept('/api/concepts/activities/activity-instances/preview').as('preview'))
+
+When('User intercepts activity instance creation request with strict_mode verification', () => {
+    cy.intercept('POST', '/api/concepts/activities/activity-instances', (req) => {
+        expect(req.body).to.have.property('strict_mode', true)
+    }).as('createInstanceWithStrictMode')
+})
+
+When('User waits for activity instance creation request with strict_mode verification', () => {
+    cy.wait('@createInstanceWithStrictMode')
+})
+
+When('User intecepts activity groupings request', () => cy.intercept('/api/concepts/activities/activity-instances/*/activity-groupings').as('activityGroupings'))
+
+When('User intecepts activity items request', () => cy.intercept('/api/concepts/activities/activity-instances/*/activity-items?*').as('activityItemClasses'))
+
+When('User waits for available activities requests', () => cy.wait('@getActivities'))
+
+When('User waits for codelist submission value request', () => cy.wait('@codelistRequest'))
+
+When('User waits for preview request', () => cy.wait('@preview'))
+
+When('User waits for activity groupings request', () => cy.wait('@activityGroupings'))
+
+When('User waits for activity items request', () => cy.wait('@activityItemClasses'))
+
+When('User saves activity name created via API', () => cy.getActivityNameByUid().then(name => activityName = name))
+
+Then("User searches for created activity instance", () => cy.searchFor(instanceName))
+
+Then("Created activity instance is displayed in the first table row", () => cy.checkRowByIndex(0, 'Activity Instance', instanceName))
 
 Then("Activity instance is not visible in table", () => cy.searchAndCheckPresence(instanceName, false))
 
@@ -14,62 +50,43 @@ Given("The Activity Instance Wizard Stepper {string} page is displayed", (steppe
 
 Given("Add activity item class button is clicked", () => cy.get('.v-window-item button').filter(':visible').contains('Add Activity Item Class').eq(0).click())
 
-When("An Activity is selected from the activity list", () => {
-    cy.get('.v-overlay-container table tbody tr [type="radio"]').eq(0).check()
-})
+When("First activity is selected from the activity list", () => cy.get('.v-overlay-container table tbody tr [type="radio"]').eq(0).check())
 
 When("The {string} is selected from the Activity instance class field", name => requiredTabSelection('Activity instance', name))
 
-When("First value is selected from the Data domain field", () => selectFirstDataDomain())
+When("The {string} is selected from the Data category field", name => requiredTabSelection('Data category', name))
+
+When("The {string} is selected from the Data SubCategory field", name => requiredTabSelection('Data subcategory (optional)', name))
 
 When('Customize toggle is turn on', () => cy.get('input[aria-label="Customize"]').check())
 
 When("Value {string} is selected for {int} Activity item class field", (value, index) => selectOptionalActivityItemClass(index, value))
 
-When("The first Activity item class is selected", () => selectFirstActivityItemClass())
-
 When("The {string} is selected from the Activity instance domain field", name => requiredTabSelection('Data domain', name))
 
-Then("The mandatory value field is outlined in red", () => cy.get('.v-field--error').should('be.visible'))
-
-Then("The test_code, test_name, unit_dimention and standard_unit fields are inactive", () => validateRequiredInstanceClassFields('have.class', 'v-input--disabled'))
-
-Then("The test_code, test_name, unit_dimention and standard_unit values are empty", () => validateRequiredInstanceClassFields('have.value', ''))
-
-Then("The Required Activity Item Classes field is displayed", () => cy.contains('.v-overlay .v-row .dialog-title', 'Required Activity Item Classes'). should('be.visible'))
+Then("The Activity Item Classes selection displayed", () => cy.contains('.v-overlay .v-row .dialog-title', 'Select Activity Item Classes'). should('be.visible'))
 
 Then("Warning is displayed for mandatory field {string}", (fieldName) => warningIsDisplayed(fieldName))
 
 Then("Warning about not matching name and sentence case name is displayed", () => warningIsDisplayed('Sentence case name', "Sentence case name can only differ in case compared to name value"))
 
-Then("Warning about already existing topic code is displayed", () => cy.checkSnackbarMessage(`Activity Instance with Topic Code '${topicCode}' already exists`))
+Then("Warning about already existing topic code is displayed", () => cy.checkSnackbarMessage(`Activity Instance with Topic Code '${existingTopicCode}' already exists`))
 
-Then("Warning about already existing activity name is displayed", () => cy.checkSnackbarMessage(`Activity Instance with Name '${instanceName}' already exists`))
+Then("Warning about already existing activity name is displayed", () => cy.checkSnackbarMessage(`Activity Instance with Name '${existingInstanceName}' already exists`))
 
 Then("Warning about not selected acitivity is displayed", () => cy.checkSnackbarMessage(`You must select an activity from the list`))
 
-Then("Mandatory field {string} is cleared", (fieldName) => clearField(fieldName))
-
-Then("Field {string} is filled with value {string}", (fieldName, value) => fillField(fieldName, value))
+Then("Activity Instance Data field {string} is cleared", (fieldName) => clearField(fieldName))
 
 Then("Automatically assigned activity instance name is saved", () => {
     cy.contains('.v-stepper-window-item .v-input', 'Activity instance name').find('input').invoke('val').then(text => instanceName = text)
 })
 
-Then("Activity instance is created", () => createInstance(true, true))
+Then("Final activity instance name is saved", () => cy.get('.v-container .page-title').invoke('text').then(text => instanceName = text.trim()))
 
-Then("Second Activity instance with the same topic code is created", () => createInstance(true, false))
+Then("The test_code value is not selected", () => cy.contains('.d-flex .v-input', 'Test Code').next().find('label.v-label').should('contain.text', 'Code submission value'))
 
-Then("Second Activity instance with the same name is created", () => createInstance(false, true))
-
-Then("The test_code value is automatically populated", () => cy.contains('.d-flex .v-input', 'test_code').next().should('not.be.empty'))
-
-Then("The standard_unit value is not automatically populated", () => cy.contains('.d-flex .v-input', 'standard_unit').next().should('have.value', ''))
-
-Then("The test_code value is enabled for picking different value", () => {
-    cy.contains('.d-flex .v-input', 'test_code').next().click()
-    cy.get('.v-overlay .v-list-item').eq(1).click()
-})
+Then("The test_code value is automatically populated", () => cy.contains('.d-flex .v-input', 'Test Code').next().find('.v-select__selection').should('not.contain.text', 'Code submission value'))
 
 Then("Sentence case name is lowercased version of instance name", () => {
     cy.contains('.v-stepper-window-item .v-input', 'Activity instance name').find('input').invoke('val').then(nameText => {
@@ -77,57 +94,113 @@ Then("Sentence case name is lowercased version of instance name", () => {
     })
 })
 
-When("The test_name value is selected", () => {
-    cy.wait(2500)
-    selectRequiredActivityItemClass('test_name')
+When("First available test_name is selected", () => selectActivityItemClass('Test Name'))
+
+When("test_name {string} is selected", (value) => selectSpecificActivityItemClass('Test Name', value))
+
+When("The Instance unit_dimension and standard_unit are selected", () => {
+    selectActivityItemClass('Unit dimension')
+    selectActivityItemClass('Standardised unit')
 })
 
-When("The unit_dimension value is selected", () => selectRequiredActivityItemClass('unit_dimension'))
-
-When("The Required Activity Item Classes field is filled with data", () => {
-    cy.wait(5000)
-    selectRequiredActivityItemClass('test_name')
-    selectRequiredActivityItemClass('unit_dimension')
-    selectRequiredActivityItemClass('standard_unit')
+When("unit_dimension {string} and standard_unit {string} are selected", (unitDimentionValue, standardUnitValue) => {
+    selectSpecificActivityItemClass('Unit dimension', unitDimentionValue)
+    selectSpecificActivityItemClass('Standardised unit', standardUnitValue, false)
 })
 
-When("Activity created via API is searched for", () => {
-    cy.getActivityNameByUid().then(name => cy.searchForInPopUp(name))
+When("Activity created via API is searched for", () => cy.searchForInPopUp(activityName))
+
+Then("Correct instance overview page is displayed", () => cy.get('.v-container .page-title').should('contain.text', selectedActivityName))
+
+When("The already used instance name is saved", () => cy.getCellValue(0, 'Activity Instance').then(text => existingInstanceName = text))
+
+When("The already used topic code is saved", () => cy.getCellValue(0, 'Topic code').then(text => existingTopicCode = text))
+
+When("Selected Activity name is saved", () => cy.getCellValueInPopUp(0, 'Activity').then(text => selectedActivityName = text))
+
+When("Selected Code Submission value is saved", () => {
+    cy.contains('.d-flex .v-input', 'Test Code').next().find('.v-select__selection').invoke('text').then(val => selectedCodeSubmissionValue = val)
 })
 
-Then("Correct instance overview page is displayed", () => cy.contains('.page-title', instanceName))
+When("The instance name is changed to the already used one", () => {
+    fillField('Activity instance name', existingInstanceName)
+    fillField('Sentence case name', existingInstanceName.toLowerCase())
+})
 
-function createInstance(uniqueName, uniqueTopicCode) {
-    cy.intercept('/api/concepts/activities/activity-instances').as('createInstance')
-    if (uniqueName) instanceName = `Instance${Date.now()}`
-    if (uniqueTopicCode) topicCode = `Topic${Date.now()}`
-    cy.clickButton('add-activity')
-    cy.wait(1000)
-    cy.get('.v-overlay-container table tbody tr [type="radio"]').eq(0).check()
-    cy.clickFormActionButton('continue')
-    requiredTabSelection('Activity instance', 'CategoricFindings')
-    selectFirstDataDomain()
-    cy.clickFormActionButton('continue')
-    cy.get('input[aria-label="Customize"]').check()
-    fillField('ADaM parameter', 'ADAM')
-    fillField('Topic code', topicCode)
+When("The instance name is changed to custom one", () => {
+    instanceName = `Instance${Date.now()}`
     fillField('Activity instance name', instanceName)
     fillField('Sentence case name', instanceName.toLowerCase())
-    cy.clickFormActionButton('continue')
-    cy.clickFormActionButton('save')
-    cy.wait('@createInstance')
-    cy.waitForTable()
-}
+})
 
-function selectRequiredActivityItemClass(type) {
-    cy.contains('.d-flex .v-input', type).siblings('.v-input .v-field.v-field--loading').should('not.exist')
+When("The sentance case name is set to different value than instance name", () => fillField('Sentence case name', `${Date.now()}`))
+
+When("The topic code is changed to the already used one", () => fillField('Topic code', existingTopicCode))
+
+Then("Activity Instance Name is identical to selected Activity Name", () => {
+    cy.contains('.v-stepper-window-item .v-input', 'Activity instance name').find('input').should('have.value', selectedActivityName)
+})
+
+Then("Topic code is uppercased version of Activity Instance Name with _ instead of spaces", () => {
+    cy.contains('.v-stepper-window-item .v-input', 'Topic code').find('input').should('contain.value', selectedActivityName.toUpperCase().replaceAll(' ', '_'))
+})
+
+Then("ADaM parameter code is four first letters of selected Code submission value of Activity Item Class", () => {
+    cy.contains('.v-stepper-window-item .v-input', 'ADaM parameter code').find('input').should('contain.value', selectedCodeSubmissionValue.substring(0, 4))
+})
+
+When("Data from research lab is checked", () => cy.get('input[aria-label="Data from a Research lab"]').check())
+
+Then("Activity Instance Name have Research added to it", () => {
+    cy.contains('.v-stepper-window-item .v-input', 'Activity instance name').find('input').should('have.value', `${selectedActivityName} Research`)
+})
+
+Then("Topic code have _RESEARCH added to it", () => {
+    cy.contains('.v-stepper-window-item .v-input', 'Topic code').find('input').should('have.value', `${selectedActivityName.toUpperCase().replaceAll(' ', '_')}_RESEARCH`)
+})
+
+Then("ADaM parameter code have X added to it", () => {
+    cy.contains('.v-stepper-window-item .v-input', 'ADaM parameter code').find('input').should('contain.value', `${selectedCodeSubmissionValue.substring(0, 4)}X`)
+})
+
+Then('Required fields name_submission_value, code_submission_value, unit_dimension are marked as required', () => {
+    cy.contains('.d-flex .v-input', 'Test Name').next().should('contain.text', 'This field is required')
+    cy.contains('.d-flex .v-input', 'Test Code').next().should('contain.text', 'This field is required')
+    cy.contains('.d-flex .v-input', 'Unit dimension').next().should('contain.text', 'This field is required')
+})
+
+Then('Only values for Numeric Findings and MK as data domain are displayed for Activity Item Class selection in the Step 3', () => {
+    cy.get('.v-form .v-card-text').filter(':visible').contains('.d-flex .v-input', 'Activity item class').click()
+    cy.contains('.v-overlay .v-list-item', 'Analysis Method')
+    cy.contains('.v-overlay .v-list-item', 'Directionality')
+    cy.contains('.v-overlay .v-list-item', 'Laterality')
+    cy.contains('.v-overlay .v-list-item', 'Location')
+    cy.contains('.v-overlay .v-list-item', 'Method')
+    cy.contains('.v-overlay .v-list-item', 'Position')
+    cy.get('.v-form .v-card-text').filter(':visible').contains('.d-flex .v-input', 'Activity item class').click()
+})
+
+Then('Only values for Numeric Findings and MK as data domain are displayed for Activity Item Class selection in the Step 4', () => {
+    cy.get('.v-form .v-card-text').filter(':visible').contains('.d-flex .v-input', 'Activity item class').click()
+    cy.contains('.v-overlay .v-list-item', 'Analysis Method')
+    cy.contains('.v-overlay .v-list-item', 'Elapsed Time')
+    cy.contains('.v-overlay .v-list-item', 'Evaluation Interval')
+    cy.contains('.v-overlay .v-list-item', 'Evaluation Interval Text')
+    cy.contains('.v-overlay .v-list-item', 'Evaluator')
+    cy.contains('.v-overlay .v-list-item', 'Evaluator Identifier')
+    cy.contains('.v-overlay .v-list-item', 'Group Identifier')
+})
+
+function selectActivityItemClass(type) {
     cy.contains('.d-flex .v-input', type).next().click()
-    cy.get('.v-overlay .v-list-item').eq(0).click()
+    cy.get('.v-overlay .v-list-item').should('not.have.text', 'No data available').eq(0).click()
 }
 
-function selectFirstActivityItemClass() {
-    cy.get('.v-form .v-card-text').filter(':visible').eq(0).contains('.d-flex .v-input', 'Activity item class').click()
-    cy.get('.v-overlay .v-list-item').eq(0).click()
+function selectSpecificActivityItemClass(type, value, search = true) {
+    cy.contains('.d-flex .v-input', type).next().click()
+    cy.get('.v-overlay .v-list-item').should('not.have.text', 'No data available')
+    if(search) cy.get('input[placeholder="Search"]').click().type(value)
+    cy.get('.v-overlay .v-list-item').should('not.have.text', 'No data available').contains(value).click()
 }
 
 function selectOptionalActivityItemClass(index, itemClassName) {
@@ -143,13 +216,26 @@ function requiredTabSelection(dropdown_name, value) {
     cy.contains('.v-overlay .v-list-item', value).click()
 }
 
-function selectFirstDataDomain() {
-    cy.contains('.v-stepper-window-item .v-input', 'Data domain').click()
-    cy.get('.v-overlay .v-list-item').eq(0).click()
-}
-
 function warningIsDisplayed(fieldName, message = 'This field is required') {
-    cy.contains('.v-stepper-window-item .v-input', fieldName).contains(message).should('be.visible')
+    // Handle both regular fields and activity item class fields (which are in .d-flex containers)
+    // For "Code submission value", it's in a .d-flex container within a v-card
+    if (fieldName === 'Code submission value') {
+        cy.contains('.v-card .d-flex .v-input', fieldName).parent().contains(message).should('be.visible')
+    } else {
+        cy.get('body').then($body => {
+            const regularField = $body.find(`.v-stepper-window-item .v-input:contains("${fieldName}")`)
+            const activityItemField = $body.find(`.d-flex .v-input:contains("${fieldName}")`)
+            
+            if (regularField.length > 0) {
+                cy.contains('.v-stepper-window-item .v-input', fieldName).contains(message).should('be.visible')
+            } else if (activityItemField.length > 0) {
+                cy.contains('.d-flex .v-input', fieldName).parent().contains(message).should('be.visible')
+            } else {
+                // Fallback: try to find the field anywhere
+                cy.contains('.v-input', fieldName).contains(message).should('be.visible')
+            }
+        })
+    }
 }
 
 function clearField(fieldName) {
@@ -158,11 +244,4 @@ function clearField(fieldName) {
 
 function fillField(fieldName, value) {
     cy.contains('.v-stepper-window-item .v-input', fieldName).clear().type(value)
-}
-
-function validateRequiredInstanceClassFields(validationRule, validationValue) {
-    cy.contains('.d-flex .v-input', 'test_name').should(validationRule, validationValue)
-    cy.contains('.d-flex .v-input', 'test_code').should(validationRule, validationValue)
-    cy.contains('.d-flex .v-input', 'unit_dimension').should(validationRule, validationValue)
-    cy.contains('.d-flex .v-input', 'standard_unit').should(validationRule, validationValue)
 }

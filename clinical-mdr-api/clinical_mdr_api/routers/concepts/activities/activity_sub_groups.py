@@ -3,12 +3,11 @@
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Body, Path, Query
-from pydantic.types import Json
 from starlette.requests import Request
 
 from clinical_mdr_api.models.concepts.activities.activity import SimpleActivity
-from clinical_mdr_api.models.concepts.activities.activity_group import ActivityGroup
 from clinical_mdr_api.models.concepts.activities.activity_sub_group import (
+    ActivityGroupForActivitySubGroup,
     ActivitySubGroup,
     ActivitySubGroupCreateInput,
     ActivitySubGroupEditInput,
@@ -56,43 +55,12 @@ Possible errors:
 )
 def get_activity_subgroups(
     library_name: Annotated[str | None, Query()] = None,
-    activity_group_uid: Annotated[
-        str | None, Query(description="The unique id of the activity group")
-    ] = None,
-    activity_group_names: Annotated[
-        list[str] | None,
-        Query(
-            description="A list of activity group names to use as a specific filter",
-            alias="activity_group_names[]",
-        ),
-    ] = None,
-    sort_by: Annotated[
-        Json | None, Query(description=_generic_descriptions.SORT_BY)
-    ] = None,
-    page_number: Annotated[
-        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = settings.default_page_number,
-    page_size: Annotated[
-        int,
-        Query(
-            ge=0,
-            le=settings.max_page_size,
-            description=_generic_descriptions.PAGE_SIZE,
-        ),
-    ] = settings.default_page_size,
-    filters: Annotated[
-        Json | None,
-        Query(
-            description=_generic_descriptions.FILTERS,
-            openapi_examples=_generic_descriptions.FILTERS_EXAMPLE,
-        ),
-    ] = None,
-    operator: Annotated[
-        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = settings.default_filter_operator,
-    total_count: Annotated[
-        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
-    ] = False,
+    sort_by: _generic_descriptions.SORT_BY_QUERY = None,
+    page_number: _generic_descriptions.PAGE_NUMBER_QUERY = settings.default_page_number,
+    page_size: _generic_descriptions.PAGE_SIZE_QUERY = settings.default_page_size,
+    filters: _generic_descriptions.FILTERS_QUERY = None,
+    operator: _generic_descriptions.FILTER_OPERATOR_QUERY = settings.default_filter_operator,
+    total_count: _generic_descriptions.TOTAL_COUNT_QUERY = False,
 ) -> CustomPage[ActivitySubGroup]:
     activity_subgroup_service = ActivitySubGroupService()
     results = activity_subgroup_service.get_all_concepts(
@@ -103,8 +71,6 @@ def get_activity_subgroups(
         total_count=total_count,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
-        activity_group_uid=activity_group_uid,
-        activity_group_names=activity_group_names,
     )
     return CustomPage(
         items=results.items, total=results.total, page=page_number, size=page_size
@@ -136,40 +102,11 @@ Possible errors:
 )
 def get_activity_subgroups_versions(
     library_name: Annotated[str | None, Query()] = None,
-    activity_group_uid: Annotated[
-        str | None, Query(description="The unique id of the activity group")
-    ] = None,
-    activity_group_names: Annotated[
-        list[str] | None,
-        Query(
-            description="A list of activity group names to use as a specific filter",
-            alias="activity_group_names[]",
-        ),
-    ] = None,
-    page_number: Annotated[
-        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = settings.default_page_number,
-    page_size: Annotated[
-        int,
-        Query(
-            ge=0,
-            le=settings.max_page_size,
-            description=_generic_descriptions.PAGE_SIZE,
-        ),
-    ] = settings.default_page_size,
-    filters: Annotated[
-        Json | None,
-        Query(
-            description=_generic_descriptions.FILTERS,
-            openapi_examples=_generic_descriptions.FILTERS_EXAMPLE,
-        ),
-    ] = None,
-    operator: Annotated[
-        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = settings.default_filter_operator,
-    total_count: Annotated[
-        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
-    ] = False,
+    page_number: _generic_descriptions.PAGE_NUMBER_QUERY = settings.default_page_number,
+    page_size: _generic_descriptions.PAGE_SIZE_QUERY = settings.default_page_size,
+    filters: _generic_descriptions.FILTERS_QUERY = None,
+    operator: _generic_descriptions.FILTER_OPERATOR_QUERY = settings.default_filter_operator,
+    total_count: _generic_descriptions.TOTAL_COUNT_QUERY = False,
 ) -> CustomPage[ActivitySubGroup]:
     activity_subgroup_service = ActivitySubGroupService()
     results = activity_subgroup_service.get_all_concept_versions(
@@ -180,8 +117,6 @@ def get_activity_subgroups_versions(
         total_count=total_count,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
-        activity_group_uid=activity_group_uid,
-        activity_group_names=activity_group_names,
     )
     return CustomPage(
         items=results.items, total=results.total, page=page_number, size=page_size
@@ -204,40 +139,12 @@ def get_activity_subgroups_versions(
     },
 )
 def get_distinct_values_for_header(
-    field_name: Annotated[
-        str, Query(description=_generic_descriptions.HEADER_FIELD_NAME)
-    ],
+    field_name: _generic_descriptions.HEADER_FIELD_NAME_QUERY,
     library_name: Annotated[str | None, Query()] = None,
-    search_string: Annotated[
-        str, Query(description=_generic_descriptions.HEADER_SEARCH_STRING)
-    ] = "",
-    activity_group_names: Annotated[
-        list[str] | None,
-        Query(
-            description="A list of activity group names to use as a specific filter",
-            alias="activity_group_names[]",
-        ),
-    ] = None,
-    activity_names: Annotated[
-        list[str] | None,
-        Query(
-            description="A list of activity names to use as a specific filter",
-            alias="activity_names[]",
-        ),
-    ] = None,
-    filters: Annotated[
-        Json | None,
-        Query(
-            description=_generic_descriptions.FILTERS,
-            openapi_examples=_generic_descriptions.FILTERS_EXAMPLE,
-        ),
-    ] = None,
-    operator: Annotated[
-        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = settings.default_filter_operator,
-    page_size: Annotated[
-        int, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
-    ] = settings.default_header_page_size,
+    search_string: _generic_descriptions.HEADER_SEARCH_STRING_QUERY = "",
+    filters: _generic_descriptions.FILTERS_QUERY = None,
+    operator: _generic_descriptions.FILTER_OPERATOR_QUERY = settings.default_filter_operator,
+    page_size: _generic_descriptions.HEADER_PAGE_SIZE_QUERY = settings.default_header_page_size,
 ) -> list[Any]:
     activity_subgroup_service = ActivitySubGroupService()
     return activity_subgroup_service.get_distinct_values_for_header(
@@ -247,8 +154,6 @@ def get_distinct_values_for_header(
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
         page_size=page_size,
-        activity_group_names=activity_group_names,
-        activity_names=activity_names,
     )
 
 
@@ -423,18 +328,14 @@ def get_activities_for_activity_subgroup(
             description="Search string to filter activities by name or other fields. Case-insensitive partial match."
         ),
     ] = "",
-    page_number: Annotated[
-        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = settings.default_page_number,
+    page_number: _generic_descriptions.PAGE_NUMBER_QUERY = settings.default_page_number,
     page_size: Annotated[
         int,
         Query(
             ge=0, le=settings.max_page_size, description=_generic_descriptions.PAGE_SIZE
         ),
     ] = settings.default_page_size,
-    total_count: Annotated[
-        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
-    ] = False,
+    total_count: _generic_descriptions.TOTAL_COUNT_QUERY = False,
 ) -> CustomPage[SimpleActivity]:
     if version == "":
         version = None
@@ -464,7 +365,7 @@ Results are paginated and suitable for export with each group on a separate row.
 {_generic_descriptions.DATA_EXPORTS_HEADER}
     """,
     status_code=200,
-    response_model=CustomPage[ActivityGroup],
+    response_model=CustomPage[ActivityGroupForActivitySubGroup],
     responses={
         404: _generic_descriptions.ERROR_404,
     },
@@ -488,19 +389,15 @@ def get_activity_groups_for_subgroup(
         str | None,
         Query(description="Select specific version, omit to view latest version"),
     ] = None,
-    page_number: Annotated[
-        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = settings.default_page_number,
+    page_number: _generic_descriptions.PAGE_NUMBER_QUERY = settings.default_page_number,
     page_size: Annotated[
         int,
         Query(
             ge=0, le=settings.max_page_size, description=_generic_descriptions.PAGE_SIZE
         ),
     ] = settings.default_page_size,
-    total_count: Annotated[
-        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
-    ] = False,
-) -> CustomPage[ActivityGroup]:
+    total_count: _generic_descriptions.TOTAL_COUNT_QUERY = False,
+) -> CustomPage[ActivityGroupForActivitySubGroup]:
     if version == "":
         version = None
 

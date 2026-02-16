@@ -108,16 +108,22 @@ const medicinalProducts = ref([])
 watch(
   () => props.compound,
   (value) => {
-    const params = {
+    const params_mp = {
+      filters: {
+        'compound.uid': { v: [value.uid] },
+      },
+      page_size: 0,
+    }
+    const params_aliases = {
       filters: {
         compound_uid: { v: [value.uid] },
       },
       page_size: 0,
     }
-    medicinalProductsApi.getFiltered(params).then((resp) => {
+    medicinalProductsApi.getFiltered(params_mp).then((resp) => {
       medicinalProducts.value = resp.data.items
     })
-    compoundAliasesApi.getFiltered(params).then((resp) => {
+    compoundAliasesApi.getFiltered(params_aliases).then((resp) => {
       aliases.value = resp.data.items
     })
   }

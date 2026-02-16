@@ -27,7 +27,6 @@ def test_create_activity_with_retired_activity_group_fails():
     # Create and approve an activity subgroup
     activity_subgroup = TestUtils.create_activity_subgroup(
         name=TestUtils.random_str(20, "ActivitySubgroup-"),
-        activity_groups=[activity_group.uid],
         approve=True,
     )
 
@@ -64,7 +63,6 @@ def test_create_activity_with_retired_activity_subgroup_fails():
     activity_subgroup_service = ActivitySubGroupService()
     activity_subgroup = TestUtils.create_activity_subgroup(
         name=TestUtils.random_str(20, "ActivitySubgroup-"),
-        activity_groups=[activity_group.uid],
         approve=True,
     )
 
@@ -98,13 +96,12 @@ def test_create_activity_with_draft_activity_group_fails():
     )
 
     # Create and approve an activity subgroup with a different group
-    temp_group = TestUtils.create_activity_group(
+    _temp_group = TestUtils.create_activity_group(
         name=TestUtils.random_str(20, "TempActivityGroup-"),
         approve=True,
     )
     activity_subgroup = TestUtils.create_activity_subgroup(
         name=TestUtils.random_str(20, "ActivitySubgroup-"),
-        activity_groups=[temp_group.uid],
         approve=True,
     )
 
@@ -136,7 +133,6 @@ def test_edit_activity_with_retired_activity_group_fails():
 
     activity_subgroup = TestUtils.create_activity_subgroup(
         name=TestUtils.random_str(20, "ActivitySubgroup-"),
-        activity_groups=[activity_group.uid],
         approve=True,
     )
 
@@ -198,7 +194,6 @@ def test_create_activity_with_final_groups_succeeds():
 
     activity_subgroup = TestUtils.create_activity_subgroup(
         name=TestUtils.random_str(20, "ActivitySubgroup-"),
-        activity_groups=[activity_group.uid],
         approve=True,
     )
 
@@ -212,6 +207,8 @@ def test_create_activity_with_final_groups_succeeds():
 
     assert activity is not None
     assert activity.uid is not None
+    assert activity.activity_groupings is not None
     assert len(activity.activity_groupings) == 1
+    # pylint: disable=unsubscriptable-object
     assert activity.activity_groupings[0].activity_group_uid == activity_group.uid
     assert activity.activity_groupings[0].activity_subgroup_uid == activity_subgroup.uid

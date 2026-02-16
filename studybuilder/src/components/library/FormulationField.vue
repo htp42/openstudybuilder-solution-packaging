@@ -17,18 +17,21 @@
         :label="$t('Formulation.active_substance')"
         density="compact"
         :items="formulationsStore.activeSubstances"
-        item-title="external_id"
+        :item-title="getSubstanceTitle"
         item-value="uid"
         variant="outlined"
-        :filter-keys="['raw.long_number', 'raw.inn']"
+        :filter-keys="[
+          'raw.long_number',
+          'raw.inn',
+          'raw.short_number',
+          'raw.unii.substance_unii',
+          'raw.analyte_number',
+        ]"
         :rules="[formRules.required]"
         @update:model-value="update()"
       >
         <template #item="{ props, item }">
-          <v-list-item
-            v-bind="props"
-            :title="item.raw.long_number ? item.raw.long_number : '-'"
-          >
+          <v-list-item v-bind="props" :title="getSubstanceTitle(item.raw)">
             <v-list-item-subtitle class="pa-2">
               <template v-if="item.raw.inn">
                 {{ item.raw.inn }}
@@ -160,6 +163,25 @@ function addLagTime() {
 function removeLagTime(index) {
   form.value.lag_times.splice(index, 1)
   update()
+}
+
+function getSubstanceTitle(item) {
+  if (item.long_number) {
+    return item.long_number
+  }
+  if (item.short_number) {
+    return item.short_number
+  }
+  if (item.unii) {
+    return item.unii.substance_unii
+  }
+  if (item.analyte_number) {
+    return item.analyte_number
+  }
+  if (item.inn) {
+    return item.inn
+  }
+  return '-'
 }
 </script>
 

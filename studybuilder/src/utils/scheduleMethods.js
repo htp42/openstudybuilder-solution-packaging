@@ -56,6 +56,14 @@ function getElementFootnotesLetters(uid) {
   return Array.from(new Set(footnotesLetters.split(''))).join(' ')
 }
 
+function getElementFootnoteLettersForMultipleRefs(refs) {
+  let footnotesLetters = ''
+  refs.forEach((ref) => {
+    footnotesLetters += getElementFootnotesLetters(ref.uid)
+  })
+  return Array.from(new Set(footnotesLetters.split(''))).join(' ')
+}
+
 function isActivityRow(row) {
   return [
     'activity',
@@ -69,5 +77,6 @@ export default {
   getSoaRowType,
   getSoaFirstCellClasses,
   getElementFootnotesLetters,
+  getElementFootnoteLettersForMultipleRefs,
   isActivityRow,
 }

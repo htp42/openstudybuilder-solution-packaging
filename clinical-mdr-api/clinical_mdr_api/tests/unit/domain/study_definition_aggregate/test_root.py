@@ -202,6 +202,7 @@ def make_random_study_metadata_edit(
             ),
             eudamed_srn_number=new_id_metadata.registry_identifiers.eudamed_srn_number,
             investigational_device_exemption_ide_number=new_id_metadata.registry_identifiers.investigational_device_exemption_ide_number,
+            eu_pas_number=new_id_metadata.registry_identifiers.eu_pas_number,
             ct_gov_id_null_value_code=new_id_metadata.registry_identifiers.ct_gov_id_null_value_code,
             eudract_id_null_value_code=new_id_metadata.registry_identifiers.eudract_id_null_value_code,
             universal_trial_number_utn_null_value_code=new_id_metadata.registry_identifiers.universal_trial_number_utn_null_value_code,
@@ -222,6 +223,7 @@ def make_random_study_metadata_edit(
             investigational_device_exemption_ide_number_null_value_code=(
                 new_id_metadata.registry_identifiers.investigational_device_exemption_ide_number_null_value_code
             ),
+            eu_pas_number_null_value_code=new_id_metadata.registry_identifiers.eu_pas_number_null_value_code,
         ),
     )
 
@@ -419,6 +421,8 @@ class TestStudyDefinitionAR(unittest.TestCase):
                         eudamed_srn_number_null_value_code=None,
                         investigational_device_exemption_ide_number=None,
                         investigational_device_exemption_ide_number_null_value_code=None,
+                        eu_pas_number=None,
+                        eu_pas_number_null_value_code=None,
                     ),
                 )
                 start_timestamp = datetime.now(timezone.utc)
@@ -502,6 +506,8 @@ class TestStudyDefinitionAR(unittest.TestCase):
                             investigational_device_exemption_ide_number_null_value_code=(
                                 study_id_metadata.registry_identifiers.investigational_device_exemption_ide_number_null_value_code
                             ),
+                            eu_pas_number=study_id_metadata.registry_identifiers.eu_pas_number,
+                            eu_pas_number_null_value_code=study_id_metadata.registry_identifiers.eu_pas_number_null_value_code,
                         ),
                     ),
                     high_level_study_design=HighLevelStudyDesignVO(
@@ -510,6 +516,7 @@ class TestStudyDefinitionAR(unittest.TestCase):
                         trial_type_codes=[],
                         is_adaptive_design=None,
                         trial_phase_code=None,
+                        development_stage_code=None,
                         is_extension_trial=None,
                         study_type_null_value_code=None,
                         trial_type_null_value_code=None,
@@ -1031,6 +1038,7 @@ class TestStudyDefinitionAR(unittest.TestCase):
                         national_medical_products_administration_nmpa_number=random_str(),
                         eudamed_srn_number=random_str(),
                         investigational_device_exemption_ide_number=random_str(),
+                        eu_pas_number=random_str(),
                         ct_gov_id_null_value_code=None,
                         eudract_id_null_value_code=None,
                         universal_trial_number_utn_null_value_code=None,
@@ -1043,6 +1051,7 @@ class TestStudyDefinitionAR(unittest.TestCase):
                         national_medical_products_administration_nmpa_number_null_value_code=None,
                         eudamed_srn_number_null_value_code=None,
                         investigational_device_exemption_ide_number_null_value_code=None,
+                        eu_pas_number_null_value_code=None,
                     ),
                     project_number=random_str(),
                 )
@@ -1087,6 +1096,7 @@ class TestStudyDefinitionAR(unittest.TestCase):
                         ),
                         eudamed_srn_number=new_id_metadata.registry_identifiers.eudamed_srn_number,
                         investigational_device_exemption_ide_number=new_id_metadata.registry_identifiers.investigational_device_exemption_ide_number,
+                        eu_pas_number=new_id_metadata.registry_identifiers.eu_pas_number,
                         ct_gov_id_null_value_code=new_id_metadata.registry_identifiers.ct_gov_id_null_value_code,
                         eudract_id_null_value_code=new_id_metadata.registry_identifiers.eudract_id_null_value_code,
                         universal_trial_number_utn_null_value_code=new_id_metadata.registry_identifiers.universal_trial_number_utn_null_value_code,
@@ -1111,6 +1121,7 @@ class TestStudyDefinitionAR(unittest.TestCase):
                         investigational_device_exemption_ide_number_null_value_code=(
                             new_id_metadata.registry_identifiers.investigational_device_exemption_ide_number_null_value_code
                         ),
+                        eu_pas_number_null_value_code=new_id_metadata.registry_identifiers.eu_pas_number_null_value_code,
                     ),
                 )
 
@@ -1171,6 +1182,7 @@ class TestStudyDefinitionAR(unittest.TestCase):
                         investigational_device_exemption_ide_number=(
                             study.current_metadata.id_metadata.registry_identifiers.investigational_device_exemption_ide_number
                         ),
+                        eu_pas_number=study.current_metadata.id_metadata.registry_identifiers.eu_pas_number,
                         ct_gov_id_null_value_code=study.current_metadata.id_metadata.registry_identifiers.ct_gov_id_null_value_code,
                         eudract_id_null_value_code=study.current_metadata.id_metadata.registry_identifiers.eudract_id_null_value_code,
                         universal_trial_number_utn_null_value_code=(
@@ -1198,6 +1210,7 @@ class TestStudyDefinitionAR(unittest.TestCase):
                         investigational_device_exemption_ide_number_null_value_code=(
                             study.current_metadata.id_metadata.registry_identifiers.investigational_device_exemption_ide_number_null_value_code
                         ),
+                        eu_pas_number_null_value_code=study.current_metadata.id_metadata.registry_identifiers.eu_pas_number_null_value_code,
                     ),
                 )
 
@@ -1245,6 +1258,7 @@ class TestStudyDefinitionAR(unittest.TestCase):
                         investigational_device_exemption_ide_number=(
                             study.current_metadata.id_metadata.registry_identifiers.investigational_device_exemption_ide_number
                         ),
+                        eu_pas_number=study.current_metadata.id_metadata.registry_identifiers.eu_pas_number,
                         ct_gov_id_null_value_code=study.current_metadata.id_metadata.registry_identifiers.ct_gov_id_null_value_code,
                         eudract_id_null_value_code=study.current_metadata.id_metadata.registry_identifiers.eudract_id_null_value_code,
                         universal_trial_number_utn_null_value_code=(
@@ -1272,6 +1286,7 @@ class TestStudyDefinitionAR(unittest.TestCase):
                         investigational_device_exemption_ide_number_null_value_code=(
                             study.current_metadata.id_metadata.registry_identifiers.investigational_device_exemption_ide_number_null_value_code
                         ),
+                        eu_pas_number_null_value_code=study.current_metadata.id_metadata.registry_identifiers.eu_pas_number_null_value_code,
                     ),
                     project_number=random_str(),
                 )
@@ -1337,6 +1352,7 @@ class TestStudyDefinitionAR(unittest.TestCase):
                         investigational_device_exemption_ide_number=(
                             study.current_metadata.id_metadata.registry_identifiers.investigational_device_exemption_ide_number
                         ),
+                        eu_pas_number=study.current_metadata.id_metadata.registry_identifiers.eu_pas_number,
                         ct_gov_id_null_value_code=study.current_metadata.id_metadata.registry_identifiers.ct_gov_id_null_value_code,
                         eudract_id_null_value_code=study.current_metadata.id_metadata.registry_identifiers.eudract_id_null_value_code,
                         universal_trial_number_utn_null_value_code=(
@@ -1364,6 +1380,7 @@ class TestStudyDefinitionAR(unittest.TestCase):
                         investigational_device_exemption_ide_number_null_value_code=(
                             study.current_metadata.id_metadata.registry_identifiers.investigational_device_exemption_ide_number_null_value_code
                         ),
+                        eu_pas_number_null_value_code=study.current_metadata.id_metadata.registry_identifiers.eu_pas_number_null_value_code,
                     ),
                     project_number=random_str(),
                 )
@@ -1403,6 +1420,7 @@ class TestStudyDefinitionAR(unittest.TestCase):
                         investigational_device_exemption_ide_number=(
                             new_id_metadata.registry_identifiers.investigational_device_exemption_ide_number
                         ),
+                        eu_pas_number=new_id_metadata.registry_identifiers.eu_pas_number,
                         ct_gov_id_null_value_code=new_id_metadata.registry_identifiers.ct_gov_id_null_value_code,
                         eudract_id_null_value_code=new_id_metadata.registry_identifiers.eudract_id_null_value_code,
                         universal_trial_number_utn_null_value_code=(
@@ -1429,6 +1447,7 @@ class TestStudyDefinitionAR(unittest.TestCase):
                         investigational_device_exemption_ide_number_null_value_code=(
                             new_id_metadata.registry_identifiers.investigational_device_exemption_ide_number_null_value_code
                         ),
+                        eu_pas_number_null_value_code=new_id_metadata.registry_identifiers.eu_pas_number_null_value_code,
                     ),
                     project_number=new_id_metadata.project_number,
                 )
@@ -1474,6 +1493,7 @@ class TestStudyDefinitionAR(unittest.TestCase):
                         investigational_device_exemption_ide_number=(
                             study.current_metadata.id_metadata.registry_identifiers.investigational_device_exemption_ide_number
                         ),
+                        eu_pas_number=study.current_metadata.id_metadata.registry_identifiers.eu_pas_number,
                         ct_gov_id_null_value_code=study.current_metadata.id_metadata.registry_identifiers.ct_gov_id_null_value_code,
                         eudract_id_null_value_code=study.current_metadata.id_metadata.registry_identifiers.eudract_id_null_value_code,
                         universal_trial_number_utn_null_value_code=(
@@ -1501,6 +1521,7 @@ class TestStudyDefinitionAR(unittest.TestCase):
                         investigational_device_exemption_ide_number_null_value_code=(
                             study.current_metadata.id_metadata.registry_identifiers.investigational_device_exemption_ide_number_null_value_code
                         ),
+                        eu_pas_number_null_value_code=study.current_metadata.id_metadata.registry_identifiers.eu_pas_number_null_value_code,
                     ),
                     project_number=random_str(),
                 )
@@ -1542,6 +1563,7 @@ class TestStudyDefinitionAR(unittest.TestCase):
                         investigational_device_exemption_ide_number=(
                             study.latest_locked_metadata.id_metadata.registry_identifiers.investigational_device_exemption_ide_number
                         ),
+                        eu_pas_number=study.latest_locked_metadata.id_metadata.registry_identifiers.eu_pas_number,
                         ct_gov_id_null_value_code=study.latest_locked_metadata.id_metadata.registry_identifiers.ct_gov_id_null_value_code,
                         eudract_id_null_value_code=study.latest_locked_metadata.id_metadata.registry_identifiers.eudract_id_null_value_code,
                         universal_trial_number_utn_null_value_code=(
@@ -1574,6 +1596,7 @@ class TestStudyDefinitionAR(unittest.TestCase):
                         investigational_device_exemption_ide_number_null_value_code=(
                             study.latest_locked_metadata.id_metadata.registry_identifiers.investigational_device_exemption_ide_number_null_value_code
                         ),
+                        eu_pas_number_null_value_code=study.latest_locked_metadata.id_metadata.registry_identifiers.eu_pas_number_null_value_code,
                     ),
                     project_number=new_id_metadata.project_number,
                 )
@@ -1622,6 +1645,7 @@ class TestStudyDefinitionAR(unittest.TestCase):
                         national_medical_products_administration_nmpa_number=None,
                         eudamed_srn_number=None,
                         investigational_device_exemption_ide_number=None,
+                        eu_pas_number=None,
                         universal_trial_number_utn_null_value_code=None,
                         japanese_trial_registry_id_japic_null_value_code=None,
                         investigational_new_drug_application_number_ind_null_value_code=None,
@@ -1632,6 +1656,7 @@ class TestStudyDefinitionAR(unittest.TestCase):
                         national_medical_products_administration_nmpa_number_null_value_code=None,
                         eudamed_srn_number_null_value_code=None,
                         investigational_device_exemption_ide_number_null_value_code=None,
+                        eu_pas_number_null_value_code=None,
                     ),
                     project_number=test_tuple[2],
                 )

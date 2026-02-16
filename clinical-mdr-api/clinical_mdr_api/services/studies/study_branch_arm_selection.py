@@ -164,7 +164,7 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
                 study_uid=study_uid,
                 branch_arm_uid=study_selection_uid,
             ):
-                design_cells_on_branch_arm = self._repos.study_design_cell_repository.get_design_cells_connected_to_branch_arm(
+                design_cells_on_branch_arm = self._repos.study_design_cell_repository.find_all_design_cells_by_study(
                     study_uid=study_uid, study_branch_arm_uid=study_selection_uid
                 )
                 # if the study_branch_arm is the last StudyBranchArm of its StudyArm root
@@ -350,7 +350,7 @@ class StudyBranchArmSelectionService(StudySelectionMixin):
     ) -> list[StudyDesignCellBatchOutput]:
         repos = self._repos
         design_cells_on_arm = (
-            repos.study_design_cell_repository.get_design_cells_connected_to_arm(
+            repos.study_design_cell_repository.find_all_design_cells_by_study(
                 study_uid=study_uid, study_arm_uid=study_arm_uid
             )
         )

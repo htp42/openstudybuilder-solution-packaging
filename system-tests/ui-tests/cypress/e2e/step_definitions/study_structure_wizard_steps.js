@@ -2,6 +2,8 @@ const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor")
 
 let structure_tests_study_uid
 
+When('User saved changes made in the study structure stepper', () => cy.clickButton('save-close-stepper'))
+
 When('The study for testing study structure is selected', () => {
       cy.sendGetRequest('/studies?include_sections=study_description&sort_by[current_metadata.identification_metadata.study_id]=true&page_size=0').then((response) => {
              structure_tests_study_uid = response.body.items
@@ -112,17 +114,10 @@ Then('The arms are updated for the study', () => {
 })
 
 When('The user removes arms from the study through Study with cohorts, branch arms and subpopulations section', () => {
-    cy.intercept('**/study-design-classes').as('designClass')
-    cy.wait('@designClass').then((req) => {
-        expect(req.response.statusCode).to.eq(200)
-    })
+    cy.intercept('**/study-arms?study_uid=*').as('arms')
     cy.get('.mdi-pencil').click()
+    cy.wait('@arms').then(req => expect(req.response.statusCode).to.eq(200))
     cy.clickFirstButton('remove-arm')
-    cy.clickButton('continue-popup')
-    cy.wait(2000)
-    cy.clickButton('save-close-stepper')
-    cy.wait(2000)
-
 })
 
 Then('The arms are removed from the study', () => {
@@ -196,16 +191,10 @@ When('The cohorts are updated for the study', () => {
 })
 
 When('The user removes cohorts from the study through Study with cohorts, branch arms and subpopulations section', () => {
-    cy.intercept('**/study-design-classes').as('designClass')
-    cy.wait('@designClass').then((req) => {
-        expect(req.response.statusCode).to.eq(200)
-    })
+    cy.intercept('**/study-cohorts?study_uid=*').as('cohorts')
     cy.get('.mdi-pencil').click()
+    cy.wait('@cohorts').then(req => expect(req.response.statusCode).to.eq(200))
     cy.clickFirstButton('remove-cohort')
-    cy.clickButton('continue-popup')
-    cy.wait(2000)
-    cy.clickButton('save-close-stepper')
-    cy.wait(2000)
 })
 
 When('The cohorts are removed from the study', () => {

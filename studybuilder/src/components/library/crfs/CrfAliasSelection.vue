@@ -15,7 +15,7 @@
           :label="$t('CRFAliases.context')"
           data-cy="alias-context"
           density="compact"
-          :disabled="props.disabled"
+          :readonly="props.readOnly"
         />
       </v-col>
       <v-col>
@@ -24,7 +24,7 @@
           :label="$t('CRFAliases.name')"
           data-cy="alias-name"
           density="compact"
-          :disabled="props.disabled"
+          :readonly="props.readOnly"
         />
       </v-col>
       <v-col>
@@ -33,7 +33,7 @@
           class="mr-2"
           data-cy="alias-add-button"
           block
-          :disabled="props.disabled"
+          :readonly="props.readOnly"
           @click="addAlias"
         >
           {{ t('_global.add') }}
@@ -57,9 +57,9 @@
           :items="aliases"
           hide-default-switches
           hide-export-button
-          :show-select="!disabled"
-          :hide-default-footer="props.disabled"
-          :hide-search-field="props.disabled"
+          :show-select="!readOnly"
+          :hide-default-footer="props.readOnly"
+          :hide-search-field="props.readOnly"
           table-height="400px"
           :items-length="total"
           disable-filtering
@@ -81,7 +81,7 @@ import crfs from '@/api/crfs'
 const { t } = useI18n()
 
 const props = defineProps({
-  disabled: {
+  readOnly: {
     type: Boolean,
     default: false,
   },
@@ -110,7 +110,7 @@ onMounted(() => {
 })
 
 const getAliases = (filters, options, filtersUpdated) => {
-  if (props.disabled) {
+  if (props.readOnly) {
     aliases.value = [...modelValue.value]
   } else {
     const params = filteringParameters.prepareParameters(

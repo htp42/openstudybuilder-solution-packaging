@@ -200,7 +200,7 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
     ):
         return input_property if input_property is not None else previous_property
 
-    @db.transaction
+    @ensure_transaction(db)
     def get_all_concepts(
         self,
         library: str | None = None,
@@ -211,29 +211,7 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
         filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
         **kwargs,
-    ) -> GenericFilteringReturn[BaseModel]:
-        return self.non_transactional_get_all_concepts(
-            library,
-            sort_by,
-            page_number,
-            page_size,
-            filter_by,
-            filter_operator,
-            total_count,
-            **kwargs,
-        )
-
-    def non_transactional_get_all_concepts(
-        self,
-        library: str | None = None,
-        sort_by: dict[str, bool] | None = None,
-        page_number: int = 1,
-        page_size: int = 0,
-        filter_by: dict[str, dict[str, Any]] | None = None,
-        filter_operator: FilterOperator = FilterOperator.AND,
-        total_count: bool = False,
-        **kwargs,
-    ) -> GenericFilteringReturn[BaseModel]:
+    ) -> GenericFilteringReturn[Any]:
         self.enforce_library(library)
 
         item_ars, total = self.repository.find_all(
@@ -387,17 +365,6 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
         force_new_value_node: bool = False,
         ignore_exc: bool = False,
     ) -> BaseModel:
-        return self.non_transactional_create_new_version(
-            uid, cascade_new_version, force_new_value_node, ignore_exc
-        )
-
-    def non_transactional_create_new_version(
-        self,
-        uid: str,
-        cascade_new_version: bool = False,
-        force_new_value_node: bool = False,
-        ignore_exc: bool = False,
-    ) -> BaseModel:
         item = self._find_by_uid_or_raise_not_found(uid, for_update=True)
         try:
             item.create_new_version(author_id=self.author_id)
@@ -418,11 +385,6 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
     def edit_draft(
         self, uid: str, concept_edit_input: BaseModel, patch_mode: bool = True
     ) -> BaseModel:
-        return self.non_transactional_edit(uid, concept_edit_input, patch_mode)
-
-    def non_transactional_edit(
-        self, uid: str, concept_edit_input: BaseModel, patch_mode: bool = True
-    ) -> BaseModel:
         item = self._find_by_uid_or_raise_not_found(uid=uid, for_update=True)
         if patch_mode:
             self._fill_missing_values_in_base_model_from_reference_base_model(
@@ -435,10 +397,6 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
         item = self._edit_aggregate(item=item, concept_edit_input=concept_edit_input)
         self.repository.save(item)
         return self._transform_aggregate_root_to_pydantic_model(item)
-
-    @ensure_transaction(db)
-    def create(self, concept_input: BaseModel, preview: bool = False) -> BaseModel:
-        return self.non_transactional_create(concept_input, preview)
 
     def generate_default_name(self, response_model):
         param_specific_item_classes = {}
@@ -478,45 +436,6 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
                     and activity_class_vo.name != "standard_unit"
                 ):
                     current_activity_item_ctterms.add(ct_term.uid)
-        cypher_terms_filering = " AND ".join(
-            f"'{item}' in ct_term_uid_collected"
-            for item in sorted(current_activity_item_ctterms)
-        )
-        cypher_counting_filtering = (
-            f" AND counting = {len(current_activity_item_ctterms)}"
-            if cypher_terms_filering
-            else ""
-        )
-        cypher_activity_filtering = (
-            f"AND act_root.uid = '{response_model.activity_groupings[0].activity.uid}'"
-        )
-        cypher_expression = f"""
-            MATCH (act_inst_root:ActivityInstanceRoot)--(act_inst_val:ActivityInstanceValue)--(activity_item:ActivityItem)-[:HAS_CT_TERM]-(ct_term:CTTermRoot)
-            MATCH (act_inst_val)--(act_group:ActivityGrouping)-[:HAS_GROUPING]-(act_val:ActivityValue)--(act_root:ActivityRoot)
-            // CHECK THAT THE ACTIVITY INSTANCE BELONGS TO NUMERIC FINDGS LVL 2
-            MATCH (act_inst_val)--(act_inst_class_root:ActivityInstanceClassRoot)--(act_inst_class_val:ActivityInstanceClassValue)
-                WHERE act_inst_class_val.name = "NumericFindings" 
-            // CHECK THAT THE ACTIVITY ITEMS are connected to an activity_item_class_root and activity_instance_class_root
-            match (:ActivityInstanceClassRoot)--(act_item_class_root:ActivityItemClassRoot)--(activity_item)
-            // filter those activity items that are connected to unit_dimention activity_item_class
-            MATCH (act_item_class_root:ActivityItemClassRoot)--(act_item_class_val:ActivityItemClassValue)
-                WHERE act_item_class_val.name <> "unit_dimension"
-            WITH act_root,act_inst_root,act_inst_val, collect(distinct ct_term.uid) as ct_term_uid_collected
-            WITH act_root,act_inst_root,act_inst_val, ct_term_uid_collected,  size(ct_term_uid_collected) as counting
-            WHERE 
-                {cypher_terms_filering}
-                {cypher_counting_filtering}
-                {cypher_activity_filtering}
-            return act_inst_val
-        """
-        if cypher_terms_filering and cypher_activity_filtering:
-            existent_equal_instances, _ = db.cypher_query(
-                cypher_expression,
-                resolve_objects=True,
-            )
-        else:
-            existent_equal_instances = []
-        if_exists = bool(len(list(existent_equal_instances)) > 0)
         activity_item_classes_order = [
             "location",
             "laterality",
@@ -528,12 +447,51 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
             "fasting_status",
             "standard_unit",
         ]
-
-        standard_unit_suffix = (
-            f" ({param_specific_item_classes['standard_unit']})"
-            if "standard_unit" in param_specific_item_classes
-            else ""
-        )
+        # TODO: Uncomment this when the standard unit is implemented
+        # cypher_terms_filering = " AND ".join(
+        #     f"'{item}' in ct_term_uid_collected"
+        #     for item in sorted(current_activity_item_ctterms)
+        # )
+        # cypher_counting_filtering = (
+        #     f" AND counting = {len(current_activity_item_ctterms)}"
+        #     if cypher_terms_filering
+        #     else ""
+        # )
+        # cypher_activity_filtering = (
+        #     f"AND act_root.uid = '{response_model.activity_groupings[0].activity.uid}'"
+        # )
+        # cypher_expression = f"""
+        #     MATCH (act_inst_root:ActivityInstanceRoot)--(act_inst_val:ActivityInstanceValue)--(activity_item:ActivityItem)-[:HAS_CT_TERM]-(ct_term:CTTermRoot)
+        #     MATCH (act_inst_val)--(act_group:ActivityGrouping)-[:HAS_GROUPING]-(act_val:ActivityValue)--(act_root:ActivityRoot)
+        #     // CHECK THAT THE ACTIVITY INSTANCE BELONGS TO NUMERIC FINDGS LVL 2
+        #     MATCH (act_inst_val)--(act_inst_class_root:ActivityInstanceClassRoot)--(act_inst_class_val:ActivityInstanceClassValue)
+        #         WHERE act_inst_class_val.name = "NumericFindings"
+        #     // CHECK THAT THE ACTIVITY ITEMS are connected to an activity_item_class_root and activity_instance_class_root
+        #     match (:ActivityInstanceClassRoot)--(act_item_class_root:ActivityItemClassRoot)--(activity_item)
+        #     // filter those activity items that are connected to unit_dimention activity_item_class
+        #     MATCH (act_item_class_root:ActivityItemClassRoot)--(act_item_class_val:ActivityItemClassValue)
+        #         WHERE act_item_class_val.name <> "unit_dimension"
+        #     WITH act_root,act_inst_root,act_inst_val, collect(distinct ct_term.uid) as ct_term_uid_collected
+        #     WITH act_root,act_inst_root,act_inst_val, ct_term_uid_collected,  size(ct_term_uid_collected) as counting
+        #     WHERE
+        #         {cypher_terms_filering}
+        #         {cypher_counting_filtering}
+        #         {cypher_activity_filtering}
+        #     return act_inst_val
+        # """
+        # if cypher_terms_filering and cypher_activity_filtering:
+        #     existent_equal_instances, _ = db.cypher_query(
+        #         cypher_expression,
+        #         resolve_objects=True,
+        #     )
+        # else:
+        #     existent_equal_instances = []
+        # if_exists = bool(len(list(existent_equal_instances)) > 0)
+        # standard_unit_suffix = (
+        #     f" ({param_specific_item_classes['standard_unit']})"
+        #     if "standard_unit" in param_specific_item_classes
+        #     else ""
+        # )
         param_names = [
             param_specific_item_classes[cls]
             for cls in activity_item_classes_order
@@ -550,17 +508,21 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
         if response_model.is_research_lab:
             generated_name += " Research"
         activity_sequence_number = 0
-        final_generated_name = (
-            f"{generated_name}{standard_unit_suffix}"
-            if if_exists
-            else f"{generated_name}"
-        )
+        # TODO: Uncomment this when the standard unit is implemented
+        # final_generated_name = (
+        #     f"{generated_name}{standard_unit_suffix}"
+        #     if if_exists
+        #     else f"{generated_name}"
+        # )
+        final_generated_name = generated_name
         while self.repository.exists_by("name", final_generated_name, False):
             activity_sequence_number += 1
             final_generated_name = (
-                f"{generated_name} {activity_sequence_number}{standard_unit_suffix}"
+                f"{generated_name} {activity_sequence_number}"
+                # TODO: Uncomment this when the standard unit is implemented
+                # {standard_unit_suffix}"
             )
-        return final_generated_name
+        return final_generated_name.strip()
 
     def generate_default_topic_code(self, response_model):
         without_special_characters = "".join(
@@ -575,15 +537,17 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
     def generate_default_name_sentence_case(self, response_model):
 
         current_name: str = response_model.name
-        split = re.split(r"(\(.*\))", current_name)
-        standard_unit = ""
-        name_without_standard_unit = ""
-        if len(split) > 1:
-            name_without_standard_unit = split[0]
-            standard_unit = split[1]
-        else:
-            name_without_standard_unit = current_name
-        final_name = name_without_standard_unit.lower() + standard_unit
+        # TODO: Uncomment this when the standard unit is implemented
+        # split = re.split(r"(\(.*\))", current_name)
+        # standard_unit = ""
+        # name_without_standard_unit = ""
+        # if len(split) > 1:
+        #     name_without_standard_unit = split[0]
+        #     standard_unit = split[1]
+        # else:
+        #     name_without_standard_unit = current_name
+        # final_name = name_without_standard_unit.lower() + standard_unit
+        final_name = current_name.lower()
         return final_name.strip()
 
     def generate_default_adam_code(self, response_model):
@@ -697,9 +661,8 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
                 final_generated_name = f"{adam_final[:7-number_of_letters_to_remove]}{activity_sequence_number}"
         return final_generated_name
 
-    def non_transactional_create(
-        self, concept_input: BaseModel, preview: bool = False
-    ) -> BaseModel:
+    @ensure_transaction(db)
+    def create(self, concept_input: BaseModel, preview: bool = False) -> BaseModel:
         BusinessLogicException.raise_if_not(
             self._repos.library_repository.library_exists(
                 normalize_string(concept_input.library_name)  # type: ignore[arg-type]

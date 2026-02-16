@@ -1,8 +1,6 @@
 from dataclasses import dataclass
 from typing import AbstractSet, Callable, Self
 
-from pydantic import BaseModel
-
 from clinical_mdr_api.domains.biomedical_concepts.activity_item_class import (
     ActivityInstanceClassActivityItemClassRelVO,
 )
@@ -15,12 +13,6 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
 )
 from clinical_mdr_api.models.standard_data_models.dataset_class import DatasetClass
 from common.exceptions import AlreadyExistsException, BusinessLogicException
-
-
-class CTTermItem(BaseModel):
-    uid: str
-    name: str | None = None
-    codelist_uid: str | None = None
 
 
 @dataclass(frozen=True)

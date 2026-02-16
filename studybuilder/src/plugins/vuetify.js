@@ -38,6 +38,7 @@ const NNCustomLightTheme = {
     crfItem: '#63A8A5',
     darkGrey: '#747474',
     tableGray: '#E5E5E5',
+    vTransparent: '#FFFFFF00',
     // Novo Design color palette
     nnWhite: '#FFFFFF',
     nnBaseBlue: '#005BD2',
@@ -63,7 +64,6 @@ const NNCustomLightTheme = {
     tableChildRow: '#E6EFFB',
     nnTableRowExpanded: '#C2D8F4',
     nnTableRowChild: '#E6EFFB',
-    nnActionBlue: '#005BD2',
   },
 }
 

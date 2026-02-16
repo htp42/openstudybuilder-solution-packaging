@@ -5,7 +5,7 @@ from pydantic import ConfigDict, Field
 from clinical_mdr_api.models.utils import BaseModel, PostInputModel
 
 
-class CompactActivityItemClass(BaseModel):
+class CompactActivityItemClassForActivityItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     uid: Annotated[
@@ -92,103 +92,13 @@ class CompactUnitDefinition(BaseModel):
     ] = None
 
 
-class CompactOdmForm(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    uid: Annotated[
-        str | None,
-        Field(json_schema_extra={"source": "has_odm_form.uid", "nullable": True}),
-    ] = None
-    oid: Annotated[
-        str | None,
-        Field(
-            json_schema_extra={
-                "source": "has_odm_form.has_latest_value.oid",
-                "nullable": True,
-            },
-        ),
-    ] = None
-    name: Annotated[
-        str | None,
-        Field(
-            json_schema_extra={
-                "source": "has_odm_form.has_latest_value.name",
-                "nullable": True,
-            },
-        ),
-    ] = None
-
-
-class CompactOdmItemGroup(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    uid: Annotated[
-        str | None,
-        Field(json_schema_extra={"source": "has_odm_item_group.uid", "nullable": True}),
-    ] = None
-    oid: Annotated[
-        str | None,
-        Field(
-            json_schema_extra={
-                "source": "has_odm_item_group.has_latest_value.oid",
-                "nullable": True,
-            },
-        ),
-    ] = None
-    name: Annotated[
-        str | None,
-        Field(
-            json_schema_extra={
-                "source": "has_odm_item_group.has_latest_value.name",
-                "nullable": True,
-            },
-        ),
-    ] = None
-
-
-class CompactOdmItem(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    uid: Annotated[
-        str | None,
-        Field(json_schema_extra={"source": "has_odm_item.uid", "nullable": True}),
-    ] = None
-    oid: Annotated[
-        str | None,
-        Field(
-            json_schema_extra={
-                "source": "has_odm_item.has_latest_value.oid",
-                "nullable": True,
-            },
-        ),
-    ] = None
-    name: Annotated[
-        str | None,
-        Field(
-            json_schema_extra={
-                "source": "has_odm_item.has_latest_value.name",
-                "nullable": True,
-            },
-        ),
-    ] = None
-
-
 class ActivityItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    activity_item_class: Annotated[CompactActivityItemClass, Field()]
+    activity_item_class: Annotated[CompactActivityItemClassForActivityItem, Field()]
     ct_terms: list[CompactCTTerm] = Field(default_factory=list)
     unit_definitions: list[CompactUnitDefinition] = Field(default_factory=list)
     is_adam_param_specific: Annotated[bool, Field()]
-    odm_form: Annotated[
-        CompactOdmForm | None, Field(json_schema_extra={"nullable": True})
-    ] = None
-    odm_item_group: Annotated[
-        CompactOdmItemGroup | None, Field(json_schema_extra={"nullable": True})
-    ] = None
-    odm_item: Annotated[
-        CompactOdmItem | None, Field(json_schema_extra={"nullable": True})
-    ] = None
 
 
 class ActivityItemCreateInput(PostInputModel):
@@ -200,6 +110,3 @@ class ActivityItemCreateInput(PostInputModel):
     ct_terms: Annotated[list[CTTermsInput], Field()]
     unit_definition_uids: Annotated[list[str], Field()]
     is_adam_param_specific: Annotated[bool, Field()]
-    odm_form_uid: Annotated[str | None, Field()] = None
-    odm_item_group_uid: Annotated[str | None, Field()] = None
-    odm_item_uid: Annotated[str | None, Field()] = None

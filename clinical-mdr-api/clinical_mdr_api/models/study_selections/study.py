@@ -119,10 +119,17 @@ class StudySoaPreferences(StudySoaPreferencesInput):
     study_uid: Annotated[str, Field(description="Uid of study")]
 
 
+class StudySoaSplitInput(PatchInputModel):
+    model_config = ConfigDict(title="SoA Split uid input")
+    uid: Annotated[str, Field(description="Uid of a StudyVisit")]
+
+
+class StudySoaSplit(StudySoaSplitInput):
+    model_config = ConfigDict(title="SoA Split uid")
+    study_uid: Annotated[str, Field(description="Uid of study")]
+
+
 class RegistryIdentifiersJsonModel(BaseModel):
-    model_config = ConfigDict(
-        title="RegistryIdentifiersMetadata metadata for study definition"
-    )
 
     ct_gov_id: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
     ct_gov_id_null_value_code: Annotated[
@@ -206,6 +213,13 @@ class RegistryIdentifiersJsonModel(BaseModel):
         SimpleCTTermNameWithConflictFlag | None,
         Field(json_schema_extra={"nullable": True}),
     ] = None
+    eu_pas_number: Annotated[
+        str | None, Field(json_schema_extra={"nullable": True})
+    ] = None
+    eu_pas_number_null_value_code: Annotated[
+        SimpleCTTermNameWithConflictFlag | None,
+        Field(json_schema_extra={"nullable": True}),
+    ] = None
 
     @classmethod
     def from_study_registry_identifiers_vo(
@@ -230,6 +244,7 @@ class RegistryIdentifiersJsonModel(BaseModel):
                     registry_identifiers_vo.national_medical_products_administration_nmpa_number_null_value_code,
                     registry_identifiers_vo.eudamed_srn_number_null_value_code,
                     registry_identifiers_vo.investigational_device_exemption_ide_number_null_value_code,
+                    registry_identifiers_vo.eu_pas_number_null_value_code,
                 }
             )
             if code is not None
@@ -330,6 +345,11 @@ class RegistryIdentifiersJsonModel(BaseModel):
                 if registry_identifiers_vo.investigational_device_exemption_ide_number_null_value_code
                 else None
             ),
+            eu_pas_number_null_value_code=(
+                terms[registry_identifiers_vo.eu_pas_number_null_value_code]
+                if registry_identifiers_vo.eu_pas_number_null_value_code
+                else None
+            ),
             ct_gov_id=registry_identifiers_vo.ct_gov_id,
             eudract_id=registry_identifiers_vo.eudract_id,
             universal_trial_number_utn=registry_identifiers_vo.universal_trial_number_utn,
@@ -342,11 +362,11 @@ class RegistryIdentifiersJsonModel(BaseModel):
             national_medical_products_administration_nmpa_number=registry_identifiers_vo.national_medical_products_administration_nmpa_number,
             eudamed_srn_number=registry_identifiers_vo.eudamed_srn_number,
             investigational_device_exemption_ide_number=registry_identifiers_vo.investigational_device_exemption_ide_number,
+            eu_pas_number=registry_identifiers_vo.eu_pas_number,
         )
 
 
 class StudyIdentificationMetadataJsonModel(BaseModel):
-    model_config = ConfigDict(title="Identification metadata for study definition")
 
     study_number: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
@@ -436,7 +456,6 @@ class StudyIdentificationMetadataJsonModel(BaseModel):
 
 
 class CompactStudyIdentificationMetadataJsonModel(BaseModel):
-    model_config = ConfigDict(title="Identification metadata for study definition")
 
     study_number: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
@@ -494,7 +513,6 @@ class CompactStudyIdentificationMetadataJsonModel(BaseModel):
 
 
 class StudyVersionMetadataJsonModel(BaseModel):
-    model_config = ConfigDict(title="Version metadata for study definition")
 
     study_status: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
@@ -529,9 +547,6 @@ class StudyVersionMetadataJsonModel(BaseModel):
 
 
 class HighLevelStudyDesignJsonModel(BaseModel):
-    model_config = ConfigDict(
-        title="High level study design parameters for study definition"
-    )
 
     study_type_code: Annotated[
         SimpleCTTermNameWithConflictFlag | None,
@@ -556,6 +571,11 @@ class HighLevelStudyDesignJsonModel(BaseModel):
         Field(json_schema_extra={"nullable": True}),
     ] = None
     trial_phase_null_value_code: Annotated[
+        SimpleCTTermNameWithConflictFlag | None,
+        Field(json_schema_extra={"nullable": True}),
+    ] = None
+
+    development_stage_code: Annotated[
         SimpleCTTermNameWithConflictFlag | None,
         Field(json_schema_extra={"nullable": True}),
     ] = None
@@ -636,6 +656,7 @@ class HighLevelStudyDesignJsonModel(BaseModel):
                 high_level_study_design_vo.trial_type_null_value_code,
                 high_level_study_design_vo.trial_phase_code,
                 high_level_study_design_vo.trial_phase_null_value_code,
+                high_level_study_design_vo.development_stage_code,
                 high_level_study_design_vo.is_extension_trial_null_value_code,
                 high_level_study_design_vo.is_adaptive_design_null_value_code,
                 high_level_study_design_vo.study_stop_rules_null_value_code,
@@ -697,6 +718,11 @@ class HighLevelStudyDesignJsonModel(BaseModel):
                 if high_level_study_design_vo.trial_phase_null_value_code
                 else None
             ),
+            development_stage_code=(
+                terms[high_level_study_design_vo.development_stage_code]
+                if high_level_study_design_vo.development_stage_code
+                else None
+            ),
             is_extension_trial_null_value_code=(
                 terms[high_level_study_design_vo.is_extension_trial_null_value_code]
                 if high_level_study_design_vo.is_extension_trial_null_value_code
@@ -741,7 +767,6 @@ class HighLevelStudyDesignJsonModel(BaseModel):
 
 
 class StudyPopulationJsonModel(BaseModel):
-    model_config = ConfigDict(title="Study population parameters for study definition")
 
     therapeutic_area_codes: Annotated[
         list[SimpleTermModel] | None, Field(json_schema_extra={"nullable": True})
@@ -1077,9 +1102,6 @@ class StudyPopulationJsonModel(BaseModel):
 
 
 class StudyInterventionJsonModel(BaseModel):
-    model_config = ConfigDict(
-        title="Study interventions parameters for study definition"
-    )
 
     intervention_type_code: Annotated[
         SimpleCTTermNameWithConflictFlag | None,
@@ -1316,7 +1338,6 @@ class StudyInterventionJsonModel(BaseModel):
 
 
 class StudyDescriptionJsonModel(BaseModel):
-    model_config = ConfigDict(title="Study description for the study definition")
 
     study_title: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
@@ -1346,7 +1367,6 @@ class StudyDescriptionJsonModel(BaseModel):
 
 
 class CompactStudyMetadataJsonModel(BaseModel):
-    model_config = ConfigDict(title="Compact Study Metadata")
 
     identification_metadata: Annotated[
         CompactStudyIdentificationMetadataJsonModel | None,
@@ -1383,7 +1403,6 @@ class CompactStudyMetadataJsonModel(BaseModel):
 
 
 class StudyMetadataJsonModel(BaseModel):
-    model_config = ConfigDict(title="Study Metadata")
 
     identification_metadata: Annotated[
         StudyIdentificationMetadataJsonModel | None,
@@ -1455,7 +1474,6 @@ class StudyMetadataJsonModel(BaseModel):
 
 
 class StudyPatchRequestJsonModel(PatchInputModel):
-    model_config = ConfigDict(title="StudyPatchRequest")
 
     study_parent_part_uid: Annotated[
         str | None, Field(description="UID of the Study Parent Part")
@@ -1943,6 +1961,9 @@ class StudyProtocolTitle(BaseModel):
     substance_name: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
+    development_stage_code: Annotated[
+        SimpleTermModel | None, Field(json_schema_extra={"nullable": True})
+    ] = None
 
     @classmethod
     def from_study_definition_ar(
@@ -1963,6 +1984,10 @@ class StudyProtocolTitle(BaseModel):
             universal_trial_number_utn=current_metadata.id_metadata.registry_identifiers.universal_trial_number_utn,
             trial_phase_code=SimpleTermModel.from_ct_code(
                 c_code=current_metadata.high_level_study_design.trial_phase_code,
+                find_term_by_uid=find_term_by_uid,
+            ),
+            development_stage_code=SimpleTermModel.from_ct_code(
+                c_code=current_metadata.high_level_study_design.development_stage_code,
                 find_term_by_uid=find_term_by_uid,
             ),
             ind_number=current_metadata.id_metadata.registry_identifiers.investigational_new_drug_application_number_ind,

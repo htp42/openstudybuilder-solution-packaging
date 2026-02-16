@@ -20,16 +20,17 @@ Feature: Studies - Define Study - Study Properties - Study Type
             | Selected values        |
             | Reason for missing     |
         And The table display following predefined data
-            | row | column                  | value                                 |
-            | 0   | Study type information  | Study type                            |
-            | 1   | Study type information  | Trial type                            |
-            | 2   | Study type information  | Study phase classification            |
-            | 3   | Study type information  | Extension study                       |
-            | 4   | Study type information  | Adaptive design                       |
-            | 5   | Study type information  | Study stop rules                      |
-            | 6   | Study type information  | Confirmed response minimum duration   |
-            | 7   | Study type information  | Post authorization safety study ind   |
-    
+            | row | column                 | value                               |
+            | 0   | Study type information | Study type                          |
+            | 1   | Study type information | Trial type                          |
+            | 2   | Study type information | Study phase classification          |
+            | 3   | Study type information | Development stage                   |
+            | 4   | Study type information | Extension study                     |
+            | 5   | Study type information | Adaptive design                     |
+            | 6   | Study type information | Study stop rules                    |
+            | 7   | Study type information | Confirmed response minimum duration |
+            | 8   | Study type information | Post authorization safety study ind |
+
     Scenario: [Table][Options] User must be able to see the Study Type table with following options
         Given The test study '/study_properties/type' page is opened
         And A table is visible with following options
@@ -58,6 +59,27 @@ Feature: Studies - Define Study - Study Properties - Study Type
         Given The test study '/study_properties/type' page is opened
         When The Confirmed response minimum duration NA option is selected
         Then The Confirmed response minimum duration field is disabled
+
+    Scenario: [Actions][Edit][Development Stage] User must be able to set study Development Stage to Pilot Stage
+        Given A test study is selected
+        And The study type is not defined
+        When The test study '/study_properties/type' page is opened
+        And The user sets study development stage to 'Pilot Stage'
+        Then The study development stage is 'Pilot Stage'
+   
+    Scenario: [Actions][Edit][Development Stage] User must be able to set study Development Stage to Pivotal Stage
+        Given A test study is selected
+        And The study type is not defined
+        When The test study '/study_properties/type' page is opened
+        And The user sets study development stage to 'Pivotal Stage'
+        Then The study development stage is 'Pivotal Stage'
+   
+    Scenario: [Actions][Edit][Development Stage] User must be able to set study Development Stage to Post-market Stage
+        Given A test study is selected
+        And The study type is not defined
+        When The test study '/study_properties/type' page is opened
+        And The user sets study development stage to 'Post-market Stage'
+        Then The study development stage is 'Post-market Stage'
 
     @pending_implementation
     Scenario: User must be able to copy the study type data from other existing study without overwriting the data

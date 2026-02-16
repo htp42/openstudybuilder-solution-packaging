@@ -84,6 +84,7 @@
 
             <div
               v-if="
+                canCreateFromStudy &&
                 suppliers.length > 0 &&
                 suppliers.some((s) => !s.data_supplier_uid)
               "
@@ -148,6 +149,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 import { useStudyDataSuppliersStore } from '@/stores/studies-data-suppliers'
+import { useFeatureFlagsStore } from '@/stores/feature-flags'
 import terms from '@/api/controlledTerminology/terms'
 import dataSuppliers from '@/api/dataSuppliers'
 import DataSupplierForm from '@/components/library/DataSupplierForm.vue'
@@ -159,6 +161,15 @@ const router = useRouter()
 const { t } = useI18n()
 const studiesGeneralStore = useStudiesGeneralStore()
 const dataSupplierStore = useStudyDataSuppliersStore()
+const featureFlagsStore = useFeatureFlagsStore()
+
+const canCreateFromStudy = computed(() => {
+  return (
+    featureFlagsStore.getFeatureFlag(
+      'study_data_suppliers_create_from_study'
+    ) !== false
+  )
+})
 
 const studyDataSuppliers = ref([])
 const dataSupplierTypes = ref([])

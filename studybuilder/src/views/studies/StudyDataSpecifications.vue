@@ -4,6 +4,7 @@
       {{ $t('StudyDataSpecifications.title') }} ({{
         studiesGeneralStore.studyId
       }})
+      <HelpButtonWithPanels :items="helpItems" />
       <v-spacer />
       <v-btn
         size="small"
@@ -51,6 +52,7 @@
 import StudyActivityInstancesTable from '@/components/studies/StudyActivityInstancesTable.vue'
 import OperationalSoa from '@/components/studies/OperationalSoa.vue'
 import SoaSettingsForm from '@/components/studies/SoaSettingsForm.vue'
+import HelpButtonWithPanels from '@/components/tools/HelpButtonWithPanels.vue'
 import { useAppStore } from '@/stores/app'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 import { useI18n } from 'vue-i18n'
@@ -77,6 +79,13 @@ const tabs = [
 ]
 const showSoaSettings = ref(false)
 const updateSoa = ref(0)
+const helpItems = [
+  'StudyDataSpecifications.general',
+  'StudyDataSpecifications.instances_actions',
+  'StudyDataSpecifications.instances_ellipsis',
+  'StudyDataSpecifications.instances_exclamation',
+  'StudyDataSpecifications.instances_updates',
+]
 
 const lockSettings = computed(() => {
   if (

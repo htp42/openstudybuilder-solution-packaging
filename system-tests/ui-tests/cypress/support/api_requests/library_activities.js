@@ -52,7 +52,7 @@ Cypress.Commands.add('createTwoGroups', () => {
 })
 
 Cypress.Commands.add('createSubGroup', (customName = '') => {
-    cy.sendPostRequest(activitySubGroupUrl, createSubGroupBody(customName, group_uid)).then(response => subgroup_uid = response.body.uid)
+    cy.sendPostRequest(activitySubGroupUrl, createSubGroupBody(customName)).then(response => subgroup_uid = response.body.uid)
 })
 
 Cypress.Commands.add('createSubGroupWithTwoGroups', () => {
@@ -121,15 +121,7 @@ Cypress.Commands.add('getName', (url) => cy.sendGetRequest(url).then((response) 
 
 Cypress.Commands.add('getFinalGroupUid', () => cy.sendGetRequest(finalActivityGroupUrl).then((response) => { group_uid = response.body.items[0].uid }))
 
-
-Cypress.Commands.add('getFinalSubGroupUid', () => {
-    cy.sendGetRequest(finalActivitySubGroupUrl).then((response) => {
-        subgroup_uid = response.body.items
-            .find(subgroup => subgroup.activity_groups
-            .find(group => group.uid == group_uid))
-            .uid
-    })
-})
+Cypress.Commands.add('getFinalSubGroupUid', () => cy.sendGetRequest(finalActivitySubGroupUrl).then(response => subgroup_uid = response.body.items[0].uid))
 
 const createActivityBody = (customName = '', isDataCollected = true, isMultipleSelectionAllowed = true) => {
     const name = customName === '' ? `API_Activity${Date.now()}` : customName
@@ -188,14 +180,13 @@ const createGroupBody = (customName = '') => {
     }
 }
 
-const createSubGroupBody = (customName = '', group_uid) => {
+const createSubGroupBody = (customName = '') => {
     const name = customName === '' ? `API_SubGroup${Date.now()}` : customName
     return {
         definition: "def",
         library_name: "Sponsor",
         name: name,
         name_sentence_case: name.toLowerCase(),
-        activity_groups: [group_uid]
     }
 }
 

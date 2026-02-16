@@ -17,7 +17,7 @@ from clinical_mdr_api.models.concepts.unit_definitions.unit_definition import (
 )
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import FilterOperator
-from clinical_mdr_api.services._utils import validate_is_dict
+from clinical_mdr_api.services._utils import ensure_transaction, validate_is_dict
 from clinical_mdr_api.services.concepts.concept_generic_service import (
     ConceptGenericService,
 )
@@ -114,7 +114,7 @@ class UnitDefinitionService(ConceptGenericService[UnitDefinitionAR]):
 
         return item
 
-    @db.transaction
+    @ensure_transaction(db)
     def get_all(
         self,
         library_name: str | None,
@@ -134,7 +134,7 @@ class UnitDefinitionService(ConceptGenericService[UnitDefinitionAR]):
             validate_is_dict("sort_by", sort_by)
             sort_by["size(name)"] = True
 
-        return self.non_transactional_get_all_concepts(
+        return self.get_all_concepts(
             library=library_name,
             dimension=dimension,
             subset=subset,

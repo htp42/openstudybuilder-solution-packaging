@@ -1,14 +1,15 @@
-"""PRD Data Corrections: Before Release 2.2"""
+"""PRD Data Corrections: Before Release 2.4"""
 
 import os
 
+from data_corrections.utils import common
 from data_corrections.utils.utils import (
     capture_changes,
     get_db_driver,
     run_cypher_query,
     save_md_title,
 )
-from migrations.utils.utils import get_logger, print_counters_table
+from migrations.utils.utils import get_logger
 from verifications import correction_verification_016
 
 LOGGER = get_logger(os.path.basename(__file__))
@@ -24,6 +25,12 @@ def main(run_label="correction"):
     fix_activity_000317_versioning_gap(DB_DRIVER, LOGGER, run_label)
     remove_cat_submission_value_suffix(DB_DRIVER, LOGGER, run_label)
     add_missing_retired_relationships(DB_DRIVER, LOGGER, run_label)
+    solve_duplicate_term_submission_values(DB_DRIVER, LOGGER, run_label)
+    solve_duplicate_term_names(DB_DRIVER, LOGGER, run_label)
+    solve_negative_duration_has_term(DB_DRIVER, LOGGER, run_label)
+    solve_not_latest_has_version_lacks_end_date(DB_DRIVER, LOGGER, run_label)
+    remove_isolated_orphan_nodes(DB_DRIVER, LOGGER, run_label)
+    remove_orphan_study_selection_nodes(DB_DRIVER, LOGGER, run_label)
 
 
 @capture_changes(
@@ -72,7 +79,6 @@ def fix_activity_000317_versioning_gap(db_driver, log, run_label):
 
     _, summary = run_cypher_query(db_driver, query)
     counters = summary.counters
-    print_counters_table(counters)
     return counters.contains_updates
 
 
@@ -123,7 +129,6 @@ def remove_cat_submission_value_suffix(db_driver, log, run_label):
 
     _, summary = run_cypher_query(db_driver, query)
     counters = summary.counters
-    print_counters_table(counters)
     return counters.contains_updates
 
 
@@ -181,7 +186,318 @@ def add_missing_retired_relationships(db_driver, log, run_label):
 
     _, summary = run_cypher_query(db_driver, query)
     counters = summary.counters
-    print_counters_table(counters)
+    return counters.contains_updates
+
+
+@capture_changes(
+    verify_func=correction_verification_016.test_duplicate_term_submission_values
+)
+def solve_duplicate_term_submission_values(db_driver, log, run_label):
+    """
+    ## Remove duplicate submission values within codelists
+
+    ### Problem description
+    In the Unit codelist, there are four pairs of terms that share the same submission value.
+    This violates the uniqueness constraint for submission values within a codelist.
+    The duplicates are:
+    - "Arbitrary U/mL"
+    - "mL/min/1.73 m2"
+    - "Therapeutic Cells"
+    - "ms"
+    These issues were created when the latest CDISC packages were imported,
+    which included some new terms that previously were added as sponsor-defined terms.
+
+    ### Change description
+    - Remove the sponsor defined terms for "mL/min/1.73 m2", "Therapeutic Cells" and "ms",
+      and move any links to these terms to the corresponding CDISC-defined terms.
+    - For "Arbitrary U/mL", the Sponsor term existed before the CDISC term.
+      In this case, set an end date on the HAS_TERM relationship for the sponsor term
+      to the start date of the CDISC term's HAS_TERM relationship.
+      Move any links to the sponsir term that were created after the start date on the CDSIC term
+      over to the CDISC term.
+
+    ### Nodes and relationships affected
+    - `CTTermRoot`. `CTCodelistTerm`, `CTTermNameValue`, `CTTermNameRoot`, `CTTermAttributesRoot`, `CTTermAttributesValue` nodes
+    - `HAS_TERM`, `HAS_NAME_ROOT`, `HAS_VERSION`, `LATEST_FINAL` relationships
+    - Expected changes:
+        - 18 nodes deleted
+        - 45 relationships deleted
+        - 1 relationship property modified
+    """
+
+    desc = "Handle duplicated submission values within Unit codelist"
+    log.info(f"Run: {run_label}, {desc}")
+
+    contains_updates = False
+
+    codelist_uid = common.find_codelist_uid(db_driver, name="Unit")
+    if codelist_uid is None:
+        log.warning("Could not find UID for 'Unit' codelist")
+        return contains_updates
+
+    # Delete the redundant sponsor-defined term and move relationships to the CDISC-defined term
+    for submval in ["mL/min/1.73 m2", "Therapeutic Cells", "ms"]:
+        bad_term_uid = common.find_term_uid(
+            db_driver,
+            submission_value=submval,
+            codelist_uid=codelist_uid,
+            library="Sponsor",
+        )
+        good_term_uid = common.find_term_uid(
+            db_driver,
+            submission_value=submval,
+            codelist_uid=codelist_uid,
+            library="CDISC",
+        )
+        if bad_term_uid is None or good_term_uid is None:
+            log.info(f"Could not find UIDs for terms with submission value '{submval}'")
+            continue
+        query, params = common.replace_term_by_deleting_query(
+            bad_term_uid, good_term_uid
+        )
+        _, summary = run_cypher_query(db_driver, query, params)
+        counters = summary.counters
+        contains_updates = contains_updates or counters.contains_updates
+
+    # Adjust end date of the replaced 'Arbitrary U/mL' sponsor defined term
+    bad_term_uid = common.find_term_uid(
+        db_driver,
+        submission_value="Arbitrary U/mL",
+        codelist_uid=codelist_uid,
+        library="Sponsor",
+    )
+    good_term_uid = common.find_term_uid(
+        db_driver,
+        submission_value="Arbitrary U/mL",
+        codelist_uid=codelist_uid,
+        library="CDISC",
+    )
+    if bad_term_uid is None or good_term_uid is None:
+        log.info("Could not find UIDs for terms with submission value 'Arbitrary U/mL'")
+        return contains_updates
+    query, params = common.replace_term_by_updating_dates_query(
+        bad_term_uid, good_term_uid, codelist_uid
+    )
+    _, summary = run_cypher_query(db_driver, query, params)
+    counters = summary.counters
+    contains_updates = contains_updates or counters.contains_updates
+    # Update links from Unit Definitions to point to the CDISC-defined term
+    query = """
+        MATCH (bad_tr:CTTermRoot {uid: $bad_term_uid})<-[:HAS_TERM_ROOT]-(:CTCodelistTerm)<-[:HAS_TERM]-(clr:CTCodelistRoot {uid: $codelist_uid})
+        MATCH (clr)-[:HAS_TERM]->(:CTCodelistTerm)-[:HAS_TERM_ROOT]->(good_tr:CTTermRoot {uid: $good_term_uid})
+        MATCH (udr:UnitDefinitionRoot)-[:LATEST]->(udv:UnitDefinitionValue)-[hctu:HAS_CT_UNIT]->(ctx:CTTermContext)-[:HAS_SELECTED_TERM]->(bad_tr)
+        MERGE (clr)<-[:HAS_SELECTED_CODELIST]-(new_ctx:CTTermContext)-[:HAS_SELECTED_TERM]->(good_tr)
+        MERGE (udv)-[new_hctu:HAS_CT_UNIT]->(new_ctx)
+        DELETE hctu
+    """
+    params = {
+        "bad_term_uid": bad_term_uid,
+        "good_term_uid": good_term_uid,
+        "codelist_uid": codelist_uid,
+    }
+    _, summary = run_cypher_query(db_driver, query, params)
+    counters = summary.counters
+    contains_updates = contains_updates or counters.contains_updates
+
+    return contains_updates
+
+
+@capture_changes(verify_func=correction_verification_016.test_duplicate_term_names)
+def solve_duplicate_term_names(db_driver, log, run_label):
+    """
+    ## Remove duplicate term names within codelists
+
+    ### Problem description
+    There are three codelists that contain terms with duplicate names.
+    This violates the uniqueness constraint for term names within a codelist.
+    The duplicates are:
+    - "Score" in the Unit Dimension codelist
+    - "Direct Glomerular Filtration Rate from Beta-Trace Protein Adjusted for Standard BSA Measurement"
+      in the "Laboratory Test Name" and "Laboratory Test Code" codelists
+    These duplicated "Score"was created when the latest CDISC packages were imported,
+    which included a new CDISC "Score" term.
+    The duplicated "Direct Glomerular Filtration Rate from Beta-Trace Protein Adjusted for Standard BSA Measurement"
+    is a mistake in the package data from CDISC where one of the terms should have had a different name.
+
+    ### Change description
+    - Remove the sponsor defined term for "Score",
+      and move any links to this terms to the corresponding CDISC-defined term.
+    - Change the name property on the CTTermNameValue node for the term with concept id C100450 to
+     "Direct Glomerular Filtration Rate from Beta-2 Microglobulin Adjusted for Standard BSA Measurement"
+
+    ### Nodes and relationships affected
+    - `CTTermRoot`. `CTCodelistTerm`, `CTTermNameValue`, `CTTermNameRoot`, `CTTermAttributesRoot`, `CTTermAttributesValue` nodes
+    - `HAS_TERM`, `HAS_NAME_ROOT`, `HAS_VERSION`, `LATEST_FINAL` relationships
+    - Expected changes:
+        - 6 node deleted
+        - 15 relationships deleted
+        - 2 node properties modified
+    """
+
+    contains_updates = False
+    desc = "Handle duplicated term names within codelists"
+    log.info(f"Run: {run_label}, {desc}")
+    # Delete the redundant sponsor-defined 'Score' term and move relationships to the CDISC-defined term
+    codelist_uid = common.find_codelist_uid(db_driver, name="Unit Dimension")
+    if codelist_uid is None:
+        log.warning("Could not find UID for 'Unit Dimension' codelist")
+    else:
+        bad_term_uid = common.find_term_uid(
+            db_driver, term_name="Score", codelist_uid=codelist_uid, library="Sponsor"
+        )
+        good_term_uid = common.find_term_uid(
+            db_driver, term_name="Score", codelist_uid=codelist_uid, library="CDISC"
+        )
+        if bad_term_uid is None or good_term_uid is None:
+            log.info("Could not find UIDs for 'Score' terms")
+        else:
+            query, params = common.replace_term_by_deleting_query(
+                bad_term_uid, good_term_uid
+            )
+            _, summary = run_cypher_query(db_driver, query, params)
+            counters = summary.counters
+            contains_updates = contains_updates or counters.contains_updates
+
+    # Update the name of the term with concept id C100450
+    query = """
+        MATCH (tr:CTTermRoot {uid: "C100450"})-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:HAS_VERSION]->
+          (tnv:CTTermNameValue {name: "Direct Glomerular Filtration Rate from Beta-Trace Protein Adjusted for Standard BSA Measurement"})
+        SET tnv.name = "Direct Glomerular Filtration Rate from Beta-2 Microglobulin Adjusted for Standard BSA Measurement"
+        SET tnv.name_sentence_case = "direct glomerular filtration rate from beta-2 microglobulin adjusted for standard BSA measurement"
+    """
+    _, summary = run_cypher_query(db_driver, query)
+    counters = summary.counters
+    contains_updates = contains_updates or counters.contains_updates
+    return contains_updates
+
+
+@capture_changes(
+    verify_func=correction_verification_016.test_negative_duration_has_term
+)
+def solve_negative_duration_has_term(db_driver, log, run_label):
+    """
+    ## Remove HAS_TERM relationships with negative duration
+    # ## Problem description
+    The database contains a single HAS_TERM relationship with a start start_date that is after its end_date.
+    This likely the result of a previous data correction or schema migration that incorrectly set the dates.
+
+    ### Change description
+    Remove the HAS_TERM relationship with negative duration.
+
+    ### Nodes and relationships affected
+    - `HAS_TERM` relationships
+    - Expected changes: 1 relationship deleted
+    """
+    desc = "Remove HAS_TERM relationships with negative duration"
+    log.info(f"Run: {run_label}, {desc}")
+
+    query = """
+        MATCH (clr:CTCodelistRoot)-[ht:HAS_TERM]->(clt:CTCodelistTerm)
+        WHERE ht.end_date IS NOT NULL AND ht.start_date > ht.end_date
+        WITH ht LIMIT 1
+        DELETE ht
+    """
+
+    _, summary = run_cypher_query(db_driver, query)
+    counters = summary.counters
+    return counters.contains_updates
+
+
+@capture_changes(
+    verify_func=correction_verification_016.test_not_latest_has_version_lacks_end_date
+)
+def solve_not_latest_has_version_lacks_end_date(db_driver, log, run_label):
+    """
+    ## Add an end date to HAS_VERSION relationships that are not latest and lack an end date
+    # ## Problem description
+    The database contains a single ActivityInstance where both a Final and a Retired HAS_VERSION relationship
+    lack an end date. This likely the result of a previous data correction or schema migration that
+    did not corectly set the end date on the Final relationship whent he Retired relationship was added.
+
+    ### Change description
+    Add an end date the the Final HAS_VERSION, setting it to the start time of the Retired HAS_VERSION.
+
+    ### Nodes and relationships affected
+    - `HAS_VERSION` relationships
+    - Expected changes: 1 relationship updated
+    """
+    desc = "Add an end date to HAS_VERSION relationships that are not latest and lack an end date"
+    log.info(f"Run: {run_label}, {desc}")
+
+    query = """
+        MATCH (air:ActivityInstanceRoot {uid: "ActivityInstance_000638"})
+        MATCH (air)-[final:HAS_VERSION {status: "Final"}]->(aiv:ActivityInstanceValue)
+        WHERE final.end_date IS NULL
+        MATCH (air)-[retired:HAS_VERSION {status: "Retired"}]->(aiv)
+        WHERE retired.end_date IS NULL
+        SET final.end_date = retired.start_date
+    """
+
+    _, summary = run_cypher_query(db_driver, query)
+    counters = summary.counters
+    return counters.contains_updates
+
+
+@capture_changes(verify_func=correction_verification_016.test_remove_isolated_orphan_nodes)
+def remove_isolated_orphan_nodes(db_driver, log, run_label):
+    """
+    ## Remove isolated orphan nodes (Bug #3473052)
+
+    ### Problem description
+    Some nodes exist in the database with no relationships at all.
+    These are orphan nodes that should have been deleted when their
+    related nodes were removed.
+
+    ### Change description
+    - Delete all nodes with no relationships that are of type:
+      StudyAction or StudyActivitySchedule
+
+    ### Nodes and relationships affected
+    - `StudyAction`, `StudyActivitySchedule` nodes with no relationships
+    """
+    log.info(f"Run: {run_label}, Removing isolated orphan nodes")
+
+    query = """
+        MATCH (n)
+        WHERE NOT EXISTS ((n)--())
+        AND (n:StudyAction OR n:StudyActivitySchedule)
+        DETACH DELETE n
+    """
+
+    _, summary = run_cypher_query(db_driver, query)
+    counters = summary.counters
+    return counters.contains_updates
+
+
+@capture_changes(
+    verify_func=correction_verification_016.test_remove_orphan_study_selection_nodes
+)
+def remove_orphan_study_selection_nodes(db_driver, log, run_label):
+    """
+    ## Remove orphan StudySelection nodes (Bug #3473115)
+
+    ### Problem description
+    Some StudySelection nodes exist without being connected to the audit trail.
+    They have no AFTER relationship from a StudyAction, meaning they are orphaned
+    from the study's action history.
+
+    ### Change description
+    - Delete all StudySelection nodes that have no incoming AFTER relationship
+      from a StudyAction node
+
+    ### Nodes and relationships affected
+    - `StudySelection` nodes not connected via AFTER relationship to StudyAction
+    """
+    log.info(f"Run: {run_label}, Removing orphan StudySelection nodes")
+
+    query = """
+        MATCH (ss:StudySelection)
+        WHERE NOT (:StudyAction)-[:AFTER]->(ss)
+        DETACH DELETE ss
+    """
+
+    _, summary = run_cypher_query(db_driver, query)
+    counters = summary.counters
     return counters.contains_updates
 
 

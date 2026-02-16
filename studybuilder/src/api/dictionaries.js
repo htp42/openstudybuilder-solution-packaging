@@ -17,6 +17,9 @@ export default {
   getSubstances(params) {
     return repository.get(`${resource}/substances`, { params })
   },
+  getSubstance(uid) {
+    return repository.get(`${resource}/substances/${uid}`)
+  },
   retrieve(uid) {
     return repository.get(`${resource}/terms/${uid}`)
   },
@@ -35,17 +38,29 @@ export default {
   newVersion(uid) {
     return repository.post(`${resource}/terms/${uid}/versions`)
   },
-  edit(uid, term) {
+  edit(uid, payload) {
     const params = {
-      ...term,
+      ...payload,
     }
     return repository.patch(`${resource}/terms/${uid}`, params)
+  },
+  editSubstance(uid, payload) {
+    const params = {
+      ...payload,
+    }
+    return repository.patch(`${resource}/substances/${uid}`, params)
   },
   create(term) {
     const params = {
       ...term,
     }
     return repository.post(`${resource}/terms`, params)
+  },
+  createSubstance(payload) {
+    const params = {
+      ...payload,
+    }
+    return repository.post(`${resource}/substances`, params)
   },
   update(uid, data) {
     return repository.patch(`${resource}/terms/${uid}`, data)

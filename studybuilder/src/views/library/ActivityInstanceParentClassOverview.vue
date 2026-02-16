@@ -20,7 +20,6 @@ import activityInstanceClasses from '@/api/activityInstanceClasses'
 import { useAppStore } from '@/stores/app'
 
 const route = useRoute()
-// const router = useRouter()
 const appStore = useAppStore()
 
 const activityInstanceParentClassOverview = ref(null)
@@ -54,13 +53,6 @@ const fetchOverview = async () => {
     )
   }
 }
-
-// const closePage = () => {
-//   router.push({
-//     name: 'Activities',
-//     params: { tab: 'activity-instance-classes' },
-//   })
-// }
 
 // Set up breadcrumbs
 onMounted(() => {

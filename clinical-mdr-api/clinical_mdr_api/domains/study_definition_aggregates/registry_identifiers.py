@@ -31,6 +31,8 @@ class RegistryIdentifiersVO:
     eudamed_srn_number_null_value_code: str | None
     investigational_device_exemption_ide_number: str | None
     investigational_device_exemption_ide_number_null_value_code: str | None
+    eu_pas_number: str | None
+    eu_pas_number_null_value_code: str | None
 
     @classmethod
     def from_input_values(
@@ -61,6 +63,8 @@ class RegistryIdentifiersVO:
         eudamed_srn_number_null_value_code: str | None,
         investigational_device_exemption_ide_number: str | None,
         investigational_device_exemption_ide_number_null_value_code: str | None,
+        eu_pas_number: str | None,
+        eu_pas_number_null_value_code: str | None,
     ) -> Self:
         return cls(
             ct_gov_id=normalize_string(ct_gov_id),
@@ -118,6 +122,10 @@ class RegistryIdentifiersVO:
             ),
             investigational_device_exemption_ide_number_null_value_code=normalize_string(
                 investigational_device_exemption_ide_number_null_value_code
+            ),
+            eu_pas_number=normalize_string(eu_pas_number),
+            eu_pas_number_null_value_code=normalize_string(
+                eu_pas_number_null_value_code
             ),
         )
 
@@ -241,4 +249,11 @@ class RegistryIdentifiersVO:
             is not None,
             msg="If reason_for_missing_null_value_uid has a value, "
             "then field investigational_device_exemption_ide_number must be None or empty string",
+        )
+
+        ValidationException.raise_if(
+            self.eu_pas_number is not None
+            and self.eu_pas_number_null_value_code is not None,
+            msg="If reason_for_missing_null_value_uid has a value, "
+            "then field eu_pas_number must be None or empty string",
         )

@@ -900,9 +900,6 @@ class SoATestData:
             self._activity_subgroups[subgroup_name] = (
                 TestUtils.create_activity_subgroup(
                     name=subgroup_name,
-                    activity_groups=(
-                        [self._activity_groups[group_name].uid] if group_name else []
-                    ),
                 )
             )
 
@@ -1099,13 +1096,20 @@ class SoATestData:
     def assign_instances_of_activity(self, name: str):
         study_activity_uid = self.study_activities[name].study_activity_uid
 
+        existing_study_activity_instances = [
+            sai.activity_instance.uid
+            for sai in self.study_activity_instances.get(study_activity_uid, [])
+            if sai.activity_instance
+        ]
+        activity_instance_uids_to_assign = [
+            activity_instance.uid
+            for activity_instance in self.activity_instances[name].values()
+            if activity_instance.uid not in existing_study_activity_instances
+        ]
         TestUtils.batch_select_study_activity_instances(
             study_uid=self.study.uid,
             study_activity_uid=study_activity_uid,
-            activity_instance_uids=[
-                activity_instance.uid
-                for activity_instance in self.activity_instances[name].values()
-            ],
+            activity_instance_uids=activity_instance_uids_to_assign,
         )
 
     def create_footnote_types(
@@ -1304,6 +1308,7 @@ class SoATestDataMinimal(SoATestData):
 
     EPOCHS = {
         "Screening": {"color_hash": "#80DEEAFF"},
+        "Treatment": {"color_hash": "#C5E1A5FF"},
     }
     VISITS = {
         "V1": {
@@ -1315,8 +1320,16 @@ class SoATestDataMinimal(SoATestData):
             "min_window": -7,
             "max_window": 3,
         },
+        "V2": {
+            "epoch": "Treatment",
+            "type": "Treatment",
+            "visit_contact_mode": "On Site Visit",
+            "day": 14,
+            "min_window": -2,
+            "max_window": 2,
+        },
     }
-    NUM_VISIT_COLS = 1
+    NUM_VISIT_COLS = 2
 
     # Mind if an activity is scheduled for a visit of a visit-group, then it must be scheduled for all visits of the group.
     # Testing for safeguards on this is not in the scope of the tests of the SoA feature.
@@ -1329,7 +1342,7 @@ class SoATestDataMinimal(SoATestData):
             "show_soa_group": True,
             "show_group": True,
             "show_subgroup": True,
-            "show_activity": True,
+            "show_activity": False,
             "instances": [
                 {
                     "class": "Numeric finding",
@@ -1337,6 +1350,30 @@ class SoATestDataMinimal(SoATestData):
                     "topic_code": "PKPK",
                     "adam_param_code": "PKSPLE",
                 }
+            ],
+        },
+        "Weight": {
+            "soa_group": "Subject Related Information",
+            "group": "General",
+            "subgroup": "Body Measurements",
+            "visits": ["V1", "V2"],
+            "show_soa_group": False,
+            "show_group": True,
+            "show_subgroup": False,
+            "show_activity": True,
+            "instances": [
+                {
+                    "class": "Weighting class",
+                    "name": "Weight in kg",
+                    "topic_code": "WEIGHTkg",
+                    "adam_param_code": "Adam Heavy",
+                },
+                {
+                    "class": "Weighting class",
+                    "name": "Weight in stones",
+                    "topic_code": "WEIGHTST",
+                    "adam_param_code": "Lightadam",
+                },
             ],
         },
     }

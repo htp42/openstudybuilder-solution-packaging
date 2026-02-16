@@ -43,6 +43,7 @@ class ConceptGenericRepository(
     value_class = type
     return_model: type = BaseModel
     filter_query_parameters: dict[Any, Any] = {}
+    sort_by: dict[Any, Any] | None = None
 
     @abstractmethod
     def _create_aggregate_root_instance_from_cypher_result(
@@ -315,6 +316,8 @@ class ConceptGenericRepository(
             library=library, uids=uids, **kwargs
         )
         self.filter_query_parameters = filter_query_parameters
+        self.sort_by = sort_by
+
         match_clause += filter_statements
 
         alias_clause = (

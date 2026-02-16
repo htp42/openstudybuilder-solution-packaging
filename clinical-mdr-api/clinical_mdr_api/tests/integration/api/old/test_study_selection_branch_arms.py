@@ -242,8 +242,6 @@ def test_adding_selection3(api_client):
     assert_response_status_code(response, 201)
 
     res = response.json()
-    print("zzz")
-    print(res)
 
     assert res["study_uid"] == "study_root"
     assert res["study_version"]

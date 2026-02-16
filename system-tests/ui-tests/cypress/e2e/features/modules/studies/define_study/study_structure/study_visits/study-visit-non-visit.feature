@@ -17,6 +17,7 @@ Feature: Studies - Define Study - Study Structure - Study Visits - Non Visit
         And Form continue button is clicked
         And Epoch 'Basic' is selected for the visit
         And Form continue button is clicked
+        And User waits for 1 seconds
         And Form save button is clicked
         And The pop up displays 'Visit added'
         When User searches for 'Non-visit'

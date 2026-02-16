@@ -7,13 +7,12 @@
           :label="$t('ActivityInstanceForm.activity_item_class')"
           :items="[props.testNameAic]"
           bg-color="white"
-          item-title="name"
+          item-title="display_name"
           item-value="uid"
           disabled
           variant="outlined"
           density="compact"
           class="w-50"
-          hide-details
         />
         <SelectActivityItemTermField
           :key="props.testNameAic.uid"
@@ -36,13 +35,12 @@
           :label="$t('ActivityInstanceForm.activity_item_class')"
           :items="[props.testCodeAic]"
           bg-color="white"
-          item-title="name"
+          item-title="display_name"
           item-value="uid"
           disabled
           variant="outlined"
           density="compact"
           class="w-50"
-          hide-details
         />
         <SelectActivityItemTermField
           :key="props.testCodeAic.uid"

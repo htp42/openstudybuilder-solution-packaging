@@ -91,7 +91,7 @@ def test_data():
 
     general_activity_group = TestUtils.create_activity_group(name="General")
     randomisation_activity_subgroup = TestUtils.create_activity_subgroup(
-        name="Randomisation", activity_groups=[general_activity_group.uid]
+        name="Randomisation"
     )
     randomized_activity = TestUtils.create_activity(
         name="Randomized",
@@ -106,7 +106,7 @@ def test_data():
         library_name="Sponsor",
     )
     body_measurements_activity_subgroup = TestUtils.create_activity_subgroup(
-        name="Body Measurements", activity_groups=[general_activity_group.uid]
+        name="Body Measurements"
     )
     weight_activity = TestUtils.create_activity(
         name="Weight",
@@ -286,9 +286,7 @@ def test_modify_visibility_flag_in_protocol_flowchart(
     api_client,
 ):
     activity_group = TestUtils.create_activity_group(name="AG")
-    activity_subgroup = TestUtils.create_activity_subgroup(
-        name="AS", activity_groups=[activity_group.uid]
-    )
+    activity_subgroup = TestUtils.create_activity_subgroup(name="AS")
     activity = TestUtils.create_activity(
         name="Act",
         library_name="Sponsor",

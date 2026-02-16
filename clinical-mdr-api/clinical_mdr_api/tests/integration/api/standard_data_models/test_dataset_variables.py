@@ -67,6 +67,10 @@ def test_data():
     global dataset_variables
     global data_model_ig
 
+    # Create some codelists to reference
+    codelist_1 = TestUtils.create_ct_codelist(name="Codelist 1")
+    codelist_2 = TestUtils.create_ct_codelist(name="Codelist 2")
+
     data_model_catalogue_name = TestUtils.create_data_model_catalogue(
         name="DataModelCatalogue name"
     )
@@ -96,7 +100,9 @@ def test_data():
         data_model_version=data_models[0].version_number,
     )
     data_model_ig = TestUtils.create_data_model_ig(
-        name="DataModelIG A", version_number="1"
+        name="DataModelIG A",
+        version_number="1",
+        implemented_data_model=data_models[0].uid,
     )
     # Create some datasets
     dataset = TestUtils.create_dataset(
@@ -121,6 +127,7 @@ def test_data():
             class_variable_uid=class_variable.uid,
             data_model_ig_name=data_model_ig.uid,
             data_model_ig_version=data_model_ig.version_number,
+            references_codelist_uids=[codelist_1.codelist_uid, codelist_2.codelist_uid],
         )
     )
     dataset_variables.append(
@@ -209,7 +216,7 @@ def test_data():
     yield
 
 
-CLASS_VARIABLE_FIELDS_ALL = [
+DATASET_VARIABLE_FIELDS_ALL = [
     "uid",
     "label",
     "title",
@@ -222,21 +229,19 @@ CLASS_VARIABLE_FIELDS_ALL = [
     "completion_instructions",
     "implementation_notes",
     "mapping_instructions",
-    "catalogue_name",
     "data_model_ig_names",
     "dataset",
     "implements_variable",
     "has_mapping_target",
-    "referenced_codelist",
+    "referenced_codelists",
     "value_list",
     "described_value_domain",
     "analysis_variable_set",
 ]
 
-CLASS_VARIABLE_FIELDS_NOT_NULL = [
+DATASET_VARIABLE_FIELDS_NOT_NULL = [
     "uid",
     "label",
-    "catalogue_name",
     "dataset",
     "implements_variable",
     "data_model_ig_names",
@@ -256,14 +261,13 @@ def test_get_class_variable(api_client):
     assert_response_status_code(response, 200)
 
     # Check fields included in the response
-    assert set(res.keys()) == set(CLASS_VARIABLE_FIELDS_ALL)
-    for key in CLASS_VARIABLE_FIELDS_NOT_NULL:
+    assert set(res.keys()) == set(DATASET_VARIABLE_FIELDS_ALL)
+    for key in DATASET_VARIABLE_FIELDS_NOT_NULL:
         assert res[key] is not None
 
     assert res["uid"] == dataset_variables[0].uid
     assert res["label"] == "DatasetVariable A label"
     assert res["description"] == "DatasetVariable A desc"
-    assert res["catalogue_name"] == data_model_catalogue_name
     assert res["dataset"]["uid"] == dataset.uid
     assert res["implements_variable"]["name"] == class_variable.label
     assert res["data_model_ig_names"] == [data_model_ig.name]
@@ -355,9 +359,14 @@ def test_get_dataset_variables(
     assert res["size"] == (page_size if page_size else 10)
 
     for item in res["items"]:
-        assert set(list(item.keys())) == set(CLASS_VARIABLE_FIELDS_ALL)
-        for key in CLASS_VARIABLE_FIELDS_NOT_NULL:
+        assert set(list(item.keys())) == set(DATASET_VARIABLE_FIELDS_ALL)
+        for key in DATASET_VARIABLE_FIELDS_NOT_NULL:
             assert item[key] is not None
+
+        if item["uid"] == dataset_variables[0].uid:
+            # Validate referenced_codelists is a list
+            # And has the right number of elements - 2
+            assert len(item["referenced_codelists"]) == 2
 
     if sort_by:
         # sort_by is JSON string in the form: {"sort_field_name": is_ascending_order}
@@ -379,11 +388,6 @@ def test_get_dataset_variables(
         pytest.param('{"*": {"v": ["aaa"]}}', "label", "name-AAA"),
         pytest.param('{"*": {"v": ["bBb"]}}', "label", "name-BBB"),
         pytest.param('{"*": {"v": ["ccc"]}}', None, None),
-        pytest.param(
-            '{"*": {"v": ["DataModelCatalogue name"]}}',
-            "catalogue_name",
-            "DataModelCatalogue name",
-        ),
     ],
 )
 def test_filtering_wildcard(
@@ -446,11 +450,6 @@ def test_filtering_wildcard(
             "VariableClass A label",
         ),
         pytest.param(
-            '{"catalogue_name": {"v": ["DataModelCatalogue name"]}}',
-            "catalogue_name",
-            "DataModelCatalogue name",
-        ),
-        pytest.param(
             '{"data_model_ig_names": {"v": ["DataModelIG A"]}}',
             "data_model_ig_names",
             ["DataModelIG A"],
@@ -507,7 +506,6 @@ def test_filtering_exact(
         pytest.param("role"),
         pytest.param("dataset.uid"),
         pytest.param("implements_variable.name"),
-        pytest.param("catalogue_name"),
     ],
 )
 def test_headers(api_client, field_name):

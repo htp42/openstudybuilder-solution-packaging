@@ -1,6 +1,6 @@
 <template>
   <SimpleFormDialog
-    ref="form"
+    ref="formRef"
     :title="$t('StudyDefineForm.title')"
     :help-items="helpItems"
     :help-text="$t('_help.StudyDefineForm.general')"
@@ -20,7 +20,13 @@
               item-title="sponsor_preferred_name"
               item-value="term_uid"
               return-object
+              variant="outlined"
+              bg-color="white"
+              color="nnBaseBlue"
+              base-color="nnBaseBlue"
+              rounded="lg"
               density="compact"
+              autocomplete="off"
               clearable
             />
           </v-col>
@@ -48,7 +54,34 @@
               item-title="sponsor_preferred_name"
               item-value="term_uid"
               return-object
+              variant="outlined"
+              bg-color="white"
+              color="nnBaseBlue"
+              base-color="nnBaseBlue"
+              rounded="lg"
               density="compact"
+              autocomplete="off"
+              clearable
+            />
+          </v-col>
+        </v-row>
+        <v-row class="pr-4">
+          <v-col cols="11">
+            <v-select
+              v-model="form.development_stage_code"
+              data-cy="development_stage"
+              :label="$t('StudyDefineForm.development_stage')"
+              :items="studiesGeneralStore.developmentStageCodes"
+              item-title="sponsor_preferred_name"
+              item-value="term_uid"
+              return-object
+              variant="outlined"
+              bg-color="white"
+              color="nnBaseBlue"
+              base-color="nnBaseBlue"
+              rounded="lg"
+              density="compact"
+              autocomplete="off"
               clearable
             />
           </v-col>
@@ -76,14 +109,26 @@
               v-model="form.study_stop_rules"
               data-cy="stop-rule"
               :label="$t('StudyDefineForm.studystoprule')"
+              variant="outlined"
+              bg-color="white"
+              color="nnBaseBlue"
+              base-color="nnBaseBlue"
+              rounded="lg"
               density="compact"
+              autocomplete="off"
               :disabled="stopRulesNone"
             />
           </v-col>
           <v-col cols="2">
             <v-checkbox
               v-model="stopRulesNone"
-              color="primary"
+              variant="outlined"
+              bg-color="white"
+              color="nnBaseBlue"
+              base-color="nnBaseBlue"
+              rounded="lg"
+              density="compact"
+              autocomplete="off"
               :label="$t('StudyDefineForm.none')"
               hide-details
               @change="updateStopRules"
@@ -124,8 +169,9 @@
   </SimpleFormDialog>
 </template>
 
-<script>
-import _isEqual from 'lodash/isEqual'
+<script setup>
+import { inject, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import _isEmpty from 'lodash/isEmpty'
 import DurationField from '@/components/tools/DurationField.vue'
 import MultipleSelect from '@/components/tools/MultipleSelect.vue'
@@ -138,183 +184,160 @@ import { useStudiesManageStore } from '@/stores/studies-manage'
 import studyMetadataForms from '@/utils/studyMetadataForms'
 import study from '@/api/study'
 
-export default {
-  components: {
-    DurationField,
-    MultipleSelect,
-    NotApplicableField,
-    SimpleFormDialog,
-    YesNoField,
-  },
-  inject: ['notificationHub', 'formRules'],
-  props: {
-    initialData: {
-      type: Object,
-      default: null,
-    },
-    open: Boolean,
-  },
-  emits: ['close', 'updated'],
-  setup() {
-    const studiesGeneralStore = useStudiesGeneralStore()
-    const studiesManageStore = useStudiesManageStore()
-    return {
-      studiesGeneralStore,
-      studiesManageStore,
-    }
-  },
-  data() {
-    return {
-      form: {},
-      helpItems: [
-        {
-          key: 'StudyDefineForm.studytype',
-          context: () => {
-            return { url: '/library/ct_catalogues/All/C99077/terms' }
-          },
-        },
-        'StudyDefineForm.studyintent',
-        {
-          key: 'StudyDefineForm.trialtype',
-          context: () => {
-            return { url: '/library/ct_catalogues/All/C99077/terms' }
-          },
-        },
-        'StudyDefineForm.trialphase',
-        'StudyDefineForm.extensiontrial',
-        'StudyDefineForm.adaptivedesign',
-        'StudyDefineForm.studystoprule',
-        'StudyDefineForm.confirmed_resp_min_duration',
-        'StudyDefineForm.post_auth_safety_indicator',
-      ],
-      stopRulesNone: false,
-    }
-  },
-  mounted() {
-    if (_isEmpty(this.initialData)) {
-      study
-        .getHighLevelStudyDesignMetadata(
-          this.studiesGeneralStore.selectedStudy.uid
-        )
-        .then((resp) => {
-          this.initForm(resp.data.current_metadata.high_level_study_design)
-        })
-    } else {
-      this.initForm(this.initialData)
-    }
-  },
-  methods: {
-    initForm(data) {
-      this.form = { ...data }
-      if (!this.form.confirmed_response_minimum_duration) {
-        this.form.confirmed_response_minimum_duration = {}
-      }
-      if (
-        this.form.study_stop_rules == null ||
-        this.form.study_stop_rules === studyConstants.STOP_RULE_NONE
-      ) {
-        this.stopRulesNone = true
-        this.form.study_stop_rules = null
-      } else {
-        this.stopRulesNone = false
-      }
-    },
-    setNullValueConfirmedDuration() {
-      this.form.confirmed_response_minimum_duration = {}
-      if (this.form.confirmed_response_minimum_duration_null_value_code) {
-        this.form.confirmed_response_minimum_duration_null_value_code = null
-      } else {
-        const termUid = this.studiesGeneralStore.nullValues.find(
-          (el) =>
-            el.submission_value === studyConstants.TERM_NOT_APPLICABLE_SUBMVAL
-        ).term_uid
-        this.form.confirmed_response_minimum_duration_null_value_code = {
-          term_uid: termUid,
-          name: this.$t('_global.not_applicable_full_name'),
-        }
-      }
-    },
-    close() {
-      this.$emit('close')
-      this.notificationHub.clearErrors()
-      this.$refs.observer.resetValidation()
-    },
-    prepareRequestPayload() {
-      const data = { ...this.form }
-      if (!data.confirmed_response_minimum_duration.duration_value) {
-        data.confirmed_response_minimum_duration = null
-      }
-      data.study_type_code = studyMetadataForms.getTermPayload(
-        data,
-        'study_type_code'
-      )
-      data.trial_intent_types_codes = studyMetadataForms.getTermsPayload(
-        data,
-        'trial_intent_types_codes'
-      )
-      data.trial_type_codes = studyMetadataForms.getTermsPayload(
-        data,
-        'trial_type_codes'
-      )
-      data.trial_phase_code = studyMetadataForms.getTermPayload(
-        data,
-        'trial_phase_code'
-      )
-      if (this.stopRulesNone) {
-        // This whole block can be removed if we decide to store NONE values as null in the backend
-        data.study_stop_rules = studyConstants.STOP_RULE_NONE
-      }
-      return data
-    },
-    async cancel() {
-      if (_isEqual(this.metadata, this.prepareRequestPayload())) {
-        this.close()
-        return
-      }
-      const options = {
-        type: 'warning',
-        cancelLabel: this.$t('_global.cancel'),
-        agreeLabel: this.$t('_global.continue'),
-      }
-      if (
-        await this.$refs.form.confirm(
-          this.$t('_global.cancel_changes'),
-          options
-        )
-      ) {
-        this.close()
-      }
-    },
-    async submit() {
-      this.notificationHub.clearErrors()
+const { t } = useI18n()
+const notificationHub = inject('notificationHub')
+const formRules = inject('formRules')
 
-      const data = this.prepareRequestPayload()
-      try {
-        const parentUid = this.studiesGeneralStore.selectedStudy
-          .study_parent_part
-          ? this.studiesGeneralStore.selectedStudy.study_parent_part.uid
-          : null
-        await this.studiesManageStore.editStudyType(
-          this.studiesGeneralStore.selectedStudy.uid,
-          data,
-          parentUid
-        )
-        this.$emit('updated', data)
-        this.notificationHub.add({
-          msg: this.$t('StudyDefineForm.update_success'),
-        })
-        this.close()
-      } finally {
-        this.$refs.form.working = false
-      }
-    },
-    updateStopRules(value) {
-      if (value) {
-        this.form.study_stop_rules = null
-      } else {
-        this.form.study_stop_rules = ''
-      }
+const props = defineProps({
+  initialData: {
+    type: Object,
+    default: null,
+  },
+  open: Boolean,
+})
+
+const emit = defineEmits(['close', 'updated'])
+
+const studiesGeneralStore = useStudiesGeneralStore()
+const studiesManageStore = useStudiesManageStore()
+
+const form = ref({})
+const helpItems = [
+  {
+    key: 'StudyDefineForm.studytype',
+    context: () => {
+      return { url: '/library/ct_catalogues/All/C99077/terms' }
     },
   },
+  'StudyDefineForm.studyintent',
+  {
+    key: 'StudyDefineForm.trialtype',
+    context: () => {
+      return { url: '/library/ct_catalogues/All/C99077/terms' }
+    },
+  },
+  'StudyDefineForm.trialphase',
+  'StudyDefineForm.development_stage',
+  'StudyDefineForm.extensiontrial',
+  'StudyDefineForm.adaptivedesign',
+  'StudyDefineForm.studystoprule',
+  'StudyDefineForm.confirmed_resp_min_duration',
+  'StudyDefineForm.post_auth_safety_indicator',
+]
+const stopRulesNone = ref(false)
+const formRef = ref()
+const observer = ref()
+
+onMounted(() => {
+  if (_isEmpty(props.initialData)) {
+    study
+      .getHighLevelStudyDesignMetadata(studiesGeneralStore.selectedStudy.uid)
+      .then((resp) => {
+        initForm(resp.data.current_metadata.high_level_study_design)
+      })
+  } else {
+    initForm(props.initialData)
+  }
+})
+
+function initForm(data) {
+  form.value = { ...data }
+  if (!form.value.confirmed_response_minimum_duration) {
+    form.value.confirmed_response_minimum_duration = {}
+  }
+  if (
+    form.value.study_stop_rules == null ||
+    form.value.study_stop_rules === studyConstants.STOP_RULE_NONE
+  ) {
+    stopRulesNone.value = true
+    form.value.study_stop_rules = null
+  } else {
+    stopRulesNone.value = false
+  }
+}
+function setNullValueConfirmedDuration() {
+  form.value.confirmed_response_minimum_duration = {}
+  if (form.value.confirmed_response_minimum_duration_null_value_code) {
+    form.value.confirmed_response_minimum_duration_null_value_code = null
+  } else {
+    const termUid = studiesGeneralStore.nullValues.find(
+      (el) => el.submission_value === studyConstants.TERM_NOT_APPLICABLE_SUBMVAL
+    ).term_uid
+    form.value.confirmed_response_minimum_duration_null_value_code = {
+      term_uid: termUid,
+      name: t('_global.not_applicable_full_name'),
+    }
+  }
+}
+function close() {
+  emit('close')
+  notificationHub.clearErrors()
+  observer.value.resetValidation()
+}
+function prepareRequestPayload() {
+  const data = { ...form.value }
+  if (!data.confirmed_response_minimum_duration.duration_value) {
+    data.confirmed_response_minimum_duration = null
+  }
+  data.study_type_code = studyMetadataForms.getTermPayload(
+    data,
+    'study_type_code'
+  )
+  data.trial_intent_types_codes = studyMetadataForms.getTermsPayload(
+    data,
+    'trial_intent_types_codes'
+  )
+  data.trial_type_codes = studyMetadataForms.getTermsPayload(
+    data,
+    'trial_type_codes'
+  )
+  data.trial_phase_code = studyMetadataForms.getTermPayload(
+    data,
+    'trial_phase_code'
+  )
+  if (stopRulesNone.value) {
+    // This whole block can be removed if we decide to store NONE values as null in the backend
+    data.study_stop_rules = studyConstants.STOP_RULE_NONE
+  }
+  return data
+}
+async function cancel() {
+  const options = {
+    type: 'warning',
+    cancelLabel: t('_global.cancel'),
+    agreeLabel: t('_global.continue'),
+  }
+  if (await formRef.value.confirm(t('_global.cancel_changes'), options)) {
+    close()
+  }
+}
+async function submit() {
+  notificationHub.clearErrors()
+
+  const data = prepareRequestPayload()
+  try {
+    const parentUid = studiesGeneralStore.selectedStudy.study_parent_part
+      ? studiesGeneralStore.selectedStudy.study_parent_part.uid
+      : null
+    await studiesManageStore.editStudyType(
+      studiesGeneralStore.selectedStudy.uid,
+      data,
+      parentUid
+    )
+    emit('updated', data)
+    notificationHub.add({
+      msg: t('StudyDefineForm.update_success'),
+    })
+    close()
+  } finally {
+    formRef.value.working = false
+  }
+}
+function updateStopRules(value) {
+  if (value) {
+    form.value.study_stop_rules = null
+  } else {
+    form.value.study_stop_rules = ''
+  }
 }
 </script>

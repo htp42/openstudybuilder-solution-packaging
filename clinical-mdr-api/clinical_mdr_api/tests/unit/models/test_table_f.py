@@ -10,12 +10,14 @@ from pyrate_limiter import Any
 
 from clinical_mdr_api.services.utils.docx_builder import DocxBuilder
 from clinical_mdr_api.services.utils.table_f import (
+    Ref,
     SimpleFootnote,
     TableCell,
     TableRow,
     TableWithFootnotes,
     table_to_docx,
     table_to_html,
+    tables_to_html,
 )
 
 DOCX_TEXT_DIRECTION_VALUE = (
@@ -39,7 +41,7 @@ TEST_TABLE = TableWithFootnotes(
                 TableCell(text="hi", style="hi hi", vertical=True, footnotes=["a"]),
                 TableCell(text="Hello", span="2", style="hi"),
                 TableCell(style="foo", span=0),
-                TableCell(text="Hi World"),
+                TableCell(text="Hello\nWorld"),
             ],
         ),
         TableRow(
@@ -99,7 +101,7 @@ TEST_TABLE = TableWithFootnotes(
         TableRow(
             hide=False,
             cells=[
-                TableCell("even more data"),
+                TableCell("even more\ndata"),
                 TableCell("second th row"),
                 TableCell("X", style="data", footnotes=["a"]),
                 TableCell("data"),
@@ -124,19 +126,37 @@ TEST_TABLE = TableWithFootnotes(
     },
 )
 
+TEST_TABLE_2 = TableWithFootnotes(
+    rows=[
+        TableRow(
+            cells=[
+                TableCell(text="Visits"),
+                TableCell(text="V1", refs=[Ref(type="StudyVisit", uid="visit-1")]),
+                TableCell(text="V2", refs=[Ref(type="StudyVisit", uid="visit-2")]),
+                TableCell(text="V3", refs=[Ref(type="StudyVisit", uid="visit-3")]),
+            ]
+        ),
+        TableRow(
+            cells=[
+                TableCell(text="Activity-one"),
+                TableCell(text="X", footnotes=["a"]),
+                TableCell(text=""),
+                TableCell(text="X"),
+            ]
+        ),
+    ],
+    num_header_rows=1,
+    num_header_cols=1,
+    title="Second Table",
+)
 
-EXPECTED_HTML = """<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <title>Hello Table</title>
-  </head>
-  <body>
+EXPECTED_TABLE_HTML = """
     <table>
       <thead>
         <tr>
           <th class="hi hi">hi<sup><b>a</b></sup></th>
           <th class="hi" colspan="2">Hello</th>
-          <th>Hi World</th>
+          <th>Hello<br/>World</th>
         </tr>
         <tr>
           <th class="head">some Text<sup><b>hello&nbsp;z13</b></sup></th>
@@ -162,7 +182,7 @@ EXPECTED_HTML = """<!DOCTYPE html>
           <td>X<sup><b>z13&nbsp;hello</b></sup></td>
         </tr>
         <tr>
-          <th>even more data</th>
+          <th>even more<br/>data</th>
           <th>second th row</th>
           <td class="data">X<sup><b>a</b></sup></td>
           <td>data</td>
@@ -172,13 +192,59 @@ EXPECTED_HTML = """<!DOCTYPE html>
     <p class="footnote"><sup><b>a</b></sup>Footnote ej</p>
     <p class="footnote"><sup><b>hello</b></sup>Hello footnotes here and there</p>
     <p class="footnote"><sup><b>z13</b></sup>More footnotes after numbering</p>
+""".strip()
+
+EXPECTED_TABLE2_HTML = """
+    <table>
+      <thead>
+        <tr>
+          <th>Visits</th>
+          <th>V1</th>
+          <th>V2</th>
+          <th>V3</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>Activity-one</th>
+          <td>X<sup><b>a</b></sup></td>
+          <td></td>
+          <td>X</td>
+        </tr>
+      </tbody>
+    </table>
+""".strip()
+
+EXPECTED_HTML_1 = f"""<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Hello Table</title>
+  </head>
+  <body>
+    {EXPECTED_TABLE_HTML}
+  </body>
+</html>"""
+
+EXPECTED_HTML_2 = f"""<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Hello Table</title>
+  </head>
+  <body>
+    {EXPECTED_TABLE_HTML}
+    {EXPECTED_TABLE2_HTML}
   </body>
 </html>"""
 
 
 def test_table_to_html_expected():
     html = table_to_html(TEST_TABLE)
-    assert html == EXPECTED_HTML
+    assert html == EXPECTED_HTML_1
+
+
+def test_tables_to_html_expected():
+    html = tables_to_html([TEST_TABLE, TEST_TABLE_2])
+    assert html == EXPECTED_HTML_2
 
 
 @pytest.mark.parametrize("test_table", [TEST_TABLE])
@@ -262,10 +328,12 @@ def compare_html_table(table: bs4.element.Tag, test_table: TableWithFootnotes):
                 ), f"expected element in row {r} cell {c} is <th>"
             span += cell.span
 
-            next_string = next(td.stripped_strings, "")
             # THEN cell text matches
-            assert (
-                next_string == cell.text
+            strings = [
+                x for x in td.contents if isinstance(x, bs4.NavigableString)
+            ] or [""]
+            assert strings == cell.text.split(
+                "\n"
             ), f"cell text doesn't match in row {r} column {c}"
 
             # THEN horizontal cell spanning matches

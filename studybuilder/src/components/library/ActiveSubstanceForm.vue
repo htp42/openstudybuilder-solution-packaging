@@ -36,7 +36,6 @@
               :label="$t('ActiveSubstance.short_number')"
               density="compact"
               variant="outlined"
-              :rules="[formRules.required]"
             />
           </v-col>
         </v-row>
@@ -47,7 +46,6 @@
               :label="$t('ActiveSubstance.long_number')"
               density="compact"
               variant="outlined"
-              :rules="[formRules.required]"
             />
           </v-col>
         </v-row>
@@ -103,7 +101,6 @@ import { useFormStore } from '@/stores/form'
 
 const { t } = useI18n()
 const notificationHub = inject('notificationHub')
-const formRules = inject('formRules')
 const props = defineProps({
   activeSubstanceUid: {
     type: String,
@@ -119,10 +116,11 @@ const formRef = ref()
 const substances = ref([])
 
 const helpItems = [
-  'CompoundAliasForm.step1_title',
-  'CompoundAliasForm.name',
-  'CompoundAliasForm.sentence_case_name',
-  'CompoundAliasForm.is_preferred_synonym',
+  'ActiveSubstanceForm.inn',
+  'ActiveSubstanceForm.analyte_number',
+  'ActiveSubstanceForm.name',
+  'ActiveSubstanceForm.id',
+  'ActiveSubstanceForm.unii',
 ]
 
 const title = computed(() => {

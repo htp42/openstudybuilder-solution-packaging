@@ -44,13 +44,14 @@ def get_db_driver():
 
 
 def run_cypher_query(
-    driver: Neo4jDriver, query, params=None
+    driver: Neo4jDriver, query, params=None, quiet=False
 ) -> tuple[list[Record], ResultSummary]:
     with driver.session(database=DATABASE_NAME) as session:
         result: Result = session.run(query, params)
         records = list(result)
         summary = result.consume()
-        print_counters_table(summary.counters)
+        if not quiet:
+            print_counters_table(summary.counters)
         return records, summary
 
 

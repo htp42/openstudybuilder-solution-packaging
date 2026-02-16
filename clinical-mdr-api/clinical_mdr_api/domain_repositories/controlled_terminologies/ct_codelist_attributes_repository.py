@@ -76,7 +76,6 @@ class CTCodelistAttributesRepository(
         rel_data = codelist_dict["rel_data"]
         major, minor = rel_data.get("version").split(".")
 
-        # print(codelist_dict)
         return CTCodelistAttributesAR.from_repository_values(
             uid=codelist_dict["codelist_uid"],
             ct_codelist_attributes_vo=CTCodelistAttributesVO.from_repository_values(

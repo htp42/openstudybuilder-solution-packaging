@@ -1,6 +1,8 @@
 import datetime
 from dataclasses import dataclass
 
+from common.utils import convert_to_datetime
+
 
 @dataclass
 class StudyDesignCellVO:
@@ -22,6 +24,10 @@ class StudyDesignCellVO:
     study_arm_name: str | None = None
     study_branch_arm_uid: str | None = None
     study_branch_arm_name: str | None = None
+
+    def __post_init__(self):
+        if not isinstance(self.start_date, datetime.datetime):
+            self.start_date = convert_to_datetime(self.start_date)
 
     def edit_core_properties(
         self,

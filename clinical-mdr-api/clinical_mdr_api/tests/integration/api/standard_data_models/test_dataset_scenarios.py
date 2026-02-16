@@ -84,7 +84,9 @@ def test_data():
         ]
     ]
     data_model_ig = TestUtils.create_data_model_ig(
-        name="DataModelIG A", version_number="1"
+        name="DataModelIG A",
+        version_number="1",
+        implemented_data_model=data_models[0].uid,
     )
     # Create some datasets
     dataset = TestUtils.create_dataset(

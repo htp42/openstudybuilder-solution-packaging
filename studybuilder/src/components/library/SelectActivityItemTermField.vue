@@ -15,7 +15,6 @@
         bg-color="white"
         variant="outlined"
         density="compact"
-        hide-details
         class="mr-4"
         :loading="loadingCodelists"
         @update:model-value="changeCodelist"
@@ -30,7 +29,7 @@
       bg-color="white"
       variant="outlined"
       density="compact"
-      hide-details
+      :rules="props.rules"
       :multiple="props.multiple"
       :loading="loading"
     >
@@ -83,6 +82,10 @@ const props = defineProps({
   multiple: {
     type: Boolean,
     default: false,
+  },
+  rules: {
+    type: Array,
+    default: () => [],
   },
 })
 const codelist = defineModel('codelist', { type: String })

@@ -12,6 +12,8 @@ USER = os.environ.get("NEO4J_MDR_AUTH_USER")
 PASS = os.environ.get("NEO4J_MDR_AUTH_PASSWORD")
 NEO4J_PROTOCOL = environ.get("NEO4J_PROTOCOL", "neo4j")
 
+NEODASH_DATE = os.environ.get("NEODASH_DATE")
+
 uri = f"{NEO4J_PROTOCOL}://{HOST}:{PORT}"
 
 def load_reports(driver: Driver, directory: str):
@@ -26,8 +28,21 @@ def load_reports(driver: Driver, directory: str):
                 report = json.load(file)
 
                 # Extract title, uuid and version from json
+                if "content" not in report:
+                    # This report has not been pre-processed, wrap it in the expected structure
+                    if NEODASH_DATE is None or NEODASH_DATE == "":
+                        raise ValueError("NEODASH_DATE environment variable must be set for unprocessed reports")
+                    date = NEODASH_DATE
+                    report = {
+                        "title": report["title"],
+                        "uuid": report["uuid"],
+                        "version": report["version"],
+                        "content": [report],
+                        "date": NEODASH_DATE,
+                    }
+
+                date = report.get("date")
                 title = report["title"]
-                date = report["date"]
                 _uuid = report["uuid"]
                 version = report["version"]
 
@@ -40,14 +55,14 @@ def load_reports(driver: Driver, directory: str):
                             uuid: $uuid
                         })
                         ON CREATE
-                         SET 
-                          d.uuid = $uuid
-                        SET      
-                          d.content = $json,
-                          d.date = $date,
-                          d.title = $title,
-                          d.user = $user,
-                          d.version= $version
+                            SET 
+                            d.uuid = $uuid
+                        SET
+                            d.content = $json,
+                            d.date = $date,
+                            d.title = $title,
+                            d.user = $user,
+                            d.version= $version
                         """,
                         json=json.dumps(report['content'][0]),
                         title=title,

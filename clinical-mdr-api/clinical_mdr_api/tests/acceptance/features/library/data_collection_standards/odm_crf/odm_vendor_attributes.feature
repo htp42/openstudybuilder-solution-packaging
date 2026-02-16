@@ -1,9 +1,9 @@
 @REQ_ID:1070683
-Feature: Manage ODM Vendor Attributes in Clinical MDR API
-    As an API user, I want to manage ODM Vendor Attributes through the Clinical MDR API endpoints.
+Feature: Manage ODM Vendor Attributes in OpenStudyBuilder API
+    As an API user, I want to manage ODM Vendor Attributes through the OpenStudyBuilder API endpoints.
 
-    Background: Test user must be able to call the Clinical MDR API, and the test data exists
-        Given The test user can call the Clinical MDR API
+    Background: Test user must be able to call the OpenStudyBuilder API, and the test data exists
+        Given The test user can call the OpenStudyBuilder API
 
     Scenario: User must be able to get an empty list of ODM vendor attributes
         When the user calls the API endpoint 'concepts/odms/vendor-attributes'
