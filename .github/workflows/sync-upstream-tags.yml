@@ -68,17 +68,21 @@ jobs:
             exit 0
           fi
 
-          # Check if this tag already exists in our fork (check if we've processed it)
-          # We check for both the tag and a marker branch
-          if git rev-parse "refs/tags/${TARGET_TAG}" >/dev/null 2>&1; then
-            LOCAL_TAG_SHA=$(git rev-parse "refs/tags/${TARGET_TAG}")
-            UPSTREAM_TAG_SHA=$(git rev-parse "upstream/${TARGET_TAG}" 2>/dev/null || git ls-remote --tags upstream "${TARGET_TAG}" | cut -f1)
+          # Check if this tag already exists in our fork (on origin, not local)
+          # We use ls-remote to check origin since local tags include fetched upstream tags
+          ORIGIN_TAG_SHA=$(git ls-remote --tags origin "${TARGET_TAG}" | cut -f1)
+          UPSTREAM_TAG_SHA=$(git ls-remote --tags upstream "${TARGET_TAG}" | cut -f1)
 
-            if [ "$LOCAL_TAG_SHA" = "$UPSTREAM_TAG_SHA" ]; then
-              echo "Tag ${TARGET_TAG} already synced"
-              echo "new_tag=" >> $GITHUB_OUTPUT
-              exit 0
-            fi
+          if [ -n "$ORIGIN_TAG_SHA" ] && [ "$ORIGIN_TAG_SHA" = "$UPSTREAM_TAG_SHA" ]; then
+            echo "Tag ${TARGET_TAG} already synced (origin and upstream SHAs match)"
+            echo "new_tag=" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          if [ -n "$ORIGIN_TAG_SHA" ]; then
+            echo "Tag ${TARGET_TAG} exists on origin but differs from upstream, will re-sync"
+          else
+            echo "Tag ${TARGET_TAG} not found on origin, will sync"
           fi
 
           # Extract version without 'v' prefix
