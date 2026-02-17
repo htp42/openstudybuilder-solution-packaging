@@ -2,7 +2,9 @@ ARG NEO4J_IMAGE=neo4j:5.26.18-enterprise
 ARG PYTHON_IMAGE=python:3.13.0-slim
 
 # --- Build stage ----
-FROM $PYTHON_IMAGE AS build-stage
+# Runs on native platform to avoid QEMU emulation issues with Neo4j/Java/Python
+# The backup file produced is platform-independent data
+FROM --platform=$BUILDPLATFORM $PYTHON_IMAGE AS build-stage
 
 ARG NEO4J_DOWNLOAD_URL=https://dist.neo4j.org/neo4j-enterprise-5.26.18-unix.tar.gz
 ARG NEO4J_CHECKSUM=9f3d954467e43681210a4541df73dae563d4f960273333b4b6db788313ef4096
