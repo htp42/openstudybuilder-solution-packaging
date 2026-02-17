@@ -1,8 +1,8 @@
 ARG NGINX_IMAGE=nginx:alpine
 ARG NODE_IMAGE=node:lts-alpine
 
-## Build stage
-FROM $NODE_IMAGE as build-stage
+## Build stage - runs on native platform to avoid QEMU emulation issues with Node.js
+FROM --platform=$BUILDPLATFORM $NODE_IMAGE as build-stage
 
 WORKDIR /app
 
