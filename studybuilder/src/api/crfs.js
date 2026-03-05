@@ -121,14 +121,19 @@ export default {
       data
     )
   },
+  getReport(params) {
+    return repository.post(
+      `${resource}/metadata/report?${params.targets}target_type=${params.target_type}${params.allowed_namespaces}`
+    )
+  },
   getXml(params) {
     return repository.post(
-      `${resource}/metadata/xmls/export?${params.targets}target_type=${params.target_type}&export_to=${params.export_to}&stylesheet=${params.selectedStylesheet}${params.allowed_namespaces}`
+      `${resource}/metadata/xmls/export?${params.targets}target_type=${params.target_type}&stylesheet=${params.selectedStylesheet}${params.allowed_namespaces}`
     )
   },
   getPdf(params) {
     return repository.post(
-      `${resource}/metadata/xmls/export?${params.targets}target_type=${params.target_type}&export_to=${params.export_to}&stylesheet=${params.selectedStylesheet}&pdf=true${params.allowed_namespaces}`,
+      `${resource}/metadata/xmls/export?${params.targets}target_type=${params.target_type}&stylesheet=${params.selectedStylesheet}&pdf=true${params.allowed_namespaces}`,
       {},
       {
         responseType: 'arraybuffer',
@@ -144,8 +149,8 @@ export default {
   getAliases(params) {
     return repository.get(`${resource}/metadata/aliases`, { params })
   },
-  getDescriptions(params) {
-    return repository.get(`${resource}/metadata/descriptions`, { params })
+  getTranslatedTexts(params) {
+    return repository.get(`${resource}/metadata/translated-texts`, { params })
   },
   getExpressions(params) {
     return repository.get(`${resource}/metadata/formal-expressions`, { params })
@@ -203,26 +208,5 @@ export default {
   },
   editElement(uid, data) {
     return repository.patch(`${resource}/vendor-elements/${uid}`, data)
-  },
-  setElements(source, uid, data) {
-    return repository.post(
-      `${resource}/${source}/${uid}/vendor-elements?override=true`,
-      data
-    )
-  },
-  setAttributes(source, uid, data) {
-    return repository.post(
-      `${resource}/${source}/${uid}/vendor-attributes?override=true`,
-      data
-    )
-  },
-  setElementAttributes(source, uid, data) {
-    return repository.post(
-      `${resource}/${source}/${uid}/vendor-element-attributes?override=true`,
-      data
-    )
-  },
-  setExtensions(source, uid, data) {
-    return repository.post(`${resource}/${source}/${uid}/vendors`, data)
   },
 }

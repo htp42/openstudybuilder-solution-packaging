@@ -7,7 +7,6 @@ When('A Controlled Terminology Version is added', () => {
     cy.clickButton('add-ct-standard-version')
     cy.selectFirstVSelect('sponsor-ct-package-dropdown')    
     cy.fillInput('description-field','Test Description')
-    cy.clickButton('save-button')
 })
 
 Then('The Controlled Terminology Version data is reflected in the table', () => {
@@ -25,8 +24,6 @@ When('The Controlled Terminology Version is edited', () => {
     cy.get('.mdi-menu-down').click()
     cy.selectFirstVSelect('sponsor-ct-package-dropdown')    
     cy.fillInput('description-field','Edited description')
-    cy.clickButton('save-button')
-
 })
 
 Then('The edited Controlled Terminology Version data is reflected in the table', () => {
@@ -36,7 +33,6 @@ Then('The edited Controlled Terminology Version data is reflected in the table',
     cy.checkLastRow('Description', 'Edited description')
     cy.checkLastRow('Modified', currentTimestamp)
     cy.checkLastRow('Modified by', '8e0e7301-7bd3-49f2-b39e-e7fdd4dcdd22')
-
 })
 
 Then('The Controlled Terminology Version data is removed from the table', () => {
@@ -48,30 +44,20 @@ When('The user opens show version history', () => {
 })
 
 When('The user is presented with version history of the output containing timestamp and username', () => {
-    cy.elementContain('version-history-window', 'Standard version selections history')
-    cy.elementContain('version-history-window', 'CT Catalogue')
-    cy.elementContain('version-history-window', 'Sponsor CT Package')
-    cy.elementContain('version-history-window', 'Description')
-    cy.elementContain('version-history-window', 'Change type')
-    cy.elementContain('version-history-window', 'User')
-    cy.elementContain('version-history-window', 'From')
-    cy.elementContain('version-history-window', 'To')
-    cy.checkLastRow('User', '8e0e7301-7bd3-49f2-b39e-e7fdd4dcdd22')
+    checkHistoryData()
     cy.checkLastRow('From', currentTimestamp)
     cy.checkLastRow('To', currentTimestamp)
-
 })
 
-When('The user clicks on History for particular element', () => {
-    cy.elementContain('version-history-window', 'Standard version selections history')
-    cy.elementContain('version-history-window', 'CT Catalogue')
-    cy.elementContain('version-history-window', 'Sponsor CT Package')
-    cy.elementContain('version-history-window', 'Description')
-    cy.elementContain('version-history-window', 'Change type')
-    cy.elementContain('version-history-window', 'User')
-    cy.elementContain('version-history-window', 'From')
-    cy.elementContain('version-history-window', 'To')
-    // cy.checkLastRow('User', '8e0e7301-7bd3-49f2-b39e-e7fdd4dcdd22')
-    // cy.checkLastRow('From', currentTimestamp)
-    // cy.checkLastRow('To', currentTimestamp)
-})
+When('The user clicks on History for particular element', () => checkHistoryData())
+
+function checkHistoryData() {
+    cy.get('[data-cy="version-history-window"]').should('contain', 'Standard version selections history')
+    cy.get('[data-cy="version-history-window"]').should('contain', 'CT Catalogue')
+    cy.get('[data-cy="version-history-window"]').should('contain', 'Sponsor CT Package')
+    cy.get('[data-cy="version-history-window"]').should('contain', 'Description')
+    cy.get('[data-cy="version-history-window"]').should('contain', 'Change type')
+    cy.get('[data-cy="version-history-window"]').should('contain', 'User')
+    cy.get('[data-cy="version-history-window"]').should('contain', 'From')
+    cy.get('[data-cy="version-history-window"]').should('contain', 'To')
+}

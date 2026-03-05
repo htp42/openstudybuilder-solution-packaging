@@ -19,7 +19,7 @@ addopts = "--cov-config=.coveragerc"
 
 [tool.isort]
 profile = 'black'
-src_paths = ['clinical_mdr_api', 'consumer_api', 'common', 'sblint']
+src_paths = ['clinical_mdr_api', 'consumer_api', 'common', 'sblint', 'extensions']
 
 [tool.pylint.'MASTER']
 extension-pkg-allow-list = 'pydantic, lxml'

@@ -1,6 +1,6 @@
 <template>
   <SimpleFormDialog
-    ref="form"
+    ref="dialog"
     :title="title"
     :open="open"
     max-width="1000px"
@@ -98,148 +98,161 @@
   </SimpleFormDialog>
 </template>
 
-<script>
+<script setup>
+import { inject, onMounted, ref, watch, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
 import SimpleFormDialog from '@/components/tools/SimpleFormDialog.vue'
 import crfs from '@/api/crfs'
 import terms from '@/api/controlledTerminology/terms'
 
-export default {
-  components: {
-    SimpleFormDialog,
+const props = defineProps({
+  open: Boolean,
+  editItem: {
+    type: Object,
+    default: null,
   },
-  inject: ['formRules'],
-  props: {
-    open: Boolean,
-    editItem: {
-      type: Object,
-      default: null,
-    },
-    parentUid: {
-      type: String,
-      default: null,
-    },
+  parentUid: {
+    type: String,
+    default: null,
   },
-  emits: ['close'],
-  data() {
-    return {
-      form: {},
-      dataTypes: [],
-      attribute: null,
-      attributes: [],
-      attributesKeyIndex: 0,
-      existingAttributes: [],
-      attributesToCreate: [],
-      compatibleTypes: ['FormDef', 'ItemGroupDef', 'ItemDef'],
-    }
-  },
-  computed: {
-    title() {
-      return this.editItem.uid
-        ? this.$t('CRFExtensions.edit_ele')
-        : this.$t('CRFExtensions.new_ele')
-    },
-  },
-  watch: {
-    editItem(value) {
-      this.initForm(value)
-    },
-    attributes() {
-      this.existingAttributes = this.attributes
-    },
-  },
-  async mounted() {
-    terms.getTermsByCodelist('dataType').then((resp) => {
-      this.dataTypes = resp.data.items
-    })
+})
 
-    await crfs.getAllAttributes({ page_size: 0 }).then((resp) => {
-      const seen = new Set()
-      this.attributes = resp.data.items.filter((item) => {
-        const key = `${item.name}|${item.data_type}|${item.regex}`
-        if (seen.has(key)) return false
-        seen.add(key)
-        return true
-      })
+const emit = defineEmits(['close'])
+
+const { t } = useI18n()
+
+const formRules = inject('formRules')
+
+const form = ref({})
+const dataTypes = ref([])
+const attribute = ref(null)
+const attributes = ref([])
+const attributesKeyIndex = ref(0)
+const existingAttributes = ref([])
+const attributesToCreate = ref([])
+const compatibleTypes = ['FormDef', 'ItemGroupDef', 'ItemDef']
+
+const dialog = ref(null)
+const observer = ref(null)
+
+const title = computed(() =>
+  props.editItem?.uid ? t('CRFExtensions.edit_ele') : t('CRFExtensions.new_ele')
+)
+
+watch(
+  () => props.editItem,
+  (value) => {
+    initForm(value)
+  }
+)
+
+watch(
+  attributes,
+  () => {
+    existingAttributes.value = attributes.value
+  },
+  { deep: true }
+)
+
+onMounted(async () => {
+  terms.getTermsByCodelist('dataType').then((resp) => {
+    dataTypes.value = resp.data.items
+  })
+
+  await crfs.getAllAttributes({ page_size: 0 }).then((resp) => {
+    const seen = new Set()
+    attributes.value = resp.data.items.filter((item) => {
+      const key = `${item.name}|${item.data_type}|${item.regex}`
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
     })
-  },
-  methods: {
-    addNewAttribute() {
-      if (!this.attributesToCreate.find((attr) => attr.name === '')) {
-        this.attributesToCreate.push({
-          key: this.attributesKeyIndex,
-          name: '',
-          data_type: '',
-        })
-        this.attributesKeyIndex += 1
+  })
+})
+
+const addNewAttribute = () => {
+  if (!attributesToCreate.value.find((attr) => attr.name === '')) {
+    attributesToCreate.value.push({
+      key: attributesKeyIndex.value,
+      name: '',
+      data_type: '',
+    })
+    attributesKeyIndex.value += 1
+  }
+}
+
+const addExistingAttribute = (newAttribute) => {
+  if (newAttribute) {
+    attributesToCreate.value.push(newAttribute)
+    existingAttributes.value = existingAttributes.value.filter(
+      (attr) => attr.uid !== newAttribute.uid
+    )
+    attribute.value = null
+  }
+}
+
+const removeAttribute = (attributeToRemove) => {
+  attributesToCreate.value = attributesToCreate.value.filter(
+    (attr) => attr.key !== attributeToRemove.key
+  )
+  if (attributeToRemove.uid) {
+    existingAttributes.value.push(attributeToRemove)
+  }
+}
+
+const close = () => {
+  observer.value?.reset?.()
+  attributesToCreate.value = []
+  form.value = {}
+  emit('close')
+}
+
+const cancel = async () => {
+  close()
+}
+
+const submit = async () => {
+  form.value.vendor_namespace_uid = props.parentUid
+
+  if (form.value.uid) {
+    form.value.change_description = t('_global.change_description')
+    await crfs.editElement(form.value.uid, form.value).then(
+      () => {
+        close()
+      },
+      () => {
+        if (dialog.value) dialog.value.working = false
       }
-    },
-    addExistingAttribute(attribute) {
-      if (attribute) {
-        this.attributesToCreate.push(attribute)
-        this.existingAttributes = this.existingAttributes.filter(
-          (attr) => attr.uid !== attribute.uid
-        )
-        this.attribute = null
-      }
-    },
-    removeAttribute(attribute) {
-      this.attributesToCreate = this.attributesToCreate.filter(
-        (attr) => attr.key !== attribute.key
-      )
-      if (attribute.uid) {
-        this.existingAttributes.push(attribute)
-      }
-    },
-    async cancel() {
-      this.close()
-    },
-    close() {
-      this.$refs.observer.reset()
-      this.attributesToCreate = []
-      this.form = {}
-      this.$emit('close')
-    },
-    async submit() {
-      this.form.vendor_namespace_uid = this.parentUid
-      if (this.form.uid) {
-        this.form.change_description = this.$t('_global.change_description')
-        await crfs.editElement(this.form.uid, this.form).then(
-          () => {
-            this.close()
-          },
-          () => {
-            this.$refs.form.working = false
-          }
-        )
-      } else {
-        let elementUid = ''
-        try {
-          const resp = await crfs.createElement(this.form)
-          elementUid = resp.data.uid
-          if (this.attributesToCreate.length > 0 && elementUid !== '') {
-            for (const attr of this.attributesToCreate) {
-              delete attr.compatible_types
-              attr.vendor_element_uid = elementUid
-              await crfs.createAttribute(attr)
-            }
-          }
-          this.close()
-        } catch (error) {
-          this.$refs.form.working = false
+    )
+  } else {
+    let elementUid = ''
+    try {
+      const resp = await crfs.createElement(form.value)
+      elementUid = resp.data.uid
+      if (attributesToCreate.value.length > 0 && elementUid !== '') {
+        for (const attr of attributesToCreate.value) {
+          delete attr.compatible_types
+          attr.vendor_element_uid = elementUid
+          await crfs.createAttribute(attr)
         }
       }
-    },
-    initForm(item) {
-      this.form = item
-      this.attributes.forEach((attr) => {
-        if (
-          attr.vendor_element &&
-          attr.vendor_element.uid === this.editItem.uid
-        ) {
-          this.attributesToCreate.push(attr)
-        }
-      })
-    },
-  },
+      close()
+    } catch (error) {
+      if (dialog.value) dialog.value.working = false
+    }
+  }
+}
+
+const initForm = (item) => {
+  form.value = item || {}
+  attributes.value.forEach((attr) => {
+    if (
+      attr.vendor_element &&
+      attr.vendor_element.uid === props.editItem?.uid
+    ) {
+      attributesToCreate.value.push(attr)
+    }
+  })
 }
 </script>

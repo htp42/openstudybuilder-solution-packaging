@@ -726,7 +726,7 @@ def test_download_operational_soa_content(
         study_activity = study_activities_map[sched.study_activity_uid]
         study_visit = study_visits_map[sched.study_visit_uid]
 
-        assert len(res.keys()) == 12, f"record #{i} property count mismatch"
+        assert len(res.keys()) == 13, f"record #{i} property count mismatch"
         assert res["study_version"].startswith("LATEST on 20")
         assert (
             res["study_number"]

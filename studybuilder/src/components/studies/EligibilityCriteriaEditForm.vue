@@ -8,7 +8,6 @@
     :library-name="library.name"
     object-type="criteria"
     max-template-length
-    guidance-text
     :open="open"
     :get-object-from-selection="(selection) => selection.criteria"
     :prepare-template-payload-func="prepareTemplatePayload"

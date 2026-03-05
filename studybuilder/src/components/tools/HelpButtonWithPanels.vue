@@ -19,7 +19,7 @@
         />
       </div>
     </template>
-    <v-card max-width="500px">
+    <v-card rounded="xl" width="500px">
       <v-card-title class="dialog-title d-flex align-center">
         {{ $t('_global.online_help') }}
         <v-spacer />

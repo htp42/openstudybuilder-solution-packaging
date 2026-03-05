@@ -44,44 +44,49 @@
     </template>
     <template #actions="slot">
       <v-btn
+        class="expandHoverBtn"
         variant="outlined"
         color="nnBaseBlue"
         :disabled="
           !accessGuard.checkPermission($roles.STUDY_WRITE) ||
           studiesGeneralStore.selectedStudyVersion !== null
         "
-        rounded="xl"
-        prepend-icon="mdi-exclamation"
         @click="openBatchUpdateForm()"
       >
-        Review activity updates
+        <v-icon left>mdi-exclamation</v-icon>
+        <span class="label">{{
+          $t('StudyActivityTable.review_activities')
+        }}</span>
       </v-btn>
       <v-btn
         v-if="slot.showSelectBoxes"
-        size="small"
         color="primary"
-        :title="$t('StudyActivityTable.edit_activity_selection')"
+        class="ml-2 expandHoverBtn"
         :disabled="
           !accessGuard.checkPermission($roles.STUDY_WRITE) ||
           studiesGeneralStore.selectedStudyVersion !== null
         "
-        icon="mdi-pencil-box-multiple-outline"
         @click="openBatchEditForm(slot.selected)"
-      />
+      >
+        <v-icon left>mdi-pencil-box-multiple-outline</v-icon>
+        <span class="label">{{
+          $t('StudyActivityTable.edit_activity_selection')
+        }}</span>
+      </v-btn>
       <v-btn
-        class="ml-2"
-        size="small"
+        class="ml-2 expandHoverBtn"
         variant="outlined"
         color="nnBaseBlue"
         data-cy="add-study-activity"
-        :title="$t('StudyActivityForm.add_title')"
         :disabled="
           !accessGuard.checkPermission($roles.STUDY_WRITE) ||
           studiesGeneralStore.selectedStudyVersion !== null
         "
-        icon="mdi-plus"
         @click.stop="showActivityForm = true"
-      />
+      >
+        <v-icon left>mdi-plus</v-icon>
+        <span class="label">{{ $t('StudyActivityForm.add_title') }}</span>
+      </v-btn>
     </template>
     <template #[`item.actions`]="{ item }">
       <ActionsMenu
@@ -222,7 +227,9 @@ const actions = [
     label: t('StudyActivityTable.update_activity_version'),
     icon: 'mdi-update',
     condition: (item) =>
-      item.is_activity_updated && !item.latest_activity.is_request_rejected,
+      item.is_activity_updated &&
+      !item.latest_activity.is_request_rejected &&
+      !item.activity.replaced_by_activity,
     click: openUpdateForm,
     accessRole: roles.STUDY_WRITE,
   },

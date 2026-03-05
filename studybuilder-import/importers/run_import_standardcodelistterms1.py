@@ -99,7 +99,7 @@ class StandardCodelistTerms1(BaseImporter):
                     "nci_preferred_name": row["preferred_term"] or "TBD",
                     "definition": row["definition"] or "TBD",
                     "extensible": extensible,
-                    "ordinal": row["ordinal"],
+                    "is_ordinal": row["ordinal"],
                     "sponsor_preferred_name": row["new_codelist_name"],
                     "template_parameter": template_parameter,
                     "library_name": row["library"],

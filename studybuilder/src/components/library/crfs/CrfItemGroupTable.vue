@@ -6,6 +6,7 @@
       :items="itemGroups"
       item-value="uid"
       :items-length="total"
+      :initial-sort-by="[{ key: 'name', order: 'asc' }]"
       column-data-resource="concepts/odms/item-groups"
       export-data-url="concepts/odms/item-groups"
       export-object-label="CRFItemGroups"
@@ -13,16 +14,16 @@
     >
       <template #actions="">
         <v-btn
-          class="ml-2"
-          size="small"
+          class="ml-2 expandHoverBtn"
           variant="outlined"
           color="nnBaseBlue"
-          :title="$t('CRFItemGroups.add_group')"
           data-cy="add-crf-item-group"
-          :disabled="!checkPermission($roles.LIBRARY_WRITE)"
-          icon="mdi-plus"
+          :disabled="!accessGuard.checkPermission($roles.LIBRARY_WRITE)"
           @click.stop="openForm"
-        />
+        >
+          <v-icon left>mdi-plus</v-icon>
+          <span class="label">{{ $t('CRFItemGroups.add_group') }}</span>
+        </v-btn>
       </template>
       <template #[`item.name`]="{ item }">
         <v-tooltip bottom>
@@ -40,53 +41,6 @@
       </template>
       <template #[`item.repeating`]="{ item }">
         {{ item.repeating }}
-      </template>
-      <template #[`item.description`]="{ item }">
-        <v-tooltip bottom>
-          <template #activator="{ props }">
-            <div
-              v-bind="props"
-              v-html="
-                sanitizeHTMLHandler(
-                  getDescriptionAttribute(item, 'description', true)
-                )
-              "
-            />
-          </template>
-          <span>{{ getDescriptionAttribute(item, 'description', false) }}</span>
-        </v-tooltip>
-      </template>
-      <template #[`item.sponsor_instruction`]="{ item }">
-        <v-tooltip bottom>
-          <template #activator="{ props }">
-            <div
-              v-bind="props"
-              v-html="
-                sanitizeHTMLHandler(
-                  getDescriptionAttribute(item, 'sponsor_instruction', true)
-                )
-              "
-            />
-          </template>
-          <span>{{
-            getDescriptionAttribute(item, 'sponsor_instruction', false)
-          }}</span>
-        </v-tooltip>
-      </template>
-      <template #[`item.instruction`]="{ item }">
-        <v-tooltip bottom>
-          <template #activator="{ props }">
-            <div
-              v-bind="props"
-              v-html="
-                sanitizeHTMLHandler(
-                  getDescriptionAttribute(item, 'instruction', true)
-                )
-              "
-            />
-          </template>
-          <span>{{ getDescriptionAttribute(item, 'instruction', false) }}</span>
-        </v-tooltip>
       </template>
       <template #[`item.status`]="{ item }">
         <StatusChip :status="item.status" />
@@ -119,6 +73,7 @@
         :title="groupHistoryTitle"
         :headers="headers"
         :items="groupHistoryItems"
+        :items-total="groupHistoryItems.length"
         @close="closeGroupHistory"
       />
     </v-dialog>
@@ -128,7 +83,9 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { computed, inject, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import NNTable from '@/components/tools/NNTable.vue'
 import StatusChip from '@/components/tools/StatusChip.vue'
 import ActionsMenu from '@/components/tools/ActionsMenu.vue'
@@ -140,315 +97,256 @@ import filteringParameters from '@/utils/filteringParameters'
 import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
 import CrfApprovalSummaryConfirmDialog from '@/components/library/crfs/CrfApprovalSummaryConfirmDialog.vue'
 import crfTypes from '@/constants/crfTypes'
-import parameters from '@/constants/parameters'
 import { useAccessGuard } from '@/composables/accessGuard'
 import { useCrfsStore } from '@/stores/crfs'
-import { computed } from 'vue'
-import { sanitizeHTML } from '@/utils/sanitize'
 import CrfNewVersionSummaryConfirmDialog from '@/components/library/crfs/CrfNewVersionSummaryConfirmDialog.vue'
 
-export default {
-  components: {
-    NNTable,
-    StatusChip,
-    ActionsMenu,
-    CrfItemGroupForm,
-    HistoryTable,
-    ConfirmDialog,
-    CrfApprovalSummaryConfirmDialog,
-    CrfNewVersionSummaryConfirmDialog,
+const props = defineProps({
+  elementProp: {
+    type: Object,
+    default: null,
   },
-  inject: ['notificationHub'],
-  props: {
-    elementProp: {
-      type: Object,
-      default: null,
-    },
-  },
-  setup() {
-    const crfsStore = useCrfsStore()
+})
 
-    return {
-      fetchItemGroups: crfsStore.fetchItemGroups,
-      total: computed(() => crfsStore.totalItemGroups),
-      itemGroups: computed(() => crfsStore.itemGroups),
-      ...useAccessGuard(),
+const { t } = useI18n()
+const notificationHub = inject('notificationHub')
+const roles = inject('roles')
+const accessGuard = useAccessGuard()
+
+const table = ref(null)
+const confirm = ref(null)
+const confirmApproval = ref(null)
+const confirmNewVersion = ref(null)
+
+const showForm = ref(false)
+const selectedGroup = ref(null)
+const filters = ref('')
+const showGroupHistory = ref(false)
+const groupHistoryItems = ref([])
+
+const crfsStore = useCrfsStore()
+const total = computed(() => crfsStore.totalItemGroups)
+const itemGroups = computed(() => crfsStore.itemGroups)
+
+const headers = computed(() => [
+  { title: '', key: 'actions', width: '1%' },
+  { title: t('CRFItemGroups.oid'), key: 'oid' },
+  { title: t('_global.name'), key: 'name' },
+  {
+    title: t('CRFItemGroups.repeating'),
+    key: 'repeating',
+    width: '1%',
+  },
+  { title: t('_global.version'), key: 'version', width: '1%' },
+  { title: t('_global.status'), key: 'status', width: '1%' },
+])
+
+const groupHistoryTitle = computed(() => {
+  if (selectedGroup.value) {
+    return t('CRFItemGroups.group_history_title', {
+      groupUid: selectedGroup.value.uid,
+    })
+  }
+  return ''
+})
+
+async function deleteGroup(item) {
+  let relationships = 0
+  await crfs.getRelationships(item.uid, 'item-groups').then((resp) => {
+    if (resp.data.OdmForm && resp.data.OdmForm.length > 0) {
+      relationships = resp.data.OdmForm.length
     }
-  },
-  data() {
-    return {
-      actions: [
-        {
-          label: this.$t('_global.approve'),
-          icon: 'mdi-check-decagram',
-          iconColor: 'success',
-          condition: (item) =>
-            item.possible_actions.find((action) => action === 'approve'),
-          accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.approve,
-        },
-        {
-          label: this.$t('_global.edit'),
-          icon: 'mdi-pencil-outline',
-          iconColor: 'primary',
-          condition: (item) =>
-            item.possible_actions.find((action) => action === 'edit'),
-          accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.edit,
-        },
-        {
-          label: this.$t('_global.view'),
-          icon: 'mdi-eye-outline',
-          iconColor: 'primary',
-          condition: (item) => item.status === constants.FINAL,
-          click: this.view,
-        },
-        {
-          label: this.$t('_global.new_version'),
-          icon: 'mdi-plus-circle-outline',
-          iconColor: 'primary',
-          condition: (item) =>
-            item.possible_actions.find((action) => action === 'new_version'),
-          accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.newVersion,
-        },
-        {
-          label: this.$t('_global.inactivate'),
-          icon: 'mdi-close-octagon-outline',
-          iconColor: 'primary',
-          condition: (item) =>
-            item.possible_actions.find((action) => action === 'inactivate'),
-          accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.inactivate,
-        },
-        {
-          label: this.$t('_global.reactivate'),
-          icon: 'mdi-undo-variant',
-          iconColor: 'primary',
-          condition: (item) =>
-            item.possible_actions.find((action) => action === 'reactivate'),
-          accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.reactivate,
-        },
-        {
-          label: this.$t('_global.delete'),
-          icon: 'mdi-delete-outline',
-          iconColor: 'error',
-          condition: (item) =>
-            item.possible_actions.find((action) => action === 'delete'),
-          accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.delete,
-        },
-        {
-          label: this.$t('_global.history'),
-          icon: 'mdi-history',
-          click: this.openGroupHistory,
-        },
-      ],
-      headers: [
-        { title: '', key: 'actions', width: '1%' },
-        { title: this.$t('CRFItemGroups.oid'), key: 'oid' },
-        { title: this.$t('_global.name'), key: 'name' },
-        {
-          title: this.$t('_global.description'),
-          key: 'description',
-          filteringName: 'descriptions.description',
-        },
-        {
-          title: this.$t('CRFDescriptions.sponsor_instruction'),
-          key: 'sponsor_instruction',
-          filteringName: 'descriptions.sponsor_instruction',
-        },
-        {
-          title: this.$t('CRFDescriptions.instruction'),
-          key: 'instruction',
-          filteringName: 'descriptions.instruction',
-        },
-        {
-          title: this.$t('CRFItemGroups.repeating'),
-          key: 'repeating',
-          width: '1%',
-        },
-        { title: this.$t('_global.version'), key: 'version', width: '1%' },
-        { title: this.$t('_global.status'), key: 'status', width: '1%' },
-      ],
-      showForm: false,
-      showHistory: false,
-      selectedGroup: null,
-      filters: '',
-      showGroupHistory: false,
-      groupHistoryItems: [],
-    }
-  },
-  computed: {
-    groupHistoryTitle() {
-      if (this.selectedGroup) {
-        return this.$t('CRFItemGroups.group_history_title', {
-          groupUid: this.selectedGroup.uid,
-        })
-      }
-      return ''
-    },
-  },
-  watch: {
-    elementProp(value) {
-      if (
-        value.tab === 'item-groups' &&
-        value.type === crfTypes.ITEM_GROUP &&
-        value.uid
-      ) {
-        this.edit({ uid: value.uid })
-      }
-    },
-  },
-  mounted() {
-    if (
-      this.elementProp.tab === 'item-groups' &&
-      this.elementProp.type === crfTypes.ITEM_GROUP &&
-      this.elementProp.uid
-    ) {
-      this.edit({ uid: this.elementProp.uid })
-    }
-  },
-  created() {
-    this.constants = constants
-  },
-  methods: {
-    sanitizeHTMLHandler(html) {
-      return sanitizeHTML(html)
-    },
-    getDescriptionAttribute(item, attr, short) {
-      const engDesc = item.descriptions.find((el) =>
-        [parameters.EN, parameters.ENG].includes(el.language)
-      )
-      if (engDesc && engDesc[attr]) {
-        return short
-          ? engDesc[attr].length > 40
-            ? engDesc[attr].substring(0, 40) + '...'
-            : engDesc[attr]
-          : engDesc[attr]
-      }
-      return ''
-    },
-    async delete(item) {
-      let relationships = 0
-      await crfs.getRelationships(item.uid, 'item-groups').then((resp) => {
-        if (resp.data.OdmForm && resp.data.OdmForm.length > 0) {
-          relationships = resp.data.OdmForm.length
-        }
-      })
-      const options = {
-        type: 'warning',
-        cancelLabel: this.$t('_global.cancel'),
-        agreeLabel: this.$t('_global.continue'),
-      }
-      if (
-        relationships < 1 ||
-        (await this.$refs.confirm.open(
-          `${this.$t('CRFItemGroups.delete_warning', { count: relationships })}`,
-          options
-        ))
-      ) {
-        crfs.delete('item-groups', item.uid).then(() => {
-          this.getItemGroups()
+  })
+  const options = {
+    type: 'warning',
+    cancelLabel: t('_global.cancel'),
+    agreeLabel: t('_global.continue'),
+  }
 
-          this.notificationHub.add({
-            msg: this.$t('CRFItemGroups.deleted'),
-          })
-        })
-      }
-    },
-    async approve(item) {
-      if (
-        await this.$refs.confirmApproval.open({
-          agreeLabel: this.$t('CRFItemGroups.approve_group'),
-          itemGroup: item,
-        })
-      ) {
-        crfs.approve('item-groups', item.uid).then(() => {
-          this.$refs.table.filterTable()
-
-          this.notificationHub.add({
-            msg: this.$t('CRFItemGroups.approved'),
-          })
-        })
-      }
-    },
-    inactivate(item) {
-      crfs.inactivate('item-groups', item.uid).then(() => {
-        this.$refs.table.filterTable()
-
-        this.notificationHub.add({
-          msg: this.$t('CRFItemGroups.inactivated'),
-        })
+  if (
+    relationships < 1 ||
+    (await confirm.value?.open(
+      `${t('CRFItemGroups.delete_warning', { count: relationships })}`,
+      options
+    ))
+  ) {
+    crfs.delete('item-groups', item.uid).then(() => {
+      getItemGroups()
+      notificationHub?.add({
+        msg: t('CRFItemGroups.deleted'),
       })
-    },
-    reactivate(item) {
-      crfs.reactivate('item-groups', item.uid).then(() => {
-        this.$refs.table.filterTable()
-
-        this.notificationHub.add({
-          msg: this.$t('CRFItemGroups.reactivated'),
-        })
-      })
-    },
-    async newVersion(item) {
-      if (
-        await this.$refs.confirmNewVersion.open({
-          agreeLabel: this.$t('CRFItemGroups.create_new_version'),
-          itemGroup: item,
-        })
-      ) {
-        crfs.newVersion('item-groups', item.uid).then(() => {
-          this.$refs.table.filterTable()
-
-          this.notificationHub.add({
-            msg: this.$t('_global.new_version_success'),
-          })
-        })
-      }
-    },
-    edit(item) {
-      crfs.getItemGroup(item.uid).then((resp) => {
-        this.selectedGroup = resp.data
-        this.showForm = true
-      })
-    },
-    view(item) {
-      crfs.getItemGroup(item.uid).then((resp) => {
-        this.selectedGroup = resp.data
-        this.showForm = true
-      })
-    },
-    openForm() {
-      this.showForm = true
-    },
-    async openGroupHistory(group) {
-      this.selectedGroup = group
-      const resp = await crfs.getGroupAuditTrail(group.uid)
-      this.groupHistoryItems = resp.data
-      this.showGroupHistory = true
-    },
-    closeGroupHistory() {
-      this.selectedGroup = null
-      this.showGroupHistory = false
-    },
-    async closeForm() {
-      this.showForm = false
-      this.selectedGroup = null
-      this.$refs.table.filterTable()
-    },
-    getItemGroups(filters, options, filtersUpdated) {
-      if (filters) {
-        this.filters = filters
-      }
-      const params = filteringParameters.prepareParameters(
-        options,
-        filters,
-        filtersUpdated
-      )
-      this.fetchItemGroups(params)
-    },
-  },
+    })
+  }
 }
+
+async function approve(item) {
+  const ok = await confirmApproval.value?.open({
+    agreeLabel: t('CRFItemGroups.approve_group'),
+    itemGroup: item,
+  })
+  if (ok) {
+    crfs.approve('item-groups', item.uid).then(() => {
+      table.value?.filterTable?.()
+      notificationHub?.add({
+        msg: t('CRFItemGroups.approved'),
+      })
+    })
+  }
+}
+
+function inactivate(item) {
+  crfs.inactivate('item-groups', item.uid).then(() => {
+    table.value?.filterTable?.()
+    notificationHub?.add({
+      msg: t('CRFItemGroups.inactivated'),
+    })
+  })
+}
+
+function reactivate(item) {
+  crfs.reactivate('item-groups', item.uid).then(() => {
+    table.value?.filterTable?.()
+    notificationHub?.add({
+      msg: t('CRFItemGroups.reactivated'),
+    })
+  })
+}
+
+async function newVersion(item) {
+  const ok = await confirmNewVersion.value?.open({
+    agreeLabel: t('CRFItemGroups.create_new_version'),
+    itemGroup: item,
+  })
+  if (ok) {
+    crfs.newVersion('item-groups', item.uid).then(() => {
+      table.value?.filterTable?.()
+      notificationHub?.add({
+        msg: t('_global.new_version_success'),
+      })
+    })
+  }
+}
+
+function view(item) {
+  crfs.getItemGroup(item.uid).then((resp) => {
+    selectedGroup.value = resp.data
+    showForm.value = true
+  })
+}
+
+function openForm() {
+  showForm.value = true
+}
+
+async function openGroupHistory(group) {
+  selectedGroup.value = group
+  const resp = await crfs.getGroupAuditTrail(group.uid)
+  groupHistoryItems.value = resp.data
+  showGroupHistory.value = true
+}
+
+function closeGroupHistory() {
+  selectedGroup.value = null
+  showGroupHistory.value = false
+}
+
+async function closeForm() {
+  showForm.value = false
+  selectedGroup.value = null
+  table.value?.filterTable?.()
+}
+
+function getItemGroups(filterString, options, filtersUpdated) {
+  if (filterString) {
+    filters.value = filterString
+  }
+  const params = filteringParameters.prepareParameters(
+    options,
+    filterString,
+    filtersUpdated
+  )
+  crfsStore.fetchItemGroups(params)
+}
+
+const actions = computed(() => [
+  {
+    label: t('_global.approve'),
+    icon: 'mdi-check-decagram',
+    iconColor: 'success',
+    condition: (item) =>
+      item.possible_actions.find((action) => action === 'approve'),
+    accessRole: roles.LIBRARY_WRITE,
+    click: approve,
+  },
+  {
+    label: t('_global.edit'),
+    icon: 'mdi-pencil-outline',
+    iconColor: 'primary',
+    condition: (item) =>
+      item.possible_actions.find((action) => action === 'edit'),
+    accessRole: roles.LIBRARY_WRITE,
+    click: view,
+  },
+  {
+    label: t('_global.view'),
+    icon: 'mdi-eye-outline',
+    iconColor: 'primary',
+    condition: (item) => item.status === constants.FINAL,
+    click: view,
+  },
+  {
+    label: t('_global.new_version'),
+    icon: 'mdi-plus-circle-outline',
+    iconColor: 'primary',
+    condition: (item) =>
+      item.possible_actions.find((action) => action === 'new_version'),
+    accessRole: roles.LIBRARY_WRITE,
+    click: newVersion,
+  },
+  {
+    label: t('_global.inactivate'),
+    icon: 'mdi-close-octagon-outline',
+    iconColor: 'primary',
+    condition: (item) =>
+      item.possible_actions.find((action) => action === 'inactivate'),
+    accessRole: roles.LIBRARY_WRITE,
+    click: inactivate,
+  },
+  {
+    label: t('_global.reactivate'),
+    icon: 'mdi-undo-variant',
+    iconColor: 'primary',
+    condition: (item) =>
+      item.possible_actions.find((action) => action === 'reactivate'),
+    accessRole: roles.LIBRARY_WRITE,
+    click: reactivate,
+  },
+  {
+    label: t('_global.delete'),
+    icon: 'mdi-delete-outline',
+    iconColor: 'error',
+    condition: (item) =>
+      item.possible_actions.find((action) => action === 'delete'),
+    accessRole: roles.LIBRARY_WRITE,
+    click: deleteGroup,
+  },
+  {
+    label: t('_global.history'),
+    icon: 'mdi-history',
+    click: openGroupHistory,
+  },
+])
+
+watch(
+  () => props.elementProp,
+  (value) => {
+    if (
+      value?.tab === 'item-groups' &&
+      value?.type === crfTypes.ITEM_GROUP &&
+      value?.uid
+    ) {
+      view({ uid: value.uid })
+    }
+  }
+)
 </script>

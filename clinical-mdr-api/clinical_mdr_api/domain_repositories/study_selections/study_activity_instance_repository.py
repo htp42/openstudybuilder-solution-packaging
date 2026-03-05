@@ -2,22 +2,21 @@ import datetime
 from dataclasses import dataclass
 from typing import Any
 
+from neomodel import db
+
 from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_codelist_attributes_repository import (
     CTCodelistAttributesRepository,
 )
 from clinical_mdr_api.domain_repositories.generic_repository import (
-    manage_previous_connected_study_selection_relationships,
+    _manage_versioning_with_relations,
 )
 from clinical_mdr_api.domain_repositories.models._utils import ListDistinct
-from clinical_mdr_api.domain_repositories.models.activities import (
-    ActivityInstanceRoot,
-    ActivityInstanceValue,
-)
+from clinical_mdr_api.domain_repositories.models.activities import ActivityInstanceValue
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTTermContext,
     CTTermRoot,
 )
-from clinical_mdr_api.domain_repositories.models.study import StudyValue
+from clinical_mdr_api.domain_repositories.models.study import StudyRoot, StudyValue
 from clinical_mdr_api.domain_repositories.models.study_audit_trail import StudyAction
 from clinical_mdr_api.domain_repositories.models.study_selections import (
     StudyActivity,
@@ -38,8 +37,13 @@ from clinical_mdr_api.domains.study_selections.study_selection_activity_instance
     StudySelectionActivityInstanceVO,
 )
 from clinical_mdr_api.models.study_selections.study_visit import SimpleStudyVisit
+from common import exceptions
 from common.config import settings
-from common.exceptions import BusinessLogicException, NotFoundException
+from common.exceptions import (
+    BusinessLogicException,
+    NotFoundException,
+    ValidationException,
+)
 from common.utils import convert_to_datetime
 
 
@@ -712,6 +716,7 @@ class StudySelectionActivityInstanceRepository(
 
     def _add_new_selection(
         self,
+        study_root: StudyRoot,
         latest_study_value_node: StudyValue,
         order: int,
         selection: StudySelectionActivityInstanceVO,
@@ -719,6 +724,67 @@ class StudySelectionActivityInstanceRepository(
         last_study_selection_node: StudyActivityInstance,
         for_deletion: bool = False,
     ):
+        # Fetch nodes referenced by uids
+        query = [
+            "MATCH (study_activity:StudyActivity {uid:$study_activity_uid}) WHERE NOT (study_activity)-[:BEFORE]-()",
+        ]
+        params = {
+            "study_activity_uid": selection.study_activity_uid,
+        }
+        returns = ["study_activity"]
+        if selection.activity_instance_uid:
+            if selection.activity_instance_version:
+                query.append(
+                    """MATCH (instance_root:ActivityInstanceRoot {uid: $activity_instance_uid})
+                        -[:HAS_VERSION {version: $activity_instance_version}]->(latest_activity_instance_value:ActivityInstanceValue) WITH * LIMIT 1"""
+                )
+                params["activity_instance_version"] = (
+                    selection.activity_instance_version
+                )
+            else:
+                query.append(
+                    "MATCH (instance_root:ActivityInstanceRoot {uid: $activity_instance_uid})-[:LATEST]->(latest_activity_instance_value:ActivityInstanceValue)"
+                )
+            params["activity_instance_uid"] = selection.activity_instance_uid
+            returns.append("latest_activity_instance_value")
+        if selection.study_data_supplier_uid:
+            query.append(
+                "MATCH (study_data_supplier:StudyDataSupplier {uid: $study_data_supplier_uid}) WHERE NOT (study_data_supplier)-[:BEFORE]-()"
+            )
+            params["study_data_supplier_uid"] = selection.study_data_supplier_uid
+            returns.append("study_data_supplier")
+        if selection.origin_type_uid:
+            query.append(
+                "OPTIONAL MATCH (origin_type_root:CTTermRoot {uid: $origin_type_uid})"
+            )
+            params["origin_type_uid"] = selection.origin_type_uid
+            returns.append("origin_type_root")
+        if selection.origin_source_uid:
+            query.append(
+                "OPTIONAL MATCH (origin_source_root:CTTermRoot {uid: $origin_source_uid})"
+            )
+            params["origin_source_uid"] = selection.origin_source_uid
+            returns.append("origin_source_root")
+
+        query.append(f"RETURN {', '.join(returns)}")
+        query_str = "\n".join(query)
+        results, keys = db.cypher_query(query_str, params, resolve_objects=True)
+        if len(results) != 1:
+            raise exceptions.BusinessLogicException(
+                msg=f"There should be one row returned with dependencies for StudyActivityInstance '{selection.study_selection_uid}'."
+            )
+
+        nodes = dict(zip(keys, results[0]))
+        latest_activity_instance_value_node: ActivityInstanceValue | None = nodes.get(
+            "latest_activity_instance_value"
+        )
+        study_activity_node: StudyActivity = nodes["study_activity"]
+        study_data_supplier_node: StudyDataSupplier | None = nodes.get(
+            "study_data_supplier"
+        )
+        origin_type_root: CTTermRoot | None = nodes.get("origin_type_root")
+        origin_source_root: CTTermRoot | None = nodes.get("origin_source_root")
+
         # Validate that reviewed instances cannot have is_important or baseline visits changed
         if last_study_selection_node and last_study_selection_node.is_reviewed:
             # Check if is_important is being changed
@@ -756,40 +822,20 @@ class StudySelectionActivityInstanceRepository(
             is_reviewed=selection.is_reviewed,
             is_important=selection.is_important,
             accepted_version=selection.accepted_version,
-        )
-        study_activity_instance_selection_node.save()
+        ).save()
         if not for_deletion:
             # Connect new node with study value
             latest_study_value_node.has_study_activity_instance.connect(
                 study_activity_instance_selection_node
             )
-        # Connect new node with audit trail
-        audit_node.has_after.connect(study_activity_instance_selection_node)
-        if selection.activity_instance_uid:
-            # find the activity instance value
-            activity_instance_root_node: ActivityInstanceRoot = (
-                ActivityInstanceRoot.nodes.get(uid=selection.activity_instance_uid)
-            )
-            latest_activity_instance_value_node: ActivityInstanceValue
-            if selection.activity_instance_version:
-                latest_activity_instance_value_node = (
-                    activity_instance_root_node.get_value_for_version(
-                        selection.activity_instance_version
-                    )
-                )
-            else:
-                latest_activity_instance_value_node = (
-                    activity_instance_root_node.has_latest_value.get()
-                )
+
+        if selection.activity_instance_uid and latest_activity_instance_value_node:
             # Connect new node with Activity value
             study_activity_instance_selection_node.has_selected_activity_instance.connect(
                 latest_activity_instance_value_node
             )
 
         # Connect StudyActivityInstance with StudyActivity node
-        study_activity_node = StudyActivity.nodes.has(has_before=False).get(
-            uid=selection.study_activity_uid
-        )
         study_activity_instance_selection_node.study_activity_has_study_activity_instance.connect(
             study_activity_node
         )
@@ -827,60 +873,57 @@ class StudySelectionActivityInstanceRepository(
             )
 
         # Connect StudyDataSupplier if provided
-        if selection.study_data_supplier_uid:
-            study_data_supplier_node = StudyDataSupplier.nodes.has(
-                has_before=False
-            ).get_or_none(uid=selection.study_data_supplier_uid)
-            if study_data_supplier_node:
-                study_activity_instance_selection_node.has_study_data_supplier.connect(
-                    study_data_supplier_node
-                )
+        if selection.study_data_supplier_uid and study_data_supplier_node:
+            study_activity_instance_selection_node.has_study_data_supplier.connect(
+                study_data_supplier_node
+            )
 
         # Connect Origin Type CT term if provided
         if selection.origin_type_uid:
-            origin_type_root = CTTermRoot.nodes.get_or_none(
-                uid=selection.origin_type_uid
+            ValidationException.raise_if(
+                origin_type_root is None,
+                msg=f"Origin Type Term with UID '{selection.origin_type_uid}' doesn't exist.",
             )
-            if origin_type_root:
-                selected_term_node = (
-                    CTCodelistAttributesRepository().get_or_create_selected_term(
-                        origin_type_root,
-                        codelist_submission_value=settings.origin_type_cl_submval,
-                    )
+            selected_term_node = (
+                CTCodelistAttributesRepository().get_or_create_selected_term(
+                    origin_type_root,
+                    codelist_submission_value=settings.origin_type_cl_submval,
                 )
-                study_activity_instance_selection_node.has_origin_type.connect(
-                    selected_term_node
-                )
+            )
+            study_activity_instance_selection_node.has_origin_type.connect(
+                selected_term_node
+            )
 
         # Connect Origin Source CT term if provided
         if selection.origin_source_uid:
-            origin_source_root = CTTermRoot.nodes.get_or_none(
-                uid=selection.origin_source_uid
+            ValidationException.raise_if(
+                origin_source_root is None,
+                msg=f"Origin Source Term with UID '{selection.origin_source_uid}' doesn't exist.",
             )
-            if origin_source_root:
-                selected_term_node = (
-                    CTCodelistAttributesRepository().get_or_create_selected_term(
-                        origin_source_root,
-                        codelist_submission_value=settings.origin_source_cl_submval,
-                    )
+            selected_term_node = (
+                CTCodelistAttributesRepository().get_or_create_selected_term(
+                    origin_source_root,
+                    codelist_submission_value=settings.origin_source_cl_submval,
                 )
-                study_activity_instance_selection_node.has_origin_source.connect(
-                    selected_term_node
-                )
+            )
+            study_activity_instance_selection_node.has_origin_source.connect(
+                selected_term_node
+            )
 
-        if last_study_selection_node:
-            manage_previous_connected_study_selection_relationships(
-                previous_item=last_study_selection_node,
-                study_value_node=latest_study_value_node,
-                new_item=study_activity_instance_selection_node,
-                # StudyDataSupplier and CTTermContext are excluded because they're handled explicitly above
-                exclude_study_selection_relationships=[
-                    StudyActivity,
-                    StudyVisit,
-                    StudyDataSupplier,
-                    CTTermContext,
-                ],
-            )
+        _manage_versioning_with_relations(
+            study_root=study_root,
+            action_type=type(audit_node),
+            before=last_study_selection_node,
+            after=study_activity_instance_selection_node,
+            exclude_relationships=[
+                ActivityInstanceValue,
+                StudyActivity,
+                StudyVisit,
+                StudyDataSupplier,
+                CTTermContext,
+            ],
+            author_id=selection.author_id,
+        )
 
     def generate_uid(self) -> str:
         return StudyActivityInstance.get_next_free_uid_and_increment_counter()

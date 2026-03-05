@@ -9,8 +9,11 @@ const isInteractiveElement = (target) =>
 const isDraggableForm = (dialogContent) => {
   const card = dialogContent.querySelector('.v-card')
   if (card?.classList.contains('fullscreen-dialog')) return false
-  // Only drag if it's a form dialog (has .dialog-title in the title bar)
-  return dialogContent.querySelector('.v-card-title .dialog-title') !== null
+  // Only drag if it's a form dialog or online help (has .dialog-title in the title bar)
+  return (
+    (dialogContent.querySelector('.v-card-title .dialog-title') ||
+      dialogContent.querySelector('.v-card-title.dialog-title')) !== null
+  )
 }
 
 const constrainToBounds = (x, y, width) => ({

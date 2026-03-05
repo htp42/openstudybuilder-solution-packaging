@@ -2,38 +2,17 @@ const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor")
 
 let structure_tests_study_uid
 
+When('User intercepts study arms request', () => cy.intercept('**/study-arms?study_uid=*').as('arms'))
+
+When('User intercepts study cohorts request', () => cy.intercept('**/study-cohorts?study_uid=*').as('cohorts'))
+
+When('User waits for study arms request', () => cy.wait('@arms').then(req => expect(req.response.statusCode).to.eq(200)))
+
+When('User waits for study cohorts request', () => cy.wait('@cohorts').then(req => expect(req.response.statusCode).to.eq(200)))
+
 When('User saved changes made in the study structure stepper', () => cy.clickButton('save-close-stepper'))
 
-When('The study for testing study structure is selected', () => {
-      cy.sendGetRequest('/studies?include_sections=study_description&sort_by[current_metadata.identification_metadata.study_id]=true&page_size=0').then((response) => {
-             structure_tests_study_uid = response.body.items
-                .find(study => study.current_metadata.identification_metadata.study_number == 9877)
-                .uid
-    })
-})
-
-When('The study for testing manually defined study structure is selected', () => {
-      cy.sendGetRequest('/studies?include_sections=study_description&sort_by[current_metadata.identification_metadata.study_id]=true&page_size=0').then((response) => {
-             structure_tests_study_uid = response.body.items
-                .find(study => study.current_metadata.identification_metadata.study_number == 9878)
-                .uid
-    })
-})
-
-When('The study {string} page is opened for that study', (page) => {
-    cy.visit(`/studies/${structure_tests_study_uid}/study_structure/${page}`)
-})
-
-When('A study with Study Arms has been selected', () => {
-    cy.selectTestStudy(structure_tests_study_uid)
-    cy.createTestArm(structure_tests_study_uid)
-    cy.reload()
-})
-
 When('The user defines multiple arms for the study through Study with cohorts, branch arms and subpopulations section', () => {
-    cy.intercept('**/study-design-classes').as('designClass')
-    cy.wait('@designClass').then((req) => expect(req.response.statusCode).to.eq(200))
-    cy.get('.mdi-plus').click()
     cy.get('[data-cy="full-design-study"] input').click()
     cy.clickButton('continue-stepper')
     cy.selectVSelect('arm-type', 'Placebo Arm')
@@ -80,11 +59,6 @@ Then('The multiple arms are created for the study', () => {
 })
 
 When('The user updates arms for the study through Study with cohorts, branch arms and subpopulations section', () => {
-    cy.intercept('**/study-design-classes').as('designClass')
-    cy.wait('@designClass').then((req) => {
-        expect(req.response.statusCode).to.eq(200)
-    })
-    cy.get('.mdi-pencil').click()
     cy.get('[data-cy="arm-name"]').eq(0).clear().type('Test Arm Two 2')
     cy.get('[data-cy="arm-short-name"]').eq(0).clear().type('CArm2')
     cy.get('[data-cy="randomization-group"]').eq(0).clear().type('RB2')
@@ -98,7 +72,6 @@ When('The user updates arms for the study through Study with cohorts, branch arm
     cy.get('[data-cy="arm-description"]').eq(1).clear().type('Test Arm A1')
     cy.clickButton('save-close-stepper')
     cy.wait(2000)
-
 })
 
 
@@ -114,9 +87,6 @@ Then('The arms are updated for the study', () => {
 })
 
 When('The user removes arms from the study through Study with cohorts, branch arms and subpopulations section', () => {
-    cy.intercept('**/study-arms?study_uid=*').as('arms')
-    cy.get('.mdi-pencil').click()
-    cy.wait('@arms').then(req => expect(req.response.statusCode).to.eq(200))
     cy.clickFirstButton('remove-arm')
 })
 
@@ -128,11 +98,6 @@ Then('The arms are removed from the study', () => {
 })
 
 When('The user defines multiple cohorts for the study through Study with cohorts, branch arms and subpopulations section', () => {
-    cy.intercept('**/study-design-classes').as('designClass')
-    cy.wait('@designClass').then((req) => {
-        expect(req.response.statusCode).to.eq(200)
-    })
-    cy.get('.mdi-pencil').click()
     cy.get('[data-cy="cohort-code"]').eq(0).clear().type('C0')
     cy.get('[data-cy="cohort-name"]').eq(0).clear().type('Cohort Test 1')
     cy.get('[data-cy="cohort-short-name"]').eq(0).clear().type('CT1')
@@ -163,11 +128,6 @@ When('The multiple cohorts are created for the study', () => {
 })
 
 When('The user updates cohorts for the study through Study with cohorts, branch arms and subpopulations section', () => {
-    cy.intercept('**/study-design-classes').as('designClass')
-    cy.wait('@designClass').then((req) => {
-        expect(req.response.statusCode).to.eq(200)
-    })
-    cy.get('.mdi-pencil').click()
     cy.get('[data-cy="cohort-code"]').eq(0).clear().type('C0A')
     cy.get('[data-cy="cohort-name"]').eq(0).clear().type('Cohort Test 1A')
     cy.get('[data-cy="cohort-short-name"]').eq(0).clear().type('CT1A')
@@ -191,9 +151,6 @@ When('The cohorts are updated for the study', () => {
 })
 
 When('The user removes cohorts from the study through Study with cohorts, branch arms and subpopulations section', () => {
-    cy.intercept('**/study-cohorts?study_uid=*').as('cohorts')
-    cy.get('.mdi-pencil').click()
-    cy.wait('@cohorts').then(req => expect(req.response.statusCode).to.eq(200))
     cy.clickFirstButton('remove-cohort')
 })
 
@@ -205,18 +162,11 @@ When('The cohorts are removed from the study', () => {
 })
 
 When('The user assigns number of participants in the branches', () => {
-    cy.intercept('**/study-design-classes').as('designClass')
-    cy.wait('@designClass').then((req) => {
-        expect(req.response.statusCode).to.eq(200)
-    })
-    cy.get('.mdi-pencil').click()
-    cy.wait(1000)
     cy.get('[data-cy="number-of-subjects-single-arm"]').eq(0).clear().type(22)
     cy.get('[data-testid="increment"]').eq(0).click()
     cy.get('[data-cy="number-of-subjects-single-arm"]').eq(1).clear().type(50)
     cy.clickButton('continue-stepper')
     cy.wait(2500)
-
 })
 
 Then('The number of participants are correctly assigned to the branches', () => {
@@ -226,17 +176,10 @@ Then('The number of participants are correctly assigned to the branches', () => 
 })
 
 Then('The user copies the number of participants to all rows', () => {
-    cy.intercept('**/study-design-classes').as('designClass')
-    cy.wait('@designClass').then((req) => {
-        expect(req.response.statusCode).to.eq(200)
-    })
-    cy.get('.mdi-pencil').click()
-    cy.wait(1000)
     cy.get('[data-cy="number-of-subjects-single-arm"]').eq(0).clear().type(10)
     cy.clickButton('copy-branches')
     cy.clickButton('continue-stepper')
     cy.wait(2500)
-
 })
 
 Then('The number of participants is updated in each row', () => {

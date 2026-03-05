@@ -73,18 +73,18 @@ dist = "python setup.py bdist_wheel"
 package = "pip wheel -r requirements.txt -w dist"
 testunit = "pytest -s --cov-report html:reports/coverage-unit-html --cov-report xml:reports/coverage.xml --cov-append --cov  --junitxml=reports/unit_report.xml clinical_mdr_api/tests/unit/ common/tests/unit"
 testint = "pytest -s -n 4 --dist loadfile --cov-report html:reports/coverage-int-html --cov-report xml:reports/coverage.xml --cov-append --cov --junitxml=reports/int_report.xml clinical_mdr_api/tests/integration/"
-testauth = "pytest -s --cov-report html:reports/coverage-auth-html --cov-report xml:reports/coverage.xml --cov-append --cov --junitxml=reports/auth_report.xml clinical_mdr_api/tests/auth/ common/tests/auth"
+testauth = "pytest -s --cov-report html:reports/coverage-auth-html --cov-report xml:reports/coverage.xml --cov-append --cov --junitxml=reports/auth_report.xml clinical_mdr_api/tests/auth/ common/tests/auth extensions/tests/auth/"
 test-telemetry = "pytest -s --cov-report html:reports/coverage-telemetry-html --cov-report xml:reports/coverage.xml --cov-append --cov --junitxml=reports/telemetry_report.xml clinical_mdr_api/tests/telemetry/"
 testunitallure = "pytest -s --cov-report html:reports/coverage-unit --cov-report xml:reports/coverage.xml --cov-append --cov=clinical_mdr_api  --junitxml=reports/unit_report.xml --alluredir reports/allure-results clinical_mdr_api/tests/unit/"
 testintallure = "pytest -s -n 4 --dist loadfile --cov-report html:reports/coverage-int --cov-report xml:reports/coverage.xml --cov-append --cov=clinical_mdr_api --junitxml=reports/int_report.xml --alluredir reports/allure-results clinical_mdr_api/tests/integration/"
-lint = "pylint -j 0 clinical_mdr_api consumer_api common"
-mypy = "mypy clinical_mdr_api consumer_api common"
-sblint = "python -m sblint.main clinical_mdr_api consumer_api common"
-black = "python -m black clinical_mdr_api consumer_api common"
-isort = "python -m isort clinical_mdr_api consumer_api common"
+lint = "pylint -j 0 clinical_mdr_api consumer_api common extensions"
+mypy = "mypy clinical_mdr_api consumer_api common extensions"
+sblint = "python -m sblint.main clinical_mdr_api consumer_api common extensions"
+black = "python -m black clinical_mdr_api consumer_api common extensions"
+isort = "python -m isort clinical_mdr_api consumer_api common extensions"
 format = """sh -c "
-    python -m isort clinical_mdr_api consumer_api common \
-    && python -m black clinical_mdr_api consumer_api common \
+    python -m isort clinical_mdr_api consumer_api common extensions \
+    && python -m black clinical_mdr_api consumer_api common extensions \
 "
 """
 openapi = "python generate_openapi_json.py"
@@ -128,3 +128,34 @@ consumer-api-schemathesis = """
         consumer_api/openapi.json
 """
 consumer-api-traceability = "python consumer_api/requirements/generate_traceability.py"
+
+extensions-api-dev = "uvicorn --host=0.0.0.0 --port=8009 extensions.extensions_api:app --reload"
+extensions-openapi = "python generate_openapi.py extensions.extensions_api:app extensions/openapi.json extensions/apiVersion"
+extensions-lint = "pylint extensions"
+extensions-test = """sh -c "
+    PRODEX_API_MOCK=True pytest -s -n 1 --dist loadfile \
+        --cov-report html:extensions/reports/coverage-extensions-html \
+        --cov-report xml:extensions/reports/coverage.xml \
+        --cov-append --cov \
+        --junitxml=extensions/reports/test_report.xml \
+        --ignore=extensions/tests/auth \
+        extensions/tests extensions/*/tests 
+"
+"""
+extensions-testauth = "pytest -s -n 1 --dist loadfile --cov-report html:extensions/reports/coverage-auth-html --cov-report xml:extensions/reports/coverage.xml --cov-append --cov --junitxml=extensions/reports/auth_report.xml extensions/tests/auth"
+extensions-schemathesis = """
+    schemathesis
+        run
+        --experimental=openapi-3.1
+        --checks=all
+        --base-url=http://localhost:8009
+        --request-timeout=30000
+        --hypothesis-max-examples=100
+        --hypothesis-verbosity=normal
+        --hypothesis-deadline=None
+        --hypothesis-suppress-health-check=too_slow,filter_too_much,data_too_large
+        --junit-xml=extensions/reports/schemathesis_report.xml
+        --report=extensions/reports/schemathesis_report.tgz
+        --show-trace
+        extensions/openapi.json
+"""

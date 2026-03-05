@@ -225,18 +225,18 @@ CHANGE_TYPE_FIELD = Field(
     json_schema_extra={"nullable": True},
 )
 SHOW_ACTIVITY_SUBGROUP_IN_PROTOCOL_FLOWCHART_FIELD = Field(
-    description="show activity subgroup in protocol flow chart",
+    description="show activity subgroup in protocol flowchart",
     json_schema_extra={"nullable": True},
 )
 SHOW_ACTIVITY_GROUP_IN_PROTOCOL_FLOWCHART_FIELD = Field(
-    description="show activity group in protocol flow chart",
+    description="show activity group in protocol flowchart",
     json_schema_extra={"nullable": True},
 )
 SHOW_SOA_GROUP_IN_PROTOCOL_FLOWCHART_FIELD = Field(
-    description="show soa group in protocol flow chart",
+    description="show soa group in protocol flowchart",
 )
 SHOW_ACTIVITY_INSTANCE_IN_PROTOCOL_FLOWCHART_FIELD = Field(
-    description="show activity instance in operational flow chart",
+    description="show activity instance in operational flowchart",
 )
 
 
@@ -2052,7 +2052,7 @@ class StudySelectionActivityCore(StudySelection):
     show_activity_in_protocol_flowchart: Annotated[
         bool | None,
         Field(
-            description="show activity in protocol flow chart",
+            description="show activity in protocol flowchart",
             json_schema_extra={"nullable": True},
         ),
     ] = None
@@ -2318,6 +2318,9 @@ class StudySelectionActivityCreateInput(PostInputModel):
     activity_subgroup_uid: Annotated[str | None, Field()] = None
     activity_group_uid: Annotated[str | None, Field()] = None
     activity_instance_uid: Annotated[str | None, Field()] = None
+    show_activity_in_protocol_flowchart: Annotated[
+        bool, Field(description="show activity in protocol flowchart")
+    ] = False
 
 
 class StudySelectionActivityInSoACreateInput(PatchInputModel):
@@ -3821,6 +3824,7 @@ class CompactStudyArm(BaseModel):
     uid: Annotated[str, Field(description="uid for the study arm")]
     name: Annotated[str, Field(description="name for the study arm")]
     short_name: Annotated[str, Field(description="short name for the study arm")]
+    label: Annotated[str, Field(description="label for the study arm")]
     number_of_subjects: Annotated[
         int | None, Field(description="number_of_subjects for the study arm")
     ] = None
@@ -3858,6 +3862,7 @@ class CompactStudyArm(BaseModel):
             uid=arm_structure["uid"],
             name=arm_structure["name"],
             short_name=arm_structure["short_name"],
+            label=arm_structure["label"],
             number_of_subjects=arm_structure["number_of_subjects"],
             study_cohorts=cohorts,
         )
@@ -3875,6 +3880,8 @@ class StudySelectionArm(StudySelection):
         str,
         Field(description="short name for the study arm"),
     ]
+
+    label: Annotated[str | None, Field(description="label for the study arm")] = None
 
     code: Annotated[
         str | None,
@@ -3970,6 +3977,7 @@ class StudySelectionArm(StudySelection):
             arm_uid=selection.study_selection_uid,
             name=selection.name,
             short_name=selection.short_name,
+            label=selection.label,
             code=selection.code,
             description=selection.description,
             order=order,
@@ -4012,6 +4020,7 @@ class StudySelectionArm(StudySelection):
             order=study_selection_history.order,
             arm_uid=study_selection_history.study_selection_uid,
             name=study_selection_history.arm_name,
+            label=study_selection_history.arm_label,
             short_name=study_selection_history.arm_short_name,
             code=study_selection_history.arm_code,
             description=study_selection_history.arm_description,
@@ -4071,6 +4080,7 @@ class StudySelectionArmWithConnectedBranchArms(StudySelectionArm):
             arm_uid=selection.study_selection_uid,
             name=selection.name,
             short_name=selection.short_name,
+            label=selection.label,
             study_version=(
                 study_value_version
                 if study_value_version
@@ -4107,6 +4117,8 @@ class StudySelectionArmCreateInput(PostInputModel):
         str | None, Field(description="short name for the study arm")
     ] = None
 
+    label: Annotated[str | None, Field(description="label for the study arm")] = None
+
     code: Annotated[str | None, Field(description="code for the study arm")] = None
 
     description: Annotated[
@@ -4141,6 +4153,8 @@ class StudySelectionArmInput(PatchInputModel):
     short_name: Annotated[
         str | None, Field(description="short name for the study arm")
     ] = None
+
+    label: Annotated[str | None, Field(description="label for the study arm")] = None
 
     code: Annotated[str | None, Field(description="code for the study arm")] = None
 

@@ -1,5 +1,5 @@
 <template>
-  <v-card class="bg-nnBaseLight" rounded="lg" border="sm" flat>
+  <v-card class="bg-nnBaseLight" rounded="lg" border="sm" flat v-bind="$attrs">
     <v-card-text>
       <div class="d-flex">
         <slot name="prepend" />
@@ -53,14 +53,32 @@
           @update:model-value="update"
         />
         <slot name="append" />
+        <v-btn
+          v-if="props.withAdvancedSearch"
+          variant="flat"
+          class="ml-4"
+          icon="mdi-text-box-search-outline"
+          size="small"
+          @click="openTermsSelectionForm()"
+        >
+        </v-btn>
       </div>
     </v-card-text>
   </v-card>
+  <TermsSelectionForm
+    v-model:codelist="codelist"
+    v-model:term-selection="form.ct_term_uid"
+    :open="showTermsSelectionForm"
+    max-width="1200px"
+    @selected="update"
+    @close="closeTermsSelectionForm"
+  />
 </template>
 
 <script setup>
 import { computed, inject, ref, watch } from 'vue'
 import SelectActivityItemTermField from './SelectActivityItemTermField.vue'
+import TermsSelectionForm from '@/components/library/TermsSelectionForm.vue'
 import unitsApi from '@/api/units'
 
 const props = defineProps({
@@ -100,6 +118,10 @@ const props = defineProps({
     type: String,
     default: null,
   },
+  withAdvancedSearch: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const emit = defineEmits(['update:modelValue'])
@@ -110,6 +132,7 @@ const codelist = ref(null)
 const allowedUnits = ref([])
 const loading = ref(false)
 const search = ref('')
+const showTermsSelectionForm = ref(false)
 const termField = ref(null)
 
 const selectedTerm = computed(() => {
@@ -120,6 +143,14 @@ const selectedTerm = computed(() => {
     (item) => item.term_uid === form.value.ct_term_uid
   )
 })
+
+function openTermsSelectionForm() {
+  showTermsSelectionForm.value = true
+}
+
+function closeTermsSelectionForm() {
+  showTermsSelectionForm.value = false
+}
 
 function fetchUnits() {
   if (!props.unitDimension) {
@@ -190,18 +221,16 @@ watch(
       }
       if (value.unit_definition_uids && value.unit_definition_uids.length) {
         form.value.unit_definition_uid = value.unit_definition_uids[0]
-      }
-      if (value.ct_terms && value.ct_terms.length) {
+      } else if (value.ct_terms && value.ct_terms.length) {
         if (!props.multiple) {
-          form.value.ct_term_uid = value.ct_terms[0].term_uid
+          form.value.ct_term_uid =
+            value.ct_terms[0].term_uid || value.ct_terms[0].uid
           codelist.value = value.ct_terms[0].codelist_uid
         } else {
+          codelist.value = value.ct_terms[0].codelist_uid
           form.value.ct_term_uid = value.ct_terms.map(
-            (ct_term) => ct_term.term_uid
+            (ct_term) => ct_term.term_uid || ct_term.uid
           )
-          if (value.ct_terms.length) {
-            codelist.value = value.ct_terms[0].codelist_uid
-          }
         }
       }
     } else {
@@ -218,10 +247,13 @@ watch(
   () => props.unitDimension,
   () => {
     if (form.value?.activity_item_class?.name === 'standard_unit') {
-      form.value.unit_definition_uid = null
+      if (allowedUnits.value.length) {
+        form.value.unit_definition_uid = null
+      }
       fetchUnits()
     }
-  }
+  },
+  { immediate: true }
 )
 
 watch(

@@ -6,13 +6,10 @@ from neomodel import db
 
 from clinical_mdr_api import utils
 from clinical_mdr_api.domain_repositories.generic_repository import (
-    manage_previous_connected_study_selection_relationships,
+    _manage_versioning_with_relations,
 )
-from clinical_mdr_api.domain_repositories.models.activities import (
-    ActivityRoot,
-    ActivityValue,
-)
-from clinical_mdr_api.domain_repositories.models.study import StudyValue
+from clinical_mdr_api.domain_repositories.models.activities import ActivityValue
+from clinical_mdr_api.domain_repositories.models.study import StudyRoot, StudyValue
 from clinical_mdr_api.domain_repositories.models.study_audit_trail import StudyAction
 from clinical_mdr_api.domain_repositories.models.study_selections import (
     StudyActivity,
@@ -28,6 +25,7 @@ from clinical_mdr_api.domains.study_selections.study_selection_activity import (
     StudySelectionActivityAR,
     StudySelectionActivityVO,
 )
+from common import exceptions
 from common.telemetry import trace_calls
 from common.utils import convert_to_datetime
 
@@ -376,6 +374,7 @@ class StudySelectionActivityRepository(
 
     def _add_new_selection(
         self,
+        study_root: StudyRoot,
         latest_study_value_node: StudyValue,
         order: int,
         selection: StudySelectionActivityVO,
@@ -383,70 +382,100 @@ class StudySelectionActivityRepository(
         last_study_selection_node: StudyActivity,
         for_deletion: bool = False,
     ):
-        # find the activity value
-        activity_root_node: ActivityRoot = ActivityRoot.nodes.get(
-            uid=selection.activity_uid
+        # Fetch nodes referenced by uids
+        query = [
+            "MATCH (activity_root:ActivityRoot {uid: $activity_uid})-[:HAS_VERSION {version: $activity_version}]->(latest_activity_value:ActivityValue) WITH * LIMIT 1",
+            "MATCH (study_soa_group:StudySoAGroup {uid:$study_soa_group_uid}) WHERE NOT (study_soa_group)-[:BEFORE]-()",
+        ]
+        params = {
+            "study_uid": selection.study_uid,
+            "activity_uid": selection.activity_uid,
+            "activity_version": selection.activity_version,
+            "study_soa_group_uid": selection.study_soa_group_uid,
+        }
+        returns = ["latest_activity_value", "study_soa_group"]
+        if selection.study_activity_subgroup_uid:
+            query.append(
+                "MATCH (study_activity_subgroup:StudyActivitySubGroup {uid: $study_activity_subgroup_uid}) WHERE NOT (study_activity_subgroup)-[:BEFORE]-()"
+            )
+            params["study_activity_subgroup_uid"] = (
+                selection.study_activity_subgroup_uid
+            )
+            returns.append("study_activity_subgroup")
+        if selection.study_activity_group_uid:
+            query.append(
+                "MATCH (study_activity_group:StudyActivityGroup {uid: $study_activity_group_uid}) WHERE NOT (study_activity_group)-[:BEFORE]-()"
+            )
+            params["study_activity_group_uid"] = selection.study_activity_group_uid
+            returns.append("study_activity_group")
+
+        query.append(f"RETURN {', '.join(returns)}")
+        query_str = "\n".join(query)
+        results, keys = db.cypher_query(query_str, params, resolve_objects=True)
+        if len(results) != 1:
+            raise exceptions.BusinessLogicException(
+                msg=f"There should be one row returned with dependencies for StudyActivity '{selection.study_selection_uid}'."
+            )
+
+        nodes = dict(zip(keys, results[0]))
+        latest_activity_value_node: ActivityValue = nodes["latest_activity_value"]
+        study_soa_group_node: StudySoAGroup = nodes["study_soa_group"]
+        study_activity_subgroup_node: StudyActivitySubGroup | None = nodes.get(
+            "study_activity_subgroup"
         )
-        latest_activity_value_node: ActivityValue = (
-            activity_root_node.get_value_for_version(selection.activity_version)
+        study_activity_group_node: StudyActivityGroup | None = nodes.get(
+            "study_activity_group"
         )
+
         # Create new activity selection
         study_activity_selection_node = StudyActivity(
+            uid=selection.study_selection_uid,
             order=order,
             show_activity_in_protocol_flowchart=selection.show_activity_in_protocol_flowchart,
             keep_old_version=selection.keep_old_version,
             keep_old_version_date=selection.keep_old_version_date,
-        )
-        study_activity_selection_node.uid = selection.study_selection_uid
-        study_activity_selection_node.accepted_version = selection.accepted_version
-        study_activity_selection_node.save()
+            accepted_version=selection.accepted_version,
+        ).save()
         if not for_deletion:
             # Connect new node with study value
             latest_study_value_node.has_study_activity.connect(
                 study_activity_selection_node
             )
-        # Connect new node with audit trail
-        audit_node.has_after.connect(study_activity_selection_node)
+
         # Connect new node with Activity value
         study_activity_selection_node.has_selected_activity.connect(
             latest_activity_value_node
         )
         # Connect StudyActivity with StudySoAGroup node
-        study_soa_group_node = StudySoAGroup.nodes.has(has_before=False).get(
-            uid=selection.study_soa_group_uid
-        )
         study_activity_selection_node.has_soa_group_selection.connect(
             study_soa_group_node
         )
 
         if selection.study_activity_subgroup_uid:
             # Connect StudyActivity with StudyActivitySubGroup node
-            study_activity_subgroup = StudyActivitySubGroup.nodes.has(
-                has_before=False
-            ).get(uid=selection.study_activity_subgroup_uid)
             study_activity_selection_node.study_activity_has_study_activity_subgroup.connect(
-                study_activity_subgroup
+                study_activity_subgroup_node
             )
 
         if selection.study_activity_group_uid:
             # Connect StudyActivity with StudyActivityGroup node
-            study_activity_group = StudyActivityGroup.nodes.has(has_before=False).get(
-                uid=selection.study_activity_group_uid
-            )
             study_activity_selection_node.study_activity_has_study_activity_group.connect(
-                study_activity_group
+                study_activity_group_node
             )
-        if last_study_selection_node:
-            manage_previous_connected_study_selection_relationships(
-                previous_item=last_study_selection_node,
-                study_value_node=latest_study_value_node,
-                new_item=study_activity_selection_node,
-                exclude_study_selection_relationships=[
-                    StudySoAGroup,
-                    StudyActivitySubGroup,
-                    StudyActivityGroup,
-                ],
-            )
+
+        _manage_versioning_with_relations(
+            study_root=study_root,
+            action_type=type(audit_node),
+            before=last_study_selection_node,
+            after=study_activity_selection_node,
+            exclude_relationships=[
+                ActivityValue,
+                StudySoAGroup,
+                StudyActivitySubGroup,
+                StudyActivityGroup,
+            ],
+            author_id=selection.author_id,
+        )
 
     def generate_uid(self) -> str:
         return StudyActivity.get_next_free_uid_and_increment_counter()

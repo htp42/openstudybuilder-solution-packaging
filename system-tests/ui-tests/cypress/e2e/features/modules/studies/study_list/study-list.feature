@@ -52,7 +52,7 @@ Feature: Studies - Study List - Study List
             #| Study subpart acronym |
             | Study title           |
             | Status                |
-            | Modified by           |
+            #| Modified by           |
 
 
     @smoke_test
@@ -63,22 +63,30 @@ Feature: Studies - Study List - Study List
 
     Scenario: [Export][CSV] User must be able to export the data in CSV format
         Given The '/studies/select_or_add_study/active' page is opened
-        And The user exports the data in 'CSV' format
+        When User clicks table export button
+        And User selects 'CSV' format to export the table content
+        And Action is confirmed by clicking continue
         Then The 'Studies' file is downloaded in 'csv' format
 
     Scenario: [Export][Json] User must be able to export the data in JSON format
         Given The '/studies/select_or_add_study/active' page is opened
-        And The user exports the data in 'JSON' format
+        When User clicks table export button
+        And User selects 'JSON' format to export the table content
+        And Action is confirmed by clicking continue
         Then The 'Studies' file is downloaded in 'json' format
 
     Scenario: [Export][Xml] User must be able to export the data in XML format
         Given The '/studies/select_or_add_study/active' page is opened
-        And The user exports the data in 'XML' format
+        When User clicks table export button
+        And User selects 'XML' format to export the table content
+        And Action is confirmed by clicking continue
         Then The 'Studies' file is downloaded in 'xml' format
 
-    Scenario: [Export][Excek] User must be able to export the data in EXCEL format
+    Scenario: [Export][Excel] User must be able to export the data in EXCEL format
         Given The '/studies/select_or_add_study/active' page is opened
-        And The user exports the data in 'EXCEL' format
+        When User clicks table export button
+        And User selects 'EXCEL' format to export the table content
+        And Action is confirmed by clicking continue
         Then The 'Studies' file is downloaded in 'xlsx' format
 
     @manual_test
@@ -90,7 +98,9 @@ Feature: Studies - Study List - Study List
     @smoke_test
     Scenario: [Create][Positive case] User must be able to add a new Study
         Given The '/studies/select_or_add_study/active' page is opened
-        When A new study is added
+        And User waits for the table
+        And The Add Study button is clicked
+        When New study project id, study number and study acronym are filled in
         And Form save button is clicked
         And Study is found
         Then The study is visible within the table

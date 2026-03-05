@@ -13,6 +13,7 @@ STUDY_WRITE = Depends(RequiresAnyRole({"Study.Write"}))
 LIBRARY_WRITE_OR_STUDY_WRITE = Depends(
     RequiresAnyRole({"Library.Write", "Study.Write"})
 )
+LIBRARY_READ_OR_STUDY_READ = Depends(RequiresAnyRole({"Library.Read", "Study.Read"}))
 ANY = Depends(
     RequiresAnyRole({"Library.Write", "Study.Write", "Library.Read", "Study.Read"})
 )

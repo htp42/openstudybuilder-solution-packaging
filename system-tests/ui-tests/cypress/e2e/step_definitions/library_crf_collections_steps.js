@@ -36,8 +36,6 @@ Then('The CRF Collection is visible in the table', () => {
     cy.checkRowByIndex(0, 'Obsolete', retiredDate)
 })
 
-When('The CRF Collection definition container is filled without name provided', () => cy.clickButton('save-button'))
-
 Then('The validation appears for the CRF Collection Name field', () => cy.get('.v-messages__message').should('be.visible'))
 
 Then('The approval popup window is displayed', () => {

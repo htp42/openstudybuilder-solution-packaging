@@ -5,18 +5,17 @@ let isRandomised = 'Yes', addOnExistingTreatments = 'Yes', stratificationFactor 
 
 
 When('The study intervention type is edited', () => {
-    cy.clickButton('edit-content')
     cy.wait(1000)
     cy.selectAutoComplete('Intervention type', intervetionType)
     cy.wait(1000)
     cy.selectMultipleSelect('Study intent type', studyIntentType)
     cy.selectAutoComplete('Control type', controlType)
     cy.selectAutoComplete('Intervention model', intervetionModel)
-    cy.selectRadio('Study is randomised', isRandomised)
-    cy.selectRadio('Add-on to existing treatments', addOnExistingTreatments)
+    cy.selectRadioButton('Study is randomised', isRandomised)
+    cy.selectRadioButton('Add-on to existing treatments', addOnExistingTreatments)
     cy.selectAutoComplete('Study blinding schema', studyBindingSchema)
     cy.fillInput('Stratification factor', stratificationFactor)
-    cy.setDuratinField('planned-study-length', '5', 'days')
+    cy.setDuration('planned-study-length', '5', 'days')
 })
 
 Then('The study intervention type data is reflected in the table', () => {

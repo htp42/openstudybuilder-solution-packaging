@@ -48,6 +48,9 @@
                     item.unit_definitions.map((unit) => unit.name).join(', ')
                   }}
                 </span>
+                <span v-else-if="item.text_value">
+                  {{ item.text_value }}
+                </span>
                 <span v-else>-</span>
               </div>
             </template>
@@ -59,6 +62,26 @@
             <template #[`item.activity_item_class`]="{ item }">
               <div class="d-block">
                 {{ item.activity_item_class?.name || '' }}
+              </div>
+            </template>
+            <template #[`item.name_submission_value`]="{ item }">
+              <div class="d-block">
+                <span v-if="item.ct_terms && item.ct_terms.length > 0">
+                  {{ item.ct_terms.map((term) => term.name).join(', ') }}
+                </span>
+                <span v-else>-</span>
+              </div>
+            </template>
+            <template #[`item.code_submission_value`]="{ item }">
+              <div class="d-block">
+                <span v-if="item.ct_terms && item.ct_terms.length > 0">
+                  {{
+                    item.ct_terms
+                      .map((term) => term.submission_value)
+                      .join(', ')
+                  }}
+                </span>
+                <span v-else>-</span>
               </div>
             </template>
           </NNTable>
@@ -110,19 +133,31 @@ const itemHeaders = [
     title: t('activityItemsTable.headerDataType'),
     key: 'item_type',
     sortable: false,
-    width: '25%',
+    width: '12%',
   },
   {
     title: t('activityItemsTable.headerName'),
     key: 'name',
     sortable: false,
-    width: '40%',
+    width: '28%',
   },
   {
     title: t('activityItemsTable.headerActivityItemClass'),
     key: 'activity_item_class',
     sortable: false,
-    width: '35%',
+    width: '20%',
+  },
+  {
+    title: t('activityItemsTable.headerNameSubmissionValue'),
+    key: 'name_submission_value',
+    sortable: false,
+    width: '20%',
+  },
+  {
+    title: t('activityItemsTable.headerCodeSubmissionValue'),
+    key: 'code_submission_value',
+    sortable: false,
+    width: '20%',
   },
 ]
 
@@ -218,9 +253,16 @@ function itemMatchesSearch(item, searchTerm) {
   if (item.activity_item_class?.data_type_name?.toLowerCase().includes(term))
     return true
 
-  // Search in CT terms
+  // Search in text_value field
+  if (item.text_value?.toLowerCase().includes(term)) return true
+
+  // Search in CT terms (name and submission value)
   if (
-    item.ct_terms?.some((ctTerm) => ctTerm.name?.toLowerCase().includes(term))
+    item.ct_terms?.some(
+      (ctTerm) =>
+        ctTerm.name?.toLowerCase().includes(term) ||
+        ctTerm.submission_value?.toLowerCase().includes(term)
+    )
   )
     return true
 

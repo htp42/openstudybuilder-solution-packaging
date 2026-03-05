@@ -29,6 +29,7 @@ class ActivityItemVO:
     activity_item_class_name: str | None
     ct_terms: list[CTTermItem]
     unit_definitions: list[CompactUnitDefinition]
+    text_value: str | None = None
 
     @classmethod
     def from_repository_values(
@@ -38,6 +39,7 @@ class ActivityItemVO:
         activity_item_class_name: str | None,
         ct_terms: list[CTTermItem],
         unit_definitions: list[CompactUnitDefinition],
+        text_value: str | None = None,
     ) -> Self:
         activity_item_vo = cls(
             is_adam_param_specific=is_adam_param_specific,
@@ -45,6 +47,7 @@ class ActivityItemVO:
             activity_item_class_name=activity_item_class_name,
             ct_terms=ct_terms,
             unit_definitions=unit_definitions,
+            text_value=text_value,
         )
 
         return activity_item_vo

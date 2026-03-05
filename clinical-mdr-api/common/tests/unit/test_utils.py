@@ -33,7 +33,7 @@ def test_strtobool():
 
 @pytest.mark.parametrize(
     "page_number, page_size",
-    [[1, 10], [2, 200], [3000, 1000], [settings.max_int_neo4j, 1]],
+    [[1, 10], [2, 200], [3000, 1000], [settings.max_int_neo4j - 1, 1]],
 )
 def test_validate_page_number_and_page_size(page_number, page_size):
     validate_page_number_and_page_size(page_number, page_size)
@@ -42,9 +42,9 @@ def test_validate_page_number_and_page_size(page_number, page_size):
 @pytest.mark.parametrize(
     "page_number, page_size",
     [
-        [settings.max_int_neo4j + 1, 1],
+        [settings.max_int_neo4j, 1],
         [settings.max_int_neo4j, 10],
-        [1, settings.max_int_neo4j + 1],
+        [1, settings.max_int_neo4j],
         [10, settings.max_int_neo4j],
     ],
 )
@@ -53,7 +53,7 @@ def test_validate_page_number_and_page_size_negative(page_number, page_size):
         validate_page_number_and_page_size(page_number, page_size)
     assert (
         str(exc_info.value)
-        == f"(page_number * page_size) value cannot be bigger than {settings.max_int_neo4j}"
+        == f"(page_number * page_size) value must be smaller than {settings.max_int_neo4j}"
     )
 
 

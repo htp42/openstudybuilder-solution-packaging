@@ -12,7 +12,9 @@ Feature: Studies - View Specification - Clinical Transparency
         Then The current URL is '/study_disclosure'
 
     Scenario: [Table][Columns][Names][Data] User must be able to select Identification Pharma CM Specification
-        Given The study disclosure page for CDISC DEV-0 is accessed
+        Given Get study 'CDISC DEV-0' uid
+        And Select study with uid saved in previous step
+        And The page 'study_disclosure' is opened for selected study
         And The user selects 'Identification' specification
         Then A table is visible with following headers
             | headers           |
@@ -32,7 +34,9 @@ Feature: Studies - View Specification - Clinical Transparency
         And The correct study values are presented for Identification
 
     Scenario: [Table][Columns][Names][Data] User must be able to select Secondary IDs Pharma CM Specification
-        Given The study disclosure page for CDISC DEV-0 is accessed
+        Given Get study 'CDISC DEV-0' uid
+        And Select study with uid saved in previous step
+        And The page 'study_disclosure' is opened for selected study
         And The user selects 'Secondary IDs' specification
         Then A table is visible with following headers
             | headers             |
@@ -43,7 +47,9 @@ Feature: Studies - View Specification - Clinical Transparency
 
     ## TODO: Add more test data for proper logic implementation
     # Scenario: User must be able to select Conditions Pharma CM Specification
-    #     Given The study disclosure page for CDISC DEV-0 is accessed
+    #     Given Get study 'CDISC DEV-0' uid
+    #    And Select study with uid saved in previous step
+    #    And The page 'study_disclosure' is opened for selected study
     #     And The user selects 'Conditions' specification
     #     Then A table is visible with following headers
     #         | headers           |
@@ -53,7 +59,9 @@ Feature: Studies - View Specification - Clinical Transparency
     #     And The correct study values are presented for Conditions
 
     Scenario: [Table][Columns][Names][Data] User must be able to select Design Pharma CM Specification
-        Given The study disclosure page for CDISC DEV-0 is accessed
+        Given Get study 'CDISC DEV-0' uid
+        And Select study with uid saved in previous step
+        And The page 'study_disclosure' is opened for selected study
         And The user selects 'Design' specification
         Then A table is visible with following headers
             | headers           |
@@ -77,7 +85,9 @@ Feature: Studies - View Specification - Clinical Transparency
         And The correct study values are presented for Design
 
     Scenario: [Table][Columns][Names][Data] User must be able to select Interventions Pharma CM Specification
-        Given The study disclosure page for CDISC DEV-0 is accessed
+        Given Get study 'CDISC DEV-0' uid
+        And Select study with uid saved in previous step
+        And The page 'study_disclosure' is opened for selected study
         And The user selects 'Interventions' specification
         Then A table is visible with following headers
             | headers     |
@@ -87,7 +97,9 @@ Feature: Studies - View Specification - Clinical Transparency
         And The correct study values are presented for Interventions
 
     Scenario: [Table][Columns][Names][Data] User must be able to select Outcome Measures Pharma CM Specification
-        Given The study disclosure page for CDISC DEV-0 is accessed
+        Given Get study 'CDISC DEV-0' uid
+        And Select study with uid saved in previous step
+        And The page 'study_disclosure' is opened for selected study
         And The user selects 'Outcome Measures' specification
         Then A table is visible with following headers
             | headers         |
@@ -97,7 +109,9 @@ Feature: Studies - View Specification - Clinical Transparency
         And The correct study values are presented for Outcome Measures
 
     Scenario: [Export][Xml] User must be able to download XML
-        Given The study disclosure page for CDISC DEV-0 is accessed
+        Given Get study 'CDISC DEV-0' uid
+        And Select study with uid saved in previous step
+        And The page 'study_disclosure' is opened for selected study
         When The user clicks on Download XML button
         Then The correct file is downloaded
         And The file is XML valid

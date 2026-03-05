@@ -472,16 +472,16 @@
         <slot name="extraActions" />
         <v-btn
           v-if="source !== 'activities-by-grouping' && !requested"
-          class="ml-2"
-          size="small"
+          class="ml-2 expandHoverBtn"
           variant="outlined"
           color="nnBaseBlue"
           data-cy="add-activity"
-          :title="itemCreationTitle"
           :disabled="!accessGuard.checkPermission($roles.LIBRARY_WRITE)"
-          icon="mdi-plus"
           @click.stop="showForm"
-        />
+        >
+          <v-icon left>mdi-plus</v-icon>
+          <span class="label">{{ itemCreationTitle }}</span>
+        </v-btn>
       </template>
     </NNTable>
     <ActivitiesForm
@@ -519,7 +519,7 @@
       content-class="fullscreen-dialog"
     >
       <ActivitiesInstantiationsForm
-        v-if="!newWizardStepper || activeItem"
+        v-if="!newWizardStepper || !newWizardStepperEditMode"
         :edited-activity="activeItem"
         @close="closeForm"
       />
@@ -751,6 +751,7 @@ const instantiationsHeaders = [
     key: 'activity_group.name',
     externalFilterSource: 'concepts/activities/activity-groups$name',
     width: '15%',
+    disableColumnFilters: true,
     exludeFromHeader: [
       'is_data_collected',
       'is_used_by_legacy_instances',
@@ -762,6 +763,7 @@ const instantiationsHeaders = [
     key: 'activity_subgroup.name',
     externalFilterSource: 'concepts/activities/activity-sub-groups$name',
     width: '15%',
+    disableColumnFilters: true,
     exludeFromHeader: [
       'is_data_collected',
       'is_used_by_legacy_instances',
@@ -969,6 +971,12 @@ const currentHeaders = computed(() => {
 const newWizardStepper = computed(() => {
   return featureFlagsStore.getFeatureFlag(
     'new_activity_instance_wizard_stepper'
+  )
+})
+
+const newWizardStepperEditMode = computed(() => {
+  return featureFlagsStore.getFeatureFlag(
+    'activity_instance_wizard_stepper_edit_mode'
   )
 })
 

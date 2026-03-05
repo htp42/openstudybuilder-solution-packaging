@@ -4,6 +4,9 @@ module.exports = {
     sourceType: 'module',
     ecmaVersion: 2022,
   },
+  globals: {
+    globalThis: 'readonly',
+  },
   env: {
     node: true,
   },

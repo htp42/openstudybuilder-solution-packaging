@@ -35,3 +35,11 @@ class StudySourceVariableEnum(Enum):
     COHORT = "Cohort"
     SUBGROUP = "Subgroup"
     STRATUM = "Stratum"
+
+
+class OdmTranslatedTextTypeEnum(Enum):
+    DESCRIPTION = "Description"
+    QUESTION = "Question"
+    OSB_DISPLAY_TEXT = "osb:DisplayText"
+    OSB_DESIGN_NOTES = "osb:DesignNotes"
+    OSB_COMPLETION_INSTRUCTIONS = "osb:CompletionInstructions"

@@ -11,6 +11,7 @@ from clinical_mdr_api.repositories._utils import (
     CypherQueryBuilder,
     FilterDict,
     FilterOperator,
+    calculate_total_count_from_query_result,
 )
 from common.config import settings
 
@@ -156,13 +157,14 @@ class QueryService:
         res = (result_array, attributes_names)
         result = utils.db_result_to_list(res)
 
-        total = 0
-        if total_count:
+        total = calculate_total_count_from_query_result(
+            len(result), page_number, page_size, total_count
+        )
+        if total is None:
             count_result, _ = db.cypher_query(
                 query=query.count_query, params=query.parameters
             )
-            if len(count_result) > 0:
-                total = count_result[0][0]
+            total = count_result[0][0] if len(count_result) > 0 else 0
 
         return GenericFilteringReturn(items=result, total=total)
 
@@ -210,13 +212,14 @@ class QueryService:
         res = (result_array, attributes_names)
         result = utils.db_result_to_list(res)
 
-        total = 0
-        if total_count:
+        total = calculate_total_count_from_query_result(
+            len(result), page_number, page_size, total_count
+        )
+        if total is None:
             count_result, _ = db.cypher_query(
                 query=query.count_query, params=query.parameters
             )
-            if len(count_result) > 0:
-                total = count_result[0][0]
+            total = count_result[0][0] if len(count_result) > 0 else 0
 
         return GenericFilteringReturn(items=result, total=total)
 
@@ -263,13 +266,14 @@ class QueryService:
         res = (result_array, attributes_names)
         result = utils.db_result_to_list(res)
 
-        total = 0
-        if total_count:
+        total = calculate_total_count_from_query_result(
+            len(result), page_number, page_size, total_count
+        )
+        if total is None:
             count_result, _ = db.cypher_query(
                 query=query.count_query, params=query.parameters
             )
-            if len(count_result) > 0:
-                total = count_result[0][0]
+            total = count_result[0][0] if len(count_result) > 0 else 0
 
         return GenericFilteringReturn(items=result, total=total)
 
@@ -334,13 +338,14 @@ class QueryService:
         res = (result_array, attributes_names)
         result = utils.db_result_to_list(res)
 
-        total = 0
-        if total_count:
+        total = calculate_total_count_from_query_result(
+            len(result), page_number, page_size, total_count
+        )
+        if total is None:
             count_result, _ = db.cypher_query(
                 query=query.count_query, params=query.parameters
             )
-            if len(count_result) > 0:
-                total = count_result[0][0]
+            total = count_result[0][0] if len(count_result) > 0 else 0
 
         return GenericFilteringReturn(items=result, total=total)
 
@@ -403,13 +408,14 @@ class QueryService:
         res = (result_array, attributes_names)
         result = utils.db_result_to_list(res)
 
-        total = 0
-        if total_count:
+        total = calculate_total_count_from_query_result(
+            len(result), page_number, page_size, total_count
+        )
+        if total is None:
             count_result, _ = db.cypher_query(
                 query=query.count_query, params=query.parameters
             )
-            if len(count_result) > 0:
-                total = count_result[0][0]
+            total = count_result[0][0] if len(count_result) > 0 else 0
 
         return GenericFilteringReturn(items=result, total=total)
 
@@ -826,12 +832,14 @@ class QueryService:
         WITH sr, sv
         MATCH (sv)-->(sf:StudyField)
         OPTIONAL MATCH  (sf)-->(:CTTermContext)-[:HAS_SELECTED_TERM]->(ctr:CTTermRoot)-->
-          (ctar:CTTermAttributesRoot)-[:LATEST_FINAL]->(ctav:CTTermAttributesValue)<--(:CTPackageTerm)<--(:CTPackageCodelist)<--(ctp:CTPackage)
+            (ctar:CTTermAttributesRoot)-[:LATEST_FINAL]->(ctav:CTTermAttributesValue)
+        OPTIONAL MATCH (ctav)<--(:CTPackageTerm)<--(:CTPackageCodelist)<--(ctp:CTPackage)
+        OPTIONAL MATCH (ctr)-->(ctnr:CTTermNameRoot)-[:LATEST_FINAL]->(ctnv:CTTermNameValue)
         OPTIONAL MATCH (sf)-->(dtr:DictionaryTermRoot)-->(dtv:DictionaryTermValue)
         OPTIONAL MATCH (sf)-[:HAS_REASON_FOR_NULL_VALUE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(ct_null:CTTermRoot{{uid:'{settings.ct_uid_na_value}'}})
         OPTIONAL MATCH (sf)-[:HAS_REASON_FOR_NULL_VALUE]->(pinf_ctx:CTTermContext)-[:HAS_SELECTED_TERM]->(ct_pinf:CTTermRoot)
         WHERE (pinf_ctx)-[:HAS_SELECTED_CODELIST]->(:CTCodelistRoot)-[:HAS_TERM]->
-          (:CTCodelistTerm {{submission_value:'{settings.ct_submval_positive_infinity}'}})-[:HAS_TERM_ROOT]->(ctr)
+            (:CTCodelistTerm {{submission_value:'{settings.ct_submval_positive_infinity}'}})-[:HAS_TERM_ROOT]->(ctr)
         WITH *,
         CASE sf.field_name
             WHEN 'disease_condition_or_indication_codes' THEN 'C112038'
@@ -915,6 +923,7 @@ class QueryService:
         nclt.submission_value AS TSPARM,
         controlled_by AS controlled_by,
         CASE
+        WHEN ctnv IS NOT NULL THEN ctnv.name
         WHEN controlled_by = 'CDISC' AND ct_null IS NULL THEN cclt.submission_value
         WHEN controlled_by = 'Dictionary' THEN dtv.name
         WHEN sf.value = [] THEN NULL
@@ -926,7 +935,7 @@ class QueryService:
             ELSE ''
         END AS TSVALNF,
         CASE 
-        WHEN controlled_by = 'CDISC' AND ct_null IS NULL  THEN ctr.concept_id
+        WHEN controlled_by = 'CDISC' AND ct_null IS NULL  THEN ctav.concept_id
         WHEN controlled_by = 'Dictionary' THEN dtv.dictionary_id
         ELSE ''
         END AS TSVALCD,

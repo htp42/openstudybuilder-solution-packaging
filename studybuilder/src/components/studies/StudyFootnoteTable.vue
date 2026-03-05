@@ -123,7 +123,7 @@
 </template>
 
 <script setup>
-import { computed, inject, onMounted, ref, watch } from 'vue'
+import { computed, inject, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import ActionsMenu from '@/components/tools/ActionsMenu.vue'
@@ -138,7 +138,6 @@ import dataFormating from '@/utils/dataFormating'
 import statuses from '@/constants/statuses'
 import { useAccessGuard } from '@/composables/accessGuard'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
-import { useStudyActivitiesStore } from '@/stores/studies-activities'
 import { useFootnotesStore } from '@/stores/studies-footnotes'
 
 const { t } = useI18n()
@@ -153,7 +152,6 @@ const route = useRoute()
 
 const accessGuard = useAccessGuard()
 const studiesGeneralStore = useStudiesGeneralStore()
-const activitiesStore = useStudyActivitiesStore()
 const footnotesStore = useFootnotesStore()
 
 const actions = [
@@ -239,12 +237,6 @@ watch(
   }
 )
 
-onMounted(() => {
-  activitiesStore.fetchStudyActivities({
-    studyUid: studiesGeneralStore.selectedStudy.uid,
-  })
-})
-
 function checkIfAnyItemHidden(item) {
   let returnValue = false
   item.referenced_items.forEach((item) => {
@@ -258,6 +250,10 @@ function checkIfAnyItemHidden(item) {
 function enableFootnoteMode(footnote) {
   emit('enableFootnoteMode', footnote)
   activeFootnote.value = footnote
+}
+
+function disableFootnoteMode() {
+  activeFootnote.value = null
 }
 
 function removeElementFromFootnote(footnote, item) {
@@ -363,6 +359,10 @@ function editStudyFootnote(studyFootnote) {
   showEditForm.value = true
 }
 
+function filterTable() {
+  table.value.filterTable()
+}
+
 async function deleteStudyFootnote(studyFootnote) {
   const options = {
     type: 'warning',
@@ -438,6 +438,10 @@ async function updateFootnoteVersion(item) {
       })
   }
 }
+defineExpose({
+  filterTable,
+  disableFootnoteMode,
+})
 </script>
 <style>
 .warning {

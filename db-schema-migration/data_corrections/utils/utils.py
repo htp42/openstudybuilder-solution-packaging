@@ -178,10 +178,29 @@ def get_changes_since_id(driver, change_id):
         CALL db.cdc.query($change_id)
     """
     records, _ = run_cypher_query(driver, query, params={"change_id": change_id})
-    return records
+    # Convert Neo4j Record objects to lists for JSON serialization
+    # Each record from CDC query contains the change data as a list of 5 elements:
+    # [id, tx_id, seq, tx_metadata, change_details]
+    # The Record object may have the data in different formats, so we handle both cases
+    converted_changes = []
+    for record in records:
+        if hasattr(record, "values"):
+            # Record.values() returns a tuple of values
+            values = list(record.values())
+            # If the record has a single value that is itself a list/array, use it directly
+            # Otherwise, use the values as-is
+            if len(values) == 1 and isinstance(values[0], (list, tuple)):
+                converted_changes.append(list(values[0]))
+            else:
+                converted_changes.append(values)
+        else:
+            # If it's already a list/tuple, convert to list
+            converted_changes.append(list(record))
+    return converted_changes
 
 
 # ---------- CDC logging wrapper ----------
+
 
 # Helper to get a unique function name based on the arguments
 def _get_func_name(summary_params):
@@ -220,14 +239,17 @@ def save_change_report(
         summary = summarize_changes(changes)
         summary_params["filename"] = f"{func_name}.{label}.json"
         # Save the full change log as a separate file
+        # Only write if there are actual changes, or if file doesn't exist yet
+        json_filepath = os.path.join(CHANGE_LOG_DIR, summary_params["filename"])
         if not os.path.exists(CHANGE_LOG_DIR):
             os.makedirs(CHANGE_LOG_DIR)
-        with open(
-            os.path.join(CHANGE_LOG_DIR, summary_params["filename"]),
-            "w",
-            encoding="UTF-8",
-        ) as file:
-            json.dump(changes, file, indent=4, default=str)
+        if len(changes) > 0 or not os.path.exists(json_filepath):
+            with open(
+                json_filepath,
+                "w",
+                encoding="UTF-8",
+            ) as file:
+                json.dump(changes, file, indent=4, default=str)
         summary_params["changes_summary"] = format_dict_to_markdown(summary)
     else:
         summary_params["filename"] = None
@@ -318,6 +340,9 @@ def capture_changes(
                     summary_params["verify_result"] = verify_result
 
                 if not docs_only:
+                    # Small delay to ensure CDC has captured all changes
+                    # This is especially important for API-based corrections that use separate transactions
+                    time.sleep(0.5)
                     changes = get_changes_since_id(driver, id_before)
                     if previous_cdc_setting != LOG_ENRICHMENT_DIFF:
                         log.info(

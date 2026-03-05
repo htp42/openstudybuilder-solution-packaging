@@ -44,6 +44,7 @@ from clinical_mdr_api.repositories._utils import (
     CypherQueryBuilder,
     FilterDict,
     FilterOperator,
+    calculate_total_count_from_query_result,
     sb_clear_cache,
     validate_filters_and_add_search_string,
 )
@@ -247,12 +248,14 @@ class DictionaryCodelistGenericRepository(
             result_array, attributes_names
         )
 
-        count_result, _ = db.cypher_query(
-            query=query.count_query, params=query.parameters
+        total_amount = calculate_total_count_from_query_result(
+            len(extracted_items), page_number, page_size, total_count
         )
-        total_amount = (
-            count_result[0][0] if len(count_result) > 0 and total_count else 0
-        )
+        if total_amount is None:
+            count_result, _ = db.cypher_query(
+                query=query.count_query, params=query.parameters
+            )
+            total_amount = count_result[0][0] if len(count_result) > 0 else 0
 
         return extracted_items, total_amount
 

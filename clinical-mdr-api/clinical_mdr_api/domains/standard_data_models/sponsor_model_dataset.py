@@ -1,6 +1,6 @@
 import datetime
 from dataclasses import dataclass
-from typing import Self
+from typing import Any, Self
 
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemAggregateRootBase,
@@ -41,6 +41,7 @@ class SponsorModelDatasetVO:
     state: str | None
     extended_domain: str | None
     target_data_model_catalogue: str | None = None
+    extra_properties: dict[str, Any] | None = None
 
     @classmethod
     def from_repository_values(
@@ -70,6 +71,7 @@ class SponsorModelDatasetVO:
         state: str | None,
         extended_domain: str | None,
         target_data_model_catalogue: str | None = None,
+        extra_properties: dict[str, Any] | None = None,
     ) -> Self:
         sponsor_model_dataset_vo = cls(
             sponsor_model_name=sponsor_model_name,
@@ -97,6 +99,7 @@ class SponsorModelDatasetVO:
             state=state,
             extended_domain=extended_domain,
             target_data_model_catalogue=target_data_model_catalogue,
+            extra_properties=extra_properties or {},
         )
 
         return sponsor_model_dataset_vo

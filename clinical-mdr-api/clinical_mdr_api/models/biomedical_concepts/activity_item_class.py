@@ -414,6 +414,10 @@ class ActivityItemClassMappingInput(PatchInputModel):
     variable_class_uids: list[str] = Field(default_factory=list)
 
 
+class ValidCodelistMappingInput(PatchInputModel):
+    valid_codelist_uids: list[str] = Field(default_factory=list)
+
+
 class ActivityItemClassVersion(ActivityItemClass):
     """
     Class for storing ActivityItemClass and calculation of differences

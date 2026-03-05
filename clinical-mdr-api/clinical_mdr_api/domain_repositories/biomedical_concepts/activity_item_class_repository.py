@@ -16,6 +16,7 @@ from clinical_mdr_api.domain_repositories.models.biomedical_concepts import (
     ActivityItemClassValue,
 )
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
+    CTCodelistRoot,
     CTTermRoot,
 )
 from clinical_mdr_api.domain_repositories.models.generic import (
@@ -482,6 +483,16 @@ class ActivityItemClassRepository(ConceptGenericRepository[ActivityItemClassAR])
             variable_class = VariableClass.nodes.get(uid=variable_class)
             root.maps_variable_class.connect(variable_class)
 
+    @sb_clear_cache(caches=["cache_store_item_by_uid"])
+    def patch_valid_codelist_mappings(
+        self, uid: str, valid_codelist_uids: list[str]
+    ) -> None:
+        root = ActivityItemClassRoot.nodes.get(uid=uid)
+        root.has_valid_codelist_for_items.disconnect_all()
+        for codelist_uid in valid_codelist_uids:
+            codelist = CTCodelistRoot.nodes.get(uid=codelist_uid)
+            root.has_valid_codelist_for_items.connect(codelist)
+
     def _maintain_parameters(
         self,
         versioned_object: ActivityItemClassAR,
@@ -619,6 +630,45 @@ class ActivityItemClassRepository(ConceptGenericRepository[ActivityItemClassAR])
             else:
                 codelists_and_terms[cl_uid] = term_uids
         return codelists_and_terms
+
+    def get_valid_codelists_and_terms(
+        self, activity_item_class_uid: str, ct_catalogue_name: str | None
+    ) -> dict[str, list[str] | None]:
+        if ct_catalogue_name:
+            extra_filter_kwargs = {
+                "has_valid_codelist_for_items__has_codelist__name": ct_catalogue_name,
+            }
+        else:
+            extra_filter_kwargs = {}
+        codelist_uids = (
+            ActivityItemClassRoot()
+            .nodes.filter(
+                uid=activity_item_class_uid,
+                **extra_filter_kwargs,
+            )
+            .traverse(
+                Path(
+                    value="has_valid_codelist_for_items",
+                    include_rels_in_return=False,
+                    include_nodes_in_return=False,
+                ),
+            )
+            .unique_variables("has_valid_codelist_for_items")
+            .intermediate_transform(
+                {
+                    "codelist_uid": {
+                        "source": NodeNameResolver("has_valid_codelist_for_items"),
+                        "source_prop": "uid",
+                        "include_in_return": True,
+                    },
+                },
+                distinct=True,
+            )
+            .all()
+        )
+        # Return a dictionary of codelist uids and filtered terms
+        # Note that for now, this model does not cater for filtering down to a subset of terms
+        return {uid: None for uid in codelist_uids}
 
     def get_activity_instance_classes_using_item(
         self,

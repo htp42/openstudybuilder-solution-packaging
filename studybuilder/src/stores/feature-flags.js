@@ -14,7 +14,7 @@ export const useFeatureFlagsStore = defineStore('featureFlags', () => {
   }
 
   function getFeatureFlag(name) {
-    return featureFlags.value[name]
+    return featureFlags.value[name] || false
   }
 
   return { featureFlags, fetchFeatureFlags, getFeatureFlag }

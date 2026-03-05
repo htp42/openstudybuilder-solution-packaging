@@ -12,15 +12,9 @@
             "body,change_description": "Change Description",
             "body,aliases,a,name": "Name of Alias #{a}",
             "body,aliases,a,context": "Context of Alias #{a}",
-            "body,descriptions,0,name": "Display Text",
-            "body,descriptions,0,description": "Description",
-            "body,descriptions,0,instruction": "Completion Instructions",
-            "body,descriptions,0,sponsor_instruction": "Design Notes",
-            "body,descriptions,a,name": "Name of Translation #{a}",
-            "body,descriptions,a,language": "Language of Translation #{a}",
-            "body,descriptions,a,description": "Description of Translation #{a}",
-            "body,descriptions,a,instruction": "Completion Instructions of Translation #{a}",
-            "body,descriptions,a,sponsor_instruction": "Design Notes of Translation #{a}"
+            "body,translated_texts,a,text_type": "Text Type of Translation #{a}",
+            "body,translated_texts,a,language": "Language of Translation #{a}",
+            "body,translated_texts,a,text": "Text of Translation #{a}"
         },
         "errors": {
             "arguments_type": "{field} arguments must be tuple, list or dictionary",

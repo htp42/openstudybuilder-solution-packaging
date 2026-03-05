@@ -205,8 +205,8 @@
           <td>{{ $filters.yesno(attributes.extensible) }}</td>
         </tr>
         <tr>
-          <td>{{ $t('CodeListDetail.ordinal') }}</td>
-          <td>{{ $filters.yesno(attributes.ordinal) }}</td>
+          <td>{{ $t('CodeListDetail.is_ordinal') }}</td>
+          <td>{{ $filters.yesno(attributes.is_ordinal) }}</td>
         </tr>
         <tr>
           <td>{{ $t('CodeListDetail.definition') }}</td>

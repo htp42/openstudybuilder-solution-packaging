@@ -14,16 +14,17 @@
     <template #actions="">
       <v-btn
         data-cy="add-study-compound-dosing"
-        size="small"
+        class="expandHoverBtn"
         color="primary"
-        :title="$t('StudyCompoundForm.add_title')"
         :disabled="
           !accessGuard.checkPermission($roles.STUDY_WRITE) ||
           selectedStudyVersion !== null
         "
-        icon="mdi-plus"
         @click.stop="showForm = true"
-      />
+      >
+        <v-icon left>mdi-plus</v-icon>
+        <span class="label">{{ $t('StudyCompoundForm.add_title') }}</span>
+      </v-btn>
     </template>
     <template #[`item.actions`]="{ item }">
       <ActionsMenu :actions="actions" :item="item" />

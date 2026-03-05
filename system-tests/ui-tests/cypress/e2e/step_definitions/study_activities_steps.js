@@ -69,6 +69,10 @@ When('User selects option to create placeholder with submitting', () => cy.conta
 
 When('Activity placeholder data is filled in', () => fillPlaceholderData())
 
+When('The activity request approval form is filled with definition', () => {
+    cy.get('[data-cy="sponsorform-definition-field"] textarea').not('[readonly]').type('Test')
+})
+
 When('Selected study id is saved', () => current_study = getCurrentStudyId())
 
 When('Data collection flag is unchecked', () => cy.get('input[aria-label="Data collection"]').uncheck())
@@ -93,8 +97,8 @@ When('Activity from placeholder is selected', () => cy.get('[data-cy="create-pla
 When('Study by id is selected', () => cy.selectVSelect('select-study-for-activity-by-id', current_study))
 
 Then('The validation appears and Create Activity form stays on Study Selection', () => {
-    cy.elementContain('select-study-for-activity-by-acronym', 'This field is required')
-    cy.elementContain('select-study-for-activity-by-id', 'This field is required')
+    cy.checkIfValidationAppears('select-study-for-activity-by-acronym')
+    cy.checkIfValidationAppears('select-study-for-activity-by-id')
 })
 
 When('The user tries to go further without SoA group chosen', () => {
@@ -204,30 +208,13 @@ Then('[API] Activity with two subgroups available is added to the study', () => 
     cy.approveSubGroup()
 })
 
-When('The activity group is updated for that study activity', () => {
-    cy.activityNewVersion(current_activity_uid)
-    cy.visit(`library/activities/activities/${current_activity_uid}/overview`)
-    cy.get('[title="Edit"]').click()
-    cy.selectFirstVSelect('activityform-activity-group-dropdown')
-    cy.selectFirstVSelect('activityform-activity-subgroup-dropdown')
-    cy.clickButton('save-button')
-})
+When('The activity group is updated for that study activity', () => cy.selectFirstVSelect('activityform-activity-group-dropdown'))
 
-When('The activity subgroup is updated for that study activity', () => {
-    cy.activityNewVersion(current_activity_uid)
-    cy.visit(`library/activities/activities/${current_activity_uid}/overview`)
-    cy.get('[title="Edit"]').click()
-    cy.selectLastVSelect('activityform-activity-subgroup-dropdown')
-    cy.clickButton('save-button')
-})
+When('The activity subgroup is updated for that study activity', () => cy.selectLastVSelect('activityform-activity-subgroup-dropdown'))
 
 When('The activity name is updated for that study activity', () => {
-    cy.activityNewVersion(current_activity_uid)
-    cy.visit(`library/activities/activities/${current_activity_uid}/overview`)
-    cy.get('[title="Edit"]').click()
     cy.get('[data-cy="activityform-activity-name-field"] input').should('have.value', apiActivityName)
     cy.fillInput('activityform-activity-name-field', new_activity_name = `NewName${Date.now()}`)
-    cy.clickButton('save-button')
 })
 
 When('The user accepts the changes', () => {
@@ -390,3 +377,19 @@ function addActivityToStudyAndGetValues(studyUid) {
         study_activity_uid = response.body[0].content.study_activity_uid
     })
 }
+
+Then('Activity placeholder is not found', () => {
+    cy.searchAndCheckPresence(activity_placeholder_name, false)
+})
+
+When('the request continue button is clicked', () => {
+    cy.clickButton('step.request-continue-button')
+})
+
+When('the sponsor continue button is clicked', () => {
+    cy.clickButton('step.sponsor-continue-button')
+})
+
+When('the confirm continue button is clicked', () => {
+    cy.clickButton('step.confirm-continue-button')
+})

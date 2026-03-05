@@ -17,15 +17,15 @@
     >
       <template #actions="">
         <v-btn
-          class="ml-2"
-          size="small"
+          class="ml-2 expandHoverBtn"
           variant="outlined"
           color="nnBaseBlue"
-          :title="$t('DictionaryTermTable.add_title')"
           :disabled="!accessGuard.checkPermission($roles.LIBRARY_WRITE)"
-          icon="mdi-plus"
           @click="openCreateTermForm()"
-        />
+        >
+          <v-icon left>mdi-plus</v-icon>
+          <span class="label">{{ $t('DictionaryTermTable.add_title') }}</span>
+        </v-btn>
       </template>
       <template #[`item.status`]="{ item }">
         <StatusChip :status="item.status" />

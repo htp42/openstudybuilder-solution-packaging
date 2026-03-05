@@ -14,8 +14,9 @@ Feature: Studies - View Specification - USDM
 
     Scenario: [Export][Json] User must be able to view and download USDM
         Given The test study '/usdm' page is opened        
-        Then Export button is available
-        And A JSON text field showing the study definition in USDM format is displayed
+        When User clicks export button
+        And JSON format is available
+        Then A JSON text field showing the study definition in USDM format is displayed
 
     Scenario: [Online help] User must be able to read online help for the General
         Given The test study '/usdm' page is opened

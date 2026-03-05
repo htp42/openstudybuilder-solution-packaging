@@ -1,4 +1,4 @@
-@REQ_ID:1070683
+@REQ_ID:1070683 @pending_implementation
 
 Feature: Top Admin - Multilingual CRFs
 
@@ -27,15 +27,28 @@ Feature: Top Admin - Multilingual CRFs
     Scenario: [Create][Positive case][Form] User must be able to create multilingual CRF Form
         Given The '/library/crf-builder/forms' page is opened
         When The new CRF Form is created with description providied
+        And Form continue button is clicked
+        And Form continue button is clicked
+        And Form continue button is clicked
+        And Form save button is clicked
         Then The CRF Form description is saved within the system
 
     Scenario: [Create][Positive case][Group] User must be able to create multilingual CRF Item Group
         Given The '/library/crf-builder/item-groups' page is opened
         When The new CRF Item Group is created with description providied
+        And Form continue button is clicked
+        And Form continue button is clicked
+        And Form continue button is clicked
+        And Form save button is clicked
         Then The CRF Item Group description is saved within the system
 
     Scenario: [Create][Positive case][Item] User must be able to create multilingual CRF Item
         Given The '/library/crf-builder/items' page is opened
         When The new CRF Item is created with description providied
+        And Form continue button is clicked
+        And Form continue button is clicked
+        And Form continue button is clicked
+        And Form continue button is clicked
+        And Form save button is clicked
         Then The CRF Item description is saved within the system
 

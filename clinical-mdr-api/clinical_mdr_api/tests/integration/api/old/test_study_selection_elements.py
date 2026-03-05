@@ -418,7 +418,7 @@ def test_get_all_list_non_empty_for_multiple_elements(api_client):
     assert res["items"][0]["author_username"] == "unknown-user@example.com"
     assert res["items"][1]["study_uid"] == "study_root"
     assert res["items"][1]["study_version"] is not None
-    assert res["items"][1]["element_uid"] == "StudyElement_000003"
+    assert res["items"][1]["element_uid"] == "StudyElement_000002"
     assert res["items"][1]["order"] == 2
     assert res["items"][1]["name"] == "Element_Name_2"
     assert res["items"][1]["short_name"] == "Element_Short_Name_2"
@@ -558,7 +558,7 @@ def test_patch_specific_set_name(api_client):
     assert res["element_colour"] == "element_colour"
     assert res["author_username"] == "unknown-user@example.com"
     assert res["study_version"] is not None
-    assert res["element_uid"] == "StudyElement_000003"
+    assert res["element_uid"] == "StudyElement_000002"
     assert res["element_type"]["term_uid"] == "ElementType_0001"
     assert res["element_type"]["term_name"] == "Element Type"
     assert res["element_type"]["codelist_uid"] == "CTCodelist_ElementType"
@@ -710,7 +710,7 @@ def test_reorder_specific1(api_client):
     assert res["element_colour"] == "element_colour"
     assert res["author_username"] == "unknown-user@example.com"
     assert res["study_version"] is not None
-    assert res["element_uid"] == "StudyElement_000003"
+    assert res["element_uid"] == "StudyElement_000002"
     assert res["element_type"]["term_uid"] == "ElementType_0001"
     assert res["element_type"]["term_name"] == "Element Type"
     assert res["element_type"]["codelist_uid"] == "CTCodelist_ElementType"
@@ -842,7 +842,7 @@ def test_all_history_of_all_selection_study_elements(
     assert res[2]["project_number"] is None
     assert res[2]["project_name"] is None
     assert res[2]["study_version"] is None
-    assert res[2]["element_uid"] == "StudyElement_000003"
+    assert res[2]["element_uid"] == "StudyElement_000002"
     assert res[2]["name"] == "New_Element_Name_2"
     assert res[2]["short_name"] == "Element_Short_Name_2"
     assert res[2]["code"] == "Element_code_2"
@@ -894,7 +894,7 @@ def test_all_history_of_all_selection_study_elements(
     assert res[3]["project_number"] is None
     assert res[3]["project_name"] is None
     assert res[3]["study_version"] is None
-    assert res[3]["element_uid"] == "StudyElement_000003"
+    assert res[3]["element_uid"] == "StudyElement_000002"
     assert res[3]["name"] == "New_Element_Name_2"
     assert res[3]["short_name"] == "Element_Short_Name_2"
     assert res[3]["code"] == "Element_code_2"
@@ -949,7 +949,7 @@ def test_all_history_of_all_selection_study_elements(
     assert res[4]["project_number"] is None
     assert res[4]["project_name"] is None
     assert res[4]["study_version"] is None
-    assert res[4]["element_uid"] == "StudyElement_000003"
+    assert res[4]["element_uid"] == "StudyElement_000002"
     assert res[4]["name"] == "Element_Name_2"
     assert res[4]["short_name"] == "Element_Short_Name_2"
     assert res[4]["code"] == "Element_code_2"

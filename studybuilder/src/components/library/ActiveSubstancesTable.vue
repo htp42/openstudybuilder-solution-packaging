@@ -15,14 +15,15 @@
   >
     <template #actions="">
       <v-btn
-        size="small"
+        class="expandHoverBtn"
         color="nnBaseBlue"
-        :title="$t('ActiveSubstanceForm.add_title')"
         :disabled="!checkPermission($roles.LIBRARY_WRITE)"
-        icon="mdi-plus"
         variant="outlined"
         @click.stop="showForm = true"
-      />
+      >
+        <v-icon left>mdi-plus</v-icon>
+        <span class="label">{{ $t('ActiveSubstanceForm.add_title') }}</span>
+      </v-btn>
     </template>
     <template #[`item.actions`]="{ item }">
       <ActionsMenu :actions="actions" :item="item" />

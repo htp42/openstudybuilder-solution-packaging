@@ -13,16 +13,16 @@
   >
     <template #actions="">
       <v-btn
-        class="ml-2"
-        size="small"
+        class="ml-2 expandHoverBtn"
         variant="outlined"
         color="nnBaseBlue"
         data-cy="add-unit"
-        :title="$t('UnitForm.add_title')"
         :disabled="!accessGuard.checkPermission($roles.LIBRARY_WRITE)"
-        icon="mdi-plus"
         @click.stop="showForm = true"
-      />
+      >
+        <v-icon left>mdi-plus</v-icon>
+        <span class="label">{{ $t('UnitForm.add_title') }}</span>
+      </v-btn>
     </template>
     <template #[`item.master_unit`]="{ item }">
       {{ $filters.yesno(item.master_unit) }}

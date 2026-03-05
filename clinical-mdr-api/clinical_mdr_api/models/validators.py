@@ -8,6 +8,7 @@ from pydantic import ValidationInfo
 
 from clinical_mdr_api.domains._utils import get_iso_lang_data
 from clinical_mdr_api.domains.concepts.utils import EN_LANGUAGE, ENG_LANGUAGE
+from clinical_mdr_api.domains.enums import OdmTranslatedTextTypeEnum
 from common.exceptions import ValidationException
 
 FLOAT_REGEX = "^[0-9]+\\.?[0-9]*$"
@@ -90,6 +91,44 @@ def validate_regex(value, info: ValidationInfo):
     return value
 
 
+def validate_first_character_is_uppercase(value, info: ValidationInfo):
+    """
+    Validates whether the first character of a string value is uppercase.
+
+    Args:
+        cls: The class to which the field belongs.
+        value: The value to validate.
+        info: ValidationInfo
+
+    Returns:
+        str: The validated value.
+    """
+    if value and not value[0].isupper():
+        raise ValueError(
+            f"Provided value '{value}' for '{info.field_name}' is invalid. The first character must be uppercase."
+        )
+    return value
+
+
+def validate_first_character_is_lowercase(value, info: ValidationInfo):
+    """
+    Validates whether the first character of a string value is lowercase.
+
+    Args:
+        cls: The class to which the field belongs.
+        value: The value to validate.
+        info: ValidationInfo
+
+    Returns:
+        str: The validated value.
+    """
+    if value and not value[0].islower():
+        raise ValueError(
+            f"Provided value '{value}' for '{info.field_name}' is invalid. The first character must be lowercase."
+        )
+    return value
+
+
 def transform_to_utc(value: datetime | None, info: ValidationInfo):
     if not value:
         return None
@@ -122,25 +161,59 @@ def is_language_supported(value: str):
     return None
 
 
-def has_english_description(descriptions: list[Any]):
+def has_english_description(translated_texts: list[Any]):
     """
-    Ensures that at least one description is in English (`eng` or `en`).
+    Ensures that there is at least one Translated Text with language English ('eng' or 'en') if Description(s) have been provided.
 
     Args:
-        descriptions (list[Any]): List of descriptions.
+        translated_texts (list[Any]): List of translated_texts.
 
     Returns:
         list[Any]: The original list if valid.
 
     Raises:
-        ValidationException: If no English description is found.
+        ValidationException: If no English Description is found.
     """
 
+    if not translated_texts:
+        return []
+
+    descriptions = [
+        tt
+        for tt in translated_texts
+        if tt.text_type == OdmTranslatedTextTypeEnum.DESCRIPTION
+    ]
     if not descriptions or any(
-        desc.language in {ENG_LANGUAGE, EN_LANGUAGE} for desc in descriptions
+        d.language in {ENG_LANGUAGE, EN_LANGUAGE} for d in descriptions
     ):
-        return descriptions
+        return translated_texts
 
     raise ValidationException(
-        msg="At least one description must be in English ('eng' or 'en')."
+        msg="A Translated Text with text_type Description and language English ('eng' or 'en') must be provided."
     )
+
+
+def translated_text_uniqueness_check(translated_texts: list[Any]):
+    """
+    Ensures that there are no duplicate Translated Texts for the same language and text_type.
+
+    Args:
+        translated_texts (list[Any]): List of translated_texts.
+
+    Returns:
+        list[Any]: The original list if valid.
+
+    Raises:
+        ValidationException: If duplicate Translated Texts are found.
+    """
+    seen = set()
+
+    for translated_text in translated_texts:
+        identifier = (translated_text.text_type, translated_text.language)
+        if identifier in seen:
+            raise ValidationException(
+                msg=f"Duplicate Translated Text found for text_type '{translated_text.text_type.value}' and language '{translated_text.language}'."
+            )
+        seen.add(identifier)
+
+    return translated_texts

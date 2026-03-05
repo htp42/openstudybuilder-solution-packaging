@@ -28,22 +28,23 @@
       <template #actions>
         <v-btn
           v-if="!editMode"
-          class="ml-2"
-          size="small"
+          class="ml-2 expandHoverBtn"
           variant="outlined"
           color="nnBaseBlue"
-          :title="$t('_global.edit')"
           :disabled="
             !accessGuard.checkPermission($roles.STUDY_WRITE) ||
             selectedStudyVersion !== null
           "
-          icon="mdi-pencil-outline"
           @click.stop="edit"
-        />
+        >
+          <v-icon left>mdi-pencil-outline</v-icon>
+          <span class="label">{{ $t('_global.edit') }}</span>
+        </v-btn>
         <v-btn
           v-if="editMode"
           color="primary"
           variant="flat"
+          height="40px"
           rounded
           :title="$t('_global.save')"
           :loading="editLoading"
@@ -55,6 +56,7 @@
           v-if="editMode"
           class="secondary-btn ml-2"
           color="white"
+          height="40px"
           variant="outlined"
           rounded
           :title="$t('_global.cancel')"
@@ -312,14 +314,27 @@ function save() {
     )
     armsApi
       .cellsBatchUpdate(selectedStudy.value.uid, updateObject.value)
-      .then(() => {
+      .then((batchResponse) => {
         editLoading.value = false
         editMode.value = false
+        let hasError = false
+        for (const subResponse of batchResponse.data) {
+          if (subResponse.response_code >= 400) {
+            notificationHub.add({
+              msg: subResponse.content.message,
+              type: 'error',
+              timeout: 0,
+            })
+            hasError = true
+          }
+        }
         armsApi.getAllStudyCells(selectedStudy.value.uid).then((resp) => {
           cells.value = resp
-          notificationHub.add({
-            msg: t('DesignMatrix.matrix_updated'),
-          })
+          if (!hasError) {
+            notificationHub.add({
+              msg: t('DesignMatrix.matrix_updated'),
+            })
+          }
           editLoading.value = false
           editMode.value = false
           updateObject.value = []

@@ -92,18 +92,18 @@
       <template #actions="">
         <v-btn
           data-cy="create-epoch"
-          class="ml-2"
-          size="small"
+          class="ml-2 expandHoverBtn"
           variant="outlined"
           color="nnBaseBlue"
-          :title="$t('StudyEpochForm.add_title')"
           :disabled="
             !accessGuard.checkPermission($roles.STUDY_WRITE) ||
             studiesGeneralStore.selectedStudyVersion !== null
           "
-          icon="mdi-plus"
           @click="createEpoch()"
-        />
+        >
+          <v-icon left>mdi-plus</v-icon>
+          <span class="label">{{ $t('StudyEpochForm.add_title') }}</span>
+        </v-btn>
       </template>
     </NNTable>
     <StudyEpochForm

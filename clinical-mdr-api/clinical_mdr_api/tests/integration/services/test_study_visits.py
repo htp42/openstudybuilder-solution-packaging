@@ -704,7 +704,7 @@ class TestStudyVisitManagement(unittest.TestCase):
         # we add so many subvists as there is a logic of
         # recalculating subvists unique-visit-numbers when we exceed allowed limits
         for i in range(1, 21):
-            create_visit_with_update(
+            vis = create_visit_with_update(
                 study_epoch_uid=self.epoch2.uid,
                 visit_type_uid="VisitType_0003",
                 time_reference_uid="VisitSubType_0005",
@@ -715,6 +715,7 @@ class TestStudyVisitManagement(unittest.TestCase):
                 visit_class="SINGLE_VISIT",
                 visit_subclass="ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV",
             )
+            print(f"created subvisit {i} with uvn {vis.unique_visit_number}")
             # check unique visit numbers before recalculation
             if i == 9:
                 all_visits = visit_service.get_all_visits(

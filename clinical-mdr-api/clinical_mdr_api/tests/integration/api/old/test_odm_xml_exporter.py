@@ -33,6 +33,7 @@ from clinical_mdr_api.tests.integration.utils.data_library import (
     STARTUP_ODM_XML_EXPORTER,
     STARTUP_UNIT_DEFINITIONS,
 )
+from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 from clinical_mdr_api.tests.utils.checks import (
     assert_response_content_type,
     assert_response_status_code,
@@ -68,8 +69,154 @@ def test_data():
 
 
 def test_get_odm_xml_form(api_client):
+    activity_instance_class = TestUtils.create_activity_instance_class(
+        name="Activity instance class 1",
+        definition="def Activity instance class 1",
+        is_domain_specific=True,
+        level=1,
+    )
+    data_type_codelist = TestUtils.create_ct_codelist(
+        name="DATATYPE", submission_value="DATATYPE", extensible=True, approve=True
+    )
+    data_type_term = TestUtils.create_ct_term(
+        sponsor_preferred_name="Data type", codelist_uid=data_type_codelist.codelist_uid
+    )
+    role_codelist = TestUtils.create_ct_codelist(
+        name="ROLE", submission_value="ROLE", extensible=True, approve=True
+    )
+    role_term = TestUtils.create_ct_term(
+        sponsor_preferred_name="Role", codelist_uid=role_codelist.codelist_uid
+    )
+    activity_item_class = TestUtils.create_activity_item_class(
+        name="Activity Item Class name1",
+        order=1,
+        activity_instance_classes=[
+            {
+                "uid": activity_instance_class.uid,
+                "mandatory": True,
+                "is_adam_param_specific_enabled": True,
+                "is_additional_optional": True,
+                "is_default_linked": True,
+            }
+        ],
+        role_uid=role_term.term_uid,
+        data_type_uid=data_type_term.term_uid,
+    )
+    sub_group = TestUtils.create_activity_subgroup(name="activity_subgroup")
+    group = TestUtils.create_activity_group(name="activity_group")
+
+    activity_instance = TestUtils.create_activity_instance(
+        name="name A",
+        activity_instance_class_uid=activity_instance_class.uid,
+        definition="def A",
+        abbreviation="abbr A",
+        nci_concept_id="NCIID",
+        nci_concept_name="NCINAME",
+        name_sentence_case="name A",
+        topic_code="topic code A",
+        is_research_lab=True,
+        adam_param_code="adam_code_a",
+        is_required_for_activity=True,
+        activities=[
+            TestUtils.create_activity(
+                name="Activity",
+                activity_subgroups=[sub_group.uid],
+                activity_groups=[group.uid],
+            ).uid
+        ],
+        activity_subgroups=[sub_group.uid],
+        activity_groups=[group.uid],
+        activity_items=[
+            {
+                "activity_item_class_uid": activity_item_class.uid,
+                "ct_terms": [],
+                "unit_definition_uids": [],
+                "is_adam_param_specific": True,
+            }
+        ],
+    )
+
+    api_client.post("concepts/odms/forms/odm_form1/versions")
+    api_client.post("concepts/odms/item-groups/odm_item_group1/versions")
+
     response = api_client.post(
-        "concepts/odms/metadata/xmls/export?targets=odm_form1&target_type=form&stylesheet=blank&allowed_namespaces=*",
+        "concepts/odms/items",
+        json={
+            "name": "with activity instance",
+            "oid": "oid999",
+            "datatype": "string",
+            "prompt": None,
+            "length": 1,
+            "significant_digits": 1,
+            "sas_field_name": "sasfieldname999",
+            "sds_var_name": "sdsvarname999",
+            "origin": "origin999",
+            "comment": "comment999",
+            "descriptions": [],
+            "aliases": [],
+            "unit_definitions": [],
+            "codelist": None,
+            "terms": [],
+        },
+    )
+    assert_response_status_code(response, 201)
+    rs = response.json()
+    item_uid = rs["uid"]
+
+    response = api_client.post(
+        "concepts/odms/item-groups/odm_item_group1/items",
+        json=[
+            {
+                "uid": item_uid,
+                "order_number": 1,
+                "mandatory": "yes",
+                "vendor": {"attributes": []},
+            }
+        ],
+    )
+    assert_response_status_code(response, 201)
+
+    response = api_client.patch(
+        "concepts/odms/items/" + item_uid,
+        json={
+            "name": "with activity instance",
+            "oid": "oid999",
+            "datatype": "string",
+            "prompt": None,
+            "length": 1,
+            "significant_digits": 1,
+            "sas_field_name": "sasfieldname999",
+            "sds_var_name": "sdsvarname999",
+            "origin": "origin999",
+            "comment": "comment999",
+            "descriptions": [],
+            "aliases": [],
+            "unit_definitions": [],
+            "codelist": None,
+            "terms": [],
+            "activity_instances": [
+                {
+                    "activity_instance_uid": activity_instance.uid,
+                    "activity_item_class_uid": activity_item_class.uid,
+                    "odm_form_uid": "odm_form1",
+                    "odm_item_group_uid": "odm_item_group1",
+                    "order": 1,
+                    "primary": True,
+                    "preset_response_value": "preset_response_value1",
+                    "value_condition": "value_condition1",
+                    "value_dependent_map": "value_dependent_map1",
+                }
+            ],
+            "vendor_elements": [],
+            "vendor_element_attributes": [],
+            "vendor_attributes": [],
+            "change_description": "Added activity instance",
+        },
+    )
+    assert_response_status_code(response, 200)
+
+    response = api_client.post(
+        "concepts/odms/metadata/xmls/export?targets=odm_form1&target_type=form&stylesheet=falcon&allowed_namespaces=*",
     )
     assert_response_status_code(response, 200)
     assert_response_content_type(response, CONTENT_TYPE)
@@ -80,14 +227,15 @@ def test_get_odm_xml_form(api_client):
     expected_xml.set("FileOID", actual_xml.attrib["FileOID"])
     expected_xml.set("CreationDateTime", actual_xml.attrib["CreationDateTime"])
 
-    assert '<?xml-stylesheet type="text/xsl" href="blank"?>' in response.text
+    assert '<?xml-stylesheet type="text/xsl" href="falcon"?>' in response.text
 
     xml_diff(expected_xml, actual_xml)
+    xml_diff(actual_xml, expected_xml)
 
 
 def test_get_odm_xml_forms(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/xmls/export?targets=odm_form1&targets=odm_form2&target_type=form&stylesheet=blank&allowed_namespaces=*",
+        "concepts/odms/metadata/xmls/export?targets=odm_form1&targets=odm_form2&target_type=form&stylesheet=falcon&allowed_namespaces=*",
     )
     assert_response_status_code(response, 200)
     assert_response_content_type(response, CONTENT_TYPE)
@@ -98,14 +246,15 @@ def test_get_odm_xml_forms(api_client):
     expected_xml.set("FileOID", actual_xml.attrib["FileOID"])
     expected_xml.set("CreationDateTime", actual_xml.attrib["CreationDateTime"])
 
-    assert '<?xml-stylesheet type="text/xsl" href="blank"?>' in response.text
+    assert '<?xml-stylesheet type="text/xsl" href="falcon"?>' in response.text
 
     xml_diff(expected_xml, actual_xml)
+    xml_diff(actual_xml, expected_xml)
 
 
 def test_get_odm_xml_forms_with_specific_version(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/xmls/export?targets=odm_form1,1.0&targets=odm_form2,1.0&target_type=form&stylesheet=blank&allowed_namespaces=*",
+        "concepts/odms/metadata/xmls/export?targets=odm_form1,1.1&targets=odm_form2,1.0&target_type=form&stylesheet=falcon&allowed_namespaces=*",
     )
     assert_response_status_code(response, 200)
     assert_response_content_type(response, CONTENT_TYPE)
@@ -116,14 +265,15 @@ def test_get_odm_xml_forms_with_specific_version(api_client):
     expected_xml.set("FileOID", actual_xml.attrib["FileOID"])
     expected_xml.set("CreationDateTime", actual_xml.attrib["CreationDateTime"])
 
-    assert '<?xml-stylesheet type="text/xsl" href="blank"?>' in response.text
+    assert '<?xml-stylesheet type="text/xsl" href="falcon"?>' in response.text
 
     xml_diff(expected_xml, actual_xml)
+    xml_diff(actual_xml, expected_xml)
 
 
 def test_get_odm_xml_forms_without_specific_version(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/xmls/export?targets=odm_form1,&targets=odm_form2,&target_type=form&stylesheet=blank&allowed_namespaces=*",
+        "concepts/odms/metadata/xmls/export?targets=odm_form1,&targets=odm_form2,&target_type=form&stylesheet=falcon&allowed_namespaces=*",
     )
     assert_response_status_code(response, 200)
     assert_response_content_type(response, CONTENT_TYPE)
@@ -134,14 +284,15 @@ def test_get_odm_xml_forms_without_specific_version(api_client):
     expected_xml.set("FileOID", actual_xml.attrib["FileOID"])
     expected_xml.set("CreationDateTime", actual_xml.attrib["CreationDateTime"])
 
-    assert '<?xml-stylesheet type="text/xsl" href="blank"?>' in response.text
+    assert '<?xml-stylesheet type="text/xsl" href="falcon"?>' in response.text
 
     xml_diff(expected_xml, actual_xml)
+    xml_diff(actual_xml, expected_xml)
 
 
 def test_get_odm_xml_item_group(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/xmls/export?targets=odm_item_group1&target_type=item_group&stylesheet=blank&allowed_namespaces=*",
+        "concepts/odms/metadata/xmls/export?targets=odm_item_group1&target_type=item_group&stylesheet=falcon&allowed_namespaces=*",
     )
     assert_response_status_code(response, 200)
     assert_response_content_type(response, CONTENT_TYPE)
@@ -152,14 +303,15 @@ def test_get_odm_xml_item_group(api_client):
     expected_xml.set("FileOID", actual_xml.attrib["FileOID"])
     expected_xml.set("CreationDateTime", actual_xml.attrib["CreationDateTime"])
 
-    assert '<?xml-stylesheet type="text/xsl" href="blank"?>' in response.text
+    assert '<?xml-stylesheet type="text/xsl" href="falcon"?>' in response.text
 
     xml_diff(expected_xml, actual_xml)
+    xml_diff(actual_xml, expected_xml)
 
 
 def test_get_odm_xml_item(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/xmls/export?targets=odm_item1&target_type=item&stylesheet=blank&allowed_namespaces=*",
+        "concepts/odms/metadata/xmls/export?targets=odm_item1&target_type=item&stylesheet=falcon&allowed_namespaces=*",
     )
     assert_response_status_code(response, 200)
     assert_response_content_type(response, CONTENT_TYPE)
@@ -170,9 +322,10 @@ def test_get_odm_xml_item(api_client):
     expected_xml.set("FileOID", actual_xml.attrib["FileOID"])
     expected_xml.set("CreationDateTime", actual_xml.attrib["CreationDateTime"])
 
-    assert '<?xml-stylesheet type="text/xsl" href="blank"?>' in response.text
+    assert '<?xml-stylesheet type="text/xsl" href="falcon"?>' in response.text
 
     xml_diff(expected_xml, actual_xml)
+    xml_diff(actual_xml, expected_xml)
 
 
 def test_get_odm_xml_with_allowed_namespaces(api_client):
@@ -188,6 +341,7 @@ def test_get_odm_xml_with_allowed_namespaces(api_client):
     expected_xml.set("CreationDateTime", actual_xml.attrib["CreationDateTime"])
 
     xml_diff(expected_xml, actual_xml)
+    xml_diff(actual_xml, expected_xml)
 
 
 def test_get_odm_xml_with_mapper_csv(api_client):
@@ -197,10 +351,6 @@ def test_get_odm_xml_with_mapper_csv(api_client):
             "mapper_file": (
                 "mapper.csv",
                 "type,parent,from_name,to_name,to_alias,from_alias,alias_context\n"
-                "attribute,,osb:instruction,CompletionInstructions,,,\n"
-                "attribute,*,osb:sponsorInstruction,ImplementationNotes,,,\n"
-                "attribute,,CompletionInstructions,,true,,\n"
-                "attribute,*,ImplementationNotes,,true,,\n"
                 "attribute,FormDef,osb:version,ov,,,\n"
                 "element,,ItemRef,osb:ItemRef,,,\n"
                 "element,FormDef,ItemGroupRef,osb:ItemGroupRef,,,\n"
@@ -220,14 +370,23 @@ def test_get_odm_xml_with_mapper_csv(api_client):
     expected_xml.set("CreationDateTime", actual_xml.attrib["CreationDateTime"])
 
     xml_diff(expected_xml, actual_xml)
+    xml_diff(actual_xml, expected_xml)
 
 
 def test_get_odm_xml_pdf_version(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/xmls/export?target_type=form&targets=odm_form1&pdf=true&stylesheet=blank"
+        "concepts/odms/metadata/xmls/export?target_type=form&targets=odm_form1&pdf=true&stylesheet=falcon"
     )
     assert_response_status_code(response, 200)
     assert_response_content_type(response, "application/pdf")
+
+
+def test_get_odm_html_version(api_client):
+    response = api_client.post(
+        "concepts/odms/metadata/report?target_type=form&targets=odm_form1"
+    )
+    assert_response_status_code(response, 200)
+    assert_response_content_type(response, "text/html")
 
 
 def test_throw_exception_if_target_type_is_not_supported(api_client):

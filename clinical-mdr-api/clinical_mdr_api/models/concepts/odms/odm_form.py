@@ -21,8 +21,10 @@ from clinical_mdr_api.models.concepts.concept import (
 )
 from clinical_mdr_api.models.concepts.odms.odm_common_models import (
     OdmAliasModel,
-    OdmDescriptionModel,
     OdmRefVendorPostInput,
+    OdmTranslatedTextModel,
+    OdmVendorElementRelationPostInput,
+    OdmVendorRelationPostInput,
 )
 from clinical_mdr_api.models.concepts.odms.odm_item_group import OdmItemGroupRefModel
 from clinical_mdr_api.models.concepts.odms.odm_vendor_attribute import (
@@ -33,7 +35,10 @@ from clinical_mdr_api.models.concepts.odms.odm_vendor_element import (
     OdmVendorElementRelationModel,
 )
 from clinical_mdr_api.models.utils import BaseModel, PostInputModel
-from clinical_mdr_api.models.validators import has_english_description
+from clinical_mdr_api.models.validators import (
+    has_english_description,
+    translated_text_uniqueness_check,
+)
 from common.config import settings
 from common.utils import booltostr
 
@@ -44,7 +49,7 @@ class OdmForm(ConceptModel):
     sdtm_version: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
-    descriptions: Annotated[list[OdmDescriptionModel], Field()]
+    translated_texts: Annotated[list[OdmTranslatedTextModel], Field()]
     aliases: Annotated[list[OdmAliasModel], Field()]
     item_groups: Annotated[list[OdmItemGroupRefModel], Field()]
     vendor_elements: Annotated[list[OdmVendorElementRelationModel], Field()]
@@ -83,8 +88,9 @@ class OdmForm(ConceptModel):
             version=odm_form_ar.item_metadata.version,
             change_description=odm_form_ar.item_metadata.change_description,
             author_username=odm_form_ar.item_metadata.author_username,
-            descriptions=sorted(
-                odm_form_ar.concept_vo.descriptions, key=lambda item: item.name
+            translated_texts=sorted(
+                odm_form_ar.concept_vo.translated_texts,
+                key=lambda item: (item.text_type.value, item.text),
             ),
             aliases=sorted(odm_form_ar.concept_vo.aliases, key=lambda item: item.name),
             item_groups=sorted(
@@ -188,6 +194,7 @@ class OdmFormRefModel(BaseModel):
             if odm_form_ref_vo is not None:
                 odm_form_ref_model = cls(
                     uid=uid,
+                    oid=odm_form_ref_vo.oid,
                     name=odm_form_ref_vo.name,
                     version=odm_form_ref_vo.version,
                     order_number=odm_form_ref_vo.order_number,
@@ -198,6 +205,7 @@ class OdmFormRefModel(BaseModel):
             else:
                 odm_form_ref_model = cls(
                     uid=uid,
+                    oid=None,
                     name=None,
                     version=None,
                     order_number=None,
@@ -208,6 +216,7 @@ class OdmFormRefModel(BaseModel):
         return odm_form_ref_model
 
     uid: Annotated[str, Field()]
+    oid: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
     name: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
     version: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
     order_number: Annotated[int, Field(json_schema_extra={"nullable": True})] = 999999
@@ -222,10 +231,20 @@ class OdmFormPostInput(ConceptPostInput):
     oid: Annotated[str | None, Field(min_length=1)] = None
     sdtm_version: Annotated[str | None, Field()] = None
     repeating: Annotated[str, Field(min_length=1)]
-    descriptions: Annotated[list[OdmDescriptionModel], Field()]
+    translated_texts: Annotated[list[OdmTranslatedTextModel], Field()]
     aliases: list[OdmAliasModel] = Field(default_factory=list)
+    vendor_elements: list[OdmVendorElementRelationPostInput] = Field(
+        default_factory=list
+    )
+    vendor_element_attributes: list[OdmVendorRelationPostInput] = Field(
+        default_factory=list
+    )
+    vendor_attributes: list[OdmVendorRelationPostInput] = Field(default_factory=list)
 
-    _english_description_validator = field_validator("descriptions")(
+    _translated_text_uniqueness_check = field_validator("translated_texts")(
+        translated_text_uniqueness_check
+    )
+    _english_description_validator = field_validator("translated_texts")(
         has_english_description
     )
 
@@ -235,10 +254,16 @@ class OdmFormPatchInput(ConceptPatchInput):
     oid: Annotated[str | None, Field(min_length=1)]
     sdtm_version: Annotated[str | None, Field()]
     repeating: Annotated[str | None, Field()]
-    descriptions: Annotated[list[OdmDescriptionModel], Field()]
+    translated_texts: Annotated[list[OdmTranslatedTextModel], Field()]
     aliases: list[OdmAliasModel] = Field(default_factory=list)
+    vendor_elements: Annotated[list[OdmVendorElementRelationPostInput], Field()]
+    vendor_element_attributes: Annotated[list[OdmVendorRelationPostInput], Field()]
+    vendor_attributes: Annotated[list[OdmVendorRelationPostInput], Field()]
 
-    _english_description_validator = field_validator("descriptions")(
+    _translated_text_uniqueness_check = field_validator("translated_texts")(
+        translated_text_uniqueness_check
+    )
+    _english_description_validator = field_validator("translated_texts")(
         has_english_description
     )
 

@@ -14,6 +14,9 @@ import i18n from '@/plugins/i18n'
 import vuetify from '@/plugins/vuetify'
 import draggable from '@/plugins/draggable'
 
+// QuillEditor enhancements
+import '@/plugins/quillTableBetter'
+
 // Filters
 import filters from '@/filters'
 

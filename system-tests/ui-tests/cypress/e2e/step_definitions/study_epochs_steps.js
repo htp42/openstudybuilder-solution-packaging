@@ -2,7 +2,9 @@ const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor")
 
 let epochDescription = `Epoch ${Date.now()}`
 
-When('User waits for epochs data', () => cy.waitForData('study-epochs'))
+When('User intercepts epochs data', () => cy.intercept(`**/study-epochs**`).as('epochsRequests'))
+
+When('User waits for epochs data', () => cy.wait('@epochsRequests'))
 
 When('User waits for epochs to load', () => {
     cy.intercept(`**/study-epochs?page_size=0`).as('getEpochs')
@@ -14,7 +16,6 @@ When('Study Epoch is found', () => cy.searchAndCheckPresence(epochDescription, t
 When('Study Epoch is not available', () => cy.searchAndCheckPresence(epochDescription, false))
 
 When('A new Study Epoch is added', () => {
-    cy.waitForData('study-epochs')
     cy.clickButton('create-epoch')
     cy.selectAutoComplete('epoch-type', 'Post Treatment')
     cy.selectAutoComplete('epoch-subtype', 'Elimination')

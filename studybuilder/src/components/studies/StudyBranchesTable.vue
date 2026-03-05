@@ -32,34 +32,36 @@
       <template #actions="">
         <v-btn
           v-if="editStepper && designClass === cohortConstants.MANUAL"
-          class="ml-2"
-          size="small"
+          class="ml-2 expandHoverBtn"
           variant="outlined"
           color="nnBaseBlue"
-          :title="$t('StudyBranchArms.add_branch')"
           data-cy="add-study-branch-arm"
           :disabled="
             !accessGuard.checkPermission($roles.STUDY_WRITE) ||
             studiesGeneralStore.selectedStudyVersion !== null
           "
-          icon="mdi-plus"
           @click.stop="addBranchArm"
-        />
+        >
+          <v-icon left>mdi-plus</v-icon>
+          <span class="label">{{ $t('StudyBranchArms.add_branch') }}</span>
+        </v-btn>
         <v-btn
           v-else-if="editStepper"
-          class="ml-2"
-          size="small"
+          class="ml-2 expandHoverBtn"
           variant="outlined"
           color="nnBaseBlue"
-          :title="$t('StudyBranchArms.cohorts_stepper')"
           :disabled="
             !accessGuard.checkPermission($roles.STUDY_WRITE) ||
             studiesGeneralStore.selectedStudyVersion !== null
           "
-          :icon="editStepper ? 'mdi-pencil' : 'mdi-plus'"
           @click.stop="showCohortsStepper = true"
           @close="showCohortsStepper = false"
-        />
+        >
+          <v-icon left>{{
+            editStepper ? 'mdi-pencil-outline' : 'mdi-plus'
+          }}</v-icon>
+          <span class="label">{{ $t('StudyBranchArms.cohorts_stepper') }}</span>
+        </v-btn>
       </template>
       <template #[`item.study_cohort_name`]="{ item }">
         <div v-html="sanitizeHTML(getCohortNames(item))" />

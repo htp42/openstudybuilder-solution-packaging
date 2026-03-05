@@ -178,6 +178,28 @@ PROJECT_NUMBER = Query(
 )
 
 
+# API endpoints to study crfs
+
+
+@router.get(
+    "/studies/{study_uid}/odm-forms",
+    dependencies=[security, rbac.STUDY_READ],
+    summary="Get a paginated list of study data suppliers of a study",
+    status_code=200,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+    },
+)
+def get_a_paginated_list_of_study_crfs_of_a_study(
+    study_uid: Annotated[str, studyUID],
+) -> list[dict[Any, Any]]:
+    service = StudyActivityInstanceSelectionService()
+
+    all_items = service.get_crfs(study_uid=study_uid)
+
+    return all_items
+
+
 # API endpoints to study data suppliers
 
 

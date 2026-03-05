@@ -1,0 +1,3 @@
+item_oid,item_group_oid,form_oid,activity_instance_name,activity_item_class_name,order,primary,preset_response_value,value_condition,value_dependent_map
+I.SYSBP,G.VS.BPP,F.VS,Systolic Blood Pressure,standard_unit,999999,No,,,
+I.DIABP,G.VS.BPP,F.VS,Diastolic Blood Pressure,standard_unit,999999,No,,,

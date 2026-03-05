@@ -45,6 +45,7 @@ Feature: Library - Code Lists - CT Catalogues
 	Scenario: [Overview][New Term] User must be able to add a new term to the Codelist
 		Given The '/library/ct_catalogues/All/C117744/terms' page is opened
 		When The term is search for and found
+		And User waits for the table
 		Then The term data is visible in the table
 
 	Scenario: [Overview] User must be able to see the Codelist Summary for Codelist
@@ -91,6 +92,8 @@ Feature: Library - Code Lists - CT Catalogues
 	Scenario: [Actions][Edit][Term] User must be able to edit a term in Codelist
 		Given The test term in test Codelist is opened
 		When The term sponsor values are edited
+		And Form save button is clicked
+		And The form is no longer available
 		And The term is validated
 		Then The edited term page is showing correct data
 		And The sponsor values should be in status 'Final' and version '1.0'

@@ -35,7 +35,6 @@
     </v-col>
   </v-row>
   <v-data-table-server
-    ref="mainTable"
     v-model:expanded="expanded"
     :headers="headers"
     item-value="name"
@@ -55,7 +54,7 @@
     </template>
     <template #item="{ item, internalItem, toggleExpand, isExpanded }">
       <tr style="background-color: rgb(var(--v-theme-dfltBackgroundLight1))">
-        <td width="45%" :class="'font-weight-bold'">
+        <td style="width: 45%" :class="'font-weight-bold'">
           <v-row class="align-center">
             <v-btn
               v-if="isExpanded(internalItem)"
@@ -98,15 +97,15 @@
             </span>
           </v-row>
         </td>
-        <td width="10%" />
-        <td width="10%" />
-        <td width="10%">
+        <td style="width: 10%" />
+        <td style="width: 10%" />
+        <td style="width: 10%">
           <StatusChip :status="item.status" />
         </td>
-        <td width="10%">
+        <td style="width: 10%">
           {{ item.version }}
         </td>
-        <td width="15%">
+        <td style="width: 15%">
           <v-menu v-if="item.status !== statuses.FINAL" offset-y>
             <template #activator="{ props }">
               <div>
@@ -200,7 +199,11 @@
   <ConfirmDialog ref="confirmNewVersion" />
 </template>
 
-<script>
+<script setup>
+import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+
 import crfs from '@/api/crfs'
 import CrfApprovalSummaryConfirmDialog from '@/components/library/crfs/CrfApprovalSummaryConfirmDialog.vue'
 import CrfTreeForms from '@/components/library/crfs/crfTreeComponents/CrfTreeForms.vue'
@@ -216,338 +219,353 @@ import filteringParameters from '@/utils/filteringParameters'
 import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
 import isEmpty from 'lodash/isEmpty'
 
-export default {
-  components: {
-    CrfApprovalSummaryConfirmDialog,
-    CrfTreeForms,
-    StatusChip,
-    CrfLinkForm,
-    ActionsMenu,
-    CrfCollectionForm,
-    CrfExportForm,
-    CrfFormForm,
-    ConfirmDialog,
-  },
-  inject: ['notificationHub'],
-  data() {
-    return {
-      headers: [
-        { title: this.$t('CRFTree.items_for_linking'), key: 'name' },
-        { title: this.$t('CRFTree.ref_attr'), key: 'refAttr' },
-        { title: this.$t('CRFTree.def_attr'), key: 'defAttr' },
-        { title: this.$t('_global.status'), key: 'status' },
-        { title: this.$t('_global.version'), key: 'version' },
-        { title: this.$t('CRFTree.link'), key: 'link' },
-      ],
-      actions: [
-        {
-          label: this.$t('CRFTree.open_def'),
-          icon: 'mdi-eye-outline',
-          click: this.openDefinition,
-        },
-        {
-          label: this.$t('CRFTree.preview_odm'),
-          icon: 'mdi-file-xml-box',
-          click: this.previewODM,
-        },
-        {
-          label: this.$t('_global.new_version'),
-          icon: 'mdi-plus-circle-outline',
-          click: this.newVersion,
-          condition: (item) => item.status === statuses.FINAL,
-          accessRole: this.$roles.LIBRARY_WRITE,
-        },
-        {
-          label: this.$t('_global.approve'),
-          icon: 'mdi-check-decagram',
-          click: this.approve,
-          condition: (item) => item.status === statuses.DRAFT,
-          accessRole: this.$roles.LIBRARY_WRITE,
-        },
-        {
-          label: this.$t('CRFTree.create_new_version_all'),
-          icon: 'mdi-plus-circle-outline',
-          click: this.newVersionAll,
-          condition: (item) => item.status === statuses.FINAL,
-          accessRole: this.$roles.LIBRARY_WRITE,
-        },
-        {
-          label: this.$t('_global.export'),
-          icon: 'mdi-download-outline',
-          click: this.openExportForm,
-        },
-        {
-          label: this.$t('CRFTree.expand'),
-          icon: 'mdi-arrow-expand-down',
-          condition: (item) => item.forms.length > 0,
-          click: this.expandAll,
-        },
-      ],
-      showLinkForm: false,
-      showCollectionForm: false,
-      selectedCollection: {},
-      refreshForms: 0,
-      expanded: [],
-      expandFormsForCollection: '',
-      showExportForm: false,
-      showCreateForm: false,
-      sortMode: false,
-      collections: [],
-      filteredOutCollections: [],
-      totalCollections: 0,
-      loading: false,
-      selectCollection: {},
-      doubleClickCounter: 0,
-      doubleClickTimer: null,
-    }
-  },
-  computed: {
-    availableSelectCollections() {
-      return [...this.collections, ...this.filteredOutCollections].sort(
-        (a, b) => a.name.localeCompare(b.name)
-      )
-    },
-  },
-  watch: {
-    selectCollection(val) {
-      this.updateCollectionView(val)
-    },
-  },
-  created() {
-    this.statuses = statuses
-  },
-  mounted() {
-    this.getCollections()
-  },
-  methods: {
-    doubleClick(toggleExpand, item) {
-      this.doubleClickCounter++
+const notificationHub = inject('notificationHub')
+const roles = inject('roles')
+const router = useRouter()
+const { t } = useI18n()
 
-      if (this.doubleClickCounter === 1) {
-        this.doubleClickTimer = setTimeout(() => {
-          toggleExpand(item)
-          this.doubleClickCounter = 0
-          this.expandFormsForCollection = ''
-        }, 500)
-      } else {
-        this.expandAll(item.raw)
-        clearTimeout(this.doubleClickTimer)
-        this.doubleClickCounter = 0
+const mainSelect = ref(null)
+
+const confirmApproval = ref(null)
+const confirmNewVersion = ref(null)
+
+const headers = computed(() => [
+  { title: t('CRFTree.items_for_linking'), key: 'name' },
+  { title: t('CRFTree.ref_attr'), key: 'refAttr' },
+  { title: t('CRFTree.def_attr'), key: 'defAttr' },
+  { title: t('_global.status'), key: 'status' },
+  { title: t('_global.version'), key: 'version' },
+  { title: t('CRFTree.link'), key: 'link' },
+])
+
+const showLinkForm = ref(false)
+const showCollectionForm = ref(false)
+const selectedCollection = ref({})
+const refreshForms = ref(0)
+const expanded = ref([])
+const expandFormsForCollection = ref('')
+const showExportForm = ref(false)
+const showCreateForm = ref(false)
+const sortMode = ref(false)
+const collections = ref([])
+const filteredOutCollections = ref([])
+const totalCollections = ref(0)
+const loading = ref(false)
+const selectCollection = ref({})
+const doubleClickCounter = ref(0)
+const doubleClickTimer = ref(null)
+
+const actions = computed(() => [
+  {
+    label: t('CRFTree.open_def'),
+    icon: 'mdi-eye-outline',
+    click: openDefinition,
+  },
+  {
+    label: t('CRFTree.preview_odm'),
+    icon: 'mdi-file-xml-box',
+    click: previewODM,
+  },
+  {
+    label: t('_global.new_version'),
+    icon: 'mdi-plus-circle-outline',
+    click: newVersion,
+    condition: (item) => item.status === statuses.FINAL,
+    accessRole: roles.LIBRARY_WRITE,
+  },
+  {
+    label: t('_global.approve'),
+    icon: 'mdi-check-decagram',
+    click: approve,
+    condition: (item) => item.status === statuses.DRAFT,
+    accessRole: roles.LIBRARY_WRITE,
+  },
+  {
+    label: t('CRFTree.create_new_version_all'),
+    icon: 'mdi-plus-circle-outline',
+    click: newVersionAll,
+    condition: (item) => item.status === statuses.FINAL,
+    accessRole: roles.LIBRARY_WRITE,
+  },
+  {
+    label: t('_global.export'),
+    icon: 'mdi-download-outline',
+    click: openExportForm,
+  },
+  {
+    label: t('CRFTree.expand'),
+    icon: 'mdi-arrow-expand-down',
+    condition: (item) => item.forms.length > 0,
+    click: expandAll,
+  },
+])
+
+const availableSelectCollections = computed(() => {
+  return [...collections.value, ...filteredOutCollections.value].sort((a, b) =>
+    a.name.localeCompare(b.name)
+  )
+})
+
+watch(selectCollection, (val) => {
+  updateCollectionView(val)
+})
+
+onMounted(() => {
+  getCollections()
+})
+
+onBeforeUnmount(() => {
+  if (doubleClickTimer.value) {
+    clearTimeout(doubleClickTimer.value)
+  }
+})
+
+function doubleClick(toggleExpand, item) {
+  doubleClickCounter.value++
+
+  if (doubleClickCounter.value === 1) {
+    doubleClickTimer.value = setTimeout(() => {
+      toggleExpand(item)
+      doubleClickCounter.value = 0
+      expandFormsForCollection.value = ''
+    }, 500)
+  } else {
+    expandAll(item.raw)
+    clearTimeout(doubleClickTimer.value)
+    doubleClickCounter.value = 0
+  }
+}
+
+function updateCollectionView(collection) {
+  if (isEmpty(collection)) {
+    collections.value = [...collections.value, ...filteredOutCollections.value]
+    filteredOutCollections.value = []
+    return
+  }
+
+  const allCollections = [...collections.value, ...filteredOutCollections.value]
+  collections.value = allCollections.filter((c) => c.uid === collection)
+  filteredOutCollections.value = allCollections.filter(
+    (c) => c.uid !== collection
+  )
+}
+
+async function newVersion(item) {
+  expanded.value = expanded.value.filter((e) => e !== item.name)
+
+  if (
+    await confirmNewVersion.value?.open(
+      t('_global.continuation_confirmation'),
+      {
+        type: 'warning',
       }
-    },
-    updateCollectionView(collection) {
-      if (isEmpty(collection)) {
-        this.collections = [...this.collections, ...this.filteredOutCollections]
-        this.filteredOutCollections = []
-        return
-      }
+    )
+  ) {
+    loading.value = true
 
-      const allCollections = [
-        ...this.collections,
-        ...this.filteredOutCollections,
-      ]
-      this.collections = allCollections.filter((c) => c.uid === collection)
-      this.filteredOutCollections = allCollections.filter(
-        (c) => c.uid !== collection
-      )
-    },
-    async newVersion(item) {
-      this.expanded = this.expanded.filter((e) => e !== item.name)
-
-      if (
-        await this.$refs.confirmNewVersion.open(
-          this.$t('_global.continuation_confirmation'),
-          { type: 'warning' }
+    crfs
+      .newVersion('study-events', item.uid)
+      .then((resp) => {
+        collections.value = collections.value.map((c) =>
+          c.uid === resp.data.uid ? { ...c, ...resp.data } : c
         )
-      ) {
-        this.loading = true
 
-        crfs
-          .newVersion('study-events', item.uid)
-          .then((resp) => {
-            this.collections = this.collections.map((c) =>
-              c.uid === resp.data.uid ? { ...c, ...resp.data } : c
-            )
-
-            this.expandAll(item)
-            this.notificationHub.add({
-              msg: this.$t('_global.new_version_success'),
-            })
-          })
-          .finally(() => {
-            this.loading = false
-          })
-      }
-    },
-    updateCollectionForm(affectedCollection, updatedForm) {
-      if (affectedCollection.status == statuses.DRAFT) {
-        const collection = this.collections.find(
-          (c) => c.uid === affectedCollection.uid
-        )
-        if (collection) {
-          collection.forms = collection.forms.map((f) =>
-            f.uid === updatedForm.uid ? { ...f, ...updatedForm } : f
-          )
-        }
-      }
-    },
-    selectAll() {
-      this.selectCollection = {}
-      this.$refs.mainSelect?.blur()
-    },
-    async getCollections(options) {
-      options = { ...options, sortBy: [{ key: 'name', order: 'asc' }] }
-      const params = filteringParameters.prepareParameters(options, null, null)
-      if (!params) {
-        params.total_count = true
-      }
-      return crfs.get('study-events', { params }).then((resp) => {
-        this.collections = resp.data.items
-        this.updateCollectionView(this.selectCollection)
-        this.totalCollections = resp.data.total
-      })
-    },
-    openCreateAndAddForm(item) {
-      this.selectedCollection = item
-      this.showCreateForm = true
-    },
-    closeCreateAndAddForm() {
-      this.showCreateForm = false
-      this.selectedCollection = {}
-    },
-    linkForm(form) {
-      const payload = [
-        {
-          uid: form.data.uid,
-          order_number: this.selectedCollection.forms.length,
-          mandatory: 'No',
-          collection_exception_condition_oid: null,
-        },
-      ]
-      crfs
-        .addFormsToCollection(payload, this.selectedCollection.uid, false)
-        .then(() => {
-          this.getCollections().then(() => {
-            this.refreshForms += 1
-          })
+        expandAll(item)
+        notificationHub?.add({
+          msg: t('_global.new_version_success'),
         })
-    },
-    updateCollection(collection) {
-      this.collections = this.collections.map((c) =>
-        c.uid === collection.uid ? { ...c, ...collection } : c
-      )
-    },
-    openDefinition(item) {
-      this.selectedCollection = item
-      this.showCollectionForm = true
-    },
-    closeDefinition() {
-      this.selectedCollection = {}
-      this.showCollectionForm = false
-      this.getCollections()
-    },
-    openLinkForm(item) {
-      this.selectedCollection = item
-      this.showLinkForm = true
-    },
-    async closeLinkForm() {
-      this.showLinkForm = false
-      this.selectedCollection = {}
-      await this.getCollections()
-      this.refreshForms += 1
-    },
-    async expandAll(item) {
-      await this.expanded.push(item.name)
-      this.expandFormsForCollection = item.uid
-    },
-    openExportForm(item) {
-      this.selectedCollection = item
-      this.showExportForm = true
-    },
-    closeExportForm() {
-      this.selectedCollection = {}
-      this.showExportForm = false
-    },
-    previewODM(item) {
-      this.$router.push({
-        name: 'CrfBuilder',
-        params: {
-          tab: 'odm-viewer',
-          uid: item.uid,
-          type: crfTypes.STUDY_EVENT,
-        },
       })
+      .finally(() => {
+        loading.value = false
+      })
+  }
+}
+
+function updateCollectionForm(affectedCollection, updatedForm) {
+  if (affectedCollection.status == statuses.DRAFT) {
+    const collection = collections.value.find(
+      (c) => c.uid === affectedCollection.uid
+    )
+    if (collection) {
+      collection.forms = collection.forms.map((f) =>
+        f.uid === updatedForm.uid ? { ...f, ...updatedForm } : f
+      )
+    }
+  }
+}
+
+function selectAll() {
+  selectCollection.value = {}
+  mainSelect.value?.blur()
+}
+
+async function getCollections(options) {
+  options = { ...options, sortBy: [{ key: 'name', order: 'asc' }] }
+  const params = filteringParameters.prepareParameters(options, null, null)
+  if (!params) {
+    params.total_count = true
+  }
+
+  return crfs.get('study-events', { params }).then((resp) => {
+    collections.value = resp.data.items
+    updateCollectionView(selectCollection.value)
+    totalCollections.value = resp.data.total
+  })
+}
+
+function openCreateAndAddForm(item) {
+  selectedCollection.value = item
+  showCreateForm.value = true
+}
+
+function closeCreateAndAddForm() {
+  showCreateForm.value = false
+  selectedCollection.value = {}
+}
+
+function linkForm(form) {
+  const payload = [
+    {
+      uid: form.data.uid,
+      order_number: selectedCollection.value.forms.length,
+      mandatory: 'No',
+      collection_exception_condition_oid: null,
     },
-    async approve(item) {
-      this.expanded = this.expanded.filter((e) => e !== item.name)
+  ]
 
-      if (
-        item.status === statuses.DRAFT &&
-        (await this.$refs.confirmApproval.open({
-          agreeLabel: this.$t('CRFCollections.approve_collection'),
-          collection: item,
-        }))
-      ) {
-        this.loading = true
+  crfs
+    .addFormsToCollection(payload, selectedCollection.value.uid, false)
+    .then(() => {
+      getCollections().then(() => {
+        refreshForms.value += 1
+      })
+    })
+}
 
-        await crfs
-          .approve('study-events', item.uid)
-          .then((resp) => {
-            this.collections = this.collections.map((collection) => {
-              if (collection.uid === resp.data.uid) {
-                return { ...collection, ...resp.data }
-              }
-              return collection
-            })
+function updateCollection(collection) {
+  collections.value = collections.value.map((c) =>
+    c.uid === collection.uid ? { ...c, ...collection } : c
+  )
+}
 
-            this.notificationHub.add({
-              msg: this.$t('CRFCollections.approved'),
-            })
-            this.expandAll(item)
-          })
-          .finally(() => {
-            this.loading = false
-          })
-      }
+function openDefinition(item) {
+  selectedCollection.value = item
+  showCollectionForm.value = true
+}
+
+function closeDefinition() {
+  selectedCollection.value = {}
+  showCollectionForm.value = false
+  getCollections()
+}
+
+function openLinkForm(item) {
+  selectedCollection.value = item
+  showLinkForm.value = true
+}
+
+async function closeLinkForm() {
+  showLinkForm.value = false
+  selectedCollection.value = {}
+  await getCollections()
+  refreshForms.value += 1
+}
+
+async function expandAll(item) {
+  await expanded.value.push(item.name)
+  expandFormsForCollection.value = item.uid
+}
+
+function openExportForm(item) {
+  selectedCollection.value = item
+  showExportForm.value = true
+}
+
+function closeExportForm() {
+  selectedCollection.value = {}
+  showExportForm.value = false
+}
+
+function previewODM(item) {
+  router.push({
+    name: 'CrfBuilder',
+    params: {
+      tab: 'odm-viewer',
+      uid: item.uid,
+      type: crfTypes.STUDY_EVENT,
     },
-    async newVersionAll(item) {
-      this.expanded = this.expanded.filter((e) => e !== item.name)
+  })
+}
 
-      if (
-        item.status === statuses.FINAL &&
-        (await this.$refs.confirmNewVersion.open(
-          this.$t('CRFTree.new_version_affecting_children_warning'),
-          {
-            agreeLabel: this.$t('CRFTree.create_new_versions'),
-            type: 'warning',
+async function approve(item) {
+  expanded.value = expanded.value.filter((e) => e !== item.name)
+
+  if (
+    item.status === statuses.DRAFT &&
+    (await confirmApproval.value?.open({
+      agreeLabel: t('CRFCollections.approve_collection'),
+      collection: item,
+    }))
+  ) {
+    loading.value = true
+
+    await crfs
+      .approve('study-events', item.uid)
+      .then((resp) => {
+        collections.value = collections.value.map((collection) => {
+          if (collection.uid === resp.data.uid) {
+            return { ...collection, ...resp.data }
           }
-        ))
-      ) {
-        this.loading = true
+          return collection
+        })
 
-        await crfs
-          .newVersion('study-events', item.uid, {
-            params: { cascade_new_version: true },
-          })
-          .then((resp) => {
-            this.collections = this.collections.map((collection) => {
-              if (collection.uid === resp.data.uid) {
-                return { ...collection, ...resp.data }
-              }
-              return collection
-            })
+        notificationHub?.add({
+          msg: t('CRFCollections.approved'),
+        })
+        expandAll(item)
+      })
+      .finally(() => {
+        loading.value = false
+      })
+  }
+}
 
-            this.notificationHub.add({
-              msg: this.$t('CRFCollections.new_version_all'),
-            })
-            this.expandAll(item)
-          })
-          .finally(() => {
-            this.loading = false
-          })
+async function newVersionAll(item) {
+  expanded.value = expanded.value.filter((e) => e !== item.name)
+
+  if (
+    item.status === statuses.FINAL &&
+    (await confirmNewVersion.value?.open(
+      t('CRFTree.new_version_affecting_children_warning'),
+      {
+        agreeLabel: t('CRFTree.create_new_versions'),
+        type: 'warning',
       }
-    },
-  },
+    ))
+  ) {
+    loading.value = true
+
+    await crfs
+      .newVersion('study-events', item.uid, {
+        params: { cascade_new_version: true },
+      })
+      .then((resp) => {
+        collections.value = collections.value.map((collection) => {
+          if (collection.uid === resp.data.uid) {
+            return { ...collection, ...resp.data }
+          }
+          return collection
+        })
+
+        notificationHub?.add({
+          msg: t('CRFCollections.new_version_all'),
+        })
+        expandAll(item)
+      })
+      .finally(() => {
+        loading.value = false
+      })
+  }
 }
 </script>
 <style>

@@ -190,6 +190,7 @@ const routes = [
         component: () => import('../views/library/MedDra.vue'),
         meta: {
           authRequired: true,
+          featureFlag: 'meddra_dictionary',
         },
       },
       {
@@ -214,6 +215,7 @@ const routes = [
         component: () => import('../views/library/LoincPage.vue'),
         meta: {
           authRequired: true,
+          featureFlag: 'loinc_dictionary',
         },
       },
       {
@@ -1155,6 +1157,22 @@ const routes = [
     meta: {},
   },
 ]
+
+// Dynamically load extension routes
+const extensionModules = import.meta.glob('@/extensions/*/router/index.js', {
+  eager: true,
+})
+
+for (const path in extensionModules) {
+  try {
+    const module = extensionModules[path]
+    if (module.addExtensionRoutes) {
+      module.addExtensionRoutes(routes)
+    }
+  } catch (exc) {
+    console.error(`Error loading extension routes from ${path}:`, exc)
+  }
+}
 
 // const { isNavigationFailure, NavigationFailureType } = VueRouter
 // const originalPush = VueRouter.prototype.push

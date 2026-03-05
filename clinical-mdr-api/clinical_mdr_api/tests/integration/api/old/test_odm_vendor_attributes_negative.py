@@ -100,7 +100,7 @@ def test_create_a_new_odm_vendor_attribute_of_vendor_element(api_client):
     assert res["vendor_namespace"] is None
     assert res["vendor_element"] == {
         "uid": "odm_vendor_element1",
-        "name": "nameOne",
+        "name": "NameOne",
         "compatible_types": ["FormDef", "ItemGroupDef", "ItemDef"],
         "status": "Final",
         "version": "1.0",
@@ -147,6 +147,39 @@ def test_cannot_create_a_new_odm_vendor_attribute_belonging_to_odm_vendor_namesp
         res["message"]
         == "compatible_types must be provided for ODM Vendor Attributes belonging to ODM Vendor Namespace."
     )
+
+
+def test_cannot_create_a_new_odm_vendor_attribute_without_first_char_lowercase(
+    api_client,
+):
+    data = {
+        "library_name": "Sponsor",
+        "name": "Uppercase",
+        "compatible_types": ["FormDef"],
+        "data_type": "string",
+        "value_regex": None,
+        "vendor_namespace_uid": "odm_vendor_namespace1",
+    }
+    response = api_client.post("concepts/odms/vendor-attributes", json=data)
+
+    assert_response_status_code(response, 400)
+
+    res = response.json()
+
+    assert res["type"] == "RequestValidationError"
+    assert res["details"] == [
+        {
+            "ctx": {
+                "error": {},
+            },
+            "error_code": "value_error",
+            "field": [
+                "body",
+                "name",
+            ],
+            "msg": "Value error, Provided value 'Uppercase' for 'name' is invalid. The first character must be lowercase.",
+        },
+    ]
 
 
 def test_cannot_create_a_new_odm_vendor_attribute_belonging_to_odm_vendor_element_when_providing_compatible_types(

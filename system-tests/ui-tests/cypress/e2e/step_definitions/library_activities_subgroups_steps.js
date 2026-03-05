@@ -3,13 +3,15 @@ const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor")
 
 let activitysubgroup, abbreviation = "ABB", definition = "DEF"
 
+When('User intercepts activity subgroup request', () => cy.intercept('/api/concepts/activities/activity-sub-groups?page_number=1&*').as('getData'))
+
+When('User waits for activity subgroup request', () => cy.wait('@getData', {timeout: 20000}))
+
 When('The Add activity subgroup button is clicked', () => cy.clickButton('add-activity'))
 
 When('Activity subgroup is searched for and found', () => cy.searchAndCheckPresence(activitysubgroup, true))
 
 When('Activity subgroup is searched for and not found', () => cy.searchAndCheckPresence(activitysubgroup, false))
-
-Given('Activity subgroup is saved and snackbar message says it is {string}', (action) => saveSubGroup(action))
 
 When('The activity subgroup edition form is filled with data', () => editSubGroup())
 
@@ -78,13 +80,6 @@ function editSubGroup() {
     cy.get('[data-cy="groupform-activity-group-field"] input').should('have.value', activitysubgroup)
     cy.get('[data-cy="groupform-activity-group-field"] input').click().clear().type(activitysubgroup = `${activitysubgroup}Edited`)
     cy.fillInput('groupform-change-description-field', "e2e test")
-}
-
-function saveSubGroup(action = 'created') {
-    cy.intercept('/api/concepts/activities/activity-sub-groups?page_number=1&*').as('getData')
-    cy.clickButton('save-button')
-    cy.get('.v-alert').contains(`Subgroup ${action}`).should('be.visible')
-    cy.wait('@getData', {timeout: 20000}) 
 }
 
 function createSubGroupViaApi(customName = '') {

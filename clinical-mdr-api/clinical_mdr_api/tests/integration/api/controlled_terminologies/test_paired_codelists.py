@@ -14,7 +14,6 @@ import logging
 
 import pytest
 from fastapi.testclient import TestClient
-from neomodel import db
 
 from clinical_mdr_api.main import app
 from clinical_mdr_api.tests.integration.utils.api import (
@@ -133,7 +132,7 @@ def test_post_paired_codelist(api_client):
             "paired_codes_codelist_uid": codes_cl.codelist_uid,
             "submission_value": "DUMMYNAMES",
             "extensible": True,
-            "ordinal": False,
+            "is_ordinal": False,
             "template_parameter": False,
             "terms": [],
         },

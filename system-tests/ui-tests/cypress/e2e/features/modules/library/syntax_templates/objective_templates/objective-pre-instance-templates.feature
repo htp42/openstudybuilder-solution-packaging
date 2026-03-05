@@ -23,12 +23,20 @@ Feature: Library - Syntax Templates - Objectives - Pre-instance
     Scenario: [Create][Positive case] User must be able to create Objective Template Pre-instantiation in Parent Template tab
         Given The '/library/objective_templates/parent' page is opened
         And The Add template button is clicked
-        When The new objective to be used as pre-instantiation is added in the library
-        And Objective template for pre-instantiation is found
+        And The objective pre-instatiation name is set
+        And Form continue button is clicked
+        And Form continue button is clicked
+        When All Not Applicable checkboxes are checked
+        And The Radiobutton with value Yes is selected
+        And Form save button is clicked
+        And Objective template for pre-instantiation is found by sufix
         When The 'Approve' option is clicked from the three dot menu list
-        And Objective template for pre-instantiation is found
+        And Objective template for pre-instantiation is found by sufix
         And The 'Create pre-instantiation' option is clicked from the three dot menu list
         When The pre-instantiation is created from that objective template
+        And Form continue button is clicked
+        And The Radiobutton with value Yes is selected
+        And Form save button is clicked
         Then The pop up displays 'Objective template pre-instantiation added'
         And The newly added Objective Template Pre-instantiation is visible as a new row in the table
         And The item has status 'Draft' and version '0.1'
@@ -37,9 +45,16 @@ Feature: Library - Syntax Templates - Objectives - Pre-instance
     Scenario: User must be able to edit an existing Objective Template Pre-instantiation in Pre-instance Template tab
         Given The test objective pre-instance template exists with a status as 'Draft'
         When The 'Edit' option is clicked from the three dot menu list
+        And The objective pre-instatiation name is updated
+        And Form continue button is clicked
+        And Form continue button is clicked
         And The objective pre-instantiation metadata is updated
-        Then The updated Objective is visible within the table
+        And The Radiobutton with value Yes is selected
+        And Form continue button is clicked
+        And The template change description is filled in
+        Then The Objective pre-instatiation is searched and found
         And The item has status 'Draft' and version '0.2'
+        And Form save button is clicked
 
     @manual_test
     Scenario: User must be able to edit indexing properties for the Objective Pre-instantiation Template with a status as 'Final'

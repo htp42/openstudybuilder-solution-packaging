@@ -5,6 +5,7 @@
     readonly
     tabindex="-1"
     size="small"
+    rounded
     class="text-none"
     style="pointer-events: none; cursor: default"
   >

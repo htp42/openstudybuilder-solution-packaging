@@ -42,6 +42,7 @@ from clinical_mdr_api.services._utils import (
 from clinical_mdr_api.services.studies.study_activity_selection_base import (
     StudyActivitySelectionBaseService,
 )
+from clinical_mdr_api.utils import db_result_to_list
 from common import exceptions
 from common.auth.user import user
 
@@ -605,3 +606,26 @@ class StudyActivityInstanceSelectionService(
                     )
                 )
         return results
+
+    def get_crfs(self, study_uid: str):
+        query = """
+        MATCH (sr:StudyRoot {uid: $study_uid})-[:LATEST]->(:StudyValue)
+            -[:HAS_STUDY_ACTIVITY_INSTANCE]->(:StudyActivityInstance)
+            -[:HAS_SELECTED_ACTIVITY_INSTANCE]->(:ActivityInstanceValue)
+            -[:CONTAINS_ACTIVITY_ITEM]->(:ActivityItem)
+            <-[:LINKS_TO_ACTIVITY_ITEM]-(ofv:OdmFormValue)
+            <-[hv:HAS_VERSION]-(ofr:OdmFormRoot)
+        
+        WITH ofr, ofv, hv ORDER BY hv.end_date DESC
+        
+        WITH ofr, COLLECT({ofv: ofv, hv: hv})[0] AS latest
+        
+        RETURN DISTINCT
+            ofr.uid AS uid,
+            latest.ofv.name AS name,
+            latest.hv.version AS version
+        """
+
+        results = db.cypher_query(query, params={"study_uid": study_uid})
+
+        return db_result_to_list(results)

@@ -1,6 +1,9 @@
 import datetime
 from dataclasses import dataclass
 
+from clinical_mdr_api.domain_repositories.generic_repository import (
+    _manage_versioning_with_relations,
+)
 from clinical_mdr_api.domain_repositories.models.study import StudyRoot, StudyValue
 from clinical_mdr_api.domain_repositories.models.study_audit_trail import (
     Create,
@@ -34,6 +37,10 @@ class StudySelectionRepository:
         """Must be defined by subclasses."""
         raise NotImplementedError
 
+    def exclude_relationships(self):
+        """Must be defined by subclasses."""
+        raise NotImplementedError
+
     def perform_save(
         self,
         study_value_node: StudyValue,
@@ -51,27 +58,32 @@ class StudySelectionRepository:
         )
 
         latest_study_value_node = study_root_node.latest_value.single()
-        selection = self.perform_save(latest_study_value_node, selection_vo, author_id)
+        new_selection = self.perform_save(
+            latest_study_value_node, selection_vo, author_id
+        )
         # Update audit trail
-        before_audit_node = None
         if selection_vo.uid is not None:
-            before_audit_node = Edit(
-                author_id=author_id, date=datetime.datetime.now(datetime.timezone.utc)
+            selection = self.get_study_selection(
+                latest_study_value_node, selection_vo.uid
             )
-            before_audit_node.save()
-            study_root_node.audit_trail.connect(before_audit_node)
-            before_audit_node.has_before.connect(selection)
-            after_audit_node = Edit()
+            _manage_versioning_with_relations(
+                study_root=study_root_node,
+                action_type=Edit,
+                before=selection,
+                after=new_selection,
+                exclude_relationships=self.exclude_relationships(),
+                author_id=author_id,
+            )
         else:
-            after_audit_node = Create()
+            _manage_versioning_with_relations(
+                study_root=study_root_node,
+                action_type=Create,
+                before=None,
+                after=new_selection,
+                author_id=author_id,
+            )
 
-        after_audit_node.author_id = author_id
-        after_audit_node.date = datetime.datetime.now(datetime.timezone.utc)
-        after_audit_node.save()
-        study_root_node.audit_trail.connect(after_audit_node)
-        after_audit_node.has_after.connect(selection)
-
-        return self._from_repository_values(selection_vo.study_uid, selection)
+        return self._from_repository_values(selection_vo.study_uid, new_selection)
 
     def get_study_selection(self, study_value_node: StudyValue, selection_uid: str):
         """Must be defined by subclasses."""
@@ -90,13 +102,14 @@ class StudySelectionRepository:
             latest_study_value_node, selection_vo, author_id
         )
         # Audit trail
-        audit_node = Delete(
-            author_id=author_id, date=datetime.datetime.now(datetime.timezone.utc)
+        _manage_versioning_with_relations(
+            study_root=study_root_node,
+            action_type=Delete,
+            before=selection,
+            after=new_selection,
+            exclude_relationships=self.exclude_relationships(),
+            author_id=author_id,
         )
-        audit_node.save()
-        study_root_node.audit_trail.connect(audit_node)
-        audit_node.has_before.connect(selection)
-        audit_node.has_after.connect(new_selection)
         new_selection.study_value.disconnect(latest_study_value_node)
         # Delete relation
         selection.study_value.disconnect(latest_study_value_node)

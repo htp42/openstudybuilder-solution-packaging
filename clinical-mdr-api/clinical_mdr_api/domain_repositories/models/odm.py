@@ -41,23 +41,25 @@ class OdmAlias(VersionValue):
     has_item = RelationshipFrom("OdmItemValue", "HAS_ALIAS", model=ClinicalMdrRel)
 
 
-class OdmDescription(VersionValue):
-    name = StringProperty()
+class OdmTranslatedText(VersionValue):
+    text_type = StringProperty()
     language = StringProperty()
-    description = StringProperty()
-    instruction = StringProperty()
-    sponsor_instruction = StringProperty()
+    text = StringProperty()
 
-    has_form = RelationshipFrom("OdmFormValue", "HAS_DESCRIPTION", model=ClinicalMdrRel)
-    has_item_group = RelationshipFrom(
-        "OdmItemGroupValue", "HAS_DESCRIPTION", model=ClinicalMdrRel
+    has_form = RelationshipFrom(
+        "OdmFormValue", "HAS_TRANSLATED_TEXT", model=ClinicalMdrRel
     )
-    has_item = RelationshipFrom("OdmItemValue", "HAS_DESCRIPTION", model=ClinicalMdrRel)
+    has_item_group = RelationshipFrom(
+        "OdmItemGroupValue", "HAS_TRANSLATED_TEXT", model=ClinicalMdrRel
+    )
+    has_item = RelationshipFrom(
+        "OdmItemValue", "HAS_TRANSLATED_TEXT", model=ClinicalMdrRel
+    )
     has_condition = RelationshipFrom(
-        "OdmConditionValue", "HAS_DESCRIPTION", model=ClinicalMdrRel
+        "OdmConditionValue", "HAS_TRANSLATED_TEXT", model=ClinicalMdrRel
     )
     has_method = RelationshipFrom(
-        "OdmMethodValue", "HAS_DESCRIPTION", model=ClinicalMdrRel
+        "OdmMethodValue", "HAS_TRANSLATED_TEXT", model=ClinicalMdrRel
     )
 
 
@@ -75,8 +77,8 @@ class OdmFormalExpression(VersionValue):
 
 class OdmConditionValue(ConceptValue):
     oid = StringProperty()
-    has_description = RelationshipTo(
-        OdmDescription, "HAS_DESCRIPTION", model=ClinicalMdrRel
+    has_translated_text = RelationshipTo(
+        OdmTranslatedText, "HAS_TRANSLATED_TEXT", model=ClinicalMdrRel
     )
     has_alias = RelationshipTo(OdmAlias, "HAS_ALIAS", model=ClinicalMdrRel)
     has_formal_expression = RelationshipTo(
@@ -107,8 +109,8 @@ class OdmConditionRoot(ConceptRoot):
 class OdmMethodValue(ConceptValue):
     oid = StringProperty()
     method_type = StringProperty()
-    has_description = RelationshipTo(
-        OdmDescription, "HAS_DESCRIPTION", model=ClinicalMdrRel
+    has_translated_text = RelationshipTo(
+        OdmTranslatedText, "HAS_TRANSLATED_TEXT", model=ClinicalMdrRel
     )
     has_alias = RelationshipTo(OdmAlias, "HAS_ALIAS", model=ClinicalMdrRel)
     has_formal_expression = RelationshipTo(
@@ -157,8 +159,8 @@ class OdmFormValue(ConceptValue):
 
     links_to_activity_item = RelationshipTo(ActivityItem, "LINKS_TO_ACTIVITY_ITEM")
 
-    has_description = RelationshipTo(
-        OdmDescription, "HAS_DESCRIPTION", model=ClinicalMdrRel
+    has_translated_text = RelationshipTo(
+        OdmTranslatedText, "HAS_TRANSLATED_TEXT", model=ClinicalMdrRel
     )
     has_alias = RelationshipTo(OdmAlias, "HAS_ALIAS", model=ClinicalMdrRel)
 
@@ -218,8 +220,8 @@ class OdmItemGroupValue(ConceptValue):
 
     links_to_activity_item = RelationshipTo(ActivityItem, "LINKS_TO_ACTIVITY_ITEM")
 
-    has_description = RelationshipTo(
-        OdmDescription, "HAS_DESCRIPTION", model=ClinicalMdrRel
+    has_translated_text = RelationshipTo(
+        OdmTranslatedText, "HAS_TRANSLATED_TEXT", model=ClinicalMdrRel
     )
     has_alias = RelationshipTo(OdmAlias, "HAS_ALIAS", model=ClinicalMdrRel)
 
@@ -284,6 +286,10 @@ class ActivityItemRel(ClinicalMdrRel):
     value_dependent_map = StringProperty()
 
 
+class OdmItemCodelistRelationship(ClinicalMdrRel):
+    allows_multi_choice = BooleanProperty()
+
+
 class OdmItemValue(ConceptValue):
     oid = StringProperty()
     prompt = StringProperty()
@@ -299,8 +305,8 @@ class OdmItemValue(ConceptValue):
         ActivityItem, "LINKS_TO_ACTIVITY_ITEM", model=ActivityItemRel
     )
 
-    has_description = RelationshipTo(
-        OdmDescription, "HAS_DESCRIPTION", model=ClinicalMdrRel
+    has_translated_text = RelationshipTo(
+        OdmTranslatedText, "HAS_TRANSLATED_TEXT", model=ClinicalMdrRel
     )
     has_alias = RelationshipTo(OdmAlias, "HAS_ALIAS", model=ClinicalMdrRel)
 
@@ -311,7 +317,9 @@ class OdmItemValue(ConceptValue):
         "HAS_UNIT_DEFINITION",
         model=OdmItemUnitDefinitionRelationship,
     )
-    has_codelist = RelationshipTo(CTCodelistRoot, "HAS_CODELIST", model=ClinicalMdrRel)
+    has_codelist = RelationshipTo(
+        CTCodelistRoot, "HAS_CODELIST", model=OdmItemCodelistRelationship
+    )
     has_codelist_term = RelationshipTo(
         CTTermContext,
         "HAS_CODELIST_TERM",

@@ -40,6 +40,7 @@ from clinical_mdr_api.repositories._utils import (
     CypherQueryBuilder,
     FilterDict,
     FilterOperator,
+    calculate_total_count_from_query_result,
     sb_clear_cache,
     validate_filters_and_add_search_string,
 )
@@ -214,6 +215,28 @@ class CTTermGenericRepository(
 
         return items, prop_names
 
+    def get_codelist_to_term_properties(self, term_uid: str, codelist_uid: str):
+        query = """
+            MATCH (codelist_root {uid: $codelist_uid})-[ht:HAS_TERM]->(cct:CTCodelistTerm)-[:HAS_TERM_ROOT]->(:CTTermRoot {uid: $term_uid})
+            RETURN
+                ht.start_date AS start_date,
+                ht.end_date AS end_date,
+                ht.order AS order,
+                ht.ordinal AS ordinal,
+                cct.submission_value AS submission_value
+            ORDER BY ht.start_date DESC
+            LIMIT 1
+            """
+
+        items, prop_names = db.cypher_query(
+            query, {"term_uid": term_uid, "codelist_uid": codelist_uid}
+        )
+
+        if not items or not items[0]:
+            return {}
+
+        return dict(zip(prop_names, items[0]))
+
     def find_all(
         self,
         codelist_uid: str | None = None,
@@ -290,13 +313,14 @@ class CTTermGenericRepository(
             result_array, attributes_names
         )
 
-        total = 0
-        if total_count:
+        total = calculate_total_count_from_query_result(
+            len(extracted_items), page_number, page_size, total_count
+        )
+        if total is None:
             count_result, _ = db.cypher_query(
                 query=query.count_query, params=query.parameters
             )
-            if len(count_result) > 0:
-                total = count_result[0][0]
+            total = count_result[0][0] if len(count_result) > 0 else 0
 
         return GenericFilteringReturn(items=extracted_items, total=total)
 

@@ -1,5 +1,5 @@
 ---
-name: Intergration API Test Specialist
+name: Integration API Test Specialist
 description: API testing agent for creating and updating integration tests for the FastAPI service backed by Neo4j, based on staged git changes.
 ---
 

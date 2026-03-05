@@ -8,7 +8,6 @@ Feature: Library - Data Collection Standards - CRF Builder - Forms
 
     Scenario: [Navigation] User must be able to navigate to CRF Builder Forms page
         Given The '/library' page is opened
-        And The multilingual CRFs option is toggled off in the settings menu
         When The 'CRF Builder' submenu is clicked in the 'Data Collection Standards' section
         And The 'Forms' tab is selected
         Then The current URL is 'library/crf-builder/forms'
@@ -19,7 +18,6 @@ Feature: Library - Data Collection Standards - CRF Builder - Forms
             | headers              |
             | OID                  |
             | Name                 |
-            | Design Notes         |
             | Repeating            |
             | Version              |
             | Status               |
@@ -29,10 +27,10 @@ Feature: Library - Data Collection Standards - CRF Builder - Forms
         Then A table is visible with following options
             | options                                                         |
             | Add CRF Form                                                    |
-            | Filters                                                         |
-            | Columns                                                         |
+            | Select columns                                                  |
             | Export                                                          |
-            | search-field                                                    |
+            | Select filters                                                  |
+            | Search                                                          |
 
     Scenario: [Table][Columns][Visibility] User must be able to select visibility of columns in the table 
         Given The '/library/crf-builder/forms' page is opened
@@ -43,6 +41,7 @@ Feature: Library - Data Collection Standards - CRF Builder - Forms
         Given The '/library/crf-builder/forms' page is opened
         When The 'add-crf-form' button is clicked
         And The Form definition container is filled with data
+        And Form continue button is clicked
         And Form continue button is clicked
         And Form continue button is clicked
         And Form save button is clicked
@@ -91,6 +90,7 @@ Feature: Library - Data Collection Standards - CRF Builder - Forms
         Given The '/library/crf-builder/forms' page is opened
         When The 'add-crf-form' button is clicked
         And The Form definition container is filled with data
+        And Form continue button is clicked
         And Form continue button is clicked
         And Form continue button is clicked
         And Form save button is clicked

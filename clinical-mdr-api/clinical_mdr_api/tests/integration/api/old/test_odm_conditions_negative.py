@@ -34,20 +34,46 @@ def test_create_a_new_odm_condition(api_client):
         "name": "name1",
         "oid": "oid1",
         "formal_expressions": [{"context": "context1", "expression": "expression1"}],
-        "descriptions": [
+        "translated_texts": [
             {
-                "name": "name2",
+                "text_type": "Description",
                 "language": "eng",
-                "description": "description2",
-                "instruction": "instruction2",
-                "sponsor_instruction": "sponsor_instruction2",
+                "text": "description2",
             },
             {
-                "name": "name3",
+                "text_type": "Description",
+                "language": "dan",
+                "text": "description3",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
                 "language": "eng",
-                "description": "description3",
-                "instruction": "instruction3",
-                "sponsor_instruction": "sponsor_instruction3",
+                "text": "instruction2",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
+                "language": "dan",
+                "text": "instruction3",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "eng",
+                "text": "sponsor_instruction2",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "dan",
+                "text": "sponsor_instruction3",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "eng",
+                "text": "name2",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "dan",
+                "text": "name3",
             },
         ],
         "aliases": [{"context": "context1", "name": "name1"}],
@@ -70,20 +96,46 @@ def test_create_a_new_odm_condition(api_client):
     assert res["formal_expressions"] == [
         {"context": "context1", "expression": "expression1"}
     ]
-    assert res["descriptions"] == [
+    assert res["translated_texts"] == [
         {
-            "name": "name2",
+            "text_type": "Description",
             "language": "eng",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
+            "text": "description2",
         },
         {
-            "name": "name3",
+            "text_type": "Description",
+            "language": "dan",
+            "text": "description3",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
             "language": "eng",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
+            "text": "instruction2",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
+            "language": "dan",
+            "text": "instruction3",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "eng",
+            "text": "sponsor_instruction2",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "dan",
+            "text": "sponsor_instruction3",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "eng",
+            "text": "name2",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "dan",
+            "text": "name3",
         },
     ]
     assert res["aliases"] == [{"context": "context1", "name": "name1"}]
@@ -96,20 +148,46 @@ def test_cannot_create_a_new_odm_condition_with_same_properties(api_client):
         "name": "name1",
         "oid": "oid1",
         "formal_expressions": [{"context": "context1", "expression": "expression1"}],
-        "descriptions": [
+        "translated_texts": [
             {
-                "name": "name2",
+                "text_type": "Description",
                 "language": "eng",
-                "description": "description2",
-                "instruction": "instruction2",
-                "sponsor_instruction": "sponsor_instruction2",
+                "text": "description2",
             },
             {
-                "name": "name3",
+                "text_type": "Description",
+                "language": "dan",
+                "text": "description3",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
                 "language": "eng",
-                "description": "description3",
-                "instruction": "instruction3",
-                "sponsor_instruction": "sponsor_instruction3",
+                "text": "instruction2",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
+                "language": "dan",
+                "text": "instruction3",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "eng",
+                "text": "sponsor_instruction2",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "dan",
+                "text": "sponsor_instruction3",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "eng",
+                "text": "name2",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "dan",
+                "text": "name3",
             },
         ],
         "aliases": [{"context": "context1", "name": "name1"}],
@@ -133,13 +211,11 @@ def test_cannot_create_a_new_odm_condition_without_an_english_description(api_cl
         "name": "name2",
         "oid": "oid2",
         "formal_expressions": [],
-        "descriptions": [
+        "translated_texts": [
             {
-                "name": "name - non-eng",
+                "text_type": "Description",
                 "language": "DAN",
-                "description": "description - non-eng",
-                "instruction": "instruction - non-eng",
-                "sponsor_instruction": "sponsor_instruction - non-eng",
+                "text": "text - non-eng",
             }
         ],
         "aliases": [],
@@ -152,7 +228,8 @@ def test_cannot_create_a_new_odm_condition_without_an_english_description(api_cl
 
     assert res["type"] == "ValidationException"
     assert (
-        res["message"] == "At least one description must be in English ('eng' or 'en')."
+        res["message"]
+        == "A Translated Text with text_type Description and language English ('eng' or 'en') must be provided."
     )
 
 
@@ -194,3 +271,42 @@ def test_cannot_reactivate_an_odm_condition_that_is_not_retired(api_client):
 
     assert res["type"] == "BusinessLogicException"
     assert res["message"] == "Only RETIRED version can be reactivated."
+
+
+@pytest.mark.parametrize(
+    "text_type",
+    [
+        pytest.param("Description"),
+        pytest.param("Question"),
+        pytest.param("osb:DesignNotes"),
+        pytest.param("osb:CompletionInstructions"),
+        pytest.param("osb:DisplayText"),
+    ],
+)
+def test_cannot_add_duplicate_translated_texts(api_client, text_type: str):
+    data = {
+        "library_name": "Sponsor",
+        "name": "testing",
+        "oid": "testing",
+        "formal_expressions": [{"context": "context1", "expression": "expression1"}],
+        "translated_texts": [
+            {
+                "text_type": text_type,
+                "language": "eng",
+                "text": str(r),
+            }
+            for r in range(2)
+        ],
+        "aliases": [],
+    }
+    response = api_client.post("concepts/odms/conditions", json=data)
+
+    assert_response_status_code(response, 400)
+
+    res = response.json()
+
+    assert res["type"] == "ValidationException"
+    assert (
+        res["message"]
+        == f"Duplicate Translated Text found for text_type '{text_type}' and language 'eng'."
+    )

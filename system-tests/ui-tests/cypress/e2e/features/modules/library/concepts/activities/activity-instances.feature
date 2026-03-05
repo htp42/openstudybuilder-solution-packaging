@@ -21,12 +21,12 @@ Feature: Library - Concepts - Activities - Activity Instances
         Then A table is visible with following options
             | options                                                         |
             | Add activity instance                                           |
-            | Filters                                                         |
-            | Columns                                                         |
+            | Select filters                                                  |
+            | Select columns                                                  |
             | Export                                                          |
             | Show version history                                            |
-            | Add select boxes to table to allow selection of rows for export |
-            | search-field                                                    |
+            | Select rows                                                     |
+            | Search                                                          |
 
     @smoke_test
     Scenario: [Table][Columns][Names] User must be able to see the columns list on the main page as below
@@ -159,6 +159,7 @@ Feature: Library - Concepts - Activities - Activity Instances
         And [API] Activity Instance in status Draft exists
         When User sets status filter to 'all'
         And Activity Instance is searched for and found
+        And User waits for 1 seconds
         When The 'Edit' option is clicked from the three dot menu list
         And User waits for edition form to open
         And Linked Activity group and subgroup are loaded

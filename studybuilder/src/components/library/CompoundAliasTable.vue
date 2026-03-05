@@ -16,15 +16,16 @@
     >
       <template #actions="">
         <v-btn
-          class="ml-2"
+          class="ml-2 expandHoverBtn"
           size="small"
           variant="outlined"
           color="nnBaseBlue"
-          :title="$t('CompoundAliasForm.add_title')"
           :disabled="!checkPermission($roles.LIBRARY_WRITE)"
-          icon="mdi-plus"
           @click.stop="showForm = true"
-        />
+        >
+          <v-icon left>mdi-plus</v-icon>
+          <span class="label">{{ $t('CompoundAliasForm.add_title') }}</span>
+        </v-btn>
       </template>
       <template #[`item.actions`]="{ item }">
         <ActionsMenu :actions="actions" :item="item" />

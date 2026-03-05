@@ -51,27 +51,53 @@ def test_create_a_new_odm_item(api_client):
         "sds_var_name": "sds_var_name1",
         "origin": "origin1",
         "comment": "comment1",
-        "descriptions": [
+        "translated_texts": [
             {
-                "name": "name2",
+                "text_type": "Description",
                 "language": "eng",
-                "description": "description2",
-                "instruction": "instruction2",
-                "sponsor_instruction": "sponsor_instruction2",
+                "text": "description2",
             },
             {
-                "name": "name3",
+                "text_type": "Description",
+                "language": "dan",
+                "text": "description3",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
                 "language": "eng",
-                "description": "description3",
-                "instruction": "instruction3",
-                "sponsor_instruction": "sponsor_instruction3",
+                "text": "instruction2",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
+                "language": "dan",
+                "text": "instruction3",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "eng",
+                "text": "sponsor_instruction2",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "dan",
+                "text": "sponsor_instruction3",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "eng",
+                "text": "name2",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "dan",
+                "text": "name3",
             },
         ],
         "aliases": [{"context": "context1", "name": "name1"}],
         "unit_definitions": [
             {"uid": "unit_definition_root1", "mandatory": False, "order": 1}
         ],
-        "codelist_uid": "editable_cr",
+        "codelist": {"uid": "editable_cr", "allows_multi_choice": True},
         "terms": [
             {
                 "uid": "term_root_final",
@@ -105,20 +131,46 @@ def test_create_a_new_odm_item(api_client):
     assert res["version"] == "0.1"
     assert res["change_description"] == "Initial version"
     assert res["author_username"] == "unknown-user@example.com"
-    assert res["descriptions"] == [
+    assert res["translated_texts"] == [
         {
-            "name": "name2",
+            "text_type": "Description",
             "language": "eng",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
+            "text": "description2",
         },
         {
-            "name": "name3",
+            "text_type": "Description",
+            "language": "dan",
+            "text": "description3",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
             "language": "eng",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
+            "text": "instruction2",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
+            "language": "dan",
+            "text": "instruction3",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "eng",
+            "text": "sponsor_instruction2",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "dan",
+            "text": "sponsor_instruction3",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "eng",
+            "text": "name2",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "dan",
+            "text": "name3",
         },
     ]
     assert res["aliases"] == [{"context": "context1", "name": "name1"}]
@@ -126,6 +178,7 @@ def test_create_a_new_odm_item(api_client):
         {
             "uid": "unit_definition_root1",
             "name": "name1",
+            "version": "0.1",
             "mandatory": False,
             "order": 1,
             "ucum": {
@@ -139,8 +192,10 @@ def test_create_a_new_odm_item(api_client):
     assert res["codelist"] == {
         "uid": "editable_cr",
         "name": "codelist attributes value1",
+        "version": "1.0",
         "submission_value": "codelist submission value1",
         "preferred_term": "codelist preferred term",
+        "allows_multi_choice": True,
     }
     assert res["terms"] == [
         {
@@ -162,10 +217,80 @@ def test_create_a_new_odm_item(api_client):
 def test_cannot_add_odm_vendor_attribute_with_an_invalid_value_to_an_odm_item(
     api_client,
 ):
-    data = [{"uid": "odm_vendor_attribute3", "value": "3423"}]
-    response = api_client.post(
-        "concepts/odms/items/OdmItem_000001/vendor-attributes", json=data
-    )
+    data = {
+        "library_name": "Sponsor",
+        "name": "name1",
+        "oid": "oid1",
+        "prompt": "prompt1",
+        "datatype": "string",
+        "length": 11,
+        "significant_digits": 11,
+        "sas_field_name": "sas_field_name1",
+        "sds_var_name": "sds_var_name1",
+        "origin": "origin1",
+        "comment": "comment1",
+        "translated_texts": [
+            {
+                "text_type": "Description",
+                "language": "eng",
+                "text": "description2",
+            },
+            {
+                "text_type": "Description",
+                "language": "dan",
+                "text": "description3",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
+                "language": "eng",
+                "text": "instruction2",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
+                "language": "dan",
+                "text": "instruction3",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "eng",
+                "text": "sponsor_instruction2",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "dan",
+                "text": "sponsor_instruction3",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "eng",
+                "text": "name2",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "dan",
+                "text": "name3",
+            },
+        ],
+        "aliases": [{"context": "context1", "name": "name1"}],
+        "unit_definitions": [
+            {"uid": "unit_definition_root1", "mandatory": False, "order": 1}
+        ],
+        "codelist": {"uid": "editable_cr", "allows_multi_choice": True},
+        "terms": [
+            {
+                "uid": "term_root_final",
+                "mandatory": True,
+                "order": 1,
+                "display_text": None,
+                "version": "1.0",
+            }
+        ],
+        "vendor_elements": [],
+        "vendor_element_attributes": [],
+        "vendor_attributes": [{"uid": "odm_vendor_attribute3", "value": "3423"}],
+        "change_description": "desc doesnt change",
+    }
+    response = api_client.patch("concepts/odms/items/OdmItem_000001", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -181,10 +306,80 @@ def test_cannot_add_odm_vendor_attribute_with_an_invalid_value_to_an_odm_item(
 
 
 def test_cannot_add_a_non_compatible_odm_vendor_attribute_to_an_odm_item(api_client):
-    data = [{"uid": "odm_vendor_attribute5", "value": "value"}]
-    response = api_client.post(
-        "concepts/odms/items/OdmItem_000001/vendor-attributes", json=data
-    )
+    data = {
+        "library_name": "Sponsor",
+        "name": "name1",
+        "oid": "oid1",
+        "prompt": "prompt1",
+        "datatype": "string",
+        "length": 11,
+        "significant_digits": 11,
+        "sas_field_name": "sas_field_name1",
+        "sds_var_name": "sds_var_name1",
+        "origin": "origin1",
+        "comment": "comment1",
+        "translated_texts": [
+            {
+                "text_type": "Description",
+                "language": "eng",
+                "text": "description2",
+            },
+            {
+                "text_type": "Description",
+                "language": "dan",
+                "text": "description3",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
+                "language": "eng",
+                "text": "instruction2",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
+                "language": "dan",
+                "text": "instruction3",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "eng",
+                "text": "sponsor_instruction2",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "dan",
+                "text": "sponsor_instruction3",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "eng",
+                "text": "name2",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "dan",
+                "text": "name3",
+            },
+        ],
+        "aliases": [{"context": "context1", "name": "name1"}],
+        "unit_definitions": [
+            {"uid": "unit_definition_root1", "mandatory": False, "order": 1}
+        ],
+        "codelist": {"uid": "editable_cr", "allows_multi_choice": True},
+        "terms": [
+            {
+                "uid": "term_root_final",
+                "mandatory": True,
+                "order": 1,
+                "display_text": None,
+                "version": "1.0",
+            }
+        ],
+        "vendor_elements": [],
+        "vendor_element_attributes": [],
+        "vendor_attributes": [{"uid": "odm_vendor_attribute5", "value": "value"}],
+        "change_description": "desc doesnt change",
+    }
+    response = api_client.patch("concepts/odms/items/OdmItem_000001", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -200,10 +395,80 @@ def test_cannot_add_a_non_compatible_odm_vendor_attribute_to_an_odm_item(api_cli
 
 
 def test_cannot_add_a_non_compatible_odm_vendor_element_to_an_odm_item(api_client):
-    data = [{"uid": "odm_vendor_element4", "value": "value"}]
-    response = api_client.post(
-        "concepts/odms/items/OdmItem_000001/vendor-elements", json=data
-    )
+    data = {
+        "library_name": "Sponsor",
+        "name": "name1",
+        "oid": "oid1",
+        "prompt": "prompt1",
+        "datatype": "string",
+        "length": 11,
+        "significant_digits": 11,
+        "sas_field_name": "sas_field_name1",
+        "sds_var_name": "sds_var_name1",
+        "origin": "origin1",
+        "comment": "comment1",
+        "translated_texts": [
+            {
+                "text_type": "Description",
+                "language": "eng",
+                "text": "description2",
+            },
+            {
+                "text_type": "Description",
+                "language": "dan",
+                "text": "description3",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
+                "language": "eng",
+                "text": "instruction2",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
+                "language": "dan",
+                "text": "instruction3",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "eng",
+                "text": "sponsor_instruction2",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "dan",
+                "text": "sponsor_instruction3",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "eng",
+                "text": "name2",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "dan",
+                "text": "name3",
+            },
+        ],
+        "aliases": [{"context": "context1", "name": "name1"}],
+        "unit_definitions": [
+            {"uid": "unit_definition_root1", "mandatory": False, "order": 1}
+        ],
+        "codelist": {"uid": "editable_cr", "allows_multi_choice": True},
+        "terms": [
+            {
+                "uid": "term_root_final",
+                "mandatory": True,
+                "order": 1,
+                "display_text": None,
+                "version": "1.0",
+            }
+        ],
+        "vendor_elements": [{"uid": "odm_vendor_element4", "value": "value"}],
+        "vendor_element_attributes": [],
+        "vendor_attributes": [],
+        "change_description": "desc doesnt change",
+    }
+    response = api_client.patch("concepts/odms/items/OdmItem_000001", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -221,10 +486,80 @@ def test_cannot_add_a_non_compatible_odm_vendor_element_to_an_odm_item(api_clien
 def test_cannot_add_odm_vendor_element_attribute_with_an_invalid_value_to_an_odm_item(
     api_client,
 ):
-    data = [{"uid": "odm_vendor_attribute1", "value": "3423"}]
-    response = api_client.post(
-        "concepts/odms/items/OdmItem_000001/vendor-element-attributes", json=data
-    )
+    data = {
+        "library_name": "Sponsor",
+        "name": "name1",
+        "oid": "oid1",
+        "prompt": "prompt1",
+        "datatype": "string",
+        "length": 11,
+        "significant_digits": 11,
+        "sas_field_name": "sas_field_name1",
+        "sds_var_name": "sds_var_name1",
+        "origin": "origin1",
+        "comment": "comment1",
+        "translated_texts": [
+            {
+                "text_type": "Description",
+                "language": "eng",
+                "text": "description2",
+            },
+            {
+                "text_type": "Description",
+                "language": "dan",
+                "text": "description3",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
+                "language": "eng",
+                "text": "instruction2",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
+                "language": "dan",
+                "text": "instruction3",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "eng",
+                "text": "sponsor_instruction2",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "dan",
+                "text": "sponsor_instruction3",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "eng",
+                "text": "name2",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "dan",
+                "text": "name3",
+            },
+        ],
+        "aliases": [{"context": "context1", "name": "name1"}],
+        "unit_definitions": [
+            {"uid": "unit_definition_root1", "mandatory": False, "order": 1}
+        ],
+        "codelist": {"uid": "editable_cr", "allows_multi_choice": True},
+        "terms": [
+            {
+                "uid": "term_root_final",
+                "mandatory": True,
+                "order": 1,
+                "display_text": None,
+                "version": "1.0",
+            }
+        ],
+        "vendor_elements": [],
+        "vendor_element_attributes": [],
+        "vendor_attributes": [{"uid": "odm_vendor_attribute1", "value": "3423"}],
+        "change_description": "desc doesnt change",
+    }
+    response = api_client.patch("concepts/odms/items/OdmItem_000001", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -240,12 +575,84 @@ def test_cannot_add_odm_vendor_element_attribute_with_an_invalid_value_to_an_odm
 
 
 def test_add_odm_vendor_element_to_an_odm_item(api_client):
-    data = [{"uid": "odm_vendor_element1", "value": "value1"}]
-    response = api_client.post(
-        "concepts/odms/items/OdmItem_000001/vendor-elements", json=data
-    )
+    data = {
+        "library_name": "Sponsor",
+        "name": "name1",
+        "oid": "oid1",
+        "prompt": "prompt1",
+        "datatype": "string",
+        "length": 11,
+        "significant_digits": 11,
+        "sas_field_name": "sas_field_name1",
+        "sds_var_name": "sds_var_name1",
+        "origin": "origin1",
+        "comment": "comment1",
+        "translated_texts": [
+            {
+                "text_type": "Description",
+                "language": "eng",
+                "text": "description2",
+            },
+            {
+                "text_type": "Description",
+                "language": "dan",
+                "text": "description3",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
+                "language": "eng",
+                "text": "instruction2",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
+                "language": "dan",
+                "text": "instruction3",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "eng",
+                "text": "sponsor_instruction2",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "dan",
+                "text": "sponsor_instruction3",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "eng",
+                "text": "name2",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "dan",
+                "text": "name3",
+            },
+        ],
+        "aliases": [{"context": "context1", "name": "name1"}],
+        "unit_definitions": [
+            {"uid": "unit_definition_root1", "mandatory": False, "order": 1}
+        ],
+        "codelist": {"uid": "editable_cr", "allows_multi_choice": True},
+        "terms": [
+            {
+                "uid": "term_root_final",
+                "mandatory": True,
+                "order": 1,
+                "display_text": None,
+                "version": "1.0",
+            }
+        ],
+        "vendor_elements": [{"uid": "odm_vendor_element1", "value": "value1"}],
+        "vendor_element_attributes": [
+            {"uid": "odm_vendor_attribute1", "value": "valueOne"}
+        ],
+        "vendor_attributes": [],
+        "change_description": "desc doesnt change",
+    }
+    response = api_client.patch("concepts/odms/items/OdmItem_000001", json=data)
 
-    assert_response_status_code(response, 201)
+    assert_response_status_code(response, 200)
 
     res = response.json()
 
@@ -266,20 +673,46 @@ def test_add_odm_vendor_element_to_an_odm_item(api_client):
     assert res["version"] == "0.1"
     assert res["change_description"] == "Initial version"
     assert res["author_username"] == "unknown-user@example.com"
-    assert res["descriptions"] == [
+    assert res["translated_texts"] == [
         {
-            "name": "name2",
+            "text_type": "Description",
             "language": "eng",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
+            "text": "description2",
         },
         {
-            "name": "name3",
+            "text_type": "Description",
+            "language": "dan",
+            "text": "description3",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
             "language": "eng",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
+            "text": "instruction2",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
+            "language": "dan",
+            "text": "instruction3",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "eng",
+            "text": "sponsor_instruction2",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "dan",
+            "text": "sponsor_instruction3",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "eng",
+            "text": "name2",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "dan",
+            "text": "name3",
         },
     ]
     assert res["aliases"] == [{"context": "context1", "name": "name1"}]
@@ -287,6 +720,7 @@ def test_add_odm_vendor_element_to_an_odm_item(api_client):
         {
             "uid": "unit_definition_root1",
             "name": "name1",
+            "version": "0.1",
             "mandatory": False,
             "order": 1,
             "ucum": {
@@ -300,8 +734,10 @@ def test_add_odm_vendor_element_to_an_odm_item(api_client):
     assert res["codelist"] == {
         "uid": "editable_cr",
         "name": "codelist attributes value1",
+        "version": "1.0",
         "submission_value": "codelist submission value1",
         "preferred_term": "codelist preferred term",
+        "allows_multi_choice": True,
     }
     assert res["terms"] == [
         {
@@ -315,90 +751,7 @@ def test_add_odm_vendor_element_to_an_odm_item(api_client):
         }
     ]
     assert res["vendor_elements"] == [
-        {"uid": "odm_vendor_element1", "name": "nameOne", "value": "value1"}
-    ]
-    assert res["vendor_attributes"] == []
-    assert res["vendor_element_attributes"] == []
-    assert res["possible_actions"] == ["approve", "delete", "edit"]
-
-
-def test_add_odm_vendor_element_attribute_to_an_odm_item(api_client):
-    data = [{"uid": "odm_vendor_attribute1", "value": "valueOne"}]
-    response = api_client.post(
-        "concepts/odms/items/OdmItem_000001/vendor-element-attributes", json=data
-    )
-
-    assert_response_status_code(response, 201)
-
-    res = response.json()
-
-    assert res["uid"] == "OdmItem_000001"
-    assert res["library_name"] == "Sponsor"
-    assert res["name"] == "name1"
-    assert res["oid"] == "oid1"
-    assert res["prompt"] == "prompt1"
-    assert res["datatype"] == "string"
-    assert res["length"] == 11
-    assert res["significant_digits"] == 11
-    assert res["sas_field_name"] == "sas_field_name1"
-    assert res["sds_var_name"] == "sds_var_name1"
-    assert res["origin"] == "origin1"
-    assert res["comment"] == "comment1"
-    assert res["end_date"] is None
-    assert res["status"] == "Draft"
-    assert res["version"] == "0.1"
-    assert res["change_description"] == "Initial version"
-    assert res["author_username"] == "unknown-user@example.com"
-    assert res["descriptions"] == [
-        {
-            "name": "name2",
-            "language": "eng",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
-        },
-        {
-            "name": "name3",
-            "language": "eng",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
-        },
-    ]
-    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
-    assert res["unit_definitions"] == [
-        {
-            "uid": "unit_definition_root1",
-            "name": "name1",
-            "mandatory": False,
-            "order": 1,
-            "ucum": {
-                "term_uid": "term_root1_uid",
-                "name": "name1",
-                "dictionary_id": "dictionary_id1",
-            },
-            "ct_units": [{"term_uid": "C25532_name1", "name": "name1"}],
-        }
-    ]
-    assert res["codelist"] == {
-        "uid": "editable_cr",
-        "name": "codelist attributes value1",
-        "submission_value": "codelist submission value1",
-        "preferred_term": "codelist preferred term",
-    }
-    assert res["terms"] == [
-        {
-            "term_uid": "term_root_final",
-            "name": "term_value_name1",
-            "mandatory": True,
-            "order": 1,
-            "submission_value": "submission_value_1",
-            "display_text": None,
-            "version": "1.0",
-        }
-    ]
-    assert res["vendor_elements"] == [
-        {"uid": "odm_vendor_element1", "name": "nameOne", "value": "value1"}
+        {"uid": "odm_vendor_element1", "name": "NameOne", "value": "value1"}
     ]
     assert res["vendor_attributes"] == []
     assert res["vendor_element_attributes"] == [
@@ -427,27 +780,53 @@ def test_cannot_create_a_new_odm_item_with_same_properties(api_client):
         "sds_var_name": "sds_var_name1",
         "origin": "origin1",
         "comment": "comment1",
-        "descriptions": [
+        "translated_texts": [
             {
-                "name": "name2",
+                "text_type": "Description",
                 "language": "eng",
-                "description": "description2",
-                "instruction": "instruction2",
-                "sponsor_instruction": "sponsor_instruction2",
+                "text": "description2",
             },
             {
-                "name": "name3",
+                "text_type": "Description",
+                "language": "dan",
+                "text": "description3",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
                 "language": "eng",
-                "description": "description3",
-                "instruction": "instruction3",
-                "sponsor_instruction": "sponsor_instruction3",
+                "text": "instruction2",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
+                "language": "dan",
+                "text": "instruction3",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "eng",
+                "text": "sponsor_instruction2",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "dan",
+                "text": "sponsor_instruction3",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "eng",
+                "text": "name2",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "dan",
+                "text": "name3",
             },
         ],
         "aliases": [{"context": "context1", "name": "name1"}],
         "unit_definitions": [
             {"uid": "unit_definition_root1", "mandatory": False, "order": 1}
         ],
-        "codelist_uid": "editable_cr",
+        "codelist": {"uid": "editable_cr", "allows_multi_choice": True},
         "terms": [
             {
                 "uid": "term_root_final",
@@ -484,7 +863,7 @@ def test_cannot_create_an_odm_item_connected_to_non_existent_concepts(api_client
         "sds_var_name": "sds_var_name1",
         "origin": "origin1",
         "comment": "comment1",
-        "descriptions": [],
+        "translated_texts": [],
         "aliases": [],
         "unit_definitions": [{"uid": "wrong_uid"}],
         "codelist_uid": None,
@@ -516,10 +895,10 @@ def test_cannot_create_an_odm_item_connected_to_non_existent_codelist(api_client
         "sds_var_name": "sds_var_name1",
         "origin": "origin1",
         "comment": "comment1",
-        "descriptions": [],
+        "translated_texts": [],
         "aliases": [],
         "unit_definitions": [],
-        "codelist_uid": "wrong_uid",
+        "codelist": {"uid": "wrong_uid"},
         "terms": [],
     }
     response = api_client.post("concepts/odms/items", json=data)
@@ -550,7 +929,7 @@ def test_cannot_create_an_odm_item_connected_to_ct_terms_without_providing_a_cod
         "sds_var_name": "sds_var_name1",
         "origin": "origin1",
         "comment": "comment1",
-        "descriptions": [],
+        "translated_texts": [],
         "aliases": [],
         "unit_definitions": [],
         "codelist_uid": None,
@@ -581,10 +960,10 @@ def test_cannot_create_an_odm_item_connected_to_ct_terms_belonging_to_a_codelist
         "sds_var_name": "sds_var_name1",
         "origin": "origin1",
         "comment": "comment1",
-        "descriptions": [],
+        "translated_texts": [],
         "aliases": [],
         "unit_definitions": [],
-        "codelist_uid": "editable_cr",
+        "codelist": {"uid": "editable_cr", "allows_multi_choice": True},
         "terms": [{"uid": "wrong_uid"}],
     }
     response = api_client.post("concepts/odms/items", json=data)
@@ -613,13 +992,11 @@ def test_cannot_create_a_new_odm_item_without_an_english_description(api_client)
         "sds_var_name": "sds_var_name1",
         "origin": "origin1",
         "comment": "comment1",
-        "descriptions": [
+        "translated_texts": [
             {
-                "name": "name - non-eng",
+                "text_type": "Description",
                 "language": "DAN",
-                "description": "description - non-eng",
-                "instruction": "instruction - non-eng",
-                "sponsor_instruction": "sponsor_instruction - non-eng",
+                "text": "text - non-eng",
             }
         ],
         "aliases": [],
@@ -635,7 +1012,8 @@ def test_cannot_create_a_new_odm_item_without_an_english_description(api_client)
 
     assert res["type"] == "ValidationException"
     assert (
-        res["message"] == "At least one description must be in English ('eng' or 'en')."
+        res["message"]
+        == "A Translated Text with text_type Description and language English ('eng' or 'en') must be provided."
     )
 
 
@@ -678,10 +1056,82 @@ def test_cannot_reactivate_an_odm_item_that_is_not_retired(api_client):
 def test_cannot_override_odm_vendor_element_that_has_attributes_connected_this_odm_item(
     api_client,
 ):
-    data = [{"uid": "odm_vendor_element2", "value": "value"}]
-    response = api_client.post(
-        "concepts/odms/items/OdmItem_000001/vendor-elements?override=true", json=data
-    )
+    data = {
+        "library_name": "Sponsor",
+        "name": "name1",
+        "oid": "oid1",
+        "prompt": "prompt1",
+        "datatype": "string",
+        "length": 11,
+        "significant_digits": 11,
+        "sas_field_name": "sas_field_name1",
+        "sds_var_name": "sds_var_name1",
+        "origin": "origin1",
+        "comment": "comment1",
+        "translated_texts": [
+            {
+                "text_type": "Description",
+                "language": "eng",
+                "text": "description2",
+            },
+            {
+                "text_type": "Description",
+                "language": "dan",
+                "text": "description3",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
+                "language": "eng",
+                "text": "instruction2",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
+                "language": "dan",
+                "text": "instruction3",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "eng",
+                "text": "sponsor_instruction2",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "dan",
+                "text": "sponsor_instruction3",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "eng",
+                "text": "name2",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "dan",
+                "text": "name3",
+            },
+        ],
+        "aliases": [{"context": "context1", "name": "name1"}],
+        "unit_definitions": [
+            {"uid": "unit_definition_root1", "mandatory": False, "order": 1}
+        ],
+        "codelist": {"uid": "editable_cr", "allows_multi_choice": True},
+        "terms": [
+            {
+                "uid": "term_root_final",
+                "mandatory": True,
+                "order": 1,
+                "display_text": None,
+                "version": "1.0",
+            }
+        ],
+        "vendor_elements": [{"uid": "odm_vendor_element2", "value": "value"}],
+        "vendor_element_attributes": [
+            {"uid": "odm_vendor_attribute1", "value": "valueOne"}
+        ],
+        "vendor_attributes": [],
+        "change_description": "desc doesnt change",
+    }
+    response = api_client.patch("concepts/odms/items/OdmItem_000001", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -697,10 +1147,80 @@ def test_cannot_override_odm_vendor_element_that_has_attributes_connected_this_o
 def test_cannot_add_odm_vendor_element_attribute_to_an_odm_item_as_an_odm_vendor_attribute(
     api_client,
 ):
-    data = [{"uid": "odm_vendor_attribute1", "value": "value"}]
-    response = api_client.post(
-        "concepts/odms/items/OdmItem_000001/vendor-attributes", json=data
-    )
+    data = {
+        "library_name": "Sponsor",
+        "name": "name1",
+        "oid": "oid1",
+        "prompt": "prompt1",
+        "datatype": "string",
+        "length": 11,
+        "significant_digits": 11,
+        "sas_field_name": "sas_field_name1",
+        "sds_var_name": "sds_var_name1",
+        "origin": "origin1",
+        "comment": "comment1",
+        "translated_texts": [
+            {
+                "text_type": "Description",
+                "language": "eng",
+                "text": "description2",
+            },
+            {
+                "text_type": "Description",
+                "language": "dan",
+                "text": "description3",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
+                "language": "eng",
+                "text": "instruction2",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
+                "language": "dan",
+                "text": "instruction3",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "eng",
+                "text": "sponsor_instruction2",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "dan",
+                "text": "sponsor_instruction3",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "eng",
+                "text": "name2",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "dan",
+                "text": "name3",
+            },
+        ],
+        "aliases": [{"context": "context1", "name": "name1"}],
+        "unit_definitions": [
+            {"uid": "unit_definition_root1", "mandatory": False, "order": 1}
+        ],
+        "codelist": {"uid": "editable_cr", "allows_multi_choice": True},
+        "terms": [
+            {
+                "uid": "term_root_final",
+                "mandatory": True,
+                "order": 1,
+                "display_text": None,
+                "version": "1.0",
+            }
+        ],
+        "vendor_elements": [],
+        "vendor_element_attributes": [],
+        "vendor_attributes": [{"uid": "odm_vendor_attribute1", "value": "value"}],
+        "change_description": "desc doesnt change",
+    }
+    response = api_client.patch("concepts/odms/items/OdmItem_000001", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -716,10 +1236,83 @@ def test_cannot_add_odm_vendor_element_attribute_to_an_odm_item_as_an_odm_vendor
 def test_cannot_add_odm_vendor_attribute_to_an_odm_item_as_an_odm_vendor_element_attribute(
     api_client,
 ):
-    data = [{"uid": "odm_vendor_attribute3", "value": "value"}]
-    response = api_client.post(
-        "concepts/odms/items/OdmItem_000001/vendor-element-attributes", json=data
-    )
+    data = {}
+    data = {
+        "library_name": "Sponsor",
+        "name": "name1",
+        "oid": "oid1",
+        "prompt": "prompt1",
+        "datatype": "string",
+        "length": 11,
+        "significant_digits": 11,
+        "sas_field_name": "sas_field_name1",
+        "sds_var_name": "sds_var_name1",
+        "origin": "origin1",
+        "comment": "comment1",
+        "translated_texts": [
+            {
+                "text_type": "Description",
+                "language": "eng",
+                "text": "description2",
+            },
+            {
+                "text_type": "Description",
+                "language": "dan",
+                "text": "description3",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
+                "language": "eng",
+                "text": "instruction2",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
+                "language": "dan",
+                "text": "instruction3",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "eng",
+                "text": "sponsor_instruction2",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "dan",
+                "text": "sponsor_instruction3",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "eng",
+                "text": "name2",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "dan",
+                "text": "name3",
+            },
+        ],
+        "aliases": [{"context": "context1", "name": "name1"}],
+        "unit_definitions": [
+            {"uid": "unit_definition_root1", "mandatory": False, "order": 1}
+        ],
+        "codelist": {"uid": "editable_cr", "allows_multi_choice": True},
+        "terms": [
+            {
+                "uid": "term_root_final",
+                "mandatory": True,
+                "order": 1,
+                "display_text": None,
+                "version": "1.0",
+            }
+        ],
+        "vendor_elements": [{"uid": "odm_vendor_element1", "value": "value1"}],
+        "vendor_element_attributes": [
+            {"uid": "odm_vendor_attribute3", "value": "value"}
+        ],
+        "vendor_attributes": [],
+        "change_description": "desc doesnt change",
+    }
+    response = api_client.patch("concepts/odms/items/OdmItem_000001", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -756,20 +1349,46 @@ def test_approve_odm_item(api_client):
     assert res["version"] == "1.0"
     assert res["change_description"] == "Approved version"
     assert res["author_username"] == "unknown-user@example.com"
-    assert res["descriptions"] == [
+    assert res["translated_texts"] == [
         {
-            "name": "name2",
+            "text_type": "Description",
             "language": "eng",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
+            "text": "description2",
         },
         {
-            "name": "name3",
+            "text_type": "Description",
+            "language": "dan",
+            "text": "description3",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
             "language": "eng",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
+            "text": "instruction2",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
+            "language": "dan",
+            "text": "instruction3",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "eng",
+            "text": "sponsor_instruction2",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "dan",
+            "text": "sponsor_instruction3",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "eng",
+            "text": "name2",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "dan",
+            "text": "name3",
         },
     ]
     assert res["aliases"] == [{"context": "context1", "name": "name1"}]
@@ -777,6 +1396,7 @@ def test_approve_odm_item(api_client):
         {
             "uid": "unit_definition_root1",
             "name": "name1",
+            "version": "0.1",
             "mandatory": False,
             "order": 1,
             "ucum": {
@@ -790,8 +1410,10 @@ def test_approve_odm_item(api_client):
     assert res["codelist"] == {
         "uid": "editable_cr",
         "name": "codelist attributes value1",
+        "version": "1.0",
         "submission_value": "codelist submission value1",
         "preferred_term": "codelist preferred term",
+        "allows_multi_choice": True,
     }
     assert res["terms"] == [
         {
@@ -805,7 +1427,7 @@ def test_approve_odm_item(api_client):
         }
     ]
     assert res["vendor_elements"] == [
-        {"uid": "odm_vendor_element1", "name": "nameOne", "value": "value1"}
+        {"uid": "odm_vendor_element1", "name": "NameOne", "value": "value1"}
     ]
     assert res["vendor_attributes"] == []
     assert res["vendor_element_attributes"] == [
@@ -845,20 +1467,46 @@ def test_inactivate_odm_item(api_client):
     assert res["version"] == "2.0"
     assert res["change_description"] == "Inactivated version"
     assert res["author_username"] == "unknown-user@example.com"
-    assert res["descriptions"] == [
+    assert res["translated_texts"] == [
         {
-            "name": "name2",
+            "text_type": "Description",
             "language": "eng",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
+            "text": "description2",
         },
         {
-            "name": "name3",
+            "text_type": "Description",
+            "language": "dan",
+            "text": "description3",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
             "language": "eng",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
+            "text": "instruction2",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
+            "language": "dan",
+            "text": "instruction3",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "eng",
+            "text": "sponsor_instruction2",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "dan",
+            "text": "sponsor_instruction3",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "eng",
+            "text": "name2",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "dan",
+            "text": "name3",
         },
     ]
     assert res["aliases"] == [{"context": "context1", "name": "name1"}]
@@ -866,6 +1514,7 @@ def test_inactivate_odm_item(api_client):
         {
             "uid": "unit_definition_root1",
             "name": "name1",
+            "version": "0.1",
             "mandatory": False,
             "order": 1,
             "ucum": {
@@ -879,8 +1528,10 @@ def test_inactivate_odm_item(api_client):
     assert res["codelist"] == {
         "uid": "editable_cr",
         "name": "codelist attributes value1",
+        "version": "1.0",
         "submission_value": "codelist submission value1",
         "preferred_term": "codelist preferred term",
+        "allows_multi_choice": True,
     }
     assert res["terms"] == [
         {
@@ -894,7 +1545,7 @@ def test_inactivate_odm_item(api_client):
         }
     ]
     assert res["vendor_elements"] == [
-        {"uid": "odm_vendor_element1", "name": "nameOne", "value": "value1"}
+        {"uid": "odm_vendor_element1", "name": "NameOne", "value": "value1"}
     ]
     assert res["vendor_attributes"] == []
     assert res["vendor_element_attributes"] == [
@@ -913,10 +1564,81 @@ def test_inactivate_odm_item(api_client):
 def test_cannot_add_odm_vendor_element_to_an_odm_item_that_is_in_retired_status(
     api_client,
 ):
-    data = [{"uid": "odm_vendor_element1", "value": "value"}]
-    response = api_client.post(
-        "concepts/odms/items/OdmItem_000001/vendor-elements", json=data
-    )
+    data = {}
+    data = {
+        "library_name": "Sponsor",
+        "name": "name1",
+        "oid": "oid1",
+        "prompt": "prompt1",
+        "datatype": "string",
+        "length": 11,
+        "significant_digits": 11,
+        "sas_field_name": "sas_field_name1",
+        "sds_var_name": "sds_var_name1",
+        "origin": "origin1",
+        "comment": "comment1",
+        "translated_texts": [
+            {
+                "text_type": "Description",
+                "language": "eng",
+                "text": "description2",
+            },
+            {
+                "text_type": "Description",
+                "language": "dan",
+                "text": "description3",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
+                "language": "eng",
+                "text": "instruction2",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
+                "language": "dan",
+                "text": "instruction3",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "eng",
+                "text": "sponsor_instruction2",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "dan",
+                "text": "sponsor_instruction3",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "eng",
+                "text": "name2",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "dan",
+                "text": "name3",
+            },
+        ],
+        "aliases": [{"context": "context1", "name": "name1"}],
+        "unit_definitions": [
+            {"uid": "unit_definition_root1", "mandatory": False, "order": 1}
+        ],
+        "codelist": {"uid": "editable_cr", "allows_multi_choice": True},
+        "terms": [
+            {
+                "uid": "term_root_final",
+                "mandatory": True,
+                "order": 1,
+                "display_text": None,
+                "version": "1.0",
+            }
+        ],
+        "vendor_elements": [{"uid": "odm_vendor_element1", "value": "value"}],
+        "vendor_element_attributes": [],
+        "vendor_attributes": [],
+        "change_description": "desc doesnt change",
+    }
+    response = api_client.patch("concepts/odms/items/OdmItem_000001", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -929,10 +1651,80 @@ def test_cannot_add_odm_vendor_element_to_an_odm_item_that_is_in_retired_status(
 def test_cannot_add_odm_vendor_attribute_to_an_odm_item_that_is_in_retired_status(
     api_client,
 ):
-    data = [{"uid": "odm_vendor_attribute1", "value": "value"}]
-    response = api_client.post(
-        "concepts/odms/items/OdmItem_000001/vendor-attributes", json=data
-    )
+    data = {
+        "library_name": "Sponsor",
+        "name": "name1",
+        "oid": "oid1",
+        "prompt": "prompt1",
+        "datatype": "string",
+        "length": 11,
+        "significant_digits": 11,
+        "sas_field_name": "sas_field_name1",
+        "sds_var_name": "sds_var_name1",
+        "origin": "origin1",
+        "comment": "comment1",
+        "translated_texts": [
+            {
+                "text_type": "Description",
+                "language": "eng",
+                "text": "description2",
+            },
+            {
+                "text_type": "Description",
+                "language": "dan",
+                "text": "description3",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
+                "language": "eng",
+                "text": "instruction2",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
+                "language": "dan",
+                "text": "instruction3",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "eng",
+                "text": "sponsor_instruction2",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "dan",
+                "text": "sponsor_instruction3",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "eng",
+                "text": "name2",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "dan",
+                "text": "name3",
+            },
+        ],
+        "aliases": [{"context": "context1", "name": "name1"}],
+        "unit_definitions": [
+            {"uid": "unit_definition_root1", "mandatory": False, "order": 1}
+        ],
+        "codelist": {"uid": "editable_cr", "allows_multi_choice": True},
+        "terms": [
+            {
+                "uid": "term_root_final",
+                "mandatory": True,
+                "order": 1,
+                "display_text": None,
+                "version": "1.0",
+            }
+        ],
+        "vendor_elements": [],
+        "vendor_element_attributes": [],
+        "vendor_attributes": [{"uid": "odm_vendor_attribute1", "value": "value"}],
+        "change_description": "desc doesnt change",
+    }
+    response = api_client.patch("concepts/odms/items/OdmItem_000001", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -945,10 +1737,82 @@ def test_cannot_add_odm_vendor_attribute_to_an_odm_item_that_is_in_retired_statu
 def test_cannot_add_odm_vendor_element_attribute_to_an_odm_item_that_is_in_retired_status(
     api_client,
 ):
-    data = [{"uid": "odm_vendor_attribute1", "value": "value"}]
-    response = api_client.post(
-        "concepts/odms/items/OdmItem_000001/vendor-element-attributes", json=data
-    )
+    data = {
+        "library_name": "Sponsor",
+        "name": "name1",
+        "oid": "oid1",
+        "prompt": "prompt1",
+        "datatype": "string",
+        "length": 11,
+        "significant_digits": 11,
+        "sas_field_name": "sas_field_name1",
+        "sds_var_name": "sds_var_name1",
+        "origin": "origin1",
+        "comment": "comment1",
+        "translated_texts": [
+            {
+                "text_type": "Description",
+                "language": "eng",
+                "text": "description2",
+            },
+            {
+                "text_type": "Description",
+                "language": "dan",
+                "text": "description3",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
+                "language": "eng",
+                "text": "instruction2",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
+                "language": "dan",
+                "text": "instruction3",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "eng",
+                "text": "sponsor_instruction2",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "dan",
+                "text": "sponsor_instruction3",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "eng",
+                "text": "name2",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "dan",
+                "text": "name3",
+            },
+        ],
+        "aliases": [{"context": "context1", "name": "name1"}],
+        "unit_definitions": [
+            {"uid": "unit_definition_root1", "mandatory": False, "order": 1}
+        ],
+        "codelist": {"uid": "editable_cr", "allows_multi_choice": True},
+        "terms": [
+            {
+                "uid": "term_root_final",
+                "mandatory": True,
+                "order": 1,
+                "display_text": None,
+                "version": "1.0",
+            }
+        ],
+        "vendor_elements": [],
+        "vendor_element_attributes": [
+            {"uid": "odm_vendor_attribute1", "value": "value"}
+        ],
+        "vendor_attributes": [],
+        "change_description": "desc doesnt change",
+    }
+    response = api_client.patch("concepts/odms/items/OdmItem_000001", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -1038,3 +1902,52 @@ def test_cannot_provide_only_one_of_length_or_significant_digits_when_datatype_i
             "error_code": "value_error",
         },
     ]
+
+
+@pytest.mark.parametrize(
+    "text_type",
+    [
+        pytest.param("Description"),
+        pytest.param("Question"),
+        pytest.param("osb:DesignNotes"),
+        pytest.param("osb:CompletionInstructions"),
+        pytest.param("osb:DisplayText"),
+    ],
+)
+def test_cannot_add_duplicate_translated_texts(api_client, text_type: str):
+    data = {
+        "library_name": "Sponsor",
+        "name": "testing",
+        "oid": "testing",
+        "prompt": "testing",
+        "datatype": "string",
+        "length": 11,
+        "significant_digits": 11,
+        "sas_field_name": "testing",
+        "sds_var_name": "testing",
+        "origin": "testing",
+        "comment": "testing",
+        "translated_texts": [
+            {
+                "text_type": text_type,
+                "language": "eng",
+                "text": str(r),
+            }
+            for r in range(2)
+        ],
+        "aliases": [],
+        "unit_definitions": [],
+        "codelist_uid": None,
+        "terms": [],
+    }
+    response = api_client.post("concepts/odms/items", json=data)
+
+    assert_response_status_code(response, 400)
+
+    res = response.json()
+
+    assert res["type"] == "ValidationException"
+    assert (
+        res["message"]
+        == f"Duplicate Translated Text found for text_type '{text_type}' and language 'eng'."
+    )

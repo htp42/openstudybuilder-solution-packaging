@@ -10,6 +10,7 @@ from neomodel import (
 )
 
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
+    CTCodelistRoot,
     CTTermContext,
 )
 from clinical_mdr_api.domain_repositories.models.generic import (
@@ -119,5 +120,10 @@ class ActivityItemClassRoot(VersionRoot):
     maps_variable_class = RelationshipTo(
         VariableClass,
         "MAPS_VARIABLE_CLASS",
+        model=ClinicalMdrRel,
+    )
+    has_valid_codelist_for_items = RelationshipTo(
+        CTCodelistRoot,
+        "HAS_VALID_CODELIST_FOR_ITEMS",
         model=ClinicalMdrRel,
     )

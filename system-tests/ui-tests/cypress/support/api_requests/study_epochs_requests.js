@@ -2,6 +2,7 @@ const availableEpochsUrl = '/epochs/allowed-configs'
 const studyEpochsUrl = (study_uid) =>  `/studies/${study_uid}/study-epochs`
 const studyEpochsPreviewUrl = (study_uid) =>  `/studies/${study_uid}/study-epochs/preview`
 let epochType, epochSubType, epochTerm
+export let epoch_uid
 
 Cypress.Commands.add('getEpochTypeAndSubType', (epoch_type_name, epoch_subtype_name) => {
     cy.sendGetRequest(availableEpochsUrl).then((response) => {
@@ -21,9 +22,9 @@ Cypress.Commands.add('getEpochTerm', (study_uid) => {
 Cypress.Commands.add('createEpoch', (study_uid) => {
   cy.sendGetRequest(studyEpochsUrl(study_uid)).then((response) => {
     if (!response.body.items.find(item => item.epoch_subtype_ctterm.term_uid == epochSubType)) {
-        cy.sendPostRequest(studyEpochsUrl(study_uid), createEpochBody(study_uid))
+        cy.sendPostRequest(studyEpochsUrl(study_uid), createEpochBody(study_uid)).then(response => epoch_uid = response.body.uid)
     } else {
-      cy.log('Epoch already exist')
+      epoch_uid = response.body.items[0].uid
     }
   })
 })

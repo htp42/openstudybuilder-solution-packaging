@@ -1,11 +1,10 @@
-import datetime
 from typing import Any, Sequence, TypeVar
 
 from neomodel import Q
 from neomodel.sync_.match import Optional
 
 from clinical_mdr_api.domain_repositories.generic_repository import (
-    manage_previous_connected_study_selection_relationships,
+    _manage_versioning_with_relations,
 )
 from clinical_mdr_api.domain_repositories.models._utils import ListDistinct
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import CTPackage
@@ -235,84 +234,39 @@ class StudyStandardVersionRepository:
         new_study_standard_version.has_ct_package.connect(ct_package)
 
         if create:
-            self.manage_versioning_create(
-                study_root=study_root, item=item, new_item=new_study_standard_version
+            _manage_versioning_with_relations(
+                study_root=study_root,
+                action_type=Create,
+                before=None,
+                after=new_study_standard_version,
+                author_id=self.author_id,
             )
             new_study_standard_version.study_value.connect(study_value)
         else:
             previous_item: StudyStandardVersion = (
                 study_value.has_study_standard_version.get(uid=item.uid)
             )
-
+            exclude_relationships = [CTPackage]
             if delete is False:
                 # update
-                self.manage_versioning_update(
+                _manage_versioning_with_relations(
                     study_root=study_root,
-                    item=item,
-                    previous_item=previous_item,
-                    new_item=new_study_standard_version,
+                    action_type=Edit,
+                    before=previous_item,
+                    after=new_study_standard_version,
+                    exclude_relationships=exclude_relationships,
+                    author_id=self.author_id,
                 )
                 new_study_standard_version.study_value.connect(study_value)
             else:
                 # delete
-                self.manage_versioning_delete(
+                _manage_versioning_with_relations(
                     study_root=study_root,
-                    item=item,
-                    previous_item=previous_item,
-                    new_item=new_study_standard_version,
+                    action_type=Delete,
+                    before=previous_item,
+                    after=new_study_standard_version,
+                    exclude_relationships=exclude_relationships,
+                    author_id=self.author_id,
                 )
-            manage_previous_connected_study_selection_relationships(
-                previous_item=previous_item,
-                study_value_node=study_value,
-                new_item=new_study_standard_version,
-            )
+
         return item
-
-    def manage_versioning_create(
-        self,
-        study_root: StudyRoot,
-        item: StudyStandardVersionVO,
-        new_item: StudyStandardVersion,
-    ):
-        action = Create(
-            date=datetime.datetime.now(datetime.timezone.utc),
-            status=item.study_status.value,
-            author_id=item.author_id,
-        )
-        action.save()
-        action.has_after.connect(new_item)
-        study_root.audit_trail.connect(action)
-
-    def manage_versioning_update(
-        self,
-        study_root: StudyRoot,
-        item: StudyStandardVersionVO,
-        previous_item: StudyStandardVersion,
-        new_item: StudyStandardVersion,
-    ):
-        action = Edit(
-            date=datetime.datetime.now(datetime.timezone.utc),
-            status=item.study_status.value,
-            author_id=item.author_id,
-        )
-        action.save()
-        action.has_before.connect(previous_item)
-        action.has_after.connect(new_item)
-        study_root.audit_trail.connect(action)
-
-    def manage_versioning_delete(
-        self,
-        study_root: StudyRoot,
-        item: StudyStandardVersionVO,
-        previous_item: StudyStandardVersion,
-        new_item: StudyStandardVersion,
-    ):
-        action = Delete(
-            date=datetime.datetime.now(datetime.timezone.utc),
-            status=item.study_status.value,
-            author_id=item.author_id,
-        )
-        action.save()
-        action.has_before.connect(previous_item)
-        action.has_after.connect(new_item)
-        study_root.audit_trail.connect(action)

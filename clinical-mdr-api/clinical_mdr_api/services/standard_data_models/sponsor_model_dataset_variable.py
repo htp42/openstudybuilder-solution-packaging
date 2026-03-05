@@ -71,6 +71,7 @@ class SponsorModelDatasetVariableService(
                 value_lvl_ct_codelist_id_col=item_input.value_lvl_ct_codelist_id_col,
                 enrich_build_order=item_input.enrich_build_order,
                 enrich_rule=item_input.enrich_rule,
+                extra_properties=item_input.get_extra_fields(),
             ),
             library=library,
         )
@@ -122,6 +123,7 @@ class SponsorModelDatasetVariableService(
                 value_lvl_ct_codelist_id_col=item_edit_input.value_lvl_ct_codelist_id_col,
                 enrich_build_order=item_edit_input.enrich_build_order,
                 enrich_rule=item_edit_input.enrich_rule,
+                extra_properties=item_edit_input.get_extra_fields(),
             ),
         )
         return item

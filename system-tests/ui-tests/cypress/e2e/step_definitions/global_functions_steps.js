@@ -1,6 +1,12 @@
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
 import { formatDateToMMMDDYYYY, getCurrentStudyId } from '../../support/helper_functions'
 
+When('User clicks table export button', () => cy.clickButton('table-export-button'))
+
+When('User clicks export button', () => cy.contains('button', 'Export').click())
+
+When('User selects {string} format to export the table content', (format) => cy.contains('.v-list-item', format).click())
+
 When('User waits for {int} seconds', (waitTime) => cy.wait(waitTime * 1000))
 
 When('The first column is selected from Select Columns option for table with actions', () => {
@@ -17,7 +23,6 @@ When('The study title form is filled with UTF-8 charset', () => {
   cy.wait(500)
   cy.fillInput("study-title", '±≥≤~≠∞°−ü®©™αβγδμτλπφψ')
   cy.fillInput('short-study-title', 'Test')
-  cy.clickButton('save-button')
 })
 
 Then('The UI is showing the UTF-8 charset correctly', () => {
@@ -38,9 +43,7 @@ Then('The table contain only selected column and actions column', () => {
     checkTableHeaders(true)
 })
 
-Then('The {string} form is opened', (formTitle) => {
-    cy.elementContain('form-body', formTitle)
-})
+Then('The {string} form is opened', (formTitle) => cy.get('.dialog-title').should('contain.text', formTitle))
 
 Given('The user is logged out', () => {
     cy.window().then((win) => {
@@ -76,12 +79,6 @@ When('I click the {string} download button', (title) => {
     cy.get([`"title=${title}"`])
 })
 
-When('The user exports the data in {string} format', (format) => {
-    cy.clickButton('table-export-button')
-    cy.contains('.v-list-item', format).click()
-    cy.clickButton('continue-popup')
-})
-
 Then('The study specific {string} file is downloaded in {string} format', (filename, format) => {
     let currentDate1 = formatDateToMMMDDYYYY()
     let currentStudy = getCurrentStudyId()
@@ -97,6 +94,12 @@ Then('The {string} file is downloaded in {string} format', (filename, format) =>
 
 Then('The {string} file without timestamp is downloaded in {string} format', (filename, format) => {
     const filePath = `cypress/downloads/${filename}.${format}`
+    cy.readFile(filePath).then((file ) => {cy.log(file)})
+})
+
+Then('The study specific {string} file without timestamp is downloaded in {string} format', (filename, format) => {
+    let currentStudy = getCurrentStudyId()
+    const filePath = `cypress/downloads/${currentStudy} ${filename}.${format}`
     cy.readFile(filePath).then((file ) => {cy.log(file)})
 })
 

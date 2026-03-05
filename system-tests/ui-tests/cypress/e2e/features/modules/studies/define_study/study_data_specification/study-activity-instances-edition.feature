@@ -134,21 +134,21 @@ Feature: Studies - Define Study - Study Data Specifications - Study Activity Ins
     Scenario: [Edit Mode][Data collection - no][Instance not applicable] User must not be able to edit Instance Relationship if Study Activity has data collection set to No
         Given The test study '/data_specifications/instances' page is opened
         And User waits for the table
-        When The Edition mode is enabled
+        When I click 'Edit' button
         And User waits for 1 seconds
         Then User searches for 'NoDataCollection' and confirms no results returned
 
     Scenario: [Edit Mode][Data collection - yes][Missing Instance] User must not be able to edit Instance Relationship if Study Activity has data collection set to Yes, but no Activity Instance is linked to it
         Given The test study '/data_specifications/instances' page is opened
         And User waits for the table
-        When The Edition mode is enabled
+        When I click 'Edit' button
         And User waits for 1 seconds
         Then User searches for 'MissingInstance' and confirms no results returned
 
     Scenario: [Edit Mode][Important Flag][Data collection - yes] User must be able to mark Study Activity Instance as Important if linked Study Activity data collection is set to Yes
         Given The test study '/data_specifications/instances' page is opened
         And User waits for the table
-        When The Edition mode is enabled
+        When I click 'Edit' button
         And User waits for 1 seconds
         And User searches for 'FirstActivity'
         And User waits for the table
@@ -162,7 +162,7 @@ Feature: Studies - Define Study - Study Data Specifications - Study Activity Ins
     Scenario: [Edit Mode][Baseline flags][Data collection - yes] User must able to assign Baseline flag is Study Activity has data collection set to Yes and Activity Instance is linked to it
         Given The test study '/data_specifications/instances' page is opened
         And User waits for the table
-        When The Edition mode is enabled
+        When I click 'Edit' button
         And User waits for 1 seconds
         And User searches for 'SecondActivity'
         And User waits for the table
@@ -177,7 +177,7 @@ Feature: Studies - Define Study - Study Data Specifications - Study Activity Ins
     Scenario: [Edit Mode][Data Supplier][Data collection - yes] User must be able to add Data Supplier to if linked Study Activity data collection is set to Yes
         Given The test study '/data_specifications/instances' page is opened
         And User waits for the table
-        When The Edition mode is enabled
+        When I click 'Edit' button
         And User waits for 1 seconds
         And User searches for 'SecondActivity'
         And User waits for the table
@@ -195,7 +195,7 @@ Feature: Studies - Define Study - Study Data Specifications - Study Activity Ins
     Scenario: [Edit Mode][Cancel] User must be able to cancel edit mode and made changes will not be applied to Study Activity Instance
         Given The test study '/data_specifications/instances' page is opened
         And User waits for the table
-        When The Edition mode is enabled
+        When I click 'Edit' button
         And User waits for 1 seconds
         And User searches for 'FirstActivity'
         And User waits for the table

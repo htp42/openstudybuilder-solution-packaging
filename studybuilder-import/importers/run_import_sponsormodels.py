@@ -4,7 +4,10 @@ import json
 import os
 import re
 from collections import defaultdict
+from dataclasses import dataclass
 from datetime import datetime
+from enum import Enum
+from typing import Any, Callable
 
 import aiohttp
 
@@ -26,6 +29,9 @@ MDR_MIGRATION_ACTIVITY_INSTANCE_CLASS_MODEL_RELS = load_env(
 MDR_MIGRATION_ACTIVITY_ITEM_CLASS_MODEL_RELS = load_env(
     "MDR_MIGRATION_ACTIVITY_ITEM_CLASS_MODEL_RELS"
 )
+MDR_MIGRATION_ACTIVITY_ITEM_CLASS_VALID_CODELIST_RELS = load_env(
+    "MDR_MIGRATION_ACTIVITY_ITEM_CLASS_VALID_CODELIST_RELS"
+)
 MDR_MIGRATION_SPONSOR_MODEL_DIRECTORY = load_env(
     "MDR_MIGRATION_SPONSOR_MODEL_DIRECTORY"
 )
@@ -45,7 +51,504 @@ ACTIVITY_INSTANCE_CLASSES_PATH = "/activity-instance-classes"
 ACTIVITY_ITEM_CLASSES_PATH = "/activity-item-classes"
 
 
+# ---------------------------------------------------------------
+# Property Definition System
+# ---------------------------------------------------------------
+
+
+class PropertyType(Enum):
+    """Type of property transformation needed"""
+
+    STRING = "string"  # String field (empty → None)
+    BOOLEAN = "boolean"  # Parse Y/X to bool
+    REVERSE_BOOLEAN = "reverse_boolean"  # Parse and reverse
+    INTEGER = "integer"  # Convert to int
+    LIST_SPACE_SEPARATED = "list_space_separated"  # Split by space
+    CUSTOM = "custom"  # Custom transformer function
+
+
+@dataclass
+class PropertyDefinition:
+    """
+    Definition of how to map and transform a CSV field to an API field.
+
+    Attributes:
+        csv_field: The header name in the CSV file
+        api_field: The field name to send to the API
+        property_type: Type of transformation to apply - Defaults to STRING
+        required: Whether this field must be present in CSV - Defaults to False
+        custom_transformer: Optional custom transformation function
+        default_value: Default value when cell is empty (not when header missing) - Defaults to None
+        conditional_check: Optional function to determine if field should be processed
+    """
+
+    csv_field: str
+    api_field: str
+    property_type: PropertyType = PropertyType.STRING
+    required: bool = False
+    custom_transformer: Callable[[Any], Any] | None = None
+    default_value: Any = None
+    conditional_check: Callable[[list[str]], bool] | None = None
+
+
+class FieldMapper:  # pylint: disable=too-few-public-methods
+    """
+    Maps CSV fields to API fields with automatic transformation based on PropertyDefinition.
+    """
+
+    def __init__(self, parser_instance):
+        """
+        Initialize with reference to parser instance for accessing parsing methods.
+
+        Args:
+            parser_instance: Instance of SponsorModels class with parsing methods
+        """
+        self.parser = parser_instance
+        self._transformers = {
+            PropertyType.STRING: lambda v: v or None,  # Empty string becomes None
+            PropertyType.BOOLEAN: self.parser.parse_bool,
+            PropertyType.REVERSE_BOOLEAN: lambda v: self.parser.reverse_bool(
+                self.parser.parse_bool(v)
+            ),
+            PropertyType.INTEGER: self.parser.parse_int,
+            PropertyType.LIST_SPACE_SEPARATED: lambda v: v.split(" ") if v else None,
+        }
+
+    def map_row_to_body(
+        self,
+        headers: list[str],
+        row: list[str],
+        property_definitions: list[PropertyDefinition],
+        include_dynamic_fields: bool = True,
+    ) -> dict[str, Any]:
+        """
+        Map a CSV row to API body based on property definitions.
+
+        Args:
+            headers: CSV headers
+            row: CSV row values
+            property_definitions: List of property definitions
+            include_dynamic_fields: Whether to include fields not in definitions - Defaults to True
+
+        Returns:
+            Dictionary ready to send to API
+        """
+        body = {}
+        processed_csv_fields = set()
+
+        # Process defined properties
+        for prop_def in property_definitions:
+            # Skip if conditional check fails
+            if prop_def.conditional_check and not prop_def.conditional_check(headers):
+                continue
+
+            # Check if field exists in CSV headers
+            if prop_def.csv_field not in headers:
+                if prop_def.required:
+                    raise ValueError(
+                        f"Required field '{prop_def.csv_field}' not found in CSV headers"
+                    )
+                continue
+
+            # Mark as processed
+            processed_csv_fields.add(prop_def.csv_field)
+
+            # Get value from row
+            value = row[headers.index(prop_def.csv_field)]
+
+            # Apply default_value if cell is empty and a default is provided
+            # Note: default_value applies when the CSV header EXISTS but the cell is EMPTY
+            # This is different from when the header is missing entirely
+            if not value and prop_def.default_value is not None:
+                body[prop_def.api_field] = prop_def.default_value
+                continue
+
+            # Apply transformation
+            if prop_def.custom_transformer:
+                transformed_value = prop_def.custom_transformer(value)
+            elif prop_def.property_type == PropertyType.CUSTOM:
+                raise ValueError(
+                    f"PropertyType.CUSTOM requires custom_transformer for field '{prop_def.csv_field}'"
+                )
+            else:
+                transformer = self._transformers[prop_def.property_type]
+                transformed_value = transformer(value)
+
+            body[prop_def.api_field] = transformed_value
+
+        # Add dynamic fields (not in definitions)
+        if include_dynamic_fields:
+            for header in headers:
+                if header not in processed_csv_fields:
+                    value = row[headers.index(header)]
+                    # Sanitize field name: lowercase, replace spaces with underscores
+                    field_name = header.lower().replace(" ", "_").replace("-", "_")
+                    # Convert empty strings to None
+                    body[field_name] = value if value else None
+
+        return body
+
+
+# ---------------------------------------------------------------
+# Dataset Property Definitions
+# ---------------------------------------------------------------
+
+
+def get_dataset_property_definitions(parser_instance) -> list[PropertyDefinition]:
+    """
+    Define all property mappings for sponsor model datasets.
+
+    Args:
+        parser_instance: Instance of SponsorModels for custom transformers
+
+    Returns:
+        List of PropertyDefinition objects
+    """
+    return [
+        # Required fields
+        PropertyDefinition(
+            csv_field="Table",
+            api_field="dataset_uid",
+            property_type=PropertyType.STRING,
+            required=True,
+        ),
+        PropertyDefinition(
+            csv_field="Label",
+            api_field="label",
+            property_type=PropertyType.STRING,
+            required=True,
+        ),
+        PropertyDefinition(
+            csv_field="Class",
+            api_field="implemented_dataset_class",
+            property_type=PropertyType.CUSTOM,
+            required=True,
+            custom_transformer=lambda v: parser_instance.parse_dataset_class_name(
+                v, row_context.get("Table", None)
+            ),
+        ),
+        PropertyDefinition(
+            csv_field="enrich_build_order",
+            api_field="enrich_build_order",
+            property_type=PropertyType.INTEGER,
+            required=True,
+            default_value=0,
+        ),
+        PropertyDefinition(
+            csv_field="basic_std",
+            api_field="is_basic_std",
+            property_type=PropertyType.BOOLEAN,
+            required=True,
+        ),
+        PropertyDefinition(
+            csv_field="comment",
+            api_field="comment",
+            property_type=PropertyType.STRING,
+            required=True,
+        ),
+        # Optional fields with standard transformations
+        PropertyDefinition(
+            csv_field="XmlPath",
+            api_field="xml_path",
+            property_type=PropertyType.STRING,
+        ),
+        PropertyDefinition(
+            csv_field="XmlTitle",
+            api_field="xml_title",
+            property_type=PropertyType.STRING,
+        ),
+        PropertyDefinition(
+            csv_field="Structure",
+            api_field="structure",
+            property_type=PropertyType.STRING,
+        ),
+        PropertyDefinition(
+            csv_field="Purpose",
+            api_field="purpose",
+            property_type=PropertyType.STRING,
+        ),
+        PropertyDefinition(
+            csv_field="Keys",
+            api_field="keys",
+            property_type=PropertyType.LIST_SPACE_SEPARATED,
+        ),
+        PropertyDefinition(
+            csv_field="SortKeys",
+            api_field="sort_keys",
+            property_type=PropertyType.LIST_SPACE_SEPARATED,
+        ),
+        PropertyDefinition(
+            csv_field="State",
+            api_field="state",
+            property_type=PropertyType.STRING,
+        ),
+        PropertyDefinition(
+            csv_field="Standardref",
+            api_field="standard_ref",
+            property_type=PropertyType.STRING,
+        ),
+        PropertyDefinition(
+            csv_field="IGcomment",
+            api_field="ig_comment",
+            property_type=PropertyType.STRING,
+        ),
+        PropertyDefinition(
+            csv_field="extended_domain",
+            api_field="extended_domain",
+            property_type=PropertyType.STRING,
+        ),
+        # Boolean fields
+        PropertyDefinition(
+            csv_field="map_domain_flag",
+            api_field="map_domain_flag",
+            property_type=PropertyType.BOOLEAN,
+        ),
+        PropertyDefinition(
+            csv_field="suppl_qual_flag",
+            api_field="suppl_qual_flag",
+            property_type=PropertyType.BOOLEAN,
+        ),
+        PropertyDefinition(
+            csv_field="include_in_raw",
+            api_field="include_in_raw",
+            property_type=PropertyType.BOOLEAN,
+        ),
+        PropertyDefinition(
+            csv_field="gen_raw_seqno_flag",
+            api_field="gen_raw_seqno_flag",
+            property_type=PropertyType.BOOLEAN,
+        ),
+        # Conditional fields
+        PropertyDefinition(
+            csv_field="isnotcdiscstd",
+            api_field="is_cdisc_std",
+            property_type=PropertyType.REVERSE_BOOLEAN,
+            conditional_check=lambda headers: "isnotcdiscstd" in headers,
+        ),
+        PropertyDefinition(
+            csv_field="basic_std",
+            api_field="is_cdisc_std",
+            property_type=PropertyType.BOOLEAN,
+            conditional_check=lambda headers: "isnotcdiscstd" not in headers,
+        ),
+        PropertyDefinition(
+            csv_field="cdiscstd",
+            api_field="source_ig",
+            property_type=PropertyType.STRING,
+            conditional_check=lambda headers: "cdiscstd" in headers,
+        ),
+    ]
+
+
+# ---------------------------------------------------------------
+# Dataset Variable Property Definitions
+# ---------------------------------------------------------------
+
+
+def get_dataset_variable_property_definitions(
+    parser_instance,
+) -> list[PropertyDefinition]:
+    """
+    Define all property mappings for sponsor model dataset variables.
+
+    Args:
+        parser_instance: Instance of SponsorModels for custom transformers
+
+    Returns:
+        List of PropertyDefinition objects
+    """
+    return [
+        # Required fields
+        PropertyDefinition(
+            csv_field="table",
+            api_field="dataset_uid",
+            property_type=PropertyType.STRING,
+            required=True,
+        ),
+        PropertyDefinition(
+            csv_field="column",
+            api_field="dataset_variable_uid",
+            property_type=PropertyType.STRING,
+            required=True,
+        ),
+        PropertyDefinition(
+            csv_field="class_table",
+            api_field="implemented_parent_dataset_class",
+            property_type=PropertyType.CUSTOM,
+            required=True,
+            custom_transformer=lambda v: parser_instance.parse_dataset_class_name(
+                class_name=v
+            ),
+        ),
+        PropertyDefinition(
+            csv_field="class_column",
+            api_field="implemented_variable_class",
+            property_type=PropertyType.CUSTOM,
+            required=True,
+            custom_transformer=parser_instance.parse_variable_class_name,
+        ),
+        PropertyDefinition(
+            csv_field="order",
+            api_field="order",
+            property_type=PropertyType.INTEGER,
+            required=True,
+        ),
+        PropertyDefinition(
+            csv_field="basic_std",
+            api_field="is_basic_std",
+            property_type=PropertyType.BOOLEAN,
+            required=True,
+        ),
+        # Optional fields
+        PropertyDefinition(
+            csv_field="label",
+            api_field="label",
+            property_type=PropertyType.STRING,
+        ),
+        PropertyDefinition(
+            csv_field="type",
+            api_field="variable_type",
+            property_type=PropertyType.STRING,
+        ),
+        PropertyDefinition(
+            csv_field="length",
+            api_field="length",
+            property_type=PropertyType.STRING,
+        ),
+        PropertyDefinition(
+            csv_field="displayformat",
+            api_field="display_format",
+            property_type=PropertyType.STRING,
+        ),
+        PropertyDefinition(
+            csv_field="xmldatatype",
+            api_field="xml_datatype",
+            property_type=PropertyType.STRING,
+        ),
+        PropertyDefinition(
+            csv_field="core",
+            api_field="core",
+            property_type=PropertyType.STRING,
+        ),
+        PropertyDefinition(
+            csv_field="origin",
+            api_field="origin",
+            property_type=PropertyType.STRING,
+        ),
+        PropertyDefinition(
+            csv_field="origintype",
+            api_field="origin_type",
+            property_type=PropertyType.STRING,
+        ),
+        PropertyDefinition(
+            csv_field="originsource",
+            api_field="origin_source",
+            property_type=PropertyType.STRING,
+        ),
+        PropertyDefinition(
+            csv_field="role",
+            api_field="role",
+            property_type=PropertyType.STRING,
+        ),
+        PropertyDefinition(
+            csv_field="term",
+            api_field="term",
+            property_type=PropertyType.STRING,
+        ),
+        PropertyDefinition(
+            csv_field="algorithm",
+            api_field="algorithm",
+            property_type=PropertyType.STRING,
+        ),
+        PropertyDefinition(
+            csv_field="qualifiers",
+            api_field="qualifiers",
+            property_type=PropertyType.LIST_SPACE_SEPARATED,
+        ),
+        PropertyDefinition(
+            csv_field="comment",
+            api_field="comment",
+            property_type=PropertyType.STRING,
+        ),
+        PropertyDefinition(
+            csv_field="IGcomment",
+            api_field="ig_comment",
+            property_type=PropertyType.STRING,
+        ),
+        PropertyDefinition(
+            csv_field="map_var_flag",
+            api_field="map_var_flag",
+            property_type=PropertyType.STRING,
+        ),
+        PropertyDefinition(
+            csv_field="fixed_mapping",
+            api_field="fixed_mapping",
+            property_type=PropertyType.STRING,
+        ),
+        PropertyDefinition(
+            csv_field="include_in_raw",
+            api_field="include_in_raw",
+            property_type=PropertyType.BOOLEAN,
+        ),
+        PropertyDefinition(
+            csv_field="nn_internal",
+            api_field="nn_internal",
+            property_type=PropertyType.BOOLEAN,
+        ),
+        PropertyDefinition(
+            csv_field="value_lvl_where_cols",
+            api_field="value_lvl_where_cols",
+            property_type=PropertyType.STRING,
+        ),
+        PropertyDefinition(
+            csv_field="value_lvl_label_col",
+            api_field="value_lvl_label_col",
+            property_type=PropertyType.STRING,
+        ),
+        PropertyDefinition(
+            csv_field="value_lvl_collect_ct_val",
+            api_field="value_lvl_collect_ct_val",
+            property_type=PropertyType.STRING,
+        ),
+        PropertyDefinition(
+            csv_field="value_lvl_ct_cdlist_id_col",
+            api_field="value_lvl_ct_codelist_id_col",
+            property_type=PropertyType.STRING,
+        ),
+        PropertyDefinition(
+            csv_field="enrich_build_order",
+            api_field="enrich_build_order",
+            property_type=PropertyType.INTEGER,
+            default_value=0,
+        ),
+        PropertyDefinition(
+            csv_field="enrich_rule",
+            api_field="enrich_rule",
+            property_type=PropertyType.STRING,
+        ),
+        # Conditional fields
+        PropertyDefinition(
+            csv_field="isnotcdiscstd",
+            api_field="is_cdisc_std",
+            property_type=PropertyType.REVERSE_BOOLEAN,
+            conditional_check=lambda headers: "isnotcdiscstd" in headers,
+        ),
+        PropertyDefinition(
+            csv_field="basic_std",
+            api_field="is_cdisc_std",
+            property_type=PropertyType.BOOLEAN,
+            conditional_check=lambda headers: "isnotcdiscstd" not in headers,
+        ),
+    ]
+
+
+# Global context for row data (used in custom transformers)
+row_context = {}
+
+
+# ---------------------------------------------------------------
 # SponsorModels with datasets and variables
+# ---------------------------------------------------------------
 class SponsorModels(BaseImporter):
     logging_name = "sponsor_models"
 
@@ -60,17 +563,28 @@ class SponsorModels(BaseImporter):
             else None
         )
 
+        # Initialize field mapper for CSV to API transformations
+        self.field_mapper = FieldMapper(self)
+
     def parse_bool(self, cell: str | None) -> bool | None:
         if cell is None:
             return None
         else:
-            return cell in ["Y", "X"]
+            return cell in ["Y", "X", "true", "True", "Yes", "1"]
 
     def reverse_bool(self, boolean: bool | None) -> bool | None:
         if boolean is None:
             return None
         else:
             return False if boolean else True
+
+    def parse_int(self, cell: str | None) -> int | None:
+        if cell is None:
+            return None
+        try:
+            return int(cell)
+        except (ValueError, TypeError):
+            return None
 
     def parse_instance_class_name(self, name: str) -> str:
         parsed = name.replace("AP ", "AssociatedPersons")
@@ -81,6 +595,22 @@ class SponsorModels(BaseImporter):
 
     def parse_variable_class_name(self, name: str) -> str:
         return name.replace("__", "--")
+
+    def parse_valid_codelist_uids(self, name: str) -> list[str]:
+        return name.split(";")
+
+    # Get a dictionary with key = submission value and value = uid
+    def _get_codelists_uid_and_submval(self):
+        all_codelist_attributes = self.api.get_all_from_api("/ct/codelists/attributes")
+
+        all_codelist_uids = CaselessDict(
+            self.api.get_all_identifiers(
+                all_codelist_attributes,
+                identifier="submission_value",
+                value="codelist_uid",
+            )
+        )
+        return all_codelist_uids
 
     @open_file_async()
     async def handle_activity_instance_class_relations(
@@ -194,6 +724,57 @@ class SponsorModels(BaseImporter):
         # Finally, push all tasks
         await asyncio.gather(*api_tasks)
 
+    @open_file_async()
+    async def handle_activity_item_class_valid_codelist_relations(
+        self, item_class_csvfile, session
+    ):
+        api_tasks = []
+
+        # Parse and PATCH ActivityItemClasses
+        csv_reader = csv.reader(item_class_csvfile, delimiter=",")
+        headers = next(csv_reader)
+        existing_item_classes = self.api.get_all_identifiers(
+            self.api.get_all_from_api(ACTIVITY_ITEM_CLASSES_PATH),
+            identifier="name",
+            value="uid",
+        )
+
+        existing_item_classes = {
+            self.parse_item_class_name(i): v for i, v in existing_item_classes.items()
+        }
+
+        all_codelist_uids = self._get_codelists_uid_and_submval()
+        for row in csv_reader:
+            class_cell = row[headers.index("activity_item_class")]
+            if class_cell:
+                activity_item_class_uid = existing_item_classes.get(
+                    self.parse_item_class_name(class_cell),
+                    None,
+                )
+                if activity_item_class_uid is not None:
+                    codelist_names = self.parse_valid_codelist_uids(
+                        row[headers.index("codelist")]
+                    )
+                    codelist_uids = [
+                        all_codelist_uids.get(codelist_submval)
+                        for codelist_submval in codelist_names
+                    ]
+                    data = {"body": {"valid_codelist_uids": codelist_uids}}
+                    self.log.info(
+                        "Adding relationships to valid codelists for activity item class '%s'",
+                        activity_item_class_uid,
+                    )
+                    api_tasks.append(
+                        self.api.patch_to_api_async(
+                            path=f"{ACTIVITY_ITEM_CLASSES_PATH}/{activity_item_class_uid}/valid-codelist-mappings",
+                            body=data["body"],
+                            session=session,
+                        )
+                    )
+
+        # Finally, push all tasks
+        await asyncio.gather(*api_tasks)
+
     async def handle_sponsor_model(self, session) -> bool:
         existing_sponsor_models = self.api.get_all_identifiers(
             self.api.get_all_from_api(SPONSOR_MODELS_PATH),
@@ -274,74 +855,39 @@ class SponsorModels(BaseImporter):
 
     @open_file_async()
     async def handle_datasets(self, csvfile, session):
-        # Populate sponsor model datasets
+        """
+        Populate sponsor model datasets using the field mapper system.
+
+        This method:
+        - Automatically maps CSV fields to API fields using PropertyDefinition
+        - Applies appropriate transformations based on property types
+        - Includes any extra CSV columns not in the property definitions
+        """
         csv_reader = csv.reader(csvfile, delimiter=",")
         headers = next(csv_reader)
         api_tasks = []
 
+        # Get property definitions for datasets
+        property_definitions = get_dataset_property_definitions(self)
+
         for row in csv_reader:
-            data = {
-                "body": {
-                    # Expected fields
-                    "dataset_uid": row[headers.index("Table")],
-                    "implemented_dataset_class": self.parse_dataset_class_name(
-                        row[headers.index("Class")], row[headers.index("Table")]
-                    ),
-                    "enrich_build_order": (
-                        row[headers.index("enrich_build_order")]
-                        if row[headers.index("enrich_build_order")]
-                        else 0
-                    ),
-                    # Optional/Changeable fields
-                    # Update in the API if renamed or new fields are added
-                    "is_basic_std": self.parse_bool(row[headers.index("basic_std")]),
-                    "label": row[headers.index("Label")],
-                    "xml_path": row[headers.index("XmlPath")],
-                    "xml_title": row[headers.index("XmlTitle")],
-                    "structure": row[headers.index("Structure")],
-                    "purpose": row[headers.index("Purpose")],
-                    "keys": (
-                        row[headers.index("Keys")].split(" ")
-                        if row[headers.index("Keys")]
-                        else None
-                    ),
-                    "sort_keys": (
-                        row[headers.index("SortKeys")].split(" ")
-                        if row[headers.index("SortKeys")]
-                        else None
-                    ),
-                    "state": row[headers.index("State")],
-                    "is_cdisc_std": (
-                        self.reverse_bool(
-                            self.parse_bool(row[headers.index("isnotcdiscstd")])
-                        )
-                        if "isnotcdiscstd" in headers
-                        else self.parse_bool(row[headers.index("basic_std")])
-                    ),
-                    "source_ig": (
-                        row[headers.index("cdiscstd")]
-                        if "cdiscstd" in headers
-                        else None
-                    ),
-                    "standard_ref": row[headers.index("Standardref")] or None,
-                    "comment": row[headers.index("comment")] or None,
-                    "ig_comment": row[headers.index("IGcomment")],
-                    "map_domain_flag": self.parse_bool(
-                        row[headers.index("map_domain_flag")]
-                    ),
-                    "suppl_qual_flag": self.parse_bool(
-                        row[headers.index("suppl_qual_flag")]
-                    ),
-                    "include_in_raw": self.parse_bool(
-                        row[headers.index("include_in_raw")]
-                    ),
-                    "gen_raw_seqno_flag": self.parse_bool(
-                        row[headers.index("gen_raw_seqno_flag")]
-                    ),
-                    "extended_domain": row[headers.index("extended_domain")],
-                    **self._common_body_params,
-                },
-            }
+            # Store row context for custom transformers that need it (e.g., parse_dataset_class_name)
+            global row_context  # pylint: disable=global-statement
+            row_context = {headers[i]: row[i] for i in range(len(headers))}
+
+            # Map CSV row to API body using field mapper
+            body = self.field_mapper.map_row_to_body(
+                headers=headers,
+                row=row,
+                property_definitions=property_definitions,
+                include_dynamic_fields=True,  # Include any extra CSV columns
+            )
+
+            # Add common parameters
+            body.update(self._common_body_params)
+
+            data = {"body": body}
+
             self.log.info(
                 f"Add sponsor model dataset '{data['body']['dataset_uid']}' to sponsor model '{data['body']['sponsor_model_name']}'"
             )
@@ -358,7 +904,7 @@ class SponsorModels(BaseImporter):
             if data["body"]["is_basic_std"] is False:
                 term_data = {
                     "body": {
-                        "catalogue_name": "SDTM CT",
+                        "catalogue_names": ["SDTM CT"],
                         "codelist_uid": "C66734",
                         "code_submission_value": data["body"]["dataset_uid"],
                         "name_submission_value": data["body"]["label"],
@@ -432,95 +978,51 @@ class SponsorModels(BaseImporter):
 
     @open_file_async()
     async def handle_dataset_variables(self, csvfile, session):
-        # Populate sponsor model dataset variables
+        """
+        Populate sponsor model dataset variables using the field mapper system.
+
+        This method:
+        - Automatically maps CSV fields to API fields using PropertyDefinition
+        - Applies appropriate transformations based on property types
+        - Includes any extra CSV columns not in the property definitions
+        - Handles special CT references separately (not in property definitions)
+        """
         csv_reader = csv.reader(csvfile, delimiter=",")
         headers = next(csv_reader)
         api_tasks = []
 
         all_codelist_uids = self.api.get_codelists_uid_and_submval()
 
+        # Get property definitions for dataset variables
+        property_definitions = get_dataset_variable_property_definitions(self)
+
         for row in csv_reader:
+            # Store row context for custom transformers
+            global row_context  # pylint: disable=global-statement
+            row_context = {headers[i]: row[i] for i in range(len(headers))}
+
+            # Parse CT references (special handling not in property definitions)
             references_codelists, references_terms = self.parse_referenced_ct(
                 headers=headers, row=row, all_codelist_uids=all_codelist_uids
             )
-            data = {
-                "body": {
-                    # Expected fields
-                    "dataset_uid": row[headers.index("table")],
-                    "dataset_variable_uid": row[headers.index("column")],
-                    "implemented_parent_dataset_class": self.parse_dataset_class_name(
-                        class_name=row[headers.index("class_table")],
-                    ),
-                    "implemented_variable_class": self.parse_variable_class_name(
-                        row[headers.index("class_column")]
-                    ),
-                    "order": row[headers.index("order")],
-                    # Optional/Changeable fields
-                    # Update in the API if renamed or new fields are added
-                    "is_basic_std": self.parse_bool(row[headers.index("basic_std")]),
-                    "label": row[headers.index("label")],
-                    "variable_type": row[headers.index("type")],
-                    "length": row[headers.index("length")],
-                    "display_format": row[headers.index("displayformat")] or None,
-                    "xml_datatype": row[headers.index("xmldatatype")],
-                    "references_codelists": references_codelists,
-                    "references_terms": references_terms,
-                    "core": row[headers.index("core")],
-                    "origin": row[headers.index("origin")] or None,
-                    "origin_type": (
-                        row[headers.index("origintype")] or None
-                        if "origintype" in headers
-                        else None
-                    ),
-                    "origin_source": (
-                        row[headers.index("originsource")] or None
-                        if "originsource" in headers
-                        else None
-                    ),
-                    "role": row[headers.index("role")],
-                    "term": row[headers.index("term")] or None,
-                    "algorithm": row[headers.index("algorithm")] or None,
-                    "qualifiers": (
-                        row[headers.index("qualifiers")].split(" ") or None
-                        if row[headers.index("qualifiers")]
-                        else None
-                    ),
-                    "is_cdisc_std": (
-                        self.reverse_bool(
-                            self.parse_bool(row[headers.index("isnotcdiscstd")])
-                        )
-                        if "isnotcdiscstd" in headers
-                        else self.parse_bool(row[headers.index("basic_std")])
-                    ),
-                    "comment": row[headers.index("comment")] or None,
-                    "ig_comment": row[headers.index("IGcomment")] or None,
-                    "map_var_flag": row[headers.index("map_var_flag")],
-                    "fixed_mapping": row[headers.index("fixed_mapping")] or None,
-                    "include_in_raw": self.parse_bool(
-                        row[headers.index("include_in_raw")]
-                    ),
-                    "nn_internal": self.parse_bool(row[headers.index("nn_internal")]),
-                    "value_lvl_where_cols": row[headers.index("value_lvl_where_cols")]
-                    or None,
-                    "value_lvl_label_col": row[headers.index("value_lvl_label_col")]
-                    or None,
-                    "value_lvl_collect_ct_val": row[
-                        headers.index("value_lvl_collect_ct_val")
-                    ]
-                    or None,
-                    "value_lvl_ct_codelist_id_col": row[
-                        headers.index("value_lvl_ct_cdlist_id_col")
-                    ]
-                    or None,
-                    "enrich_build_order": (
-                        row[headers.index("enrich_build_order")] or None
-                        if row[headers.index("enrich_build_order")]
-                        else 0
-                    ),
-                    "enrich_rule": row[headers.index("enrich_rule")] or None,
-                    **self._common_body_params,
-                },
-            }
+
+            # Map CSV row to API body using field mapper
+            body = self.field_mapper.map_row_to_body(
+                headers=headers,
+                row=row,
+                property_definitions=property_definitions,
+                include_dynamic_fields=True,  # Include any extra CSV columns
+            )
+
+            # Add CT references (not handled by property definitions)
+            body["references_codelists"] = references_codelists
+            body["references_terms"] = references_terms
+
+            # Add common parameters
+            body.update(self._common_body_params)
+
+            data = {"body": body}
+
             self.log.info(
                 f"Add sponsor model variable '{data['body']['dataset_variable_uid']}' to dataset '{data['body']['dataset_uid']}'"
             )
@@ -544,6 +1046,10 @@ class SponsorModels(BaseImporter):
             )
             await self.handle_activity_item_class_relations(
                 MDR_MIGRATION_ACTIVITY_ITEM_CLASS_MODEL_RELS,
+                session,
+            )
+            await self.handle_activity_item_class_valid_codelist_relations(
+                MDR_MIGRATION_ACTIVITY_ITEM_CLASS_VALID_CODELIST_RELS,
                 session,
             )
 

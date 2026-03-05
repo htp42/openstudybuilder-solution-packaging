@@ -107,22 +107,30 @@ Feature: Studies - Define Study - Study Structure - Study Elements
 
     Scenario: User must be able to export the data in CSV format
         Given The '/studies/study_structure/elements' page is opened
-        And The user exports the data in 'CSV' format
+        When User clicks table export button
+        And User selects 'CSV' format to export the table content
+        And Action is confirmed by clicking continue
         Then The study specific 'StudyElements' file is downloaded in 'csv' format
 
     Scenario: User must be able to export the data in JSON format
         Given The '/studies/study_structure/elements' page is opened
-        And The user exports the data in 'JSON' format
+        When User clicks table export button
+        And User selects 'JSON' format to export the table content
+        And Action is confirmed by clicking continue
         Then The study specific 'StudyElements' file is downloaded in 'json' format
 
     Scenario: User must be able to export the data in XML format
         Given The '/studies/study_structure/elements' page is opened
-        And The user exports the data in 'XML' format
+        When User clicks table export button
+        And User selects 'XML' format to export the table content
+        And Action is confirmed by clicking continue
         Then The study specific 'StudyElements' file is downloaded in 'xml' format
 
     Scenario: User must be able to export the data in EXCEL format
         Given The '/studies/study_structure/elements' page is opened
-        And The user exports the data in 'EXCEL' format
+        When User clicks table export button
+        And User selects 'EXCEL' format to export the table content
+        And Action is confirmed by clicking continue
         Then The study specific 'StudyElements' file is downloaded in 'xlsx' format
 
     Scenario: User must see the warning message when deleting Study Element

@@ -14,7 +14,7 @@ from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_codelist_a
     CTCodelistAttributesRepository,
 )
 from clinical_mdr_api.domain_repositories.generic_repository import (
-    manage_previous_connected_study_selection_relationships,
+    _manage_versioning_with_relations,
 )
 from clinical_mdr_api.domain_repositories.models.concepts import (
     StudyDayRoot,
@@ -64,7 +64,7 @@ from clinical_mdr_api.domains.study_selections.study_visit import (
 from clinical_mdr_api.models.controlled_terminologies.ct_term import (
     SimpleCTTermNameWithConflictFlag,
 )
-from common import queries
+from common import exceptions, queries
 from common.auth.user import user
 from common.config import settings
 from common.exceptions import ValidationException
@@ -720,60 +720,124 @@ class StudyVisitRepository:
         )
         return extracted_items
 
-    def manage_versioning_create(
-        self, study_root: StudyRoot, study_visit: StudyVisitVO, new_item: StudyVisit
-    ):
-        action = Create(
-            date=datetime.datetime.now(datetime.timezone.utc),
-            status=study_visit.status.value,
-            author_id=study_visit.author_id,
-        )
-        action.save()
-        action.has_after.connect(new_item)
-        study_root.audit_trail.connect(action)
-
-    def manage_versioning_update(
-        self,
-        study_root: StudyRoot,
-        study_visit: StudyVisitVO,
-        previous_item: StudyVisit,
-        new_item: StudyVisit,
-    ):
-        action = Edit(
-            date=datetime.datetime.now(datetime.timezone.utc),
-            status=study_visit.status.value,
-            author_id=study_visit.author_id,
-        )
-        action.save()
-        action.has_before.connect(previous_item)
-        action.has_after.connect(new_item)
-        study_root.audit_trail.connect(action)
-
-    def manage_versioning_delete(
-        self,
-        study_root: StudyRoot,
-        study_visit: StudyVisitVO,
-        previous_item: StudyVisit,
-        new_item: StudyVisit,
-    ):
-        action = Delete(
-            date=datetime.datetime.now(datetime.timezone.utc),
-            status=study_visit.status.value,
-            author_id=study_visit.author_id,
-        )
-        action.save()
-        action.has_before.connect(previous_item)
-        action.has_after.connect(new_item)
-        study_root.audit_trail.connect(action)
-
     def _update(self, study_visit: StudyVisitVO, create: bool = False):
-        study_root: StudyRoot = StudyRoot.nodes.get(uid=study_visit.study_uid)
-        study_value: StudyValue = study_root.latest_value.get_or_none()
-        ValidationException.raise_if(
-            study_value is None, msg="Study doesn't have draft version."
+
+        # Fetch nodes referenced by uids
+        query = [
+            "MATCH (study_root:StudyRoot {uid: $study_uid})-[:LATEST]->(latest_value:StudyValue)",
+            "MATCH (latest_value)-[:HAS_STUDY_EPOCH]->(study_epoch:StudyEpoch {uid: $study_epoch_uid}) WHERE NOT (study_epoch)-[:BEFORE]-()",
+            "MATCH (visit_type:CTTermRoot {uid: $visit_type_uid})",
+            "MATCH (visit_contact_mode:CTTermRoot {uid: $visit_contact_mode_uid})",
+            "MATCH (visit_name:VisitNameRoot {uid: $visit_name_uid})",
+        ]
+        params = {
+            "study_uid": study_visit.study_uid,
+            "study_epoch_uid": study_visit.epoch_uid,
+            "visit_type_uid": study_visit.visit_type.term_uid,
+            "visit_contact_mode_uid": study_visit.visit_contact_mode.term_uid,
+            "visit_name_uid": study_visit.visit_name_sc.uid,
+        }
+        returns = [
+            "study_root",
+            "latest_value",
+            "study_epoch",
+            "visit_type",
+            "visit_contact_mode",
+            "visit_name",
+        ]
+
+        if study_visit.repeating_frequency:
+            query.append(
+                "MATCH (repeating_frequency:CTTermRoot {uid: $repeating_frequency_uid})"
+            )
+            params["repeating_frequency_uid"] = study_visit.repeating_frequency.term_uid
+            returns.append("repeating_frequency")
+        if study_visit.epoch_allocation:
+            query.append(
+                "MATCH (epoch_allocation:CTTermRoot {uid: $epoch_allocation_uid})"
+            )
+            params["epoch_allocation_uid"] = study_visit.epoch_allocation.term_uid
+            returns.append("epoch_allocation")
+        if study_visit.timepoint:
+            query.append("MATCH (timepoint:TimePointRoot {uid: $timepoint_uid})")
+            params["timepoint_uid"] = study_visit.timepoint.uid
+            returns.append("timepoint")
+        if study_visit.study_day:
+            query.append("MATCH (study_day:StudyDayRoot {uid: $study_day_uid})")
+            params["study_day_uid"] = study_visit.study_day.uid
+            returns.append("study_day")
+        if study_visit.study_duration_days:
+            query.append(
+                "MATCH (study_duration_days:StudyDurationDaysRoot {uid: $study_duration_days_uid})"
+            )
+            params["study_duration_days_uid"] = study_visit.study_duration_days.uid
+            returns.append("study_duration_days")
+        if study_visit.study_week:
+            query.append("MATCH (study_week:StudyWeekRoot {uid: $study_week_uid})")
+            params["study_week_uid"] = study_visit.study_week.uid
+            returns.append("study_week")
+        if study_visit.study_duration_weeks:
+            query.append(
+                "MATCH (study_duration_weeks:StudyDurationWeeksRoot {uid: $study_duration_weeks_uid})"
+            )
+            params["study_duration_weeks_uid"] = study_visit.study_duration_weeks.uid
+            returns.append("study_duration_weeks")
+        if study_visit.week_in_study:
+            query.append(
+                "MATCH (week_in_study:WeekInStudyRoot {uid: $week_in_study_uid})"
+            )
+            params["week_in_study_uid"] = study_visit.week_in_study.uid
+            returns.append("week_in_study")
+        if study_visit.study_visit_group:
+            query.append(
+                "MATCH (study_visit_group:StudyVisitGroup {uid: $study_visit_group_uid})"
+            )
+            params["study_visit_group_uid"] = study_visit.study_visit_group.uid
+            returns.append("study_visit_group")
+        if study_visit.window_unit_uid:
+            query.append(
+                "MATCH (window_unit:UnitDefinitionRoot {uid: $window_unit_uid})"
+            )
+            params["window_unit_uid"] = study_visit.window_unit_uid
+            returns.append("window_unit")
+
+        if not create and study_visit.uid:
+            query.append(
+                "MATCH (latest_value)-[:HAS_STUDY_VISIT]->(study_visit:StudyVisit {uid: $study_visit_uid})"
+            )
+            params["study_visit_uid"] = study_visit.uid
+            returns.append("study_visit")
+
+        query.append(f"RETURN {', '.join(returns)}")
+        query_str = "\n".join(query)
+        results, keys = db.cypher_query(query_str, params, resolve_objects=True)
+        if len(results) != 1:
+            raise exceptions.BusinessLogicException(
+                msg=f"There should be one row returned with dependencies for StudyVisit '{study_visit.uid}'."
+            )
+
+        nodes = dict(zip(keys, results[0]))
+        study_root: StudyRoot = nodes["study_root"]
+        study_value: StudyValue = nodes["latest_value"]
+        study_epoch: StudyEpoch = nodes["study_epoch"]
+        visit_type: CTTermRoot = nodes["visit_type"]
+        visit_contact_mode: CTTermRoot = nodes["visit_contact_mode"]
+        repeating_frequency: CTTermRoot | None = nodes.get("repeating_frequency")
+        epoch_allocation: CTTermRoot | None = nodes.get("epoch_allocation")
+        timepoint: TimePointRoot | None = nodes.get("timepoint")
+        study_day: StudyDayRoot | None = nodes.get("study_day")
+        study_duration_days: StudyDurationDaysRoot | None = nodes.get(
+            "study_duration_days"
         )
-        if not create:
-            previous_item = study_value.has_study_visit.get(uid=study_visit.uid)
+        study_week: StudyWeekRoot | None = nodes.get("study_week")
+        study_duration_weeks: StudyDurationWeeksRoot | None = nodes.get(
+            "study_duration_weeks"
+        )
+        week_in_study: WeekInStudyRoot | None = nodes.get("week_in_study")
+        study_visit_group: StudyVisitGroup | None = nodes.get("study_visit_group")
+        visit_name: VisitNameRoot = nodes["visit_name"]
+        window_unit: UnitDefinitionRoot | None = nodes.get("window_unit")
+        previous_item: StudyVisit | None = nodes.get("study_visit")
 
         new_visit = StudyVisit(
             uid=study_visit.uid,
@@ -802,7 +866,6 @@ class StudyVisitRepository:
             study_visit.uid = new_visit.uid
 
         # Visit type
-        visit_type = CTTermRoot.nodes.get(uid=study_visit.visit_type.term_uid)
         selected_visit_type_node = (
             CTCodelistAttributesRepository().get_or_create_selected_term(
                 visit_type,
@@ -812,78 +875,7 @@ class StudyVisitRepository:
         )
         new_visit.has_visit_type.connect(selected_visit_type_node)
 
-        # Repeating visit frequency
-        if study_visit.repeating_frequency:
-            visit_repeating_frequency = CTTermRoot.nodes.get(
-                uid=study_visit.repeating_frequency.term_uid
-            )
-            selected_repeating_frequency_node = CTCodelistAttributesRepository().get_or_create_selected_term(
-                visit_repeating_frequency,
-                codelist_submission_value=settings.repeating_visit_frequency_cl_submval,
-                catalogue_name=settings.sdtm_ct_catalogue_name,
-            )
-            new_visit.has_repeating_frequency.connect(selected_repeating_frequency_node)
-
-        # Time point
-        if study_visit.timepoint:
-            visit_timepoint = TimePointRoot.nodes.get(uid=study_visit.timepoint.uid)
-            new_visit.has_timepoint.connect(visit_timepoint)
-        # Study day
-        if study_visit.study_day:
-            study_day_numeric_value = StudyDayRoot.nodes.get(
-                uid=study_visit.study_day.uid
-            )
-            new_visit.has_study_day.connect(study_day_numeric_value)
-
-        # Study duration days
-        if study_visit.study_duration_days:
-            study_duration_days = StudyDurationDaysRoot.nodes.get(
-                uid=study_visit.study_duration_days.uid
-            )
-            new_visit.has_study_duration_days.connect(study_duration_days)
-
-        # Study week
-        if study_visit.study_week:
-            study_week_numeric_value = StudyWeekRoot.nodes.get(
-                uid=study_visit.study_week.uid
-            )
-            new_visit.has_study_week.connect(study_week_numeric_value)
-
-        # Study duration weeks
-        if study_visit.study_duration_weeks:
-            study_duration_weeks = StudyDurationWeeksRoot.nodes.get(
-                uid=study_visit.study_duration_weeks.uid
-            )
-            new_visit.has_study_duration_weeks.connect(study_duration_weeks)
-
-        # Week in study
-        if study_visit.week_in_study:
-            week_in_study = WeekInStudyRoot.nodes.get(uid=study_visit.week_in_study.uid)
-            new_visit.has_week_in_study.connect(week_in_study)
-
-        if study_visit.study_visit_group:
-            study_visit_group = StudyVisitGroup.nodes.get(
-                uid=study_visit.study_visit_group.uid
-            )
-            new_visit.in_visit_group.connect(study_visit_group)
-
-        # Visit name
-        visit_name_text_value = VisitNameRoot.nodes.get(
-            uid=study_visit.visit_name_sc.uid
-        )
-        new_visit.has_visit_name.connect(visit_name_text_value)
-
-        # Visit window time unit
-        if study_visit.window_unit_uid is not None:
-            window_unit = UnitDefinitionRoot.nodes.get(uid=study_visit.window_unit_uid)
-            new_visit.has_window_unit.connect(window_unit)
-        else:
-            window_unit = None
-
         # Visit contact mode
-        visit_contact_mode = CTTermRoot.nodes.get(
-            uid=study_visit.visit_contact_mode.term_uid
-        )
         selected_contact_mode_node = (
             CTCodelistAttributesRepository().get_or_create_selected_term(
                 visit_contact_mode,
@@ -893,11 +885,51 @@ class StudyVisitRepository:
         )
         new_visit.has_visit_contact_mode.connect(selected_contact_mode_node)
 
+        # Repeating visit frequency
+        if study_visit.repeating_frequency:
+            selected_repeating_frequency_node = CTCodelistAttributesRepository().get_or_create_selected_term(
+                repeating_frequency,
+                codelist_submission_value=settings.repeating_visit_frequency_cl_submval,
+                catalogue_name=settings.sdtm_ct_catalogue_name,
+            )
+            new_visit.has_repeating_frequency.connect(selected_repeating_frequency_node)
+
+        # Time point
+        if study_visit.timepoint:
+            new_visit.has_timepoint.connect(timepoint)
+
+        # Study day
+        if study_visit.study_day:
+            new_visit.has_study_day.connect(study_day)
+
+        # Study duration days
+        if study_visit.study_duration_days:
+            new_visit.has_study_duration_days.connect(study_duration_days)
+
+        # Study week
+        if study_visit.study_week:
+            new_visit.has_study_week.connect(study_week)
+
+        # Study duration weeks
+        if study_visit.study_duration_weeks:
+            new_visit.has_study_duration_weeks.connect(study_duration_weeks)
+
+        # Week in study
+        if study_visit.week_in_study:
+            new_visit.has_week_in_study.connect(week_in_study)
+
+        if study_visit.study_visit_group:
+            new_visit.in_visit_group.connect(study_visit_group)
+
+        # Visit name
+        new_visit.has_visit_name.connect(visit_name)
+
+        # Visit window time unit
+        if study_visit.window_unit_uid is not None:
+            new_visit.has_window_unit.connect(window_unit)
+
         # Epoch allocation
         if study_visit.epoch_allocation:
-            epoch_allocation = CTTermRoot.nodes.get(
-                uid=study_visit.epoch_allocation.term_uid
-            )
             selected_epoch_allocation_node = (
                 CTCodelistAttributesRepository().get_or_create_selected_term(
                     epoch_allocation,
@@ -907,41 +939,51 @@ class StudyVisitRepository:
             )
             new_visit.has_epoch_allocation.connect(selected_epoch_allocation_node)
 
-        study_epoch = (
-            StudyEpoch.nodes.has(has_after=True)
-            .has(has_before=False)
-            .get(uid=study_visit.epoch_uid)
-        )
         new_visit.study_epoch_has_study_visit.connect(study_epoch)
         if not create:
+            exclude_study_selection_relationships = [
+                StudyEpoch,
+                TimePointRoot,
+                StudyDayRoot,
+                StudyDurationDaysRoot,
+                StudyWeekRoot,
+                StudyDurationWeeksRoot,
+                WeekInStudyRoot,
+                VisitNameRoot,
+                StudyVisitGroup,
+                StudyVisit.has_visit_type,
+                StudyVisit.has_repeating_frequency,
+                StudyVisit.has_visit_contact_mode,
+                StudyVisit.has_epoch_allocation,
+                StudyVisit.has_window_unit,
+            ]
             if study_visit.is_deleted:
-                self.manage_versioning_delete(
+                _manage_versioning_with_relations(
                     study_root=study_root,
-                    study_visit=study_visit,
-                    previous_item=previous_item,
-                    new_item=new_visit,
+                    action_type=Delete,
+                    before=previous_item,
+                    after=new_visit,
+                    exclude_relationships=exclude_study_selection_relationships,
+                    author_id=self.author_id,
                 )
             else:
                 new_visit.has_study_visit.connect(study_value)
-                self.manage_versioning_update(
+                _manage_versioning_with_relations(
                     study_root=study_root,
-                    study_visit=study_visit,
-                    previous_item=previous_item,
-                    new_item=new_visit,
+                    action_type=Edit,
+                    before=previous_item,
+                    after=new_visit,
+                    exclude_relationships=exclude_study_selection_relationships,
+                    author_id=self.author_id,
                 )
-            exclude_study_selection_relationships = [
-                StudyEpoch,
-            ]
-            manage_previous_connected_study_selection_relationships(
-                previous_item=previous_item,
-                study_value_node=study_value,
-                new_item=new_visit,
-                exclude_study_selection_relationships=exclude_study_selection_relationships,
-            )
         else:
             new_visit.has_study_visit.connect(study_value)
-            self.manage_versioning_create(
-                study_root=study_root, study_visit=study_visit, new_item=new_visit
+            _manage_versioning_with_relations(
+                study_root=study_root,
+                action_type=Create,
+                before=None,
+                after=new_visit,
+                author_id=self.author_id,
             )
 
         return study_visit

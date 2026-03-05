@@ -9,7 +9,7 @@
     :items-length="total"
     @filter="fetchItems"
   >
-    <template #actions="">
+    <template #beforeTable="">
       <v-btn
         v-if="
           studiesGeneralStore.selectedStudy.current_metadata.version_metadata
@@ -17,33 +17,34 @@
           !studiesGeneralStore.selectedStudy.study_parent_part &&
           isLatestStudySelected()
         "
-        size="small"
-        color="red"
-        :title="$t('_global.lock')"
-        data-cy="lock-study"
-        :disabled="!checkPermission($roles.STUDY_WRITE)"
-        icon="mdi-lock-outline"
-        :loading="loading"
-        @click.stop="lockStudy"
-      />
-      <v-btn
-        v-if="
-          studiesGeneralStore.selectedStudy.current_metadata.version_metadata
-            .study_status === 'DRAFT' &&
-          !studiesGeneralStore.selectedStudy.study_parent_part &&
-          isLatestStudySelected()
-        "
-        class="ml-2"
-        size="small"
+        class="ml-2 expandHoverBtn"
         variant="outlined"
         color="nnBaseBlue"
-        :title="$t('_global.release')"
         data-cy="release-study"
-        :disabled="!checkPermission($roles.STUDY_WRITE)"
-        icon="mdi-share-variant"
+        :disabled="!accessGuard.checkPermission($roles.STUDY_WRITE)"
         :loading="loading"
         @click.stop="releaseStudy"
-      />
+      >
+        <v-icon left>mdi-share-variant</v-icon>
+        <span class="label">{{ $t('Study.release') }}</span>
+      </v-btn>
+      <v-btn
+        v-if="
+          studiesGeneralStore.selectedStudy.current_metadata.version_metadata
+            .study_status === 'DRAFT' &&
+          !studiesGeneralStore.selectedStudy.study_parent_part &&
+          isLatestStudySelected()
+        "
+        class="ml-2 expandHoverBtn"
+        color="nnBaseBlue"
+        data-cy="lock-study"
+        :disabled="!accessGuard.checkPermission($roles.STUDY_WRITE)"
+        :loading="loading"
+        @click.stop="lockStudy"
+      >
+        <v-icon left>mdi-lock-outline</v-icon>
+        <span class="label">{{ $t('Study.lock') }}</span>
+      </v-btn>
       <v-btn
         v-if="
           studiesGeneralStore.selectedStudy.current_metadata.version_metadata
@@ -51,15 +52,16 @@
           !studiesGeneralStore.selectedStudy.study_parent_part &&
           isLatestStudySelected()
         "
-        size="small"
-        color="green"
-        :title="$t('_global.unlock')"
+        class="ml-2 expandHoverBtn"
+        color="nnBaseBlue"
         data-cy="unlock-study"
-        :disabled="!checkPermission($roles.STUDY_WRITE)"
-        icon="mdi-lock-open-outline"
+        :disabled="!accessGuard.checkPermission($roles.STUDY_WRITE)"
         :loading="loading"
         @click.stop="unlockStudy"
-      />
+      >
+        <v-icon left>mdi-lock-open-outline</v-icon>
+        <span class="label">{{ $t('Study.unlock') }}</span>
+      </v-btn>
     </template>
     <template #[`item.actions`]="{ item }">
       <ActionsMenu
@@ -93,7 +95,9 @@
   <ConfirmDialog ref="confirm" :text-cols="6" :action-cols="5" />
 </template>
 
-<script>
+<script setup>
+import { inject, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import api from '@/api/study'
 import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
 import filteringParameters from '@/utils/filteringParameters'
@@ -105,139 +109,110 @@ import { useAccessGuard } from '@/composables/accessGuard'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 import _isEmpty from 'lodash/isEmpty'
 
-export default {
-  components: {
-    ConfirmDialog,
-    NNTable,
-    StatusChip,
-    StudyStatusForm,
-    ActionsMenu,
+const { t } = useI18n()
+const notificationHub = inject('notificationHub')
+const accessGuard = useAccessGuard()
+const studiesGeneralStore = useStudiesGeneralStore()
+
+const headers = [
+  { title: '', key: 'actions', width: '1%' },
+  {
+    title: t('Study.status'),
+    key: 'current_metadata.version_metadata.study_status',
   },
-  inject: ['notificationHub'],
-  setup() {
-    const accessGuard = useAccessGuard()
-    const studiesGeneralStore = useStudiesGeneralStore()
-    return {
-      studiesGeneralStore,
-      ...accessGuard,
-    }
+  {
+    title: t('_global.version'),
+    key: 'current_metadata.version_metadata.version_number',
   },
-  data() {
-    return {
-      editedStudy: null,
-      headers: [
-        { title: '', key: 'actions', width: '1%' },
-        {
-          title: this.$t('Study.status'),
-          key: 'current_metadata.version_metadata.study_status',
-        },
-        {
-          title: this.$t('_global.version'),
-          key: 'current_metadata.version_metadata.version_number',
-        },
-        {
-          title: this.$t('Study.release_description'),
-          key: 'current_metadata.version_metadata.version_description',
-        },
-        {
-          title: this.$t('_global.modified'),
-          key: 'current_metadata.version_metadata.version_timestamp',
-        },
-        {
-          title: this.$t('_global.modified_by'),
-          key: 'current_metadata.version_metadata.version_author',
-        },
-      ],
-      loading: false,
-      lockedHistory: [],
-      showStatusForm: false,
-      statusAction: null,
-      items: [],
-      total: 0,
-      actions: [
-        {
-          label: this.$t('StudyTable.select'),
-          icon: 'mdi-check-circle-outline',
-          iconColor: 'primary',
-          click: this.selectStudyVersion,
-        },
-      ],
-      latestStudy: {},
-    }
+  {
+    title: t('Study.release_description'),
+    key: 'current_metadata.version_metadata.version_description',
   },
-  methods: {
-    checkIfSelectable(studyVersion) {
-      return (
-        studyVersion.current_metadata.version_metadata.version_number !==
-          this.studiesGeneralStore.selectedStudyVersion ||
-        studyVersion.current_metadata.version_metadata.study_status !==
-          this.studiesGeneralStore.selectedStudy.current_metadata
-            .version_metadata.study_status
-      )
-    },
-    async selectStudyVersion(studyVersion) {
-      await this.studiesGeneralStore.selectStudy(studyVersion, true)
-    },
-    closeEditForm() {
-      this.showEditForm = false
-      this.fetchItems()
-    },
-    closeStatusForm() {
-      this.loading = false
-      this.showStatusForm = false
-    },
-    fetchItems(filters, options, filtersUpdated) {
-      const params = filteringParameters.prepareParameters(
-        options,
-        filters,
-        filtersUpdated
-      )
-      api
-        .getStudySnapshotHistory(
-          this.studiesGeneralStore.selectedStudy.uid,
-          params
-        )
-        .then((resp) => {
-          this.items = resp.data.items
-          this.total = resp.data.total
-          if (_isEmpty(params.sort_by) && _isEmpty(params.filters)) {
-            this.latestStudy = resp.data.items[0]
-          }
-        })
-    },
-    isLatestStudySelected() {
-      return (
-        this.latestStudy.current_metadata.version_metadata.version_number ===
-        this.studiesGeneralStore.selectedStudy.current_metadata.version_metadata
-          .version_number
-      )
-    },
-    releaseStudy() {
-      this.loading = true
-      this.statusAction = 'release'
-      this.showStatusForm = true
-    },
-    lockStudy() {
-      this.loading = true
-      this.statusAction = 'lock'
-      this.showStatusForm = true
-    },
-    async refreshData() {
-      this.fetchItems()
-    },
-    async unlockStudy() {
-      this.loading = true
-      const resp = await api.unlockStudy(
-        this.studiesGeneralStore.selectedStudy.uid
-      )
-      await this.studiesGeneralStore.selectStudy(resp.data)
-      this.notificationHub.add({
-        msg: this.$t('StudyStatusTable.unlock_success'),
-        type: 'success',
-      })
-      this.loading = false
-      this.fetchItems()
-    },
+  {
+    title: t('_global.modified'),
+    key: 'current_metadata.version_metadata.version_timestamp',
   },
+  {
+    title: t('_global.modified_by'),
+    key: 'current_metadata.version_metadata.version_author',
+  },
+]
+const loading = ref(false)
+const showStatusForm = ref(false)
+const statusAction = ref(null)
+const items = ref([])
+const total = ref(0)
+const actions = [
+  {
+    label: t('StudyTable.select'),
+    icon: 'mdi-check-circle-outline',
+    iconColor: 'primary',
+    click: selectStudyVersion,
+  },
+]
+const latestStudy = ref({})
+
+function checkIfSelectable(studyVersion) {
+  return (
+    studyVersion.current_metadata.version_metadata.version_number !==
+      studiesGeneralStore.selectedStudyVersion ||
+    studyVersion.current_metadata.version_metadata.study_status !==
+      studiesGeneralStore.selectedStudy.current_metadata.version_metadata
+        .study_status
+  )
+}
+async function selectStudyVersion(studyVersion) {
+  await studiesGeneralStore.selectStudy(studyVersion, true)
+}
+function closeStatusForm() {
+  loading.value = false
+  showStatusForm.value = false
+}
+function fetchItems(filters, options, filtersUpdated) {
+  const params = filteringParameters.prepareParameters(
+    options,
+    filters,
+    filtersUpdated
+  )
+  api
+    .getStudySnapshotHistory(studiesGeneralStore.selectedStudy.uid, params)
+    .then((resp) => {
+      items.value = resp.data.items
+      total.value = resp.data.total
+      if (_isEmpty(params.sort_by) && _isEmpty(params.filters)) {
+        latestStudy.value = resp.data.items[0]
+      }
+    })
+}
+function isLatestStudySelected() {
+  return (
+    latestStudy.value.current_metadata.version_metadata.version_number ===
+    studiesGeneralStore.selectedStudy.current_metadata.version_metadata
+      .version_number
+  )
+}
+function releaseStudy() {
+  loading.value = true
+  statusAction.value = 'release'
+  showStatusForm.value = true
+}
+function lockStudy() {
+  loading.value = true
+  statusAction.value = 'lock'
+  showStatusForm.value = true
+}
+async function refreshData() {
+  fetchItems()
+}
+async function unlockStudy() {
+  loading.value = true
+  const resp = await api.unlockStudy(studiesGeneralStore.selectedStudy.uid)
+  await studiesGeneralStore.selectStudy(resp.data)
+  notificationHub.add({
+    msg: t('StudyStatusTable.unlock_success'),
+    type: 'success',
+  })
+  loading.value = false
+  fetchItems()
 }
 </script>

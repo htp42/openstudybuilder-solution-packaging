@@ -4,6 +4,7 @@
     :scrollable="scrollable"
     persistent
     :max-width="maxWidth"
+    v-bind="$attrs"
     @keydown.esc="cancel"
   >
     <v-card data-cy="form-body" elevation="0" rounded="xl">
@@ -60,7 +61,7 @@
             data-cy="save-button"
             color="secondary"
             variant="flat"
-            width="120px"
+            min-width="120px"
             :loading="working"
             :disabled="actionDisabled"
             rounded
@@ -152,12 +153,6 @@ export default {
     cancel() {
       this.working = false
       this.$emit('close')
-    },
-    disableActions() {
-      this.actionDisabled = true
-    },
-    enableActions() {
-      this.actionDisabled = false
     },
     async confirm(message, options) {
       return await this.$refs.confirm.open(message, options)

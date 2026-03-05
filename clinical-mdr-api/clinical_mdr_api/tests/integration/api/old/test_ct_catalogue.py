@@ -49,7 +49,7 @@ def test_get_catalogue_changes_returned_valid_data(api_client):
                 "name": "new_name",
                 "definition": "codelist_added",
                 "extensible": False,
-                "ordinal": False,
+                "is_ordinal": False,
             },
             "uid": "added_codelist_uid",
             "change_date": "2020-06-26T00:00:00Z",
@@ -61,7 +61,7 @@ def test_get_catalogue_changes_returned_valid_data(api_client):
         {
             "value_node": {
                 "left_only": {},
-                "in_common": {"extensible": False, "ordinal": False},
+                "in_common": {"extensible": False, "is_ordinal": False},
                 "different": {"name": {"left": "old_name", "right": "new_name"}},
                 "right_only": {"definition": "new_definition"},
             },
@@ -77,7 +77,7 @@ def test_get_catalogue_changes_returned_valid_data(api_client):
                 "name": "new_name",
                 "definition": "codelist_added",
                 "extensible": False,
-                "ordinal": False,
+                "is_ordinal": False,
             },
         },
     ]

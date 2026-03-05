@@ -1,3 +1,4 @@
+export let element_uid
 let type_uid, subType_uid
 const elementSubTypesUrl = `/study-elements/allowed-element-configs`
 const createElementUrl = (study_uid) => `/studies/${study_uid}/study-elements`
@@ -10,7 +11,7 @@ Cypress.Commands.add('getElementTypeAndSubType', (subTypeName) => {
 })
 
 Cypress.Commands.add('addElementToStudy', (study_uid, element_name) => {
-  cy.sendPostRequest(createElementUrl(study_uid), addElementBody(type_uid, subType_uid, element_name))
+  cy.sendPostRequest(createElementUrl(study_uid), addElementBody(type_uid, subType_uid, element_name)).then(response => element_uid = response.body.element_uid)
 })
 
 const addElementBody = (typeUid, subtypeUid, name) => {

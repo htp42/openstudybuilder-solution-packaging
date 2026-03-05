@@ -33,7 +33,7 @@ def test_data():
 def test_create_a_new_odm_vendor_element(api_client):
     data = {
         "library_name": "Sponsor",
-        "name": "nameTwo",
+        "name": "NameTwo",
         "compatible_types": ["FormDef"],
         "vendor_namespace_uid": "odm_vendor_namespace1",
     }
@@ -46,7 +46,7 @@ def test_create_a_new_odm_vendor_element(api_client):
     assert res["compatible_types"] == ["FormDef"]
     assert res["uid"] == "OdmVendorElement_000001"
     assert res["library_name"] == "Sponsor"
-    assert res["name"] == "nameTwo"
+    assert res["name"] == "NameTwo"
     assert res["end_date"] is None
     assert res["status"] == "Draft"
     assert res["version"] == "0.1"
@@ -84,7 +84,7 @@ def test_cannot_create_a_new_odm_vendor_element_without_providing_compatible_typ
 ):
     data = {
         "library_name": "Sponsor",
-        "name": "nameTwo",
+        "name": "NameTwo",
         "compatible_types": [],
         "vendor_namespace_uid": "odm_vendor_namespace1",
     }
@@ -94,6 +94,7 @@ def test_cannot_create_a_new_odm_vendor_element_without_providing_compatible_typ
 
     res = response.json()
 
+    assert res["type"] == "RequestValidationError"
     assert res["details"] == [
         {
             "error_code": "too_short",
@@ -104,12 +105,43 @@ def test_cannot_create_a_new_odm_vendor_element_without_providing_compatible_typ
     ]
 
 
+def test_cannot_create_a_new_odm_vendor_element_without_first_char_uppercase(
+    api_client,
+):
+    data = {
+        "library_name": "Sponsor",
+        "name": "lowercase",
+        "compatible_types": ["FormDef"],
+        "vendor_namespace_uid": "odm_vendor_namespace1",
+    }
+    response = api_client.post("concepts/odms/vendor-elements", json=data)
+
+    assert_response_status_code(response, 400)
+
+    res = response.json()
+
+    assert res["type"] == "RequestValidationError"
+    assert res["details"] == [
+        {
+            "ctx": {
+                "error": {},
+            },
+            "error_code": "value_error",
+            "field": [
+                "body",
+                "name",
+            ],
+            "msg": "Value error, Provided value 'lowercase' for 'name' is invalid. The first character must be uppercase.",
+        },
+    ]
+
+
 def test_cannot_create_a_new_odm_vendor_element_if_odm_vendor_namespace_doesnt_exist(
     api_client,
 ):
     data = {
         "library_name": "Sponsor",
-        "name": "nameTwo",
+        "name": "NameTwo",
         "compatible_types": ["FormDef"],
         "vendor_namespace_uid": "wrong_uid",
     }
@@ -129,7 +161,7 @@ def test_cannot_create_a_new_odm_vendor_element_if_odm_vendor_namespace_doesnt_e
 def test_cannot_create_a_new_odm_vendor_element_with_existing_name(api_client):
     data = {
         "library_name": "Sponsor",
-        "name": "nameTwo",
+        "name": "NameTwo",
         "compatible_types": ["FormDef"],
         "vendor_namespace_uid": "odm_vendor_namespace1",
     }
@@ -140,7 +172,7 @@ def test_cannot_create_a_new_odm_vendor_element_with_existing_name(api_client):
     res = response.json()
 
     assert res["type"] == "AlreadyExistsException"
-    assert res["message"] == "ODM Vendor Element with Name 'nameTwo' already exists."
+    assert res["message"] == "ODM Vendor Element with Name 'NameTwo' already exists."
 
 
 def test_cannot_inactivate_an_odm_vendor_element_that_is_in_draft_status(api_client):
@@ -176,7 +208,7 @@ def test_create_an_odm_form(api_client):
         "oid": "oid1",
         "sdtm_version": "0.1",
         "repeating": "No",
-        "descriptions": [],
+        "translated_texts": [],
         "aliases": [],
     }
     response = api_client.post("concepts/odms/forms", json=data)
@@ -196,7 +228,7 @@ def test_create_an_odm_form(api_client):
     assert res["version"] == "0.1"
     assert res["change_description"] == "Initial version"
     assert res["author_username"] == "unknown-user@example.com"
-    assert res["descriptions"] == []
+    assert res["translated_texts"] == []
     assert res["aliases"] == []
     assert res["item_groups"] == []
     assert res["vendor_elements"] == []
@@ -206,12 +238,22 @@ def test_create_an_odm_form(api_client):
 
 
 def test_add_odm_vendor_element_to_the_odm_form(api_client):
-    data = [{"uid": "OdmVendorElement_000001", "value": "value1"}]
-    response = api_client.post(
-        "concepts/odms/forms/OdmForm_000001/vendor-elements", json=data
-    )
+    data = {
+        "library_name": "Sponsor",
+        "name": "name1",
+        "oid": "oid1",
+        "sdtm_version": "0.1",
+        "repeating": "No",
+        "translated_texts": [],
+        "aliases": [],
+        "vendor_elements": [{"uid": "OdmVendorElement_000001", "value": "value1"}],
+        "vendor_element_attributes": [],
+        "vendor_attributes": [],
+        "change_description": "change desc",
+    }
+    response = api_client.patch("concepts/odms/forms/OdmForm_000001", json=data)
 
-    assert_response_status_code(response, 201)
+    assert_response_status_code(response, 200)
 
     res = response.json()
 
@@ -226,11 +268,11 @@ def test_add_odm_vendor_element_to_the_odm_form(api_client):
     assert res["change_description"] == "Initial version"
     assert res["author_username"] == "unknown-user@example.com"
     assert res["sdtm_version"] == "0.1"
-    assert res["descriptions"] == []
+    assert res["translated_texts"] == []
     assert res["aliases"] == []
     assert res["item_groups"] == []
     assert res["vendor_elements"] == [
-        {"uid": "OdmVendorElement_000001", "name": "nameTwo", "value": "value1"}
+        {"uid": "OdmVendorElement_000001", "name": "NameTwo", "value": "value1"}
     ]
     assert res["vendor_attributes"] == []
     assert res["vendor_element_attributes"] == []

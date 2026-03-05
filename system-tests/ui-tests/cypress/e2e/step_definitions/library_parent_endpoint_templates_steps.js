@@ -1,4 +1,4 @@
-import { fillTemplateNameAndContinue } from './library_syntax_templates_common'
+import { fillTemplateName } from './library_syntax_templates_common'
 const { Given, When, Then } = require('@badeball/cypress-cucumber-preprocessor')
 
 let defaultEndpointName
@@ -19,7 +19,7 @@ When('The endpoint metadata update is started', () => fillBaseData(`Update${Date
 
 When('The endpoint template edition form is filled with data', () => fillBaseData(`CancelEdit${Date.now()}`))
 
-When('The endpoint template form is filled with already existing name', () => fillTemplateNameAndContinue(defaultEndpointName))
+When('The endpoint template form is filled with already existing name', () => fillBaseData(defaultEndpointName))
 
 When('[API] Endpoint template is inactivated', () => cy.inactivateEndpoint())
 
@@ -46,5 +46,5 @@ function createEndpointViaApi(customName = '') {
 
 function fillBaseData(endpointName) {
   defaultEndpointName = endpointName
-  fillTemplateNameAndContinue(defaultEndpointName)
+  fillTemplateName(defaultEndpointName)
 }

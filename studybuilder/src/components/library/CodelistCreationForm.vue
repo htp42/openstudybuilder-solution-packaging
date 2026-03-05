@@ -107,10 +107,10 @@
         <v-row>
           <v-col>
             <v-switch
-              v-model="form.ordinal"
+              v-model="form.is_ordinal"
               color="primary"
               data-cy="ordinal-toggle"
-              :label="$t('CodelistAttributesForm.ordinal')"
+              :label="$t('CodelistAttributesForm.is_ordinal')"
               density="compact"
             />
           </v-col>
@@ -154,7 +154,7 @@ const catalogues = computed(() => ctCataloguesStore.catalogues)
 
 const form = ref({
   extensible: false,
-  ordinal: false,
+  is_ordinal: false,
   library_name: 'Sponsor',
   template_parameter: false,
 })
@@ -172,7 +172,7 @@ const helpItems = [
   'CodelistAttributesForm.subm_value',
   'CodelistAttributesForm.nci_pref_name',
   'CodelistAttributesForm.extensible',
-  'CodelistAttributesForm.ordinal',
+  'CodelistAttributesForm.is_ordinal',
   'CodelistAttributesForm.definition',
 ]
 const steps = [

@@ -5,9 +5,6 @@ from starlette.requests import Request
 
 from clinical_mdr_api.models.concepts.odms.odm_common_models import (
     OdmElementWithParentUid,
-    OdmVendorElementRelationPostInput,
-    OdmVendorRelationPostInput,
-    OdmVendorsPostInput,
 )
 from clinical_mdr_api.models.concepts.odms.odm_item import (
     OdmItem,
@@ -56,11 +53,7 @@ OdmItemUID = Path(description="The unique id of the ODM Item.")
             "significant_digits",
             "origin",
             "prompt",
-            "descriptions=descriptions.description",
-            "instructions=descriptions.instruction",
-            "languages=descriptions.language",
-            "instructions=descriptions.instruction",
-            "sponsor_instructions=descriptions.sponsor_instruction",
+            "translated_texts",
             "repeating",
             "start_date",
             "end_date",
@@ -91,7 +84,7 @@ OdmItemUID = Path(description="The unique id of the ODM Item.")
             "significant_digits",
             "origin",
             "prompt",
-            "descriptions",
+            "translated_texts",
             "repeating",
             "start_date",
             "end_date",
@@ -436,152 +429,6 @@ def reactivate_odm_item(odm_item_uid: Annotated[str, OdmItemUID]) -> OdmItem:
     odm_item_service = OdmItemService()
     return odm_item_service.reactivate_retired(
         uid=odm_item_uid, cascade_reactivate=True, force_new_value_node=True
-    )
-
-
-@router.post(
-    "/{odm_item_uid}/vendor-elements",
-    dependencies=[security, rbac.LIBRARY_WRITE],
-    summary="Adds ODM Vendor Elements to the ODM Item.",
-    status_code=201,
-    responses={
-        403: _generic_descriptions.ERROR_403,
-        201: {
-            "description": "Created - The ODM Vendor Elements were successfully added to the ODM Item."
-        },
-        400: {
-            "model": ErrorResponse,
-            "description": "Forbidden - Reasons include e.g.: \n",
-        },
-        404: {
-            "model": ErrorResponse,
-            "description": "Not Found - The ODM Vendor Elements with the specified 'odm_item_uid' wasn't found.",
-        },
-    },
-)
-def add_vendor_elements_to_odm_item(
-    odm_item_uid: Annotated[str, OdmItemUID],
-    odm_vendor_relation_post_input: Annotated[
-        list[OdmVendorElementRelationPostInput], Body()
-    ],
-    override: Annotated[
-        bool,
-        Query(
-            description="If true, all existing ODM Vendor Element relationships will be replaced with the provided ODM Vendor Element relationships.",
-        ),
-    ] = False,
-) -> OdmItem:
-    odm_item_service = OdmItemService()
-    return odm_item_service.add_vendor_elements(
-        uid=odm_item_uid,
-        odm_vendor_relation_post_input=odm_vendor_relation_post_input,
-        override=override,
-    )
-
-
-@router.post(
-    "/{odm_item_uid}/vendor-attributes",
-    dependencies=[security, rbac.LIBRARY_WRITE],
-    summary="Adds ODM Vendor Attributes to the ODM Item.",
-    status_code=201,
-    responses={
-        403: _generic_descriptions.ERROR_403,
-        201: {
-            "description": "Created - The ODM Vendor Attributes were successfully added to the ODM Item."
-        },
-        400: {
-            "model": ErrorResponse,
-            "description": "Forbidden - Reasons include e.g.: \n",
-        },
-        404: {
-            "model": ErrorResponse,
-            "description": "Not Found - The ODM Vendor Attributes with the specified 'odm_item_uid' wasn't found.",
-        },
-    },
-)
-def add_vendor_attributes_to_odm_item(
-    odm_item_uid: Annotated[str, OdmItemUID],
-    odm_vendor_relation_post_input: Annotated[list[OdmVendorRelationPostInput], Body()],
-    override: Annotated[
-        bool,
-        Query(
-            description="""If true, all existing ODM Vendor Attribute relationships will be replaced with the provided ODM Vendor Attribute relationships.""",
-        ),
-    ] = False,
-) -> OdmItem:
-    odm_item_service = OdmItemService()
-    return odm_item_service.add_vendor_attributes(
-        uid=odm_item_uid,
-        odm_vendor_relation_post_input=odm_vendor_relation_post_input,
-        override=override,
-    )
-
-
-@router.post(
-    "/{odm_item_uid}/vendor-element-attributes",
-    dependencies=[security, rbac.LIBRARY_WRITE],
-    summary="Adds ODM Vendor Element attributes to the ODM Item.",
-    status_code=201,
-    responses={
-        403: _generic_descriptions.ERROR_403,
-        201: {
-            "description": "Created - The ODM Vendor Element attributes were successfully added to the ODM Item."
-        },
-        400: {
-            "model": ErrorResponse,
-            "description": "Forbidden - Reasons include e.g.: \n",
-        },
-        404: {
-            "model": ErrorResponse,
-            "description": "Not Found - The ODM Vendor Element attributes with the specified 'odm_item_uid' wasn't found.",
-        },
-    },
-)
-def add_vendor_element_attributes_to_odm_item(
-    odm_item_uid: Annotated[str, OdmItemUID],
-    odm_vendor_relation_post_input: Annotated[list[OdmVendorRelationPostInput], Body()],
-    override: Annotated[
-        bool,
-        Query(
-            description="""If true, all existing ODM Vendor Element attribute relationships will be replaced with the provided ODM Vendor Element attribute relationships.""",
-        ),
-    ] = False,
-) -> OdmItem:
-    odm_item_service = OdmItemService()
-    return odm_item_service.add_vendor_element_attributes(
-        uid=odm_item_uid,
-        odm_vendor_relation_post_input=odm_vendor_relation_post_input,
-        override=override,
-    )
-
-
-@router.post(
-    "/{odm_item_uid}/vendors",
-    dependencies=[security, rbac.LIBRARY_WRITE],
-    summary="Manages all ODM Vendors by replacing existing ODM Vendors by provided ODM Vendors.",
-    status_code=201,
-    responses={
-        403: _generic_descriptions.ERROR_403,
-        201: {
-            "description": "Created - The ODM Vendors were successfully added to the ODM Item."
-        },
-        400: {
-            "model": ErrorResponse,
-            "description": "Forbidden - Reasons include e.g.: \n",
-        },
-        404: {
-            "model": ErrorResponse,
-            "description": "Not Found - The ODM Vendors with the specified 'odm_item_uid' wasn't found.",
-        },
-    },
-)
-def manage_vendors_of_odm_item_group(
-    odm_item_uid: Annotated[str, OdmItemUID],
-    odm_vendors_post_input: Annotated[OdmVendorsPostInput, Body()],
-) -> OdmItem:
-    odm_item_group_service = OdmItemService()
-    return odm_item_group_service.manage_vendors(
-        uid=odm_item_uid, odm_vendors_post_input=odm_vendors_post_input
     )
 
 

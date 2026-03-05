@@ -173,7 +173,10 @@
         "back": "Back",
         "select_all": "Select All",
         "unselect_all": "Unselect All",
-        "save_question": "Are you sure you want to save your changes?"
+        "save_question": "Are you sure you want to save your changes?",
+        "go_to": "Go to ↓",
+        "optional": " (Optional)",
+        "edit_in_table": "Edit in table"
     },
     "_errors": {
         "general": "Something went wrong. Please try again later.",
@@ -201,9 +204,6 @@
             "oid": "Specify an 'Object Identifier' as a unique ID in the application. As we are defining a Form, it could starts with F.XXX. This will be used as the /ODM/FormDef/@OID attribute in the ODM-XML file (Mandatory field, but it can be auto-populated if left blank).",
             "repeating": "Specify if the Form is repeating over time or not. This will be used as the /ODM/FormDef/@Repeating with a Yes/No answer.",
             "description": "A free-text description of the containing study metadata component. This information will be used as the /ODM/FormDef/Description/TranslatedText.",
-            "sponsor_instruction": "Provide here the text explaining the way this Form will be used in the application (as a Sponsor note). Note that here you can use the Rich Editor to add some html tag. This will be used as the /ODM/FormDef[@sponsorInstruction] attribute in the ODM-XML file.",
-            "displayed_text": "Specify here the label of the Form (using the default language). This will be used as the /ODM/FormDef/Description/TranslatedText/ tag in the ODM-XML file. When the multilingual is activated then, the stepper 'Translations' will allow the display text of the Form to be translated accordingly.",
-            "instruction": "Provide here the help text that could be displayed in a CRF as an OnlineHelp. Note that here you can use the Rich Editor to add some html tag. This will be used as the /ODM/FormDef/[@Instruction] name attribute in the ODM-XML file.",
             "vendor_extensions": "This stepper is dedicated to the extension of the Form by providing both Elements and / or Attributes. This will then be added to the ODM/FormDef as a Vendor like for example osb:displayAsTable='Yes' or as an extension under this OMD level. XML namespaces are used for providing uniquely named elements and attributes in an XML document. Provide also the datatype for this Vendor Extension and note that the value can be verified against a dedicated list of accepted reply.",
             "aliases": "An Alias provides an additional name for an element, here for the Form element. The Context attribute specifies the application domain in which this additional name is relevant. This will be used as the /ODM/FormDef/Alias[@Context] name attribute in the ODM-XML file.",
             "context": "The Context attribute specifies the application domain in which this additional name is relevant. You could use for example 'CDASH/SDTM' with a 'Name' = 'DM:Demographics' and then the ODM-XML view will display it as an annotation."
@@ -212,10 +212,6 @@
             "name": "Provide the name of the ItemGroup. An ItemGroup describes a type of item group (a group of clinical questions that are meaningful together) that can occur within a study. This will be used as the /ODM/ItemGroupDef/@name attribute in the ODM-XML file (Mandatory field).",
             "oid": "Specify an 'Object Identifier' as a unique ID in the application. As we are defining an ItemGroup, it could starts with G.XXX. This will be used as the /ODM/ItemGroupDef/@OID attribute in the ODM-XML file (Mandatory field, but it can be auto-populated if left blank).",
             "repeating": "Specify if the ItemGroup is repeating over time or not. This will be used as the /ODM/ItemGroupDef/@Repeating with a Yes/No answer.",
-            "description": "A free-text description of the containing study metadata component. This information will be used as the /ODM/ItemGroupDef/Description/TranslatedText.",
-            "sponsor_instruction": "Provide here the text explaining the way this Item Group will be used in the application (as a Sponsor note). Note that here you can use the Rich Editor to add some html tag. This will be used as the /ODM/ItemGroupDef[@osb:sponsorInstruction] attribute in the ODM-XML file.",
-            "displayed_text": "Specify here the label of the Item Group (using the default language). This will be used as the /ODM/ItemGroupDef/Description/TranslatedText/ tag in the ODM-XML file. When the multilingual is activated then, the stepper 'Translations' will allow the display text of the Form to be translated accordingly.",
-            "instruction": "Provide here the help text that could be displayed in a CRF as an OnlineHelp. Note that here you can use the Rich Editor to add some html tag. This will be used as the /ODM/ItemGroupDef[@osb:instruction] attribute in the ODM-XML file.",
             "aliases": "An Alias provides an additional name for an element, here for the ItemGroup element. The Context attribute specifies the application domain in which this additional name is relevant. This will be used as the /ODM/ItemGroupDef/Alias[@Context] name attribute in the ODM-XML file.",
             "context": "The Context attribute specifies the application domain in which this additional name is relevant. You could use for example 'CDASH/SDTM' with a 'Name' = 'DM:Demographics|DS:Disposition' and then the ODM-XML view will display it as an annotation for two SDTM Domain."
         },
@@ -226,12 +222,9 @@
             "length": "If DataType=integer, Length=N is a requirement that the receiving system be able to process and store all whole number values of magnitude less than 10N. Larger values may be rejected. If DataType=float, Length=N and SignificantDigits=S is a requirement that the receiving system be able to process and store all numeric values of magnitude less than 10N-S that are multiples of 10-S. Larger values may be rejected. Intermediate values may be rounded to the nearest multiple of 10-S. If DataType=text, Length=N is a requirement that the receiving system be able to process and store all text string values of length less than or equal to N. All characters are allowed in text string values. Data of type Text should be transmitted in an ItemDataString element.",
             "significant_digits": "Length and SignificantDigits are statements about an item's data values, not the number of characters used to represent these values in value elements. For example, the character '<' might be represented as '&lt;'. Data characters that are not included in the encoding character set for a particular ODM file must be represented using XML entities or character references. For example, Æ could be represented as '&#198;'.",
             "sas_name": "The SAS Name could be used to store legacy variable reference.",
-            "sds_name": "The SDSVarName attribute carry submission information as described in the latest version of CDISC SDTM. It should use a SDTMIG variable reference.",
-            "origin": "Origin attribute carry submission information as described in the latest version of CDISC SDTM.",
-            "comment": "Comment attribute carry submission information as described in the latest version of CDISC SDTM.",
-            "sponsor_instruction": "Provide here the text explaining the way this Item will be used in the application (as a Sponsor note). Note that here you can use the Rich Editor to add some html tag. This will be used as the /ODM/ItemDef[@osb:sponsorInstruction] attribute in the ODM-XML file.",
-            "displayed_text": "Specify here the label of the Item (using the default language). This will be used as the /ODM/ItemDef/Description/TranslatedText/ tag in the ODM-XML file. When the multilingual is activated then, the stepper 'Translations' will allow the display text of the Form to be translated accordingly.",
-            "instruction": "Provide here the help text that could be displayed in a CRF as an OnlineHelp. Note that here you can use the Rich Editor to add some html tag. This will be used as the /ODM/ItemDef[@osb:instruction] attribute in the ODM-XML file.",
+            "sds_name": "The SDSVarName attribute carries submission information as described in the latest version of CDISC SDTM. It should use a SDTMIG variable reference.",
+            "origin": "Origin attribute carries submission information as described in the latest version of CDISC SDTM.",
+            "comment": "Comment attribute carries submission information as described in the latest version of CDISC SDTM.",
             "vendor_extensions": "This stepper is dedicated to the extension of the Form by providing both Elements and / or Attributes. This will then be added to the ODM/ItemDef as a Vendor like for example osb:displayAsTable='Yes' or as an extension under this OMD level. XML namespaces are used for providing uniquely named elements and attributes in an XML document. Provide also the datatype for this Vendor Extension and note that the value can be verified against a dedicated list of accepted reply.",
             "aliases": "An Alias provides an additional name for an element, here for the Item element. The Context attribute specifies the application domain in which this additional name is relevant. This will be used as the /ODM/ItemDef/Alias[@Context] name attribute in the ODM-XML file.",
             "context": "The Context attribute specifies the application domain in which this additional name is relevant. You could use for example 'CDASH/SDTM' with a 'Name' = 'VS:VSORRES' and then the ODM-XML view will display it as an annotation for two SDTM Domain."
@@ -457,7 +450,7 @@
             "subm_value": "Provide a unique submission value. If a duplicate exists then the application will request a unique value.",
             "nci_pref_name": "Provide if applicable a preferred name",
             "extensible": "Allow addition of new term(s)",
-            "ordinal": "Mark the codelist as ordinal, meaning that the 'order' of the terms represent their numeric value.",
+            "is_ordinal": "Mark the codelist as ordinal, meaning that the 'order' of the terms represent their numeric value.",
             "definition": "Provide a complete definition of the code list"
         },
         "CodelistTermCreationForm": {
@@ -892,7 +885,7 @@
             "settings": "The 'Settings' option allow you to control the time unit (days/weeks) for the SoA and whether or not you need baseline visit (eg. randomisation) shown as time 0",
             "study_activities": "The activities can be selected from the library, from other studies or activity placeholders can be created for requesting new activities.",
             "detailed_soa": "The Detailed SoA is where you define at what visit(s) an activity is needed. The SoA has four levels: <br /> 1) SoA group <br /> 2) Activity group <br /> 3) Activity subgroup <br /> 4) Activity <br /> Click the circle to select or unselect that an activity should be done at that visit. Click the eye icon to toggle the visibility of an activity level in the Protocol SoA. If an activity level is hidden, the timings ticked will 'inherit up' a level, so you can hide the Activity and Activity subgroup level to just include the Activity group in the Protocol SoA (for example you might want to hide e.g. 'Height' and 'Weight' and just include 'Body measurements' in the Protocol SoA).",
-            "detailed_soa_actions": "Use the ellipsis (three dots) to the left of an activity to access these: <br /><b> Edit Activity: </b> Adjust details in an activity. <br /><b> Add Activity: </b>Add an activity above the selected activity (you can change the order of activities from the 'Study Activities' tab). <br /><b> Exchange Activity: </b> Replace an activity with a new activity while keeping visits and footnotes in the detailed SoA. <br /><b> Remove Activity: </b> Remove the activity, any visits and references to footnotes that have been added to this activity. A removed activity can be added again under the ‘Study Activities’ tab. Footnotes will not be removed, so can be linked to again.",
+            "detailed_soa_actions": "Use the ellipsis (three dots) to the left of an activity to access these: <br /><b> Edit Activity: </b> Adjust details in an activity. <br /><b> Add Activity: </b>Add an activity above the selected activity (you can change the order of activities from the 'Study Activities' tab). <br /><b> Exchange Activity: </b> Replace an activity with a new activity while keeping visits and footnotes in the detailed SoA. <br /><b> Remove Activity: </b> Remove the activity, any visits and references to footnotes that have been added to this activity. A removed activity can be added again under the 'Study Activities' tab. Footnotes will not be removed, so can be linked to again.",
             "detailed_soa_reordering": "You can use drag-and-drop for easy reordering of rows in the detailed SoA. To enable, click the 3 dots to the left of a row title and select 'Reorder' in the menu. Now you can reorder rows using your mouse - simply drag-and-drop on the arrow-icon to the left of the row. Reordering is done within a context - so if you select 'Reorder' on a SoA group, then you can reorder only SoA groups, whereas if you select 'Reorder' on an activity, then you can reorder only within that group. When you are done, click the 'Finish reordering' button to exit the reordering mode.",
             "study_footnotes": "Select or create footnotes to be used in the  protocol SoA. Footnotes can be selected from library, other studies or created from scratch. The footnotes will automatically be ordered by occurrence in the SoA.",
             "hidden_activity_footnotes": "If you link to an activity that is hidden, the footnote will not 'inherit up' to a visible level above. Instead a warning will be shown under 'Linked to' and this must then be addressed to ensure proper display of footnotes in the Protocol SoA.",
@@ -936,11 +929,11 @@
             "content_line_5": "The page will list the available study definition instances and their status.",
             "content_line_6": "The possible actions depend on the current state and status of the study.",
             "content_line_7": "When study is in <strong>Draft</strong> status the Release action is enabled",
-            "content_line_8": "The possible actions depend on the current state and status of the study.<br>This will create a stable persistent study instance that can be referred to for downstream usage, as a data snapshot reference in the repository.<br>A concurrent minor version number will automatically be assigned (0.1, 0.2, …, 1.1, 1.2, …).<br>The study will continue to be in ‘Draft’ status.<br>Release is like check-in in a document management system or a commit and push in a Git repository.",
+            "content_line_8": "The possible actions depend on the current state and status of the study.<br>This will create a stable persistent study instance that can be referred to for downstream usage, as a data snapshot reference in the repository.<br>A concurrent minor version number will automatically be assigned (0.1, 0.2, …, 1.1, 1.2, …).<br>The study will continue to be in 'Draft' status.<br>Release is like check-in in a document management system or a commit and push in a Git repository.",
             "content_line_9": "When study is in <strong>Draft</strong> status the Lock action is enabled",
-            "content_line_10": "This will create a versioned stable persistent study instance that can be referred to from downstream usage, as a data snapshot reference in the repository. The study will change status to ‘Locked’ and can no longer be edited. To continue to edit, an un-lock action must be done starting up a new version.<br>A concurrent major version number will automatically be assigned (1.0, 2.0, 3.0, …).<br>The locking process will also make a study release instance to ensure the latest release instance never is older than the latest locked instance.<br>Lock and Release is like creating a final approved version in a document management system or a merging a pull request into main in a Git repository.",
+            "content_line_10": "This will create a versioned stable persistent study instance that can be referred to from downstream usage, as a data snapshot reference in the repository. The study will change status to 'Locked' and can no longer be edited. To continue to edit, an un-lock action must be done starting up a new version.<br>A concurrent major version number will automatically be assigned (1.0, 2.0, 3.0, …).<br>The locking process will also make a study release instance to ensure the latest release instance never is older than the latest locked instance.<br>Lock and Release is like creating a final approved version in a document management system or a merging a pull request into main in a Git repository.",
             "content_line_11": "When study is in <strong>Locked</strong> status the Un-lock action is enabled",
-            "content_line_12": "This will bring the study back into the ‘Draft’ status where the study again can be edited.",
+            "content_line_12": "This will bring the study back into the 'Draft' status where the study again can be edited.",
             "study_sub_parts_body": "Specification for the study definition as a parent definition for several sub-study definitions, or as a sub-study definition under a parent. This is the approach for making a study specification for protocols holding multiple sub-study parts.",
             "protocol_version_body": "Specification of the relationship between versions of study definition instances and the corresponding protocol document versions."
         },
@@ -1007,9 +1000,9 @@
         },
         "StudyDataSpecifications": {
             "general": "The 'Data Specifications' page displays all selected study activities and allows linking each activity to its corresponding activity instances. Additionally for each activity instances the study supplier, importance or baseline flags may be defined (see 'Study Activity Instances' page). It can also visualize activities and their instances in the operational SoA view, showing their linkage with study visits (see 'Operational SoA' page).",
-            "instances_actions": "This table lists study activities and their instances. Each row shows one activity linked to one activity instance. If an activity is linked to multiple instances, it will appear in multiple rows, each showing a different instance. The State/Actions column shows the state of an activity or activity instance, or the action expected to be taken. There are six possible states/actions: <br/> 1) Review not needed <br/> 2) Review needed <br/> 3) Reviewed <br/> 4) Add instance <br/> 5) Remove instance <br/> 6) Not applicable <br/> 'Review not needed' requires no action from the user. It is a state specific to a mandatory activity instance, meaning the instance is required for the activity and is not expected to be removed. When the 'Review not needed' state is shown for an activity–activity instance pair, the 'Reviewed' checkbox is automatically checked. The row with the 'Review needed' state requires attention from the user. The user should verify whether the activity–activity instance pair meets study requirements. The activity instance may need to be changed to a different instance, or the activity may need to be linked to another activity instance. After the necessary changes are made, the user can select the 'Reviewed' checkbox for each row carrying the 'Review needed' state, which will change the state to 'Reviewed'. 'Add instance' state/action is displayed for an activity row that is not linked to any activity instance. The 'Reviewed' checkbox cannot be selected in this situation, because the expected action is to first create the relationship between the activity and an instance. 'Remove instance' is shown for an activity for which multiple instances are not allowed. This means that such an activity can only be paired with a single instance at the study level. The expected action from the user is to remove the unwanted activity–activity instance pair by clicking the ellipsis icon and selecting Delete Activity Instance relationship. 'Not applicable' is a state for activities that are not expected to be linked to any instances and for which the data collection attribute is set to NO. No user action is required. The 'Reviewed' checkbox cannot be checked for activities that carry the 'Not applicable' state. Please note that for rows with the 'Reviewed' and 'Review not needed' states, the 'Reviewed' checkbox may be ticked off. Clearing it will change the state/action to 'Review needed'",
-            "instances_ellipsis": "Use the ellipsis (three dots) to the left of an activity to access these options: <br/> 1) Edit Activity – Instance Relationship, <br/> 2) Delete Activity – Instance Relationship, <br/> 3) Update Instance to new version. <br/> The Edit option allows changing the activity–activity instance relationship for an activity. A new relationship (activity instance) can also be added. When adding or editing an instance, the data supplier (including data origin and data type), importance and baseline flags can be specified for the selected instance. These changes can also be made via the table edit mode — to open the table in this mode, click the pencil icon. The Delete option removes unwanted activity–activity instance pairs from the table. The Update Instance to New Version option updates an instance to the latest version available in the OpenStudyBuilder library. After an activity instance used in your trial has been updated in the library, you will be notified by a red exclamation‑mark icon displayed to the left of the activity row. In that situation, the Update Instance to New Version option becomes available; otherwise, this option is not availa-ble. If the user decides to update the instance to the latest version, the red exclamation‑mark icon will disappear. If the update is declined and the instance is kept as is, the red icon will be replaced by a yellow exclamation‑mark icon.",
-            "instances_exclamation": "All, Red and Yellow exclamation‑mark buttons are placed in the middle of the page just above the table. By default, the table is set to show all instances — the All button is turned on. However, the user may want to filter the table to see which study instances have been updated in the library to a new version. To do that, select the button with the red exclamation‑mark. To filter the table to see instances that were updated in the library but for which the user declined the update (instances kept as they are), select the button with the yellow exclamation‑mark.",
+            "instances_actions": "This table lists study activities and their instances. Each row shows one activity linked to one activity instance. If an activity is linked to multiple instances, it will appear in multiple rows, each showing a different instance. The State/Actions column shows the state of an activity or activity instance, or the action expected to be taken. There are six possible states/actions: <br/> 1) Review not needed <br/> 2) Review needed <br/> 3) Reviewed <br/> 4) Add instance <br/> 5) Remove instance <br/> 6) Not applicable <br/> 'Review not needed' requires no action from the user. It is a state specific to a mandatory activity instance, meaning the instance is required for the activity and is not expected to be removed. When the 'Review not needed' state is shown for an activity-activity instance pair, the 'Reviewed' checkbox is automatically checked. The row with the 'Review needed' state requires attention from the user. The user should verify whether the activity-activity instance pair meets study requirements. The activity instance may need to be changed to a different instance, or the activity may need to be linked to another activity instance. After the necessary changes are made, the user can select the 'Reviewed' checkbox for each row carrying the 'Review needed' state, which will change the state to 'Reviewed'. 'Add instance' state/action is displayed for an activity row that is not linked to any activity instance. The 'Reviewed' checkbox cannot be selected in this situation, because the expected action is to first create the relationship between the activity and an instance. 'Remove instance' is shown for an activity for which multiple instances are not allowed. This means that such an activity can only be paired with a single instance at the study level. The expected action from the user is to remove the unwanted activity-activity instance pair by clicking the ellipsis icon and selecting Delete Activity Instance relationship. 'Not applicable' is a state for activities that are not expected to be linked to any instances and for which the data collection attribute is set to NO. No user action is required. The 'Reviewed' checkbox cannot be checked for activities that carry the 'Not applicable' state. Please note that for rows with the 'Reviewed' and 'Review not needed' states, the 'Reviewed' checkbox may be ticked off. Clearing it will change the state/action to 'Review needed'",
+            "instances_ellipsis": "Use the ellipsis (three dots) to the left of an activity to access these options: <br/> 1) Edit Activity - Instance Relationship, <br/> 2) Delete Activity - Instance Relationship, <br/> 3) Update Instance to new version. <br/> The Edit option allows changing the activity-activity instance relationship for an activity. A new relationship (activity instance) can also be added. When adding or editing an instance, the data supplier (including data origin and data type), importance and baseline flags can be specified for the selected instance. These changes can also be made via the table edit mode — to open the table in this mode, click the pencil icon. The Delete option removes unwanted activity-activity instance pairs from the table. The Update Instance to New Version option updates an instance to the latest version available in the OpenStudyBuilder library. After an activity instance used in your trial has been updated in the library, you will be notified by a red exclamation-mark icon displayed to the left of the activity row. In that situation, the Update Instance to New Version option becomes available; otherwise, this option is not availa-ble. If the user decides to update the instance to the latest version, the red exclamation-mark icon will disappear. If the update is declined and the instance is kept as is, the red icon will be replaced by a yellow exclamation-mark icon.",
+            "instances_exclamation": "All, Red and Yellow exclamation-mark buttons are placed in the middle of the page just above the table. By default, the table is set to show all instances — the All button is turned on. However, the user may want to filter the table to see which study instances have been updated in the library to a new version. To do that, select the button with the red exclamation-mark. To filter the table to see instances that were updated in the library but for which the user declined the update (instances kept as they are), select the button with the yellow exclamation-mark.",
             "instances_updates": "By clicking the Review Activity Instance Updates button, the user can open a table that dis-plays all instances that were updated and require the user's decision to accept or decline. Users can review them and take action in a batch. Note that the table does not show instances that have been retired."
         },
         "DataSupplierView": {
@@ -1020,7 +1013,7 @@
                 "name": "Please enter a unique name for the data supplier. Note that the supplier you add must be assigned to a single data type, which will be used as the default.",
                 "supplier_type": "Data types are defined according to the sponsor-defined code list 'Data Supplier Type'. One supplier can be assigned to one (default) data type.",
                 "description": "Use this field for any extra descriptive notes about the supplier (e.g., former name).",
-                "order": "This is a sequence number indicating the supplier’s position in the dedicated pull-down list. By default, the field is auto-assigned with the lowest available integer.",
+                "order": "This is a sequence number indicating the supplier's position in the dedicated pull-down list. By default, the field is auto-assigned with the lowest available integer.",
                 "order_placeholder": "Auto-assigned",
                 "order_hint": "Leave empty to auto-assign, or enter specific order to insert at that position",
                 "api_base_url": "Provide API base URL if known.",
@@ -2426,7 +2419,8 @@
         "release_description": "Release description",
         "lock_description": "Lock description",
         "lock_success": "Study has been locked",
-        "release_success": "Study has been released"
+        "release_success": "Study has been released",
+        "description_placeholder": "Write a description of the version"
     },
     "StudyProtocolElementsView": {
         "title": "Protocol Elements",
@@ -2509,7 +2503,7 @@
         "submission_value": "Submission value",
         "definition": "Definition",
         "extensible": "Extensible",
-        "ordinal": "Ordinal",
+        "is_ordinal": "Ordinal",
         "new_attributes_version": "Create new attributes version",
         "new_attributes_version_success": "New version of attributes created",
         "approve_attributes_version": "Change status to Final",
@@ -2547,7 +2541,7 @@
         "nci_pref_name_hint": "Provide if applicable a preferred name",
         "extensible": "Extensible?",
         "extensible_hint": "Allow addition of new term(s)",
-        "ordinal": "Ordinal?",
+        "is_ordinal": "Ordinal?",
         "ordinal_hint": "Mark the codelist as ordinal, meaning that the 'order' of the terms represent their numeric value.",
         "definition": "Definition",
         "definition_hint": "Provide a complete definition of the code list"
@@ -3053,7 +3047,7 @@
         "select_columns": "Select columns"
     },
     "NNTableTooltips": {
-        "filters": "Filters",
+        "filters": "Select filters",
         "columns_layout": "Columns",
         "edit_filters": "Select filters",
         "clear_filters": "Clear and dismiss filters",
@@ -3446,7 +3440,8 @@
         "group_visit_title": "Group selected visits together",
         "grouping_no_selection": "Please select the visits that should be grouped. Note that the visits must be similar and in consecutive order",
         "time_unit": "Time unit:",
-        "timeline_preview": "Time line preview"
+        "timeline_preview": "Time line preview",
+        "add_visit": "Add visit"
     },
     "GroupStudyVisits": {
         "title": "Group selected visits together",
@@ -3517,7 +3512,10 @@
         "project_id": "Project ID",
         "acronym": "Study acronym",
         "title": "Study title",
-        "release_description": "Release description"
+        "release_description": "Release description",
+        "release": "Release study",
+        "lock": "Lock study",
+        "unlock": "Unlock study"
     },
     "CTDashboardView": {
         "title": "Code Lists and Terms Dashboard",
@@ -3644,6 +3642,7 @@
         "not_submitted": "Not Submitted",
         "update_activity_version": "Update activity version",
         "remove_activity": "Remove Activity",
+        "review_activities": "Review activity updates",
         "review_instances": "Review activity instance updates"
     },
     "StudyActivity": {
@@ -3680,10 +3679,11 @@
         "tab1_title": "Study Activity Instances",
         "tab2_title": "Operational SoA",
         "general": "General",
-        "instances_actions": "Study Activity Instances – State/Actions and Reviewed checkbox",
-        "instances_ellipsis": "Study Activity Instances – Ellipsis icon (three dots)",
+        "instances_actions": "Study Activity Instances - State/Actions and Reviewed checkbox",
+        "instances_ellipsis": "Study Activity Instances - Ellipsis icon (three dots)",
         "instances_exclamation": "Study Activity Instances - All, Red, and Yellow exclamation mark icons",
-        "instances_updates": "Study Activity Instances – Review Activity instance updates"
+        "instances_updates": "Study Activity Instances - Review Activity instance updates",
+        "tab3_title": "Study CRFs"
     },
     "StudyActivityInstances": {
         "instance": "Instance",
@@ -3708,6 +3708,7 @@
         "details": "Details",
         "state": "State",
         "mandatory": "Mandatory",
+        "required": "Required",
         "defaulted": "Defaulted",
         "suggestion": "Suggestion",
         "study_activity_instance_history_title": "History for study activity instance [{studyActivityInstanceUid}]",
@@ -3728,7 +3729,8 @@
         "baseline_visits": "Baseline visits",
         "data_supplier": "Data Supplier",
         "origin_type": "Origin Type",
-        "origin_source": "Origin Source"
+        "origin_source": "Origin Source",
+        "library_status": "Library Instance Status"
     },
     "StudyActivityForm": {
         "add_title": "Add study activities",
@@ -3869,6 +3871,7 @@
         "type": "Type",
         "name": "Arm name",
         "short_name": "Arm short name",
+        "label": "Arm label",
         "code": "Random. code",
         "randomisation_group": "Random. group",
         "number_of_subjects": "No. of subjects",
@@ -3889,6 +3892,7 @@
         "edit_arm": "Edit study arm",
         "arm_name": "Arm name",
         "arm_short_name": "Arm short name",
+        "arm_label": "Arm label",
         "arm_type": "Study arm type",
         "arm_code": "Arm code",
         "randomisation_group": "Randomisation group",
@@ -4077,18 +4081,12 @@
         "context": "Context",
         "aliases": "Aliases",
         "new_translation": "New translation",
-        "sponsor_instruction": "Design Notes",
-        "instruction": "Completion Instructions",
-        "language": "Language",
-        "description": "Description",
-        "instructions": "Instructions",
         "form_details": "Form",
         "alias_details": "Alias",
-        "description_details": "Translations",
+        "translated_text_details": "Translations",
         "form_created": "Form created",
         "form_updated": "Form updated",
         "change_desc": "Change Description",
-        "displayed_text": "Displayed text",
         "help_for_site": "Help for site",
         "help_for_sponsor": "Help for sponsor",
         "definition": "Definition",
@@ -4122,16 +4120,11 @@
         "context": "Context",
         "aliases": "Aliases",
         "new_translation": "New translation",
-        "sponsor_instruction": "Design Notes",
-        "instruction": "Completion Instructions",
-        "description": "Description",
-        "instructions": "Instructions",
         "group_details": "Item Group",
         "alias_details": "Alias",
-        "description_details": "Translations",
+        "translated_text_details": "Translations",
         "group_created": "Item Group created",
         "group_updated": "Item Group updated",
-        "displayed_text": "Displayed text",
         "help_for_site": "Help for site",
         "help_for_sponsor": "Implementation notes",
         "warning": "This Item Group is used in {count} Form(s). Are you sure you want to delete it?",
@@ -4143,6 +4136,7 @@
         "approved": "Item approved",
         "deleted": "Item deleted",
         "inactivated": "Item inactivated",
+        "no_terms_selected": "No terms selected",
         "reactivated": "Item reactivated",
         "create_new_version": "Create new version for the Item",
         "type": "Type",
@@ -4156,13 +4150,11 @@
         "sas_name": "SAS Field Name",
         "origin": "Origin",
         "comment": "Comment",
-        "sponsor_instruction": "Design Notes",
-        "instruction": "Completion Instructions",
         "item_details": "Item",
         "alias_details": "Alias",
         "context": "Context",
         "aliases": "Aliases",
-        "desc_details": "Translations",
+        "translated_text_details": "Translations",
         "codelist_details": "Code list",
         "unit_details": "Unit",
         "change_desc": "Change Description",
@@ -4191,22 +4183,25 @@
         "preset_response_value": "Preset Response Value",
         "primary": "Primary",
         "value_condition": "Value Condition",
-        "value_dependent_map": "Value Dependent Map"
+        "value_dependent_map": "Value Dependent Map",
+        "add_unit": "Add Unit"
     },
     "CRFAliases": {
         "add": "Add Alias",
         "select": "Or select one here",
         "name": "Name",
-        "context": "Context"
+        "context": "Context",
+        "editing_alias": "Alias unselected and ready to be edited"
     },
-    "CRFDescriptions": {
-        "add": "Add Description",
+    "CRFTranslatedTexts": {
+        "add": "Add Translated Text",
         "select": "Or select one here",
-        "name": "Display Text",
+        "text_type": "Text Type",
         "language": "Language",
-        "description": "Description",
-        "instruction": "Completion Instructions",
-        "sponsor_instruction": "Design Notes"
+        "text": "Text",
+        "exact_match": "Exact Match",
+        "editing_translated_text": "Translated Text unselected and ready to be edited",
+        "missing_fields": "All fields must be provided to add a Translation"
     },
     "StudyBranchArms": {
         "no_data": "No data available - Create Study Arm first",
@@ -4327,7 +4322,7 @@
         "link_activity_sub_groups": "Link Activity Sub Groups"
     },
     "OdmViewer": {
-        "blank": "Blank",
+        "html": "HTML",
         "crf_with_annotations": "CRF with annotations",
         "falcon": "Downloadable Falcon (word)",
         "allowed_namespaces": "Allowed Extensions",
@@ -4343,6 +4338,7 @@
         "form_name": "Form Name",
         "item_group_name": "Item Group Name",
         "item_name": "Item Name",
+        "source_copied_to_clipboard": "Source code copied to clipboard",
         "collection": "Collection",
         "form": "Form",
         "item_group": "Item Group",
@@ -4351,7 +4347,7 @@
         "latest_version": "Latest Version",
         "export": "Export ",
         "format": "Format",
-        "xml_code": "XML Code",
+        "source_code": "Source Code",
         "crf_collection": "CRF Collection",
         "forms": "Form(s)"
     },
@@ -4637,10 +4633,13 @@
         "noItemsAvailable": "No activity items available",
         "headerDataType": "Data type",
         "headerName": "Name",
-        "headerActivityItemClass": "Activity Item Class"
+        "headerActivityItemClass": "Activity Item Class",
+        "headerNameSubmissionValue": "Name submission value",
+        "headerCodeSubmissionValue": "Code submission value"
     },
-    "activitySummary": {
-        "dataCollection": "Data collection"
+    "ActivitySummary": {
+        "data_collection": "Data collection",
+        "multiple_instances_allowed": "Multiple instances allowed"
     },
     "YamlViewer": {
         "search_content": "Search for content",
@@ -4985,6 +4984,7 @@
         "data_from_research_lab": "Data from a Research lab",
         "data_from_research_lab_help": "This flag is used to indicate that the data collection is based on a research lab where all GxP requirements are not necessarily met. This means that the data can´t be used for endpoint analysis",
         "add_success": "Activity Instance added",
+        "update_success": "Activity Instance updated",
         "refresh_title": "Revert to suggested names",
         "general": "General",
         "step1_description": "Choose activity to add an instance to",
@@ -4998,7 +4998,21 @@
         "mandatory_activity_item_classes_missing_values": "The following mandatory Activity Item Classes must have CT term values selected: {names}",
         "codelist": "Codelist",
         "allow_manual_edit": "Customize",
-        "selected_activity": "Selected activity:"
+        "selected_activity": "Selected activity:",
+        "response_codelist": "Response code list",
+        "response_ct_terms": "Response CT terms",
+        "advanced_search": "Advanced search"
+    },
+    "TermsSelectionForm": {
+        "title": "Select categorical response terms from codelists",
+        "search_for_codelists": "Search for codelists",
+        "search_by_codelist": "Search by name",
+        "search_by_term": "Search by term",
+        "select_codelist": "Select codelist",
+        "select_terms": "Select CT term(s)",
+        "ordinal_codelists": "Only ordinal codelists",
+        "response_codelists": "Only response codelists",
+        "whole_word_match": "Match whole words"
     },
     "ActivityInstancePreview": {
         "activity_instance_name": "Activity instance name",
@@ -5017,6 +5031,7 @@
         "study_arm_type": "Study arm type",
         "arm_name": "Arm name",
         "arm_short_name": "Arm short name",
+        "arm_label": "Arm label",
         "no_participants": "Number of participants",
         "rand_group": "Randomisation group",
         "rand_group_optional": "Randomisation group (optional)",

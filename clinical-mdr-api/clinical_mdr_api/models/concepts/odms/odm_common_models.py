@@ -4,6 +4,7 @@ from pydantic import Field, StringConstraints, field_validator
 
 from clinical_mdr_api.domains.concepts.concept_base import ConceptARBase
 from clinical_mdr_api.domains.concepts.odms.vendor_attribute import OdmVendorAttributeAR
+from clinical_mdr_api.domains.enums import OdmTranslatedTextTypeEnum
 from clinical_mdr_api.models.utils import BaseModel, PostInputModel
 from clinical_mdr_api.models.validators import is_language_supported
 
@@ -282,20 +283,12 @@ class OdmAliasModel(BaseModel, frozen=True):  # type: ignore[misc]
     context: Annotated[str, Field(min_length=1)]
 
 
-class OdmDescriptionModel(BaseModel, frozen=True):  # type: ignore[misc]
-    name: Annotated[str, Field(min_length=1)]
+class OdmTranslatedTextModel(BaseModel, frozen=True):  # type: ignore[misc]
+    text_type: Annotated[OdmTranslatedTextTypeEnum, Field()]
     language: Annotated[
         str, StringConstraints(to_lower=True, strip_whitespace=True, min_length=1)
     ]
-    description: Annotated[
-        str | None, Field(json_schema_extra={"nullable": True, "format": "html"})
-    ] = None
-    instruction: Annotated[
-        str | None, Field(json_schema_extra={"nullable": True, "format": "html"})
-    ] = None
-    sponsor_instruction: Annotated[
-        str | None, Field(json_schema_extra={"nullable": True, "format": "html"})
-    ] = None
+    text: Annotated[str, Field(json_schema_extra={"format": "html"})]
 
     _language_validator = field_validator("language")(is_language_supported)
 

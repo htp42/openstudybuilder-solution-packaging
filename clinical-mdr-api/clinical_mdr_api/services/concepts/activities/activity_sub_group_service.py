@@ -14,7 +14,6 @@ from clinical_mdr_api.domains.enums import LibraryItemStatus
 from clinical_mdr_api.models.concepts.activities.activity import (
     ActivityEditInput,
     ActivityGrouping,
-    SimpleActivity,
 )
 from clinical_mdr_api.models.concepts.activities.activity_sub_group import (
     ActivityGroupForActivitySubGroup,
@@ -137,7 +136,7 @@ class ActivitySubGroupService(ConceptGenericService[ActivitySubGroupAR]):
         page_number: int = 1,
         page_size: int = 10,
         total_count: bool = False,
-    ) -> GenericFilteringReturn[SimpleActivity]:
+    ):
         """
         Get activities linked to a specific activity subgroup version with pagination.
 
@@ -171,7 +170,7 @@ class ActivitySubGroupService(ConceptGenericService[ActivitySubGroupAR]):
             subgroup_ar.version,
         )
 
-        activities: list[SimpleActivity] = []
+        activities = []
         if linked_activity_data and "activities" in linked_activity_data:
             activity_service = ActivityService()
             for activity_info in linked_activity_data["activities"]:

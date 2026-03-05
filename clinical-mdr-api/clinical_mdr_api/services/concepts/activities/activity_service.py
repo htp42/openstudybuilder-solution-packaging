@@ -484,14 +484,27 @@ class ActivityService(ConceptGenericService[ActivityAR]):
                     continue
                 instance_from_db = linked_instances_map[activity_instance.uid]
                 instance_groupings = []
-                for grouping in item.concept_vo.activity_groupings:
+                if len(item.concept_vo.activity_groupings) == 1:
+                    # If only one grouping in the activity, there is only one possible choice
+                    # for the instance grouping, so we use it no matter if it was changed or not.
+                    grouping = item.concept_vo.activity_groupings[0]
                     grp = {
                         "activity_uid": item.uid,
                         "activity_group_uid": grouping.activity_group_uid,
                         "activity_subgroup_uid": grouping.activity_subgroup_uid,
                     }
-                    if grp in instance_from_db["activity_groupings"]:
-                        instance_groupings.append(ActivityInstanceGrouping(**grp))
+                    instance_groupings.append(ActivityInstanceGrouping(**grp))
+                else:
+                    # Multiple groupings in the activity, find and keep only the matching ones.
+                    # We do not add new groupings that were not present before.
+                    for grouping in item.concept_vo.activity_groupings:
+                        grp = {
+                            "activity_uid": item.uid,
+                            "activity_group_uid": grouping.activity_group_uid,
+                            "activity_subgroup_uid": grouping.activity_subgroup_uid,
+                        }
+                        if grp in instance_from_db["activity_groupings"]:
+                            instance_groupings.append(ActivityInstanceGrouping(**grp))
 
                 if not instance_groupings:
                     # No matching groupings found, skip this instance

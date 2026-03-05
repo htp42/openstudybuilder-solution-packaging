@@ -93,7 +93,7 @@ class ControlTerminologyConcurrencyTest(unittest.TestCase):
                 preferred_term="Preferred Term",
                 definition="Definition",
                 extensible=True,
-                ordinal=False,
+                is_ordinal=False,
             )
 
             ct_codelist_attributes_ar = CTCodelistAttributesAR.from_input_values(

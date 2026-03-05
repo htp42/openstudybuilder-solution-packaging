@@ -32,12 +32,14 @@ Feature: Studies - Manage Studies - Data Standard Versions - Controlled Terminol
     Scenario: User must be able to add a Study Controlled Terminology Versions
         Given The test study '/data_standard_versions/controlled_terminology' page is opened
         When A Controlled Terminology Version is added
+        And Form save button is clicked
         Then The Controlled Terminology Version data is reflected in the table
 
     Scenario: User must be able to edit the Study Controlled Terminology Versions
         Given The test study '/data_standard_versions/controlled_terminology' page is opened
         When The 'Edit' option is clicked from the three dot menu list
         When The Controlled Terminology Version is edited
+        And Form save button is clicked
         Then The edited Controlled Terminology Version data is reflected in the table
 
     Scenario: User must be able to delete a Study Controlled Terminology Versions

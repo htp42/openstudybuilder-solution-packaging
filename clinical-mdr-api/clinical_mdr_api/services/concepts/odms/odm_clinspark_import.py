@@ -4,6 +4,7 @@ from fastapi import UploadFile
 
 from clinical_mdr_api.models.concepts.odms.odm_form import OdmFormPostInput
 from clinical_mdr_api.models.concepts.odms.odm_item import (
+    OdmItemCodelist,
     OdmItemPostInput,
     OdmItemTermRelationshipInput,
     OdmItemUnitDefinitionRelationshipInput,
@@ -166,7 +167,7 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
                         definition=codelist.getAttribute("Name"),
                         sponsor_preferred_name=codelist.getAttribute("Name"),
                         extensible=True,
-                        ordinal=False,
+                        is_ordinal=False,
                         template_parameter=True,
                         parent_codelist_uid=None,
                         library_name="Sponsor",
@@ -328,8 +329,6 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
             )
 
     def _get_odm_item_post_input(self, item_def):
-        descriptions = self._extract_descriptions(item_def)
-
         plausible_duplicates = self.odm_item_service.get_all_concepts(
             filter_by={"name": {"v": [item_def.getAttribute("Name")], "op": "co"}}
         ).items
@@ -398,23 +397,20 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
             sds_var_name=item_def.getAttribute("SDSVarName"),
             origin=item_def.getAttribute("Origin"),
             comment=None,
-            descriptions=[
-                self._create_description(
-                    name=description["name"],
-                    description=description["description"],
-                    lang=description["lang"],
-                )
-                for description in descriptions
-            ],
+            translated_texts=self._get_translated_text_post_input(item_def),
             aliases=[],
             unit_definitions=item_unit_definitions,
-            codelist_uid=codelist_uid,
+            codelist=(
+                OdmItemCodelist(
+                    uid=codelist_uid,
+                )
+                if codelist_uid
+                else None
+            ),
             terms=input_terms,
         )
 
     def _get_odm_item_group_post_input(self, item_group_def):
-        descriptions = self._extract_descriptions(item_group_def)
-
         plausible_duplicates = self.odm_item_group_service.get_all_concepts(
             filter_by={"name": {"v": [item_group_def.getAttribute("Name")], "op": "co"}}
         ).items
@@ -430,21 +426,12 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
             purpose=item_group_def.getAttribute("Purpose"),
             sas_dataset_name=item_group_def.getAttribute("SASDatasetName"),
             comment=None,
-            descriptions=[
-                self._create_description(
-                    name=description["name"],
-                    description=description["description"],
-                    lang=description["lang"],
-                )
-                for description in descriptions
-            ],
+            translated_texts=self._get_translated_text_post_input(item_group_def),
             aliases=[],
             sdtm_domain_uids=[],
         )
 
     def _get_odm_form_post_input(self, form_def):
-        descriptions = self._extract_descriptions(form_def)
-
         plausible_duplicates = self.odm_form_service.get_all_concepts(
             filter_by={"name": {"v": [form_def.getAttribute("Name")], "op": "co"}}
         ).items
@@ -456,14 +443,7 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
             ),
             sdtm_version="",
             repeating=form_def.getAttribute("Repeating"),
-            descriptions=[
-                self._create_description(
-                    name=description["name"],
-                    description=description["description"],
-                    lang=description["lang"],
-                )
-                for description in descriptions
-            ],
+            translated_texts=self._get_translated_text_post_input(form_def),
             aliases=[],
         )
 

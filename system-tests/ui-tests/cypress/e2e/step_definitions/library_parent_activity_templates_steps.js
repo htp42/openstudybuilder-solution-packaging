@@ -1,5 +1,5 @@
 import { activity_uid, group_uid, subgroup_uid } from '../../support/api_requests/library_activities';
-import { fillTemplateNameAndContinue, changeIndex } from './library_syntax_templates_common'
+import { fillTemplateName, changeIndex } from './library_syntax_templates_common'
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
 
 let defaultActivityName
@@ -22,8 +22,6 @@ Then("The activity instruction is searched and found", () => cy.searchAndCheckPr
 
 Then("The parent activity is no longer available", () => cy.searchAndCheckPresence(defaultActivityName, false))
 
-When('The activity instruction template form is filled with already existing name', () => fillTemplateNameAndContinue(defaultActivityName))
-
 When('The mandatory indexes are filled', () => changeMandatoryIndexes())
 
 When('All activity instruction indexes are filled in', () => {
@@ -45,6 +43,8 @@ When('The activity instruction template form is filled with base data', () => fi
 When('The activity template metadata update is started', () => fillBaseData(`Update${Date.now()}`))
 
 When('The activity template edition form is filled with data', () => fillBaseData(`CancelEdit${Date.now()}`))
+
+When('The activity instruction template form is filled with already existing name', () => fillBaseData(defaultActivityName))
 
 When('User intercepts activity templates request', () => cy.intercept('/api/activity-instruction-templates?page_number=1&*').as('getTemplate'))
 
@@ -78,5 +78,5 @@ function changeMandatoryIndexes() {
 
 function fillBaseData(name) {
   defaultActivityName = name
-  fillTemplateNameAndContinue(name)
+  fillTemplateName(name)
 }

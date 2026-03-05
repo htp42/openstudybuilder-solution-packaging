@@ -8,7 +8,6 @@ Feature: Library - Data Collection Standards - CRF Builder - CRF Collections
 
     Scenario: [Navigation] User must be able to navigate to CRF Collections page
         Given The '/library' page is opened
-        And The multilingual CRFs option is toggled off in the settings menu
         When The 'CRF Builder' submenu is clicked in the 'Data Collection Standards' section
         And The 'CRF Collections' tab is selected
         Then The current URL is '/library/crf-builder/collections'
@@ -29,10 +28,10 @@ Feature: Library - Data Collection Standards - CRF Builder - CRF Collections
         Then A table is visible with following options
             | options                                                         |
             | Add Collection                                                  |
-            | Filters                                                         |
-            | Columns                                                         |
+            | Select columns                                                  |
             | Export                                                          |
-            | search-field                                                    |
+            | Select filters                                                  |
+            | Search                                                          |
 
     Scenario: [Table][Columns][Visibility] User must be able to select visibility of columns in the table 
         Given The '/library/crf-builder/collections' page is opened

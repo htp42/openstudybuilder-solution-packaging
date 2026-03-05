@@ -438,7 +438,9 @@ def solve_not_latest_has_version_lacks_end_date(db_driver, log, run_label):
     return counters.contains_updates
 
 
-@capture_changes(verify_func=correction_verification_016.test_remove_isolated_orphan_nodes)
+@capture_changes(
+    verify_func=correction_verification_016.test_remove_isolated_orphan_nodes
+)
 def remove_isolated_orphan_nodes(db_driver, log, run_label):
     """
     ## Remove isolated orphan nodes (Bug #3473052)

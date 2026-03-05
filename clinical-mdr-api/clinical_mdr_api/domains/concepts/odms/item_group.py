@@ -12,7 +12,7 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
 )
 from clinical_mdr_api.models.concepts.odms.odm_common_models import (
     OdmAliasModel,
-    OdmDescriptionModel,
+    OdmTranslatedTextModel,
 )
 from common.exceptions import AlreadyExistsException, BusinessLogicException
 from common.utils import booltostr
@@ -27,7 +27,7 @@ class OdmItemGroupVO(ConceptVO):
     origin: str | None
     purpose: str | None
     comment: str | None
-    descriptions: list[OdmDescriptionModel]
+    translated_texts: list[OdmTranslatedTextModel]
     aliases: list[OdmAliasModel]
     sdtm_domain_uids: list[str]
     item_uids: list[str]
@@ -46,7 +46,7 @@ class OdmItemGroupVO(ConceptVO):
         origin: str | None,
         purpose: str | None,
         comment: str | None,
-        descriptions: list[OdmDescriptionModel],
+        translated_texts: list[OdmTranslatedTextModel],
         aliases: list[OdmAliasModel],
         sdtm_domain_uids: list[str],
         item_uids: list[str],
@@ -63,7 +63,7 @@ class OdmItemGroupVO(ConceptVO):
             origin=origin,
             purpose=purpose,
             comment=comment,
-            descriptions=descriptions,
+            translated_texts=translated_texts,
             aliases=aliases,
             sdtm_domain_uids=sdtm_domain_uids,
             item_uids=item_uids,

@@ -16,6 +16,7 @@
         variant="outlined"
         density="compact"
         class="mr-4"
+        :disabled="props.disabled"
         :loading="loadingCodelists"
         @update:model-value="changeCodelist"
       />
@@ -29,6 +30,7 @@
       bg-color="white"
       variant="outlined"
       density="compact"
+      :disabled="props.disabled"
       :rules="props.rules"
       :multiple="props.multiple"
       :loading="loading"
@@ -87,9 +89,13 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  disabled: {
+    type: Boolean,
+    default: false,
+  },
 })
 const codelist = defineModel('codelist', { type: String })
-const model = defineModel({ type: String })
+const model = defineModel({ type: [String, Array] })
 const search = defineModel('search', { type: String })
 
 const codelists = ref([])
@@ -117,11 +123,21 @@ const fetchTerms = _debounce(function (codelist) {
   }
   codelistsApi.getCodelistTerms(codelist, params).then((resp) => {
     allowedValues.value = []
-    const present = resp.data.items.find(
-      (item) => item.term_uid === model.value
-    )
-    if (model.value && !present) {
-      model.value = null
+    if (model.value) {
+      let present
+      if (typeof model.value === 'string') {
+        present = resp.data.items.find((item) => item.term_uid === model.value)
+      } else {
+        for (const item of resp.data.items) {
+          if (model.value.includes(item.term_uid)) {
+            present = true
+            break
+          }
+        }
+      }
+      if (!present) {
+        model.value = null
+      }
     }
     allowedValues.value = resp.data.items
     loading.value = false
@@ -131,10 +147,17 @@ const fetchTerms = _debounce(function (codelist) {
 const fetchCodelists = async () => {
   loadingCodelists.value = true
   try {
+    const params = {
+      page_size: 0,
+      ct_catalogue_name: 'SDTM CT',
+    }
+    if (props.activityItemClass.name === 'categoric_finding_original_result') {
+      params.valid_codelists_for_item = true
+    }
     const resp = await activityItemClassesApi.getDatasetCodelists(
       props.activityItemClass.uid,
       props.dataDomain,
-      { page_size: 0, ct_catalogue_name: 'SDTM CT' }
+      params
     )
     codelists.value = resp.data.items
     if (codelists.value.length === 1) {

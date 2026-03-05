@@ -259,6 +259,7 @@ app.include_router(
     prefix="/notifications",
     tags=["Notifications"],
 )
+app.include_router(routers.iso_router, prefix="/iso", tags=["ISO Standards"])
 app.include_router(
     routers.odm_study_events_router,
     prefix="/concepts/odms/study-events",

@@ -5,14 +5,16 @@
       <HelpButtonWithPanels :title="$t('_global.help')" :items="helpItems" />
       <v-spacer />
       <v-btn
-        size="small"
+        class="expandHoverBtn"
         variant="outlined"
         color="nnBaseBlue"
-        icon="mdi-cog-outline"
         :disabled="lockSettings"
         :loading="soaContentLoadingStore.loading"
         @click="openSoaSettings"
-      />
+      >
+        <v-icon left>mdi-cog-outline</v-icon>
+        <span class="label">{{ $t('ProtocolFlowchart.soa_settings') }}</span>
+      </v-btn>
     </div>
     <NavigationTabs :tabs="tabs" @tab-changed="onTabChanged">
       <template #default="{ tabKeys }">

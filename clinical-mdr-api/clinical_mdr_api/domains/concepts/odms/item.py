@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Callable, Self
+from typing import TYPE_CHECKING, Any, Callable, Self
 
 from clinical_mdr_api.domains.concepts.concept_base import ConceptVO
 from clinical_mdr_api.domains.concepts.odms.odm_ar_base import OdmARBase
@@ -13,11 +13,14 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
 )
 from clinical_mdr_api.models.concepts.odms.odm_common_models import (
     OdmAliasModel,
-    OdmDescriptionModel,
+    OdmTranslatedTextModel,
 )
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from common.exceptions import AlreadyExistsException, BusinessLogicException
 from common.utils import booltostr
+
+if TYPE_CHECKING:
+    from clinical_mdr_api.models.concepts.odms.odm_item import OdmItemCodelist
 
 
 @dataclass(frozen=True)
@@ -31,10 +34,10 @@ class OdmItemVO(ConceptVO):
     sds_var_name: str | None
     origin: str | None
     comment: str | None
-    descriptions: list[OdmDescriptionModel]
+    translated_texts: list[OdmTranslatedTextModel]
     aliases: list[OdmAliasModel]
     unit_definition_uids: list[str]
-    codelist_uid: str | None
+    codelist: "OdmItemCodelist | None"
     term_uids: list[str]
     vendor_attribute_uids: list[str]
     vendor_element_uids: list[str]
@@ -54,10 +57,10 @@ class OdmItemVO(ConceptVO):
         sds_var_name: str | None,
         origin: str | None,
         comment: str | None,
-        descriptions: list[OdmDescriptionModel],
+        translated_texts: list[OdmTranslatedTextModel],
         aliases: list[OdmAliasModel],
         unit_definition_uids: list[str],
-        codelist_uid: str | None,
+        codelist: "OdmItemCodelist | None",
         term_uids: list[str],
         vendor_element_uids: list[str],
         vendor_attribute_uids: list[str],
@@ -75,10 +78,10 @@ class OdmItemVO(ConceptVO):
             sds_var_name=sds_var_name,
             origin=origin,
             comment=comment,
-            descriptions=descriptions,
+            translated_texts=translated_texts,
             aliases=aliases,
             unit_definition_uids=unit_definition_uids,
-            codelist_uid=codelist_uid,
+            codelist=codelist,
             term_uids=term_uids,
             vendor_element_uids=vendor_element_uids,
             vendor_attribute_uids=vendor_attribute_uids,
@@ -107,7 +110,7 @@ class OdmItemVO(ConceptVO):
         data = {
             "library_name": library_name,
             "unit_definition_uids": self.unit_definition_uids,
-            "codelist_uid": self.codelist_uid,
+            "codelist_uid": self.codelist.uid if self.codelist else None,
             "term_uids": self.term_uids,
             "name": self.name,
             "oid": self.oid,
@@ -137,27 +140,26 @@ class OdmItemVO(ConceptVO):
             "ODM Item",
         )
 
-        BusinessLogicException.raise_if(
-            self.codelist_uid is not None
-            and not find_codelist_attribute_callback(self.codelist_uid),
-            msg=f"ODM Item tried to connect to non-existent Codelist with UID '{self.codelist_uid}'.",
-        )
+        if self.codelist is not None and not find_codelist_attribute_callback(
+            self.codelist.uid
+        ):
+            raise BusinessLogicException(
+                msg=f"ODM Item tried to connect to non-existent Codelist with UID '{self.codelist.uid}'.",
+            )
 
         if self.term_uids:
-            BusinessLogicException.raise_if_not(
-                self.codelist_uid,
-                msg="To add terms you need to specify a codelist.",
-            )
+            if self.codelist is None:
+                raise BusinessLogicException(
+                    msg="To add terms you need to specify a codelist."
+                )
 
-            codelist_term_uids = (
-                [term.uid for term in find_all_terms_callback(self.codelist_uid).items]
-                if self.codelist_uid is not None
-                else []
-            )
+            codelist_term_uids = [
+                term.uid for term in find_all_terms_callback(self.codelist.uid).items
+            ]
             for term_uid in self.term_uids:
                 BusinessLogicException.raise_if(
                     term_uid not in codelist_term_uids,
-                    msg=f"Term with UID '{term_uid}' doesn't belong to the specified Codelist with UID '{self.codelist_uid}'.",
+                    msg=f"Term with UID '{term_uid}' doesn't belong to the specified Codelist with UID '{self.codelist.uid}'.",
                 )
 
         if self.activity_instances:

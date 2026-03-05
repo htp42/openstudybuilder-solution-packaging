@@ -23,7 +23,10 @@ from clinical_mdr_api.models.concepts.odms.odm_common_models import (
     OdmVendorNamespaceSimpleModel,
 )
 from clinical_mdr_api.models.utils import BaseModel
-from clinical_mdr_api.models.validators import validate_name_only_contains_letters
+from clinical_mdr_api.models.validators import (
+    validate_first_character_is_uppercase,
+    validate_name_only_contains_letters,
+)
 
 
 class OdmVendorElement(ConceptModel):
@@ -60,7 +63,9 @@ class OdmVendorElement(ConceptModel):
                         uid=vendor_attribute_uid,
                         find_odm_vendor_attribute_by_uid=find_odm_vendor_attribute_by_uid,
                     )
-                    for vendor_attribute_uid in odm_vendor_element_ar.concept_vo.vendor_attribute_uids
+                    for vendor_attribute_uid in set(
+                        odm_vendor_element_ar.concept_vo.vendor_attribute_uids
+                    )
                 ],
                 key=lambda item: item.name or "",
             ),
@@ -138,11 +143,21 @@ class OdmVendorElementPostInput(ConceptPostInput):
     _validate_name_only_contains_letters = field_validator("name", mode="before")(
         validate_name_only_contains_letters
     )
+    _validate_first_character_is_uppercase = field_validator("name", mode="after")(
+        validate_first_character_is_uppercase
+    )
 
 
 class OdmVendorElementPatchInput(ConceptPatchInput):
     name: Annotated[str, Field(min_length=1)]
     compatible_types: Annotated[list[VendorElementCompatibleType], Field(min_length=1)]
+
+    _validate_name_only_contains_letters = field_validator("name", mode="before")(
+        validate_name_only_contains_letters
+    )
+    _validate_first_character_is_uppercase = field_validator("name", mode="after")(
+        validate_first_character_is_uppercase
+    )
 
 
 class OdmVendorElementVersion(OdmVendorElement):

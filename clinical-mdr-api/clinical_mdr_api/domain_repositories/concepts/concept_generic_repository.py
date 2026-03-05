@@ -31,7 +31,9 @@ from clinical_mdr_api.repositories._utils import (
     CypherQueryBuilder,
     FilterDict,
     FilterOperator,
+    calculate_total_count_from_query_result,
     sb_clear_cache,
+    validate_filter_by_dict,
     validate_filters_and_add_search_string,
 )
 
@@ -120,6 +122,42 @@ class ConceptGenericRepository(
         )
 
         return f"""CYPHER runtime=slotted MATCH (concept_root:{concept_label})-[{rel}]->(concept_value:{concept_value_label})"""
+
+    def minimal_count_query(
+        self,
+        filter_by: dict[str, dict[str, Any]] | None,
+        return_all_versions: bool,
+        **kwargs,
+    ) -> tuple[str | None, dict[str, Any]]:
+        concept_label = self.root_class.__label__
+        concept_value_label = self.value_class.__label__
+
+        # we do not support minimal count queries when a specific version is requested
+        if kwargs.get("version", None) is not None:
+            return None, {}
+
+        filter_by = validate_filter_by_dict(filter_by)
+        # no filters, we can return a minimal count query
+        if not filter_by or len(filter_by) == 0:
+            if return_all_versions:
+                # when all versions are requested, we need to count the Value nodes
+                query = f"""MATCH (concept_root:{concept_label})-[hv:HAS_VERSION]->(concept_value:{concept_value_label}) RETURN count(DISTINCT hv) AS count"""
+                return query, {}
+            # when only latest versions are requested, we can count the root nodes directly
+            query = f"""MATCH (concept_root:{concept_label}) RETURN count(DISTINCT concept_root) AS count"""
+            return query, {}
+
+        # if the only filter is for status, we return a specific count query
+        if len(filter_by) == 1 and "status" in filter_by and not return_all_versions:
+            query = f"""
+                MATCH (concept_root:{concept_label})-[hv:HAS_VERSION]->(concept_value:{concept_value_label})
+                WHERE hv.end_date IS NULL AND hv.status IN $status
+                RETURN count(DISTINCT concept_root) AS count
+            """
+            params = {"status": filter_by["status"]["v"]}
+            return query, params
+        # else, a generic count query needs to be used
+        return None, {}
 
     def generic_alias_clause(self, **kwargs):
         version = kwargs.get("version", None)
@@ -325,6 +363,12 @@ class ConceptGenericRepository(
             if not return_all_versions
             else self.generic_alias_clause_all_versions()
         ) + self.specific_alias_clause(**kwargs)
+
+        minimal_count_query, minimal_count_params = self.minimal_count_query(
+            filter_by=filter_by, return_all_versions=return_all_versions, **kwargs
+        )
+        filtering_active = minimal_count_query is None
+
         query = CypherQueryBuilder(
             match_clause=match_clause,
             alias_clause=alias_clause,
@@ -336,6 +380,7 @@ class ConceptGenericRepository(
             total_count=total_count,
             return_model=self.return_model,
             format_filter_sort_keys=self.format_filter_sort_keys,
+            one_element_extra=filtering_active,
         )
 
         if kwargs.get("version", None) is not None:
@@ -347,14 +392,23 @@ class ConceptGenericRepository(
         extracted_items = self._retrieve_concepts_from_cypher_res(
             result_array, attributes_names
         )
-
-        count_result, _ = db.cypher_query(
-            query=query.count_query, params=query.parameters
+        total_amount = calculate_total_count_from_query_result(
+            len(extracted_items),
+            page_number,
+            page_size,
+            total_count,
+            extra_requested=filtering_active,
         )
-        total_amount = (
-            count_result[0][0] if len(count_result) > 0 and total_count else 0
-        )
-
+        if 0 < page_size < len(extracted_items):
+            extracted_items = extracted_items[:page_size]
+        if total_amount is None:
+            if minimal_count_query is not None:
+                count_result, _ = db.cypher_query(
+                    query=minimal_count_query, params=minimal_count_params
+                )
+                total_amount = count_result[0][0] if len(count_result) > 0 else 0
+            else:
+                total_amount = -1
         return extracted_items, total_amount
 
     def _retrieve_concepts_from_cypher_res(

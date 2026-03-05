@@ -1,7 +1,6 @@
 # pylint: disable=unused-argument
 
 import dataclasses
-import sys
 import unittest
 
 import pytest
@@ -793,7 +792,7 @@ class TestStudyDefinitionRepository(unittest.TestCase):
         with db.transaction:
             repo = StudyDefinitionRepositoryImpl(current_function_name())
             all_studies_in_db = repo.find_all(
-                page_number=1, page_size=sys.maxsize
+                page_number=1, page_size=settings.max_int_neo4j - 1
             ).items
             repo.close()
 
@@ -832,7 +831,7 @@ class TestStudyDefinitionRepository(unittest.TestCase):
         with db.transaction:
             repo = StudyDefinitionRepositoryImpl(current_function_name())
             all_studies_in_db = repo.find_all(
-                page_number=1, page_size=sys.maxsize
+                page_number=1, page_size=settings.max_int_neo4j - 1
             ).items
             repo.close()
 

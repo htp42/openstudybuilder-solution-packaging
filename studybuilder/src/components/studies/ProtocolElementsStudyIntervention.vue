@@ -8,7 +8,7 @@
       <div class="d-flex ml-4">
         <v-btn
           color="secondary"
-          class="ml-3"
+          rounded
           :disabled="Boolean(loadingMessage)"
           @click="downloadDocx($event)"
         >

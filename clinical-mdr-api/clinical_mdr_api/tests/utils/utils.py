@@ -2,41 +2,49 @@ from typing import Any
 from xml.etree.ElementTree import Element
 
 
-def xml_diff(expected: Element, actual: Element, path: str = "Root"):
+def xml_diff(source: Element, target: Element, path: str = "Root"):
     """
     Compare two XML documents.
     Order of tags and attributes matters.
     """
-    assert expected.tag == actual.tag, (
+    assert source.tag == target.tag, (
         f"\nPATH: {path}\n"
-        f"EXPECTED tag: {expected.tag}\n"
-        f"ACTUAL tag: {actual.tag}\n\n\n"
+        f"SOURCE tag: {source.tag}\n"
+        f"TARGET tag: {target.tag}\n\n\n"
     )
-    if isinstance(expected.text, str) and isinstance(actual.text, str):
-        expected_text = expected.text.strip()
-        actual_text = actual.text.strip()
-        assert expected_text == actual_text, (
+    if isinstance(source.text, str) and isinstance(target.text, str):
+        source_text = source.text.strip()
+        target_text = target.text.strip()
+        assert source_text == target_text, (
             f"\nPATH: {path}\n"
-            f"Values of {expected.tag} don't match:\n"
-            f"EXPECTED: {expected_text}\n"
-            f"ACTUAL: {actual_text}\n\n\n"
+            f"Values of {source.tag} don't match:\n"
+            f"SOURCE: {source_text}\n"
+            f"TARGET: {target_text}\n\n\n"
         )
-    assert set(expected.items()) == set(actual.items()), (
+    assert set(source.items()) == set(target.items()), (
         f"\nPATH: {path}\n"
-        f"Attributes of {expected.tag} don't match:\n"
-        f"EXPECTED: {expected.items()}\n"
-        f"ACTUAL: {actual.items()}\n\n\n"
+        f"Attributes of {source.tag} don't match:\n"
+        f"SOURCE: {source.items()}\n"
+        f"TARGET: {target.items()}\n\n\n"
     )
 
-    expected_sub_elements = list(expected)
-    actual_sub_elements = list(actual)
+    source_sub_elements = list(source)
+    target_sub_elements = list(target)
 
-    for idx, elm in enumerate(actual_sub_elements):
-        xml_diff(
-            expected_sub_elements[idx],
-            elm,
-            f"{path}->{idx}:{expected_sub_elements[idx].tag}",
-        )
+    for idx, elm in enumerate(target_sub_elements):
+        try:
+            xml_diff(
+                source_sub_elements[idx],
+                elm,
+                f"{path}->{idx}:{source_sub_elements[idx].tag}",
+            )
+        except IndexError as e:
+            raise AssertionError(
+                f"\nPATH: {path}\n"
+                f"SOURCE has fewer elements than TARGET at index {idx}:\n"
+                f"SOURCE: {len(source_sub_elements)} elements\n"
+                f"TARGET: {len(target_sub_elements)} elements\n\n\n"
+            ) from e
 
 
 # remove specified keys from a dictionary

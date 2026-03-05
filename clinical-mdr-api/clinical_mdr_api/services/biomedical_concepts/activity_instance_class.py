@@ -266,8 +266,11 @@ class ActivityInstanceClassService(NeomodelExtGenericService[ActivityInstanceCla
         )
 
         # Get all versions
-        version_history = self.get_version_history(parent_class_uid)
-        all_versions = list(set(v.version for v in version_history))
+        all_versions = (
+            self._repos.activity_instance_class_repository.get_all_version_numbers(
+                parent_class_uid
+            )
+        )
         all_versions = self._sort_semantic_versions(all_versions, reverse=True)
 
         return ActivityInstanceParentClassOverview(
@@ -322,8 +325,11 @@ class ActivityInstanceClassService(NeomodelExtGenericService[ActivityInstanceCla
         )
 
         # Get all versions
-        version_history = self.get_version_history(activity_instance_class_uid)
-        all_versions = list(set(v.version for v in version_history))
+        all_versions = (
+            self._repos.activity_instance_class_repository.get_all_version_numbers(
+                activity_instance_class_uid
+            )
+        )
         all_versions = self._sort_semantic_versions(all_versions, reverse=True)
 
         return ActivityInstanceClassOverview(

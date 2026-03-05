@@ -1,25 +1,20 @@
 
-import { fillTemplateNameAndContinue } from './library_syntax_templates_common'
+import { fillTemplateName } from './library_syntax_templates_common'
 const { Given, When, Then } = require('@badeball/cypress-cucumber-preprocessor')
 
-let nameSufix
+let nameSufix = `template ${Date.now()}`
 let objectivePreInstanceName
 let preInstanceName
-let newObjectiveNameUpdated = Date.now() + 'Updated'
 let parameterSelected
 let secondParameterSelected
 
-When('Objective template for pre-instantiation is found', () => cy.searchAndCheckPresence(nameSufix, true))
+When('The objective pre-instatiation name is set', () => fillBaseData(`Test [Activity] and [ActivityGroup] ${nameSufix}`))
 
-When('The new objective to be used as pre-instantiation is added in the library', () => {
-  nameSufix = `template ${Date.now()}`
-  objectivePreInstanceName = `Test [Activity] and [ActivityGroup] ${nameSufix}`
-  fillTemplateNameAndContinue(objectivePreInstanceName)
-  cy.get('[data-cy="not-applicable-checkbox"] input').eq(0).check()
-  cy.get('[data-cy="not-applicable-checkbox"] input').eq(1).check()
-  cy.clickButton('radio-Yes')
-  cy.clickFormActionButton('save')
-})
+When('The objective pre-instatiation name is updated', () => fillBaseData(`Update${Date.now()}`))
+
+When('The Radiobutton with value Yes is selected', () => cy.clickButton('radio-Yes'))
+
+When('The template change description is filled in', () => cy.fillInput('template-change-description', 'updated for test'))
 
 When('The pre-instantiation is created from that objective template', () => {
   cy.selectFirstMultipleSelect('Activity')
@@ -29,9 +24,6 @@ When('The pre-instantiation is created from that objective template', () => {
     secondParameterSelected = text
   })
   cy.get('.fullscreen-dialog .template-readonly p').invoke('text').then(text => preInstanceName = text)
-  cy.clickFormActionButton('continue')
-  cy.clickButton('radio-Yes')
-  cy.clickFormActionButton('save')
 })
 
 Then('The newly added Objective Template Pre-instantiation is visible as a new row in the table', () => {
@@ -42,15 +34,17 @@ Then('The newly added Objective Template Pre-instantiation is visible as a new r
 })
 
 When('The objective pre-instantiation metadata is updated', () => {
-  fillTemplateNameAndContinue(newObjectiveNameUpdated)
   cy.checkLastMultipleSelect('template-indication-dropdown')
-  cy.selectRadioGroup('template-confirmatory-testing', 'Yes')
-  cy.clickFormActionButton('continue')
-  cy.fillInput('template-change-description', 'updated for test')
-  cy.clickFormActionButton('save')
 })
 
-Then('The updated Objective is visible within the table', () => {
-  cy.searchAndCheckPresence(newObjectiveNameUpdated, true)
-  cy.getRowIndex(0, 'Parent template', newObjectiveNameUpdated)
+Then('The Objective pre-instatiation is searched and found', () => {
+  cy.searchAndCheckPresence(objectivePreInstanceName, true)
+  cy.getRowIndex(0, 'Parent template', objectivePreInstanceName)
 })
+
+When('Objective template for pre-instantiation is found by sufix', () => cy.searchAndCheckPresence(nameSufix, true))
+
+function fillBaseData(name) {
+  objectivePreInstanceName = name
+  fillTemplateName(objectivePreInstanceName)
+}

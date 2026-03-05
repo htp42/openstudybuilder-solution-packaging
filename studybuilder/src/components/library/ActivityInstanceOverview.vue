@@ -150,9 +150,22 @@
           content-class="top-dialog"
         >
           <ActivitiesInstantiationsForm
+            v-if="!newWizardStepper"
             :edited-activity="item"
             @close="close"
           />
+          <Suspense v-else>
+            <ActivityInstanceForm
+              :activity-instance-uid="item?.uid"
+              @close="close"
+            />
+            <template #fallback>
+              <v-skeleton-loader
+                class="fullscreen-dialog"
+                type="card"
+              ></v-skeleton-loader>
+            </template>
+          </Suspense>
         </v-dialog>
       </template>
     </BaseActivityOverview>
@@ -164,15 +177,18 @@ import { ref, onMounted, watch, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
+import { useFeatureFlagsStore } from '@/stores/feature-flags'
 import BaseActivityOverview from './BaseActivityOverview.vue'
 import ActivitySummary from './ActivitySummary.vue'
 import NNTable from '@/components/tools/NNTable.vue'
+import ActivityInstanceForm from './ActivityInstanceForm.vue'
 import ActivitiesInstantiationsForm from './ActivitiesInstantiationsForm.vue'
 import ActivityItemsTable from './ActivityItemsTable.vue'
 import activities from '@/api/activities'
 
 const { t } = useI18n()
 const appStore = useAppStore()
+const featureFlagsStore = useFeatureFlagsStore()
 const route = useRoute()
 const router = useRouter()
 
@@ -395,6 +411,12 @@ const displayedGroupings = computed(() => {
   return searchTerm.value
     ? filteredGroupings.value
     : convertActivityGroupingsToTableItems(activityGroupings.value)
+})
+
+const newWizardStepper = computed(() => {
+  return featureFlagsStore.getFeatureFlag(
+    'new_activity_instance_wizard_stepper'
+  )
 })
 
 // Transform item for BaseActivityOverview

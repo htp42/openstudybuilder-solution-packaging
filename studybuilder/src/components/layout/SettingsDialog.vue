@@ -18,13 +18,6 @@
           type="number"
           clearable
         />
-        <v-switch
-          v-model="form.multilingual"
-          color="primary"
-          :label="$t('Settings.multilingual_crf')"
-          data-cy="settings-multilingual-crf"
-          class="mt-4"
-        />
       </div>
     </v-card-text>
     <v-card-actions class="pb-4">

@@ -23,7 +23,7 @@
       <template #bottom />
       <template #item="{ item, internalItem, toggleExpand, isExpanded, index }">
         <tr style="background-color: lightgrey">
-          <td width="45%" :class="'font-weight-bold'">
+          <td style="width: 45%" :class="'font-weight-bold'">
             <v-row class="align-center">
               <v-btn
                 v-if="isExpanded(internalItem)"
@@ -69,23 +69,23 @@
               </span>
             </v-row>
           </td>
-          <td width="10%">
+          <td style="width: 10%">
             <CrfTreeTooltipsHandler :item="item" value="mandatory" />
             <CrfTreeTooltipsHandler :item="item" value="locked" />
             <CrfTreeTooltipsHandler :item="item" value="refAttrs" />
           </td>
-          <td width="10%">
+          <td style="width: 10%">
             <CrfTreeTooltipsHandler :item="item" value="repeating" />
             <CrfTreeTooltipsHandler :item="item" value="is_reference_data" />
             <CrfTreeTooltipsHandler :item="item" value="vendor" />
           </td>
-          <td width="10%">
+          <td style="width: 10%">
             <StatusChip :status="item.status" />
           </td>
-          <td width="10%">
+          <td style="width: 10%">
             {{ item.version }}
           </td>
-          <td width="15%">
+          <td style="width: 15%">
             <v-menu v-if="item.status !== statuses.FINAL" offset-y>
               <template #activator="{ props }">
                 <div>
@@ -192,7 +192,11 @@
   <CrfNewVersionSummaryConfirmDialog ref="confirmNewVersion" />
 </template>
 
-<script>
+<script setup>
+import { computed, inject, onMounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+
 import crfs from '@/api/crfs'
 import CrfTreeItems from '@/components/library/crfs/crfTreeComponents/CrfTreeItems.vue'
 import CrfTreeTooltipsHandler from '@/components/library/crfs/CrfTreeTooltipsHandler.vue'
@@ -211,315 +215,327 @@ import CrfTreeReorderButtons from '@/components/library/crfs/CrfTreeReorderButto
 import CrfApprovalSummaryConfirmDialog from '@/components/library/crfs/CrfApprovalSummaryConfirmDialog.vue'
 import CrfNewVersionSummaryConfirmDialog from '@/components/library/crfs/CrfNewVersionSummaryConfirmDialog.vue'
 
-export default {
-  components: {
-    CrfTreeItems,
-    CrfTreeTooltipsHandler,
-    StatusChip,
-    CrfLinkForm,
-    ActionsMenu,
-    CrfItemGroupForm,
-    CrfExportForm,
-    CrfReferencesForm,
-    CrfItemForm,
-    CrfTreeReorderButtons,
-    CrfApprovalSummaryConfirmDialog,
-    CrfNewVersionSummaryConfirmDialog,
+const props = defineProps({
+  parentForm: {
+    type: Object,
+    default: null,
   },
-  inject: ['notificationHub'],
-  props: {
-    parentForm: {
-      type: Object,
-      default: null,
-    },
-    columns: {
-      type: Array,
-      default: null,
-    },
-    refreshItemGroups: {
-      type: Number,
-      default: null,
-    },
-    expandGroupsForForm: {
-      type: Array,
-      default: null,
-    },
-    sortMode: {
-      type: Boolean,
-      default: false,
-    },
+  columns: {
+    type: Array,
+    default: null,
   },
-  emits: ['updateParentFormItemGroup'],
-  data() {
-    return {
-      itemGroups: [],
-      loading: false,
-      selectedItemGroup: {},
-      showItemGroupForm: false,
-      actions: [
-        {
-          label: this.$t('CRFTree.open_def'),
-          icon: 'mdi-eye-outline',
-          click: this.openDefinition,
-        },
-        {
-          label: this.$t('CRFTree.edit_reference'),
-          icon: 'mdi-pencil-outline',
-          click: this.editAttributes,
-          condition: (item) => item.status === statuses.DRAFT,
-          accessRole: this.$roles.LIBRARY_WRITE,
-        },
-        {
-          label: this.$t('CRFTree.preview_odm'),
-          icon: 'mdi-file-xml-box',
-          click: this.previewODM,
-        },
-        {
-          label: this.$t('_global.approve'),
-          icon: 'mdi-check-decagram',
-          click: this.approve,
-          condition: (item) => item.status === statuses.DRAFT,
-          accessRole: this.$roles.LIBRARY_WRITE,
-        },
-        {
-          label: this.$t('_global.new_version'),
-          icon: 'mdi-plus-circle-outline',
-          click: this.newVersion,
-          condition: (item) => item.status === statuses.FINAL,
-          accessRole: this.$roles.LIBRARY_WRITE,
-        },
-        {
-          label: this.$t('_global.export'),
-          icon: 'mdi-download-outline',
-          click: this.openExportForm,
-        },
-      ],
-      expanded: [],
-      showExportForm: false,
-      showAttributesForm: false,
-      showCreateForm: false,
-      showLinkForm: false,
+  refreshItemGroups: {
+    type: Number,
+    default: null,
+  },
+  expandGroupsForForm: {
+    type: Array,
+    default: null,
+  },
+  sortMode: {
+    type: Boolean,
+    default: false,
+  },
+})
+
+const emit = defineEmits(['updateParentFormItemGroup'])
+
+const notificationHub = inject('notificationHub')
+const roles = inject('roles')
+const router = useRouter()
+const { t } = useI18n()
+
+const itemGroups = ref([])
+const loading = ref(false)
+const selectedItemGroup = ref({})
+const showItemGroupForm = ref(false)
+const showCreateForm = ref(false)
+const showLinkForm = ref(false)
+const showExportForm = ref(false)
+const showAttributesForm = ref(false)
+const expanded = ref([])
+
+const refreshItems = ref(0)
+
+const confirmApproval = ref(null)
+const confirmNewVersion = ref(null)
+
+const actions = computed(() => [
+  {
+    label: t('CRFTree.open_def'),
+    icon: 'mdi-eye-outline',
+    click: openDefinition,
+  },
+  {
+    label: t('CRFTree.edit_reference'),
+    icon: 'mdi-pencil-outline',
+    click: editAttributes,
+    condition: (item) => item.status === statuses.DRAFT,
+    accessRole: roles.LIBRARY_WRITE,
+  },
+  {
+    label: t('CRFTree.preview_odm'),
+    icon: 'mdi-file-xml-box',
+    click: previewODM,
+  },
+  {
+    label: t('_global.approve'),
+    icon: 'mdi-check-decagram',
+    click: approve,
+    condition: (item) => item.status === statuses.DRAFT,
+    accessRole: roles.LIBRARY_WRITE,
+  },
+  {
+    label: t('_global.new_version'),
+    icon: 'mdi-plus-circle-outline',
+    click: newVersion,
+    condition: (item) => item.status === statuses.FINAL,
+    accessRole: roles.LIBRARY_WRITE,
+  },
+  {
+    label: t('_global.export'),
+    icon: 'mdi-download-outline',
+    click: openExportForm,
+  },
+])
+
+watch(
+  () => props.refreshItemGroups,
+  () => {
+    fetchItemGroups()
+  }
+)
+
+watch(
+  () => props.expandGroupsForForm,
+  (value) => {
+    if (!_isEmpty(value) && value.includes(props.parentForm?.uid)) {
+      expanded.value = itemGroups.value
+        .map((group) => (group.items.length > 0 ? group.name : null))
+        .filter((val) => val !== null)
     }
-  },
-  watch: {
-    refreshItemGroups() {
-      this.fetchItemGroups()
-    },
-    expandGroupsForForm(value) {
-      if (!_isEmpty(value) && value.indexOf(this.parentForm.uid) > -1) {
-        this.expanded = this.itemGroups
-          .map((group) => (group.items.length > 0 ? group.name : null))
-          .filter(function (val) {
-            return val !== null
-          })
-      }
-    },
-  },
-  created() {
-    this.statuses = statuses
-  },
-  mounted() {
-    this.fetchItemGroups()
-  },
-  methods: {
-    async newVersion(item) {
-      this.expanded = this.expanded.filter((e) => e !== item.name)
+  }
+)
 
-      if (
-        await this.$refs.confirmNewVersion.open({
-          agreeLabel: this.$t('CRFItemGroups.create_new_version'),
-          itemGroup: item,
-        })
-      ) {
-        this.loading = true
+onMounted(() => {
+  fetchItemGroups()
+})
 
-        crfs
-          .newVersion('item-groups', item.uid)
-          .then((resp) => {
-            if (this.parentForm.status === statuses.DRAFT) {
-              this.updateItemGroup(resp.data)
-            }
+async function newVersion(item) {
+  expanded.value = expanded.value.filter((e) => e !== item.name)
 
-            this.expandAll(item)
-            this.notificationHub.add({
-              msg: this.$t('_global.new_version_success'),
-            })
-          })
-          .finally(() => {
-            this.loading = false
-          })
-      }
-    },
-    async approve(item) {
-      this.expanded = this.expanded.filter((e) => e !== item.name)
+  if (
+    await confirmNewVersion.value?.open({
+      agreeLabel: t('CRFItemGroups.create_new_version'),
+      itemGroup: item,
+    })
+  ) {
+    loading.value = true
 
-      if (
-        await this.$refs.confirmApproval.open({
-          agreeLabel: this.$t('CRFItemGroups.approve_group'),
-          itemGroup: item,
-        })
-      ) {
-        this.loading = true
-
-        crfs
-          .approve('item-groups', item.uid)
-          .then((resp) => {
-            this.updateItemGroup(resp.data)
-
-            this.expandAll(item)
-            this.notificationHub.add({
-              msg: this.$t('CRFItemGroups.approved'),
-            })
-          })
-          .finally(() => {
-            this.loading = false
-          })
-      }
-    },
-    updateItemGroupItem(affectedItemGroup, updatedItem) {
-      if (affectedItemGroup.status == statuses.DRAFT) {
-        const itemGroup = this.itemGroups.find(
-          (ig) => ig.uid === affectedItemGroup.uid
-        )
-        if (itemGroup) {
-          itemGroup.items = itemGroup.items.map((i) =>
-            i.uid === updatedItem.uid ? { ...i, ...updatedItem } : i
-          )
+    crfs
+      .newVersion('item-groups', item.uid)
+      .then((resp) => {
+        if (props.parentForm?.status === statuses.DRAFT) {
+          updateItemGroup(resp.data)
         }
-      }
-    },
-    openCreateAndAddForm(item) {
-      this.selectedItemGroup = item
-      this.showCreateForm = true
-    },
-    closeCreateAndAddForm() {
-      this.showCreateForm = false
-      this.selectedItemGroup = {}
-    },
-    linkItem(item) {
-      const payload = [
-        {
-          uid: item.data.uid,
-          order_number: this.selectedItemGroup.items.length,
-          mandatory: 'No',
-          collection_exception_condition_oid: null,
-          key_sequence: parameters.NULL,
-          methodOid: parameters.NULL,
-          imputation_method_oid: parameters.NULL,
-          role: parameters.NULL,
-          role_codelist_oid: parameters.NULL,
-          data_entry_required: 'No',
-          sdv: 'No',
-          vendor: { attributes: [] },
-        },
-      ]
-      crfs
-        .addItemsToItemGroup(payload, this.selectedItemGroup.uid, false)
-        .then(() => {
-          this.fetchItemGroups()
-        })
-    },
-    async fetchItemGroups() {
-      this.loading = true
-      this.itemGroups = []
-      for (const itemGroup of this.parentForm.item_groups) {
-        let rs = await crfs.get(`item-groups/${itemGroup.uid}`, {
-          params: { version: itemGroup.version },
-        })
-        this.itemGroups.push({ ...itemGroup, ...rs.data })
-      }
 
-      this.refreshItems += 1
-      this.loading = false
-      if (
-        !_isEmpty(this.expandGroupsForForm) &&
-        this.expandGroupsForForm.indexOf(this.parentForm.uid) > -1
-      ) {
-        this.expanded = this.itemGroups
-          .map((group) => (group.items.length > 0 ? group.name : null))
-          .filter(function (val) {
-            return val !== null
-          })
-      }
-    },
-    updateItemGroup(itemGroup) {
-      this.itemGroups = this.itemGroups.map((ig) =>
-        ig.uid === itemGroup.uid ? { ...ig, ...itemGroup } : ig
-      )
-      this.$emit('updateParentFormItemGroup', this.parentForm, itemGroup)
-    },
-    openDefinition(item) {
-      this.selectedItemGroup = item
-      this.showItemGroupForm = true
-    },
-    closeDefinition() {
-      this.selectedItemGroup = {}
-      this.showItemGroupForm = false
-      this.fetchItemGroups()
-    },
-    openLinkForm(item) {
-      this.selectedItemGroup = item
-      this.showLinkForm = true
-    },
-    closeLinkForm() {
-      this.showLinkForm = false
-      this.selectedItemGroup = {}
-      this.fetchItemGroups()
-    },
-    async expandAll(item) {
-      await this.expanded.push(item.name)
-    },
-    openExportForm(item) {
-      this.selectedItemGroup = item
-      this.showExportForm = true
-    },
-    closeExportForm() {
-      this.selectedItemGroup = {}
-      this.showExportForm = false
-    },
-    editAttributes(item) {
-      this.selectedItemGroup = item
-      this.showAttributesForm = true
-    },
-    closeAttributesForm() {
-      this.selectedItemGroup = {}
-      this.showAttributesForm = false
-    },
-    previewODM(item) {
-      this.$router.push({
-        name: 'CrfBuilder',
-        params: {
-          tab: 'odm-viewer',
-          uid: item.uid,
-          type: crfTypes.ITEM_GROUP,
-        },
+        expandAll(item)
+        notificationHub?.add({
+          msg: t('_global.new_version_success'),
+        })
       })
-    },
-    orderUp(item, index) {
-      if (index === 0) {
-        return
-      } else {
-        this.itemGroups[index].order_number--
-        this.itemGroups[index - 1].order_number++
-        this.itemGroups.sort((a, b) => {
-          return a.order_number - b.order_number
+      .finally(() => {
+        loading.value = false
+      })
+  }
+}
+
+async function approve(item) {
+  expanded.value = expanded.value.filter((e) => e !== item.name)
+
+  if (
+    await confirmApproval.value?.open({
+      agreeLabel: t('CRFItemGroups.approve_group'),
+      itemGroup: item,
+    })
+  ) {
+    loading.value = true
+
+    crfs
+      .approve('item-groups', item.uid)
+      .then((resp) => {
+        updateItemGroup(resp.data)
+
+        expandAll(item)
+        notificationHub?.add({
+          msg: t('CRFItemGroups.approved'),
         })
-        crfs.addItemGroupsToForm(this.itemGroups, this.parentForm.uid, true)
-      }
+      })
+      .finally(() => {
+        loading.value = false
+      })
+  }
+}
+
+function updateItemGroupItem(affectedItemGroup, updatedItem) {
+  if (affectedItemGroup.status == statuses.DRAFT) {
+    const itemGroup = itemGroups.value.find(
+      (ig) => ig.uid === affectedItemGroup.uid
+    )
+    if (itemGroup) {
+      itemGroup.items = itemGroup.items.map((i) =>
+        i.uid === updatedItem.uid ? { ...i, ...updatedItem } : i
+      )
+    }
+  }
+}
+
+function openCreateAndAddForm(item) {
+  selectedItemGroup.value = item
+  showCreateForm.value = true
+}
+
+function closeCreateAndAddForm() {
+  showCreateForm.value = false
+  selectedItemGroup.value = {}
+}
+
+function linkItem(item) {
+  const payload = [
+    {
+      uid: item.data.uid,
+      order_number: selectedItemGroup.value.items.length,
+      mandatory: 'No',
+      collection_exception_condition_oid: null,
+      key_sequence: parameters.NULL,
+      methodOid: parameters.NULL,
+      imputation_method_oid: parameters.NULL,
+      role: parameters.NULL,
+      role_codelist_oid: parameters.NULL,
+      data_entry_required: 'No',
+      sdv: 'No',
+      vendor: { attributes: [] },
     },
-    orderDown(item, index) {
-      if (index === this.itemGroups.length - 1) {
-        return
-      } else {
-        this.itemGroups[index].order_number++
-        this.itemGroups[index + 1].order_number--
-        this.itemGroups.sort((a, b) => {
-          return a.order_number - b.order_number
-        })
-        crfs.addItemGroupsToForm(this.itemGroups, this.parentForm.uid, true)
-      }
+  ]
+
+  crfs
+    .addItemsToItemGroup(payload, selectedItemGroup.value.uid, false)
+    .then(() => {
+      fetchItemGroups()
+    })
+}
+
+async function fetchItemGroups() {
+  if (!props.parentForm) {
+    return
+  }
+
+  loading.value = true
+  itemGroups.value = []
+  for (const itemGroup of props.parentForm.item_groups ?? []) {
+    const rs = await crfs.get(`item-groups/${itemGroup.uid}`, {
+      params: { version: itemGroup.version },
+    })
+    itemGroups.value.push({ ...itemGroup, ...rs.data })
+  }
+
+  refreshItems.value += 1
+  loading.value = false
+
+  if (
+    !_isEmpty(props.expandGroupsForForm) &&
+    props.expandGroupsForForm.includes(props.parentForm.uid)
+  ) {
+    expanded.value = itemGroups.value
+      .map((group) => (group.items.length > 0 ? group.name : null))
+      .filter((val) => val !== null)
+  }
+}
+
+function updateItemGroup(itemGroup) {
+  itemGroups.value = itemGroups.value.map((ig) =>
+    ig.uid === itemGroup.uid ? { ...ig, ...itemGroup } : ig
+  )
+  emit('updateParentFormItemGroup', props.parentForm, itemGroup)
+}
+
+function openDefinition(item) {
+  selectedItemGroup.value = item
+  showItemGroupForm.value = true
+}
+
+function closeDefinition() {
+  selectedItemGroup.value = {}
+  showItemGroupForm.value = false
+  fetchItemGroups()
+}
+
+function openLinkForm(item) {
+  selectedItemGroup.value = item
+  showLinkForm.value = true
+}
+
+function closeLinkForm() {
+  showLinkForm.value = false
+  selectedItemGroup.value = {}
+  fetchItemGroups()
+}
+
+async function expandAll(item) {
+  await expanded.value.push(item.name)
+}
+
+function openExportForm(item) {
+  selectedItemGroup.value = item
+  showExportForm.value = true
+}
+
+function closeExportForm() {
+  selectedItemGroup.value = {}
+  showExportForm.value = false
+}
+
+function editAttributes(item) {
+  selectedItemGroup.value = item
+  showAttributesForm.value = true
+}
+
+function closeAttributesForm() {
+  selectedItemGroup.value = {}
+  showAttributesForm.value = false
+}
+
+function previewODM(item) {
+  router.push({
+    name: 'CrfBuilder',
+    params: {
+      tab: 'odm-viewer',
+      uid: item.uid,
+      type: crfTypes.ITEM_GROUP,
     },
-  },
+  })
+}
+
+function orderUp(item, index) {
+  if (index === 0) {
+    return
+  }
+
+  itemGroups.value[index].order_number--
+  itemGroups.value[index - 1].order_number++
+  itemGroups.value.sort((a, b) => a.order_number - b.order_number)
+  crfs.addItemGroupsToForm(itemGroups.value, props.parentForm.uid, true)
+}
+
+function orderDown(item, index) {
+  if (index === itemGroups.value.length - 1) {
+    return
+  }
+
+  itemGroups.value[index].order_number++
+  itemGroups.value[index + 1].order_number--
+  itemGroups.value.sort((a, b) => a.order_number - b.order_number)
+  crfs.addItemGroupsToForm(itemGroups.value, props.parentForm.uid, true)
 }
 </script>
 <style scoped>

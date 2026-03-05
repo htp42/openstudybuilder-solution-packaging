@@ -56,7 +56,6 @@
               </td>
               <td width="20%">
                 <v-text-field
-                  v-if="item.type"
                   v-model="selectedExtensions[index].value"
                   :label="$t('_global.value')"
                   density="compact"

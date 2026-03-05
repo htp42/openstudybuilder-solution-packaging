@@ -11,7 +11,7 @@ from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_codelist_a
     CTCodelistAttributesRepository,
 )
 from clinical_mdr_api.domain_repositories.generic_repository import (
-    manage_previous_connected_study_selection_relationships,
+    _manage_versioning_with_relations,
 )
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTTermRoot,
@@ -33,7 +33,7 @@ from clinical_mdr_api.domains.study_selections.study_epoch import (
 from clinical_mdr_api.models.controlled_terminologies.ct_term import (
     SimpleCTTermNameWithConflictFlag,
 )
-from common import queries
+from common import exceptions, queries
 from common.auth.user import user
 from common.config import settings
 from common.exceptions import ValidationException
@@ -433,13 +433,50 @@ class StudyEpochRepository:
         return self._update(epoch, create=True)
 
     def _update(self, item: StudyEpochVO, create: bool = False):
-        study_root = StudyRoot.nodes.get(uid=item.study_uid)
-        study_value: StudyValue = study_root.latest_value.get_or_none()
-        ValidationException.raise_if(
-            study_value is None, msg="Study doesn't have draft version."
-        )
-        if not create:
-            previous_item = study_value.has_study_epoch.get(uid=item.uid)
+
+        # Fetch nodes referenced by uids
+        query = [
+            "MATCH (study_root:StudyRoot {uid: $study_uid})-[:LATEST]->(latest_value:StudyValue)",
+            "MATCH (epoch:CTTermRoot {uid: $epoch_uid})",
+            "MATCH (epoch_subtype:CTTermRoot {uid: $epoch_subtype_uid})",
+            "MATCH (epoch_type:CTTermRoot {uid: $epoch_type_uid})",
+        ]
+        params = {
+            "study_uid": item.study_uid,
+            "epoch_uid": item.epoch.term_uid,
+            "epoch_subtype_uid": item.subtype.term_uid,
+            "epoch_type_uid": item.epoch_type.term_uid,
+        }
+        returns = [
+            "study_root",
+            "latest_value",
+            "epoch",
+            "epoch_subtype",
+            "epoch_type",
+        ]
+
+        if not create and item.uid:
+            query.append(
+                "MATCH (latest_value)-[:HAS_STUDY_EPOCH]->(study_epoch:StudyEpoch {uid: $study_epoch_uid})"
+            )
+            params["study_epoch_uid"] = item.uid
+            returns.append("study_epoch")
+
+        query.append(f"RETURN {', '.join(returns)}")
+        query_str = "\n".join(query)
+        results, keys = db.cypher_query(query_str, params, resolve_objects=True)
+        if len(results) != 1:
+            raise exceptions.BusinessLogicException(
+                msg=f"There should be one row returned with dependencies for StudyEpoch '{item.uid}'."
+            )
+
+        nodes = dict(zip(keys, results[0]))
+        study_root: StudyRoot = nodes["study_root"]
+        study_value: StudyValue = nodes["latest_value"]
+        epoch: CTTermRoot = nodes["epoch"]
+        epoch_subtype: CTTermRoot = nodes["epoch_subtype"]
+        epoch_type: CTTermRoot = nodes["epoch_type"]
+        previous_item: StudyEpoch | None = nodes.get("study_epoch")
 
         allow_removed_terms = not create
 
@@ -462,10 +499,10 @@ class StudyEpochRepository:
             item.uid = new_study_epoch.uid
 
         # connect to epoch subtype
-        ct_epoch_subtype = CTTermRoot.nodes.get(uid=item.subtype.term_uid)
+        # ct_epoch_subtype = CTTermRoot.nodes.get(uid=item.subtype.term_uid)
         selected_epoch_subtype_node = (
             CTCodelistAttributesRepository().get_or_create_selected_term(
-                ct_epoch_subtype,
+                epoch_subtype,
                 codelist_submission_value=settings.study_epoch_subtype_cl_submval,
                 catalogue_name=settings.sdtm_ct_catalogue_name,
                 allow_removed_terms=allow_removed_terms,
@@ -474,10 +511,10 @@ class StudyEpochRepository:
         new_study_epoch.has_epoch_subtype.connect(selected_epoch_subtype_node)
 
         # connect to epoch type
-        ct_epoch_type = CTTermRoot.nodes.get(uid=item.epoch_type.term_uid)
+        # ct_epoch_type = CTTermRoot.nodes.get(uid=item.epoch_type.term_uid)
         selected_epoch_type_node = (
             CTCodelistAttributesRepository().get_or_create_selected_term(
-                ct_epoch_type,
+                epoch_type,
                 codelist_submission_value=settings.study_epoch_type_cl_submval,
                 catalogue_name=settings.sdtm_ct_catalogue_name,
                 allow_removed_terms=allow_removed_terms,
@@ -486,10 +523,10 @@ class StudyEpochRepository:
         new_study_epoch.has_epoch_type.connect(selected_epoch_type_node)
 
         # connect to epoch
-        ct_epoch = CTTermRoot.nodes.get(uid=item.epoch.term_uid)
+        # ct_epoch = CTTermRoot.nodes.get(uid=item.epoch.term_uid)
         selected_epoch_node = (
             CTCodelistAttributesRepository().get_or_create_selected_term(
-                ct_epoch,
+                epoch,
                 codelist_submission_value=settings.study_epoch_cl_submval,
                 catalogue_name=settings.sdtm_ct_catalogue_name,
                 allow_removed_terms=allow_removed_terms,
@@ -499,77 +536,38 @@ class StudyEpochRepository:
 
         if create:
             new_study_epoch.study_value.connect(study_value)
-            self.manage_versioning_create(
-                study_root=study_root, item=item, new_item=new_study_epoch
+            _manage_versioning_with_relations(
+                study_root=study_root,
+                action_type=Create,
+                before=None,
+                after=new_study_epoch,
+                author_id=self.author_id,
             )
         else:
+            exclude_relations = (
+                StudyEpoch.has_epoch_type,
+                StudyEpoch.has_epoch_subtype,
+                StudyEpoch.has_epoch,
+            )
+            # previous_item = study_value.has_study_epoch.get(uid=item.uid)
             if item.is_deleted:
-                self.manage_versioning_delete(
+                _manage_versioning_with_relations(
                     study_root=study_root,
-                    item=item,
-                    # pylint: disable=possibly-used-before-assignment
-                    previous_item=previous_item,
-                    new_item=new_study_epoch,
+                    action_type=Delete,
+                    before=previous_item,
+                    after=new_study_epoch,
+                    exclude_relationships=exclude_relations,
+                    author_id=self.author_id,
                 )
             else:
                 new_study_epoch.study_value.connect(study_value)
-                self.manage_versioning_update(
+                _manage_versioning_with_relations(
                     study_root=study_root,
-                    item=item,
-                    previous_item=previous_item,
-                    new_item=new_study_epoch,
+                    action_type=Edit,
+                    before=previous_item,
+                    after=new_study_epoch,
+                    exclude_relationships=exclude_relations,
+                    author_id=self.author_id,
                 )
-            manage_previous_connected_study_selection_relationships(
-                previous_item=previous_item,
-                study_value_node=study_value,
-                new_item=new_study_epoch,
-                exclude_study_selection_relationships=[],
-            )
 
         return item
-
-    def manage_versioning_create(
-        self, study_root: StudyRoot, item: StudyEpochVO, new_item: StudyEpoch
-    ):
-        action = Create(
-            date=datetime.datetime.now(datetime.timezone.utc),
-            status=item.status.value,
-            author_id=item.author_id,
-        )
-        action.save()
-        action.has_after.connect(new_item)
-        study_root.audit_trail.connect(action)
-
-    def manage_versioning_update(
-        self,
-        study_root: StudyRoot,
-        item: StudyEpochVO,
-        previous_item: StudyEpoch,
-        new_item: StudyEpoch,
-    ):
-        action = Edit(
-            date=datetime.datetime.now(datetime.timezone.utc),
-            status=item.status.value,
-            author_id=item.author_id,
-        )
-        action.save()
-        action.has_before.connect(previous_item)
-        action.has_after.connect(new_item)
-        study_root.audit_trail.connect(action)
-
-    def manage_versioning_delete(
-        self,
-        study_root: StudyRoot,
-        item: StudyEpochVO,
-        previous_item: StudyEpoch,
-        new_item: StudyEpoch,
-    ):
-        action = Delete(
-            date=datetime.datetime.now(datetime.timezone.utc),
-            status=item.status.value,
-            author_id=item.author_id,
-        )
-        action.save()
-        action.has_before.connect(previous_item)
-        action.has_after.connect(new_item)
-        study_root.audit_trail.connect(action)

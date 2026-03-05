@@ -55,6 +55,7 @@ class SponsorModelDatasetService(NeomodelExtGenericService[SponsorModelDatasetAR
                 label=item_input.label,
                 state=item_input.state,
                 extended_domain=item_input.extended_domain,
+                extra_properties=item_input.get_extra_fields(),
             ),
             library=library,
         )
@@ -90,6 +91,7 @@ class SponsorModelDatasetService(NeomodelExtGenericService[SponsorModelDatasetAR
                 label=item_edit_input.label,
                 state=item_edit_input.state,
                 extended_domain=item_edit_input.extended_domain,
+                extra_properties=item_edit_input.get_extra_fields(),
             ),
         )
         return item

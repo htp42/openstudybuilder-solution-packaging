@@ -17,12 +17,12 @@ Feature: Library - Concepts - Activities - Requested Activities
         Given The '/library/activities/requested-activities' page is opened
         Then A table is visible with following options
             | options                                                         |
-            | Filters                                                         |
-            | Columns                                                         |
+            | Select filters                                                  |
+            | Select columns                                                  |
             | Export                                                          |
             | Show version history                                            |
-            | Add select boxes to table to allow selection of rows for export |
-            | search-field                                                    |
+            | Select rows                                                     |
+            | Search                                                          |
 
     @smoke_test
     Scenario: [Table][Columns][Names] User must be able to see the columns list on the main page as below

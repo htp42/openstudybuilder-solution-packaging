@@ -18,7 +18,7 @@
     "build-sbom": "python3 assbom.py --yarn --append sbom-append.md --fallback-dir doc/licenses --level 2 --output sbom.md"
   },
   "dependencies": {
-    "@formkit/drag-and-drop": "^0.3.3",
+    "@formkit/drag-and-drop": "^0.5.3",
     "@microsoft/applicationinsights-clickanalytics-js": "^3.2.0",
     "@microsoft/applicationinsights-web": "^3.2.0",
     "@vueup/vue-quill": "^1.2.0",
@@ -32,6 +32,7 @@
     "marked": "^10.0.0",
     "oidc-client-ts": "^3.0.0-beta.0",
     "pinia": "^2.1.7",
+    "quill-table-better": "^1.2.3",
     "tslib": "^2.8.1",
     "vue": "^3.4.19",
     "vue-chartjs": "^5.2.0",

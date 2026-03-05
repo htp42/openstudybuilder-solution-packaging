@@ -81,6 +81,10 @@
             density="compact"
             class="ml-4 w-50"
             :rules="[formRules.required]"
+            :disabled="
+              props.activityInstanceUid !== undefined &&
+              props.activityInstanceUid !== null
+            "
             @update:model-value="filterActivityInstanceClasses"
           />
         </div>
@@ -123,10 +127,6 @@
               :compatible-activity-item-classes="[activityItemClass]"
               :unit-dimension="selectedUnitDimension"
               :adam-specific="activityItemClass.is_adam_param_specific_enabled"
-              :disabled="
-                props.activityInstanceUid !== undefined &&
-                props.activityInstanceUid !== null
-              "
               :data-domain="step2Form.data_domain"
               select-value-only
               class="mb-4 w-50"
@@ -151,13 +151,20 @@
               :compatible-activity-item-classes="[activityItemClass]"
               :unit-dimension="selectedUnitDimension"
               :adam-specific="activityItemClass.is_adam_param_specific_enabled"
-              :disabled="
-                props.activityInstanceUid !== undefined &&
-                props.activityInstanceUid !== null
-              "
               :data-domain="step2Form.data_domain"
               select-value-only
-              class="mb-4 w-50"
+              class="mb-4"
+              :class="{
+                'w-50':
+                  activityItemClass.name !==
+                  'categoric_finding_original_result',
+              }"
+              :with-advanced-search="
+                activityItemClass.name === 'categoric_finding_original_result'
+              "
+              :multiple="
+                activityItemClass.name === 'categoric_finding_original_result'
+              "
             />
           </template>
         </template>
@@ -274,7 +281,11 @@
             variant="outlined"
             density="compact"
             class="mr-4"
-            :disabled="!allowManualEdit"
+            :disabled="
+              !allowManualEdit ||
+              (props.activityInstanceUid !== undefined &&
+                props.activityInstanceUid !== null)
+            "
             :loading="loadingPreview"
             :rules="[formRules.required]"
           />
@@ -300,6 +311,7 @@
             v-model="step3Form.is_research_lab"
             :label="$t('ActivityInstanceForm.data_from_research_lab')"
             color="primary"
+            :disabled="activityInstanceUid !== null"
           >
             <template #append>
               <v-icon
@@ -408,6 +420,18 @@
             </template>
           </v-checkbox>
         </div>
+        <template v-if="props.activityInstanceUid">
+          <div class="dialog-title my-4">
+            {{ $t('_global.change_description') }}
+          </div>
+          <v-text-field
+            v-model="step4Form.change_description"
+            :rules="[formRules.required]"
+            variant="outlined"
+            density="compact"
+            class="w-50"
+          />
+        </template>
       </v-form>
     </template>
   </HorizontalStepperForm>
@@ -415,7 +439,7 @@
 
 <script setup>
 import { computed, inject, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useFeatureFlagsStore } from '@/stores/feature-flags'
 import _debounce from 'lodash/debounce'
@@ -427,6 +451,7 @@ import TestActivityItemClassField from './TestActivityItemClassField.vue'
 import activitiesApi from '@/api/activities'
 import activityInstanceClassesApi from '@/api/activityInstanceClasses'
 import codelistsApi from '@/api/controlledTerminology/codelists'
+import ctApi from '@/api/controlledTerminology'
 import activityItemClassesConstants from '@/constants/activityItemClasses'
 import libraryConstants from '@/constants/libraries.js'
 import statuses from '@/constants/statuses.js'
@@ -442,6 +467,7 @@ const props = defineProps({
 })
 
 const router = useRouter()
+const route = useRoute()
 const { t } = useI18n()
 const notificationHub = inject('notificationHub')
 const formRules = inject('formRules')
@@ -519,20 +545,6 @@ const selectedActivityName = computed(() => {
 const availableActivityItemClasses = ref([])
 const filteredActivityItemClasses = ref([])
 
-const mandatoryActivityItemClasses = computed(() => {
-  const result = availableActivityItemClasses.value.filter((item) => {
-    return item.mandatory && !['test_code', 'test_name'].includes(item.name)
-  })
-  if (step2Form.value.activity_instance_class?.name === 'NumericFindings') {
-    // special sorting for NumericFindings
-    return [
-      result.find((item) => item.name === 'unit_dimension'),
-      result.find((item) => item.name === 'standard_unit'),
-    ].filter(Boolean) // Filter out undefined values
-  }
-  return result
-})
-
 // List of activity item classes that should not be proposed to end users
 const activityItemClassExceptions = computed(() => {
   const exceptions = ['domain']
@@ -543,6 +555,24 @@ const activityItemClassExceptions = computed(() => {
     exceptions.push(subcategoryAic.value.name)
   }
   return exceptions
+})
+
+const mandatoryActivityItemClasses = computed(() => {
+  const result = availableActivityItemClasses.value.filter((item) => {
+    return (
+      item.mandatory &&
+      !activityItemClassExceptions.value.includes(item.name) &&
+      !['test_code', 'test_name'].includes(item.name)
+    )
+  })
+  if (step2Form.value.activity_instance_class?.name === 'NumericFindings') {
+    // special sorting for NumericFindings
+    return [
+      result.find((item) => item.name === 'unit_dimension'),
+      result.find((item) => item.name === 'standard_unit'),
+    ].filter(Boolean) // Filter out undefined values
+  }
+  return result
 })
 
 const optionalActivityItemClasses = computed(() => {
@@ -764,13 +794,28 @@ async function fetchActivityItemClasses(activityInstanceClass) {
       if (!aic) return // Skip if undefined
       let activityItem
       if (activityInstance.value) {
+        // Handle mandatory activity items here because we must
+        // respect the order of activity items classes received from the
+        // API
         const matched = activityInstance.value.activity_items.find(
           (item) => item.activity_item_class.uid === aic.uid
         )
         if (matched) {
           activityItem = {
             activity_item_class_uid: matched.activity_item_class.uid,
-            ct_term_uids: matched.ct_terms.map((ct_term) => ct_term.uid),
+            is_adam_param_specific: matched.is_adam_param_specific,
+            unit_definition_uids: [],
+            ct_terms: [],
+          }
+          if (matched.activity_item_class.name === 'standard_unit') {
+            activityItem.unit_definition_uids = matched.unit_definitions.map(
+              (unit) => unit.uid
+            )
+          } else {
+            activityItem.ct_terms = matched.ct_terms
+            if (matched.activity_item_class.name === 'unit_dimension') {
+              activityItem.ct_term_name = matched.ct_terms[0].name
+            }
           }
         } else {
           activityItem = { activity_item_class_uid: aic.uid }
@@ -943,9 +988,7 @@ function extraStepValidation(step) {
   return true
 }
 
-async function prepareCreationPayload(forPreview) {
-  const [activityGroupUid, activitySubgroupUid, activityUid] =
-    selectedActivity.value.split('|')
+async function prepareActivityItems() {
   const activityItems = [
     ...step2Form.value.activityItems,
     ...step3Form.value.activityItems,
@@ -1012,6 +1055,25 @@ async function prepareCreationPayload(forPreview) {
     }
   }
 
+  // Thanks to API inconsistency, we have to do this...
+  for (const activityItem of activityItems) {
+    if (!activityItem.ct_terms) {
+      continue
+    }
+    for (const term of activityItem.ct_terms) {
+      if (!term.term_uid) {
+        term.term_uid = term.uid
+      }
+    }
+  }
+
+  return activityItems
+}
+
+async function prepareCreationPayload(forPreview) {
+  const [activityGroupUid, activitySubgroupUid, activityUid] =
+    selectedActivity.value.split('|')
+  const activityItems = await prepareActivityItems()
   const result = {
     library_name: libraryConstants.LIBRARY_SPONSOR,
     nci_concept_name: step3Form.value.nci_concept_name,
@@ -1040,6 +1102,39 @@ async function prepareCreationPayload(forPreview) {
     result.name_sentence_case = step3Form.value.name_sentence_case
     result.adam_param_code = step3Form.value.adam_param_code
     result.topic_code = step3Form.value.topic_code
+  }
+  return result
+}
+
+async function prepareUpdatePayload() {
+  const [activityGroupUid, activitySubgroupUid, activityUid] =
+    selectedActivity.value.split('|')
+  const result = {
+    library_name: libraryConstants.LIBRARY_SPONSOR,
+    activity_groupings: [
+      {
+        activity_group_uid: activityGroupUid,
+        activity_subgroup_uid: activitySubgroupUid,
+        activity_uid: activityUid,
+      },
+    ],
+    nci_concept_name: step3Form.value.nci_concept_name,
+    nci_concept_id: step3Form.value.nci_concept_id,
+    activity_instance_class_uid: step2Form.value.activity_instance_class.uid,
+    is_required_for_activity: step4Form.value.is_required_for_activity,
+    is_default_selected_for_activity:
+      step4Form.value.is_default_selected_for_activity,
+    is_data_sharing: step4Form.value.is_data_sharing,
+    is_research_lab: step3Form.value.is_research_lab,
+    activity_items: await prepareActivityItems(),
+    name: step3Form.value.name,
+    name_sentence_case: step3Form.value.name_sentence_case,
+    adam_param_code: step3Form.value.adam_param_code,
+    topic_code: step3Form.value.topic_code,
+    change_description: 'Update',
+  }
+  if (step2Form.value.molecular_weight) {
+    result.molecular_weight = step2Form.value.molecular_weight
   }
   return result
 }
@@ -1107,37 +1202,53 @@ async function initStep(step) {
 async function submit() {
   notificationHub.clearErrors()
 
-  const payload = await prepareCreationPayload()
   try {
-    const resp = await activitiesApi.create(payload, 'activity-instances')
-    notificationHub.add({
-      msg: t('ActivityInstanceForm.add_success'),
-    })
-    router.push({
-      name: 'ActivityInstanceOverview',
-      params: { id: resp.data.uid },
-    })
+    let resp
+    if (props.activityInstanceUid) {
+      const payload = await prepareUpdatePayload()
+      resp = await activitiesApi.update(
+        props.activityInstanceUid,
+        payload,
+        {},
+        'activity-instances'
+      )
+      notificationHub.add({
+        msg: t('ActivityInstanceForm.update_success'),
+      })
+    } else {
+      const payload = await prepareCreationPayload()
+      resp = await activitiesApi.create(payload, 'activity-instances')
+      notificationHub.add({
+        msg: t('ActivityInstanceForm.add_success'),
+      })
+    }
+    if (route.name !== 'ActivityInstanceOverview') {
+      router.push({
+        name: 'ActivityInstanceOverview',
+        params: { id: resp.data.uid },
+      })
+    } else {
+      window.location.reload()
+    }
   } finally {
     stepper.value.loading = false
   }
 }
 
-resetForms()
+async function initiateDomainFromActivityItem(activityItem) {
+  const resp = await ctApi.getTermCodelists(activityItem.ct_terms[0].uid)
+  for (const codelist of resp.data.codelists) {
+    if (
+      codelist.codelist_uid ===
+      activityItemClassesConstants.sdtmDomainAbbreviationCodelistUid
+    ) {
+      step2Form.value.data_domain = codelist.submission_value
+    }
+  }
+  dataDomainCTTermUid.value = activityItem.ct_terms[0].uid
+}
 
-activityInstanceClassesApi
-  .getAll({
-    filters: {
-      name: { v: allowedInstanceClasses },
-      level: { v: [3] },
-    },
-    page_size: 0,
-  })
-  .then((resp) => {
-    activityInstanceClasses.value = resp.data.items
-  })
-fetchDatasets()
-
-if (props.activityInstanceUid) {
+async function initFromActivityInstance() {
   const resp = await activitiesApi.getObject(
     'activity-instances',
     props.activityInstanceUid
@@ -1158,13 +1269,34 @@ if (props.activityInstanceUid) {
   step3Form.value.nci_concept_id = activityInstance.value.nci_concept_id
 
   for (const activityItem of activityInstance.value.activity_items) {
+    if (activityItem.activity_item_class.name === 'domain') {
+      await initiateDomainFromActivityItem(activityItem)
+      continue
+    }
+    if (activityItem.activity_item_class.name === categoryAic.value.name) {
+      step2Form.value.data_category = activityItem.ct_terms[0].uid
+      continue
+    }
+    if (activityItem.activity_item_class.name === subcategoryAic.value.name) {
+      step2Form.value.data_subcategory = activityItem.ct_terms[0].uid
+      continue
+    }
+    if (
+      testNameAic.value &&
+      activityItem.activity_item_class.uid === testNameAic.value.uid
+    ) {
+      testValue.value = activityItem.ct_terms[0].uid
+      continue
+    }
     let matched = optionalActivityItemClasses.value.find(
       (aic) => aic.uid === activityItem.activity_item_class.uid
     )
     if (matched) {
       step3Form.value.activityItems.push({
         activity_item_class_uid: matched.uid,
-        ct_term_uids: activityItem.ct_terms.map((ct_term) => ct_term.uid),
+        is_adam_param_specific: matched.is_adam_param_specific_enabled,
+        unit_definition_uids: [],
+        ct_terms: activityItem.ct_terms,
       })
       continue
     }
@@ -1174,9 +1306,27 @@ if (props.activityInstanceUid) {
     if (matched) {
       step4Form.value.activityItems.push({
         activity_item_class_uid: matched.uid,
-        ct_term_uids: activityItem.ct_terms.map((ct_term) => ct_term.uid),
+        is_adam_param_specific: matched.is_adam_param_specific_enabled,
+        unit_definition_uids: [],
+        ct_terms: activityItem.ct_terms,
       })
     }
   }
+}
+
+resetForms()
+
+const resp = await activityInstanceClassesApi.getAll({
+  filters: {
+    name: { v: allowedInstanceClasses },
+    level: { v: [3] },
+  },
+  page_size: 0,
+})
+activityInstanceClasses.value = resp.data.items
+await fetchDatasets()
+
+if (props.activityInstanceUid) {
+  await initFromActivityInstance()
 }
 </script>

@@ -10,6 +10,8 @@ Feature: Studies - Define Study - Study Activities - Schedule of Activities - Pr
     Background: User is logged in and study has been selected
         Given The user is logged in
         And A test study is selected
+
+    Scenario: [Test data] User must be able to create data needed for study protocol timeframe_instances
         And [API] The epoch with type 'Pre Treatment' and subtype 'Run-in' exists in selected study
         And [API] The epoch with type 'Treatment' and subtype 'Intervention' exists in selected study
         And [API] Study vists uids are fetched for current study
@@ -138,6 +140,7 @@ Feature: Studies - Define Study - Study Activities - Schedule of Activities - Pr
     Scenario: User must be able to split protocol SoA by on multiple visits
         When The test study '/activities/soa' page is opened
         And User switches to the 'protocol' view
+        And The user unsplits the SoA by 'V3'
         And The user splits the SoA by 'V3'
         Then The SoA split is created on 'V3'
         When The user splits the SoA by 'V2'
@@ -146,6 +149,26 @@ Feature: Studies - Define Study - Study Activities - Schedule of Activities - Pr
     Scenario: User must be able to unsplit SoA
         When The test study '/activities/soa' page is opened
         And User switches to the 'protocol' view
-        And The user splits the SoA by 'V3'
         And The user unsplits the SoA by 'V3'
         Then The SoA split on 'V3' is removed
+
+    Scenario: [Export][CSV] User must be able to export the data in CSV format
+        Given The test study '/activities/soa' page is opened
+        And User switches to the 'protocol' view
+        When User clicks export button
+        And User selects 'CSV' format to export the table content
+        Then The study specific 'protocol SoA' file without timestamp is downloaded in 'csv' format
+
+    Scenario: [Export][EXCEL] User must be able to export the data in JSON format
+        Given The test study '/activities/soa' page is opened
+        And User switches to the 'protocol' view
+        When User clicks export button
+        And User selects 'EXCEL' format to export the table content
+        Then The study specific 'protocol SoA' file without timestamp is downloaded in 'xlsx' format
+
+    Scenario: [Export][DOCX] User must be able to export the data in XML format
+        Given The test study '/activities/soa' page is opened
+        And User switches to the 'protocol' view
+        When User clicks export button
+        And User selects 'DOCX' format to export the table content
+        Then The study specific 'protocol SoA' file without timestamp is downloaded in 'docx' format

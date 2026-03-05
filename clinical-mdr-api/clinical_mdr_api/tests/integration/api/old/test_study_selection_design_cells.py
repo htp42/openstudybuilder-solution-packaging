@@ -607,7 +607,7 @@ def test_adding_studydesigncell_selection_2nd(api_client):
     data = {
         "study_arm_uid": STUDY_ARM_2,
         "study_epoch_uid": "StudyEpoch_000001",
-        "study_element_uid": "StudyElement_000003",
+        "study_element_uid": "StudyElement_000002",
         "transition_rule": "Transition_Rule_2",
     }
     response = api_client.post("/studies/study_root/study-design-cells", json=data)
@@ -629,7 +629,7 @@ def test_batch_patch_studydesigncell_selection(api_client):
             "content": {
                 "study_design_cell_uid": "StudyDesignCell_000001",
                 "study_arm_uid": "StudyArm_000002",
-                "study_element_uid": "StudyElement_000003",
+                "study_element_uid": "StudyElement_000002",
                 "study_branch_arm_uid": None,
             },
         },

@@ -712,16 +712,16 @@ class Activities(BaseImporter):
                         existing_rows[current_class_name] = response
 
     def are_item_classes_equal(self, new, existing):
-        def are_instance_classes_covered():
-            _new = set()
-            for i in new.get("activity_instance_classes") or []:
-                _new.add(i["name"])
-
-            _existing = set()
-            for i in existing.get("activity_instance_classes") or []:
-                _existing.add(i["name"])
-
-            return _new.issubset(_existing)
+        def are_instance_classes_equal():
+            _new = sorted(
+                new.get("activity_instance_classes") or [],
+                key=lambda x: x.get("name", ""),
+            )
+            _existing = sorted(
+                existing.get("activity_instance_classes") or [],
+                key=lambda x: x.get("name", ""),
+            )
+            return _new == _existing
 
         properties_to_compare = [
             "name",
@@ -738,15 +738,17 @@ class Activities(BaseImporter):
         if self.compare_properties(new, existing, properties_to_compare) is False:
             self.log.debug("Difference found in basic properties")
             return False
-        if not are_instance_classes_covered():
-            self.log.debug("Instance classes are not covered")
+        if not are_instance_classes_equal():
+            self.log.debug(
+                "Instance classes are not equal ; either the list is different, or attached properties are"
+            )
             return False
 
         return True
 
     @open_file_async()
     async def handle_activity_item_classes(self, csvfile, session):
-        # Populate then activity item classes in sponsor library
+        # Populate the activity item classes in sponsor library
         readCSV = csv.DictReader(csvfile, delimiter=",")
         api_tasks = []
 

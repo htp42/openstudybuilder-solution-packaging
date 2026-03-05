@@ -15,14 +15,16 @@
   >
     <template #actions="">
       <v-btn
-        size="small"
+        class="expandHoverBtn"
         color="nnBaseBlue"
         :title="$t('CompoundForm.add_title')"
         :disabled="!accessGuard.checkPermission($roles.LIBRARY_WRITE)"
-        icon="mdi-plus"
         variant="outlined"
         @click.stop="showCompoundForm = true"
-      />
+      >
+        <v-icon left>mdi-plus</v-icon>
+        <span class="label">{{ $t('CompoundForm.add_title') }}</span>
+      </v-btn>
     </template>
     <template #[`item.actions`]="{ item }">
       <ActionsMenu :actions="actions" :item="item" />

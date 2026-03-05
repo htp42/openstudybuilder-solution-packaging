@@ -44,20 +44,46 @@ def test_creating_a_new_odm_condition(api_client):
         "name": "name1",
         "oid": "oid1",
         "formal_expressions": [{"context": "context1", "expression": "expression1"}],
-        "descriptions": [
+        "translated_texts": [
             {
-                "name": "name2",
+                "text_type": "Description",
                 "language": "eng",
-                "description": "description2",
-                "instruction": "instruction2",
-                "sponsor_instruction": "sponsor_instruction2",
+                "text": "description2",
             },
             {
-                "name": "name3",
+                "text_type": "Description",
+                "language": "dan",
+                "text": "description3",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
                 "language": "eng",
-                "description": "description3",
-                "instruction": "instruction3",
-                "sponsor_instruction": "sponsor_instruction3",
+                "text": "instruction2",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
+                "language": "dan",
+                "text": "instruction3",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "eng",
+                "text": "sponsor_instruction2",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "dan",
+                "text": "sponsor_instruction3",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "eng",
+                "text": "name2",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "dan",
+                "text": "name3",
             },
         ],
         "aliases": [{"context": "context1", "name": "name1"}],
@@ -80,20 +106,46 @@ def test_creating_a_new_odm_condition(api_client):
     assert res["formal_expressions"] == [
         {"context": "context1", "expression": "expression1"}
     ]
-    assert res["descriptions"] == [
+    assert res["translated_texts"] == [
         {
-            "name": "name2",
+            "text_type": "Description",
             "language": "eng",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
+            "text": "description2",
         },
         {
-            "name": "name3",
+            "text_type": "Description",
+            "language": "dan",
+            "text": "description3",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
             "language": "eng",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
+            "text": "instruction2",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
+            "language": "dan",
+            "text": "instruction3",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "eng",
+            "text": "sponsor_instruction2",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "dan",
+            "text": "sponsor_instruction3",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "eng",
+            "text": "name2",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "dan",
+            "text": "name3",
         },
     ]
     assert res["aliases"] == [{"context": "context1", "name": "name1"}]
@@ -119,20 +171,46 @@ def test_getting_non_empty_list_of_odm_conditions(api_client):
     assert res["items"][0]["formal_expressions"] == [
         {"context": "context1", "expression": "expression1"}
     ]
-    assert res["items"][0]["descriptions"] == [
+    assert res["items"][0]["translated_texts"] == [
         {
-            "name": "name2",
+            "text_type": "Description",
             "language": "eng",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
+            "text": "description2",
         },
         {
-            "name": "name3",
+            "text_type": "Description",
+            "language": "dan",
+            "text": "description3",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
             "language": "eng",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
+            "text": "instruction2",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
+            "language": "dan",
+            "text": "instruction3",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "eng",
+            "text": "sponsor_instruction2",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "dan",
+            "text": "sponsor_instruction3",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "eng",
+            "text": "name2",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "dan",
+            "text": "name3",
         },
     ]
     assert res["items"][0]["aliases"] == [{"context": "context1", "name": "name1"}]
@@ -168,20 +246,46 @@ def test_getting_a_specific_odm_condition(api_client):
     assert res["formal_expressions"] == [
         {"context": "context1", "expression": "expression1"}
     ]
-    assert res["descriptions"] == [
+    assert res["translated_texts"] == [
         {
-            "name": "name2",
+            "text_type": "Description",
             "language": "eng",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
+            "text": "description2",
         },
         {
-            "name": "name3",
+            "text_type": "Description",
+            "language": "dan",
+            "text": "description3",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
             "language": "eng",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
+            "text": "instruction2",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
+            "language": "dan",
+            "text": "instruction3",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "eng",
+            "text": "sponsor_instruction2",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "dan",
+            "text": "sponsor_instruction3",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "eng",
+            "text": "name2",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "dan",
+            "text": "name3",
         },
     ]
     assert res["aliases"] == [{"context": "context1", "name": "name1"}]
@@ -207,20 +311,46 @@ def test_getting_versions_of_a_specific_odm_condition(api_client):
     assert res[0]["formal_expressions"] == [
         {"context": "context1", "expression": "expression1"}
     ]
-    assert res[0]["descriptions"] == [
+    assert res[0]["translated_texts"] == [
         {
-            "name": "name2",
+            "text_type": "Description",
             "language": "eng",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
+            "text": "description2",
         },
         {
-            "name": "name3",
+            "text_type": "Description",
+            "language": "dan",
+            "text": "description3",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
             "language": "eng",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
+            "text": "instruction2",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
+            "language": "dan",
+            "text": "instruction3",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "eng",
+            "text": "sponsor_instruction2",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "dan",
+            "text": "sponsor_instruction3",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "eng",
+            "text": "name2",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "dan",
+            "text": "name3",
         },
     ]
     assert res[0]["aliases"] == [{"context": "context1", "name": "name1"}]
@@ -234,20 +364,46 @@ def test_updating_an_existing_odm_condition(api_client):
         "oid": "oid1",
         "formal_expressions": [{"context": "context1", "expression": "expression1"}],
         "change_description": "name changed",
-        "descriptions": [
+        "translated_texts": [
             {
-                "name": "name2",
+                "text_type": "Description",
                 "language": "eng",
-                "description": "description2",
-                "instruction": "instruction2",
-                "sponsor_instruction": "sponsor_instruction2",
+                "text": "description2",
             },
             {
-                "name": "name3",
+                "text_type": "Description",
+                "language": "dan",
+                "text": "description3",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
                 "language": "eng",
-                "description": "description3",
-                "instruction": "instruction3",
-                "sponsor_instruction": "sponsor_instruction3",
+                "text": "instruction2",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
+                "language": "dan",
+                "text": "instruction3",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "eng",
+                "text": "sponsor_instruction2",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "dan",
+                "text": "sponsor_instruction3",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "eng",
+                "text": "name2",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "dan",
+                "text": "name3",
             },
         ],
         "aliases": [{"context": "context1", "name": "name1"}],
@@ -272,20 +428,46 @@ def test_updating_an_existing_odm_condition(api_client):
     assert res["formal_expressions"] == [
         {"context": "context1", "expression": "expression1"}
     ]
-    assert res["descriptions"] == [
+    assert res["translated_texts"] == [
         {
-            "name": "name2",
+            "text_type": "Description",
             "language": "eng",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
+            "text": "description2",
         },
         {
-            "name": "name3",
+            "text_type": "Description",
+            "language": "dan",
+            "text": "description3",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
             "language": "eng",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
+            "text": "instruction2",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
+            "language": "dan",
+            "text": "instruction3",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "eng",
+            "text": "sponsor_instruction2",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "dan",
+            "text": "sponsor_instruction3",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "eng",
+            "text": "name2",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "dan",
+            "text": "name3",
         },
     ]
     assert res["aliases"] == [{"context": "context1", "name": "name1"}]
@@ -313,20 +495,46 @@ def test_getting_a_specific_odm_condition_in_specific_version(api_client):
     assert res["formal_expressions"] == [
         {"context": "context1", "expression": "expression1"}
     ]
-    assert res["descriptions"] == [
+    assert res["translated_texts"] == [
         {
-            "name": "name2",
+            "text_type": "Description",
             "language": "eng",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
+            "text": "description2",
         },
         {
-            "name": "name3",
+            "text_type": "Description",
+            "language": "dan",
+            "text": "description3",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
             "language": "eng",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
+            "text": "instruction2",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
+            "language": "dan",
+            "text": "instruction3",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "eng",
+            "text": "sponsor_instruction2",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "dan",
+            "text": "sponsor_instruction3",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "eng",
+            "text": "name2",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "dan",
+            "text": "name3",
         },
     ]
     assert res["aliases"] == [{"context": "context1", "name": "name1"}]
@@ -352,20 +560,46 @@ def test_approving_an_odm_condition(api_client):
     assert res["formal_expressions"] == [
         {"context": "context1", "expression": "expression1"}
     ]
-    assert res["descriptions"] == [
+    assert res["translated_texts"] == [
         {
-            "name": "name2",
+            "text_type": "Description",
             "language": "eng",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
+            "text": "description2",
         },
         {
-            "name": "name3",
+            "text_type": "Description",
+            "language": "dan",
+            "text": "description3",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
             "language": "eng",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
+            "text": "instruction2",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
+            "language": "dan",
+            "text": "instruction3",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "eng",
+            "text": "sponsor_instruction2",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "dan",
+            "text": "sponsor_instruction3",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "eng",
+            "text": "name2",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "dan",
+            "text": "name3",
         },
     ]
     assert res["aliases"] == [{"context": "context1", "name": "name1"}]
@@ -393,20 +627,46 @@ def test_inactivating_a_specific_odm_condition(api_client):
     assert res["formal_expressions"] == [
         {"context": "context1", "expression": "expression1"}
     ]
-    assert res["descriptions"] == [
+    assert res["translated_texts"] == [
         {
-            "name": "name2",
+            "text_type": "Description",
             "language": "eng",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
+            "text": "description2",
         },
         {
-            "name": "name3",
+            "text_type": "Description",
+            "language": "dan",
+            "text": "description3",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
             "language": "eng",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
+            "text": "instruction2",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
+            "language": "dan",
+            "text": "instruction3",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "eng",
+            "text": "sponsor_instruction2",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "dan",
+            "text": "sponsor_instruction3",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "eng",
+            "text": "name2",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "dan",
+            "text": "name3",
         },
     ]
     assert res["aliases"] == [{"context": "context1", "name": "name1"}]
@@ -434,20 +694,46 @@ def test_reactivating_a_specific_odm_condition(api_client):
     assert res["formal_expressions"] == [
         {"context": "context1", "expression": "expression1"}
     ]
-    assert res["descriptions"] == [
+    assert res["translated_texts"] == [
         {
-            "name": "name2",
+            "text_type": "Description",
             "language": "eng",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
+            "text": "description2",
         },
         {
-            "name": "name3",
+            "text_type": "Description",
+            "language": "dan",
+            "text": "description3",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
             "language": "eng",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
+            "text": "instruction2",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
+            "language": "dan",
+            "text": "instruction3",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "eng",
+            "text": "sponsor_instruction2",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "dan",
+            "text": "sponsor_instruction3",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "eng",
+            "text": "name2",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "dan",
+            "text": "name3",
         },
     ]
     assert res["aliases"] == [{"context": "context1", "name": "name1"}]
@@ -473,20 +759,46 @@ def test_creating_a_new_odm_condition_version(api_client):
     assert res["formal_expressions"] == [
         {"context": "context1", "expression": "expression1"}
     ]
-    assert res["descriptions"] == [
+    assert res["translated_texts"] == [
         {
-            "name": "name2",
+            "text_type": "Description",
             "language": "eng",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
+            "text": "description2",
         },
         {
-            "name": "name3",
+            "text_type": "Description",
+            "language": "dan",
+            "text": "description3",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
             "language": "eng",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
+            "text": "instruction2",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
+            "language": "dan",
+            "text": "instruction3",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "eng",
+            "text": "sponsor_instruction2",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "dan",
+            "text": "sponsor_instruction3",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "eng",
+            "text": "name2",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "dan",
+            "text": "name3",
         },
     ]
     assert res["aliases"] == [{"context": "context1", "name": "name1"}]
@@ -499,13 +811,11 @@ def test_create_a_new_odm_condition_for_deleting_it(api_client):
         "name": "name - delete",
         "oid": "oid2",
         "formal_expressions": [],
-        "descriptions": [
+        "translated_texts": [
             {
-                "name": "name - delete",
+                "text_type": "Description",
                 "language": "eng",
-                "description": "description - delete",
-                "instruction": "instruction - delete",
-                "sponsor_instruction": "sponsor_instruction - delete",
+                "text": "name - delete",
             }
         ],
         "aliases": [],
@@ -526,13 +836,11 @@ def test_create_a_new_odm_condition_for_deleting_it(api_client):
     assert res["change_description"] == "Initial version"
     assert res["author_username"] == "unknown-user@example.com"
     assert res["formal_expressions"] == []
-    assert res["descriptions"] == [
+    assert res["translated_texts"] == [
         {
-            "name": "name - delete",
+            "text_type": "Description",
             "language": "eng",
-            "description": "description - delete",
-            "instruction": "instruction - delete",
-            "sponsor_instruction": "sponsor_instruction - delete",
+            "text": "name - delete",
         }
     ]
     assert res["aliases"] == []
@@ -551,14 +859,15 @@ def test_creating_a_new_odm_condition_with_relations(api_client):
         "name": "string",
         "oid": "string",
         "formal_expressions": [{"context": "string", "expression": "string"}],
-        "descriptions": [
+        "translated_texts": [
+            {"text_type": "Description", "language": "eng", "text": "string2"},
             {
-                "name": "string2",
+                "text_type": "osb:CompletionInstructions",
                 "language": "eng",
-                "description": "string2",
-                "instruction": "string2",
-                "sponsor_instruction": "string2",
+                "text": "string2",
             },
+            {"text_type": "osb:DesignNotes", "language": "eng", "text": "string2"},
+            {"text_type": "osb:DisplayText", "language": "eng", "text": "string2"},
         ],
         "aliases": [],
     }
@@ -578,14 +887,15 @@ def test_creating_a_new_odm_condition_with_relations(api_client):
     assert res["change_description"] == "Initial version"
     assert res["author_username"] == "unknown-user@example.com"
     assert res["formal_expressions"] == [{"context": "string", "expression": "string"}]
-    assert res["descriptions"] == [
+    assert res["translated_texts"] == [
+        {"text_type": "Description", "language": "eng", "text": "string2"},
         {
-            "name": "string2",
+            "text_type": "osb:CompletionInstructions",
             "language": "eng",
-            "description": "string2",
-            "instruction": "string2",
-            "sponsor_instruction": "string2",
+            "text": "string2",
         },
+        {"text_type": "osb:DesignNotes", "language": "eng", "text": "string2"},
+        {"text_type": "osb:DisplayText", "language": "eng", "text": "string2"},
     ]
     assert res["aliases"] == []
     assert res["possible_actions"] == ["approve", "delete", "edit"]
@@ -601,14 +911,15 @@ def test_updating_an_existing_odm_condition_with_relations(api_client):
             {"context": "context1", "expression": "expression1"},
             {"context": "context4", "expression": "expression4"},
         ],
-        "descriptions": [
+        "translated_texts": [
+            {"text_type": "Description", "language": "eng", "text": "string3"},
             {
-                "name": "string3",
+                "text_type": "osb:CompletionInstructions",
                 "language": "eng",
-                "description": "string3",
-                "instruction": "string3",
-                "sponsor_instruction": "string3",
+                "text": "string3",
             },
+            {"text_type": "osb:DesignNotes", "language": "eng", "text": "string3"},
+            {"text_type": "osb:DisplayText", "language": "eng", "text": "string3"},
         ],
         "aliases": [{"context": "context1", "name": "name1"}],
     }
@@ -633,14 +944,15 @@ def test_updating_an_existing_odm_condition_with_relations(api_client):
         {"context": "context1", "expression": "expression1"},
         {"context": "context4", "expression": "expression4"},
     ]
-    assert res["descriptions"] == [
+    assert res["translated_texts"] == [
+        {"text_type": "Description", "language": "eng", "text": "string3"},
         {
-            "name": "string3",
+            "text_type": "osb:CompletionInstructions",
             "language": "eng",
-            "description": "string3",
-            "instruction": "string3",
-            "sponsor_instruction": "string3",
+            "text": "string3",
         },
+        {"text_type": "osb:DesignNotes", "language": "eng", "text": "string3"},
+        {"text_type": "osb:DisplayText", "language": "eng", "text": "string3"},
     ]
     assert res["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res["possible_actions"] == ["approve", "edit"]

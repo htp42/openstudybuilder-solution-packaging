@@ -11,17 +11,20 @@ from clinical_mdr_api.models.concepts.concept import (
 )
 from clinical_mdr_api.models.concepts.odms.odm_common_models import (
     OdmAliasModel,
-    OdmDescriptionModel,
     OdmFormalExpressionModel,
+    OdmTranslatedTextModel,
 )
-from clinical_mdr_api.models.validators import has_english_description
+from clinical_mdr_api.models.validators import (
+    has_english_description,
+    translated_text_uniqueness_check,
+)
 
 
 class OdmMethod(ConceptModel):
     oid: Annotated[str | None, Field()]
     method_type: Annotated[str | None, Field()]
     formal_expressions: Annotated[list[OdmFormalExpressionModel], Field()]
-    descriptions: Annotated[list[OdmDescriptionModel], Field()]
+    translated_texts: Annotated[list[OdmTranslatedTextModel], Field()]
     aliases: Annotated[list[OdmAliasModel], Field()]
     possible_actions: Annotated[list[str], Field()]
 
@@ -43,8 +46,9 @@ class OdmMethod(ConceptModel):
                 odm_method_ar.concept_vo.formal_expressions,
                 key=lambda item: item.context,
             ),
-            descriptions=sorted(
-                odm_method_ar.concept_vo.descriptions, key=lambda item: item.name
+            translated_texts=sorted(
+                odm_method_ar.concept_vo.translated_texts,
+                key=lambda item: (item.text_type.value, item.text),
             ),
             aliases=sorted(
                 odm_method_ar.concept_vo.aliases, key=lambda item: item.name
@@ -59,10 +63,13 @@ class OdmMethodPostInput(ConceptPostInput):
     oid: Annotated[str | None, Field(min_length=1)] = None
     method_type: Annotated[str | None, Field(min_length=1)] = None
     formal_expressions: Annotated[list[OdmFormalExpressionModel], Field()]
-    descriptions: Annotated[list[OdmDescriptionModel], Field()]
+    translated_texts: Annotated[list[OdmTranslatedTextModel], Field()]
     aliases: Annotated[list[OdmAliasModel], Field()] = Field(default_factory=list)
 
-    _english_description_validator = field_validator("descriptions")(
+    _translated_text_uniqueness_check = field_validator("translated_texts")(
+        translated_text_uniqueness_check
+    )
+    _english_description_validator = field_validator("translated_texts")(
         has_english_description
     )
 
@@ -72,10 +79,13 @@ class OdmMethodPatchInput(ConceptPatchInput):
     oid: Annotated[str | None, Field(min_length=1)]
     method_type: Annotated[str | None, Field(min_length=1)]
     formal_expressions: Annotated[list[OdmFormalExpressionModel], Field()]
-    descriptions: Annotated[list[OdmDescriptionModel], Field()]
+    translated_texts: Annotated[list[OdmTranslatedTextModel], Field()]
     aliases: Annotated[list[OdmAliasModel], Field()] = Field(default_factory=list)
 
-    _english_description_validator = field_validator("descriptions")(
+    _translated_text_uniqueness_check = field_validator("translated_texts")(
+        translated_text_uniqueness_check
+    )
+    _english_description_validator = field_validator("translated_texts")(
         has_english_description
     )
 

@@ -52,7 +52,7 @@ export function useErrorHandler(error) {
     const mappedField = field.map((item) => {
       if (Number.isInteger(item)) {
         const key = alphabet[counter++]
-        ctx[key] = item
+        ctx[key] = item + 1
         return key
       }
       return item

@@ -26,10 +26,3 @@ Then('The Item Group approval dialog is displayed', () => {
       .should('be.visible') // Assert that the dialog is visible
       .and('contain', 'Approving the item group will approve the following child elements:'); // Assert that it contains specific text
 });
-
-When('The CRF Item Group definition is filled without name provided and the next button is clicked', () => {
-    cy.clickButton('add-crf-item-group')
-    cy.clickFormActionButton('continue')
-})
-
-Then('The validation appears for the CRF Item Group Name field', () => cy.get('.v-messages__message').should('be.visible'))

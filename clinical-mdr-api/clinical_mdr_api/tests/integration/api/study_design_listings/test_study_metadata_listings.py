@@ -553,7 +553,7 @@ def test_study_metadata_listing_api(api_client):
                 "desc": "desc...",
             },
             {
-                "uid": "StudyElement_000003",
+                "uid": "StudyElement_000002",
                 "order": 2,
                 "name": "Element_Name_1",
                 "short_name": "Element_Short_Name_1",
@@ -582,7 +582,7 @@ def test_study_metadata_listing_api(api_client):
                 "arm_uid": "StudyArm_000001",
                 "branch_uid": "",
                 "epoch_uid": "StudyEpoch_000002",
-                "element_uid": "StudyElement_000003",
+                "element_uid": "StudyElement_000002",
             },
             {
                 "arm_uid": "StudyArm_000003",
@@ -997,7 +997,7 @@ def test_study_metadata_listing_with_subpart(api_client):
                 "desc": "desc...",
             },
             {
-                "uid": "StudyElement_000003",
+                "uid": "StudyElement_000002",
                 "order": 2,
                 "name": "Element_Name_1",
                 "short_name": "Element_Short_Name_1",
@@ -1026,7 +1026,7 @@ def test_study_metadata_listing_with_subpart(api_client):
                 "arm_uid": "StudyArm_000001",
                 "branch_uid": "",
                 "epoch_uid": "StudyEpoch_000002",
-                "element_uid": "StudyElement_000003",
+                "element_uid": "StudyElement_000002",
             },
             {
                 "arm_uid": "StudyArm_000003",

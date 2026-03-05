@@ -64,11 +64,10 @@ INDEXES = [
     ("OdmVendorNamespaceValue", "name"),
     ("OdmVendorAttributeValue", "name"),
     ("OdmTemplateValue", "name"),
-    ("OdmDescriptionValue", "name"),
     ("OdmFormValue", "name"),
     ("OdmItemGroupValue", "name"),
     ("OdmItemValue", "name"),
-    ("OdmAliasValue", "name"),
+    ("OdmAlias", "name"),
     ("ObjectiveTemplateValue", "name"),
     ("ObjectiveValue", "name"),
     ("EndpointTemplateValue", "name"),
@@ -117,8 +116,6 @@ INDEXES = [
     ("OdmVendorElementValue", "name"),
     ("StudySourceVariable", "uid"),
     ("DataSupplierRoot", "uid"),
-    ("OdmAliasRoot", "uid"),
-    ("OdmDescriptionRoot", "uid"),
     ("DataSupplierValue", "name"),
 ]
 
@@ -133,6 +130,20 @@ TEXT_INDEXES = [
     ("Brand", "name"),
     ("DatasetScenarioInstance", "label"),
     ("Notification", "title"),
+]
+
+# array of fulltext indexes to create [labels, properties, index_name]
+FULLTEXT_INDEXES = [
+    (
+        ["CTCodelistAttributesValue", "CTCodelistNameValue"],
+        ["name", "submission_value"],
+        "codelist_fulltext_index",
+    ),
+    (
+        ["CTTermAttributesValue", "CTTermNameValue"],
+        ["name", "submission_value"],
+        "term_fulltext_index",
+    ),
 ]
 
 # array of relation indexes to create [type, property]
@@ -254,6 +265,16 @@ def build_create_node_text_index_query(data):
     return query
 
 
+def build_create_node_fulltext_index_query(data):
+    labels, props, index_name = data
+    query = f"""
+        CREATE FULLTEXT INDEX {index_name} IF NOT EXISTS
+        FOR (n:{'|'.join(labels)})
+        ON EACH [{', '.join([f'n.{prop}' for prop in props])}]
+    """
+    return query
+
+
 def build_create_rel_index_query(data):
     label, prop = data
     name = label + "_" + prop
@@ -292,6 +313,10 @@ def build_schema_queries():
 
     for idx in TEXT_INDEXES:
         query = build_create_node_text_index_query(idx)
+        queries.append(query)
+
+    for idx in FULLTEXT_INDEXES:
+        query = build_create_node_fulltext_index_query(idx)
         queries.append(query)
 
     for idx in REL_INDEXES:

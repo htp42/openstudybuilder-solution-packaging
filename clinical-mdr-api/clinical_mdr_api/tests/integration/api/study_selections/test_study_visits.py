@@ -680,6 +680,36 @@ def test_non_manually_defined_visit(api_client):
 
     # failed post on the uniqueness check for non_manually defined visit
 
+    # Create a non_manually (ANCHOR_VISIT_IN_GROUP_OF_SUBV) defined study visit with existed visit number, unique visit number, visit name and visit short name
+    # When A study visit is created or updated
+    # And The study visit is not defined as a "Manually defined visit"
+    # And The <study visit field> is defined with a derived or preset test value that already exist for a manually defined study visit
+    inputs_visit = {
+        "study_epoch_uid": study_epoch.uid,
+        "visit_type_uid": "VisitType_0002",
+        "time_reference_uid": "VisitSubType_0005",
+        "time_value": 22,
+        "time_unit_uid": DAYUID,
+        "visit_class": "SINGLE_VISIT",
+        "visit_subclass": "ANCHOR_VISIT_IN_GROUP_OF_SUBV",
+        "is_global_anchor_visit": False,
+    }
+
+    datadict = visits_basic_data.copy()
+    datadict.update(inputs_visit)
+    response = api_client.post(
+        f"/studies/{study_for_i_visit.uid}/study-visits",
+        json=datadict,
+    )
+
+    # Then The system displays the message "Value \"test value\" in field "<study visit field>" is not unique for the study
+    # as a manually defined value exist. Change the manually defined value before this visit can be defined."
+    assert_response_status_code(response, 400)
+    res = response.json()
+    error_msg = "Fields visit number - 2 and unique visit number - 200 and visit name - Visit 2 are not unique"
+    error_msg += " for the Study as a manually defined value exists. Change the manually defined value before this visit can be defined."
+    assert res["message"] == error_msg
+
     # Create a non_manually defined study visit with existed visit number, unique visit number, visit name and visit short name
     # When A study visit is created or updated
     # And The study visit is not defined as a "Manually defined visit"
@@ -2302,7 +2332,7 @@ def test_assert_uvn_is_changed_when_group_of_visits_is_modified(api_client):
     study_epoch = create_study_epoch("EpochSubType_0001", study_uid=study.uid)
 
     # Global Anchor Visit
-    inputs = {
+    anchor_inputs = {
         "study_epoch_uid": study_epoch.uid,
         "visit_type_uid": "VisitType_0002",
         "time_reference_uid": "VisitSubType_0005",
@@ -2313,7 +2343,7 @@ def test_assert_uvn_is_changed_when_group_of_visits_is_modified(api_client):
         "is_global_anchor_visit": True,
     }
     datadict = visits_basic_data
-    datadict.update(inputs)
+    datadict.update(anchor_inputs)
     response = api_client.post(
         f"/studies/{study.uid}/study-visits",
         json=datadict,
@@ -2382,6 +2412,92 @@ def test_assert_uvn_is_changed_when_group_of_visits_is_modified(api_client):
     assert audit_trail[0]["unique_visit_number"] == 100
     assert audit_trail[1]["unique_visit_number"] == 110
     assert audit_trail[2]["unique_visit_number"] == 100
+
+    new_visit_description = "Edited Anchor Visit"
+    anchor_inputs.update(
+        {"description": new_visit_description, "uid": anchor_visit_uid}
+    )
+    datadict = visits_basic_data
+    datadict.update(anchor_inputs)
+    response = api_client.patch(
+        f"/studies/{study.uid}/study-visits/{anchor_visit_uid}",
+        json=datadict,
+    )
+    assert_response_status_code(response, 200)
+    assert response.json()["description"] == new_visit_description
+
+    response = api_client.get(
+        f"/studies/{study.uid}/study-visits",
+    )
+    assert_response_status_code(response, 200)
+    study_visits = response.json()["items"]
+    assert len(study_visits) == 2
+    assert study_visits[0]["uid"] == anchor_visit_uid
+    assert study_visits[0]["visit_short_name"] == "V1D1"
+    assert study_visits[0]["visit_name"] == "Visit 1"
+    assert study_visits[0]["unique_visit_number"] == 100
+    assert study_visits[1]["uid"] == subvisit_uid
+    assert study_visits[1]["visit_short_name"] == "V1D11"
+    assert study_visits[1]["visit_name"] == "Visit 1"
+    assert study_visits[1]["unique_visit_number"] == 110
+
+    # Call for StudyVisits but derive properties based on visit_number instead of returning them straight from DB
+    response = api_client.get(
+        f"/studies/{study.uid}/study-visits",
+        params={"derive_props_based_on_timeline": True},
+    )
+    assert_response_status_code(response, 200)
+    study_visits = response.json()["items"]
+    assert len(study_visits) == 2
+    assert study_visits[0]["uid"] == anchor_visit_uid
+    assert study_visits[0]["visit_short_name"] == "V1D1"
+    assert study_visits[0]["visit_name"] == "Visit 1"
+    assert study_visits[0]["unique_visit_number"] == 100
+    assert study_visits[1]["uid"] == subvisit_uid
+    assert study_visits[1]["visit_short_name"] == "V1D11"
+    assert study_visits[1]["visit_name"] == "Visit 1"
+    assert study_visits[1]["unique_visit_number"] == 110
+
+    response = api_client.get(
+        f"/studies/{study.uid}/study-visits/{anchor_visit_uid}",
+    )
+    assert_response_status_code(response, 200)
+    study_visit = response.json()
+    assert study_visit["uid"] == anchor_visit_uid
+    assert study_visit["visit_short_name"] == "V1D1"
+    assert study_visit["visit_name"] == "Visit 1"
+    assert study_visit["unique_visit_number"] == 100
+    response = api_client.get(
+        f"/studies/{study.uid}/study-visits/{subvisit_uid}",
+    )
+    assert_response_status_code(response, 200)
+    study_visit = response.json()
+    assert study_visit["uid"] == subvisit_uid
+    assert study_visit["visit_short_name"] == "V1D11"
+    assert study_visit["visit_name"] == "Visit 1"
+    assert study_visit["unique_visit_number"] == 110
+
+    # Call for StudyVisits but derive properties based on visit_number instead of returning them straight from DB
+    response = api_client.get(
+        f"/studies/{study.uid}/study-visits/{anchor_visit_uid}",
+        params={"derive_props_based_on_timeline": True},
+    )
+    assert_response_status_code(response, 200)
+    study_visit = response.json()
+    assert study_visit["uid"] == anchor_visit_uid
+    assert study_visit["visit_short_name"] == "V1D1"
+    assert study_visit["visit_name"] == "Visit 1"
+    assert study_visit["unique_visit_number"] == 100
+    response = api_client.get(
+        f"/studies/{study.uid}/study-visits/{subvisit_uid}",
+        params={"derive_props_based_on_timeline": True},
+    )
+    assert_response_status_code(response, 200)
+    study_visit = response.json()
+    assert study_visit["uid"] == subvisit_uid
+    assert study_visit["visit_short_name"] == "V1D11"
+    assert study_visit["visit_name"] == "Visit 1"
+    assert study_visit["unique_visit_number"] == 110
 
 
 def test_it_is_possible_create_two_study_visits_with_the_same_timing(api_client):

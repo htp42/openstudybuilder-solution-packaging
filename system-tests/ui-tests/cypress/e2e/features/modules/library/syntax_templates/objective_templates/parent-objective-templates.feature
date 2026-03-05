@@ -49,6 +49,8 @@ Feature: Library - Syntax Templates - Objectives - Parent
     Given The 'library/objective_templates' page is opened
     And The Add template button is clicked
     When The objective template form is filled with base data
+    And Form continue button is clicked
+    And Form continue button is clicked
     And Objective criteria specific indexes are set
     And Form save button is clicked
     And The objective template is found
@@ -59,7 +61,9 @@ Feature: Library - Syntax Templates - Objectives - Parent
     Given The 'library/objective_templates' page is opened
     And The Add template button is clicked
     When The objective template form is filled with base data
-    And Indexes are set as not applicable
+    And Form continue button is clicked
+    And Form continue button is clicked
+    And All Not Applicable checkboxes are checked
     And Form save button is clicked
     And The objective template is found
     And The item has status 'Draft' and version '0.1'
@@ -73,6 +77,8 @@ Feature: Library - Syntax Templates - Objectives - Parent
     And The objective template is found
     When The 'Edit' option is clicked from the three dot menu list
     And The objective metadata update is started
+    And Form continue button is clicked
+    And Form continue button is clicked
     And Objective criteria specific indexes are updated
     And Form continue button is clicked
     And Template change description is provided
@@ -87,7 +93,7 @@ Feature: Library - Syntax Templates - Objectives - Parent
   Scenario: [Create][Mandatory fields] User must not be able to create Objective template without: Template Text
     Given The 'library/objective_templates' page is opened
     And The Add template button is clicked
-    When The Template is added without template text
+    When Form continue button is clicked
     Then The validation appears for Template name
     And The form is not closed
 
@@ -96,7 +102,9 @@ Feature: Library - Syntax Templates - Objectives - Parent
     And [API] Create objective template
     And The Add template button is clicked
     And The second objective is added with the same template text
-    And Indexes are set as not applicable
+    And Form continue button is clicked
+    And Form continue button is clicked
+    And All Not Applicable checkboxes are checked
     And Form save button is clicked
     Then The pop up displays 'already exists'
     And The form is not closed
@@ -105,8 +113,8 @@ Feature: Library - Syntax Templates - Objectives - Parent
     Given The 'library/objective_templates' page is opened
     And The Add template button is clicked
     And The objective template form is filled with base data
-    And Objective criteria specific indexes are set
-    And Indication or Disorder index is cleared
+    And Form continue button is clicked
+    And Form continue button is clicked
     And Form save button is clicked
     Then The validation appears for Indication or Disorder field
     And The form is not closed
@@ -115,8 +123,8 @@ Feature: Library - Syntax Templates - Objectives - Parent
     Given The 'library/objective_templates' page is opened
     And The Add template button is clicked
     And The objective template form is filled with base data
-    And Objective criteria specific indexes are set
-    And Category index is cleared for 'objective' template
+    And Form continue button is clicked
+    And Form continue button is clicked
     And Form save button is clicked
     Then The validation appears for 'objective' template category field
     And The form is not closed
@@ -201,6 +209,8 @@ Feature: Library - Syntax Templates - Objectives - Parent
     Then The item has status 'Draft' and version '1.1'
     When The 'Edit' option is clicked from the three dot menu list
     And The objective metadata update is started
+    And Form continue button is clicked
+    And Form continue button is clicked
     And Objective criteria specific indexes are updated
     And Form continue button is clicked
     And Template change description is provided
@@ -267,7 +277,9 @@ Feature: Library - Syntax Templates - Objectives - Parent
     Given The 'library/objective_templates' page is opened
     And The Add template button is clicked
     And The objective template edition form is filled with data
-    And Indexes are set as not applicable
+    And Form continue button is clicked
+    And Form continue button is clicked
+    And All Not Applicable checkboxes are checked
     When Fullscreen wizard is closed by clicking cancel button
     And Action is confirmed by clicking continue
     Then The form is no longer available
@@ -279,7 +291,9 @@ Feature: Library - Syntax Templates - Objectives - Parent
     And The objective template is found
     When The 'Edit' option is clicked from the three dot menu list
     And The objective template edition form is filled with data
-    And Indexes are set as not applicable
+    And Form continue button is clicked
+    And Form continue button is clicked
+    And All Not Applicable checkboxes are checked
     And Fullscreen wizard is closed by clicking cancel button
     And Action is confirmed by clicking continue
     Then The form is no longer available

@@ -9,42 +9,42 @@
       <v-btn
         v-if="copyFromStudy"
         data-cy="copy-from-study"
-        class="ml-2"
-        size="small"
+        class="ml-2 expandHoverBtn"
         variant="outlined"
         color="nnBaseBlue"
-        :title="$t('NNTableTooltips.copy_from_study')"
         :disabled="
           !checkPermission($roles.STUDY_WRITE) ||
           studiesGeneralStore.selectedStudyVersion !== null
         "
-        icon="mdi-content-copy"
         @click.stop="openCopyForm"
-      />
+      >
+        <v-icon left>mdi-content-copy</v-icon>
+        <span class="label">{{ $t('NNTableTooltips.copy_from_study') }}</span>
+      </v-btn>
       <v-btn
-        class="ml-2"
-        size="small"
+        class="ml-2 expandHoverBtn"
         variant="outlined"
         color="nnBaseBlue"
-        :title="$t('NNTableTooltips.edit_content')"
         :disabled="
           !checkPermission($roles.STUDY_WRITE) ||
           studiesGeneralStore.selectedStudyVersion !== null ||
           disableEdit
         "
         data-cy="edit-content"
-        icon="mdi-pencil-outline"
         @click.stop="openForm"
-      />
+      >
+        <v-icon left>mdi-pencil-outline</v-icon>
+        <span class="label">{{ $t('NNTableTooltips.edit_content') }}</span>
+      </v-btn>
       <v-btn
-        class="ml-2"
-        size="small"
+        class="ml-2 expandHoverBtn"
         variant="outlined"
         color="nnBaseBlue"
-        :title="$t('NNTableTooltips.history')"
-        icon="mdi-history"
         @click="openHistory"
-      />
+      >
+        <v-icon left>mdi-history</v-icon>
+        <span class="label">{{ $t('NNTableTooltips.history') }}</span>
+      </v-btn>
     </v-card-title>
     <v-card-text>
       <v-data-table

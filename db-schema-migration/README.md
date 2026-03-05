@@ -296,7 +296,7 @@ for running locally.
 Store the token in the `WIKI_PERSONAL_ACCESS_TOKEN` environment variable to use this method. 
 If given, this token is then used with the "Basic" authentication type.
 
-For running in pipelies, instead give a system token in the `WIKI_API_TOKEN` enviromnent variable.
+For running in pipelines, instead give a system token in the `WIKI_API_TOKEN` enviromnent variable.
 If given, this token is then used with the "Bearer" authentication type.
 
 Run the script, providing the markdown file as an argument:

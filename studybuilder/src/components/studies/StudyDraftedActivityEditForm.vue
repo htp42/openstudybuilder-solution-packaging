@@ -45,7 +45,7 @@
                 v-model="form.activity_subgroup_uid"
                 :label="$t('ActivityForms.activity_subgroup')"
                 data-cy="activity-subgroup"
-                :items="filteredSubGroups"
+                :items="subGroups"
                 item-title="name"
                 item-value="uid"
                 clearable
@@ -148,19 +148,6 @@ export default {
       working: false,
     }
   },
-  computed: {
-    filteredSubGroups() {
-      if (!this.form.activity_group_uid) {
-        return []
-      }
-      return this.subGroups.filter(
-        (el) =>
-          el.activity_groups.find(
-            (o) => o.uid === this.form.activity_group_uid
-          ) !== undefined
-      )
-    },
-  },
   watch: {
     studyActivity: {
       handler(value) {
@@ -171,11 +158,6 @@ export default {
         }
       },
       immediate: true,
-    },
-    filteredSubGroups(value) {
-      if (value.length === 1) {
-        this.form.activity_subgroup_uid = value[0].uid
-      }
     },
   },
   mounted() {

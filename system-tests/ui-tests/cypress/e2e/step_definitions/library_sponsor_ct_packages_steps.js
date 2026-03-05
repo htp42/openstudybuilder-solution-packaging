@@ -10,7 +10,6 @@ When('The Create First One button is pressed on the Sponsor CT Package page', ()
 When('The Sponsor CT Package form is populated and saved', () => {
     startSponsorCTPackageCreation();
     cy.contains('SDTM CT 2014-09-26').click()
-    cy.clickButton('save-button')
 })
 
 Then('The table presents created Sponsor CT Package', () => {
@@ -26,7 +25,6 @@ When('Sponsor CT Package is created for the same date as already existing one', 
     cy.get('.mdi-plus').click()
     startSponsorCTPackageCreation()
     cy.contains(availablePackage.replaceAll('__', ' ')).click()
-    cy.clickButton('save-button')
 })
 
 function startSponsorCTPackageCreation() {

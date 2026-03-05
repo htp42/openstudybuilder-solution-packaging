@@ -55,23 +55,54 @@ def test_creating_a_new_odm_form(api_client):
         "oid": "oid1",
         "sdtm_version": "0.1",
         "repeating": "No",
-        "descriptions": [
+        "translated_texts": [
             {
-                "name": "name2",
+                "text_type": "Description",
                 "language": "eng",
-                "description": "description2",
-                "instruction": "instruction2",
-                "sponsor_instruction": "sponsor_instruction2",
+                "text": "description2",
             },
             {
-                "name": "name3",
+                "text_type": "Description",
+                "language": "dan",
+                "text": "description3",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
                 "language": "eng",
-                "description": "description3",
-                "instruction": "instruction3",
-                "sponsor_instruction": "sponsor_instruction3",
+                "text": "instruction2",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
+                "language": "dan",
+                "text": "instruction3",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "eng",
+                "text": "sponsor_instruction2",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "dan",
+                "text": "sponsor_instruction3",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "eng",
+                "text": "name2",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "dan",
+                "text": "name3",
             },
         ],
         "aliases": [{"context": "context1", "name": "name1"}],
+        "vendor_elements": [{"uid": "odm_vendor_element1", "value": "value"}],
+        "vendor_element_attributes": [
+            {"uid": "odm_vendor_attribute2", "value": "value"}
+        ],
+        "vendor_attributes": [{"uid": "odm_vendor_attribute4", "value": "value"}],
     }
     response = api_client.post("concepts/odms/forms", json=data)
 
@@ -90,27 +121,73 @@ def test_creating_a_new_odm_form(api_client):
     assert res["version"] == "0.1"
     assert res["change_description"] == "Initial version"
     assert res["author_username"] == "unknown-user@example.com"
-    assert res["descriptions"] == [
+    assert res["translated_texts"] == [
         {
-            "name": "name2",
+            "text_type": "Description",
             "language": "eng",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
+            "text": "description2",
         },
         {
-            "name": "name3",
+            "text_type": "Description",
+            "language": "dan",
+            "text": "description3",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
             "language": "eng",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
+            "text": "instruction2",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
+            "language": "dan",
+            "text": "instruction3",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "eng",
+            "text": "sponsor_instruction2",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "dan",
+            "text": "sponsor_instruction3",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "eng",
+            "text": "name2",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "dan",
+            "text": "name3",
         },
     ]
     assert res["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res["item_groups"] == []
-    assert res["vendor_elements"] == []
-    assert res["vendor_attributes"] == []
-    assert res["vendor_element_attributes"] == []
+    assert res["vendor_elements"] == [
+        {"uid": "odm_vendor_element1", "name": "NameOne", "value": "value"}
+    ]
+    assert res["vendor_attributes"] == [
+        {
+            "uid": "odm_vendor_attribute4",
+            "name": "nameFour",
+            "value": "value",
+            "value_regex": None,
+            "data_type": "string",
+            "vendor_namespace_uid": "odm_vendor_namespace1",
+        }
+    ]
+    assert res["vendor_element_attributes"] == [
+        {
+            "uid": "odm_vendor_attribute2",
+            "name": "nameTwo",
+            "value": "value",
+            "value_regex": None,
+            "data_type": "string",
+            "vendor_element_uid": "odm_vendor_element1",
+        }
+    ]
     assert res["possible_actions"] == ["approve", "delete", "edit"]
 
 
@@ -132,27 +209,73 @@ def test_getting_non_empty_list_of_odm_forms(api_client):
     assert res["items"][0]["version"] == "0.1"
     assert res["items"][0]["change_description"] == "Initial version"
     assert res["items"][0]["author_username"] == "unknown-user@example.com"
-    assert res["items"][0]["descriptions"] == [
+    assert res["items"][0]["translated_texts"] == [
         {
-            "name": "name2",
+            "text_type": "Description",
             "language": "eng",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
+            "text": "description2",
         },
         {
-            "name": "name3",
+            "text_type": "Description",
+            "language": "dan",
+            "text": "description3",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
             "language": "eng",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
+            "text": "instruction2",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
+            "language": "dan",
+            "text": "instruction3",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "eng",
+            "text": "sponsor_instruction2",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "dan",
+            "text": "sponsor_instruction3",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "eng",
+            "text": "name2",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "dan",
+            "text": "name3",
         },
     ]
     assert res["items"][0]["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res["items"][0]["item_groups"] == []
-    assert res["items"][0]["vendor_elements"] == []
-    assert res["items"][0]["vendor_attributes"] == []
-    assert res["items"][0]["vendor_element_attributes"] == []
+    assert res["items"][0]["vendor_elements"] == [
+        {"uid": "odm_vendor_element1", "name": "NameOne", "value": "value"}
+    ]
+    assert res["items"][0]["vendor_attributes"] == [
+        {
+            "uid": "odm_vendor_attribute4",
+            "name": "nameFour",
+            "value": "value",
+            "value_regex": None,
+            "data_type": "string",
+            "vendor_namespace_uid": "odm_vendor_namespace1",
+        }
+    ]
+    assert res["items"][0]["vendor_element_attributes"] == [
+        {
+            "uid": "odm_vendor_attribute2",
+            "name": "nameTwo",
+            "value": "value",
+            "value_regex": None,
+            "data_type": "string",
+            "vendor_element_uid": "odm_vendor_element1",
+        }
+    ]
     assert res["items"][0]["possible_actions"] == ["approve", "delete", "edit"]
 
 
@@ -184,27 +307,72 @@ def test_getting_a_specific_odm_form(api_client):
     assert res["version"] == "0.1"
     assert res["change_description"] == "Initial version"
     assert res["author_username"] == "unknown-user@example.com"
-    assert res["descriptions"] == [
+    assert res["translated_texts"] == [
         {
-            "name": "name2",
+            "text_type": "Description",
             "language": "eng",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
+            "text": "description2",
         },
         {
-            "name": "name3",
+            "text_type": "Description",
+            "language": "dan",
+            "text": "description3",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
             "language": "eng",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
+            "text": "instruction2",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
+            "language": "dan",
+            "text": "instruction3",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "eng",
+            "text": "sponsor_instruction2",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "dan",
+            "text": "sponsor_instruction3",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "eng",
+            "text": "name2",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "dan",
+            "text": "name3",
         },
     ]
     assert res["aliases"] == [{"context": "context1", "name": "name1"}]
-    assert res["item_groups"] == []
-    assert res["vendor_elements"] == []
-    assert res["vendor_attributes"] == []
-    assert res["vendor_element_attributes"] == []
+    assert res["vendor_elements"] == [
+        {"uid": "odm_vendor_element1", "name": "NameOne", "value": "value"}
+    ]
+    assert res["vendor_attributes"] == [
+        {
+            "uid": "odm_vendor_attribute4",
+            "name": "nameFour",
+            "value": "value",
+            "value_regex": None,
+            "data_type": "string",
+            "vendor_namespace_uid": "odm_vendor_namespace1",
+        }
+    ]
+    assert res["vendor_element_attributes"] == [
+        {
+            "uid": "odm_vendor_attribute2",
+            "name": "nameTwo",
+            "value": "value",
+            "value_regex": None,
+            "data_type": "string",
+            "vendor_element_uid": "odm_vendor_element1",
+        }
+    ]
     assert res["possible_actions"] == ["approve", "delete", "edit"]
 
 
@@ -226,27 +394,73 @@ def test_getting_versions_of_a_specific_odm_form(api_client):
     assert res[0]["version"] == "0.1"
     assert res[0]["change_description"] == "Initial version"
     assert res[0]["author_username"] == "unknown-user@example.com"
-    assert res[0]["descriptions"] == [
+    assert res[0]["translated_texts"] == [
         {
-            "name": "name2",
+            "text_type": "Description",
             "language": "eng",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
+            "text": "description2",
         },
         {
-            "name": "name3",
+            "text_type": "Description",
+            "language": "dan",
+            "text": "description3",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
             "language": "eng",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
+            "text": "instruction2",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
+            "language": "dan",
+            "text": "instruction3",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "eng",
+            "text": "sponsor_instruction2",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "dan",
+            "text": "sponsor_instruction3",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "eng",
+            "text": "name2",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "dan",
+            "text": "name3",
         },
     ]
     assert res[0]["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res[0]["item_groups"] == []
-    assert res[0]["vendor_elements"] == []
-    assert res[0]["vendor_attributes"] == []
-    assert res[0]["vendor_element_attributes"] == []
+    assert res[0]["vendor_elements"] == [
+        {"uid": "odm_vendor_element1", "name": "NameOne", "value": "value"}
+    ]
+    assert res[0]["vendor_attributes"] == [
+        {
+            "uid": "odm_vendor_attribute4",
+            "name": "nameFour",
+            "value": "value",
+            "value_regex": None,
+            "data_type": "string",
+            "vendor_namespace_uid": "odm_vendor_namespace1",
+        }
+    ]
+    assert res[0]["vendor_element_attributes"] == [
+        {
+            "uid": "odm_vendor_attribute2",
+            "name": "nameTwo",
+            "value": "value",
+            "value_regex": None,
+            "data_type": "string",
+            "vendor_element_uid": "odm_vendor_element1",
+        }
+    ]
     assert res[0]["possible_actions"] == ["approve", "delete", "edit"]
 
 
@@ -258,23 +472,58 @@ def test_updating_an_existing_odm_form(api_client):
         "sdtm_version": "0.1",
         "repeating": "Yes",
         "change_description": "repeating changed to Yes",
-        "descriptions": [
+        "translated_texts": [
             {
-                "name": "name2",
+                "text_type": "Description",
                 "language": "eng",
-                "description": "description2",
-                "instruction": "instruction2",
-                "sponsor_instruction": "sponsor_instruction2",
+                "text": "description2",
             },
             {
-                "name": "name3",
+                "text_type": "Description",
+                "language": "dan",
+                "text": "description3",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
                 "language": "eng",
-                "description": "description3",
-                "instruction": "instruction3",
-                "sponsor_instruction": "sponsor_instruction3",
+                "text": "instruction2",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
+                "language": "dan",
+                "text": "instruction3",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "eng",
+                "text": "sponsor_instruction2",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "dan",
+                "text": "sponsor_instruction3",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "eng",
+                "text": "name2",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "dan",
+                "text": "name3",
             },
         ],
         "aliases": [{"context": "context1", "name": "name1"}],
+        "vendor_elements": [
+            {"uid": "odm_vendor_element3", "value": "value"},
+        ],
+        "vendor_element_attributes": [
+            {"uid": "odm_vendor_attribute7", "value": "value"},
+        ],
+        "vendor_attributes": [
+            {"uid": "odm_vendor_attribute3", "value": "value"},
+        ],
     }
     response = api_client.patch("concepts/odms/forms/OdmForm_000001", json=data)
 
@@ -293,27 +542,73 @@ def test_updating_an_existing_odm_form(api_client):
     assert res["version"] == "0.2"
     assert res["change_description"] == "repeating changed to Yes"
     assert res["author_username"] == "unknown-user@example.com"
-    assert res["descriptions"] == [
+    assert res["translated_texts"] == [
         {
-            "name": "name2",
+            "text_type": "Description",
             "language": "eng",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
+            "text": "description2",
         },
         {
-            "name": "name3",
+            "text_type": "Description",
+            "language": "dan",
+            "text": "description3",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
             "language": "eng",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
+            "text": "instruction2",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
+            "language": "dan",
+            "text": "instruction3",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "eng",
+            "text": "sponsor_instruction2",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "dan",
+            "text": "sponsor_instruction3",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "eng",
+            "text": "name2",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "dan",
+            "text": "name3",
         },
     ]
     assert res["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res["item_groups"] == []
-    assert res["vendor_elements"] == []
-    assert res["vendor_attributes"] == []
-    assert res["vendor_element_attributes"] == []
+    assert res["vendor_elements"] == [
+        {"uid": "odm_vendor_element3", "name": "NameThree", "value": "value"}
+    ]
+    assert res["vendor_attributes"] == [
+        {
+            "data_type": "string",
+            "name": "nameThree",
+            "uid": "odm_vendor_attribute3",
+            "value": "value",
+            "value_regex": "^[a-zA-Z]+$",
+            "vendor_namespace_uid": "odm_vendor_namespace1",
+        },
+    ]
+    assert res["vendor_element_attributes"] == [
+        {
+            "data_type": "string",
+            "name": "nameSeven",
+            "uid": "odm_vendor_attribute7",
+            "value": "value",
+            "value_regex": None,
+            "vendor_element_uid": "odm_vendor_element3",
+        },
+    ]
     assert res["possible_actions"] == ["approve", "delete", "edit"]
 
 
@@ -335,20 +630,46 @@ def test_getting_a_specific_odm_form_in_specific_version(api_client):
     assert res["version"] == "0.1"
     assert res["change_description"] == "Initial version"
     assert res["author_username"] == "unknown-user@example.com"
-    assert res["descriptions"] == [
+    assert res["translated_texts"] == [
         {
-            "name": "name2",
+            "text_type": "Description",
             "language": "eng",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
+            "text": "description2",
         },
         {
-            "name": "name3",
+            "text_type": "Description",
+            "language": "dan",
+            "text": "description3",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
             "language": "eng",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
+            "text": "instruction2",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
+            "language": "dan",
+            "text": "instruction3",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "eng",
+            "text": "sponsor_instruction2",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "dan",
+            "text": "sponsor_instruction3",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "eng",
+            "text": "name2",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "dan",
+            "text": "name3",
         },
     ]
     assert res["aliases"] == [{"context": "context1", "name": "name1"}]
@@ -389,20 +710,46 @@ def test_adding_odm_item_groups_to_a_specific_odm_form(api_client):
     assert res["version"] == "0.2"
     assert res["change_description"] == "repeating changed to Yes"
     assert res["author_username"] == "unknown-user@example.com"
-    assert res["descriptions"] == [
+    assert res["translated_texts"] == [
         {
-            "name": "name2",
+            "text_type": "Description",
             "language": "eng",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
+            "text": "description2",
         },
         {
-            "name": "name3",
+            "text_type": "Description",
+            "language": "dan",
+            "text": "description3",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
             "language": "eng",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
+            "text": "instruction2",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
+            "language": "dan",
+            "text": "instruction3",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "eng",
+            "text": "sponsor_instruction2",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "dan",
+            "text": "sponsor_instruction3",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "eng",
+            "text": "name2",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "dan",
+            "text": "name3",
         },
     ]
     assert res["aliases"] == [{"context": "context1", "name": "name1"}]
@@ -429,9 +776,29 @@ def test_adding_odm_item_groups_to_a_specific_odm_form(api_client):
             },
         }
     ]
-    assert res["vendor_elements"] == []
-    assert res["vendor_attributes"] == []
-    assert res["vendor_element_attributes"] == []
+    assert res["vendor_elements"] == [
+        {"uid": "odm_vendor_element3", "name": "NameThree", "value": "value"}
+    ]
+    assert res["vendor_attributes"] == [
+        {
+            "data_type": "string",
+            "name": "nameThree",
+            "uid": "odm_vendor_attribute3",
+            "value": "value",
+            "value_regex": "^[a-zA-Z]+$",
+            "vendor_namespace_uid": "odm_vendor_namespace1",
+        },
+    ]
+    assert res["vendor_element_attributes"] == [
+        {
+            "data_type": "string",
+            "name": "nameSeven",
+            "uid": "odm_vendor_attribute7",
+            "value": "value",
+            "value_regex": None,
+            "vendor_element_uid": "odm_vendor_element3",
+        },
+    ]
     assert res["possible_actions"] == ["approve", "delete", "edit"]
 
 
@@ -465,156 +832,46 @@ def test_overriding_odm_item_groups_from_a_specific_odm_form(api_client):
     assert res["version"] == "0.2"
     assert res["change_description"] == "repeating changed to Yes"
     assert res["author_username"] == "unknown-user@example.com"
-    assert res["descriptions"] == [
+    assert res["translated_texts"] == [
         {
-            "name": "name2",
+            "text_type": "Description",
             "language": "eng",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
+            "text": "description2",
         },
         {
-            "name": "name3",
-            "language": "eng",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
-        },
-    ]
-    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
-    assert res["item_groups"] == [
-        {
-            "uid": "odm_item_group2",
-            "oid": "oid2",
-            "name": "name2",
-            "version": "1.0",
-            "order_number": 2,
-            "mandatory": "Yes",
-            "collection_exception_condition_oid": "collection_exception_condition_oid2",
-            "vendor": {
-                "attributes": [
-                    {
-                        "uid": "odm_vendor_attribute3",
-                        "name": "nameThree",
-                        "data_type": "string",
-                        "value_regex": "^[a-zA-Z]+$",
-                        "value": "No",
-                        "vendor_namespace_uid": "odm_vendor_namespace1",
-                    }
-                ]
-            },
-        }
-    ]
-    assert res["vendor_elements"] == []
-    assert res["vendor_attributes"] == []
-    assert res["vendor_element_attributes"] == []
-    assert res["possible_actions"] == ["approve", "delete", "edit"]
-
-
-def test_adding_odm_vendor_element_to_a_specific_odm_form(api_client):
-    data = [{"uid": "odm_vendor_element2", "value": "value"}]
-    response = api_client.post(
-        "concepts/odms/forms/OdmForm_000001/vendor-elements", json=data
-    )
-
-    assert_response_status_code(response, 201)
-
-    res = response.json()
-
-    assert res["uid"] == "OdmForm_000001"
-    assert res["name"] == "name1"
-    assert res["library_name"] == "Sponsor"
-    assert res["oid"] == "oid1"
-    assert res["sdtm_version"] == "0.1"
-    assert res["repeating"] == "Yes"
-    assert res["end_date"] is None
-    assert res["status"] == "Draft"
-    assert res["version"] == "0.2"
-    assert res["change_description"] == "repeating changed to Yes"
-    assert res["author_username"] == "unknown-user@example.com"
-    assert res["descriptions"] == [
-        {
-            "name": "name2",
-            "language": "eng",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
+            "text_type": "Description",
+            "language": "dan",
+            "text": "description3",
         },
         {
-            "name": "name3",
+            "text_type": "osb:CompletionInstructions",
             "language": "eng",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
-        },
-    ]
-    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
-    assert res["item_groups"] == [
-        {
-            "uid": "odm_item_group2",
-            "oid": "oid2",
-            "version": "1.0",
-            "name": "name2",
-            "order_number": 2,
-            "mandatory": "Yes",
-            "collection_exception_condition_oid": "collection_exception_condition_oid2",
-            "vendor": {
-                "attributes": [
-                    {
-                        "uid": "odm_vendor_attribute3",
-                        "name": "nameThree",
-                        "data_type": "string",
-                        "value_regex": "^[a-zA-Z]+$",
-                        "value": "No",
-                        "vendor_namespace_uid": "odm_vendor_namespace1",
-                    }
-                ]
-            },
-        }
-    ]
-    assert res["vendor_elements"] == [
-        {"uid": "odm_vendor_element2", "name": "nameTwo", "value": "value"}
-    ]
-    assert res["vendor_attributes"] == []
-    assert res["vendor_element_attributes"] == []
-    assert res["possible_actions"] == ["approve", "delete", "edit"]
-
-
-def test_overriding_odm_vendor_element_from_a_specific_odm_form(api_client):
-    data = [{"uid": "odm_vendor_element1", "value": "value"}]
-    response = api_client.post(
-        "concepts/odms/forms/OdmForm_000001/vendor-elements?override=true", json=data
-    )
-
-    assert_response_status_code(response, 201)
-
-    res = response.json()
-
-    assert res["uid"] == "OdmForm_000001"
-    assert res["name"] == "name1"
-    assert res["library_name"] == "Sponsor"
-    assert res["oid"] == "oid1"
-    assert res["sdtm_version"] == "0.1"
-    assert res["repeating"] == "Yes"
-    assert res["end_date"] is None
-    assert res["status"] == "Draft"
-    assert res["version"] == "0.2"
-    assert res["change_description"] == "repeating changed to Yes"
-    assert res["author_username"] == "unknown-user@example.com"
-    assert res["descriptions"] == [
-        {
-            "name": "name2",
-            "language": "eng",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
+            "text": "instruction2",
         },
         {
-            "name": "name3",
+            "text_type": "osb:CompletionInstructions",
+            "language": "dan",
+            "text": "instruction3",
+        },
+        {
+            "text_type": "osb:DesignNotes",
             "language": "eng",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
+            "text": "sponsor_instruction2",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "dan",
+            "text": "sponsor_instruction3",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "eng",
+            "text": "name2",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "dan",
+            "text": "name3",
         },
     ]
     assert res["aliases"] == [{"context": "context1", "name": "name1"}]
@@ -642,353 +899,91 @@ def test_overriding_odm_vendor_element_from_a_specific_odm_form(api_client):
         }
     ]
     assert res["vendor_elements"] == [
-        {"uid": "odm_vendor_element1", "name": "nameOne", "value": "value"}
-    ]
-    assert res["vendor_attributes"] == []
-    assert res["vendor_element_attributes"] == []
-    assert res["possible_actions"] == ["approve", "delete", "edit"]
-
-
-def test_adding_odm_vendor_attribute_to_a_specific_odm_form(api_client):
-    data = [{"uid": "odm_vendor_attribute3", "value": "value"}]
-    response = api_client.post(
-        "concepts/odms/forms/OdmForm_000001/vendor-attributes", json=data
-    )
-
-    assert_response_status_code(response, 201)
-
-    res = response.json()
-
-    assert res["uid"] == "OdmForm_000001"
-    assert res["name"] == "name1"
-    assert res["library_name"] == "Sponsor"
-    assert res["oid"] == "oid1"
-    assert res["sdtm_version"] == "0.1"
-    assert res["repeating"] == "Yes"
-    assert res["end_date"] is None
-    assert res["status"] == "Draft"
-    assert res["version"] == "0.2"
-    assert res["change_description"] == "repeating changed to Yes"
-    assert res["author_username"] == "unknown-user@example.com"
-    assert res["descriptions"] == [
-        {
-            "name": "name2",
-            "language": "eng",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
-        },
-        {
-            "name": "name3",
-            "language": "eng",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
-        },
-    ]
-    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
-    assert res["item_groups"] == [
-        {
-            "uid": "odm_item_group2",
-            "oid": "oid2",
-            "name": "name2",
-            "version": "1.0",
-            "order_number": 2,
-            "mandatory": "Yes",
-            "collection_exception_condition_oid": "collection_exception_condition_oid2",
-            "vendor": {
-                "attributes": [
-                    {
-                        "uid": "odm_vendor_attribute3",
-                        "name": "nameThree",
-                        "data_type": "string",
-                        "value_regex": "^[a-zA-Z]+$",
-                        "value": "No",
-                        "vendor_namespace_uid": "odm_vendor_namespace1",
-                    }
-                ]
-            },
-        }
-    ]
-    assert res["vendor_elements"] == [
-        {"uid": "odm_vendor_element1", "name": "nameOne", "value": "value"}
+        {"uid": "odm_vendor_element3", "name": "NameThree", "value": "value"}
     ]
     assert res["vendor_attributes"] == [
         {
-            "uid": "odm_vendor_attribute3",
+            "data_type": "string",
             "name": "nameThree",
-            "data_type": "string",
+            "uid": "odm_vendor_attribute3",
+            "value": "value",
             "value_regex": "^[a-zA-Z]+$",
-            "value": "value",
             "vendor_namespace_uid": "odm_vendor_namespace1",
-        }
-    ]
-    assert res["vendor_element_attributes"] == []
-    assert res["possible_actions"] == ["approve", "delete", "edit"]
-
-
-def test_overriding_odm_vendor_attribute_from_a_specific_odm_form(api_client):
-    data = [{"uid": "odm_vendor_attribute4", "value": "value"}]
-    response = api_client.post(
-        "concepts/odms/forms/OdmForm_000001/vendor-attributes?override=true", json=data
-    )
-
-    assert_response_status_code(response, 201)
-
-    res = response.json()
-
-    assert res["uid"] == "OdmForm_000001"
-    assert res["name"] == "name1"
-    assert res["library_name"] == "Sponsor"
-    assert res["oid"] == "oid1"
-    assert res["sdtm_version"] == "0.1"
-    assert res["repeating"] == "Yes"
-    assert res["end_date"] is None
-    assert res["status"] == "Draft"
-    assert res["version"] == "0.2"
-    assert res["change_description"] == "repeating changed to Yes"
-    assert res["author_username"] == "unknown-user@example.com"
-    assert res["descriptions"] == [
-        {
-            "name": "name2",
-            "language": "eng",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
         },
-        {
-            "name": "name3",
-            "language": "eng",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
-        },
-    ]
-    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
-    assert res["item_groups"] == [
-        {
-            "uid": "odm_item_group2",
-            "oid": "oid2",
-            "name": "name2",
-            "version": "1.0",
-            "order_number": 2,
-            "mandatory": "Yes",
-            "collection_exception_condition_oid": "collection_exception_condition_oid2",
-            "vendor": {
-                "attributes": [
-                    {
-                        "uid": "odm_vendor_attribute3",
-                        "name": "nameThree",
-                        "data_type": "string",
-                        "value_regex": "^[a-zA-Z]+$",
-                        "value": "No",
-                        "vendor_namespace_uid": "odm_vendor_namespace1",
-                    }
-                ]
-            },
-        }
-    ]
-    assert res["vendor_elements"] == [
-        {"uid": "odm_vendor_element1", "name": "nameOne", "value": "value"}
-    ]
-    assert res["vendor_attributes"] == [
-        {
-            "uid": "odm_vendor_attribute4",
-            "name": "nameFour",
-            "data_type": "string",
-            "value_regex": None,
-            "value": "value",
-            "vendor_namespace_uid": "odm_vendor_namespace1",
-        }
-    ]
-    assert res["vendor_element_attributes"] == []
-    assert res["possible_actions"] == ["approve", "delete", "edit"]
-
-
-def test_adding_odm_vendor_element_attribute_to_a_specific_odm_form(api_client):
-    data = [{"uid": "odm_vendor_attribute1", "value": "value"}]
-    response = api_client.post(
-        "concepts/odms/forms/OdmForm_000001/vendor-element-attributes", json=data
-    )
-
-    assert_response_status_code(response, 201)
-
-    res = response.json()
-
-    assert res["uid"] == "OdmForm_000001"
-    assert res["name"] == "name1"
-    assert res["library_name"] == "Sponsor"
-    assert res["oid"] == "oid1"
-    assert res["sdtm_version"] == "0.1"
-    assert res["repeating"] == "Yes"
-    assert res["end_date"] is None
-    assert res["status"] == "Draft"
-    assert res["version"] == "0.2"
-    assert res["change_description"] == "repeating changed to Yes"
-    assert res["author_username"] == "unknown-user@example.com"
-    assert res["descriptions"] == [
-        {
-            "name": "name2",
-            "language": "eng",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
-        },
-        {
-            "name": "name3",
-            "language": "eng",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
-        },
-    ]
-    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
-    assert res["item_groups"] == [
-        {
-            "uid": "odm_item_group2",
-            "oid": "oid2",
-            "name": "name2",
-            "version": "1.0",
-            "order_number": 2,
-            "mandatory": "Yes",
-            "collection_exception_condition_oid": "collection_exception_condition_oid2",
-            "vendor": {
-                "attributes": [
-                    {
-                        "uid": "odm_vendor_attribute3",
-                        "name": "nameThree",
-                        "data_type": "string",
-                        "value_regex": "^[a-zA-Z]+$",
-                        "value": "No",
-                        "vendor_namespace_uid": "odm_vendor_namespace1",
-                    }
-                ]
-            },
-        }
-    ]
-    assert res["vendor_elements"] == [
-        {"uid": "odm_vendor_element1", "name": "nameOne", "value": "value"}
-    ]
-    assert res["vendor_attributes"] == [
-        {
-            "uid": "odm_vendor_attribute4",
-            "name": "nameFour",
-            "data_type": "string",
-            "value_regex": None,
-            "value": "value",
-            "vendor_namespace_uid": "odm_vendor_namespace1",
-        }
     ]
     assert res["vendor_element_attributes"] == [
         {
-            "uid": "odm_vendor_attribute1",
-            "name": "nameOne",
             "data_type": "string",
-            "value_regex": "^[a-zA-Z]+$",
+            "name": "nameSeven",
+            "uid": "odm_vendor_attribute7",
             "value": "value",
-            "vendor_element_uid": "odm_vendor_element1",
-        }
-    ]
-    assert res["possible_actions"] == ["approve", "delete", "edit"]
-
-
-def test_overriding_odm_vendor_element_attribute_from_a_specific_odm_form(api_client):
-    data = [{"uid": "odm_vendor_attribute2", "value": "value"}]
-    response = api_client.post(
-        "concepts/odms/forms/OdmForm_000001/vendor-element-attributes?override=true",
-        json=data,
-    )
-
-    assert_response_status_code(response, 201)
-
-    res = response.json()
-
-    assert res["uid"] == "OdmForm_000001"
-    assert res["name"] == "name1"
-    assert res["library_name"] == "Sponsor"
-    assert res["oid"] == "oid1"
-    assert res["sdtm_version"] == "0.1"
-    assert res["repeating"] == "Yes"
-    assert res["end_date"] is None
-    assert res["status"] == "Draft"
-    assert res["version"] == "0.2"
-    assert res["change_description"] == "repeating changed to Yes"
-    assert res["author_username"] == "unknown-user@example.com"
-    assert res["descriptions"] == [
-        {
-            "name": "name2",
-            "language": "eng",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
-        },
-        {
-            "name": "name3",
-            "language": "eng",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
-        },
-    ]
-    assert res["aliases"] == [{"context": "context1", "name": "name1"}]
-    assert res["item_groups"] == [
-        {
-            "uid": "odm_item_group2",
-            "oid": "oid2",
-            "name": "name2",
-            "version": "1.0",
-            "order_number": 2,
-            "mandatory": "Yes",
-            "collection_exception_condition_oid": "collection_exception_condition_oid2",
-            "vendor": {
-                "attributes": [
-                    {
-                        "uid": "odm_vendor_attribute3",
-                        "name": "nameThree",
-                        "data_type": "string",
-                        "value_regex": "^[a-zA-Z]+$",
-                        "value": "No",
-                        "vendor_namespace_uid": "odm_vendor_namespace1",
-                    }
-                ]
-            },
-        }
-    ]
-    assert res["vendor_elements"] == [
-        {"uid": "odm_vendor_element1", "name": "nameOne", "value": "value"}
-    ]
-    assert res["vendor_attributes"] == [
-        {
-            "uid": "odm_vendor_attribute4",
-            "name": "nameFour",
-            "data_type": "string",
             "value_regex": None,
-            "value": "value",
-            "vendor_namespace_uid": "odm_vendor_namespace1",
-        }
-    ]
-    assert res["vendor_element_attributes"] == [
-        {
-            "uid": "odm_vendor_attribute2",
-            "name": "nameTwo",
-            "data_type": "string",
-            "value_regex": None,
-            "value": "value",
-            "vendor_element_uid": "odm_vendor_element1",
-        }
+            "vendor_element_uid": "odm_vendor_element3",
+        },
     ]
     assert res["possible_actions"] == ["approve", "delete", "edit"]
 
 
 def test_managing_odm_vendors_of_a_specific_odm_form(api_client):
     data = {
-        "elements": [{"uid": "odm_vendor_element3", "value": "value"}],
-        "element_attributes": [{"uid": "odm_vendor_attribute7", "value": "value"}],
-        "attributes": [{"uid": "odm_vendor_attribute4", "value": "value"}],
+        "library_name": "Sponsor",
+        "name": "name1",
+        "oid": "oid1",
+        "sdtm_version": "0.1",
+        "repeating": "Yes",
+        "change_description": "repeating changed to Yes",
+        "translated_texts": [
+            {
+                "text_type": "Description",
+                "language": "eng",
+                "text": "description2",
+            },
+            {
+                "text_type": "Description",
+                "language": "dan",
+                "text": "description3",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
+                "language": "eng",
+                "text": "instruction2",
+            },
+            {
+                "text_type": "osb:CompletionInstructions",
+                "language": "dan",
+                "text": "instruction3",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "eng",
+                "text": "sponsor_instruction2",
+            },
+            {
+                "text_type": "osb:DesignNotes",
+                "language": "dan",
+                "text": "sponsor_instruction3",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "eng",
+                "text": "name2",
+            },
+            {
+                "text_type": "osb:DisplayText",
+                "language": "dan",
+                "text": "name3",
+            },
+        ],
+        "aliases": [{"context": "context1", "name": "name1"}],
+        "vendor_elements": [{"uid": "odm_vendor_element3", "value": "value"}],
+        "vendor_element_attributes": [
+            {"uid": "odm_vendor_attribute7", "value": "value"}
+        ],
+        "vendor_attributes": [{"uid": "odm_vendor_attribute4", "value": "value"}],
     }
-    response = api_client.post("concepts/odms/forms/OdmForm_000001/vendors", json=data)
+    response = api_client.patch("concepts/odms/forms/OdmForm_000001", json=data)
 
-    assert_response_status_code(response, 201)
+    assert_response_status_code(response, 200)
 
     res = response.json()
 
@@ -1003,20 +998,46 @@ def test_managing_odm_vendors_of_a_specific_odm_form(api_client):
     assert res["version"] == "0.2"
     assert res["change_description"] == "repeating changed to Yes"
     assert res["author_username"] == "unknown-user@example.com"
-    assert res["descriptions"] == [
+    assert res["translated_texts"] == [
         {
-            "name": "name2",
+            "text_type": "Description",
             "language": "eng",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
+            "text": "description2",
         },
         {
-            "name": "name3",
+            "text_type": "Description",
+            "language": "dan",
+            "text": "description3",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
             "language": "eng",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
+            "text": "instruction2",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
+            "language": "dan",
+            "text": "instruction3",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "eng",
+            "text": "sponsor_instruction2",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "dan",
+            "text": "sponsor_instruction3",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "eng",
+            "text": "name2",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "dan",
+            "text": "name3",
         },
     ]
     assert res["aliases"] == [{"context": "context1", "name": "name1"}]
@@ -1044,7 +1065,7 @@ def test_managing_odm_vendors_of_a_specific_odm_form(api_client):
         }
     ]
     assert res["vendor_elements"] == [
-        {"uid": "odm_vendor_element3", "name": "nameThree", "value": "value"}
+        {"uid": "odm_vendor_element3", "name": "NameThree", "value": "value"}
     ]
     assert res["vendor_attributes"] == [
         {
@@ -1087,20 +1108,46 @@ def test_approving_an_odm_form(api_client):
     assert res["version"] == "1.0"
     assert res["change_description"] == "Approved version"
     assert res["author_username"] == "unknown-user@example.com"
-    assert res["descriptions"] == [
+    assert res["translated_texts"] == [
         {
-            "name": "name2",
+            "text_type": "Description",
             "language": "eng",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
+            "text": "description2",
         },
         {
-            "name": "name3",
+            "text_type": "Description",
+            "language": "dan",
+            "text": "description3",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
             "language": "eng",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
+            "text": "instruction2",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
+            "language": "dan",
+            "text": "instruction3",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "eng",
+            "text": "sponsor_instruction2",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "dan",
+            "text": "sponsor_instruction3",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "eng",
+            "text": "name2",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "dan",
+            "text": "name3",
         },
     ]
     assert res["aliases"] == [{"context": "context1", "name": "name1"}]
@@ -1128,7 +1175,7 @@ def test_approving_an_odm_form(api_client):
         }
     ]
     assert res["vendor_elements"] == [
-        {"uid": "odm_vendor_element3", "name": "nameThree", "value": "value"}
+        {"uid": "odm_vendor_element3", "name": "NameThree", "value": "value"}
     ]
     assert res["vendor_attributes"] == [
         {
@@ -1171,20 +1218,46 @@ def test_inactivating_a_specific_odm_form(api_client):
     assert res["version"] == "2.0"
     assert res["change_description"] == "Inactivated version"
     assert res["author_username"] == "unknown-user@example.com"
-    assert res["descriptions"] == [
+    assert res["translated_texts"] == [
         {
-            "name": "name2",
+            "text_type": "Description",
             "language": "eng",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
+            "text": "description2",
         },
         {
-            "name": "name3",
+            "text_type": "Description",
+            "language": "dan",
+            "text": "description3",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
             "language": "eng",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
+            "text": "instruction2",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
+            "language": "dan",
+            "text": "instruction3",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "eng",
+            "text": "sponsor_instruction2",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "dan",
+            "text": "sponsor_instruction3",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "eng",
+            "text": "name2",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "dan",
+            "text": "name3",
         },
     ]
     assert res["aliases"] == [{"context": "context1", "name": "name1"}]
@@ -1212,7 +1285,7 @@ def test_inactivating_a_specific_odm_form(api_client):
         }
     ]
     assert res["vendor_elements"] == [
-        {"uid": "odm_vendor_element3", "name": "nameThree", "value": "value"}
+        {"uid": "odm_vendor_element3", "name": "NameThree", "value": "value"}
     ]
     assert res["vendor_attributes"] == [
         {
@@ -1255,20 +1328,46 @@ def test_reactivating_a_specific_odm_form(api_client):
     assert res["version"] == "3.0"
     assert res["change_description"] == "Reactivated version"
     assert res["author_username"] == "unknown-user@example.com"
-    assert res["descriptions"] == [
+    assert res["translated_texts"] == [
         {
-            "name": "name2",
+            "text_type": "Description",
             "language": "eng",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
+            "text": "description2",
         },
         {
-            "name": "name3",
+            "text_type": "Description",
+            "language": "dan",
+            "text": "description3",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
             "language": "eng",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
+            "text": "instruction2",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
+            "language": "dan",
+            "text": "instruction3",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "eng",
+            "text": "sponsor_instruction2",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "dan",
+            "text": "sponsor_instruction3",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "eng",
+            "text": "name2",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "dan",
+            "text": "name3",
         },
     ]
     assert res["aliases"] == [{"context": "context1", "name": "name1"}]
@@ -1296,7 +1395,7 @@ def test_reactivating_a_specific_odm_form(api_client):
         }
     ]
     assert res["vendor_elements"] == [
-        {"uid": "odm_vendor_element3", "name": "nameThree", "value": "value"}
+        {"uid": "odm_vendor_element3", "name": "NameThree", "value": "value"}
     ]
     assert res["vendor_attributes"] == [
         {
@@ -1339,20 +1438,46 @@ def test_creating_a_new_odm_form_version(api_client):
     assert res["version"] == "3.1"
     assert res["change_description"] == "New draft created"
     assert res["author_username"] == "unknown-user@example.com"
-    assert res["descriptions"] == [
+    assert res["translated_texts"] == [
         {
-            "name": "name2",
+            "text_type": "Description",
             "language": "eng",
-            "description": "description2",
-            "instruction": "instruction2",
-            "sponsor_instruction": "sponsor_instruction2",
+            "text": "description2",
         },
         {
-            "name": "name3",
+            "text_type": "Description",
+            "language": "dan",
+            "text": "description3",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
             "language": "eng",
-            "description": "description3",
-            "instruction": "instruction3",
-            "sponsor_instruction": "sponsor_instruction3",
+            "text": "instruction2",
+        },
+        {
+            "text_type": "osb:CompletionInstructions",
+            "language": "dan",
+            "text": "instruction3",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "eng",
+            "text": "sponsor_instruction2",
+        },
+        {
+            "text_type": "osb:DesignNotes",
+            "language": "dan",
+            "text": "sponsor_instruction3",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "eng",
+            "text": "name2",
+        },
+        {
+            "text_type": "osb:DisplayText",
+            "language": "dan",
+            "text": "name3",
         },
     ]
     assert res["aliases"] == [{"context": "context1", "name": "name1"}]
@@ -1380,7 +1505,7 @@ def test_creating_a_new_odm_form_version(api_client):
         }
     ]
     assert res["vendor_elements"] == [
-        {"uid": "odm_vendor_element3", "name": "nameThree", "value": "value"}
+        {"uid": "odm_vendor_element3", "name": "NameThree", "value": "value"}
     ]
     assert res["vendor_attributes"] == [
         {
@@ -1412,13 +1537,11 @@ def test_create_a_new_odm_form_for_deleting_it(api_client):
         "oid": "oid2",
         "sdtm_version": "0.1",
         "repeating": "No",
-        "descriptions": [
+        "translated_texts": [
             {
-                "name": "name - delete",
+                "text_type": "Description",
                 "language": "eng",
-                "description": "description - delete",
-                "instruction": "instruction - delete",
-                "sponsor_instruction": "sponsor_instruction - delete",
+                "text": "name - delete",
             }
         ],
         "aliases": [],
@@ -1440,13 +1563,11 @@ def test_create_a_new_odm_form_for_deleting_it(api_client):
     assert res["version"] == "0.1"
     assert res["change_description"] == "Initial version"
     assert res["author_username"] == "unknown-user@example.com"
-    assert res["descriptions"] == [
+    assert res["translated_texts"] == [
         {
-            "name": "name - delete",
+            "text_type": "Description",
             "language": "eng",
-            "description": "description - delete",
-            "instruction": "instruction - delete",
-            "sponsor_instruction": "sponsor_instruction - delete",
+            "text": "name - delete",
         }
     ]
     assert res["aliases"] == []
@@ -1470,21 +1591,23 @@ def test_creating_a_new_odm_form_with_relations(api_client):
         "oid": "string",
         "sdtm_version": "0.1",
         "repeating": "No",
-        "descriptions": [
+        "translated_texts": [
+            {"text_type": "Description", "language": "eng", "text": "string1"},
+            {"text_type": "Description", "language": "dan", "text": "string2"},
             {
-                "name": "string1",
+                "text_type": "osb:CompletionInstructions",
                 "language": "eng",
-                "description": "string1",
-                "instruction": "string1",
-                "sponsor_instruction": "string1",
+                "text": "string1",
             },
             {
-                "name": "string2",
+                "text_type": "osb:CompletionInstructions",
                 "language": "dan",
-                "description": "string2",
-                "instruction": "string2",
-                "sponsor_instruction": "string2",
+                "text": "string2",
             },
+            {"text_type": "osb:DesignNotes", "language": "eng", "text": "string1"},
+            {"text_type": "osb:DesignNotes", "language": "dan", "text": "string2"},
+            {"text_type": "osb:DisplayText", "language": "eng", "text": "string1"},
+            {"text_type": "osb:DisplayText", "language": "dan", "text": "string2"},
         ],
         "aliases": [],
     }
@@ -1505,21 +1628,23 @@ def test_creating_a_new_odm_form_with_relations(api_client):
     assert res["version"] == "0.1"
     assert res["change_description"] == "Initial version"
     assert res["author_username"] == "unknown-user@example.com"
-    assert res["descriptions"] == [
+    assert res["translated_texts"] == [
+        {"text_type": "Description", "language": "eng", "text": "string1"},
+        {"text_type": "Description", "language": "dan", "text": "string2"},
         {
-            "name": "string1",
+            "text_type": "osb:CompletionInstructions",
             "language": "eng",
-            "description": "string1",
-            "instruction": "string1",
-            "sponsor_instruction": "string1",
+            "text": "string1",
         },
         {
-            "name": "string2",
+            "text_type": "osb:CompletionInstructions",
             "language": "dan",
-            "description": "string2",
-            "instruction": "string2",
-            "sponsor_instruction": "string2",
+            "text": "string2",
         },
+        {"text_type": "osb:DesignNotes", "language": "eng", "text": "string1"},
+        {"text_type": "osb:DesignNotes", "language": "dan", "text": "string2"},
+        {"text_type": "osb:DisplayText", "language": "eng", "text": "string1"},
+        {"text_type": "osb:DisplayText", "language": "dan", "text": "string2"},
     ]
     assert res["aliases"] == []
     assert res["item_groups"] == []
@@ -1537,23 +1662,34 @@ def test_updating_an_existing_odm_form_with_relations(api_client):
         "sdtm_version": "0.1",
         "repeating": "Yes",
         "change_description": "repeating changed to Yes",
-        "descriptions": [
+        "translated_texts": [
+            {"text_type": "Description", "language": "eng", "text": "string2"},
+            {"text_type": "Description", "language": "ara", "text": "string3"},
             {
-                "name": "string2",
+                "text_type": "osb:CompletionInstructions",
                 "language": "eng",
-                "description": "string2",
-                "instruction": "string2",
-                "sponsor_instruction": "string2",
+                "text": "string2",
             },
             {
-                "name": "string3",
-                "language": "ara",
-                "description": "string3",
-                "instruction": "string3",
-                "sponsor_instruction": "string3",
+                "text_type": "osb:CompletionInstructions",
+                "language": "dan",
+                "text": "string3",
             },
+            {"text_type": "osb:DesignNotes", "language": "eng", "text": "string2"},
+            {"text_type": "osb:DesignNotes", "language": "ara", "text": "string3"},
+            {"text_type": "osb:DisplayText", "language": "eng", "text": "string2"},
+            {"text_type": "osb:DisplayText", "language": "ara", "text": "string3"},
         ],
         "aliases": [{"context": "context1", "name": "name1"}],
+        "vendor_elements": [
+            {"uid": "odm_vendor_element3", "value": "value"},
+        ],
+        "vendor_element_attributes": [
+            {"uid": "odm_vendor_attribute7", "value": "value"},
+        ],
+        "vendor_attributes": [
+            {"uid": "odm_vendor_attribute3", "value": "value"},
+        ],
     }
     response = api_client.patch("concepts/odms/forms/OdmForm_000001", json=data)
 
@@ -1572,21 +1708,23 @@ def test_updating_an_existing_odm_form_with_relations(api_client):
     assert res["version"] == "3.2"
     assert res["change_description"] == "repeating changed to Yes"
     assert res["author_username"] == "unknown-user@example.com"
-    assert res["descriptions"] == [
+    assert res["translated_texts"] == [
+        {"text_type": "Description", "language": "eng", "text": "string2"},
+        {"text_type": "Description", "language": "ara", "text": "string3"},
         {
-            "name": "string2",
+            "text_type": "osb:CompletionInstructions",
             "language": "eng",
-            "description": "string2",
-            "instruction": "string2",
-            "sponsor_instruction": "string2",
+            "text": "string2",
         },
         {
-            "name": "string3",
-            "language": "ara",
-            "description": "string3",
-            "instruction": "string3",
-            "sponsor_instruction": "string3",
+            "text_type": "osb:CompletionInstructions",
+            "language": "dan",
+            "text": "string3",
         },
+        {"text_type": "osb:DesignNotes", "language": "eng", "text": "string2"},
+        {"text_type": "osb:DesignNotes", "language": "ara", "text": "string3"},
+        {"text_type": "osb:DisplayText", "language": "eng", "text": "string2"},
+        {"text_type": "osb:DisplayText", "language": "ara", "text": "string3"},
     ]
     assert res["aliases"] == [{"context": "context1", "name": "name1"}]
     assert res["item_groups"] == [
@@ -1613,17 +1751,17 @@ def test_updating_an_existing_odm_form_with_relations(api_client):
         }
     ]
     assert res["vendor_elements"] == [
-        {"uid": "odm_vendor_element3", "name": "nameThree", "value": "value"}
+        {"uid": "odm_vendor_element3", "name": "NameThree", "value": "value"}
     ]
     assert res["vendor_attributes"] == [
         {
-            "uid": "odm_vendor_attribute4",
-            "name": "nameFour",
             "data_type": "string",
-            "value_regex": None,
+            "name": "nameThree",
+            "uid": "odm_vendor_attribute3",
             "value": "value",
+            "value_regex": "^[a-zA-Z]+$",
             "vendor_namespace_uid": "odm_vendor_namespace1",
-        }
+        },
     ]
     assert res["vendor_element_attributes"] == [
         {
@@ -1704,6 +1842,7 @@ def test_add_the_odm_form_to_the_odm_study_event(api_client):
     assert res["forms"] == [
         {
             "uid": "OdmForm_000001",
+            "oid": "oid1",
             "name": "name1",
             "version": "3.2",
             "order_number": 1,

@@ -14,6 +14,7 @@ import datetime
 import json
 import logging
 import random
+import threading
 from string import ascii_lowercase
 from typing import Sequence
 from unittest import mock
@@ -3118,3 +3119,109 @@ def test_get_study_complexity_score(api_client):
     res_version_1 = response.json()
     assert isinstance(res_version_1, float)
     assert res_version_1 >= 0
+
+
+def test_concurrent_study_locking_does_not_create_duplicate_sponsor_ct_packages(
+    api_client,
+):
+    """Test that locking multiple studies concurrently does not create duplicate Sponsor CT Packages"""
+    from datetime import date
+
+    # Create multiple studies for concurrent locking
+    study1 = TestUtils.create_study()
+    study2 = TestUtils.create_study()
+    study3 = TestUtils.create_study()
+
+    # Update study titles to be able to lock them
+    for study_obj in [study1, study2, study3]:
+        response = api_client.patch(
+            f"/studies/{study_obj.uid}",
+            json={
+                "current_metadata": {"study_description": {"study_title": "test title"}}
+            },
+        )
+        assert_response_status_code(response, 200)
+
+    # Get initial count of sponsor packages for today
+    response = api_client.get(
+        f"/ct/packages?sponsor_only=true&catalogue_name={settings.sdtm_ct_catalogue_name}"
+    )
+    assert_response_status_code(response, 200)
+    initial_packages = response.json()
+    initial_count_today = len(
+        [
+            pkg
+            for pkg in initial_packages
+            if pkg.get("effective_date") == date.today().isoformat()
+        ]
+    )
+
+    # Lock studies concurrently using threads
+    lock_results = []
+    errors = []
+
+    def lock_study(study_uid):
+        try:
+            response = api_client.post(
+                f"/studies/{study_uid}/locks",
+                json={"change_description": f"Concurrent lock test for {study_uid}"},
+            )
+            lock_results.append((study_uid, response.status_code, response.json()))
+        except (ValueError, KeyError, TypeError) as e:
+            # Catch specific exceptions that might occur during API call processing
+            errors.append((study_uid, str(e)))
+
+    threads = [
+        threading.Thread(target=lock_study, args=(study1.uid,)),
+        threading.Thread(target=lock_study, args=(study2.uid,)),
+        threading.Thread(target=lock_study, args=(study3.uid,)),
+    ]
+
+    # Start all threads
+    for thread in threads:
+        thread.start()
+
+    # Wait for all threads to complete
+    for thread in threads:
+        thread.join()
+
+    # Verify we got results from all threads
+    assert (
+        len(lock_results) == 3
+    ), f"Expected 3 lock attempts, got {len(lock_results)}. Errors: {errors}"
+
+    # Count successful locks (some may fail due to other validation, but that's OK for this test)
+    successful_locks = [r for r in lock_results if r[1] == 201]
+    assert len(successful_locks) > 0, (
+        f"No successful locks. Results: {lock_results}. "
+        f"This test focuses on preventing duplicate packages, not all locks succeeding."
+    )
+
+    # Verify only one additional sponsor package was created (or none if it already existed)
+    response = api_client.get(
+        f"/ct/packages?sponsor_only=true&catalogue_name={settings.sdtm_ct_catalogue_name}"
+    )
+    assert_response_status_code(response, 200)
+    final_packages = response.json()
+    final_count_today = len(
+        [
+            pkg
+            for pkg in final_packages
+            if pkg.get("effective_date") == date.today().isoformat()
+        ]
+    )
+
+    # Should have at most one more package than initially (if it didn't exist before)
+    # or the same count (if it already existed and was reused)
+    assert final_count_today <= initial_count_today + 1
+    assert final_count_today >= initial_count_today
+
+    # Verify no duplicate packages exist (same name and date)
+    package_names_today = [
+        pkg["name"]
+        for pkg in final_packages
+        if pkg.get("effective_date") == date.today().isoformat()
+    ]
+    assert len(package_names_today) == len(
+        set(package_names_today)
+    ), f"Duplicate sponsor packages found: {package_names_today}"

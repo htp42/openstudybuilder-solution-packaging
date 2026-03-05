@@ -27,11 +27,12 @@ Feature: Library - Concepts - Activities - Activity Subgroup Overview Page
     Scenario: [COSMoS YAML] Verify that the instance overview page displays all sections correctly
         And User waits for linked 'Activities' table data to load
         When I click on the COSMoS YAML tab
-        Then The COSMoS YAML page should be opened with Download button and Close button displayed
-        When The Download YAML content button is clicked
+        And 'Download YAML content' button is visible in the overview page
+        And 'Close YAML viewer' button is visible in the overview page
+        When I click 'Download YAML content' button
         Then The 'COSMoS-overview' file without timestamp is downloaded in 'yml' format
         # And the COSMoS YAML file should be saved with correct content (this step should be tested manually)
-        When I click on the Close button in the COSMoS YAML page
+        When I click 'Close YAML viewer' button
         Then Subgroup overview page is opened      
 
     Scenario: [Sections] Verify that the activity subgroup overview page version 2 displays correctly
@@ -52,7 +53,7 @@ Feature: Library - Concepts - Activities - Activity Subgroup Overview Page
         And The free text search field should be displayed in the 'Activities' table
 
     Scenario: [History] Verify that the activity group overview page displays correctly
-        When I click on the history button
+        When I click 'History' button
         Then The history page is opened
 
     Scenario: [Linking] Verify that the activities subgroup overview page version 2 can link to the correct subgroup

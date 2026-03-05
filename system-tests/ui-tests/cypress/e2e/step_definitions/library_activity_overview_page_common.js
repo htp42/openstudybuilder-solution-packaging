@@ -6,6 +6,8 @@ const { When, Then, Given } = require("@badeball/cypress-cucumber-preprocessor")
 let groupName, subgroupName, secondSubgroup, activityName, instanceName
 let trimmedStartDate
 
+When('Activity name created via API is fetched', () => cy.getActivityNameByUid().then(text => activityName = text))
+
 When('Group, subgroup, activity and instance names created through API are found', () => {
     cy.getGroupNameByUid().then(text => groupName = text)
     cy.getSubGroupNameByUid().then(text => subgroupName = text)
@@ -13,9 +15,11 @@ When('Group, subgroup, activity and instance names created through API are found
     cy.getActivityInstanceNameByUid().then(text => instanceName = text)
 })
 
-When('{string} button is not available', (title) => cy.get(`button.v-btn[title="${title}"]`).should('not.exist'))
+When('{string} button is not available', (title) => cy.contains('.v-card-title button', title).should('not.exist'))
 
-When('I click {string} button', (title) => cy.get(`button.v-btn[title="${title}"]`).click())
+When('{string} button is visible in the overview page', (title) => cy.contains('.v-card-title button', title).should('be.visible'))
+
+When('I click {string} button', (title) => cy.contains('.v-card-title button', title).click())
 
 Then('{string} overview page can be opened by clicking the link in overview page', (name) => cy.get('.v-table__wrapper').contains('a', name).click())
 
@@ -189,16 +193,9 @@ Then('{string} Activity Instance Class is displayed in the Hierarchy field', (va
 
 When('I click on the COSMoS YAML tab', () => cy.get('button.v-btn.v-tab[value="cosmos"]').click())
 
-Then('The COSMoS YAML page should be opened with Download button and Close button displayed', () => {
-    cy.get('button[title="Download YAML content"]').should('be.visible');
-    cy.get('button[title="Close YAML viewer"]').should('be.visible');
-})
-
 Then('The Download YAML content button is clicked', () => cy.get('button[title="Download YAML content"]').click())
 
 When('I click on the Close button in the COSMoS YAML page', () => cy.get('button[title="Close YAML viewer"]').click())
-
-When('I click on the history button', () => cy.get('button[title="History"]').click())
 
 Then('The history page is opened', () => cy.get(`[data-cy="version-history-window"]`).should('be.visible'))
 

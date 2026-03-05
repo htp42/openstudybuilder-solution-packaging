@@ -78,6 +78,7 @@ from clinical_mdr_api.repositories._utils import (
     CypherQueryBuilder,
     FilterDict,
     FilterOperator,
+    calculate_total_count_from_query_result,
 )
 from clinical_mdr_api.services._utils import calculate_diffs
 from clinical_mdr_api.services.user_info import UserInfoService
@@ -2533,7 +2534,10 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
                 study_dictionary[attribute_name] = study_property
             studies.append(study_dictionary)
 
-        if total_count:
+        total = calculate_total_count_from_query_result(
+            len(studies), page_number, page_size, total_count
+        )
+        if total is None:
             count_result, _ = db.cypher_query(
                 query=query.count_query, params=query.parameters
             )
@@ -2541,8 +2545,6 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
                 total = count_result[0][0]
             else:
                 total = 0
-        else:
-            total = 0
 
         return GenericFilteringReturn(
             items=self._retrieve_all_snapshots_from_cypher_query_result(
@@ -2684,7 +2686,10 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
             for study_property, attribute_name in zip(study, attributes_names):
                 study_dictionary[attribute_name] = study_property
             studies.append(study_dictionary)
-        if total_count:
+        total = calculate_total_count_from_query_result(
+            len(studies), page_number, page_size, total_count
+        )
+        if total is None:
             count_result, _ = db.cypher_query(
                 query=query.count_query, params=query.parameters
             )
@@ -2692,8 +2697,6 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
                 total = count_result[0][0]
             else:
                 total = 0
-        else:
-            total = 0
 
         return GenericFilteringReturn(
             items=self._retrieve_all_snapshots_from_cypher_query_result(studies),

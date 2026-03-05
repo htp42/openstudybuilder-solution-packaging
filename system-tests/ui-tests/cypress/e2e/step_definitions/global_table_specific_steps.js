@@ -26,10 +26,10 @@ Then('A table is visible with following headers', (headers) => {
     headers.rows().forEach((header) => cy.headerContains(header))
 })
 
-Then('A table is visible with following options', (options) => {
-    options.rows().forEach((option) => {
-        const locator = option == 'search-field' ? `[data-cy="${option}"]` : `.v-card-title [title="${option}"]`
-        cy.get(locator).should('be.visible')
+Then('A table is visible with following options', (dataTable) => {
+    dataTable.rows().forEach(option => {
+        const locator = option == 'Search' || option == 'Select rows' ? '.v-card-title label' : '.v-card-title .label'
+        cy.contains(locator, option[0]).should('exist')
     })
 })
 
@@ -99,7 +99,7 @@ Then('Only actions that should be avaiable for the Retired item are displayed', 
 When('The user switches pages of the table', () => {
     cy.waitForTable()
     cy.intercept('**page_number=2**').as('tablePage')
-    cy.get('[data-test="v-pagination-next"]').click()
+    cy.get('.v-data-table-footer__pagination .mdi-chevron-right').click()
 })
 
 Then('The table page presents correct data', () => {

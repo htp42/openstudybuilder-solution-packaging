@@ -40,7 +40,7 @@ def test_post_create_codelist_non_enditable_library(api_client):
         "nci_preferred_name": "Nci preferred name",
         "definition": "definition",
         "extensible": True,
-        "ordinal": False,
+        "is_ordinal": False,
         "sponsor_preferred_name": "Sponsor preferred name",
         "template_parameter": True,
         "library_name": "CDISC",
@@ -193,7 +193,7 @@ def test_post_create_codelist_with_parent_codelist1(api_client):
         "nci_preferred_name": "Nci preferred name with parent",
         "definition": "definition",
         "extensible": True,
-        "ordinal": False,
+        "is_ordinal": False,
         "sponsor_preferred_name": "Sponsor preferred name with parent",
         "template_parameter": True,
         "library_name": "Sponsor",
@@ -214,7 +214,7 @@ def test_post_create_codelist_with_parent_codelist1(api_client):
     assert res["nci_preferred_name"] == "Nci preferred name with parent"
     assert res["definition"] == "definition"
     assert res["extensible"] is True
-    assert res["ordinal"] is False
+    assert res["is_ordinal"] is False
     assert res["sponsor_preferred_name"] == "Sponsor preferred name with parent"
     assert res["template_parameter"] is True
     assert res["library_name"] == "Sponsor"

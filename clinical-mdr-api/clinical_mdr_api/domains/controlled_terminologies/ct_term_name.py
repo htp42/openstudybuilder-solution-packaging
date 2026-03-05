@@ -26,6 +26,7 @@ class CTTermCodelistVO:
     codelist_submission_value: str
     library_name: str
     codelist_concept_id: str | None = None
+    ordinal: float | None = None
 
 
 @dataclass(frozen=True)

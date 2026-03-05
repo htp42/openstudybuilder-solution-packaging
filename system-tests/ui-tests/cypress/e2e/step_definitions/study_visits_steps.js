@@ -21,8 +21,6 @@ Given('Add visit button is clicked', () => cy.clickButton('add-visit'))
 
 Given('Visit scheduling type is selected as {string}', (visitType) => cy.get(`[data-cy=${visitType}] input`).check())
 
-Given('The study with uid {string} is selected', study_uid => cy.selectTestStudy(study_uid))
-
 When('Visit description is changed to {string}', (value) => cy.fillInput('visit-description', value))
 
 Then('Visit number field is disabled', () => cy.get('[data-cy="visit-number"]').should('have.class', 'v-input--disabled'))

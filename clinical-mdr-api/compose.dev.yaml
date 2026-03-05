@@ -42,6 +42,25 @@ services:
         source: ./
         target: /app
 
+  extensions-api:
+    extends:
+      file: compose.yaml
+      service: extensions-api
+    build:
+      args:
+        TARGET: ${BUILD_TARGET:-dev}
+        UID: ${UID:-1000}
+    environment:
+      NEO4J_DSN: "${NEO4J_DSN:-bolt://neo4j:changeme1234@database:7687/mdrdb}"
+      UVICORN_ROOT_PATH: ""
+      UVICORN_RELOAD: "true"
+    ports:
+      - "127.0.0.1:5679:5678"
+    volumes:
+      - type: bind
+        source: ./
+        target: /app
+
   database:
     extends:
       file: compose.yaml

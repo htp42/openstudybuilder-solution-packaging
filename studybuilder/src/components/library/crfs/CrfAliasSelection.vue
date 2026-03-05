@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div id="alias-container">
     <v-row>
       <v-col>
         <div class="text-h5 mb-4">
@@ -34,7 +34,7 @@
           data-cy="alias-add-button"
           block
           :readonly="props.readOnly"
-          @click="addAlias"
+          @click="add"
         >
           {{ t('_global.add') }}
         </v-btn>
@@ -52,6 +52,7 @@
     <v-row>
       <v-col>
         <NNTable
+          ref="table"
           v-model="modelValue"
           :headers="headers"
           :items="aliases"
@@ -65,7 +66,23 @@
           disable-filtering
           column-data-resource="concepts/odm-metadata/aliases"
           @filter="getAliases"
-        />
+        >
+          <template #[`afterSearch`]>
+            <v-checkbox
+              v-model="operator"
+              :label="t('CRFTranslatedTexts.exact_match')"
+              class="ms-5 mt-5"
+            />
+          </template>
+          <template #[`item.actions`]="{ item }">
+            <v-btn
+              icon="mdi-pencil"
+              variant="flat"
+              :disabled="props.readOnly"
+              @click.stop="edit(item)"
+            />
+          </template>
+        </NNTable>
       </v-col>
     </v-row>
   </div>
@@ -73,12 +90,13 @@
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, inject, onMounted, watch } from 'vue'
 import filteringParameters from '@/utils/filteringParameters'
 import NNTable from '@/components/tools/NNTable.vue'
 import crfs from '@/api/crfs'
 
 const { t } = useI18n()
+const notificationHub = inject('notificationHub')
 
 const props = defineProps({
   readOnly: {
@@ -93,6 +111,9 @@ const modelValue = defineModel({
 })
 
 const headers = computed(() => [
+  props.readOnly
+    ? ''
+    : { title: '', key: 'actions', width: '1%', condition: false },
   { title: t('CRFAliases.context'), key: 'context' },
   { title: t('CRFAliases.name'), key: 'name' },
 ])
@@ -100,6 +121,13 @@ const headers = computed(() => [
 const inputAlias = ref({
   context: '',
   name: '',
+})
+
+const table = ref(false)
+const operator = ref(false)
+
+watch(operator, () => {
+  table.value.filterTable()
 })
 
 const aliases = ref([])
@@ -119,6 +147,7 @@ const getAliases = (filters, options, filtersUpdated) => {
       filtersUpdated
     )
     params.search = options.search
+    params.op = operator.value ? 'eq' : 'co'
     crfs.getAliases(params).then((resp) => {
       aliases.value = [
         ...modelValue.value,
@@ -133,7 +162,7 @@ const getAliases = (filters, options, filtersUpdated) => {
   }
 }
 
-const addAlias = () => {
+const add = () => {
   if (inputAlias.value.name && inputAlias.value.context) {
     const alias = {
       context: inputAlias.value.context,
@@ -151,5 +180,21 @@ const addAlias = () => {
     modelValue.value.push({ ...alias })
     inputAlias.value = {}
   }
+}
+
+const edit = (item) => {
+  inputAlias.value = { ...item }
+  modelValue.value = modelValue.value.filter(
+    (tt) => !(tt.context === item.context && tt.name === item.name)
+  )
+
+  notificationHub.add({
+    msg: t('CRFAliases.editing_alias'),
+    type: 'info',
+  })
+
+  document
+    .getElementById('alias-container')
+    .scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 </script>

@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Case Report Form</title>
+    <style type="text/css">
+        body {
+            font-family: "Open Sans", sans-serif;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        @media print {
+            .noprint {
+                visibility: hidden;
+            }
+
+            /* Prevent page breaks inside key sections */
+            table {
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+
+            tr {
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+
+            /* Prevent orphaned headers */
+            thead {
+                display: table-header-group;
+            }
+
+            /* Add page break before forms if needed */
+            .border-l-4 {
+                page-break-before: auto;
+            }
+        }
+
+        /* Spacing - Padding */
+        .p-1 {
+            padding: 0.25rem;
+        }
+
+        .p-2 {
+            padding: 0.5rem;
+        }
+
+        .p-4 {
+            padding: 1rem;
+        }
+
+        .p-6 {
+            padding: 1.5rem;
+        }
+
+        .p-8 {
+            padding: 2rem;
+        }
+
+        .px-1 {
+            padding-left: 0.25rem;
+            padding-right: 0.25rem;
+        }
+
+        .px-2 {
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
+
+        .px-4 {
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+
+        .py-1 {
+            padding-top: 0.25rem;
+            padding-bottom: 0.25rem;
+        }
+
+        .py-2 {
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
+        }
+
+        .pr-2 {
+            padding-right: 0.5rem;
+        }
+
+        /* Spacing - Margin */
+        .mb-1 {
+            margin-bottom: 0.25rem;
+        }
+
+        .mb-2 {
+            margin-bottom: 0.5rem;
+        }
+
+        .mb-4 {
+            margin-bottom: 1rem;
+        }
+
+        .mb-6 {
+            margin-bottom: 1.5rem;
+        }
+
+        .mt-2 {
+            margin-top: 0.5rem;
+        }
+
+        .mt-4 {
+            margin-top: 1rem;
+        }
+
+        .me-0 {
+            margin-right: 0;
+        }
+
+        .my-2 {
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .mx-auto {
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Indentation */
+        .indent-2 {
+            padding-left: 2rem;
+        }
+
+        .indent-4 {
+            padding-left: 4rem;
+        }
+
+        .indent-6 {
+            padding-left: 6rem;
+        }
+
+        .indent-8 {
+            padding-left: 8rem;
+        }
+
+        .indent-10 {
+            padding-left: 10rem;
+        }
+
+        .indent-12 {
+            padding-left: 12rem;
+        }
+
+        .indent-14 {
+            padding-left: 14rem;
+        }
+
+        .indent-16 {
+            padding-left: 16rem;
+        }
+
+        .indent-18 {
+            padding-left: 18rem;
+        }
+
+        .indent-20 {
+            padding-left: 20rem;
+        }
+
+        /* Layout */
+        .flex {
+            display: flex;
+        }
+
+        .inline-block {
+            display: inline-block;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .justify-between {
+            justify-content: space-between;
+        }
+
+        .items-center {
+            align-items: center;
+        }
+
+        /* Positioning */
+        .align-top {
+            vertical-align: top;
+        }
+
+        /* Width */
+        .w-fit {
+            width: fit-content;
+        }
+
+        .w-full {
+            width: 100%;
+        }
+
+        .w-2 {
+            width: 2%;
+        }
+
+        .w-28 {
+            width: 28%;
+        }
+
+        .w-30 {
+            width: 30%;
+        }
+
+        .w-40 {
+            width: 40%;
+        }
+
+        .w-50 {
+            width: 50%;
+        }
+
+        /* Typography - Size */
+        .text-xs {
+            font-size: 0.75rem;
+        }
+
+        .text-sm {
+            font-size: 0.875rem;
+        }
+
+        .text-md {
+            font-size: 1rem;
+        }
+
+        .text-lg {
+            font-size: 1.125rem;
+        }
+
+        .text-2xl {
+            font-size: 1.5rem;
+        }
+
+        /* Typography - Weight */
+        .font-medium {
+            font-weight: 500;
+        }
+
+        .font-bold {
+            font-weight: 700;
+        }
+
+        /* Typography - Style */
+        .italic {
+            font-style: italic;
+        }
+
+        /* Typography - Alignment */
+        .text-left {
+            text-align: left;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        /* Colors - Background */
+        .bg-white {
+            background-color: #FFFFFF;
+        }
+
+        .bg-gray-50 {
+            background-color: #F9FAFB;
+        }
+
+        .bg-gray-200 {
+            background-color: #E5E7EB;
+        }
+
+        .bg-gray-300 {
+            background-color: #D1D5DB;
+        }
+
+        .bg-red-100 {
+            background-color: #FEE2E2;
+        }
+
+        .bg-cyan-300 {
+            background-color: #67E8F9;
+        }
+
+        .bg-green-600 {
+            background-color: #16A34A;
+        }
+
+        .bg-blue-500 {
+            background-color: #3B82F6;
+        }
+
+        .bg-blue-900 {
+            background-color: #1E3A8A;
+        }
+
+        .bg-red-600 {
+            background-color: #DC2626;
+        }
+
+        /* Colors - Text */
+        .text-white {
+            color: #FFFFFF;
+        }
+
+        .text-red-600 {
+            color: #DC2626;
+        }
+
+        .text-red-700 {
+            color: #B91C1C;
+        }
+
+        .text-green-700 {
+            color: #15803D;
+        }
+
+        /* Border */
+        .border {
+            border-width: 1px;
+            border-style: solid;
+        }
+
+        .border-0 {
+            border-width: 0;
+        }
+
+        .border-black {
+            border-color: #000000;
+        }
+
+        .border-gray-300 {
+            border-color: #D1D5DB;
+        }
+
+        .border-gray-500 {
+            border-color: #6B7280;
+        }
+
+        .border-gray-600 {
+            border-color: #4B5563;
+        }
+
+        .border-dashed {
+            border-style: dashed;
+        }
+
+        .border-l-4 {
+            border-left-width: 4px;
+            border-style: solid;
+        }
+
+        /* Border Radius */
+        .rounded {
+            border-radius: 0.25rem;
+        }
+
+        .rounded-md {
+            border-radius: 0.375rem;
+        }
+
+        .rounded-lg {
+            border-radius: 0.5rem;
+        }
+
+        /* Shadow */
+        .shadow-md {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Table */
+        .border-collapse {
+            border-collapse: collapse;
+        }
+
+        /* Cursor */
+        .cursor-pointer {
+            cursor: pointer;
+        }
+
+        /* Transitions */
+        .transition-colors {
+            transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 150ms;
+        }
+
+        /* Hover States */
+        .bg-blue-900:hover {
+            background-color: #1E40AF;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 p-2">
+    <div class="mx-auto rounded-lg shadow-md bg-white p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold">Case Report Form (CRF)</h1>
+            <div>
+                <button onclick="showContainer('completion-instructions', event)"
+                    class="noprint text-md border-0 cursor-pointer px-4 py-2 bg-blue-900 text-white font-medium rounded-md transition-colors">Completion
+                    Instructions</button>
+                <button onclick="showContainer('design-notes', event)"
+                    class="noprint text-md border-0 cursor-pointer px-4 py-2 bg-blue-900 text-white font-medium rounded-md transition-colors">Design
+                    Notes</button>
+                <button onclick="showContainer('activity-instance', event)"
+                    class="noprint text-md border-0 cursor-pointer px-4 py-2 bg-blue-900 text-white font-medium rounded-md transition-colors">ActivityInstance</button>
+                <button onclick="showContainer('source-value', event)"
+                    class="noprint text-md border-0 cursor-pointer px-4 py-2 bg-blue-900 text-white font-medium rounded-md transition-colors">Source
+                    Value</button>
+                <button onclick="showContainer('sdtm', event)"
+                    class="noprint text-md border-0 cursor-pointer px-4 py-2 bg-blue-900 text-white font-medium rounded-md transition-colors">SDTM</button>
+                <button onclick="showContainer('keys', event)"
+                    class="noprint text-md border-0 cursor-pointer px-4 py-2 bg-blue-900 text-white font-medium rounded-md transition-colors">Keys</button>
+            </div>
+        </div>
+
+        {% macro render_item(item_in, item_group_uid, form_uid, group_domains) %}
+        {% set item = data.odm_items | selectattr('uid', '==', item_in.uid) | first | default('') %}
+        {% if item_in.vendor %}
+        {% set indent_attr = item_in.vendor.attributes | selectattr('name', '==', 'indentLevel') | first | default('')
+        %}
+        {% set indent_level = ((indent_attr.value)|int * 2)|string if indent_attr else '' %}
+        {% else %}
+        {% set indent_level = '' %}
+        {% endif %}
+        <tr class="bg-gray-50">
+            {% if item.datatype|lower == 'comment' %}
+            <td class="border border-gray-600 p-4 text-center text-2xl" colspan="3">
+                <h4 class="inline-block font-medium my-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" style="display: inline-block;" viewBox="0 0 24 24"
+                        width="20" height="20">
+                        <path fill="#63A8A5"
+                            d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M14,7H10V9H11V15H10V17H14V15H13V9H14V7Z" />
+                    </svg>
+                    {{ item.name }}
+                </h4>
+            </td>
+            {% else %}
+            <td class="border border-gray-600 p-2 w-2 text-red-600 font-bold text-center">
+                {{ '*' if item_in.mandatory|lower == 'yes' else '' }}
+            </td>
+            <td class="border border-gray-600 p-2 w-30">
+                <div class="{{ 'indent-' + indent_level if indent_level != '' else '' }}">
+                    <h4
+                        class="inline-block font-medium my-2 text-md {{ '' if item_in.mandatory|lower == 'yes' else 'text-green-700' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" style="display: inline-block;" class="me-0"
+                            viewBox="0 0 24 24" width="20" height="20">
+                            <path fill="#63A8A5"
+                                d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M14,7H10V9H11V15H10V17H14V15H13V9H14V7Z" />
+                        </svg>
+                        {{ item.name }}
+                    </h4>
+
+                    <div class="text-red-600 text-xs keys-container hidden">
+                        [OID={{ item_in.oid }}, Version={{ item_in.version }}]
+                    </div>
+                    {% if item_group_uid and form_uid %}
+                    {% set item_activity_instance = item.activity_instances | selectattr('odm_item_group_uid',
+                    '==', item_group_uid) | selectattr('odm_form_uid', '==', form_uid) | first | default('') %}
+                    {% if item_activity_instance %}
+                    <div class="bg-green-600 activity-instance-container py-2 px-2 mt-2 w-fit rounded hidden">
+                        <div class="text-white font-bold mb-2">Activity Instance: {{
+                            item_activity_instance.activity_instance_name }}
+                        </div>
+                        <div class="mb-2">
+                            <span class="text-white">Topic Code:</span> <span
+                                class="bg-cyan-300 p-1 text-xs border-black border rounded">
+                                {{ item_activity_instance.activity_instance_topic_code }}
+                            </span>
+                        </div>
+                        <div>
+                            <span class="text-white">ADaM Param Code:</span> <span
+                                class="bg-cyan-300 p-1 text-xs border-black border rounded">
+                                {{ item_activity_instance.activity_instance_adam_param_code }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endif %}
+
+                    {% set item_activity_instances = item.vendor_elements | selectattr('name', '==', 'ActivityInstance')
+                    %}
+                    {% for item_activity_instance in item_activity_instances %}
+                    {% set topic_code = item.vendor_element_attributes | selectattr('vendor_element_uid', '==',
+                    item_activity_instance.uid) | selectattr('name', '==', 'topicCode') | first | default('') %}
+                    {% set adam_param_code = item.vendor_element_attributes | selectattr('vendor_element_uid', '==',
+                    item_activity_instance.uid) | selectattr('name', '==', 'adamCode') | first | default('') %}
+                    <div class="bg-red-600 activity-instance-container py-2 px-2 mt-2 w-fit rounded hidden">
+                        <div class="text-white font-bold mb-2">Activity Instance: {{
+                            item_activity_instance.value | default('') }}
+                        </div>
+                        <div class="mb-2">
+                            <span class="text-white">Topic Code:</span> <span
+                                class="bg-cyan-300 p-1 text-xs border-black border rounded">
+                                {{ topic_code.value }}
+                            </span>
+                        </div>
+                        <div>
+                            <span class="text-white">ADaM Param Code:</span> <span
+                                class="bg-cyan-300 p-1 text-xs border-black border rounded">
+                                {{ adam_param_code.value }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+
+                    <div class="completion-instructions-container hidden">
+                        {% set completion_instructions = item.translated_texts | selectattr('text_type.value', '==',
+                        'osb:CompletionInstructions')
+                        | first | default('') %}
+                        {% if completion_instructions %}
+                        <div class="bg-gray-200 p-2 text-sm italic mt-4 rounded-lg">{{ completion_instructions.text|safe
+                            }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </td>
+            <td class="border border-gray-600 p-2 w-40">
+                <div class="{{ 'indent-' + indent_level if indent_level != '' else '' }}">
+                    {% if item.codelist is not none %}
+                    {% for term in item.terms %}
+                    <div class="mb-1">
+                        <input type="{{ 'checkbox' if item.codelist.allows_multi_choice else 'radio' }}"
+                            name="{{ item.uid }}-{{ item_group_uid }}-{{ form_uid }}-terms"
+                            id="{{ item.uid }}-{{ item_group_uid }}-{{ form_uid }}-term-{{ loop.index0 }}" />
+                        <label for="{{ item.uid }}-{{ item_group_uid }}-{{ form_uid }}-term-{{ loop.index0 }}">{{
+                            term.display_text or term.name
+                            }}</label>
+                        <span class="text-xs p-1 rounded border-black border source-value-container hidden"
+                            style="background-color: {{ group_domains.values() | first | last }};">
+                            {{ term.submission_value }}
+                        </span>
+                    </div>
+                    <div class="text-red-600 text-xs font-medium keys-container hidden">
+                        [{% if 'CTTerm_' not in term.term_uid %}OID={{ term.term_uid }}, {% endif %}Version={{
+                        term.version }}]
+                    </div>
+                    {% endfor %}
+                    <div class="text-red-600 text-xs font-medium mt-4 keys-container hidden">
+                        [CodeList={{ item.codelist.submission_value }}@{{ item.oid }}, OID={{ item.codelist.uid }},
+                        Version={{
+                        item.codelist.version }}]
+                    </div>
+                    {% else %}
+                    <input type="{{ get_input_type(item.datatype|lower)|trim }}"
+                        class="p-2 border border-gray-300 rounded w-50" />
+                    {% endif %}
+
+                    {% if item.length is not none and not item.terms %}
+                    <span class="{{ '' if item_in.mandatory|lower == 'yes' else 'text-green-700' }}">
+                        {{ item.length }} char(s)
+                    </span>
+                    {% endif %}
+
+                    <div class="text-red-700 design-notes-container hidden">
+                        {% set design_note = item.translated_texts | selectattr('text_type.value', '==',
+                        'osb:DesignNotes')
+                        | first | default('') %}
+                        {% if design_note %}
+                        <div class="bg-red-100 p-2 text-sm italic mt-4 rounded-lg">{{ design_note.text|safe }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {{ render_units(item.unit_definitions, item.uid, item_group_uid, form_uid) }}
+                </div>
+            </td>
+            {% endif %}
+
+            <td class="border border-gray-600 p-2 w-28">
+                {% if item.sds_var_name and ':' in item.sds_var_name %}
+                {% for domain in item.sds_var_name.split('|') %}
+                <div class="sdtm-container mb-2 hidden">
+                    {% if ':' in domain%}
+                    {% set sub_val, name = domain.split(':') %}
+                    {% set group_domain = group_domains.get(sub_val, none) %}
+                    {% set color = group_domain[1] %}
+                    <span class="inline-block text-xs p-1 rounded border-black border"
+                        style="background-color: {{ color }};">
+                        {{ name }}
+                    </span>
+                    {% else %}
+                    <span class="inline-block text-xs p-1 rounded border-black border">
+                        {{ domain }}
+                    </span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                {% elif item.sds_var_name and ',' in item.sds_var_name %}
+                {% for domain in item.sds_var_name.split(',') %}
+                <div class="sdtm-container mb-2 hidden">
+                    <span class="inline-block text-xs p-1 rounded border-black border">
+                        {{ domain }}
+                    </span>
+                </div>
+                {% endfor %}
+                {% elif item.sds_var_name %}
+                <div class="sdtm-container mb-2 hidden">
+                    <span class="inline-block text-xs p-1 rounded border-black border">
+                        {{ item.sds_var_name }}
+                    </span>
+                </div>
+                {% endif %}
+
+                {% for alias in item.aliases %}
+                <div class="sdtm-container mb-2 hidden">
+                    {% if alias.context|lower == 'sdtm' %}
+                    {% set border_style = 'border-dashed' if 'note:' in alias.name|lower or 'not submitted' in
+                    alias.name|lower else '' %}
+                    {% if ':' in alias.name %}
+                    {% set sub_val, _ = alias.name.split(':') %}
+                    {% set group_domain = group_domains.get(sub_val, none) %}
+                    {% set name = group_domain[0] %}
+                    {% set color = group_domain[1] %}
+                    <span class="inline-block text-xs p-1 rounded border-black border {{ border_style }}"
+                        style="background-color: {{color}};">
+                        {{ alias.name.split(':') | last }}
+                    </span>
+                    {% else %}
+                    <span class="inline-block text-xs p-1 rounded border-black border {{ border_style }}">
+                        {{ alias.name }}
+                    </span>
+                    {% endif %}
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </td>
+        </tr>
+        {% endmacro %}
+
+        {% macro render_item_group(item_group_in, form_uid) %}
+        {% set item_group = data.odm_item_groups | selectattr('uid', '==', item_group_in.uid) | first | default('') %}
+        {% set domains = {} %}
+        {% for domain in item_group.sdtm_domains %}
+        {% set _ = domains.update({domain.submission_value: (domain.term_name, domain_color(loop.index0))}) %}
+        {% endfor %}
+
+        <table class="w-full border-collapse mb-4">
+            <thead>
+                <tr class="bg-gray-300">
+                    <th class="border border-gray-600 p-2 text-left" colspan="3">
+                        <h3 class="inline-block font-medium my-2 text-md">
+                            <svg xmlns="http://www.w3.org/2000/svg" style="display: inline-block;" viewBox="0 0 24 24"
+                                width="20" height="20">
+                                <path fill="#3B97DE"
+                                    d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M11,7A2,2 0 0,0 9,9V15A2,2 0 0,0 11,17H13A2,2 0 0,0 15,15V11H13V15H11V9H15V7H11Z" />
+                            </svg>
+                            {{ item_group.name }}
+                            <span class="text-red-600 font-bold">
+                                {{'*' if item_group_in.mandatory|lower == 'yes' else '' }}
+                            </span>
+                        </h3>
+
+                        <div class="text-red-600 text-xs font-medium keys-container hidden">
+                            [OID={{ item_group_in.oid }}, Version={{ item_group_in.version }}]
+                        </div>
+                    </th>
+                    <th class="border border-gray-600 p-2 text-left">
+                        {% for sub_val, (name, color) in domains.items() %}
+                        <div class="sdtm-container hidden my-2">
+                            <span style="background-color: {{ color }};"
+                                class="inline-block text-lg p-2 font-medium border-black border rounded">
+                                {{ sub_val }} ({{ name }})
+                            </span>
+                        </div>
+                        {% endfor %}
+                        <div class="text-red-700 design-notes-container rounded hidden">
+                            {% set design_note = item_group.translated_texts | selectattr('text_type.value', '==',
+                            'osb:DesignNotes')
+                            | first | default('') %}
+                            {% if design_note %}
+                            <div class="bg-red-100 p-2 text-sm font-medium italic mt-4 rounded-lg">{{
+                                design_note.text|safe }}</div>
+                            {% endif %}
+                        </div>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item_ref in item_group.items %}
+                {{ render_item(item_ref, item_group.uid, form_uid, domains) }}
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endmacro %}
+
+        {% macro render_form(form_in) %}
+        <div class="border-l-4 border-0 rounded-lg border-gray-500 bg-gray-50 p-4 mb-4">
+            <div class="text-lg mb-4">
+                <h2 class="inline-block font-medium my-2 text-md">
+                    <svg xmlns="http://www.w3.org/2000/svg" style="display: inline-block;" viewBox="0 0 24 24"
+                        width="20" height="20">
+                        <path fill="#005AD2"
+                            d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M9,7V17H11V13H14V11H11V9H15V7H9Z" />
+                    </svg>
+                    {{ form_in.name }}
+                </h2>
+
+                <div class="text-red-600 text-xs keys-container hidden">
+                    [OID={{ form_in.oid }}, Version={{ form_in.version }}]
+                </div>
+            </div>
+            <div class="text-red-700 design-notes-container hidden">
+                {% set design_note = form_in.translated_texts | selectattr('text_type.value', '==', 'osb:DesignNotes')
+                | first | default('') %}
+                {% if design_note %}
+                <div class="bg-red-100 p-2 text-sm italic mt-2 mb-4 rounded-lg">{{ design_note.text|safe }}</div>
+                {% endif %}
+            </div>
+            {% for item_group_ref in form_in.item_groups %}
+            {{ render_item_group(item_group_ref, form_in.uid) }}
+            {% endfor %}
+        </div>
+        {% endmacro %}
+
+
+        {% macro render_units(units, item_uid, item_group_uid, form_uid) %}
+        {% if units and units|length > 0 %}
+        <table class="mt-2">
+            <tr>
+                <td class="align-center pr-2">Units:</td>
+                <td>
+                    {% for unit in units %}
+                    <div>
+                        <input type="radio" name="{{ item_uid }}-{{ item_group_uid }}-{{ form_uid }}-units"
+                            id="{{ item_uid }}-{{ item_group_uid }}-{{ form_uid }}-unit-{{ loop.index0 }}" />
+                        <label for="{{ item_uid }}-{{ item_group_uid }}-{{ form_uid }}-unit-{{ loop.index0 }}">{{
+                            unit.name }}</label>
+                    </div>
+                    <div class="text-red-600 text-xs font-medium keys-container hidden">
+                        [Version={{ unit.version }}]
+                    </div>
+                    {% endfor %}
+                </td>
+            </tr>
+        </table>
+        {% endif %}
+        {% endmacro %}
+
+        {% macro render_all_forms(forms) %}
+        {% for form in forms %}
+        {{ render_form(form) }}
+        {% endfor %}
+        {% endmacro %}
+
+        {% macro render_all_item_groups(item_groups) %}
+        {% for item_group in item_groups %}
+        {{ render_item_group(item_group, none) }}
+        {% endfor %}
+        {% endmacro %}
+
+        {% macro render_all_items(items) %}
+        {% for item in items %}
+        {{ render_item(item, none, none, {}) }}
+        {% endfor %}
+        {% endmacro %}
+
+        {% macro get_input_type(type) %}
+        {% if type == 'integer' %}
+        number
+        {% elif type == 'date' %}
+        date
+        {% elif type == 'time' %}
+        time
+        {% elif type == 'datetime' %}
+        datetime-local
+        {% else %}
+        text
+        {% endif %}
+        {% endmacro %}
+
+        {% macro domain_color(index) %}
+        {% set colors = ["#BFFFFF", "#FFFF96", "#96FF96", "#FFBF9C", "#3DB7E9", "#E69F00", "#F748A5"] %}
+        {{ colors[index % colors|length] }}
+        {% endmacro %}
+
+        {% if data.odm_forms and data.odm_forms|length > 0 %}
+        {{ render_all_forms(data.odm_forms) }}
+        {% elif data.odm_item_groups and data.odm_item_groups|length > 0 %}
+        {{ render_all_item_groups(data.odm_item_groups) }}
+        {% elif data.odm_items and data.odm_items|length > 0 %}
+        {{ render_all_items(data.odm_items) }}
+        {% endif %}
+    </div>
+
+    <script>
+        function showContainer(type, event) {
+            event.target.classList.toggle('bg-blue-500');
+            event.target.classList.toggle('bg-blue-900');
+
+            const elements = document.getElementsByClassName(`${type}-container`);
+            for (const element of elements) {
+                element.classList.toggle('hidden');
+            }
+        }
+    </script>
+</body>
+
+</html>

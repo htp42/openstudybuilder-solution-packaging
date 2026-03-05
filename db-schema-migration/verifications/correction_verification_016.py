@@ -184,6 +184,7 @@ def test_not_latest_has_version_lacks_end_date():
         len(res) == 0
     ), f"Found {len(res)} HAS_VERSION relationships that are not latest and lack an end date"
 
+
 def test_remove_isolated_orphan_nodes():
     """
     Bug #3473052: Verify no isolated orphan nodes exist.

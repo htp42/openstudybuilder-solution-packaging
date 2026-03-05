@@ -76,132 +76,126 @@
   </v-card>
 </template>
 
-<script>
+<script setup>
+import { inject, onMounted, ref, watch } from 'vue'
+
 import OdmReferencesTree from '@/components/library/crfs/OdmReferencesTree.vue'
 import crfs from '@/api/crfs'
 import crfTypes from '@/constants/crfTypes'
 
-export default {
-  components: {
-    OdmReferencesTree,
+const props = defineProps({
+  open: Boolean,
+  item: {
+    type: Object,
+    default: null,
   },
-  props: {
-    open: Boolean,
-    item: {
-      type: Object,
-      default: null,
-    },
-    type: {
-      type: String,
-      default: null,
-    },
+  type: {
+    type: String,
+    default: null,
   },
-  emits: ['close'],
-  inkect: ['formRules'],
-  data() {
-    return {
-      relations: false,
-      name: '',
-      oid: '',
-      form: {},
-      itemsToLinkTo: [],
-      itemToLinkTo: null,
+})
+
+const emit = defineEmits(['close'])
+
+const formRules = inject('formRules')
+
+const observer = ref(null)
+
+const relations = ref(false)
+const name = ref('')
+const oid = ref('')
+const form = ref({})
+const itemsToLinkTo = ref([])
+const itemToLinkTo = ref(null)
+
+const getElementsToLinkTo = () => {
+  if (props.type === crfTypes.FORM) {
+    crfs.get('study-events', {}).then((resp) => {
+      itemsToLinkTo.value = resp.data.items
+    })
+  } else if (props.type === crfTypes.GROUP) {
+    crfs.getCrfForms().then((resp) => {
+      itemsToLinkTo.value = resp.data
+    })
+  } else if (props.type === crfTypes.ITEM) {
+    crfs.getCrfGroups().then((resp) => {
+      itemsToLinkTo.value = resp.data
+    })
+  }
+}
+
+watch(
+  () => props.type,
+  () => {
+    getElementsToLinkTo()
+  }
+)
+
+onMounted(() => {
+  getElementsToLinkTo()
+})
+
+const close = () => {
+  emit('close')
+}
+
+const save = async () => {
+  const { valid } = await observer.value.validate()
+  if (!valid) return
+
+  let resp
+
+  form.value = Object.assign(form.value, props.item)
+  form.value.name = name.value
+  form.value.oid = oid.value
+
+  if (props.type === crfTypes.COLLECTION) {
+    resp = await crfs.createCollection(form.value)
+    if (relations.value) {
+      await crfs.addFormsToCollection(props.item.forms, resp.data.uid, true)
     }
-  },
-  watch: {
-    type() {
-      this.getElementsToLinkTo()
-    },
-  },
-  created() {
-    this.crfTypes = crfTypes
-  },
-  mounted() {
-    this.getElementsToLinkTo()
-  },
-  methods: {
-    getElementsToLinkTo() {
-      if (this.type === crfTypes.FORM) {
-        crfs.get('study-events', {}).then((resp) => {
-          this.itemsToLinkTo = resp.data.items
-        })
-      } else if (this.type === crfTypes.GROUP) {
-        crfs.getCrfForms().then((resp) => {
-          this.itemsToLinkTo = resp.data
-        })
-      } else if (this.type === crfTypes.ITEM) {
-        crfs.getCrfGroups().then((resp) => {
-          this.itemsToLinkTo = resp.data
-        })
+    close()
+  } else if (props.type === crfTypes.FORM) {
+    form.value.alias_uids = form.value.aliases.map((alias) => alias.uid)
+    resp = await crfs.createForm(form.value)
+    form.value.uid = resp.uid
+    if (relations.value) {
+      crfs.addItemGroupsToForm(props.item.item_groups, resp.data.uid, true)
+    }
+    await crfs.addFormsToCollection([form.value], itemToLinkTo.value.uid, false)
+    close()
+  } else if (props.type === crfTypes.GROUP) {
+    form.value.alias_uids = form.value.aliases.map((alias) => alias.uid)
+    form.value.sdtm_domain_uids = form.value.sdtm_domains.map(
+      (sdtm) => sdtm.uid
+    )
+    resp = await crfs.createItemGroup(form.value)
+    form.value.uid = resp.uid
+    if (relations.value) {
+      crfs.addItemsToItemGroup(props.item.items, resp.data.uid, true)
+    }
+    await crfs.addItemGroupsToForm([form.value], itemToLinkTo.value.uid, false)
+    close()
+  } else {
+    form.value.alias_uids = form.value.aliases.map((alias) => alias.uid)
+    if (form.value.codelist) {
+      form.value.codelist_uid = form.value.codelist.uid
+    }
+    if (form.value.unit_definitions) {
+      for (const unit of form.value.unit_definitions) {
+        form.value.unit_definitions[
+          form.value.unit_definitions.indexOf(unit)
+        ].mandatory = unit.mandatory !== null && unit.mandatory !== false
       }
-    },
-    close() {
-      this.$emit('close')
-    },
-    async save() {
-      const { valid } = await this.$refs.observer.validate()
-      if (!valid) return
-      let resp
-      this.form = Object.assign(this.form, this.item)
-      this.form.name = this.name
-      this.form.oid = this.oid
-      if (this.type === crfTypes.COLLECTION) {
-        resp = await crfs.createCollection(this.form)
-        if (this.relations) {
-          await crfs.addFormsToCollection(this.item.forms, resp.data.uid, true)
-        }
-        this.close()
-      } else if (this.type === crfTypes.FORM) {
-        this.form.alias_uids = this.form.aliases.map((alias) => alias.uid)
-        resp = await crfs.createForm(this.form)
-        this.form.uid = resp.uid
-        if (this.relations) {
-          crfs.addItemGroupsToForm(this.item.item_groups, resp.data.uid, true)
-        }
-        await crfs.addFormsToCollection(
-          [this.form],
-          this.itemToLinkTo.uid,
-          false
-        )
-        this.close()
-      } else if (this.type === crfTypes.GROUP) {
-        this.form.alias_uids = this.form.aliases.map((alias) => alias.uid)
-        this.form.sdtm_domain_uids = this.form.sdtm_domains.map(
-          (sdtm) => sdtm.uid
-        )
-        resp = await crfs.createItemGroup(this.form)
-        this.form.uid = resp.uid
-        if (this.relations) {
-          crfs.addItemsToItemGroup(this.item.items, resp.data.uid, true)
-        }
-        await crfs.addItemGroupsToForm(
-          [this.form],
-          this.itemToLinkTo.uid,
-          false
-        )
-        this.close()
-      } else {
-        this.form.alias_uids = this.form.aliases.map((alias) => alias.uid)
-        if (this.form.codelist) {
-          this.form.codelist_uid = this.form.codelist.uid
-        }
-        if (this.form.unit_definitions) {
-          for (const unit of this.form.unit_definitions) {
-            this.form.unit_definitions[
-              this.form.unit_definitions.indexOf(unit)
-            ].mandatory = unit.mandatory !== null && unit.mandatory !== false
-          }
-        }
-        this.form.terms.forEach((term) => {
-          term.uid = term.term_uid
-          delete term.term_uid
-        })
-        resp = await crfs.createItem(this.form)
-        this.form.uid = resp.uid
-        crfs.addItemsToItemGroup([this.form], this.itemToLinkTo.uid, false)
-        this.close()
-      }
-    },
-  },
+    }
+    form.value.terms.forEach((term) => {
+      term.uid = term.term_uid
+      delete term.term_uid
+    })
+    resp = await crfs.createItem(form.value)
+    form.value.uid = resp.uid
+    crfs.addItemsToItemGroup([form.value], itemToLinkTo.value.uid, false)
+    close()
+  }
 }
 </script>

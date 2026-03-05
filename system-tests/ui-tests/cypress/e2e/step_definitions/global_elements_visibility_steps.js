@@ -14,7 +14,7 @@ Then('The following buttons are visible', (dataTable) => {
 
 Then('A tile {string} is visible with following description', (tileTitle, docstring) => {
     cy.get(`[data-cy="tiles-box"] [data-cy="${tileTitle}"] .v-expansion-panel-title`).click({ force: true })
-    cy.elementContain(tileTitle, docstring)
+    cy.get(`[data-cy="${tileTitle}"]`).should('contain', docstring)
 })
 
 Then('The the user is prompted with a notification message {string}', (message) => {

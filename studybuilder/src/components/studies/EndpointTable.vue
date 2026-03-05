@@ -82,18 +82,18 @@
     <template #actions="">
       <slot name="extraActions" />
       <v-btn
-        class="ml-2"
-        size="small"
+        class="ml-2 expandHoverBtn"
         variant="outlined"
         color="nnBaseBlue"
-        :title="$t('StudyEndpointsTable.add_endpoint')"
         :disabled="
           !accessGuard.checkPermission($roles.STUDY_WRITE) ||
           studiesGeneralStore.selectedStudyVersion !== null
         "
-        icon="mdi-plus"
         @click.stop="showForm = true"
-      />
+      >
+        <v-icon left>mdi-plus</v-icon>
+        <span class="label">{{ $t('StudyEndpointsTable.add_endpoint') }}</span>
+      </v-btn>
     </template>
     <template #[`item.endpoint_level.term_name`]="{ item }">
       <CTCodelistTermDisplay :term="item.endpoint_level" />

@@ -328,7 +328,7 @@ class CustomPage(BaseModel, Generic[T]):
     """
 
     items: Annotated[Sequence[T], Field()]
-    total: Annotated[int, Field(ge=0)]
+    total: Annotated[int, Field(ge=-1)]
     page: Annotated[int, Field(ge=0)]
     size: Annotated[int, Field(ge=0)]
 
@@ -347,7 +347,7 @@ class GenericFilteringReturn(BaseModel, Generic[T]):
     """
 
     items: Annotated[list[T], Field()]
-    total: Annotated[int, Field(ge=0)]
+    total: Annotated[int, Field(ge=-1)]
 
     @classmethod
     def create(cls, items: list[T], total: int) -> Self:

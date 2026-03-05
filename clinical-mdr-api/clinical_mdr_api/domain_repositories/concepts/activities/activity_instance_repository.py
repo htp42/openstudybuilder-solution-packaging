@@ -131,7 +131,8 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
                 else False
             )
             activity_item_node = ActivityItem(
-                is_adam_param_specific=is_adam_param_specific
+                is_adam_param_specific=is_adam_param_specific,
+                text_value=item.text_value,
             )
             activity_item_node.save()
             activity_item_node.has_activity_item_class.connect(activity_item_class)
@@ -162,6 +163,7 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
                     "class": item.activity_item_class_uid,
                     "units": {unit.uid for unit in item.unit_definitions},
                     "terms": {(term.uid, term.codelist_uid) for term in item.ct_terms},
+                    "text_value": item.text_value,
                 }
             )
 
@@ -186,6 +188,7 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
                         (ct_term["uid"], ct_term["codelist_uid"])
                         for ct_term in ct_terms
                     },
+                    "text_value": activity_item_node.text_value,
                 }
             )
         for item in ar_activity_items:
@@ -424,6 +427,7 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
                             )
                             for unit in activity_item.get("unit_definitions")
                         ],
+                        text_value=activity_item.get("text_value"),
                     )
                     for activity_item in input_dict.get("activity_items", [])
                 ],
@@ -502,6 +506,7 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
                     activity_item_class_name=activity_item_class_root.has_latest_value.get_or_none().name,
                     ct_terms=ct_terms,
                     unit_definitions=unit_definitions,
+                    text_value=activity_item.text_value,
                 )
             )
         activity_groupings_nodes = value.has_activity.all()
@@ -632,6 +637,7 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
                     activity_item_class_name=activity_item["activity_item_class_name"],
                     ct_terms=ct_terms,
                     unit_definitions=unit_definitions,
+                    text_value=activity_item.get("text_value"),
                 )
             )
         activity_groupings = []
@@ -738,7 +744,8 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
                         RETURN {uid: term_root.uid, name: term_name_value.name, codelist_uid: codelist_root.uid, submission_value: ct_codelist_term.submission_value}
                     },
                     unit_definitions: [(activity_item)-[:HAS_UNIT_DEFINITION]->(unit_definition_root:UnitDefinitionRoot)-[:LATEST]->(unit_definition_value:UnitDefinitionValue)-[:HAS_CT_DIMENSION]-(:CTTermRoot)-[:HAS_NAME_ROOT]->(CTTermNamesRoot)-[:LATEST]->(dimension_value:CTTermNameValue) | {uid: unit_definition_root.uid, name: unit_definition_value.name, dimension_name: dimension_value.name}],
-                    is_adam_param_specific: activity_item.is_adam_param_specific
+                    is_adam_param_specific: activity_item.is_adam_param_specific,
+                    text_value: activity_item.text_value
                 }] AS activity_items,
             head([(concept_value)-[:HAS_ACTIVITY]->(activity_grouping)<-[:HAS_GROUPING]-(activity_value) | activity_value.name]) as activity_name,
             apoc.coll.toSet([(concept_value)-[:HAS_ACTIVITY]->(activity_grouping:ActivityGrouping)
@@ -978,7 +985,8 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
                     -[:HAS_CT_DIMENSION]-(:CTTermContext)-[:HAS_SELECTED_TERM]-(:CTTermRoot)-[:HAS_NAME_ROOT]->(CTTermNamesRoot)-[:LATEST]->(dimension_value:CTTermNameValue)
                     | {uid: unit_definition_root.uid, name: unit_definition_value.name, dimension_name: dimension_value.name}
                 ],
-                is_adam_param_specific: activity_item.is_adam_param_specific
+                is_adam_param_specific: activity_item.is_adam_param_specific,
+                text_value: activity_item.text_value
             }
             ]) AS activity_items
         CALL {

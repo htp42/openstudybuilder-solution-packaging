@@ -51,14 +51,14 @@ Feature: Studies - Define Study - Study Activities - Schedule of Activities - De
         And Button for Expanding SoA table is available
 
     Scenario: [Table][Options] User must be able to see the Detailed SoA Footnotes table with options listed in this scenario
-        And The test study '/activities/soa' page is opened
-        Then Footnotes table is available with options
+        Given The test study '/activities/soa' page is opened
+        When Add footnote button is available in the detailed SoA
+        Then A table is visible with following options
             | options                    |
-            | Add SoA footnotes          |
-            | Filters                    |
+            | Select filters             |
             | Show version history       |
-            | search-field               |
-
+            | Search                     |
+            
     @smoke_test
     Scenario: [Table][Columns][Names] User must be able to see the Footnotes table with specified headers
         And The test study '/activities/soa' page is opened
@@ -217,6 +217,7 @@ Feature: Studies - Define Study - Study Activities - Schedule of Activities - De
         And Select study with uid saved in previous step
         And The page 'activities/list' is opened for selected study
         And Study activity add button is clicked
+        And Form continue button is clicked
         And The user goes through selection from library form
         And Form save button is clicked
         And The page 'activities/soa' is opened for selected study
@@ -240,6 +241,7 @@ Feature: Studies - Define Study - Study Activities - Schedule of Activities - De
         And Select study with uid saved in previous step
         And The page 'activities/list' is opened for selected study
         And Study activity add button is clicked
+        And Form continue button is clicked
         And The user goes through selection from library form
         And Form save button is clicked
         And The page 'activities/soa' is opened for selected study
@@ -297,6 +299,7 @@ Feature: Studies - Define Study - Study Activities - Schedule of Activities - De
         And User expand table
         And User search study activity
         When Action 'Exchange Activity' is selected for study activity
+        And Form continue button is clicked
         And The user goes through selection from library form
         And Form save button is clicked
         And The page is reloaded
@@ -364,6 +367,8 @@ Feature: Studies - Define Study - Study Activities - Schedule of Activities - De
         Given At least '2' activites are present in the selected study
         And The test study '/activities/soa' page is opened
         When The user edits activities in bulk
+        And User intercepts bulk edit request
+        And Action is confirmed by clicking save
         Then The data for bulk edited activities is updated
 
     @manual_test @pending_implementation 
@@ -436,14 +441,17 @@ Feature: Studies - Define Study - Study Activities - Schedule of Activities - De
 
     Scenario: [New study] User must be able to see buttons for adding new activity or visit when Study is empty
         Given The '/studies/select_or_add_study/active' page is opened
-        When A new study is added
+        And User waits for the table
+        And The Add Study button is clicked
+        When New study project id, study number and study acronym are filled in
         And Form save button is clicked
-        And [API] Study uid is fetched
-        And Go to created study
+        When The 'Study Activities' submenu is clicked in the 'Define Study' section
+        And The 'Schedule of Activities' tab is selected
         Then Text about no added visits and activities is displayed
         And User can click Add visit button
         Then The current URL is '/study_structure/visits'
-        And Go to created study
+        When The 'Study Activities' submenu is clicked in the 'Define Study' section
+        And The 'Schedule of Activities' tab is selected
         And User can click Add study activity button
         Then The current URL is '/activities/list'
 
@@ -487,6 +495,24 @@ Feature: Studies - Define Study - Study Activities - Schedule of Activities - De
         And User expand table
         When User search study activity by group
         Then No activities are found
+
+    Scenario: [Export][CSV] User must be able to export the data in CSV format
+        Given The test study '/activities/soa' page is opened
+        When User clicks table export button
+        And User selects 'CSV' format to export the table content
+        Then The study specific 'detailed SoA' file without timestamp is downloaded in 'csv' format
+
+    Scenario: [Export][EXCEL] User must be able to export the data in JSON format
+        Given The test study '/activities/soa' page is opened
+        When User clicks table export button
+        And User selects 'EXCEL' format to export the table content
+        Then The study specific 'detailed SoA' file without timestamp is downloaded in 'xlsx' format
+
+    Scenario: [Export][DOCX] User must be able to export the data in XML format
+        Given The test study '/activities/soa' page is opened
+        When User clicks table export button
+        And User selects 'DOCX' format to export the table content
+        Then The study specific 'detailed SoA' file without timestamp is downloaded in 'docx' format
 
     @manual_test @BUG_ID:2851795
     Scenario:[Edit] User must be presented with all activity groups linked when editing the activity

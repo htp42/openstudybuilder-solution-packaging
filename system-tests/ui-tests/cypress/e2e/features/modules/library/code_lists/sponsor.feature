@@ -14,11 +14,11 @@ Feature: Library - Code Lists - Sponsor
         Given The '/library/sponsor' page is opened
         Then A table is visible with following options
             | options                                                         |
-            | Columns                                                         |
+            | Select columns                                                  |
             | Export                                                          |
-            | Filters                                                         |
-            | Add select boxes to table to allow selection of rows for export |
-            | search-field                                                    |
+            | Select filters                                                  |
+            | Select rows                                                     |
+            | Search                                                          |
            # | search-with-terms                                               | to be implemented
            # | or-field                                                        | to be implemented
 

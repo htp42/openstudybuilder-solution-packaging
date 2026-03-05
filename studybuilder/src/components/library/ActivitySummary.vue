@@ -48,11 +48,37 @@
                   }"
                   class="activity-link"
                 >
-                  {{ field.value }}
+                  <v-tooltip
+                    v-if="showTooltip(field.value)"
+                    location="top"
+                    max-width="300"
+                    :text="field.value"
+                    interactive
+                  >
+                    <template #activator="{ props }">
+                      <span v-bind="props">{{
+                        field.value.substring(0, 50) + '...'
+                      }}</span>
+                    </template>
+                  </v-tooltip>
+                  <span v-else>{{ field.value }}</span>
                 </router-link>
               </template>
               <template v-else>
-                {{ field.value }}
+                <v-tooltip
+                  v-if="showTooltip(field.value)"
+                  location="top"
+                  max-width="300"
+                  :text="field.value"
+                  interactive
+                >
+                  <template #activator="{ props }">
+                    <span v-bind="props">{{
+                      field.value.substring(0, 50) + '...'
+                    }}</span>
+                  </template>
+                </v-tooltip>
+                <span v-else>{{ field.value }}</span>
               </template>
             </div>
           </td>
@@ -118,6 +144,10 @@ const props = defineProps({
     default: () => [],
   },
 })
+
+function showTooltip(value) {
+  return value && value.length > 50 && !value.includes(' ')
+}
 
 // Extract activity information from activity groupings
 const activityInfo = computed(() => {
@@ -231,10 +261,16 @@ const organizedRows = computed(() => {
   if (props.showDataCollection) {
     fields.push({
       key: 'data_collection',
-      label: t('activitySummary.dataCollection') || 'Data collection',
+      label: t('ActivitySummary.data_collection'),
       value: $filters.yesno(props.activity.is_data_collected),
     })
   }
+
+  fields.push({
+    key: 'is_multiple_selection_allowed',
+    label: t('ActivitySummary.multiple_instances_allowed'),
+    value: $filters.yesno(props.activity.is_multiple_selection_allowed),
+  })
 
   // Activity instance specific fields
   if (props.activity.is_legacy_usage !== undefined) {

@@ -58,7 +58,7 @@
     </div>
 
     <div class="mt-10 d-flex justify-center">
-      <v-btn text color="white" @click="showLicense = true">
+      <v-btn text color="white" rounded @click="showLicense = true">
         {{ $t('_global.license') }}
       </v-btn>
     </div>

@@ -43,7 +43,7 @@ def test_getting_empty_list_of_odm_vendor_elements(api_client):
 def test_creating_a_new_odm_vendor_element(api_client):
     data = {
         "library_name": "Sponsor",
-        "name": "nameTwo",
+        "name": "NameTwo",
         "compatible_types": ["FormDef"],
         "vendor_namespace_uid": "odm_vendor_namespace1",
     }
@@ -56,7 +56,7 @@ def test_creating_a_new_odm_vendor_element(api_client):
     assert res["compatible_types"] == ["FormDef"]
     assert res["uid"] == "OdmVendorElement_000001"
     assert res["library_name"] == "Sponsor"
-    assert res["name"] == "nameTwo"
+    assert res["name"] == "NameTwo"
     assert res["end_date"] is None
     assert res["status"] == "Draft"
     assert res["version"] == "0.1"
@@ -80,7 +80,7 @@ def test_creating_a_new_odm_vendor_element_with_relation_to_odm_vendor_element(
 ):
     data = {
         "library_name": "Sponsor",
-        "name": "nameThree",
+        "name": "NameThree",
         "compatible_types": ["FormDef"],
         "vendor_namespace_uid": "odm_vendor_namespace1",
     }
@@ -93,7 +93,7 @@ def test_creating_a_new_odm_vendor_element_with_relation_to_odm_vendor_element(
     assert res["compatible_types"] == ["FormDef"]
     assert res["uid"] == "OdmVendorElement_000002"
     assert res["library_name"] == "Sponsor"
-    assert res["name"] == "nameThree"
+    assert res["name"] == "NameThree"
     assert res["end_date"] is None
     assert res["status"] == "Draft"
     assert res["version"] == "0.1"
@@ -122,7 +122,7 @@ def test_getting_non_empty_list_of_odm_vendor_elements(api_client):
     assert res["items"][0]["compatible_types"] == ["FormDef"]
     assert res["items"][0]["uid"] == "OdmVendorElement_000001"
     assert res["items"][0]["library_name"] == "Sponsor"
-    assert res["items"][0]["name"] == "nameTwo"
+    assert res["items"][0]["name"] == "NameTwo"
     assert res["items"][0]["end_date"] is None
     assert res["items"][0]["status"] == "Draft"
     assert res["items"][0]["version"] == "0.1"
@@ -146,7 +146,7 @@ def test_getting_non_empty_list_of_odm_vendor_elements(api_client):
     assert res["items"][1]["author_username"] == "unknown-user@example.com"
     assert res["items"][1]["change_description"] == "Initial version"
     assert res["items"][1]["uid"] == "OdmVendorElement_000002"
-    assert res["items"][1]["name"] == "nameThree"
+    assert res["items"][1]["name"] == "NameThree"
     assert res["items"][1]["library_name"] == "Sponsor"
     assert res["items"][1]["vendor_namespace"] == {
         "uid": "odm_vendor_namespace1",
@@ -168,7 +168,7 @@ def test_getting_possible_header_values_of_odm_vendor_elements(api_client):
 
     res = response.json()
 
-    assert res == ["nameThree", "nameTwo"]
+    assert res == ["NameThree", "NameTwo"]
 
 
 def test_getting_a_specific_odm_vendor_element(api_client):
@@ -181,7 +181,7 @@ def test_getting_a_specific_odm_vendor_element(api_client):
     assert res["compatible_types"] == ["FormDef"]
     assert res["uid"] == "OdmVendorElement_000001"
     assert res["library_name"] == "Sponsor"
-    assert res["name"] == "nameTwo"
+    assert res["name"] == "NameTwo"
     assert res["end_date"] is None
     assert res["status"] == "Draft"
     assert res["version"] == "0.1"
@@ -212,7 +212,7 @@ def test_getting_versions_of_a_specific_odm_vendor_element(api_client):
     assert res[0]["compatible_types"] == ["FormDef"]
     assert res[0]["uid"] == "OdmVendorElement_000001"
     assert res[0]["library_name"] == "Sponsor"
-    assert res[0]["name"] == "nameTwo"
+    assert res[0]["name"] == "NameTwo"
     assert res[0]["end_date"] is None
     assert res[0]["status"] == "Draft"
     assert res[0]["version"] == "0.1"
@@ -234,10 +234,10 @@ def test_getting_versions_of_a_specific_odm_vendor_element(api_client):
 def test_updating_an_existing_odm_vendor_element(api_client):
     data = {
         "library_name": "Sponsor",
-        "name": "new name",
+        "name": "NewName",
         "compatible_types": ["ItemDef"],
         "vendor_namespace_uid": "odm_vendor_namespace1",
-        "change_description": "name changed to new name",
+        "change_description": "name changed to NewName",
     }
     response = api_client.patch(
         "concepts/odms/vendor-elements/OdmVendorElement_000001", json=data
@@ -250,11 +250,11 @@ def test_updating_an_existing_odm_vendor_element(api_client):
     assert res["compatible_types"] == ["ItemDef"]
     assert res["uid"] == "OdmVendorElement_000001"
     assert res["library_name"] == "Sponsor"
-    assert res["name"] == "new name"
+    assert res["name"] == "NewName"
     assert res["end_date"] is None
     assert res["status"] == "Draft"
     assert res["version"] == "0.2"
-    assert res["change_description"] == "name changed to new name"
+    assert res["change_description"] == "name changed to NewName"
     assert res["author_username"] == "unknown-user@example.com"
     assert res["vendor_namespace"] == {
         "uid": "odm_vendor_namespace1",
@@ -281,7 +281,7 @@ def test_getting_a_specific_odm_vendor_element_in_specific_version(api_client):
     assert res["compatible_types"] == ["FormDef"]
     assert res["uid"] == "OdmVendorElement_000001"
     assert res["library_name"] == "Sponsor"
-    assert res["name"] == "nameTwo"
+    assert res["name"] == "NameTwo"
     assert res["end_date"]
     assert res["status"] == "Draft"
     assert res["version"] == "0.1"
@@ -312,7 +312,7 @@ def test_approving_an_odm_vendor_element(api_client):
     assert res["compatible_types"] == ["ItemDef"]
     assert res["uid"] == "OdmVendorElement_000001"
     assert res["library_name"] == "Sponsor"
-    assert res["name"] == "new name"
+    assert res["name"] == "NewName"
     assert res["end_date"] is None
     assert res["status"] == "Final"
     assert res["version"] == "1.0"
@@ -343,7 +343,7 @@ def test_inactivating_a_specific_odm_vendor_element(api_client):
     assert res["compatible_types"] == ["ItemDef"]
     assert res["uid"] == "OdmVendorElement_000001"
     assert res["library_name"] == "Sponsor"
-    assert res["name"] == "new name"
+    assert res["name"] == "NewName"
     assert res["end_date"] is None
     assert res["status"] == "Retired"
     assert res["version"] == "1.0"
@@ -374,7 +374,7 @@ def test_reactivating_a_specific_odm_vendor_element(api_client):
     assert res["compatible_types"] == ["ItemDef"]
     assert res["uid"] == "OdmVendorElement_000001"
     assert res["library_name"] == "Sponsor"
-    assert res["name"] == "new name"
+    assert res["name"] == "NewName"
     assert res["end_date"] is None
     assert res["status"] == "Final"
     assert res["version"] == "1.0"
@@ -405,7 +405,7 @@ def test_creating_a_new_odm_vendor_element_version(api_client):
     assert res["compatible_types"] == ["ItemDef"]
     assert res["uid"] == "OdmVendorElement_000001"
     assert res["library_name"] == "Sponsor"
-    assert res["name"] == "new name"
+    assert res["name"] == "NewName"
     assert res["end_date"] is None
     assert res["status"] == "Draft"
     assert res["version"] == "1.1"
@@ -427,7 +427,7 @@ def test_creating_a_new_odm_vendor_element_version(api_client):
 def test_create_a_new_odm_vendor_element_for_deleting_it(api_client):
     data = {
         "library_name": "Sponsor",
-        "name": "nameDelete",
+        "name": "NameDelete",
         "compatible_types": ["FormDef"],
         "vendor_namespace_uid": "odm_vendor_namespace1",
     }
@@ -439,7 +439,7 @@ def test_create_a_new_odm_vendor_element_for_deleting_it(api_client):
 
     assert res["compatible_types"] == ["FormDef"]
     assert res["uid"] == "OdmVendorElement_000003"
-    assert res["name"] == "nameDelete"
+    assert res["name"] == "NameDelete"
     assert res["library_name"] == "Sponsor"
     assert res["end_date"] is None
     assert res["status"] == "Draft"
@@ -498,7 +498,7 @@ def test_create_a_new_odm_vendor_attribute_with_relation_to_odm_vendor_element(
     assert res["vendor_namespace"] is None
     assert res["vendor_element"] == {
         "uid": "OdmVendorElement_000001",
-        "name": "new name",
+        "name": "NewName",
         "compatible_types": ["ItemDef"],
         "status": "Draft",
         "version": "1.1",

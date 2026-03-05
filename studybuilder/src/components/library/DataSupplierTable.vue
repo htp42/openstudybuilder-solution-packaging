@@ -14,16 +14,18 @@
     >
       <template #actions="">
         <v-btn
-          class="ml-2"
-          size="small"
+          class="ml-2 expandHoverBtn"
           variant="outlined"
           color="nnBaseBlue"
-          :title="$t('DataSupplierView.DataSupplierTable.add_data_supplier')"
           data-cy="add-data-supplier"
           :disabled="!accessGuard.checkPermission($roles.LIBRARY_WRITE)"
-          icon="mdi-plus"
           @click.stop="openForm()"
-        />
+        >
+          <v-icon left>mdi-plus</v-icon>
+          <span class="label">{{
+            $t('DataSupplierView.DataSupplierTable.add_data_supplier')
+          }}</span>
+        </v-btn>
       </template>
       <template #[`item.actions`]="{ item }">
         <ActionsMenu :actions="actions" :item="item" />

@@ -1,4 +1,4 @@
-import { fillTemplateNameAndContinue } from './library_syntax_templates_common'
+import { fillTemplateName } from './library_syntax_templates_common'
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
 
 let defaultCriteriaName
@@ -34,7 +34,7 @@ When('[API] Search Test - Create second {string} criteria template', (type) => c
 
 function fillBaseDataAndContinue(name) {
     defaultCriteriaName = name
-    fillTemplateNameAndContinue(name)
+    fillTemplateName(name)
 }
 
 function createCriteriaViaApi(type, customName = '') {

@@ -9,7 +9,7 @@ from clinical_mdr_api.utils.api_version import (
     increment_api_version_if_needed,
     increment_version_number,
 )
-from consumer_api.consumer_api import custom_openapi
+# from consumer_api.consumer_api import custom_openapi
 
 log = logging.getLogger(__name__)
 
@@ -26,7 +26,11 @@ def generate_openapi(app_import_path, schema_path, version_path, stdout: bool = 
     version_path = os.path.join("./", version_path)
 
     # Generate OpenAPI schema file, increment version number if needed
-    api_spec_new = custom_openapi()
+    custom_openapi_func = getattr(module, "custom_openapi", None)
+    if custom_openapi_func:
+        api_spec_new = custom_openapi_func()
+    else:
+        api_spec_new = app.openapi()
     try:
         with open(schema_path, "r", encoding="utf-8") as f:
             api_spec_old = json.load(f)

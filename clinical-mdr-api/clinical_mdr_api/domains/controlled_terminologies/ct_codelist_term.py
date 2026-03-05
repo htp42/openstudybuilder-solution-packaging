@@ -23,6 +23,7 @@ class CTCodelistTermVO:
     attributes_date: datetime
     submission_value: str
     order: int | None
+    ordinal: float | None
     concept_id: str | None
     nci_preferred_name: str | None
     definition: str
@@ -42,6 +43,7 @@ class CTCodelistTermVO:
             attributes_date=convert_to_datetime(result["attributes_date"]),
             submission_value=result["submission_value"],
             order=result.get("order"),
+            ordinal=result.get("ordinal"),
             start_date=convert_to_datetime(result["start_date"]),
             end_date=convert_to_datetime(result.get("end_date")),
             concept_id=result.get("concept_id"),
@@ -87,6 +89,7 @@ class CTSimpleCodelistTermVO:
     submission_value: str
     preferred_term: str | None
     order: int | None
+    ordinal: float | None
     codelist_uid: str | None
     codelist_name: str | None
     codelist_submission_value: str | None
@@ -100,6 +103,7 @@ class CTSimpleCodelistTermVO:
             submission_value=result["submission_value"],
             preferred_term=result.get("preferred_term"),
             order=result.get("order"),
+            ordinal=result.get("ordinal"),
             codelist_uid=result.get("codelist_uid"),
             codelist_name=result.get("codelist_name"),
             codelist_submission_value=result.get("codelist_submission_value"),

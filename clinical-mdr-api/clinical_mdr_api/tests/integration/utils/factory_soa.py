@@ -397,8 +397,8 @@ class SoATestData:
     NUM_SOA_ROWS = 43
     NUM_ACTIVITY_REQUEST_ROWS = 3 + 3 + 3  # 3 activity requests with their groupings
     NUM_ACTIVITY_INSTANCES = 8
-    # Placeholders (activity requests without instances) are not shown in operational SoA
-    # because they're filtered out in _build_flowchart_table when activity_instance is None
+    # Operational SoA XLSX includes all activities (17) plus their instances (8)
+    NUM_OPERATIONAL_SOA_XLSX_DATA_ROWS = 25
     NUM_OPERATIONAL_SOA_ROWS = NUM_SOA_ROWS + NUM_ACTIVITY_INSTANCES
     NUM_OPERATIONAL_SOA_SCHEDULES = 9  # Mind that study-activities are scheduled, not study-activity-instances, there may be multiple instances per activity
     NUM_OPERATIONAL_SOA_CHECKMARKS = (

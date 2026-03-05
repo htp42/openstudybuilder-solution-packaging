@@ -25,6 +25,7 @@ from clinical_mdr_api.models.concepts.odms.odm_common_models import (
 )
 from clinical_mdr_api.models.utils import BaseModel
 from clinical_mdr_api.models.validators import (
+    validate_first_character_is_lowercase,
     validate_name_only_contains_letters,
     validate_regex,
 )
@@ -256,6 +257,9 @@ class OdmVendorAttributePostInput(ConceptPostInput):
     _validate_name_only_contains_letters = field_validator("name", mode="before")(
         validate_name_only_contains_letters
     )
+    _validate_first_character_is_lowercase = field_validator("name", mode="after")(
+        validate_first_character_is_lowercase
+    )
 
     @model_validator(mode="before")
     @classmethod
@@ -281,6 +285,12 @@ class OdmVendorAttributePatchInput(ConceptPatchInput):
     value_regex: Annotated[str | None, Field(min_length=1)]
 
     _validate_regex = field_validator("value_regex", mode="before")(validate_regex)
+    _validate_name_only_contains_letters = field_validator("name", mode="before")(
+        validate_name_only_contains_letters
+    )
+    _validate_first_character_is_lowercase = field_validator("name", mode="after")(
+        validate_first_character_is_lowercase
+    )
 
 
 class OdmVendorAttributeVersion(OdmVendorAttribute):

@@ -58,31 +58,34 @@
     <template #actions="">
       <v-btn
         v-if="!editMode"
+        class="mr-2 expandHoverBtn"
         variant="outlined"
         color="nnBaseBlue"
         :disabled="
           !accessGuard.checkPermission($roles.STUDY_WRITE) ||
           studiesGeneralStore.selectedStudyVersion !== null
         "
-        rounded="xl"
-        prepend-icon="mdi-exclamation"
-        class="mr-2"
         @click="openBatchUpdateForm()"
       >
-        {{ $t('StudyActivityTable.review_instances') }}
+        <v-icon left>mdi-exclamation</v-icon>
+        <span class="label">{{
+          $t('StudyActivityTable.review_instances')
+        }}</span>
       </v-btn>
       <v-btn
         v-if="!editMode"
-        size="small"
+        class="expandHoverBtn"
         variant="outlined"
         color="nnBaseBlue"
         :disabled="
           !accessGuard.checkPermission($roles.STUDY_WRITE) ||
           studiesGeneralStore.selectedStudyVersion !== null
         "
-        icon="mdi-pencil"
         @click="openEditMode()"
-      />
+      >
+        <v-icon left>mdi-pencil-outline</v-icon>
+        <span class="label">{{ $t('_global.edit_in_table') }}</span>
+      </v-btn>
     </template>
     <template #[`item.actions`]="{ item }">
       <ActionsMenu

@@ -55,7 +55,6 @@
 import { computed } from 'vue'
 import study from '@/api/study'
 import StudyActivitySelectionBaseForm from './StudyActivitySelectionBaseForm.vue'
-import studyEpochs from '@/api/studyEpochs'
 import terms from '@/api/controlledTerminology/terms'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 
@@ -72,6 +71,10 @@ export default {
     currentSelectionMatrix: {
       type: Object,
       default: undefined,
+    },
+    studyVisits: {
+      type: Array,
+      default: null,
     },
     open: Boolean,
   },
@@ -95,17 +98,16 @@ export default {
     terms.getTermsByCodelist('flowchartGroups').then((resp) => {
       this.flowchartGroups = resp.data.items
     })
-    // Filter out non-visit and unscheduled-visits as these shouldn't
-    // be able to be assigned to any schedules
-    const params = {
-      page_size: 0,
-      filters: {
-        visit_class: { v: ['NON_VISIT', 'UNSCHEDULED_VISIT'], op: 'ne' },
-      },
-    }
-    studyEpochs.getStudyVisits(this.selectedStudy.uid, params).then((resp) => {
+    this.studyVisitsGrouped = this.studyVisits
+      // Filter out non-visit and unscheduled-visits as these shouldn't
+      // be able to be assigned to any schedules
+      .filter(
+        (item) =>
+          item.visit_class !== 'NON_VISIT' &&
+          item.visit_class !== 'UNSCHEDULED_VISIT'
+      )
       // a mapping to arrays of visits with the same consecutive_visit_group if set, else a single visit with the visit uid as key
-      this.studyVisitsGrouped = resp.data.items.reduce((acc, item) => {
+      .reduce((acc, item) => {
         const key = item.consecutive_visit_group ?? item.uid
         if (!acc[key]) {
           acc[key] = []
@@ -113,7 +115,6 @@ export default {
         acc[key].push(item)
         return acc
       }, {})
-    })
   },
   methods: {
     close() {

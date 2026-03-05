@@ -426,6 +426,7 @@ def export_detailed_soa_content(
         "defaults": [
             "study_number",
             "study_version",
+            "library",
             "soa_group",
             "activity_group",
             "activity_subgroup",
@@ -445,6 +446,7 @@ def export_detailed_soa_content(
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
             "Study number=study_number",
             "Study version=study_version",
+            "Library=library",
             "SoA group=soa_group",
             "Activity group=activity_group",
             "Activity subgroup=activity_subgroup",

@@ -24,24 +24,24 @@
         <v-btn
           v-if="!readOnly"
           data-cy="add-study"
-          class="ml-2"
-          size="small"
+          class="ml-2 expandHoverBtn"
           variant="outlined"
           color="nnBaseBlue"
-          :title="$t('StudyForm.add_title')"
           :disabled="!accessGuard.checkPermission($roles.STUDY_WRITE)"
-          icon="mdi-plus"
           @click.stop="showCreationForm = true"
-        />
+        >
+          <v-icon left>mdi-plus</v-icon>
+          <span class="label">{{ $t('StudyForm.add_title') }}</span>
+        </v-btn>
         <v-btn
-          class="ml-2"
-          size="small"
+          class="ml-2 expandHoverBtn"
           variant="outlined"
           color="nnBaseBlue"
-          :title="$t('NNTableTooltips.filters')"
-          icon="mdi-filter-outline"
           @click="emit('enableFiltering')"
-        />
+        >
+          <v-icon left>mdi-filter-outline</v-icon>
+          <span class="label">{{ $t('NNTableTooltips.filters') }}</span>
+        </v-btn>
       </template>
       <template #[`item.version_start_date`]="{ item }">
         {{ $filters.date(item.version_start_date) }}

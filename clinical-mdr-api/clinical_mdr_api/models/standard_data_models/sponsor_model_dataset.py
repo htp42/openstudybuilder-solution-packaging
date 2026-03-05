@@ -1,4 +1,4 @@
-from typing import Annotated, Self
+from typing import Annotated, Any, Self
 
 from pydantic import ConfigDict, Field
 
@@ -11,7 +11,7 @@ from clinical_mdr_api.models.utils import InputModel
 
 
 class SponsorModelDataset(SponsorModelBase):
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, extra="allow")
 
     uid: Annotated[
         str | None,
@@ -216,34 +216,46 @@ class SponsorModelDataset(SponsorModelBase):
         cls,
         sponsor_model_dataset_ar: SponsorModelDatasetAR,
     ) -> Self:
-        return cls(
-            uid=sponsor_model_dataset_ar.uid,
-            is_basic_std=sponsor_model_dataset_ar.sponsor_model_dataset_vo.is_basic_std,
-            implemented_dataset_class=sponsor_model_dataset_ar.sponsor_model_dataset_vo.implemented_dataset_class,
-            xml_path=sponsor_model_dataset_ar.sponsor_model_dataset_vo.xml_path,
-            xml_title=sponsor_model_dataset_ar.sponsor_model_dataset_vo.xml_title,
-            structure=sponsor_model_dataset_ar.sponsor_model_dataset_vo.structure,
-            purpose=sponsor_model_dataset_ar.sponsor_model_dataset_vo.purpose,
-            keys=sponsor_model_dataset_ar.sponsor_model_dataset_vo.keys,
-            sort_keys=sponsor_model_dataset_ar.sponsor_model_dataset_vo.sort_keys,
-            is_cdisc_std=sponsor_model_dataset_ar.sponsor_model_dataset_vo.is_cdisc_std,
-            source_ig=sponsor_model_dataset_ar.sponsor_model_dataset_vo.source_ig,
-            standard_ref=sponsor_model_dataset_ar.sponsor_model_dataset_vo.standard_ref,
-            comment=sponsor_model_dataset_ar.sponsor_model_dataset_vo.comment,
-            ig_comment=sponsor_model_dataset_ar.sponsor_model_dataset_vo.ig_comment,
-            map_domain_flag=sponsor_model_dataset_ar.sponsor_model_dataset_vo.map_domain_flag,
-            suppl_qual_flag=sponsor_model_dataset_ar.sponsor_model_dataset_vo.suppl_qual_flag,
-            include_in_raw=sponsor_model_dataset_ar.sponsor_model_dataset_vo.include_in_raw,
-            gen_raw_seqno_flag=sponsor_model_dataset_ar.sponsor_model_dataset_vo.gen_raw_seqno_flag,
-            enrich_build_order=sponsor_model_dataset_ar.sponsor_model_dataset_vo.enrich_build_order,
-            label=sponsor_model_dataset_ar.sponsor_model_dataset_vo.label,
-            state=sponsor_model_dataset_ar.sponsor_model_dataset_vo.state,
-            extended_domain=sponsor_model_dataset_ar.sponsor_model_dataset_vo.extended_domain,
-            library_name=Library.from_library_vo(sponsor_model_dataset_ar.library).name,
-        )
+        base_data = {
+            "uid": sponsor_model_dataset_ar.uid,
+            "is_basic_std": sponsor_model_dataset_ar.sponsor_model_dataset_vo.is_basic_std,
+            "implemented_dataset_class": sponsor_model_dataset_ar.sponsor_model_dataset_vo.implemented_dataset_class,
+            "xml_path": sponsor_model_dataset_ar.sponsor_model_dataset_vo.xml_path,
+            "xml_title": sponsor_model_dataset_ar.sponsor_model_dataset_vo.xml_title,
+            "structure": sponsor_model_dataset_ar.sponsor_model_dataset_vo.structure,
+            "purpose": sponsor_model_dataset_ar.sponsor_model_dataset_vo.purpose,
+            "keys": sponsor_model_dataset_ar.sponsor_model_dataset_vo.keys,
+            "sort_keys": sponsor_model_dataset_ar.sponsor_model_dataset_vo.sort_keys,
+            "is_cdisc_std": sponsor_model_dataset_ar.sponsor_model_dataset_vo.is_cdisc_std,
+            "source_ig": sponsor_model_dataset_ar.sponsor_model_dataset_vo.source_ig,
+            "standard_ref": sponsor_model_dataset_ar.sponsor_model_dataset_vo.standard_ref,
+            "comment": sponsor_model_dataset_ar.sponsor_model_dataset_vo.comment,
+            "ig_comment": sponsor_model_dataset_ar.sponsor_model_dataset_vo.ig_comment,
+            "map_domain_flag": sponsor_model_dataset_ar.sponsor_model_dataset_vo.map_domain_flag,
+            "suppl_qual_flag": sponsor_model_dataset_ar.sponsor_model_dataset_vo.suppl_qual_flag,
+            "include_in_raw": sponsor_model_dataset_ar.sponsor_model_dataset_vo.include_in_raw,
+            "gen_raw_seqno_flag": sponsor_model_dataset_ar.sponsor_model_dataset_vo.gen_raw_seqno_flag,
+            "enrich_build_order": sponsor_model_dataset_ar.sponsor_model_dataset_vo.enrich_build_order,
+            "label": sponsor_model_dataset_ar.sponsor_model_dataset_vo.label,
+            "state": sponsor_model_dataset_ar.sponsor_model_dataset_vo.state,
+            "extended_domain": sponsor_model_dataset_ar.sponsor_model_dataset_vo.extended_domain,
+            "library_name": Library.from_library_vo(
+                sponsor_model_dataset_ar.library
+            ).name,
+        }
+
+        # Add extra properties if they exist
+        if sponsor_model_dataset_ar.sponsor_model_dataset_vo.extra_properties:
+            base_data.update(
+                sponsor_model_dataset_ar.sponsor_model_dataset_vo.extra_properties
+            )
+
+        return cls(**base_data)  # type: ignore[arg-type]
 
 
 class SponsorModelDatasetInput(InputModel):
+    model_config = ConfigDict(extra="allow")  # Allow extra fields
+
     target_data_model_catalogue: Annotated[str | None, Field()] = "SDTMIG"
     dataset_uid: Annotated[str, Field(min_length=1)]
     sponsor_model_name: Annotated[
@@ -295,3 +307,10 @@ class SponsorModelDatasetInput(InputModel):
     library_name: Annotated[
         str | None, Field(description="Defaults to CDISC", min_length=1)
     ] = "CDISC"
+
+    def get_extra_fields(self) -> dict[str, Any]:
+        """Return fields that were passed but are not in the defined model."""
+        defined_fields = set(self.model_fields.keys())
+        all_fields = set(self.model_dump().keys())
+        extra_fields = all_fields - defined_fields
+        return {field: getattr(self, field) for field in extra_fields}

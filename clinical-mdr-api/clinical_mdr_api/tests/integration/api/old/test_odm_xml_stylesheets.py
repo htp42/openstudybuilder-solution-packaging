@@ -22,14 +22,14 @@ def test_get_available_stylesheet_names(api_client):
     response = api_client.get("concepts/odms/metadata/xmls/stylesheets")
 
     assert_response_status_code(response, 200)
-    assert response.json() == ["blank", "falcon", "with-annotations"]
+    assert response.json() == ["falcon", "with-annotations"]
 
 
 def test_get_specific_stylesheet(api_client):
-    response = api_client.get("concepts/odms/metadata/xmls/stylesheets/blank")
+    response = api_client.get("concepts/odms/metadata/xmls/stylesheets/falcon")
 
     with open(
-        settings.xml_stylesheet_dir_path + "blank.xsl", mode="r", encoding="utf-8"
+        settings.xml_stylesheet_dir_path + "falcon.xsl", mode="r", encoding="utf-8"
     ) as file:
         expected_xml = file.read()
 
@@ -54,7 +54,7 @@ def test_throw_exception_if_stylesheet_doesnt_exist(api_client):
 
 
 def test_throw_exception_if_stylesheet_name_contains_disallowed_character(api_client):
-    for name in ["bla_nk", "blank.", "bla%nk"]:
+    for name in ["falc_on", "falcon.", "falc%on"]:
         response = api_client.get(
             f"concepts/odms/metadata/xmls/stylesheets/{name}",
         )

@@ -71,7 +71,7 @@ Then('The Create new sponsor values version button is visible', () => cy.get('[d
 When('The codelist summary is expanded', () => cy.clickButton('cl-summary-title'))
 
 Then('The codelist summary show following data', (dataTable) => {
-    dataTable.hashes().forEach(element => cy.elementContain(element.name, element.value))
+    dataTable.hashes().forEach(element => cy.get(`[data-cy="${element.name}"]`).should('contain', element.value))
 })
 
 Then('The sponsor preferred name is updated', () => {
@@ -112,7 +112,6 @@ When('The term is validated', () => {
 })
 
 Then('The term data is visible in the table', () => {
-    cy.waitForTableData()
     cy.checkRowByIndex(0, 'Library', 'Sponsor')
     cy.checkRowByIndex(0, 'Concept ID', conceptId)
     cy.checkRowByIndex(0, 'Sponsor name', termSponsorName)
@@ -149,8 +148,6 @@ When('The term sponsor values are edited', () => {
     cy.wait(1000)
     cy.fillInput('term-sponsor-preffered-name', termSponsorName)
     cy.fillInput('change-description', `Description edited of the change`)
-    cy.clickButton('save-button')
-    cy.get('[data-cy="form-body"] .dialog-title').should('not.exist')
 })
 
 When('The new Codelist is added', () => {
@@ -234,8 +231,8 @@ function verifyCodelist() {
 }
 
 function checkStatusAndVersion(type, status, version) {
-    cy.elementContain(`${type}-status`, status)
-    cy.elementContain(`${type}-version`, version)
+    cy.get(`[data-cy="${type}-status"]`).should('contain', status)
+    cy.get(`[data-cy="${type}-version"]`).should('contain', version)
 }
 
 function checkCodelistTable(columnName, value) {

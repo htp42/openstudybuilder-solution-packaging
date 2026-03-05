@@ -30,7 +30,10 @@ Feature: Studies - Define Study - Registry Identifiers
 
 
    Scenario: [Actions][Edit] User must be able to provide informations for Registry Identifiers
+      Given [API] Registry Identifier with all values set to null is created
       Given The test study '/registry_identifiers' page is opened
+      And User waits for the table
+      When The edit content button is clicked
       When The identifiers are set with following data
          | identifier                                        | value      |
          | ClinicalTrials.gov ID                             | Azerty1234 |
@@ -47,6 +50,7 @@ Feature: Studies - Define Study - Registry Identifiers
          | Investigational Device Exemption Number           | Azerty1111 |
 		And Form save button is clicked
 		And The form is no longer available
+      And User waits for the table
       Then The identifiers table is showing following data
          | identifier                                        | value      |
          | ClinicalTrials.gov ID                             | Azerty1234 |
@@ -64,23 +68,14 @@ Feature: Studies - Define Study - Registry Identifiers
 
 
    Scenario: [Actions][Edit][N/A] User must be able to select not applicable for Registry Identifiers
+      Given [API] Registry Identifier with all values set to null is created
       Given The test study '/registry_identifiers' page is opened
-      When The not applicable is checked for all identifiers
-         | identifier                                        |
-         | ClinicalTrials.gov ID                             |
-         | EUDRACT ID                                        |
-         | Universal Trial Number (UTN)                      |
-         | Japanese Trial Registry ID (JAPIC)                |
-         | Investigational New Drug Application (IND) Number |
-         | EU Trial Number                                   |
-         | CIV-ID/SIN Number                                  |
-         | National Clinical Trial Number                    |
-         | Japanese Trial Registry Number                    |
-         | NMPA Number                                       |
-         | EUDAMED number                                    |
-         | Investigational Device Exemption Number           |
+      And User waits for the table
+      When The edit content button is clicked
+      And All Not Applicable checkboxes are checked
 		And Form save button is clicked
 		And The form is no longer available
+      And User waits for the table
       Then The identifiers table is showing following data in column Reason for missing
          | identifier                                        | value          |
          | ClinicalTrials.gov ID                             | Not applicable |

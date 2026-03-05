@@ -98,10 +98,10 @@ function fillBasicUnitData(customName = '') {
 
 function fillOptionalUnitData() {
   cy.selectVSelect('unit-subset', unitSubsets)
-  cy.checkbox('convertible-unit', true)
-  cy.checkbox('display-unit', true)
-  cy.checkbox('si-unit', true)
-  cy.checkbox('us-unit', true)
+  cy.get('[data-cy="convertible-unit"] input').check()
+  cy.get('[data-cy="display-unit"] input').check()
+  cy.get('[data-cy="si-unit"] input').check()
+  cy.get('[data-cy="us-unit"] input').check()
   cy.selectVSelect('unit-dimension', unitDimension)
   cy.fillInput('unit-legacy-code', legacyCode)
   cy.fillInput('unit-conversion-factor', conversionFactorToMaster)

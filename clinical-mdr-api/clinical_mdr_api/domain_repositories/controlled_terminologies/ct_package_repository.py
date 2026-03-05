@@ -199,6 +199,15 @@ class CTPackageRepository:
         sponsor_package_uid = (
             f"Sponsor {catalogue_node.name} {effective_date.strftime('%Y-%m-%d')}"
         )
+
+        # Pre-creation validation: check if a package with the same name already exists
+        # This provides an additional safety layer beyond the database constraint
+        existing_package = CTPackage.nodes.get_or_none(name=sponsor_package_uid)
+        if existing_package is not None:
+            raise AlreadyExistsException(
+                msg="A sponsor CTPackage already exists for this date"
+            )
+
         sponsor_package = CTPackage(
             uid=sponsor_package_uid,
             name=sponsor_package_uid,

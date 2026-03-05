@@ -22,6 +22,7 @@ from clinical_mdr_api.models.biomedical_concepts.activity_item_class import (
     ActivityItemClassVersion,
     CompactActivityItemClass,
     SimpleActivityInstanceClassForItem,
+    ValidCodelistMappingInput,
 )
 from clinical_mdr_api.models.controlled_terminologies.ct_codelist import (
     CTCodelistNameAndAttributes,
@@ -195,12 +196,31 @@ class ActivityItemClassService(ConceptGenericService[ActivityItemClassAR]):
 
         return self.get_by_uid(uid)
 
+    def patch_valid_codelist_mappings(
+        self, uid: str, mapping_input: ValidCodelistMappingInput
+    ) -> ActivityItemClass:
+        activity_item_class = self._repos.activity_item_class_repository.find_by_uid_2(
+            uid
+        )
+
+        NotFoundException.raise_if_not(activity_item_class, "Activity Item Class", uid)
+
+        try:
+            self._repos.activity_item_class_repository.patch_valid_codelist_mappings(
+                uid, mapping_input.valid_codelist_uids
+            )
+        finally:
+            self._repos.activity_item_class_repository.close()
+
+        return self.get_by_uid(uid)
+
     def get_codelists_of_activity_item_class(
         self,
         activity_item_class_uid: str,
         dataset_uid: str,
         use_sponsor_model: bool = True,
         ct_catalogue_name: str | None = None,
+        valid_codelists_for_item: bool = False,
         sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
@@ -209,10 +229,18 @@ class ActivityItemClassService(ConceptGenericService[ActivityItemClassAR]):
         total_count: bool = False,
     ) -> GenericFilteringReturn[ActivityItemClassCodelist]:
 
-        codelists_and_terms = self._repos.activity_item_class_repository.get_referenced_codelist_and_term_uids(
-            activity_item_class_uid, dataset_uid, use_sponsor_model, ct_catalogue_name
-        )
-
+        if valid_codelists_for_item is True:
+            codelists_and_terms = self._repos.activity_item_class_repository.get_valid_codelists_and_terms(
+                activity_item_class_uid=activity_item_class_uid,
+                ct_catalogue_name=ct_catalogue_name,
+            )
+        else:
+            codelists_and_terms = self._repos.activity_item_class_repository.get_referenced_codelist_and_term_uids(
+                activity_item_class_uid,
+                dataset_uid,
+                use_sponsor_model,
+                ct_catalogue_name,
+            )
         if not codelists_and_terms:
             return EmptyGenericFilteringResult
         codelist_uids = codelists_and_terms.keys()

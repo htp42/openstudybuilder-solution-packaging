@@ -21,6 +21,7 @@
               v-model="form.study_element"
               :label="$t('StudyCompoundDosingForm.element')"
               :items="studyElements"
+              data-cy="study-element"
               item-title="name"
               return-object
               :rules="[formRules.required]"
@@ -37,6 +38,7 @@
                 v-if="form.study_element"
                 v-model="form.study_element.order"
                 :label="$t('StudyCompoundDosingForm.element_order')"
+                data-cy="study-element-order"
                 row
                 disabled
                 hide-details
@@ -49,6 +51,7 @@
               <v-text-field
                 v-model="form.study_element.element_type.term_name"
                 :label="$t('StudyCompoundDosingForm.element_type')"
+                data-cy="study-element-type"
                 row
                 disabled
                 hide-details
@@ -58,6 +61,7 @@
               <v-text-field
                 v-model="form.study_element.element_subtype.term_name"
                 :label="$t('StudyCompoundDosingForm.element_subtype')"
+                data-cy="study-element-subtype"
                 row
                 disabled
                 hide-details
@@ -69,6 +73,7 @@
               <v-text-field
                 v-model="form.study_element.name"
                 :label="$t('StudyCompoundDosingForm.element_name')"
+                data-cy="study-element-name"
                 row
                 disabled
                 hide-details
@@ -78,6 +83,7 @@
               <v-text-field
                 v-model="form.study_element.short_name"
                 :label="$t('StudyCompoundDosingForm.element_short_name')"
+                data-cy="study-element-short-name"
                 row
                 disabled
                 hide-details
@@ -89,6 +95,7 @@
               <v-text-field
                 v-model="form.study_element.description"
                 :label="$t('StudyCompoundDosingForm.element_description')"
+                data-cy="study-element-description"
                 row
                 disabled
                 hide-details
@@ -110,6 +117,7 @@
                 (item) => `#${item.order} ${item.compound_alias.name}`
               "
               item-value="study_compound_uid"
+              data-cy="select-compound"
               return-object
               :rules="[formRules.required]"
               density="compact"
@@ -134,6 +142,7 @@
             <v-text-field
               v-model="form.study_compound.order"
               :label="$t('StudyCompoundDosingForm.compound_order')"
+              data-cy="compound-order"
               row
               disabled
               hide-details
@@ -143,6 +152,7 @@
             <v-text-field
               v-model="form.study_compound.type_of_treatment.term_name"
               :label="$t('StudyCompoundDosingForm.type_of_treatment')"
+              data-cy="type-of-treatment"
               row
               disabled
               hide-details
@@ -154,6 +164,7 @@
             <v-text-field
               v-model="form.study_compound.compound.name"
               :label="$t('StudyCompoundDosingForm.compound_name')"
+              data-cy="compound-name"
               row
               disabled
               hide-details
@@ -163,6 +174,7 @@
             <v-text-field
               v-model="form.study_compound.compound_alias.name"
               :label="$t('StudyCompoundDosingForm.compound_alias_name')"
+              data-cy="compound-alias-name"
               row
               disabled
               hide-details
@@ -175,6 +187,7 @@
             <YesNoField
               v-model="form.study_compound.compound_alias.is_preferred_synonym"
               :label="$t('StudyCompoundForm.is_preferred_synonym')"
+              data-cy="is-preffered-synonym"
               row
               disabled
               hide-details
@@ -194,6 +207,7 @@
                 <v-text-field
                   :model-value="activeSubstance.inn"
                   :label="$t('CompoundForm.inn')"
+                  data-cy="compound-inn"
                   density="compact"
                   readonly
                   variant="filled"
@@ -204,6 +218,7 @@
                 <v-text-field
                   :model-value="activeSubstance.analyte_number"
                   :label="$t('CompoundForm.analyte_number')"
+                  data-cy="compound-analyte-number"
                   density="compact"
                   readonly
                   variant="filled"
@@ -214,6 +229,7 @@
                 <v-text-field
                   :model-value="activeSubstance.long_number"
                   :label="$t('CompoundForm.long_number')"
+                  data-cy="compound-long-number"
                   density="compact"
                   readonly
                   variant="filled"
@@ -224,6 +240,7 @@
                 <v-text-field
                   :model-value="activeSubstance.short_number"
                   :label="$t('CompoundForm.short_number')"
+                  data-cy="compound-short-number"
                   density="compact"
                   readonly
                   variant="filled"
@@ -241,6 +258,7 @@
                       : '-'
                   "
                   :label="$t('CompoundAliasForm.substance')"
+                  data-cy="compound-substance-unii"
                   density="compact"
                   readonly
                   variant="filled"
@@ -255,6 +273,7 @@
                       : '-'
                   "
                   :label="$t('CompoundAliasForm.pharmacological_class')"
+                  data-cy="compound-pharmacological-class"
                   density="compact"
                   readonly
                   variant="filled"
@@ -277,6 +296,7 @@
               :label="$t('StudyCompoundDosingForm.dose_value')"
               :items="form.study_compound.medicinal_product.dose_values"
               :item-title="(item) => `${item.value} ${item.unit_label}`"
+              data-cy="dose-value"
               item-value="uid"
               density="compact"
               clearable

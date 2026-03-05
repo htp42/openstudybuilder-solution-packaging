@@ -512,6 +512,7 @@ def add_term(
         term_uid=term_input.term_uid,
         order=term_input.order,
         submission_value=term_input.submission_value,
+        ordinal=term_input.ordinal,
     )
 
 

@@ -50,6 +50,8 @@ Feature: Library - Syntax Templates - Activity Instructions - Parent
         Given The 'library/activity_instruction_templates/parent' page is opened
         And The Add template button is clicked
         And The activity instruction template form is filled with base data
+        And Form continue button is clicked
+        And Form continue button is clicked
         And All activity instruction indexes are filled in
         And User intercepts activity templates request
         And Form save button is clicked
@@ -62,7 +64,9 @@ Feature: Library - Syntax Templates - Activity Instructions - Parent
         Given The 'library/activity_instruction_templates/parent' page is opened
         And The Add template button is clicked
         And The activity instruction template form is filled with base data
-        When Indexes are set as not applicable
+        And Form continue button is clicked
+        And Form continue button is clicked
+        When All Not Applicable checkboxes are checked
         And The mandatory indexes are filled
         And User intercepts activity templates request
         And Form save button is clicked
@@ -79,6 +83,8 @@ Feature: Library - Syntax Templates - Activity Instructions - Parent
         When The 'Edit' option is clicked from the three dot menu list
         And The activity instruction template form is filled with base data
         And Form continue button is clicked
+        And Form continue button is clicked
+        And Form continue button is clicked
         And Template change description is provided
         And User intercepts activity templates request
         And Form save button is clicked
@@ -90,7 +96,7 @@ Feature: Library - Syntax Templates - Activity Instructions - Parent
     Scenario: [Create][Mandatory fields] User must not be able to create Activity Instruction template without: Template Text
         Given The 'library/activity_instruction_templates/parent' page is opened
         And The Add template button is clicked
-        When The Template is added without template text
+        When Form continue button is clicked
         Then The validation appears for Template name
         And The form is not closed
 
@@ -100,6 +106,8 @@ Feature: Library - Syntax Templates - Activity Instructions - Parent
         And The 'library/activity_instruction_templates/parent' page is opened
         And The Add template button is clicked
         And The activity instruction template form is filled with already existing name
+        And Form continue button is clicked
+        And Form continue button is clicked
         And All activity instruction indexes are filled in
         And Form save button is clicked
         Then The pop up displays 'already exists'
@@ -109,6 +117,8 @@ Feature: Library - Syntax Templates - Activity Instructions - Parent
         Given The 'library/activity_instruction_templates/parent' page is opened
         And The Add template button is clicked
         And The activity instruction template form is filled with base data
+        And Form continue button is clicked
+        And Form continue button is clicked
         And All activity instruction indexes are filled in
         When Indication or Disorder index is cleared
         And Form save button is clicked
@@ -119,6 +129,8 @@ Feature: Library - Syntax Templates - Activity Instructions - Parent
         Given The 'library/activity_instruction_templates/parent' page is opened
         And The Add template button is clicked
         And The activity instruction template form is filled with base data
+        And Form continue button is clicked
+        And Form continue button is clicked
         And All activity instruction indexes are filled in
         And The Activity Group index is cleared
         And Form save button is clicked
@@ -129,6 +141,8 @@ Feature: Library - Syntax Templates - Activity Instructions - Parent
         Given The 'library/activity_instruction_templates/parent' page is opened
         And The Add template button is clicked
         And The activity instruction template form is filled with base data
+        And Form continue button is clicked
+        And Form continue button is clicked
         And All activity instruction indexes are filled in
         And The Activity Subgroup index is cleared
         And Form save button is clicked
@@ -139,6 +153,8 @@ Feature: Library - Syntax Templates - Activity Instructions - Parent
         Given The 'library/activity_instruction_templates/parent' page is opened
         And The Add template button is clicked
         And The activity instruction template form is filled with base data
+        And Form continue button is clicked
+        And Form continue button is clicked
         And All activity instruction indexes are filled in
         And The Activity index is cleared
         And Form save button is clicked
@@ -246,6 +262,8 @@ Feature: Library - Syntax Templates - Activity Instructions - Parent
         Then The item has status 'Draft' and version '1.1'
         When The 'Edit' option is clicked from the three dot menu list
         And The activity template metadata update is started
+        And Form continue button is clicked
+        And Form continue button is clicked
         And All activity instruction indexes are cleared and filled in
         And Form continue button is clicked
         And Template change description is provided
@@ -323,6 +341,8 @@ Feature: Library - Syntax Templates - Activity Instructions - Parent
         Given The 'library/activity_instruction_templates/parent' page is opened
         And The Add template button is clicked
         And The activity template edition form is filled with data
+        And Form continue button is clicked
+        And Form continue button is clicked
         And All activity instruction indexes are filled in
         When Fullscreen wizard is closed by clicking cancel button
         And Action is confirmed by clicking continue
@@ -336,6 +356,8 @@ Feature: Library - Syntax Templates - Activity Instructions - Parent
         And The activity instruction is searched and found
         When The 'Edit' option is clicked from the three dot menu list
         And The activity template edition form is filled with data
+        And Form continue button is clicked
+        And Form continue button is clicked
         And All activity instruction indexes are filled in
         And Fullscreen wizard is closed by clicking cancel button
         And Action is confirmed by clicking continue

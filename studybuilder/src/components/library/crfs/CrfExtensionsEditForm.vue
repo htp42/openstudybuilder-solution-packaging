@@ -107,26 +107,22 @@
           </template>
           <template #actions="">
             <v-btn
-              class="ml-2 mb-2"
-              dark
+              class="ml-2 mb-2 expandHoverBtn"
               color="crfGroup"
-              rounded
               :disabled="!accessGuard.checkPermission($roles.LIBRARY_WRITE)"
               @click="addElement"
             >
-              <v-icon dark> mdi-plus </v-icon>
-              {{ $t('CRFExtensions.element') }}
+              <v-icon left> mdi-plus </v-icon>
+              <span class="label">{{ $t('CRFExtensions.element') }}</span>
             </v-btn>
             <v-btn
-              class="ml-2 mb-2"
-              dark
+              class="ml-2 mb-2 expandHoverBtn"
               color="crfItem"
-              rounded
               :disabled="!accessGuard.checkPermission($roles.LIBRARY_WRITE)"
               @click="addAttribute"
             >
-              <v-icon dark> mdi-plus </v-icon>
-              {{ $t('CRFExtensions.attribute') }}
+              <v-icon left> mdi-plus </v-icon>
+              <span class="label">{{ $t('CRFExtensions.attribute') }}</span>
             </v-btn>
           </template>
         </NNTable>

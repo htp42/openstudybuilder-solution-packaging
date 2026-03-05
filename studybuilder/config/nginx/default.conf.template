@@ -34,6 +34,10 @@ server {
         proxy_pass http://$CONSUMER_API_HOST:$CONSUMER_API_PORT/;
     }
 
+    location $EXTENSIONS_API_PATH {
+        proxy_pass http://$EXTENSIONS_API_HOST:$EXTENSIONS_API_PORT/;
+    }
+
     location $DOC_PATH {
         proxy_pass http://$DOC_HOST:$DOC_PORT/;
     }

@@ -4,7 +4,6 @@
     :headers="headers"
     :items="codelists"
     :items-length="total"
-    :page="ctCataloguesStore.currentCataloguePage"
     export-object-label="Codelists"
     :export-data-url="columnDataResource"
     :export-data-url-params="exportUrlParams"
@@ -21,15 +20,15 @@
       <v-btn
         v-if="!readOnly"
         data-cy="add-sponsor-codelist"
-        class="ml-2"
-        size="small"
+        class="ml-2 expandHoverBtn"
         variant="outlined"
         color="nnBaseBlue"
-        :title="$t('CodelistCreationForm.title')"
         :disabled="!accessGuard.checkPermission($roles.LIBRARY_WRITE)"
-        icon="mdi-plus"
         @click.stop="showCreationForm = true"
-      />
+      >
+        <v-icon left>mdi-plus</v-icon>
+        <span class="label">{{ $t('CodelistCreationForm.title') }}</span>
+      </v-btn>
     </template>
     <template #beforeSwitches="">
       <v-select
@@ -160,7 +159,6 @@
 
 <script setup>
 import { computed, inject, ref, watch } from 'vue'
-import { useCtCataloguesStore } from '@/stores/library-ctcatalogues'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import controlledTerminology from '@/api/controlledTerminology'
@@ -214,7 +212,6 @@ const props = defineProps({
   },
 })
 const emit = defineEmits(['openCodelistTerms'])
-const ctCataloguesStore = useCtCataloguesStore()
 const termsStore = useTermsStore()
 const accessGuard = useAccessGuard()
 const { t } = useI18n()
@@ -349,12 +346,6 @@ function fetchCodelists(filters, options, filtersUpdated) {
     filters,
     filtersUpdated
   )
-  if (
-    params.page_number &&
-    params.page_number !== ctCataloguesStore.currentCataloguePage
-  ) {
-    ctCataloguesStore.currentCataloguePage = params.page_number
-  }
   savedFilters.value = filters
   params.library_name = props.library
   if (props.package) {

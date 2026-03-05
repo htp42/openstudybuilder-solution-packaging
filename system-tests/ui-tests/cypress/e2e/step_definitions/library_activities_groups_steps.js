@@ -2,13 +2,15 @@ const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor")
 
 let activityGroupName, abbreviation = "ABB", definition = "DEF"
 
+When('User intercepts activity group request', () => cy.intercept('/api/concepts/activities/activity-groups?page_number=1&*').as('getData'))
+
+When('User waits for activity group request', () => cy.wait('@getData', {timeout: 20000}))
+
 When('The add activity group button is clicked', () => cy.clickButton('add-activity'))
 
 When('Activity group is searched for and found', () => cy.searchAndCheckPresence(activityGroupName, true))
 
 When('Activity group is searched for and not found', () => cy.searchAndCheckPresence(activityGroupName, false))
-
-Given('Activity group is saved and snackbar message says it is {string}', (action) => saveGroup(action))
 
 When('The test activity group container is filled with data', () => fillGroupData())
 
@@ -69,13 +71,6 @@ function fillGroupData() {
     cy.get('[data-cy="groupform-activity-group-field"] input').click().type(activityGroupName = `Group${Date.now()}`)
     cy.fillInput('groupform-abbreviation-field', abbreviation)
     cy.fillInput('groupform-definition-field', definition)
-}
-
-function saveGroup(action = 'created') {
-    cy.intercept('/api/concepts/activities/activity-groups?page_number=1&*').as('getData')
-    cy.clickButton('save-button')
-    cy.get('.v-alert').contains(`Group ${action}`).should('be.visible');
-    cy.wait('@getData', {timeout: 20000})
 }
 
 function editGroup() {

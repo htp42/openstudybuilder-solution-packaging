@@ -1,10 +1,12 @@
-import datetime
 from textwrap import dedent
 from typing import Any
 
 from neomodel import db
 
 from clinical_mdr_api import utils
+from clinical_mdr_api.domain_repositories.generic_repository import (
+    _manage_versioning_with_relations,
+)
 from clinical_mdr_api.domain_repositories.models.study import StudyRoot
 from clinical_mdr_api.domain_repositories.models.study_audit_trail import (
     Create,
@@ -707,29 +709,46 @@ class StudySoAFootnoteRepository:
         )
 
         if create:
-            self.manage_versioning_create(
+            _manage_versioning_with_relations(
                 study_root=study_root,
-                study_soa_footnote_vo=soa_footnote_vo,
-                new_node=soa_footnote_node,
+                action_type=Create,
+                before=None,
+                after=soa_footnote_node,
+                author_id=soa_footnote_vo.author_id,
             )
             soa_footnote_node.study_value.connect(study_value)
         else:
             previous_item = StudySoAFootnote.nodes.filter(uid=soa_footnote_vo.uid).has(
                 study_value=True, has_before=False
             )[0]
+            exclude_relationships = [
+                FootnoteValue,
+                FootnoteTemplateValue,
+                StudySoAFootnote.references_study_activity,
+                StudySoAFootnote.references_study_activity_subgroup,
+                StudySoAFootnote.references_study_activity_group,
+                StudySoAFootnote.references_study_soa_group,
+                StudySoAFootnote.references_study_epoch,
+                StudySoAFootnote.references_study_visit,
+                StudySoAFootnote.references_study_activity_schedule,
+            ]
             if soa_footnote_vo.is_deleted:
-                self.manage_versioning_delete(
+                _manage_versioning_with_relations(
                     study_root=study_root,
-                    study_soa_footnote_vo=soa_footnote_vo,
-                    previous_node=previous_item,
-                    new_node=soa_footnote_node,
+                    action_type=Delete,
+                    before=previous_item,
+                    after=soa_footnote_node,
+                    exclude_relationships=exclude_relationships,
+                    author_id=soa_footnote_vo.author_id,
                 )
             else:
-                self.manage_versioning_update(
+                _manage_versioning_with_relations(
                     study_root=study_root,
-                    study_soa_footnote_vo=soa_footnote_vo,
-                    previous_node=previous_item,
-                    new_node=soa_footnote_node,
+                    action_type=Edit,
+                    before=previous_item,
+                    after=soa_footnote_node,
+                    exclude_relationships=exclude_relationships,
+                    author_id=soa_footnote_vo.author_id,
                 )
                 soa_footnote_node.study_value.connect(study_value)
             # disconnect old StudyValue node to only keep StudyValue connection to the Latest value of StudySoAFootnote
@@ -769,52 +788,6 @@ class StudySoAFootnoteRepository:
             selection_vo = self.create_vo_history_from_db_output(selection=selection)
             all_selections.append(selection_vo)
         return all_selections
-
-    def manage_versioning_create(
-        self,
-        study_root: StudyRoot,
-        study_soa_footnote_vo: StudySoAFootnoteVO,
-        new_node: StudySoAFootnote,
-    ):
-        action = Create(
-            date=datetime.datetime.now(datetime.timezone.utc),
-            author_id=study_soa_footnote_vo.author_id,
-        )
-        action.save()
-        action.has_after.connect(new_node)
-        study_root.audit_trail.connect(action)
-
-    def manage_versioning_update(
-        self,
-        study_root: StudyRoot,
-        study_soa_footnote_vo: StudySoAFootnoteVO,
-        previous_node: StudySoAFootnote,
-        new_node: StudySoAFootnote,
-    ):
-        action = Edit(
-            date=datetime.datetime.now(datetime.timezone.utc),
-            author_id=study_soa_footnote_vo.author_id,
-        )
-        action.save()
-        action.has_before.connect(previous_node)
-        action.has_after.connect(new_node)
-        study_root.audit_trail.connect(action)
-
-    def manage_versioning_delete(
-        self,
-        study_root: StudyRoot,
-        study_soa_footnote_vo: StudySoAFootnoteVO,
-        previous_node: StudySoAFootnote,
-        new_node: StudySoAFootnote,
-    ):
-        action = Delete(
-            date=datetime.datetime.now(datetime.timezone.utc),
-            author_id=study_soa_footnote_vo.author_id,
-        )
-        action.save()
-        action.has_before.connect(previous_node)
-        action.has_after.connect(new_node)
-        study_root.audit_trail.connect(action)
 
     def check_exists_soa_footnotes_for_footnote_and_study_uid(
         self, study_uid: str, footnote_uid: str, soa_footnote_uid_to_exclude: str

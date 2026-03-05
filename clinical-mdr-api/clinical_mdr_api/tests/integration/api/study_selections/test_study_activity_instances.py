@@ -2779,3 +2779,78 @@ def test_batch_patch_study_activity_instance_data_supplier_and_origin_fields(
     assert res["origin_source"]["term_uid"] == origin_source_term.term_uid
 
     TestUtils.delete_study(test_study.uid)
+
+
+@pytest.mark.parametrize(
+    "field,invalid_uid,expected_msg",
+    [
+        (
+            "origin_type_uid",
+            "InvalidUid_1",
+            "Origin Type Term with UID 'InvalidUid_1' doesn't exist.",
+        ),
+        (
+            "origin_source_uid",
+            "InvalidUid_2",
+            "Origin Source Term with UID 'InvalidUid_2' doesn't exist.",
+        ),
+    ],
+)
+def test_study_activity_instance_invalid_origin_uid(
+    api_client, field, invalid_uid, expected_msg
+):
+    """Test that invalid origin UIDs return 400 error."""
+    test_study = TestUtils.create_study(project_number=project.project_number)
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activities",
+        json={
+            "activity_uid": randomized_activity.uid,
+            "activity_subgroup_uid": randomisation_activity_subgroup.uid,
+            "activity_group_uid": general_activity_group.uid,
+            "soa_group_term_uid": term_efficacy_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
+    study_activity_uid = response.json()["study_activity_uid"]
+
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activity-instances",
+        json={
+            "study_activity_uid": study_activity_uid,
+            "activity_instance_uid": second_randomized_activity_instance.uid,
+            field: invalid_uid,
+        },
+    )
+    assert_response_status_code(response, 400)
+    assert response.json()["message"] == expected_msg
+    TestUtils.delete_study(test_study.uid)
+
+
+def test_study_activity_instance_origin_term_not_in_codelist(api_client):
+    """Test that using a term from wrong codelist returns 400 error."""
+    test_study = TestUtils.create_study(project_number=project.project_number)
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activities",
+        json={
+            "activity_uid": randomized_activity.uid,
+            "activity_subgroup_uid": randomisation_activity_subgroup.uid,
+            "activity_group_uid": general_activity_group.uid,
+            "soa_group_term_uid": term_efficacy_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
+    study_activity_uid = response.json()["study_activity_uid"]
+
+    # Use supplier_type_term which exists but is NOT in ORIGINT codelist
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activity-instances",
+        json={
+            "study_activity_uid": study_activity_uid,
+            "activity_instance_uid": second_randomized_activity_instance.uid,
+            "origin_type_uid": supplier_type_term.term_uid,
+        },
+    )
+    assert_response_status_code(response, 400)
+    res = response.json()
+    assert "was not found in the codelist" in res["message"]
+    TestUtils.delete_study(test_study.uid)

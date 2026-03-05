@@ -1,0 +1,96 @@
+{
+  "title": "Activity Instance Export",
+  "version": "2.4",
+  "settings": {
+    "pagenumber": 0,
+    "editable": true,
+    "fullscreenEnabled": false,
+    "parameters": {
+      "neodash_activityinstancevalue_name": [
+        "Eosinophils Blood"
+      ],
+      "neodash_activityinstancevalue_name_display": [
+        "Eosinophils Blood"
+      ],
+      "neodash_": "finding_category"
+    },
+    "theme": "light"
+  },
+  "pages": [
+    {
+      "title": "New page",
+      "reports": [
+        {
+          "id": "fd7ccd21-1a54-4645-ae33-a3c455e0b449",
+          "title": "Activity items",
+          "query": "MATCH (n1:ActivityInstanceValue)\nWHERE n1.name in $neodash_activityinstancevalue_name\nMATCH (n1)-[r1:CONTAINS_ACTIVITY_ITEM]-(ai:ActivityItem)\n\nMATCH\n  (ai)-[r2:HAS_ACTIVITY_ITEM]-\n  (n6:ActivityItemClassRoot)-[r3:LATEST_FINAL]-\n  (n7:ActivityItemClassValue)\nMATCH (n1)-[r4:LATEST_FINAL]-(n8:ActivityInstanceRoot)\nMATCH\n  (n1)-[r5:HAS_ACTIVITY]-\n  (n9:ActivityGrouping)-[r6:HAS_GROUPING]-\n  (n10:ActivityValue)-[r7:LATEST_FINAL]-\n  (n11:ActivityRoot)\nMATCH\n  (n1)-[r8:ACTIVITY_INSTANCE_CLASS]-\n  (n12:ActivityInstanceClassRoot)-[r9:LATEST_FINAL]-\n  (n13:ActivityInstanceClassValue)\n\n\n\n// Make sure that the query works in both previous (PRD) and new (DEV) model\n// Previous model: ActivityGrouping-[r10:IN_SUBGROUP]-(ActivityValidGroup)-[r11:IN_GROUP]-(ActivityGroupValue)\nOPTIONAL MATCH\n  (n9)-[r12:IN_SUBGROUP]-\n  (old_avg:ActivityValidGroup)-[r13:IN_GROUP]-\n  (old_agv:ActivityGroupValue)\nOPTIONAL MATCH (old_avg)-[r14:HAS_GROUP]-(old_asgv:ActivitySubGroupValue)\n// New model: ActivityGrouping-[r15:HAS_SELECTED_GROUP]-(ActivityGroupValue)\nOPTIONAL MATCH\n  (n9)-[r16:HAS_SELECTED_GROUP]-\n  (new_agv:ActivityGroupValue)\nOPTIONAL MATCH (n9)-[r17:HAS_SELECTED_SUBGROUP]-(new_asgv:ActivitySubGroupValue)\n\nOPTIONAL MATCH\n  (ai)-[r18:HAS_CT_TERM]->\n  (n3:CTTermRoot)-[r19:HAS_ATTRIBUTES_ROOT]->\n  (n4:CTTermAttributesRoot)-[r20:LATEST_FINAL]-\n  (n5:CTTermAttributesValue)\nOPTIONAL MATCH\n  (ai)-[r21:HAS_UNIT_DEFINITION]->\n  (udr:UnitDefinitionRoot)-[r22:LATEST_FINAL]->\n  (udv:UnitDefinitionValue)\n\nWITH\n  COALESCE(collect(new_agv.name)[0], collect(old_agv.name)[0]) AS `Assm. group`,\n  COALESCE(collect(new_asgv.name)[0], collect(old_asgv.name)[0]) AS `Assm. subgroup`,\n  n10.name AS activity,\n  n1.name AS activity_instance,\n  n13.name AS ActivityInstanceClassValue,\n  n1.topic_code AS TOPIC_CD,\n  n7.name AS activity_item_type,\n  COALESCE(n5.name_submission_value, n5.code_submission_value, udv.name) AS term\nRETURN\n  `Assm. group`,\n  `Assm. subgroup`,\n  activity,\n  activity_instance,\n  ActivityInstanceClassValue,\n  TOPIC_CD,\n  activity_item_type,\n  \"\" as codelist,\n  apoc.text.join(collect(DISTINCT term), '|') AS activity_item_value\nORDER BY TOPIC_CD\n",
+          "width": 21,
+          "height": 6,
+          "x": 0,
+          "y": 2,
+          "type": "table",
+          "selection": {},
+          "settings": {
+            "compact": true,
+            "wrapContent": true,
+            "allowDownload": true,
+            "actionsRules": [
+              {
+                "condition": "Click",
+                "field": "",
+                "value": "",
+                "customization": "set variable",
+                "customizationValue": ""
+              }
+            ],
+            "styleRules": [
+              {
+                "field": "",
+                "condition": "=",
+                "value": "",
+                "customization": "row color",
+                "customizationValue": "black"
+              }
+            ]
+          }
+        },
+        {
+          "id": "972e858e-4a51-4465-ab27-8fca527465f2",
+          "title": "Select Activity Instances",
+          "query": "MATCH (n:`ActivityInstanceValue`) \nWHERE toLower(toString(n.`name`)) CONTAINS toLower($input) \nRETURN DISTINCT n.`name` as value,  n.`name` as display ORDER BY size(toString(value)) ASC LIMIT 5",
+          "width": 21,
+          "height": 2,
+          "x": 0,
+          "y": 0,
+          "type": "select",
+          "selection": {},
+          "settings": {
+            "type": "Node Property",
+            "entityType": "ActivityInstanceValue",
+            "propertyType": "name",
+            "propertyTypeDisplay": "name",
+            "parameterName": "neodash_activityinstancevalue_name",
+            "multiSelector": true,
+            "multiSelectLimit": 20
+          },
+          "schema": []
+        }
+      ]
+    }
+  ],
+  "parameters": {},
+  "extensions": {
+    "active": true,
+    "activeReducers": [],
+    "advanced-charts": {
+      "active": true
+    },
+    "styling": {
+      "active": true
+    },
+    "actions": {
+      "active": true
+    }
+  },
+  "uuid": "be1726c5-b9a1-4b07-ab16-5eb7c6a69345"
+}

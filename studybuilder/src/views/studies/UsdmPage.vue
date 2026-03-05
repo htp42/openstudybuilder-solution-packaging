@@ -7,15 +7,15 @@
       <v-menu rounded location="bottom">
         <template #activator="{ props }">
           <v-btn
-            class="ml-2"
-            size="small"
+            class="ml-2 expandHoverBtn"
             variant="outlined"
             color="nnBaseBlue"
             v-bind="props"
-            :title="$t('DataTableExportButton.export')"
-            icon="mdi-download-outline"
             :loading="loading || downloadLoading"
-          />
+          >
+            <v-icon left>mdi-download-outline</v-icon>
+            <span class="label">{{ $t('DataTableExportButton.export') }}</span>
+          </v-btn>
         </template>
         <v-list>
           <v-list-item link @click="downloadJSON">

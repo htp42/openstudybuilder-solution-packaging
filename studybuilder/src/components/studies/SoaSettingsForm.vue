@@ -1,5 +1,5 @@
 <template>
-  <v-card bg-color="dfltBackground">
+  <v-card bg-color="dfltBackground" rounded="xl">
     <v-card-title class="d-flex align-center">
       <span class="dialog-title">{{
         $t('ProtocolFlowchart.soa_settings')
@@ -43,11 +43,12 @@
         />
       </div>
     </v-card-text>
-    <v-card-actions class="px-6 py-2">
+    <v-card-actions class="mb-2 px-6 py-2">
       <v-spacer />
       <v-btn
         class="secondary-btn"
         variant="outlined"
+        rounded
         elevation="2"
         width="120px"
         @click="cancel"
@@ -57,6 +58,7 @@
       <v-btn
         color="secondary"
         variant="flat"
+        rounded
         elevation="2"
         width="120px"
         @click="submit"

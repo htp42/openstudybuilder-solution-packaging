@@ -12,15 +12,15 @@
   >
     <template #actions="">
       <v-btn
-        class="ml-2"
-        size="small"
+        class="ml-2 expandHoverBtn"
         variant="outlined"
         color="nnBaseBlue"
-        icon="mdi-plus"
-        :title="$t('CRFExtensions.new_namespace')"
         :disabled="!accessGuard.checkPermission($roles.LIBRARY_WRITE)"
         @click.stop="openCreateForm"
-      />
+      >
+        <v-icon left>mdi-plus</v-icon>
+        <span class="label">{{ $t('CRFExtensions.new_namespace') }}</span>
+      </v-btn>
     </template>
     <template #[`item.actions`]="{ item }">
       <ActionsMenu :actions="actions" :item="item" />

@@ -26,16 +26,16 @@
       <template #actions>
         <v-btn
           v-if="!preInstanceMode"
-          class="ml-2"
-          size="small"
+          class="ml-2 expandHoverBtn"
           variant="outlined"
           color="nnBaseBlue"
           data-cy="add-template"
-          :title="$t(`${translationType}.add`)"
           :disabled="!accessGuard.checkPermission($roles.LIBRARY_WRITE)"
-          icon="mdi-plus"
           @click="createTemplate()"
-        />
+        >
+          <v-icon left>mdi-plus</v-icon>
+          <span class="label">{{ $t(`${translationType}.add`) }}</span>
+        </v-btn>
       </template>
       <template v-for="(_, slot) of $slots" #[slot]="scope">
         <slot :name="slot" v-bind="scope" />

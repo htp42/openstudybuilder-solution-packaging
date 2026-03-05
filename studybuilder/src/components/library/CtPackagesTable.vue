@@ -16,14 +16,16 @@
       >
         <template #extraActions>
           <v-btn
-            class="ml-2"
-            size="small"
+            class="ml-2 expandHoverBtn"
             variant="outlined"
             color="nnBaseBlue"
-            :title="$t('CtPackageHistory.ct_packages_history')"
-            icon="mdi-calendar-clock"
             @click="goToPackagesHistory(catalogue_name)"
-          />
+          >
+            <v-icon left>mdi-calendar-clock</v-icon>
+            <span class="label">{{
+              $t('CtPackageHistory.ct_packages_history')
+            }}</span>
+          </v-btn>
         </template>
       </CodelistTable>
     </template>

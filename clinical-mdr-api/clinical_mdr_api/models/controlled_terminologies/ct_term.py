@@ -119,6 +119,7 @@ class CTTermCodelistInput(BaseModel):
     codelist_uid: Annotated[str, Field()]
     submission_value: Annotated[str, Field()]
     order: Annotated[int | None, Field()] = None
+    ordinal: Annotated[float | None, Field()] = None
 
 
 class CTTermCreateInput(PostInputModel):

@@ -28,5 +28,6 @@ linting_report.txt
 .coverage*
 /reports
 /consumer_api/reports
+/extensions/reports
 traceability.html
 Consumer_API_Traceability.html

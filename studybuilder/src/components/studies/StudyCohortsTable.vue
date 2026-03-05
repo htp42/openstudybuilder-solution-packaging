@@ -30,34 +30,36 @@
       <template #actions="">
         <v-btn
           v-if="editStepper && designClass === cohortConstants.MANUAL"
-          class="ml-2"
-          size="small"
+          class="ml-2 expandHoverBtn"
           variant="outlined"
           color="nnBaseBlue"
-          :title="$t('StudyCohorts.add_study_cohort')"
           data-cy="add-study-cohort"
           :disabled="
             !accessGuard.checkPermission($roles.STUDY_WRITE) ||
             studiesGeneralStore.selectedStudyVersion !== null
           "
-          icon="mdi-plus"
           @click.stop="showForm()"
-        />
+        >
+          <v-icon left>mdi-plus</v-icon>
+          <span class="label">{{ $t('StudyCohorts.add_study_cohort') }}</span>
+        </v-btn>
         <v-btn
           v-else-if="editStepper"
-          class="ml-2"
-          size="small"
+          class="ml-2 expandHoverBtn"
           variant="outlined"
           color="nnBaseBlue"
-          :title="$t('StudyCohorts.cohorts_stepper')"
           :disabled="
             !accessGuard.checkPermission($roles.STUDY_WRITE) ||
             studiesGeneralStore.selectedStudyVersion !== null
           "
-          :icon="editStepper ? 'mdi-pencil' : 'mdi-plus'"
           @click.stop="showCohortsStepper = true"
           @close="showCohortsStepper = false"
-        />
+        >
+          <v-icon left>{{
+            editStepper ? 'mdi-pencil-outline' : 'mdi-plus'
+          }}</v-icon>
+          <span class="label">{{ $t('StudyCohorts.cohorts_stepper') }}</span>
+        </v-btn>
       </template>
       <template #tbody>
         <tbody v-show="sortMode" ref="parent">

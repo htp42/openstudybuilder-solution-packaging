@@ -18,8 +18,6 @@ from clinical_mdr_api.domain_repositories.models.study_audit_trail import (
     Edit,
     StudyAction,
 )
-from clinical_mdr_api.domain_repositories.models.study_field import StudyField
-from clinical_mdr_api.domain_repositories.models.study_selections import StudySelection
 from clinical_mdr_api.repositories._utils import sb_clear_cache
 from common.config import settings
 from common.exceptions import ValidationException
@@ -224,105 +222,13 @@ def get_connected_node_by_rel_name_and_study_value(
 
 
 @trace_calls
-def manage_previous_connected_study_selection_relationships(
-    previous_item: Any,
-    study_value_node: Any,
-    new_item: Any,
-    exclude_study_selection_relationships: list[Any] | None = None,
-):
-    """
-    Method for preserving the previous version's connected StudySelection(s) relationships to the current version.
-    Take into account that the StudySelection(s) that will be kept are only those
-    - those StudySelections that are linked to the study_value_node supplied as a parameter ":param study_value_node:"
-    - those StudySelections that are specified as relationship on the NeoModel Class object
-
-    It is possible to exclude StudySelection(s) if they are already kept and can be connected and found by UID on the VO.
-    By giving the parameter ":param exclude_study_selection_relationships:" the StudySelections will be excluded.
-    This method's purpose is to be maintenance-driven (constantly maintain and define what will be omitted).
-
-    :param previous_item: Any, Previous item from which relationships should be maintained
-    :param study_value_node: Any, StudyValue node from which the previous item should be disconnected
-    :param new_item: Any, New item to link the existing relationships
-    :param exclude_relationships: list[Union[list[Union[str,Any]],Any]] = None,
-        Excluded relationships to keep because they are maintained (linked) by its uid
-        *  There are two ways to define exclusion:
-            * list[Type[StudySelectionNeoModel]: type of the node]
-            * list[(str: relationship_name, Type[StudySelectionNeoModel]: type of the node )]
-        * For instance:
-            * we can define either simply the node type object on exclude_relationships --> [CTTermRoot,...]
-            * or we can define the specific relationship exclude_relationships --> [("has_visit_contact_mode", CTTermRoot),...],
-            * Both might also be in the same List exclude_relationships --> [("has_visit_contact_mode", CTTermRoot), UnitDefinitionRoot, ...]
-
-    :raises: BusinessLogicException -- An exception is thrown if the previous node is not connected to a StudyValue,
-    to ensure that the relationships are preserved.
-
-    :return:
-    """
-    if not exclude_study_selection_relationships:
-        exclude_study_selection_relationships = []
-    # ensure that StudyValue will be excluded from being maintained, later will be dropped
-    exclude_study_selection_relationships.append(type(study_value_node))
-    exclude_study_selection_relationships.append(StudyAction)
-    study_selection_relationships = [
-        (rel[0], rel[1].definition["node_class"])
-        for rel in previous_item.__all_relationships__
-        if (
-            issubclass(
-                rel[1].definition["node_class"],
-                (StudySelection, StudyField, type(study_value_node), StudyAction),
-            )
-        )
-    ]
-    study_value_rel_name = None
-    for rel_name, target_node_type in study_selection_relationships:
-        if target_node_type == type(study_value_node):
-            study_value_rel_name = rel_name
-
-    study_action_rels = [
-        i_rel for i_rel in study_selection_relationships if i_rel[1] == StudyAction
-    ]
-    # filter just those relationships that we want to maintain, to not appear if rel in exclude_study_selection_relationships
-    relationships_to_maintain = [
-        i_rel
-        for i_rel in study_selection_relationships
-        if not (
-            i_rel in exclude_study_selection_relationships
-            or i_rel[1] in exclude_study_selection_relationships
-        )
-    ]
-    # MAINTAIN non filtered relationships, just for those non filtered relationships nodes with StudyValue connection
-    for connected_rel_name, _ in relationships_to_maintain:
-        connected_nodes = get_connected_node_by_rel_name_and_study_value(
-            node=previous_item,
-            connected_rel_name=connected_rel_name,
-            study_value=study_value_node,
-            multiple_returned_nodes=True,
-            at_least_one_returned=False,
-        )
-        # connect to those connected nodes with same study_value as new_item
-        for i_connected_node in connected_nodes:
-            getattr(new_item, connected_rel_name).connect(i_connected_node)
-    # run ".single()" to confirm that the StudyAction cardinalities are correct.
-    for study_action_rel_name, _ in study_action_rels:
-        getattr(previous_item, study_action_rel_name).single()
-        getattr(new_item, study_action_rel_name).single()
-    # DROP StudyValue relationship
-    if study_value_rel_name:
-        ValidationException.raise_if_not(
-            getattr(previous_item, study_value_rel_name).single(),
-            msg=f"The modified version of '{previous_item.uid}' of type '{previous_item.__label__}' is not connected to any StudyValue node.",
-        )
-        getattr(previous_item, study_value_rel_name).disconnect(study_value_node)
-
-
-@trace_calls
 def _manage_versioning_with_relations(
     study_root: StudyRoot | str,
     action_type: type[StudyAction],
     before: StructuredNode | None = None,
     after: StructuredNode | None = None,
     exclude_relationships: Iterable[
-        type[StructuredNode] | type[RelationshipDefinition] | str
+        type[StructuredNode] | RelationshipDefinition | str
     ] = tuple(),
     **properties,
 ) -> StudyAction:
@@ -408,10 +314,10 @@ def _manage_versioning_with_relations(
         for rel in exclude_relationships:
             if isinstance(rel, str):
                 _exclude_relationships.add(rel)
+            elif isinstance(rel, RelationshipDefinition):
+                _exclude_relationships.add(rel.definition["relation_type"])
             elif issubclass(rel, StructuredNode):
                 _exclude_labels.add(rel.__name__)
-            elif issubclass(rel, RelationshipDefinition):
-                _exclude_relationships.add(rel.definition["relation_type"])
             else:
                 raise RuntimeError(
                     "exclude_relationships must be an iterable of StructuredNode subclasses or relationship type strings."

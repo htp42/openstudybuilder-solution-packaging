@@ -8,6 +8,9 @@ from clinical_mdr_api import utils
 from clinical_mdr_api.domain_repositories._utils.helpers import (
     acquire_write_lock_study_value,
 )
+from clinical_mdr_api.domain_repositories.generic_repository import (
+    _manage_versioning_with_relations,
+)
 from clinical_mdr_api.domain_repositories.models.study import StudyRoot, StudyValue
 from clinical_mdr_api.domain_repositories.models.study_audit_trail import (
     Create,
@@ -285,6 +288,7 @@ class StudySelectionCohortRepository:
         )
         return cohort_node
 
+    # pylint: disable=unused-argument
     def save(self, study_selection: StudySelectionCohortAR, author_id: str) -> None:
         """
         Persist the set of selected study cohorts from the aggregate to the database
@@ -351,13 +355,6 @@ class StudySelectionCohortRepository:
             audit_node = self._get_audit_node(
                 study_selection, selection.study_selection_uid
             )
-            # create the before node to the last_study_selection_node and audit trial to study_root
-            audit_node = self._set_before_audit_info(
-                audit_node=audit_node,
-                study_selection_node=last_study_selection_node,
-                study_root_node=study_root_node,
-                author_id=author_id,
-            )
             self._remove_old_selection_if_exists(study_selection.study_uid, selection)
             # storage of the removed node audit trail to after put the "after" relationship to the new one
             audit_trail_nodes[selection.study_selection_uid] = audit_node
@@ -365,31 +362,33 @@ class StudySelectionCohortRepository:
             last_nodes[selection.study_selection_uid] = last_study_selection_node
             if isinstance(audit_node, Delete):
                 self._add_new_selection(
+                    study_root=study_root_node,
                     latest_study_value_node=latest_study_value_node,
                     order=order,
                     selection=selection,
                     audit_node=audit_node,
                     for_deletion=True,
+                    before_node=last_study_selection_node,
                 )
 
         # loop through and add selections
         for order, selection in selections_to_add:
+            last_study_selection_node = None
             # if the study selection already has an audit trail node
             if selection.study_selection_uid in audit_trail_nodes:
                 # extract the audit_trail_node
                 audit_node = audit_trail_nodes[selection.study_selection_uid]
+                last_study_selection_node = last_nodes[selection.study_selection_uid]
             else:
                 audit_node = Create()
-                audit_node.author_id = selection.author_id
-                audit_node.date = selection.start_date
-                audit_node.save()
-                study_root_node.audit_trail.connect(audit_node)
             self._add_new_selection(
+                study_root=study_root_node,
                 latest_study_value_node=latest_study_value_node,
                 order=order,
                 selection=selection,
                 audit_node=audit_node,
                 for_deletion=False,
+                before_node=last_study_selection_node,
             )
 
     @staticmethod
@@ -421,27 +420,14 @@ class StudySelectionCohortRepository:
         )
 
     @staticmethod
-    def _set_before_audit_info(
-        audit_node: StudyAction,
-        study_selection_node: StudyCohort,
-        study_root_node: StudyRoot,
-        author_id: str,
-    ) -> StudyAction:
-        audit_node.author_id = author_id
-        audit_node.date = datetime.datetime.now(datetime.timezone.utc)
-        audit_node.save()
-
-        audit_node.has_before.connect(study_selection_node)
-        study_root_node.audit_trail.connect(audit_node)
-        return audit_node
-
-    @staticmethod
     def _add_new_selection(
+        study_root: StudyRoot,
         latest_study_value_node: StudyValue,
         order: int,
         selection: StudySelectionCohortVO,
         audit_node: StudyAction,
         for_deletion: bool = False,
+        before_node: StudyCohort | None = None,
     ):
         # Create new cohort selection
         study_cohort_selection_node = StudyCohort(
@@ -461,8 +447,6 @@ class StudySelectionCohortRepository:
             latest_study_value_node.has_study_cohort.connect(
                 study_cohort_selection_node
             )
-        # Connect new node with audit trail
-        audit_node.has_after.connect(study_cohort_selection_node)
 
         # check if arm root is set
         if selection.arm_root_uids:
@@ -487,6 +471,15 @@ class StudySelectionCohortRepository:
                 study_cohort_selection_node.branch_arm_root.connect(
                     study_branch_arm_root
                 )
+
+        _manage_versioning_with_relations(
+            study_root=study_root,
+            action_type=type(audit_node),
+            before=before_node,
+            after=study_cohort_selection_node,
+            exclude_relationships=[StudyArm, StudyBranchArm],
+            author_id=selection.author_id,
+        )
 
     def generate_uid(self) -> str:
         return StudyCohort.get_next_free_uid_and_increment_counter()

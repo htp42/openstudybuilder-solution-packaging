@@ -15,15 +15,14 @@ Feature: Library - Concepts - Activities - Activity Item Classes
         Then The current URL is '/library/activities/activity-item-classes'
 
     Scenario: [Table][Options] User must be able to see table with correct options
-        And The '/library/activities/activities' page is opened
         Then A table is visible with following options
             | options                                                         |
-            | Filters                                                         |
-            | Columns                                                         |
+            | Select columns                                                  |
             | Export                                                          |
+            | Select filters                                                  |
+            | Select rows                                                     |
+            | Search                                                          |
             | Show version history                                            |
-            | Add select boxes to table to allow selection of rows for export |
-            | search-field                                                    |
 
     @smoke_test
      Scenario: [Table][Columns][Names] User must be able to see the columns list on the main page as below

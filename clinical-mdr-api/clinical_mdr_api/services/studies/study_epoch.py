@@ -80,6 +80,8 @@ class StudyEpochService(StudySelectionMixin):
         self.visit_repo = self._repos.study_visit_repository
         self.author = user().id()
 
+        if study_uid:
+            self.check_if_study_exists(study_uid=study_uid)
         self.terms_at_specific_datetime = None
         if terms_at_specific_date:
             self.terms_at_specific_datetime = datetime.datetime(
@@ -298,7 +300,7 @@ class StudyEpochService(StudySelectionMixin):
     def _validate_creation(self, epoch_input: StudyEpochCreateInput):
         ValidationException.raise_if(
             epoch_input.epoch_subtype not in self.study_epoch_subtypes_by_uid,
-            msg="Invalid value for study epoch sub type",
+            msg=f"Invalid value for study epoch subtype: {epoch_input.epoch_subtype}",
         )
         epoch_subtype_name = self.study_epoch_subtypes_by_uid[
             epoch_input.epoch_subtype
@@ -313,7 +315,7 @@ class StudyEpochService(StudySelectionMixin):
         ValidationException.raise_if(
             epoch_input.epoch_subtype is not None
             and epoch_input.epoch_subtype not in self.study_epoch_subtypes_by_uid,
-            msg="Invalid value for study epoch sub type",
+            msg=f"Invalid value for study epoch subtype: {epoch_input.epoch_subtype}",
         )
 
     def _get_or_create_epoch_in_specific_subtype(

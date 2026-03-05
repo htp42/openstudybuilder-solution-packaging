@@ -28,56 +28,66 @@ Cypress.Commands.add('approveCollection', (collectionUid) => cy.sendPostRequest(
 
 const createCrfFormBody = (name) => {
     return {
-        name: name, // Use the given name
-        repeating: "no",
-        alias_uids: [],
-        descriptions: [
-            {
-                library_name: "Sponsor",
-                language: "ENG",
-                name: name // Use the same name for descriptions
-            }
-        ],
-        library_name: "Sponsor"
+        oid: null,
+        repeating: "No",
+        aliases: [],
+        translated_texts: [],
+        vendor_elements: [],
+        vendor_element_attributes: [],
+        vendor_attributes: [],
+        name: name,
     }
 }
 
 const createCrfItemBody = (name) => {
     return {
-        name: name, // Use the given name
-        alias_uids: [],
-        locked: "no",
-        datatype: "INTEGER", // Assuming a data type is needed
-        descriptions: [
+        oid: null,
+        aliases: [],
+        translated_texts: [],
+        activity_instances: [
             {
-                library_name: "Sponsor",
-                language: "ENG",
-                name: name // Use the same name for descriptions
+                activity_instance_uid: "",
+                activity_item_class_uid: "",
+                odm_form_ui: "",
+                odm_item_group_uid: "",
+                order: 999999,
+                preset_response_value: "",
+                primary: false,
+                value_condition: "",
+                value_dependent_map: "",
+                availableActivityItemClasses: [],
+                availableParentForms: [],
+                vendor_elements: [],
+                vendor_element_attributes: [],
+                vendor_attributes: []
             }
         ],
+        name: name,
+        datatype: "INTEGER",
         library_name: "Sponsor",
+        unit_definitions: [],
         codelist_uid: null,
-        unitDefinitions: [],
-        terms: []
+        terms: [],
+        vendor_elements: [],
+        vendor_element_attributes: [],
+        vendor_attributes: []
     }
 }
 
 const createCrfItemGroupBody = (name) => {
     return {
-        name: name, // Use the given name
-        repeating: "no",
-        is_reference_data: "no",
-        locked: "no",
-        alias_uids: [],
-        sdtm_domain_uids: [],
-        descriptions: [
-            {
-                library_name: "Sponsor",
-                language: "ENG",
-                name: name // Use the same name for descriptions
-            }
-        ],
-        library_name: "Sponsor"
+        oid: null,
+        repeating: "No",
+        isReferenceData: "No",
+        aliases: [],
+        translated_texts: [],
+        sdtm_domains: [],
+        vendor_elements: [],
+        vendor_element_attributes: [],
+        vendor_attributes: [],
+        name: name,
+        library_name: "Sponsor",
+        sdtm_domain_uids: []
     }
 }
 

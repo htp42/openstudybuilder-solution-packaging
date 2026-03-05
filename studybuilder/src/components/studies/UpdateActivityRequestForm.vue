@@ -124,17 +124,6 @@
         {{ $t('StudyActivityUpdateForms.decline_keep') }}
       </v-btn>
       <v-btn
-        color="red"
-        variant="flat"
-        rounded
-        class="mr-2"
-        :loading="loading"
-        @click="declineAndRemove()"
-      >
-        <v-icon> mdi-close </v-icon>
-        {{ $t('StudyActivityUpdateForms.decline_remove') }}
-      </v-btn>
-      <v-btn
         color="nnBaseBlue"
         variant="flat"
         rounded
@@ -223,23 +212,6 @@ function submit() {
 function close() {
   emit('close')
   notificationHub.clearErrors()
-}
-
-async function declineAndRemove() {
-  loading.value = true
-  study
-    .deleteStudyActivity(
-      studiesGeneralStore.selectedStudy.uid,
-      props.activity.study_activity_uid
-    )
-    .then(() => {
-      loading.value = false
-      notificationHub.add({
-        type: 'success',
-        msg: t('StudyActivityUpdateForms.remove_success'),
-      })
-      close()
-    })
 }
 
 async function declineAndKeep() {

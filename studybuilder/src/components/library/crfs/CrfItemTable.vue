@@ -6,6 +6,7 @@
       :items="items"
       item-value="uid"
       :items-length="total"
+      :initial-sort-by="[{ key: 'name', order: 'asc' }]"
       column-data-resource="concepts/odms/items"
       export-data-url="concepts/odms/items"
       export-object-label="CRFItems"
@@ -13,16 +14,16 @@
     >
       <template #actions="">
         <v-btn
-          class="ml-2"
-          size="small"
+          class="ml-2 expandHoverBtn"
           variant="outlined"
           color="nnBaseBlue"
-          :title="$t('CRFItems.add_title')"
           data-cy="add-crf-item"
-          :disabled="!checkPermission($roles.LIBRARY_WRITE)"
-          icon="mdi-plus"
+          :disabled="!accessGuard.checkPermission($roles.LIBRARY_WRITE)"
           @click.stop="showForm = true"
-        />
+        >
+          <v-icon left>mdi-plus</v-icon>
+          <span class="label">{{ $t('CRFItems.add_title') }}</span>
+        </v-btn>
       </template>
       <template #[`item.name`]="{ item }">
         <v-tooltip bottom>
@@ -39,53 +40,6 @@
             </div>
           </template>
           <span>{{ item.name }}</span>
-        </v-tooltip>
-      </template>
-      <template #[`item.description`]="{ item }">
-        <v-tooltip bottom>
-          <template #activator="{ props }">
-            <div
-              v-bind="props"
-              v-html="
-                sanitizeHTMLHandler(
-                  getDescriptionAttribute(item, 'description', true)
-                )
-              "
-            />
-          </template>
-          <span>{{ getDescriptionAttribute(item, 'description', false) }}</span>
-        </v-tooltip>
-      </template>
-      <template #[`item.sponsor_instruction`]="{ item }">
-        <v-tooltip bottom>
-          <template #activator="{ props }">
-            <div
-              v-bind="props"
-              v-html="
-                sanitizeHTMLHandler(
-                  getDescriptionAttribute(item, 'sponsor_instruction', true)
-                )
-              "
-            />
-          </template>
-          <span>{{
-            getDescriptionAttribute(item, 'sponsor_instruction', false)
-          }}</span>
-        </v-tooltip>
-      </template>
-      <template #[`item.instruction`]="{ item }">
-        <v-tooltip bottom>
-          <template #activator="{ props }">
-            <div
-              v-bind="props"
-              v-html="
-                sanitizeHTMLHandler(
-                  getDescriptionAttribute(item, 'instruction', true)
-                )
-              "
-            />
-          </template>
-          <span>{{ getDescriptionAttribute(item, 'instruction', false) }}</span>
         </v-tooltip>
       </template>
       <template #[`item.status`]="{ item }">
@@ -117,6 +71,7 @@
         :title="itemHistoryTitle"
         :headers="headers"
         :items="itemHistoryItems"
+        :items-total="itemHistoryItems.length"
         @close="closeItemHistory"
       />
     </v-dialog>
@@ -125,7 +80,9 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { computed, inject, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import NNTable from '@/components/tools/NNTable.vue'
 import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter.vue'
 import StatusChip from '@/components/tools/StatusChip.vue'
@@ -137,316 +94,255 @@ import constants from '@/constants/statuses'
 import filteringParameters from '@/utils/filteringParameters'
 import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
 import crfTypes from '@/constants/crfTypes'
-import parameters from '@/constants/parameters'
 import { useAccessGuard } from '@/composables/accessGuard'
 import { useCrfsStore } from '@/stores/crfs'
-import { computed } from 'vue'
-import { sanitizeHTML } from '@/utils/sanitize'
 import CrfNewVersionSummaryConfirmDialog from '@/components/library/crfs/CrfNewVersionSummaryConfirmDialog.vue'
 
-export default {
-  components: {
-    NNTable,
-    NNParameterHighlighter,
-    StatusChip,
-    ActionsMenu,
-    CrfItemForm,
-    HistoryTable,
-    ConfirmDialog,
-    CrfNewVersionSummaryConfirmDialog,
+const props = defineProps({
+  elementProp: {
+    type: Object,
+    default: null,
   },
-  inject: ['notificationHub'],
-  props: {
-    elementProp: {
-      type: Object,
-      default: null,
-    },
-  },
-  setup() {
-    const crfsStore = useCrfsStore()
+})
 
-    return {
-      fetchItems: crfsStore.fetchItems,
-      total: computed(() => crfsStore.totalItems),
-      items: computed(() => crfsStore.items),
-      ...useAccessGuard(),
-    }
-  },
-  data() {
-    return {
-      actions: [
-        {
-          label: this.$t('_global.approve'),
-          icon: 'mdi-check-decagram',
-          iconColor: 'success',
-          condition: (item) =>
-            item.possible_actions.find((action) => action === 'approve'),
-          accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.approve,
-        },
-        {
-          label: this.$t('_global.edit'),
-          icon: 'mdi-pencil-outline',
-          iconColor: 'primary',
-          condition: (item) =>
-            item.possible_actions.find((action) => action === 'edit'),
-          accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.edit,
-        },
-        {
-          label: this.$t('CRFItems.manage_activity_instance_links'),
-          icon: 'mdi-link',
-          iconColor: 'primary',
-          condition: (item) =>
-            item.possible_actions.find((action) => action === 'edit'),
-          accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.manageActivityInstancesLinks,
-        },
-        {
-          label: this.$t('_global.view'),
-          icon: 'mdi-eye-outline',
-          iconColor: 'primary',
-          condition: (item) => item.status === constants.FINAL,
-          click: this.view,
-        },
-        {
-          label: this.$t('_global.new_version'),
-          icon: 'mdi-plus-circle-outline',
-          iconColor: 'primary',
-          condition: (item) =>
-            item.possible_actions.find((action) => action === 'new_version'),
-          accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.newVersion,
-        },
-        {
-          label: this.$t('_global.inactivate'),
-          icon: 'mdi-close-octagon-outline',
-          iconColor: 'primary',
-          condition: (item) =>
-            item.possible_actions.find((action) => action === 'inactivate'),
-          accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.inactivate,
-        },
-        {
-          label: this.$t('_global.reactivate'),
-          icon: 'mdi-undo-variant',
-          iconColor: 'primary',
-          condition: (item) =>
-            item.possible_actions.find((action) => action === 'reactivate'),
-          accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.reactivate,
-        },
-        {
-          label: this.$t('_global.delete'),
-          icon: 'mdi-delete-outline',
-          iconColor: 'error',
-          condition: (item) =>
-            item.possible_actions.find((action) => action === 'delete'),
-          accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.delete,
-        },
-        {
-          label: this.$t('_global.history'),
-          icon: 'mdi-history',
-          click: this.openItemHistory,
-        },
-      ],
-      headers: [
-        { title: '', key: 'actions', width: '1%' },
-        { title: this.$t('CRFItems.oid'), key: 'oid' },
-        { title: this.$t('_global.name'), key: 'name' },
-        {
-          title: this.$t('_global.description'),
-          key: 'description',
-          filteringName: 'descriptions.description',
-        },
-        {
-          title: this.$t('CRFDescriptions.sponsor_instruction'),
-          key: 'sponsor_instruction',
-          filteringName: 'descriptions.sponsor_instruction',
-        },
-        {
-          title: this.$t('CRFDescriptions.instruction'),
-          key: 'instruction',
-          filteringName: 'descriptions.instruction',
-        },
-        { title: this.$t('CRFItems.type'), key: 'datatype', width: '1%' },
-        { title: this.$t('CRFItems.length'), key: 'length', width: '1%' },
-        { title: this.$t('CRFItems.sds_name'), key: 'sds_var_name' },
-        { title: this.$t('_global.version'), key: 'version', width: '1%' },
-        { title: this.$t('_global.status'), key: 'status', width: '1%' },
-      ],
-      showForm: false,
-      filters: '',
-      selectedItem: null,
-      showItemHistory: false,
-      itemHistoryItems: [],
-      openStep: null,
-    }
-  },
-  computed: {
-    itemHistoryTitle() {
-      if (this.selectedItem) {
-        return this.$t('CRFItems.item_history_title', {
-          itemUid: this.selectedItem.uid,
-        })
-      }
-      return ''
-    },
-  },
-  watch: {
-    elementProp(value) {
-      if (value.tab === 'items' && value.type === crfTypes.ITEM && value.uid) {
-        this.edit(value)
-      }
-    },
-  },
-  mounted() {
-    if (
-      this.elementProp.tab === 'items' &&
-      this.elementProp.type === crfTypes.ITEM &&
-      this.elementProp.uid
-    ) {
-      this.edit(this.elementProp)
-    }
-  },
-  created() {
-    this.constants = constants
-  },
-  methods: {
-    sanitizeHTMLHandler(html) {
-      return sanitizeHTML(html)
-    },
-    getDescriptionAttribute(item, attr, short) {
-      const engDesc = item.descriptions.find((el) =>
-        [parameters.EN, parameters.ENG].includes(el.language)
-      )
-      if (engDesc && engDesc[attr]) {
-        return short
-          ? engDesc[attr].length > 40
-            ? engDesc[attr].substring(0, 40) + '...'
-            : engDesc[attr]
-          : engDesc[attr]
-      }
-      return ''
-    },
-    openForm() {
-      this.showForm = true
-    },
-    closeForm() {
-      this.showForm = false
-      this.selectedItem = null
-      this.openStep = null
-      this.$refs.table.filterTable()
-    },
-    approve(item) {
-      crfs.approve('items', item.uid).then(() => {
-        this.$refs.table.filterTable()
+const { t } = useI18n()
+const notificationHub = inject('notificationHub')
+const roles = inject('roles')
+const accessGuard = useAccessGuard()
 
-        this.notificationHub.add({
-          msg: this.$t('CRFItems.approved'),
-        })
-      })
-    },
-    async delete(item) {
-      let relationships = 0
-      await crfs.getRelationships(item.uid, 'items').then((resp) => {
-        if (resp.data.OdmItemGroup && resp.data.OdmItemGroup.length > 0) {
-          relationships = resp.data.OdmItemGroup.length
-        }
-      })
-      const options = {
-        type: 'warning',
-        cancelLabel: this.$t('_global.cancel'),
-        agreeLabel: this.$t('_global.continue'),
-      }
-      if (
-        relationships < 1 ||
-        (await this.$refs.confirm.open(
-          `${this.$t('CRFItems.delete_warning', { count: relationships })}`,
-          options
-        ))
-      ) {
-        crfs.delete('items', item.uid).then(() => {
-          this.$refs.table.filterTable()
+const table = ref(null)
+const confirm = ref(null)
+const confirmNewVersion = ref(null)
 
-          this.notificationHub.add({
-            msg: this.$t('CRFItems.deleted'),
-          })
-        })
-      }
-    },
-    inactivate(item) {
-      crfs.inactivate('items', item.uid).then(() => {
-        this.$refs.table.filterTable()
+const showForm = ref(false)
+const filters = ref('')
+const selectedItem = ref(null)
+const showItemHistory = ref(false)
+const itemHistoryItems = ref([])
+const openStep = ref(null)
 
-        this.notificationHub.add({
-          msg: this.$t('CRFItems.inactivated'),
-        })
-      })
-    },
-    reactivate(item) {
-      crfs.reactivate('items', item.uid).then(() => {
-        this.$refs.table.filterTable()
+const crfsStore = useCrfsStore()
+const total = computed(() => crfsStore.totalItems)
+const items = computed(() => crfsStore.items)
 
-        this.notificationHub.add({
-          msg: this.$t('CRFItems.reactivated'),
-        })
-      })
-    },
-    async newVersion(item) {
-      if (
-        await this.$refs.confirmNewVersion.open({
-          agreeLabel: this.$t('CRFItems.create_new_version'),
-          item: item,
-        })
-      ) {
-        crfs.newVersion('items', item.uid).then(() => {
-          this.$refs.table.filterTable()
+const headers = computed(() => [
+  { title: '', key: 'actions', width: '1%' },
+  { title: t('CRFItems.oid'), key: 'oid' },
+  { title: t('_global.name'), key: 'name' },
+  { title: t('CRFItems.type'), key: 'datatype', width: '1%' },
+  { title: t('CRFItems.length'), key: 'length', width: '1%' },
+  { title: t('CRFItems.sds_name'), key: 'sds_var_name' },
+  { title: t('_global.version'), key: 'version', width: '1%' },
+  { title: t('_global.status'), key: 'status', width: '1%' },
+])
 
-          this.notificationHub.add({
-            msg: this.$t('_global.new_version_success'),
-          })
-        })
-      }
-    },
-    edit(item) {
-      crfs.getItem(item.uid).then((resp) => {
-        this.selectedItem = resp.data
-        this.showForm = true
-      })
-    },
-    manageActivityInstancesLinks(item) {
-      this.edit(item)
-      this.openStep = 'activity_instance_links'
-    },
-    view(item) {
-      crfs.getItem(item.uid).then((resp) => {
-        this.selectedItem = resp.data
-        this.showForm = true
-      })
-    },
-    async openItemHistory(item) {
-      this.selectedItem = item
-      const resp = await crfs.getItemAuditTrail(item.uid)
-      this.itemHistoryItems = resp.data
-      this.showItemHistory = true
-    },
-    closeItemHistory() {
-      this.selectedItem = null
-      this.showItemHistory = false
-    },
-    getItems(filters, options, filtersUpdated) {
-      if (filters) {
-        this.filters = filters
-      }
-      const params = filteringParameters.prepareParameters(
-        options,
-        filters,
-        filtersUpdated
-      )
-      this.fetchItems(params)
-    },
-  },
+const itemHistoryTitle = computed(() => {
+  if (selectedItem.value) {
+    return t('CRFItems.item_history_title', {
+      itemUid: selectedItem.value.uid,
+    })
+  }
+  return ''
+})
+
+function closeForm() {
+  showForm.value = false
+  selectedItem.value = null
+  openStep.value = null
+  table.value?.filterTable?.()
 }
+
+function approve(item) {
+  crfs.approve('items', item.uid).then(() => {
+    table.value?.filterTable?.()
+    notificationHub?.add({
+      msg: t('CRFItems.approved'),
+    })
+  })
+}
+
+async function deleteItem(item) {
+  let relationships = 0
+  await crfs.getRelationships(item.uid, 'items').then((resp) => {
+    if (resp.data.OdmItemGroup && resp.data.OdmItemGroup.length > 0) {
+      relationships = resp.data.OdmItemGroup.length
+    }
+  })
+  const options = {
+    type: 'warning',
+    cancelLabel: t('_global.cancel'),
+    agreeLabel: t('_global.continue'),
+  }
+
+  if (
+    relationships < 1 ||
+    (await confirm.value?.open(
+      `${t('CRFItems.delete_warning', { count: relationships })}`,
+      options
+    ))
+  ) {
+    crfs.delete('items', item.uid).then(() => {
+      table.value?.filterTable?.()
+      notificationHub?.add({
+        msg: t('CRFItems.deleted'),
+      })
+    })
+  }
+}
+
+function inactivate(item) {
+  crfs.inactivate('items', item.uid).then(() => {
+    table.value?.filterTable?.()
+    notificationHub?.add({
+      msg: t('CRFItems.inactivated'),
+    })
+  })
+}
+
+function reactivate(item) {
+  crfs.reactivate('items', item.uid).then(() => {
+    table.value?.filterTable?.()
+    notificationHub?.add({
+      msg: t('CRFItems.reactivated'),
+    })
+  })
+}
+
+async function newVersion(item) {
+  const ok = await confirmNewVersion.value?.open({
+    agreeLabel: t('CRFItems.create_new_version'),
+    item: item,
+  })
+  if (ok) {
+    crfs.newVersion('items', item.uid).then(() => {
+      table.value?.filterTable?.()
+      notificationHub?.add({
+        msg: t('_global.new_version_success'),
+      })
+    })
+  }
+}
+
+function manageActivityInstancesLinks(item) {
+  view(item)
+  openStep.value = 'activity_instance_links'
+}
+
+function view(item) {
+  crfs.getItem(item.uid).then((resp) => {
+    selectedItem.value = resp.data
+    showForm.value = true
+  })
+}
+
+async function openItemHistory(item) {
+  selectedItem.value = item
+  const resp = await crfs.getItemAuditTrail(item.uid)
+  itemHistoryItems.value = resp.data
+  showItemHistory.value = true
+}
+
+function closeItemHistory() {
+  selectedItem.value = null
+  showItemHistory.value = false
+}
+
+function getItems(filterString, options, filtersUpdated) {
+  if (filterString) {
+    filters.value = filterString
+  }
+  const params = filteringParameters.prepareParameters(
+    options,
+    filterString,
+    filtersUpdated
+  )
+  crfsStore.fetchItems(params)
+}
+
+const actions = computed(() => [
+  {
+    label: t('_global.approve'),
+    icon: 'mdi-check-decagram',
+    iconColor: 'success',
+    condition: (item) =>
+      item.possible_actions.find((action) => action === 'approve'),
+    accessRole: roles.LIBRARY_WRITE,
+    click: approve,
+  },
+  {
+    label: t('_global.edit'),
+    icon: 'mdi-pencil-outline',
+    iconColor: 'primary',
+    condition: (item) =>
+      item.possible_actions.find((action) => action === 'edit'),
+    accessRole: roles.LIBRARY_WRITE,
+    click: view,
+  },
+  {
+    label: t('CRFItems.manage_activity_instance_links'),
+    icon: 'mdi-link',
+    iconColor: 'primary',
+    condition: (item) =>
+      item.possible_actions.find((action) => action === 'edit'),
+    accessRole: roles.LIBRARY_WRITE,
+    click: manageActivityInstancesLinks,
+  },
+  {
+    label: t('_global.view'),
+    icon: 'mdi-eye-outline',
+    iconColor: 'primary',
+    condition: (item) => item.status === constants.FINAL,
+    click: view,
+  },
+  {
+    label: t('_global.new_version'),
+    icon: 'mdi-plus-circle-outline',
+    iconColor: 'primary',
+    condition: (item) =>
+      item.possible_actions.find((action) => action === 'new_version'),
+    accessRole: roles.LIBRARY_WRITE,
+    click: newVersion,
+  },
+  {
+    label: t('_global.inactivate'),
+    icon: 'mdi-close-octagon-outline',
+    iconColor: 'primary',
+    condition: (item) =>
+      item.possible_actions.find((action) => action === 'inactivate'),
+    accessRole: roles.LIBRARY_WRITE,
+    click: inactivate,
+  },
+  {
+    label: t('_global.reactivate'),
+    icon: 'mdi-undo-variant',
+    iconColor: 'primary',
+    condition: (item) =>
+      item.possible_actions.find((action) => action === 'reactivate'),
+    accessRole: roles.LIBRARY_WRITE,
+    click: reactivate,
+  },
+  {
+    label: t('_global.delete'),
+    icon: 'mdi-delete-outline',
+    iconColor: 'error',
+    condition: (item) =>
+      item.possible_actions.find((action) => action === 'delete'),
+    accessRole: roles.LIBRARY_WRITE,
+    click: deleteItem,
+  },
+  {
+    label: t('_global.history'),
+    icon: 'mdi-history',
+    click: openItemHistory,
+  },
+])
+
+watch(
+  () => props.elementProp,
+  (value) => {
+    if (value?.tab === 'items' && value?.type === crfTypes.ITEM && value?.uid) {
+      view(value)
+    }
+  }
+)
 </script>

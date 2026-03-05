@@ -1,10 +1,13 @@
-from neomodel import db
+from neomodel import RelationshipDefinition, StructuredNode, db
 
 from clinical_mdr_api.domain_repositories.models.study import StudyValue
 from clinical_mdr_api.domain_repositories.models.study_selections import (
     StudyActivityInstruction,
 )
-from clinical_mdr_api.domain_repositories.models.syntax import ActivityInstructionRoot
+from clinical_mdr_api.domain_repositories.models.syntax import (
+    ActivityInstructionRoot,
+    ActivityInstructionValue,
+)
 from clinical_mdr_api.domain_repositories.study_selections import base
 from clinical_mdr_api.domains.study_selections.study_activity_instruction import (
     StudyActivityInstructionVO,
@@ -28,6 +31,11 @@ class StudyActivityInstructionRepository(base.StudySelectionRepository):
             start_date=study_action.date,
             author_id=study_action.author_id,
         )
+
+    def exclude_relationships(
+        self,
+    ) -> list[type[StructuredNode] | RelationshipDefinition | str]:
+        return [ActivityInstructionValue]
 
     def perform_save(
         self,
@@ -64,8 +72,7 @@ class StudyActivityInstructionRepository(base.StudySelectionRepository):
             self._remove_old_selection_if_exists(selection_vo.study_uid, selection_vo)
 
         # Create new node
-        node = StudyActivityInstruction(uid=selection_vo.uid)
-        node.save()
+        node = StudyActivityInstruction(uid=selection_vo.uid).save()
 
         # Create relations
         node.study_activity.connect(study_activity_node)

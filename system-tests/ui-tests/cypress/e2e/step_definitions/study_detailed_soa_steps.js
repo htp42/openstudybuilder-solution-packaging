@@ -30,7 +30,6 @@ When('Activity checkbox is checked for {int} activity on the list', (index) => {
 })
 
 When('The user goes through selection from library form', () => {
-    cy.clickFormActionButton('continue')
     cy.get('[data-cy="select-activity"]').not('.v-selection-control--disabled').parentsUntil('tr').siblings().eq(4).invoke('text').then((activity_name) => {
         new_activity_name = activity_name.substring(0, 40)
     })
@@ -39,31 +38,32 @@ When('The user goes through selection from library form', () => {
     cy.get('.v-list-item').filter(':visible').first().click()
 })
 
-Then('The newly selected activity replaces previous activity in study', () => cy.contains('table tbody tr.bg-white', new RegExp(`^(${new_activity_name})$`, "g")).should('exist'))
+Then('The newly selected activity replaces previous activity in study', () => {
+    cy.get('table tbody tr.bg-white .ml-4').invoke('text').then(text => cy.wrap(text.trim()).should('equal', new_activity_name))
+})
 
 Then('The old activity is no longer available', () => cy.contains('table tbody tr.bg-white', new RegExp(`^(${activityName})$`, "g")).should('not.exist'))
 
 Then('The Activity is visible in the SoA', () => cy.contains(activity_activity.substring(0, 40)).should('be.visible'))
 
 When('The user selects {string} action after clicking Bulk actions', (action) => {
-    cy.get('[title="Bulk actions"]').click()
+    cy.contains('.v-window-item .d-flex button[aria-controls^="v-menu"]', 'Bulk actions').click()
     cy.contains('.v-list-item', action).click()
 })
 
 Then('The bulk edit view is presented to user allowing to update Activity Group and Visits for selected activities', () => {
-    cy.elementContain('form-body', 'Batch edit study activities')
-    cy.elementContain('form-body', 'Note: The entire row of existing selections will be overwritten with the selection(s) done here')
-    cy.elementContain('form-body', 'Batch editing will overwrite existing choices. Only activities expected to have same schedule should be batch-edited together.')
-    cy.elementContain('form-body', 'Batch edit study activities')
-    cy.elementContain('form-body', activity_list[0])
+    cy.get('[data-cy="form-body"]').should('contain', 'Batch edit study activities')
+    cy.get('[data-cy="form-body"]').should('contain', 'Note: The entire row of existing selections will be overwritten with the selection(s) done here')
+    cy.get('[data-cy="form-body"]').should('contain', 'Batch editing will overwrite existing choices. Only activities expected to have same schedule should be batch-edited together.')
+    cy.get('[data-cy="form-body"]').should('contain', activity_list[0])
 })
 
 When('The user edits activities in bulk', () => {
     cy.slectFirstVSelect('bulk-edit-soa-group')
     cy.slectFirstVSelect('bulk-edit-visit')
-    cy.intercept('**/soa-edits/batch').as('editRequest')
-    cy.clickButton('save-button')
 })
+
+Then('User intercepts bulk edit request', () => cy.intercept('**/soa-edits/batch').as('editRequest'))
 
 Then('The data for bulk edited activities is updated', () => cy.wait('@editRequest').its('response.statusCode').should('equal', 207))
 
@@ -150,9 +150,9 @@ When('User selects visits {string}', (visitList) => {
     visitListArray.forEach(visit => cy.contains('table thead th', visit.trim()).find('input').check())
 })
 
-When('Button for collapsing visits is clicked', () => cy.get('button[title="Group selected visits together"]').click())
+When('Button for collapsing visits is clicked', () => cy.contains('button', 'Group selected visits together').click())
 
-When('Button for collapsing visits is not available', () => cy.get('button[title="Group selected visits together"]').should('not.be.visible'))
+When('Button for collapsing visits is not available', () => cy.contains('button', 'Group selected visits together').should('not.be.visible'))
 
 When('Option for collapsing in {string} is selected', (value) => cy.get(`input[value="${value}"]`).check({force: true}))
 
@@ -174,19 +174,12 @@ Then('Visit group delete button is clicked', () => cy.get('button[title="Delete 
 
 Then('Error message is displayed for collapsing visits with different epochs', () => cy.checkSnackbarMessage("Given Visits can't be collapsed as they exist in different Epochs"))
 
-Then('Footnotes table is available with options', (options) => {
-    options.rows().forEach((option) => {
-        cy.contains('.page-title', 'Footnotes').parent().within(() => {
-            const locator = option == 'search-field' ? `[data-cy="${option}"]` : `[title="${option}"]`
-            cy.get(locator).should('be.visible')
-        })
-    })
-})
+Then('Add footnote button is available in the detailed SoA', () => cy.get(`[title="Add SoA footnotes"]`).should('be.visible'))
 
 Then('SoA table is available with Bulk actions, Export and Show version history', () => {
-    cy.get('button[title="Bulk actions"]').should('be.visible')
-        .siblings('button[title="Export"]').should('be.visible')
-            .siblings('button[title="Show version history"]').should('be.visible')
+    cy.contains('.v-window-item .d-flex button[aria-controls^="v-menu"]', 'Bulk actions').should('exist')
+    cy.contains('.v-window-item .d-flex button[aria-controls^="v-menu"]', 'Export').should('exist')
+    cy.contains('.v-window-item .d-flex button.v-btn--variant-outlined', 'Show version history').should('exist')
 })
 
 Then('Search is available in SoA table', () => cy.contains('.v-label', 'Search Activities').parent().within(() => cy.get('input').should('exist')))

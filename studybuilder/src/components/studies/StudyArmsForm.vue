@@ -1,6 +1,6 @@
 <template>
   <SimpleFormDialog
-    ref="form"
+    ref="formRef"
     :title="title"
     :help-items="helpItems"
     :open="open"
@@ -30,6 +30,18 @@
               :label="$t('StudyArmsForm.arm_name')"
               data-cy="arm-name"
               :rules="[formRules.required, formRules.max(form.name, 200)]"
+              clearable
+              density="compact"
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="12">
+            <v-text-field
+              v-model="form.label"
+              :label="$t('StudyArmsForm.arm_label')"
+              data-cy="arm-label"
+              :rules="[formRules.required, formRules.max(form.label, 40)]"
               clearable
               density="compact"
             />
@@ -109,167 +121,155 @@
   </SimpleFormDialog>
 </template>
 
-<script>
+<script setup>
+import { computed, inject, onMounted, ref, watch } from 'vue'
 import arms from '@/api/arms'
 import codelists from '@/api/controlledTerminology/terms'
 import SimpleFormDialog from '@/components/tools/SimpleFormDialog.vue'
 import _isEqual from 'lodash/isEqual'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 import { useFormStore } from '@/stores/form'
+import { useI18n } from 'vue-i18n'
 
-export default {
-  components: {
-    SimpleFormDialog,
-  },
-  inject: ['notificationHub', 'formRules'],
-  props: {
-    editedArm: {
-      type: Object,
-      default: undefined,
-    },
-    open: Boolean,
-  },
-  emits: ['close'],
-  setup() {
-    const studiesGeneralStore = useStudiesGeneralStore()
-    const formStore = useFormStore()
-    return {
-      selectedStudy: studiesGeneralStore.selectedStudy,
-      formStore,
-    }
-  },
-  data() {
-    return {
-      form: {},
-      helpItems: [
-        'StudyArmsForm.arm_type',
-        'StudyArmsForm.arm_name',
-        'StudyArmsForm.arm_short_name',
-        'StudyArmsForm.randomisation_group',
-        'StudyArmsForm.arm_code',
-        'StudyArmsForm.planned_number',
-        'StudyArmsForm.description',
-      ],
-      armTypes: [],
-      editMode: false,
-      armCodeEnable: false,
-      branches: [],
-      codeRules: '',
-    }
-  },
-  computed: {
-    title() {
-      return Object.keys(this.editedArm).length !== 0
-        ? this.$t('StudyArmsForm.edit_arm')
-        : this.$t('StudyArmsForm.add_arm')
-    },
-  },
-  watch: {
-    editedArm(value) {
-      if (Object.keys(value).length !== 0) {
-        arms.getStudyArm(this.selectedStudy.uid, value.arm_uid).then((resp) => {
-          this.form = JSON.parse(JSON.stringify(resp.data))
-          if (this.form.arm_connected_branch_arms) {
-            this.branches = this.form.arm_connected_branch_arms.map(
-              (el) => el.name
-            )
-            delete this.form.arm_connected_branch_arms
-          }
-          this.form.arm_type_uid = value.arm_type.term_uid
-          this.formStore.save(this.form)
-        })
-      }
-    },
-  },
-  mounted() {
-    codelists.getTermsByCodelist('armTypes').then((resp) => {
-      this.armTypes = resp.data.items
-    })
-    if (Object.keys(this.editedArm).length !== 0) {
-      this.form = JSON.parse(JSON.stringify(this.editedArm))
-      if (this.form.arm_connected_branch_arms) {
-        this.branches = this.form.arm_connected_branch_arms.map((el) => el.name)
-        delete this.form.arm_connected_branch_arms
-      }
-      this.form.arm_type_uid = this.editedArm.arm_type.term_uid
-      this.formStore.save(this.form)
-    }
-  },
-  methods: {
-    enableArmCode() {
-      if (!this.armCodeEnable) {
-        this.form.code = this.form.randomization_group
-        this.armCodeEnable = true
-      }
-    },
-    isEdit() {
-      return Object.keys(this.editedArm).length !== 0
-    },
-    async submit() {
-      this.notificationHub.clearErrors()
+const formRules = inject('formRules')
+const notificationHub = inject('notificationHub')
 
-      if (Object.keys(this.editedArm).length !== 0) {
-        this.edit()
-      } else {
-        this.create()
-      }
-    },
-    create() {
-      arms.create(this.selectedStudy.uid, this.form).then(
-        () => {
-          this.notificationHub.add({
-            msg: this.$t('StudyArmsForm.arm_created'),
-          })
-          this.close()
-        },
-        () => {
-          this.$refs.form.working = false
-        }
-      )
-    },
-    edit() {
-      arms.edit(this.selectedStudy.uid, this.form, this.editedArm.arm_uid).then(
-        () => {
-          this.notificationHub.add({
-            msg: this.$t('StudyArmsForm.arm_updated'),
-          })
-          this.close()
-        },
-        () => {
-          this.$refs.form.working = false
-        }
-      )
-    },
-    close() {
-      this.notificationHub.clearErrors()
-      this.form = {}
-      this.armCodeEnable = false
-      this.$refs.observer.reset()
-      this.$emit('close')
-      this.formStore.reset()
-    },
-    async cancel() {
-      if (
-        this.storedForm === '' ||
-        _isEqual(this.storedForm, JSON.stringify(this.form))
-      ) {
-        this.close()
-      } else {
-        const options = {
-          type: 'warning',
-          cancelLabel: this.$t('_global.cancel'),
-          agreeLabel: this.$t('_global.continue'),
-        }
-        if (
-          await this.$refs.form.confirm(
-            this.$t('_global.cancel_changes'),
-            options
+const props = defineProps({
+  editedArm: {
+    type: Object,
+    default: undefined,
+  },
+  open: Boolean,
+})
+const emit = defineEmits(['close'])
+
+const { t } = useI18n()
+const studiesGeneralStore = useStudiesGeneralStore()
+const formStore = useFormStore()
+
+const selectedStudy = computed(() => studiesGeneralStore.selectedStudy)
+const title = computed(() => {
+  return Object.keys(props.editedArm).length !== 0
+    ? t('StudyArmsForm.edit_arm')
+    : t('StudyArmsForm.add_arm')
+})
+
+const form = ref({})
+const armTypes = ref([])
+const armCodeEnable = ref(false)
+const branches = ref([])
+const formRef = ref()
+const observer = ref()
+let storedForm = ''
+
+const helpItems = [
+  'StudyArmsForm.arm_type',
+  'StudyArmsForm.arm_name',
+  'StudyArmsForm.arm_short_name',
+  'StudyArmsForm.randomisation_group',
+  'StudyArmsForm.arm_code',
+  'StudyArmsForm.planned_number',
+  'StudyArmsForm.description',
+]
+
+watch(
+  () => props.editedArm,
+  (value) => {
+    if (Object.keys(value).length !== 0) {
+      arms.getStudyArm(selectedStudy.value.uid, value.arm_uid).then((resp) => {
+        form.value = JSON.parse(JSON.stringify(resp.data))
+        if (form.value.arm_connected_branch_arms) {
+          branches.value = form.value.arm_connected_branch_arms.map(
+            (el) => el.name
           )
-        ) {
-          this.close()
+          delete form.value.arm_connected_branch_arms
         }
-      }
+        form.value.arm_type_uid = value.arm_type.term_uid
+        formStore.save(form.value)
+      })
+    }
+  }
+)
+
+onMounted(() => {
+  codelists.getTermsByCodelist('armTypes').then((resp) => {
+    armTypes.value = resp.data.items
+  })
+  if (Object.keys(props.editedArm).length !== 0) {
+    form.value = JSON.parse(JSON.stringify(props.editedArm))
+    if (form.value.arm_connected_branch_arms) {
+      branches.value = form.value.arm_connected_branch_arms.map((el) => el.name)
+      delete form.value.arm_connected_branch_arms
+    }
+    form.value.arm_type_uid = props.editedArm.arm_type.term_uid
+    formStore.save(form.value)
+  }
+})
+
+function enableArmCode() {
+  if (!armCodeEnable.value) {
+    form.value.code = form.value.randomization_group
+    armCodeEnable.value = true
+  }
+}
+function isEdit() {
+  return Object.keys(props.editedArm).length !== 0
+}
+async function submit() {
+  notificationHub.clearErrors()
+
+  if (Object.keys(props.editedArm).length !== 0) {
+    edit()
+  } else {
+    create()
+  }
+}
+function create() {
+  arms.create(selectedStudy.value.uid, form.value).then(
+    () => {
+      notificationHub.add({
+        msg: t('StudyArmsForm.arm_created'),
+      })
+      close()
     },
-  },
+    () => {
+      formRef.value.working = false
+    }
+  )
+}
+function edit() {
+  arms.edit(selectedStudy.value.uid, form.value, props.editedArm.arm_uid).then(
+    () => {
+      notificationHub.add({
+        msg: t('StudyArmsForm.arm_updated'),
+      })
+      close()
+    },
+    () => {
+      formRef.value.working = false
+    }
+  )
+}
+function close() {
+  notificationHub.clearErrors()
+  form.value = {}
+  armCodeEnable.value = false
+  observer.value.reset()
+  emit('close')
+  formStore.reset()
+}
+async function cancel() {
+  if (storedForm === '' || _isEqual(storedForm, JSON.stringify(form.value))) {
+    close()
+  } else {
+    const options = {
+      type: 'warning',
+      cancelLabel: t('_global.cancel'),
+      agreeLabel: t('_global.continue'),
+    }
+    if (await formRef.value.confirm(t('_global.cancel_changes'), options)) {
+      close()
+    }
+  }
 }
 </script>

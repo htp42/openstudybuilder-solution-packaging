@@ -650,6 +650,7 @@ class StudyActivitySelectionService(
             generate_uid_callback=self.repository.generate_uid,
             activity_subgroup_uid=selection_create_input.activity_subgroup_uid,
             activity_group_uid=selection_create_input.activity_group_uid,
+            show_activity_in_protocol_flowchart=selection_create_input.show_activity_in_protocol_flowchart,
         )
         return new_selection
 
@@ -808,7 +809,7 @@ class StudyActivitySelectionService(
             activity_subgroup_uid, version=activity_subgroup_version
         )
         NotFoundException.raise_if_not(
-            activity_subgroup_uid, "Activity Subgroup", activity_subgroup_uid
+            activity_subgroup_ar, "Activity Subgroup", activity_subgroup_uid
         )
 
         NotFoundException.raise_if(
@@ -837,7 +838,7 @@ class StudyActivitySelectionService(
         )
 
         NotFoundException.raise_if_not(
-            activity_group_uid, "Activity Group", activity_group_uid
+            activity_group_ar, "Activity Group", activity_group_uid
         )
 
         NotFoundException.raise_if(
@@ -1331,6 +1332,8 @@ class StudyActivitySelectionService(
             activity_ar: ActivityAR = activity_service.repository.find_by_uid_2(
                 activity_uid, for_update=True
             )
+            NotFoundException.raise_if_not(activity_ar, "Activity", activity_uid)
+
             activity_group_version, activity_subgroup_version = (
                 self._get_activity_group_subgroup_version_from_activity_ar(
                     activity_ar=activity_ar,

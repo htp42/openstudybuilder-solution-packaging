@@ -1,7 +1,8 @@
-import datetime
-
 from clinical_mdr_api.domain_repositories._utils.helpers import (
     acquire_write_lock_study_value,
+)
+from clinical_mdr_api.domain_repositories.generic_repository import (
+    _manage_versioning_with_relations,
 )
 from clinical_mdr_api.domain_repositories.models._utils import ListDistinct
 from clinical_mdr_api.domain_repositories.models.study import StudyRoot, StudyValue
@@ -81,14 +82,13 @@ class StudySourceVariableRepository:
             }
         )[0]
         latest_study_value.has_study_source_variable.connect(study_source_variable_node)
-
-        action = Create(
-            date=datetime.datetime.now(datetime.timezone.utc),
+        _manage_versioning_with_relations(
+            study_root=study_root,
+            action_type=Create,
+            before=None,
+            after=study_source_variable_node,
             author_id=author_id,
         )
-        action.save()
-        action.has_after.connect(study_source_variable_node)
-        study_root.audit_trail.connect(action)
 
         return self.get_study_source_variable(study_uid=study_uid)
 
@@ -118,13 +118,13 @@ class StudySourceVariableRepository:
         )[0]
         latest_study_value.has_study_source_variable.connect(study_source_variable_node)
 
-        action = Edit(
-            date=datetime.datetime.now(datetime.timezone.utc),
+        _manage_versioning_with_relations(
+            study_root=study_root,
+            action_type=Edit,
+            before=previous_node,
+            after=study_source_variable_node,
+            exclude_relationships=[],
             author_id=author_id,
         )
-        action.save()
-        action.has_before.connect(previous_node)
-        action.has_after.connect(study_source_variable_node)
-        study_root.audit_trail.connect(action)
 
         return self.get_study_source_variable(study_uid=study_uid)

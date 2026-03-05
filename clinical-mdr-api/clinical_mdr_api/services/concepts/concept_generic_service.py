@@ -304,7 +304,7 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
         ]
         return GenericFilteringReturn(items=items, total=total)
 
-    @db.transaction
+    @ensure_transaction(db)
     def get_by_uid(
         self,
         uid: str,

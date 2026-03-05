@@ -8,6 +8,9 @@ from clinical_mdr_api import utils
 from clinical_mdr_api.domain_repositories._utils.helpers import (
     acquire_write_lock_study_value,
 )
+from clinical_mdr_api.domain_repositories.generic_repository import (
+    _manage_versioning_with_relations,
+)
 from clinical_mdr_api.domain_repositories.models.study import StudyRoot, StudyValue
 from clinical_mdr_api.domain_repositories.models.study_audit_trail import (
     Create,
@@ -19,6 +22,8 @@ from clinical_mdr_api.domain_repositories.models.study_selections import StudyCr
 from clinical_mdr_api.domain_repositories.models.syntax import (
     CriteriaRoot,
     CriteriaTemplateRoot,
+    CriteriaTemplateValue,
+    CriteriaValue,
 )
 from clinical_mdr_api.domains.study_selections.study_selection_criteria import (
     StudySelectionCriteriaAR,
@@ -314,6 +319,7 @@ class StudySelectionCriteriaRepository:
 
         return selections_to_remove, selections_to_add
 
+    # pylint: disable=unused-argument
     def save(self, study_selection: StudySelectionCriteriaAR, author_id: str) -> None:
         """
         Persist the set of selected study criteria from the aggregate to the database
@@ -349,6 +355,8 @@ class StudySelectionCriteriaRepository:
 
         # audit trail nodes dictionary, holds the new nodes created for the audit trail
         audit_trail_nodes = {}
+        # dictionary of last nodes to traverse to their old connections
+        last_nodes = {}
 
         # loop through and remove selections
         for criteria_list in selections_to_remove.values():
@@ -366,17 +374,19 @@ class StudySelectionCriteriaRepository:
                 audit_node = self._get_audit_node(
                     study_selection, selected_object.study_selection_uid
                 )
-                audit_node = self._set_before_audit_info(
-                    audit_node, last_study_selection_node, study_root_node, author_id
-                )
                 audit_trail_nodes[selected_object.study_selection_uid] = audit_node
+                last_nodes[selected_object.study_selection_uid] = (
+                    last_study_selection_node
+                )
                 if isinstance(audit_node, Delete):
                     self._add_new_selection(
+                        study_root_node,
                         latest_study_value_node,
                         order,
                         selected_object,
                         audit_node,
                         True,
+                        last_study_selection_node,
                     )
 
         # loop through and add selections
@@ -384,16 +394,22 @@ class StudySelectionCriteriaRepository:
             for selection in criteria_list:
                 order = selection[0]
                 selected_object = selection[1]
+                last_study_selection_node = None
                 if selected_object.study_selection_uid in audit_trail_nodes:
                     audit_node = audit_trail_nodes[selected_object.study_selection_uid]
+                    last_study_selection_node = last_nodes[
+                        selected_object.study_selection_uid
+                    ]
                 else:
                     audit_node = Create()
-                    audit_node.author_id = selected_object.author_id
-                    audit_node.date = selected_object.start_date
-                    audit_node.save()
-                    study_root_node.audit_trail.connect(audit_node)
                 self._add_new_selection(
-                    latest_study_value_node, order, selected_object, audit_node, False
+                    study_root_node,
+                    latest_study_value_node,
+                    order,
+                    selected_object,
+                    audit_node,
+                    False,
+                    last_study_selection_node,
                 )
 
     def _remove_old_selection_if_exists(
@@ -410,28 +426,15 @@ class StudySelectionCriteriaRepository:
             },
         )
 
-    @staticmethod
-    def _set_before_audit_info(
-        audit_node: StudyAction,
-        study_criteria_selection_node: StudyCriteria,
-        study_root_node: StudyRoot,
-        author_id: str,
-    ) -> StudyAction:
-        audit_node.author_id = author_id
-        audit_node.date = datetime.datetime.now(datetime.timezone.utc)
-        audit_node.save()
-
-        audit_node.has_before.connect(study_criteria_selection_node)
-        study_root_node.audit_trail.connect(audit_node)
-        return audit_node
-
     def _add_new_selection(
         self,
+        study_root: StudyRoot,
         latest_study_value_node: StudyValue,
         order: int,
         selection: StudySelectionCriteriaVO,
         audit_node: StudyAction,
         for_deletion: bool = False,
+        before_node: StudyCriteria | None = None,
     ):
         if selection.is_instance:
             # Get the criteria value
@@ -464,8 +467,6 @@ class StudySelectionCriteriaRepository:
             latest_study_value_node.has_study_criteria.connect(
                 study_criteria_selection_node
             )
-        # Connect new node with audit trail
-        audit_node.has_after.connect(study_criteria_selection_node)
 
         # Connect new node with object value node
         if selection.is_instance:
@@ -476,6 +477,17 @@ class StudySelectionCriteriaRepository:
             study_criteria_selection_node.has_selected_criteria_template.connect(
                 latest_criteria_template_value_node
             )
+        _manage_versioning_with_relations(
+            study_root=study_root,
+            action_type=type(audit_node),
+            before=before_node,
+            after=study_criteria_selection_node,
+            exclude_relationships=[
+                CriteriaValue,
+                CriteriaTemplateValue,
+            ],
+            author_id=selection.author_id,
+        )
 
     def generate_uid(self) -> str:
         return StudyCriteria.get_next_free_uid_and_increment_counter()

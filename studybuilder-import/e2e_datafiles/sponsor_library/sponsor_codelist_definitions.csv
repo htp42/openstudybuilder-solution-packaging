@@ -65,6 +65,6 @@ Sponsor,SDTM CT,,Category for Exposure,Category for Exposure,N,EXCAT,,Category f
 Sponsor,SDTM CT,,Category for Substance Use,Category for Substance Use,N,SUCAT,,Category for Substance Use,Controlled Terminology for Category for Substance Use,Y,N,,
 Sponsor,SDTM CT,,Category for Vital Signs,Category for Vital Signs,N,VSCAT,,Category for Vital Signs,Controlled Terminology for Category for Vital Signs,Y,N,,
 Sponsor,SDTM CT,,Data Supplier Type,Data Supplier Type,N,DATA_SUPPLIER_TYPE,,Data Supplier Type,Categorisation of data suppliers into different type of systems or other types of data suppliers,Y,N,,
-Sponsor,SDTM CT,,,Lock Study Milestone,N,LOCK_STUDY_MILESTONE,,Lock Study Milestone,Milestones for locking study at different stages of development,Y,N,,
-Sponsor,SDTM CT,,,Unlock Study Milestone,N,UNLOCK_STUDY_MILESTONE,,Unlock Study Milestone,Milestones for unlocking study for various updates and modifications,Y,N,,
+Sponsor,SDTM CT,,,Reason For Lock,N,RSNFL,,Reason For Lock,Milestones for locking study at different stages of development,Y,N,,
+Sponsor,SDTM CT,,,Reason For Unlock,N,RSNFUL,,Reason For Unlock,Milestones for unlocking study for various updates and modifications,Y,N,,
 Sponsor,SDTM CT,,,Development Stage,N,DEVELOPMENT_STAGE,,Development Stage,Development stage codelist to support device studies,Y,N,,

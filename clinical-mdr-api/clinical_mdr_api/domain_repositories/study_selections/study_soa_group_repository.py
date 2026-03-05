@@ -8,12 +8,12 @@ from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_codelist_a
     CTCodelistAttributesRepository,
 )
 from clinical_mdr_api.domain_repositories.generic_repository import (
-    manage_previous_connected_study_selection_relationships,
+    _manage_versioning_with_relations,
 )
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTTermRoot,
 )
-from clinical_mdr_api.domain_repositories.models.study import StudyValue
+from clinical_mdr_api.domain_repositories.models.study import StudyRoot, StudyValue
 from clinical_mdr_api.domain_repositories.models.study_audit_trail import StudyAction
 from clinical_mdr_api.domain_repositories.models.study_selections import (
     StudySelection,
@@ -187,6 +187,7 @@ class StudySoAGroupRepository(StudySelectionActivityBaseRepository[StudySoAGroup
 
     def _add_new_selection(
         self,
+        study_root: StudyRoot,
         latest_study_value_node: StudyValue,
         order: int,
         selection: StudySoAGroupVO,
@@ -207,8 +208,6 @@ class StudySoAGroupRepository(StudySelectionActivityBaseRepository[StudySoAGroup
             # Connect new node with study value
             latest_study_value_node.has_study_soa_group.connect(study_soa_group_node)
 
-        # Connect new node with audit trail
-        audit_node.has_after.connect(study_soa_group_node)
         # Set flowchart group
         ct_term_root = CTTermRoot.nodes.get(uid=selection.soa_group_term_uid)
         selected_term_node = (
@@ -219,12 +218,14 @@ class StudySoAGroupRepository(StudySelectionActivityBaseRepository[StudySoAGroup
             )
         )
         study_soa_group_node.has_flowchart_group.connect(selected_term_node)
-        if last_study_selection_node:
-            manage_previous_connected_study_selection_relationships(
-                previous_item=last_study_selection_node,
-                study_value_node=latest_study_value_node,
-                new_item=study_soa_group_node,
-            )
+        _manage_versioning_with_relations(
+            study_root=study_root,
+            action_type=type(audit_node),
+            before=last_study_selection_node,
+            after=study_soa_group_node,
+            exclude_relationships=[StudySoAGroup.has_flowchart_group],
+            author_id=selection.author_id,
+        )
 
     def generate_uid(self) -> str:
         return StudySoAGroup.get_next_free_uid_and_increment_counter()

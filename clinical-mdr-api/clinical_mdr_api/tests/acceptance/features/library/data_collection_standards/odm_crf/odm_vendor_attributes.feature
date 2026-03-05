@@ -64,7 +64,7 @@ Feature: Manage ODM Vendor Attributes in OpenStudyBuilder API
     Scenario: User cannot create a new ODM vendor attribute without an English description
         When the user sends a request to create an ODM vendor attribute without an English description
         Then the response status code must be 400
-        And the response must include the message "At least one description must be in English ('eng' or 'en')."
+        And the response must include the message "A Translated Text with text_type Description and language English ('eng' or 'en') must be provided."
     Test Coverage:
         | TestFile                                                          | TestID                                                                                |
         | /tests/integration/api/old/test_odm_vendor_attributes_negative.py | @TestID: test_cannot_create_a_new_odm_vendor_attribute_without_an_english_description |

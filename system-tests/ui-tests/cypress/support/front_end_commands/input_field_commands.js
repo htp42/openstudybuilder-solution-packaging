@@ -10,9 +10,7 @@ Cypress.Commands.add('fillTextArea', (textArea, value) => {
 })
 
 Cypress.Commands.add('clearField', (fieldName) => {
-    cy.get(`[data-cy="${fieldName}"]`).within(() => {
-        cy.get('.mdi-close-circle').click({force: true})
-    })
+    cy.get(`[data-cy="${fieldName}"] .mdi-close-circle`).click({force: true})
 })
 
 Cypress.Commands.add('clearInput', (fieldName) => {

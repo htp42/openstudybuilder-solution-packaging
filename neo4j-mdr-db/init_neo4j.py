@@ -194,7 +194,6 @@ def pre_load_counter_nodes(tx: Transaction):
         "OdmItemCounter",
         "OdmItemGroupCounter",
         "OdmStudyEventCounter",
-        "OdmTemplateCounter",
         "OdmVendorAttributeCounter",
         "OdmVendorNamespaceCounter",
         "PharmaceuticalProductCounter",

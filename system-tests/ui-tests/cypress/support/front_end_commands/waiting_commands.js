@@ -13,11 +13,6 @@ Cypress.Commands.add('waitForPage', () => {
     cy.get('.v-container', {timeout: 20000}).should('be.visible')
 })
 
-Cypress.Commands.add('waitForData', (dataName) => {
-    cy.intercept('**/' + dataName + '**').as('waitingForThisRequest')
-    cy.wait('@waitingForThisRequest')
-})
-
 function waitForTableToStopLoading(timeout) {
     cy.get('.v-table__wrapper', {timeout: timeout}).should('not.contain', 'Loading items...')
     cy.get('.v-data-table--loading', {timeout: timeout}).should('not.exist')

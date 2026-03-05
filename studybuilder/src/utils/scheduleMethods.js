@@ -53,7 +53,7 @@ function getElementFootnotesLetters(uid) {
       }
     })
   })
-  return Array.from(new Set(footnotesLetters.split(''))).join(' ')
+  return Array.from(new Set(footnotesLetters.split(''))).join(', ')
 }
 
 function getElementFootnoteLettersForMultipleRefs(refs) {

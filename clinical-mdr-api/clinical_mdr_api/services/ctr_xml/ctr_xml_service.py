@@ -244,10 +244,10 @@ class ODMBuilder:
                 description=ctrxml.Description(
                     translated_text=[
                         ctrxml.TranslatedText(
-                            value=description.description or "",
+                            value=description.text or "",
                             lang=iso639_shortest(description.language or "en"),
                         )
-                        for description in form.descriptions
+                        for description in form.translated_texts
                     ]
                 ),
                 item_group_ref=[
@@ -305,10 +305,10 @@ class ODMBuilder:
                 description=ctrxml.Description(
                     translated_text=[
                         ctrxml.TranslatedText(
-                            value=description.description or "",
+                            value=description.text or "",
                             lang=iso639_shortest(description.language or "en"),
                         )
-                        for description in item_group.descriptions
+                        for description in item_group.translated_texts
                     ]
                 ),
                 item_ref=[

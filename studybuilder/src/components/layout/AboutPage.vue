@@ -184,9 +184,11 @@ async function fetchFiles() {
       ? ''
       : `${location.protocol}//${location.host}`
   for (const component of components) {
-    const license = await axios.get(`${url}/LICENSE-${component}.md`)
+    const license = await axios.get(
+      `${url}/LICENSE-${component}.md?ts=${Date.now()}`
+    )
     licenses.value[component] = license.data
-    const sbom = await axios.get(`${url}/sbom-${component}.md`)
+    const sbom = await axios.get(`${url}/sbom-${component}.md?ts=${Date.now()}`)
     sboms.value[component] = sbom.data
   }
 }

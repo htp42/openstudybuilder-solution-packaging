@@ -19,12 +19,12 @@ Feature: Library - Concepts - Activities - Activity Groups
         Then A table is visible with following options
             | options                                                         |
             | Add activity group                                              |
-            | Filters                                                         |
-            | Columns                                                         |
+            | Select columns                                                  |
             | Export                                                          |
+            | Select filters                                                  |
+            | Select rows                                                     |
+            | Search                                                          |
             | Show version history                                            |
-            | Add select boxes to table to allow selection of rows for export |
-            | search-field                                                    |
 
     @smoke_test
     Scenario: [Table][Columns][Names] User must be able to see the columns list on the main page as below
@@ -46,7 +46,10 @@ Feature: Library - Concepts - Activities - Activity Groups
     Scenario: [Create][Positive case] User must be able to add a new activity group
         When The add activity group button is clicked
         And The test activity group container is filled with data
-        And Activity group is saved and snackbar message says it is 'created'
+        And User intercepts activity group request
+        And Form save button is clicked
+        And User waits for activity group request
+        Then The pop up displays 'Group created'
         And Activity group is searched for and found
         And The newly added activity group is visible in the the table
         And The item has status 'Draft' and version '0.1'
@@ -86,7 +89,10 @@ Feature: Library - Concepts - Activities - Activity Groups
         Then The item has status 'Draft' and version '1.1'
         When The 'Edit' option is clicked from the three dot menu list
         And The activity group is edited
-        And Activity group is saved and snackbar message says it is 'updated'
+        And User intercepts activity group request
+        And Form save button is clicked
+        And User waits for activity group request
+        Then The pop up displays 'Group updated'
         And Activity group is searched for and found
         Then The item has status 'Draft' and version '1.2'
         When The 'Approve' option is clicked from the three dot menu list
@@ -112,7 +118,10 @@ Feature: Library - Concepts - Activities - Activity Groups
         And Activity group is searched for and found
         When The 'Edit' option is clicked from the three dot menu list
         And The activity group is edited
-        And Activity group is saved and snackbar message says it is 'updated'
+        And User intercepts activity group request
+        And Form save button is clicked
+        And User waits for activity group request
+        Then The pop up displays 'Group updated'
         And Activity group is searched for and found
         Then The item has status 'Draft' and version '0.2'
         

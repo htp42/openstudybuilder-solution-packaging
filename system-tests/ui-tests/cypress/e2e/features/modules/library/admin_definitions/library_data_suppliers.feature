@@ -16,10 +16,10 @@ Feature: Library - Admin Definitions - Data Suppliers
         Then A table is visible with following options
             | options                                                         |
             | Add Data Supplier                                               |
-            | Filters                                                         |
-            | Columns                                                         |
+            | Select filters                                                  |
+            | Select columns                                                  |
             | Export                                                          |
-            | search-field                                                    |
+            | Search                                                          |
 
     Scenario: [Table][Columns][Names] User must be able to see the columns list on the main page as below
         Then A table is visible with following headers

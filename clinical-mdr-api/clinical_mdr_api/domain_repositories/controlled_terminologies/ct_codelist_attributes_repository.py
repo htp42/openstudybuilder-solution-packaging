@@ -89,7 +89,7 @@ class CTCodelistAttributesRepository(
                 preferred_term=codelist_dict.get("value_node").get("preferred_term"),
                 definition=codelist_dict.get("value_node").get("definition"),
                 extensible=codelist_dict.get("value_node").get("extensible"),
-                ordinal=bool(codelist_dict.get("value_node").get("ordinal")),
+                is_ordinal=bool(codelist_dict.get("value_node").get("is_ordinal")),
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=codelist_dict["library_name"],
@@ -139,7 +139,7 @@ class CTCodelistAttributesRepository(
                 preferred_term=value.preferred_term,
                 definition=value.definition,
                 extensible=value.extensible,
-                ordinal=value.ordinal,
+                is_ordinal=value.is_ordinal,
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=library.name,
@@ -166,7 +166,7 @@ class CTCodelistAttributesRepository(
                 preferred_term=ar.ct_codelist_vo.preferred_term,
                 definition=ar.ct_codelist_vo.definition,
                 extensible=ar.ct_codelist_vo.extensible,
-                ordinal=ar.ct_codelist_vo.ordinal,
+                is_ordinal=ar.ct_codelist_vo.is_ordinal,
             ):
                 return itm
             latest_draft = root.latest_draft.get_or_none()
@@ -185,7 +185,7 @@ class CTCodelistAttributesRepository(
             preferred_term=ar.ct_codelist_vo.preferred_term,
             definition=ar.ct_codelist_vo.definition,
             extensible=ar.ct_codelist_vo.extensible,
-            ordinal=ar.ct_codelist_vo.ordinal,
+            is_ordinal=ar.ct_codelist_vo.is_ordinal,
         )
         self._db_save_node(new_value)
         return new_value
@@ -197,7 +197,7 @@ class CTCodelistAttributesRepository(
             or ar.ct_codelist_vo.preferred_term != value.preferred_term
             or ar.ct_codelist_vo.definition != value.definition
             or ar.ct_codelist_vo.extensible != value.extensible
-            or ar.ct_codelist_vo.ordinal != value.ordinal
+            or ar.ct_codelist_vo.is_ordinal != value.is_ordinal
         )
 
     def _create(self, item: CTCodelistAttributesAR) -> CTCodelistAttributesAR:
@@ -215,7 +215,7 @@ class CTCodelistAttributesRepository(
             preferred_term=item.ct_codelist_vo.preferred_term,
             definition=item.ct_codelist_vo.definition,
             extensible=item.ct_codelist_vo.extensible,
-            ordinal=item.ct_codelist_vo.ordinal,
+            is_ordinal=item.ct_codelist_vo.is_ordinal,
         )
         self._db_save_node(root)
 

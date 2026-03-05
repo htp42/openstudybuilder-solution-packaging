@@ -96,9 +96,35 @@ Feature: Studies - Define Study - Study Activities - Study Activities Placeholde
         And Activity placeholder is found
         And The 'Update activity version' option is clicked for flagged item
         And The user is presented with the changes to request
-        And Modal window 'Decline and remove' button is clicked
-        And The form is no longer available
+        And Modal window 'Decline and keep' button is clicked        
+        Then The form is no longer available
+        When The 'Remove Activity' option is clicked for flagged item
+        And Action is confirmed by clicking continue
         Then The activity request is removed from the study
+
+    Scenario: [Positive Case][Shared Activity Request] User must be able to approve activity request created from placeholder
+        When Study activity add button is clicked
+        And Activity from placeholder is selected
+        And Form continue button is clicked
+        And User selects option to create placeholder with submitting
+        When Activity placeholder data is filled in
+        And Form save button is clicked
+        Then Activity placeholder is found
+        When The '/library/activities/requested-activities' page is opened
+        Then Activity placeholder is found
+        When The 'Handle placeholder request' option is clicked from the three dot menu list
+        And the request continue button is clicked
+        And The activity request approval form is filled with definition
+        And the sponsor continue button is clicked
+        And the confirm continue button is clicked
+        Then Activity placeholder is not found
+        When The test study '/activities/list' page is opened
+        Then Activity placeholder is found
+        When The 'Update to approved activity' option is clicked for flagged item
+        And Modal window 'Accept' button is clicked
+        And The item actions button is clicked
+        Then The form is no longer available
+        And 'Update to approved activity' action is not available
 
     Scenario: [Update][Positive Case][Shared Activity Request] User must not be notified of changes when SoA group has been updated
         When Study activity add button is clicked

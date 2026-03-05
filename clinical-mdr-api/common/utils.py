@@ -19,20 +19,18 @@ log = logging.getLogger(__name__)
 
 
 class VisitClass(Enum):
-    SINGLE_VISIT = "Single visit"
-    SPECIAL_VISIT = "Special visit"
-    NON_VISIT = "Non visit"
-    UNSCHEDULED_VISIT = "Unscheduled visit"
-    MANUALLY_DEFINED_VISIT = "Manually defined visit"
+    SINGLE_VISIT = "SINGLE_VISIT"
+    SPECIAL_VISIT = "SPECIAL_VISIT"
+    NON_VISIT = "NON_VISIT"
+    UNSCHEDULED_VISIT = "UNSCHEDULED_VISIT"
+    MANUALLY_DEFINED_VISIT = "MANUALLY_DEFINED_VISIT"
 
 
 class VisitSubclass(Enum):
-    SINGLE_VISIT = "Single visit"
-    ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV = (
-        "Additional subvisit in a group of subvisits"
-    )
-    ANCHOR_VISIT_IN_GROUP_OF_SUBV = "Anchor visit in group of subvisits"
-    REPEATING_VISIT = "Repeating visit"
+    SINGLE_VISIT = "SINGLE_VISIT"
+    ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV = "ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV"
+    ANCHOR_VISIT_IN_GROUP_OF_SUBV = "ANCHOR_VISIT_IN_GROUP_OF_SUBV"
+    REPEATING_VISIT = "REPEATING_VISIT"
 
 
 @dataclass
@@ -336,19 +334,25 @@ def booltostr(value: bool | str | int | None, true_format: str = "Yes") -> str:
 @overload
 def convert_to_datetime(value: neo4j.time.DateTime) -> datetime: ...
 @overload
+def convert_to_datetime(value: datetime) -> datetime: ...
+@overload
 def convert_to_datetime(value: None) -> None: ...
-def convert_to_datetime(value: neo4j.time.DateTime | None) -> datetime | None:
+def convert_to_datetime(
+    value: neo4j.time.DateTime | datetime | None,
+) -> datetime | None:
     """
     Converts a neo4j.time.DateTime object from the database to a Python datetime object.
 
     Args:
-        value (neo4j.time.DateTime | None): The DateTime object to convert or None.
+        value (neo4j.time.DateTime | datetime | None): The object to convert or None.
 
     Returns:
         datetime.datetime: The Python datetime object or None if `value` is None.
     """
     if value is None:
         return None
+    if isinstance(value, datetime):
+        return value
     if not isinstance(value, neo4j.time.DateTime):
         raise TypeError(f"Expected neo4j.time.DateTime, got {type(value)}")
     return value.to_native()
@@ -365,8 +369,8 @@ def validate_max_skip_clause(page_number: int, page_size: int) -> None:
 
     # neo4j supports `SKIP {val}` values which fall within unsigned 64-bit integer range
     ValidationException.raise_if(
-        max(1, page_number) * max(1, page_size) > settings.max_int_neo4j,
-        msg=f"(page_number * page_size) value cannot be bigger than {settings.max_int_neo4j}",
+        max(1, page_number) * max(1, page_size) >= settings.max_int_neo4j,
+        msg=f"(page_number * page_size) value must be smaller than {settings.max_int_neo4j}",
     )
 
 

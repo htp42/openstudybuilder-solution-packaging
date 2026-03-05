@@ -116,6 +116,7 @@ from clinical_mdr_api.routers.dictionaries.dictionary_terms import (
     router as dictionary_terms_router,
 )
 from clinical_mdr_api.routers.feature_flags import router as feature_flags_router
+from clinical_mdr_api.routers.iso import router as iso_router
 from clinical_mdr_api.routers.libraries.libraries import router as libraries_router
 from clinical_mdr_api.routers.libraries.time_points import router as time_points_router
 from clinical_mdr_api.routers.listings.listings import metadata_router
@@ -284,6 +285,7 @@ __all__ = [
     "activity_item_classes_router",
     "data_suppliers_router",
     "odm_metadata_router",
+    "iso_router",
     "compounds_router",
     "compound_aliases_router",
     "activity_subgroups_router",

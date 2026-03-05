@@ -8,22 +8,23 @@ from neomodel import db
 from clinical_mdr_api.domain_repositories.concepts.odms.odm_generic_repository import (
     OdmGenericRepository,
 )
-from clinical_mdr_api.domains._utils import get_iso_lang_data, is_language_english
+from clinical_mdr_api.domains._utils import get_iso_lang_data
 from clinical_mdr_api.domains.concepts.utils import (
     EN_LANGUAGE,
     RelationType,
     VendorAttributeCompatibleType,
     VendorElementCompatibleType,
 )
+from clinical_mdr_api.domains.enums import OdmTranslatedTextTypeEnum
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemStatus,
     LibraryVO,
 )
 from clinical_mdr_api.models.concepts.odms.odm_common_models import (
     OdmAliasModel,
-    OdmDescriptionModel,
     OdmFormalExpressionModel,
     OdmRefVendorPostInput,
+    OdmTranslatedTextModel,
     OdmVendorElementRelationPostInput,
     OdmVendorRelationPostInput,
 )
@@ -38,6 +39,7 @@ from clinical_mdr_api.models.concepts.odms.odm_form import (
 )
 from clinical_mdr_api.models.concepts.odms.odm_item import (
     OdmItem,
+    OdmItemCodelist,
     OdmItemPostInput,
     OdmItemTermRelationshipInput,
     OdmItemUnitDefinitionRelationshipInput,
@@ -162,15 +164,13 @@ class OdmXmlImporterService:
     mapper_file: UploadFile | None = None
 
     OSB_PREFIX = "osb"
-    EXCLUDED_OSB_VENDOR_ATTRIBUTES = [
-        "version",
-        "lang",
-        "instruction",
-        "sponsorInstruction",
+    EXCLUDED_OSB_VENDOR_ATTRIBUTES = ["version", "lang", "allowsMultiChoice"]
+    EXCLUDED_OSB_VENDOR_ELEMENTS = [
+        "DomainColor",
+        "DisplayText",
+        "DesignNotes",
+        "CompletionInstructions",
     ]
-    EXCLUDED_OSB_VENDOR_ELEMENTS = ["DomainColor"]
-    OSB_INSTRUCTION = f"{OSB_PREFIX}:instruction"
-    OSB_SPONSOR_INSTRUCTION = f"{OSB_PREFIX}:sponsorInstruction"
 
     def __init__(self, xml_file: UploadFile, mapper_file: UploadFile | None):
         exceptions.BusinessLogicException.raise_if(
@@ -759,8 +759,6 @@ class OdmXmlImporterService:
 
     def _create_conditions_with_relations(self):
         for condition_def in self.condition_defs:
-            descriptions = self._extract_descriptions(condition_def)
-
             rs = self._create(
                 self._repos.odm_condition_repository,
                 self.odm_condition_service,
@@ -777,14 +775,9 @@ class OdmXmlImporterService:
                             "FormalExpression"
                         )
                     ],
-                    descriptions=[
-                        self._create_description(
-                            name=description["name"],
-                            lang=description["lang"],
-                            description=description["description"],
-                        )
-                        for description in descriptions
-                    ],
+                    translated_texts=self._get_translated_text_post_input(
+                        condition_def
+                    ),
                     aliases=[
                         OdmAliasModel(
                             name=alias_element.getAttribute("Name"),
@@ -800,8 +793,6 @@ class OdmXmlImporterService:
 
     def _create_methods_with_relations(self):
         for method_def in self.method_defs:
-            descriptions = self._extract_descriptions(method_def)
-
             rs = self._create(
                 self._repos.odm_method_repository,
                 self.odm_method_service,
@@ -819,14 +810,7 @@ class OdmXmlImporterService:
                             "FormalExpression"
                         )
                     ],
-                    descriptions=[
-                        self._create_description(
-                            name=description["name"],
-                            lang=description["lang"],
-                            description=description["description"],
-                        )
-                        for description in descriptions
-                    ],
+                    translated_texts=self._get_translated_text_post_input(method_def),
                     aliases=[
                         OdmAliasModel(
                             name=alias_element.getAttribute("Name"),
@@ -855,7 +839,9 @@ class OdmXmlImporterService:
 
             if odm_item_post_input.terms:
                 self.odm_item_service._manage_terms(
-                    rs.uid, odm_item_post_input.codelist_uid, odm_item_post_input.terms
+                    rs.uid,
+                    getattr(odm_item_post_input.codelist, "uid", None),
+                    odm_item_post_input.terms,
                 )
             self.odm_item_service._manage_unit_definitions(
                 rs.uid, odm_item_post_input.unit_definitions
@@ -1040,83 +1026,31 @@ class OdmXmlImporterService:
             self._repos.odm_study_event_repository, self.odm_study_event_service, rs
         )
 
-    def _create_description(
-        self,
-        name: str | minidom.Text,
-        lang: str = EN_LANGUAGE,
-        description: str | None = None,
-        instruction: str | None = None,
-        sponsor_instruction: str | None = None,
-    ) -> OdmDescriptionModel:
-        if isinstance(name, minidom.Text):
-            name = name.nodeValue
+    def _get_translated_text_post_input(self, elm):
+        translated_texts: list[OdmTranslatedTextModel] = []
 
-        if not description:
-            description = "Please update this description"
+        for translated_text_type in OdmTranslatedTextTypeEnum:
+            translated_text_parent_element = elm.getElementsByTagName(
+                translated_text_type.value
+            )
 
-        if not instruction:
-            instruction = "Please update this instruction"
+            if not translated_text_parent_element:
+                continue
 
-        if not sponsor_instruction:
-            sponsor_instruction = "Please update this sponsor instruction"
-
-        return OdmDescriptionModel(
-            name=str(name) or "TBD",
-            language=lang,
-            description=description,
-            instruction=instruction if is_language_english(lang) else None,
-            sponsor_instruction=(
-                sponsor_instruction if is_language_english(lang) else None
-            ),
-        )
-
-    def _extract_descriptions(self, elm):
-        description_element = elm.getElementsByTagName("Description")
-        question_element = elm.getElementsByTagName("Question")
-        descriptions = []
-        description_langs = []
-
-        if description_element:
-            for translated_text in description_element[0].getElementsByTagName(
-                "TranslatedText"
-            ):
-                lang = translated_text.getAttribute("xml:lang")
-                desc = translated_text.firstChild.nodeValue
-
-                descriptions.append(
-                    {
-                        "lang": lang,
-                        "name": desc,
-                        "description": desc,
-                    }
-                )
-                description_langs.append(lang)
-
-        if question_element:
-            for translated_text in question_element[0].getElementsByTagName(
-                "TranslatedText"
-            ):
-                lang = translated_text.getAttribute("xml:lang")
-                name = translated_text.firstChild
-
-                if lang not in description_langs:
-                    descriptions.append(
-                        {
-                            "lang": lang,
-                            "name": name,
-                            "description": None,
-                        }
+            for translated_text in translated_text_parent_element[
+                0
+            ].getElementsByTagName("TranslatedText"):
+                translated_texts.append(
+                    OdmTranslatedTextModel(
+                        text_type=translated_text_type,
+                        language=get_iso_lang_data(  # type: ignore[arg-type]
+                            translated_text.getAttribute("xml:lang") or EN_LANGUAGE
+                        ),
+                        text=str(translated_text.firstChild.nodeValue) or "TBD",
                     )
-                else:
-                    for description in descriptions:
-                        if lang == description["lang"]:
-                            description["name"] = name
-                            break
+                )
 
-        for description in descriptions:
-            description["lang"] = get_iso_lang_data(description["lang"] or EN_LANGUAGE)
-
-        return descriptions
+        return translated_texts
 
     def _get_newly_created_vendor_namespaces(self):
         rs, _ = self._repos.odm_vendor_namespace_repository.find_all(
@@ -1367,13 +1301,16 @@ class OdmXmlImporterService:
             ) from exc
 
     def _get_odm_item_post_input(self, item_def):
-        descriptions = self._extract_descriptions(item_def)
-
         item_unit_definitions = self._get_item_unit_definition_inputs(item_def)
 
-        codelist = next(
+        codelist, codelist_allows_multi_choice = next(
             (
-                codelist
+                (
+                    codelist,
+                    item_def.getElementsByTagName("CodeListRef")[0].getAttribute(
+                        "osb:allowsMultiChoice"
+                    ),
+                )
                 for codelist in self.codelists
                 if item_def.getElementsByTagName("CodeListRef")
                 and codelist.getAttribute("OID")
@@ -1381,7 +1318,7 @@ class OdmXmlImporterService:
                     "CodeListOID"
                 )
             ),
-            None,
+            (None, False),
         )
 
         input_terms = []
@@ -1389,6 +1326,9 @@ class OdmXmlImporterService:
         new_codelist = False
         if codelist:
             codelist_name = codelist.getAttribute("Name")
+            codelist_allows_multi_choice = (
+                codelist_allows_multi_choice.lower() == "true"
+            )
             codelist_uid = (
                 self._repos.ct_codelist_attribute_repository.find_uid_by_name(
                     codelist_name
@@ -1407,7 +1347,7 @@ class OdmXmlImporterService:
                         nci_preferred_name=codelist_description_translatedtext,
                         definition=codelist_description_translatedtext,
                         extensible=True,
-                        ordinal=False,
+                        is_ordinal=False,
                         sponsor_preferred_name=codelist_name,
                         template_parameter=False,
                         terms=[],
@@ -1469,7 +1409,7 @@ class OdmXmlImporterService:
                     self.ct_codelist_service.add_term(
                         codelist_uid=codelist_uid,
                         term_uid=term_uid,
-                        order=999999,
+                        order=None,
                         submission_value=coded_value_value,
                     )
 
@@ -1481,7 +1421,7 @@ class OdmXmlImporterService:
                             if codelist_item.getAttribute("osb:mandatory") != ""
                             else True
                         ),
-                        order=codelist_item.getAttribute("OrderNumber"),
+                        order=codelist_item.getAttribute("OrderNumber") or None,
                         display_text=codelist_item.getElementsByTagName(
                             "TranslatedText"
                         )[0].firstChild.nodeValue,
@@ -1498,18 +1438,7 @@ class OdmXmlImporterService:
             sas_field_name=item_def.getAttribute("SASFieldName"),
             sds_var_name=item_def.getAttribute("SDSVarName"),
             origin=item_def.getAttribute("Origin"),
-            descriptions=[
-                self._create_description(
-                    name=description["name"],
-                    lang=description["lang"],
-                    description=description["description"],
-                    instruction=item_def.getAttribute(self.OSB_INSTRUCTION),
-                    sponsor_instruction=item_def.getAttribute(
-                        self.OSB_SPONSOR_INSTRUCTION
-                    ),
-                )
-                for description in descriptions
-            ],
+            translated_texts=self._get_translated_text_post_input(item_def),
             aliases=[
                 OdmAliasModel(
                     name=alias_element.getAttribute("Name"),
@@ -1518,12 +1447,17 @@ class OdmXmlImporterService:
                 for alias_element in item_def.getElementsByTagName("Alias")
             ],
             unit_definitions=item_unit_definitions,
-            codelist_uid=codelist_uid,
+            codelist=(
+                OdmItemCodelist(
+                    uid=codelist_uid, allows_multi_choice=codelist_allows_multi_choice
+                )
+                if codelist_uid
+                else None
+            ),
             terms=input_terms,
         )
 
     def _get_odm_item_group_post_input(self, item_group_def):
-        descriptions = self._extract_descriptions(item_group_def)
         sdtm_domain_uids = []
         for domain in item_group_def.getAttribute("Domain").split("|"):
             if domain:
@@ -1558,18 +1492,7 @@ class OdmXmlImporterService:
             is_reference_data="no",  # missing in odm
             purpose=item_group_def.getAttribute("Purpose"),
             sas_dataset_name=item_group_def.getAttribute("SASDatasetName"),
-            descriptions=[
-                self._create_description(
-                    name=description["name"],
-                    lang=description["lang"],
-                    description=description["description"],
-                    instruction=item_group_def.getAttribute(self.OSB_INSTRUCTION),
-                    sponsor_instruction=item_group_def.getAttribute(
-                        self.OSB_SPONSOR_INSTRUCTION
-                    ),
-                )
-                for description in descriptions
-            ],
+            translated_texts=self._get_translated_text_post_input(item_group_def),
             aliases=[
                 OdmAliasModel(
                     name=alias_element.getAttribute("Name"),
@@ -1581,25 +1504,12 @@ class OdmXmlImporterService:
         )
 
     def _get_odm_form_post_input(self, form_def):
-        descriptions = self._extract_descriptions(form_def)
-
         return OdmFormPostInput(
             oid=form_def.getAttribute("OID"),
             name=form_def.getAttribute("Name"),
             sdtm_version="",
             repeating=form_def.getAttribute("Repeating"),
-            descriptions=[
-                self._create_description(
-                    name=description["name"],
-                    lang=description["lang"],
-                    description=description["description"],
-                    instruction=form_def.getAttribute(self.OSB_INSTRUCTION),
-                    sponsor_instruction=form_def.getAttribute(
-                        self.OSB_SPONSOR_INSTRUCTION
-                    ),
-                )
-                for description in descriptions
-            ],
+            translated_texts=self._get_translated_text_post_input(form_def),
             aliases=[
                 OdmAliasModel(
                     name=alias_element.getAttribute("Name"),

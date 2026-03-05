@@ -1,4 +1,4 @@
-@REQ_ID:1070683
+@REQ_ID:1070683 @skip_on_prv_val
 
 Feature: Library - Concepts - Activities - Activity Subgroups
 
@@ -19,12 +19,12 @@ Feature: Library - Concepts - Activities - Activity Subgroups
         Then A table is visible with following options
             | options                                                         |
             | Add activity subgroup                                           |
-            | Filters                                                         |
-            | Columns                                                         |
+            | Select filters                                                  |
+            | Select columns                                                  |
             | Export                                                          |
             | Show version history                                            |
-            | Add select boxes to table to allow selection of rows for export |
-            | search-field                                                    |
+            | Select rows                                                     |
+            | Search                                                          |
 
     @smoke_test
     Scenario: [Table][Columns][Names] User must be able to see the columns list on the main page as below
@@ -46,7 +46,10 @@ Feature: Library - Concepts - Activities - Activity Subgroups
     Scenario: [Create][Positive case] User must be able to add a new activity subgroups
         When The Add activity subgroup button is clicked
         And The activity subgroup form is filled with data
-        And Activity subgroup is saved and snackbar message says it is 'created'
+        And User intercepts activity subgroup request
+        And Form save button is clicked
+        And User waits for activity subgroup request
+        Then The pop up displays 'Subgroup created'
         And Activity subgroup is searched for and found
         Then The newly added activity subgroup is visible in the the table
         And The item has status 'Draft' and version '0.1'
@@ -88,7 +91,10 @@ Feature: Library - Concepts - Activities - Activity Subgroups
         Then The item has status 'Draft' and version '1.1'
         When The 'Edit' option is clicked from the three dot menu list
         And The activity subgroup edition form is filled with data
-        And Activity subgroup is saved and snackbar message says it is 'updated'
+        And User intercepts activity subgroup request
+        And Form save button is clicked
+        And User waits for activity subgroup request
+        Then The pop up displays 'Subgroup updated'
         And Activity subgroup is searched for and found
         Then The item has status 'Draft' and version '1.2'
         When The 'Approve' option is clicked from the three dot menu list
@@ -130,7 +136,10 @@ Feature: Library - Concepts - Activities - Activity Subgroups
         And Activity subgroup is searched for and found
         When The 'Edit' option is clicked from the three dot menu list
         Then The activity subgroup edition form is filled with data
-        And Activity subgroup is saved and snackbar message says it is 'updated'
+        And User intercepts activity subgroup request
+        And Form save button is clicked
+        And User waits for activity subgroup request
+        Then The pop up displays 'Subgroup updated'
         And Activity subgroup is searched for and found
         And The item has status 'Draft' and version '0.2'
 

@@ -5,13 +5,13 @@ from typing import Any
 from neomodel import db
 
 from clinical_mdr_api.domain_repositories.generic_repository import (
-    manage_previous_connected_study_selection_relationships,
+    _manage_versioning_with_relations,
 )
 from clinical_mdr_api.domain_repositories.models.activities import (
     ActivitySubGroupRoot,
     ActivitySubGroupValue,
 )
-from clinical_mdr_api.domain_repositories.models.study import StudyValue
+from clinical_mdr_api.domain_repositories.models.study import StudyRoot, StudyValue
 from clinical_mdr_api.domain_repositories.models.study_audit_trail import StudyAction
 from clinical_mdr_api.domain_repositories.models.study_selections import (
     StudyActivitySubGroup,
@@ -223,6 +223,7 @@ class StudySelectionActivitySubGroupRepository(
 
     def _add_new_selection(
         self,
+        study_root: StudyRoot,
         latest_study_value_node: StudyValue,
         order: int,
         selection: StudySelectionActivitySubGroupVO,
@@ -256,18 +257,18 @@ class StudySelectionActivitySubGroupRepository(
                 study_activity_subgroup_selection_node
             )
 
-        # Connect new node with audit trail
-        audit_node.has_after.connect(study_activity_subgroup_selection_node)
         # Connect new node with Activity subgroup value
         study_activity_subgroup_selection_node.has_selected_activity_subgroup.connect(
             latest_activity_subgroup_value_node
         )
-        if last_study_selection_node:
-            manage_previous_connected_study_selection_relationships(
-                previous_item=last_study_selection_node,
-                study_value_node=latest_study_value_node,
-                new_item=study_activity_subgroup_selection_node,
-            )
+        _manage_versioning_with_relations(
+            study_root=study_root,
+            action_type=type(audit_node),
+            before=last_study_selection_node,
+            after=study_activity_subgroup_selection_node,
+            exclude_relationships=[ActivitySubGroupValue],
+            author_id=selection.author_id,
+        )
 
     def generate_uid(self) -> str:
         return StudyActivitySubGroup.get_next_free_uid_and_increment_counter()

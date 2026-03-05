@@ -13,6 +13,7 @@ from clinical_mdr_api.models.biomedical_concepts.activity_item_class import (
     ActivityItemClassMappingInput,
     ActivityItemClassOverview,
     SimpleActivityInstanceClassForItem,
+    ValidCodelistMappingInput,
 )
 from clinical_mdr_api.models.utils import CustomPage, GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import FilterOperator
@@ -232,6 +233,16 @@ def get_all_codelists(
             description="Optionally, the name of a CT Catalogue to filter Codelists."
         ),
     ] = None,
+    valid_codelists_for_item: Annotated[
+        bool,
+        Query(
+            description=(
+                "Whether to look for codelists using the Valid codelists relationship.\n\n"
+                "if set to True, this will take precedence over SDTMIG and Sponsor Model.\n\n"
+                "Defaults to False."
+            )
+        ),
+    ] = False,
     sort_by: _generic_descriptions.SORT_BY_QUERY = None,
     page_number: _generic_descriptions.PAGE_NUMBER_QUERY = settings.default_page_number,
     page_size: _generic_descriptions.PAGE_SIZE_QUERY = settings.default_page_size,
@@ -244,6 +255,7 @@ def get_all_codelists(
         dataset_uid=dataset_uid,
         use_sponsor_model=use_sponsor_model,
         ct_catalogue_name=ct_catalogue_name,
+        valid_codelists_for_item=valid_codelists_for_item,
         sort_by=sort_by,
         page_number=page_number,
         page_size=page_size,
@@ -383,6 +395,45 @@ def patch_mappings(
 ) -> ActivityItemClass:
     activity_item_class_service = ActivityItemClassService()
     return activity_item_class_service.patch_mappings(
+        uid=activity_item_class_uid, mapping_input=mapping_input
+    )
+
+
+@router.patch(
+    "/{activity_item_class_uid}/valid-codelist-mappings",
+    dependencies=[security, rbac.LIBRARY_WRITE],
+    summary="Edit the mappings to valid codelists for ActivityItems",
+    description="""
+State before:
+- uid must exist
+
+Business logic:
+- Mappings to valid codelists are replaced with the provided ones
+
+Possible errors:
+- Invalid uid
+""",
+    response_model_exclude_unset=True,
+    status_code=200,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        200: {"description": "OK."},
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - Reasons include e.g.: \n"
+            "- The activity item class with the specified 'activity_item_class_uid' could not be found.",
+        },
+    },
+)
+def patch_valid_codelist_mappings(
+    activity_item_class_uid: Annotated[str, ActivityItemClassUID],
+    mapping_input: Annotated[
+        ValidCodelistMappingInput,
+        Body(description="The uid of valid codelists to map activity item class to."),
+    ],
+) -> ActivityItemClass:
+    activity_item_class_service = ActivityItemClassService()
+    return activity_item_class_service.patch_valid_codelist_mappings(
         uid=activity_item_class_uid, mapping_input=mapping_input
     )
 

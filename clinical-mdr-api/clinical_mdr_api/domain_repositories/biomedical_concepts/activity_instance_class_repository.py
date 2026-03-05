@@ -590,3 +590,13 @@ class ActivityInstanceClassRepository(  # type: ignore[misc]
         results, meta = db.cypher_query(final_query, params=params)
 
         return [dict(zip(meta, row)) for row in results], total
+
+    def get_all_version_numbers(self, uid: str) -> list[str]:
+        """Get all version numbers of a given activity instance class"""
+
+        rs, _ = db.cypher_query(
+            "MATCH (:ActivityInstanceClassRoot {uid: $uid})-[hv:HAS_VERSION]-(:ActivityInstanceClassValue) RETURN DISTINCT hv.version",
+            params={"uid": uid},
+        )
+
+        return [row[0] for row in rs]

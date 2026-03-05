@@ -66,6 +66,7 @@ def test_import_odm_xml(api_client):
     res = response.json()
 
     assert_with_key_exclusion(IMPORT_OUTPUT1, res, ["start_date"])
+    assert_with_key_exclusion(res, IMPORT_OUTPUT1, ["start_date"])
 
 
 def test_import_odm_vendor_with_csv_mapper(api_client):
@@ -77,11 +78,9 @@ def test_import_odm_vendor_with_csv_mapper(api_client):
                 "mapper.csv",
                 "type,parent,from_name,to_name,to_alias,from_alias,alias_context\n"
                 "attribute,,Repeated,Repeating,,,\n"
-                "element,,NameOne,cs:nameOne,,,\n"
+                "element,,NameOne,cs:NameOne,,,\n"
                 "element,,Alias,,,true,CompletionInstructions\n"
                 "element,*,Alias,,,true,ImplementationNotes\n"
-                "attribute,,CompletionInstructions,osb:instruction,,,\n"
-                "attribute,*,ImplementationNotes,osb:sponsorInstruction,,,\n",
                 "text/csv",
             ),
         },
@@ -92,6 +91,7 @@ def test_import_odm_vendor_with_csv_mapper(api_client):
     res = response.json()
 
     assert_with_key_exclusion(IMPORT_OUTPUT2, res, ["start_date"])
+    assert_with_key_exclusion(res, IMPORT_OUTPUT2, ["start_date"])
 
 
 def test_import_clinspark_odm_xml(api_client):
@@ -106,6 +106,7 @@ def test_import_clinspark_odm_xml(api_client):
     res = response.json()
 
     assert_with_key_exclusion(CLINSPARK_OUTPUT, res, ["start_date"])
+    assert_with_key_exclusion(res, CLINSPARK_OUTPUT, ["start_date"])
 
 
 def test_throw_exception_if_file_is_not_xml(api_client):

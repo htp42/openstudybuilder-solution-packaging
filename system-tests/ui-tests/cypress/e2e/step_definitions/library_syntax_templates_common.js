@@ -20,11 +20,7 @@ Then('The validation appears for Template name', () => cy.checkIfValidationAppea
 
 When('The syntax is verified', () => cy.clickButton('verify-syntax-button'))
 
-When('The Template is added without template text', () => cy.clickFormActionButton('continue'))
-
 When('Template change description is provided', () => cy.fillInput('template-change-description', 'updated for test'))
-
-When('Indexes are set as not applicable', () => cy.checkAllCheckboxes())
 
 Then('Indication or Disorder index is cleared', () => cy.clearField('template-indication-dropdown'))
 
@@ -58,7 +54,7 @@ When('The new template name is prepared with a parameters', () => {
 When('The indication indexes edition is initiated', () => {
   cy.wait(1000)
   changeIndex('template-indication-dropdown', true)
-  cy.getText('[data-cy="template-indication-dropdown"] [class$="selection-text"]').then(text => indicationSelected = text)
+  cy.get('[data-cy="template-indication-dropdown"] [class$="selection-text"]').invoke('text').then(text => indicationSelected = text)
 })
 
 Then('The indication index is updated', () => checkIndexValue(indicationSelected))
@@ -99,15 +95,15 @@ function changeIndexesIncludingSubCategory(templateType, update, clear) {
   cy.wait(1000)
   changeCommonIndexes(templateType, update, clear)
   changeIndex(`template-${templateType}-sub-category`, update, clear)
-  cy.getText(`[data-cy="template-${templateType}-sub-category"] [class$="selection-text"]`).then(text => subCategorySelected = text)
+  cy.get(`[data-cy="template-${templateType}-sub-category"] [class$="selection-text"]`).invoke('text').then(text => subCategorySelected = text)
 }
 
 function changeCommonIndexes(templateType, update, clear) {
   cy.wait(1000)
   changeIndex('template-indication-dropdown', update, clear)
   changeIndex(`template-${templateType}-category`, update, clear)
-  cy.getText(`[data-cy="template-indication-dropdown"] [class$="selection-text"]`).then(text => indicationSelected = text)
-  cy.getText(`[data-cy="template-${templateType}-category"] [class$="selection-text"]`).then(text => categorySelected = text)
+  cy.get(`[data-cy="template-indication-dropdown"] [class$="selection-text"]`).invoke('text').then(text => indicationSelected = text)
+  cy.get(`[data-cy="template-${templateType}-category"] [class$="selection-text"]`).invoke('text').then(text => categorySelected = text)
 }
 
 function checkIndexesIncludingSubCategory() {
@@ -130,9 +126,7 @@ export function changeIndex(indexLocator, update, clear) {
   select(indexLocator)
 }
 
-export function fillTemplateNameAndContinue(name) {
+export function fillTemplateName(name) {
   cy.wait(1000)
   cy.fillTextArea('template-text-field', name)
-  cy.clickFormActionButton('continue')
-  cy.clickFormActionButton('continue')
 }

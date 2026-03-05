@@ -124,6 +124,12 @@ def get_all(
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,
+    derive_props_based_on_timeline: Annotated[
+        bool,
+        Query(
+            description="Indicates whether the (visit_name, visit_short_name, unique_visit_number) properties are derived based on the study visit timeline and not from database values.",
+        ),
+    ] = False,
 ) -> CustomPage[StudyVisit]:
     results = StudyVisitService.get_all_visits(
         study_uid=study_uid,
@@ -134,6 +140,7 @@ def get_all(
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
         study_value_version=study_value_version,
+        derive_props_based_on_timeline=derive_props_based_on_timeline,
     )
     return CustomPage(
         items=results.items, total=results.total, page=page_number, size=page_size
@@ -517,11 +524,18 @@ def get_study_visit(
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,
+    derive_props_based_on_timeline: Annotated[
+        bool,
+        Query(
+            description="Indicates whether the (visit_name, visit_short_name, unique_visit_number) properties are derived based on the study visit timeline and not from database values.",
+        ),
+    ] = False,
 ) -> StudyVisit:
     return StudyVisitService.find_by_uid(
         study_uid=study_uid,
         uid=study_visit_uid,
         study_value_version=study_value_version,
+        derive_props_based_on_timeline=derive_props_based_on_timeline,
     )
 
 

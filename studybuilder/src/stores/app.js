@@ -5,6 +5,12 @@ import { i18n } from '@/plugins/i18n'
 import generalUtils from '@/utils/generalUtils'
 import { useStudiesGeneralStore } from './studies-general'
 
+// Dynamically load extension menu items
+const extensionStores = import.meta.glob('@/extensions/*/stores/app.js', {
+  eager: true,
+  import: 'default',
+})
+
 function getStudyUid() {
   const studyUidFromUrl = generalUtils.extractStudyUidFromUrl(
     document.location.pathname
@@ -96,6 +102,7 @@ export const useAppStore = defineStore('app', {
               {
                 title: i18n.t('Sidebar.library.meddra'),
                 url: { name: 'MedDra' },
+                featureFlag: 'meddra_dictionary',
               },
               {
                 title: i18n.t('Sidebar.library.medrt'),
@@ -108,6 +115,7 @@ export const useAppStore = defineStore('app', {
               {
                 title: i18n.t('Sidebar.library.loinc'),
                 url: { name: 'Loinc' },
+                featureFlag: 'loinc_dictionary',
               },
               {
                 title: i18n.t('Sidebar.library.ucum'),
@@ -672,6 +680,29 @@ export const useAppStore = defineStore('app', {
   },
 
   actions: {
+    loadExtensionMenuItems() {
+      // Merge extension menu items into the menuItems
+      for (const path in extensionStores) {
+        const extensionMenu = extensionStores[path]
+        if (extensionMenu && extensionMenu.menuItems) {
+          // Iterate through each section in the extension menu
+          for (const section in extensionMenu.menuItems) {
+            if (this.menuItems[section]) {
+              // If section exists, merge items
+              if (extensionMenu.menuItems[section].items) {
+                this.menuItems[section].items = [
+                  ...this.menuItems[section].items,
+                  ...extensionMenu.menuItems[section].items,
+                ]
+              }
+            } else {
+              // If section doesn't exist, add it
+              this.menuItems[section] = extensionMenu.menuItems[section]
+            }
+          }
+        }
+      }
+    },
     setSection(section) {
       this.section = section
       localStorage.setItem('section', section)
@@ -693,6 +724,9 @@ export const useAppStore = defineStore('app', {
       const section = localStorage.getItem('section')
       const breadcrumbs = localStorage.getItem('breadcrumbs')
       const userData = localStorage.getItem('userData')
+
+      // Load extension menu items
+      this.loadExtensionMenuItems()
 
       if (section) {
         this.section = section

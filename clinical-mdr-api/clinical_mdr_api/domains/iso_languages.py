@@ -23,7 +23,7 @@ _639_2T = "639-2/T"
 _639_2B = "639-2/B"
 _639_3 = "639-3"
 
-LANGUAGES = [
+LANGUAGES: list[dict[str, Any]] = [
     {
         _NAMES: ["Abkhazian"],
         _639_1: "ab",
@@ -1901,6 +1901,9 @@ LANGUAGES_BY_639_2T = {lang[_639_2T]: lang for lang in LANGUAGES}
 LANGUAGES_BY_639_2B = {lang[_639_2B]: lang for lang in LANGUAGES}
 LANGUAGES_BY_639_3 = {
     key.casefold(): lang for lang in LANGUAGES for key in lang[_639_3]
+}
+LANGUAGES_BY_NAME_AND_639_1_AND_639_2T = {
+    lang["names"][0]: (lang[_639_1], lang[_639_2T]) for lang in LANGUAGES
 }
 
 LANGUAGES_INDEXED_BY: dict[str, dict[Any, dict[str, Any]]] = {

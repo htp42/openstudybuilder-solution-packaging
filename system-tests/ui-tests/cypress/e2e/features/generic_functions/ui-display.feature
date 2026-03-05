@@ -9,4 +9,5 @@ Feature: Basic requirements
         And The test study '/study_title' page is opened
         When The 'Edit study title' button is clicked
         And The study title form is filled with UTF-8 charset
+        And Action is confirmed by clicking save
         Then The UI is showing the UTF-8 charset correctly

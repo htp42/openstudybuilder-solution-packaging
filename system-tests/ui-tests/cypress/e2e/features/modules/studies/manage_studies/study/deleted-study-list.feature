@@ -33,22 +33,30 @@ Feature: Studies - Study List - Deleted Studies
 
     Scenario: [Export][CSV] User must be able to export the data in CSV format
         Given The '/studies/select_or_add_study/deleted' page is opened
-        And The user exports the data in 'CSV' format
+        When User clicks table export button
+        And User selects 'CSV' format to export the table content
+        And Action is confirmed by clicking continue
         Then The 'Studies' file is downloaded in 'csv' format
 
     Scenario: [Export][Json] User must be able to export the data in JSON format
         Given The '/studies/select_or_add_study/deleted' page is opened
-        And The user exports the data in 'JSON' format
+        When User clicks table export button
+        And User selects 'JSON' format to export the table content
+        And Action is confirmed by clicking continue
         Then The 'Studies' file is downloaded in 'json' format
 
     Scenario: [Export][Xml] User must be able to export the data in XML format
         Given The '/studies/select_or_add_study/deleted' page is opened
-        And The user exports the data in 'XML' format
+        When User clicks table export button
+        And User selects 'XML' format to export the table content
+        And Action is confirmed by clicking continue
         Then The 'Studies' file is downloaded in 'xml' format
 
     Scenario: [Export][Excel] User must be able to export the data in EXCEL format
         Given The '/studies/select_or_add_study/deleted' page is opened
-        And The user exports the data in 'EXCEL' format
+        When User clicks table export button
+        And User selects 'EXCEL' format to export the table content
+        And Action is confirmed by clicking continue
         Then The 'Studies' file is downloaded in 'xlsx' format
     
     @pending_implementation

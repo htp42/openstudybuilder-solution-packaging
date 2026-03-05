@@ -572,13 +572,26 @@ async function submit() {
         studiesGeneralStore.selectedStudy.uid,
         payloadActivities.value
       )
-      .then(() => {
-        notificationHub.add({
-          msg: t('StudyActivityUpdateForms.update_confirm_activities', {
-            number: payloadActivities.value.length,
-          }),
-          type: 'success',
-        })
+      .then((resp) => {
+        const errors = []
+        for (const subResp of resp.data) {
+          if (subResp.response_code >= 400) {
+            errors.push(subResp.content.message)
+            notificationHub.add({
+              msg: subResp.content.message,
+              type: 'error',
+              timeout: 0,
+            })
+          }
+        }
+        if (!errors.length) {
+          notificationHub.add({
+            msg: t('StudyActivityUpdateForms.update_confirm_activities', {
+              number: payloadActivities.value.length,
+            }),
+            type: 'success',
+          })
+        }
         close()
       })
   }

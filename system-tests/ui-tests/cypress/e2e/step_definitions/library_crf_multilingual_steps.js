@@ -35,14 +35,12 @@ When('The new CRF Form is created with description providied', () => {
     cy.clickButton('add-crf-form')
     cy.fillInput('form-oid', 'CRFNOID')
     cy.fillInput('form-oid-name', formName)
-    proceedAndSave()
 })
 
 When('The new CRF Item Group is created with description providied', () => {
     itemGroupName = `CRFITGNAME ${Date.now()}`
     cy.clickButton('add-crf-item-group')
     cy.fillInput('item-group-name', itemGroupName)
-    proceedAndSave()
 })
 
 When('The new CRF Item is created with description providied', () => {
@@ -50,8 +48,6 @@ When('The new CRF Item is created with description providied', () => {
     cy.clickButton('add-crf-item')
     cy.fillInput('item-name', itemName)
     cy.selectVSelect('item-data-type', 'INTEGER')
-    cy.clickFormActionButton('continue')
-    proceedAndSave()
 })
 
 Then('The CRF Form description is saved within the system', () => cy.searchAndCheckPresence(formName, true))
@@ -59,14 +55,6 @@ Then('The CRF Form description is saved within the system', () => cy.searchAndCh
 Then('The CRF Item Group description is saved within the system', () => cy.searchAndCheckPresence(itemGroupName, true))
 
 Then('The CRF Item description is saved within the system', () => cy.searchAndCheckPresence(itemName, true))
-
-function proceedAndSave() {
-    cy.clickFormActionButton('continue')
-    cy.clickFormActionButton('continue')
-    cy.clickFormActionButton('continue')
-    cy.clickFormActionButton('save')
-    cy.waitForTable()
-}
 
 function checkIfSystemDisplayesTranslations(section, button, shouldBeDisplayed = true) {
     let condition = shouldBeDisplayed ? 'contain' : 'not.contain'

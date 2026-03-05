@@ -10,11 +10,6 @@ from clinical_mdr_api.domains.concepts.utils import (
     VendorElementCompatibleType,
 )
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
-from clinical_mdr_api.models.concepts.odms.odm_common_models import (
-    OdmVendorElementRelationPostInput,
-    OdmVendorRelationPostInput,
-    OdmVendorsPostInput,
-)
 from clinical_mdr_api.models.concepts.odms.odm_form import (
     OdmForm,
     OdmFormItemGroupPostInput,
@@ -61,7 +56,7 @@ class OdmFormService(OdmGenericService[OdmFormAR]):
                 name=concept_input.name,
                 sdtm_version=concept_input.sdtm_version,
                 repeating=strtobool(concept_input.repeating),
-                descriptions=concept_input.descriptions,
+                translated_texts=concept_input.translated_texts,
                 aliases=concept_input.aliases,
                 item_group_uids=[],
                 vendor_element_uids=[],
@@ -84,7 +79,7 @@ class OdmFormService(OdmGenericService[OdmFormAR]):
                 name=concept_edit_input.name,
                 sdtm_version=concept_edit_input.sdtm_version,
                 repeating=strtobool(concept_edit_input.repeating),
-                descriptions=concept_edit_input.descriptions,
+                translated_texts=concept_edit_input.translated_texts,
                 aliases=concept_edit_input.aliases,
                 item_group_uids=item.concept_vo.item_group_uids,
                 vendor_element_uids=item.concept_vo.vendor_element_uids,
@@ -94,6 +89,42 @@ class OdmFormService(OdmGenericService[OdmFormAR]):
             odm_object_exists_callback=self._repos.odm_form_repository.odm_object_exists,
         )
         return item
+
+    @db.transaction
+    def create(self, concept_input: OdmFormPostInput) -> OdmForm:
+        item = super().create(concept_input)
+
+        super().manage_vendors(
+            item.uid,
+            VendorElementCompatibleType.FORM_DEF,
+            VendorAttributeCompatibleType.FORM_DEF,
+            concept_input.vendor_elements,
+            concept_input.vendor_element_attributes,
+            concept_input.vendor_attributes,
+            self._repos.odm_form_repository,
+        )
+
+        return self._transform_aggregate_root_to_pydantic_model(
+            self._repos.odm_form_repository.find_by_uid_2(item.uid)
+        )
+
+    @db.transaction
+    def edit_draft(self, uid: str, concept_edit_input: OdmFormPatchInput) -> OdmForm:
+        super().edit_draft(uid, concept_edit_input)
+
+        super().manage_vendors(
+            uid,
+            VendorElementCompatibleType.FORM_DEF,
+            VendorAttributeCompatibleType.FORM_DEF,
+            concept_edit_input.vendor_elements,
+            concept_edit_input.vendor_element_attributes,
+            concept_edit_input.vendor_attributes,
+            self._repos.odm_form_repository,
+        )
+
+        return self._transform_aggregate_root_to_pydantic_model(
+            self._repos.odm_form_repository.find_by_uid_2(uid)
+        )
 
     @ensure_transaction(db)
     def add_item_groups(
@@ -157,151 +188,6 @@ class OdmFormService(OdmGenericService[OdmFormAR]):
         odm_form_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
 
         return self._transform_aggregate_root_to_pydantic_model(odm_form_ar)
-
-    @db.transaction
-    def add_vendor_elements(
-        self,
-        uid: str,
-        odm_vendor_relation_post_input: list[OdmVendorElementRelationPostInput],
-        override: bool = False,
-    ) -> OdmForm:
-        odm_form_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
-
-        BusinessLogicException.raise_if(
-            odm_form_ar.item_metadata.status != LibraryItemStatus.DRAFT,
-            msg=self.OBJECT_NOT_IN_DRAFT,
-        )
-
-        self.are_elements_vendor_compatible(
-            odm_vendor_relation_post_input, VendorElementCompatibleType.FORM_DEF
-        )
-
-        if override:
-            self.fail_if_non_present_vendor_elements_are_used_by_current_odm_element_attributes(
-                odm_form_ar._concept_vo.vendor_element_attribute_uids,
-                odm_vendor_relation_post_input,
-            )
-
-            self._repos.odm_form_repository.remove_relation(
-                uid=uid,
-                relation_uid=None,
-                relationship_type=RelationType.VENDOR_ELEMENT,
-                disconnect_all=True,
-            )
-
-        for vendor_element in odm_vendor_relation_post_input:
-            self._repos.odm_form_repository.add_relation(
-                uid=uid,
-                relation_uid=vendor_element.uid,
-                relationship_type=RelationType.VENDOR_ELEMENT,
-                parameters={
-                    "value": vendor_element.value,
-                },
-            )
-
-        odm_form_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
-
-        return self._transform_aggregate_root_to_pydantic_model(odm_form_ar)
-
-    @db.transaction
-    def add_vendor_attributes(
-        self,
-        uid: str,
-        odm_vendor_relation_post_input: list[OdmVendorRelationPostInput],
-        override: bool = False,
-    ) -> OdmForm:
-        odm_form_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
-
-        BusinessLogicException.raise_if(
-            odm_form_ar.item_metadata.status != LibraryItemStatus.DRAFT,
-            msg=self.OBJECT_NOT_IN_DRAFT,
-        )
-
-        self.fail_if_these_attributes_cannot_be_added(
-            input_attributes=odm_vendor_relation_post_input,
-            compatible_type=VendorAttributeCompatibleType.FORM_DEF,
-        )
-
-        if override:
-            self._repos.odm_form_repository.remove_relation(
-                uid=uid,
-                relation_uid=None,
-                relationship_type=RelationType.VENDOR_ATTRIBUTE,
-                disconnect_all=True,
-            )
-
-        for vendor_attribute in odm_vendor_relation_post_input:
-            self._repos.odm_form_repository.add_relation(
-                uid=uid,
-                relation_uid=vendor_attribute.uid,
-                relationship_type=RelationType.VENDOR_ATTRIBUTE,
-                parameters={
-                    "value": vendor_attribute.value,
-                },
-            )
-
-        odm_form_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
-
-        return self._transform_aggregate_root_to_pydantic_model(odm_form_ar)
-
-    @db.transaction
-    def add_vendor_element_attributes(
-        self,
-        uid: str,
-        odm_vendor_relation_post_input: list[OdmVendorRelationPostInput],
-        override: bool = False,
-    ) -> OdmForm:
-        odm_form_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
-
-        BusinessLogicException.raise_if(
-            odm_form_ar.item_metadata.status != LibraryItemStatus.DRAFT,
-            msg=self.OBJECT_NOT_IN_DRAFT,
-        )
-
-        self.fail_if_these_attributes_cannot_be_added(
-            odm_vendor_relation_post_input,
-            odm_form_ar.concept_vo.vendor_element_uids,
-        )
-
-        if override:
-            self._repos.odm_form_repository.remove_relation(
-                uid=uid,
-                relation_uid=None,
-                relationship_type=RelationType.VENDOR_ELEMENT_ATTRIBUTE,
-                disconnect_all=True,
-            )
-
-        for vendor_element_attribute in odm_vendor_relation_post_input:
-            self._repos.odm_form_repository.add_relation(
-                uid=uid,
-                relation_uid=vendor_element_attribute.uid,
-                relationship_type=RelationType.VENDOR_ELEMENT_ATTRIBUTE,
-                parameters={
-                    "value": vendor_element_attribute.value,
-                },
-            )
-
-        odm_form_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
-
-        return self._transform_aggregate_root_to_pydantic_model(odm_form_ar)
-
-    def manage_vendors(
-        self,
-        uid: str,
-        odm_vendors_post_input: OdmVendorsPostInput,
-    ) -> OdmForm:
-        odm_form_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
-
-        self.pre_management(
-            uid, odm_vendors_post_input, odm_form_ar, self._repos.odm_form_repository
-        )
-        self.add_vendor_elements(uid, odm_vendors_post_input.elements, True)
-        self.add_vendor_element_attributes(
-            uid, odm_vendors_post_input.element_attributes, True
-        )
-        self.add_vendor_attributes(uid, odm_vendors_post_input.attributes, True)
-
-        return self.get_by_uid(uid)
 
     @db.transaction
     def get_active_relationships(self, uid: str):

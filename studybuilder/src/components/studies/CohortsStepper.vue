@@ -102,6 +102,26 @@
               </v-btn>
             </v-col>
           </v-row>
+          <v-row
+            v-if="creationMode === cohortConstants.MANUAL"
+            justify="center"
+          >
+            <v-col cols="4">
+              <v-text-field
+                v-model="arm.label"
+                data-cy="arm-label"
+                :label="$t('CohortsStepper.arm_label')"
+                :rules="[formRules.max(arm.label, 40)]"
+                variant="outlined"
+                bg-color="white"
+                color="nnBaseBlue"
+                base-color="nnBaseBlue"
+                rounded="lg"
+                clearable
+                density="compact"
+              />
+            </v-col>
+          </v-row>
           <v-row>
             <v-col cols="4">
               <div style="display: flex">
@@ -165,7 +185,7 @@
                 density="compact"
               />
             </v-col>
-            <!-- Hidden for now, will be used later 
+            <!-- Hidden for now, will be used later
             <v-col v-if="creationMode !== cohortConstants.MANUAL" cols="3">
               <v-switch
                 v-model="arm.merge_branch_for_this_arm_for_sdtm_adam"
@@ -188,6 +208,21 @@
                 :label="$t('CohortsStepper.arm_code_optional')"
                 :rules="[formRules.max(arm.code, 20)]"
                 class="ml-1"
+                variant="outlined"
+                bg-color="white"
+                color="nnBaseBlue"
+                base-color="nnBaseBlue"
+                rounded="lg"
+                clearable
+                density="compact"
+              />
+            </v-col>
+            <v-col v-else cols="3">
+              <v-text-field
+                v-model="arm.label"
+                data-cy="arm-label"
+                :label="$t('CohortsStepper.arm_label')"
+                :rules="[formRules.max(arm.label, 40)]"
                 variant="outlined"
                 bg-color="white"
                 color="nnBaseBlue"

@@ -377,6 +377,7 @@ CALL apoc.cypher.run("
     MATCH 
         (selection_src:StudySelection&(" + to_copy_labels_text + "))<-[sv_has_selection]-
         (sv_src)
+    WHERE type(sv_has_selection) <> 'HAS_PROTOCOL_SOA_CELL' AND type(sv_has_selection) <> 'HAS_PROTOCOL_SOA_FOOTNOTE'
     MATCH 
         (sr_src)-[audit_trail:AUDIT_TRAIL]->
         (saction_src:StudyAction)-[saction_selection:AFTER]->
@@ -420,12 +421,13 @@ RETURN rel
         query = """
 WITH $study_src_uid as study_src, $study_target_uid as study_target, $to_copy_labels as to_copy_labels
 
-MATCH (sr_from:StudyRoot)-[:LATEST]->(sv_from:StudyValue)-->(selection_src_from:StudySelection)-[r_ext_src]->(selection_src_to:StudySelection)
-    where sr_from.uid = study_src
+MATCH (sr_from:StudyRoot)-[:LATEST]->(sv_from:StudyValue)-[sv_to_ss_source]->(selection_src_from:StudySelection)-[r_ext_src]->(selection_src_to:StudySelection)
+    where sr_from.uid = study_src AND type(sv_to_ss_source) <> "HAS_PROTOCOL_SOA_CELL" AND type(sv_to_ss_source) <> "HAS_PROTOCOL_SOA_FOOTNOTE"
 WITH selection_src_from.uid as from_uid, type(r_ext_src) AS from_rel_type_to, selection_src_to.uid as to_uid, study_target, to_copy_labels
 match (sr_to:StudyRoot)-[:LATEST]->(sv_to:StudyValue)-->(a:StudySelection)
     where sr_to.uid = study_target
-match (sr_to)-[:LATEST]->(sv_to)-->(b:StudySelection) 
+match (sr_to)-[:LATEST]->(sv_to)-[sv_to__b]->(b:StudySelection) 
+    WHERE type(sv_to__b) <> "HAS_PROTOCOL_SOA_CELL" AND type(sv_to__b) <> "HAS_PROTOCOL_SOA_FOOTNOTE"
 WITH a,b, from_rel_type_to
     where a.uid = from_uid
     and b.uid = to_uid

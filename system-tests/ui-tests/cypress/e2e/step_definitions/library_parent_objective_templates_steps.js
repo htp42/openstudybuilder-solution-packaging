@@ -1,4 +1,4 @@
-import { fillTemplateNameAndContinue } from './library_syntax_templates_common'
+import { fillTemplateName } from './library_syntax_templates_common'
 const { Given, When, Then } = require('@badeball/cypress-cucumber-preprocessor')
 
 let defaultObjectiveName
@@ -19,7 +19,7 @@ When('The objective metadata update is started', () => fillBaseData(`Update${Dat
 
 When('The objective template edition form is filled with data', () => fillBaseData(`CancelEdit${Date.now()}`))
 
-When('The second objective is added with the same template text', () => fillTemplateNameAndContinue(defaultObjectiveName))
+When('The second objective is added with the same template text', () => fillBaseData(defaultObjectiveName))
 
 When('[API] Objective template is inactivated', () => cy.inactivateObjective())
 
@@ -39,11 +39,11 @@ When('[API] Search Test - Create second objective template', () => createObjecti
 
 function createObjectiveViaApi(customName = '') {
   cy.getInidicationUid()
-  cy.getObjectiveCategoryUid()
+  //cy.getObjectiveCategoryUid()
   cy.createObjective(customName)
 }
 
 function fillBaseData(name) {
   defaultObjectiveName = name
-  fillTemplateNameAndContinue(name)
+  fillTemplateName(name)
 }

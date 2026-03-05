@@ -85,6 +85,7 @@ class ActivityInstanceService(ConceptGenericService[ActivityInstanceAR]):
                         activity_item_class_name=None,
                         ct_terms=ct_terms,
                         unit_definitions=unit_definitions,
+                        text_value=item.text_value,
                     )
                 )
 
@@ -204,6 +205,7 @@ class ActivityInstanceService(ConceptGenericService[ActivityInstanceAR]):
                             activity_item_class_name=None,
                             ct_terms=ct_terms,
                             unit_definitions=unit_definitions,
+                            text_value=activity_item.text_value,
                         )
                     )
         else:

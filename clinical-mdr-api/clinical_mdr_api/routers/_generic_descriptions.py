@@ -203,8 +203,13 @@ FILTERS_EXAMPLE = {
 }
 
 TOTAL_COUNT = (
-    "Boolean value specifying whether total count of entities should be included in the response.\n\n"
-    "Functionality: retrieve total count of queried entities.\n\n"
+    "Boolean flag to include the total count of entities in the response.\n\n"
+    "Default: `false`\n\n"
+    "Functionality: When set to `true`, returns the total number of entities that match the query.\n\n"
+    "When combined with filters, the count reflects only the entities matching those filters.\n\n"
+    "Note: This operation can be expensive for large datasets.\n\n"
+    "Special case: A value of `-1` indicates that the exact count is unavailable due to performance constraints, "
+    "but confirms that at least one more entity exists beyond the current page."
 )
 
 # Reusable Query parameter for total_count

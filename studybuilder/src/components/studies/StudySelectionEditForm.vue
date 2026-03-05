@@ -53,19 +53,18 @@
           :items="parameterTypes"
           :show-drop-down-early="true"
         />
-        <div class="text-secondary text-h8 mt-2">
-          {{ $t('CriteriaTemplateForm.guidance_text') }}
+        <div v-if="templateForm.guidance_text">
+          <div class="text-secondary text-h8 mt-2">
+            {{ $t('CriteriaTemplateForm.guidance_text') }}
+          </div>
+          <div class="pa-4 bg-parameterBackground rounded">
+            <NNParameterHighlighter
+              :name="templateForm.guidance_text"
+              default-color="orange"
+              :tooltip="false"
+            />
+          </div>
         </div>
-        <QuillEditor
-          v-if="guidanceText"
-          id="editor"
-          ref="editor"
-          v-model:content="templateForm.guidance_text"
-          content-type="html"
-          :toolbar="customToolbar"
-          :placeholder="$t('CriteriaTemplateForm.guidance_text')"
-          class="pt-4"
-        />
       </v-form>
       <v-card v-else flat class="bg-parameterBackground">
         <v-card-text>
@@ -77,7 +76,7 @@
             default-color="orange"
             :tooltip="false"
           />
-          <div v-if="guidanceText">
+          <div v-if="templateForm.guidance_text">
             <div class="text-secondary text-h8">
               {{ $t('CriteriaTemplateForm.guidance_text') }}
             </div>
@@ -131,7 +130,6 @@ import templateParameterTypes from '@/api/templateParameterTypes'
 import templates from '@/api/templates'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 import instances from '@/utils/instances'
-import { QuillEditor } from '@vueup/vue-quill'
 
 export default {
   components: {
@@ -139,7 +137,6 @@ export default {
     NNTemplateInputField,
     ParameterValueSelector,
     SimpleFormDialog,
-    QuillEditor,
   },
   inject: ['formRules'],
   props: {
@@ -180,10 +177,6 @@ export default {
     maxTemplateLength: {
       type: Boolean,
       default: null,
-    },
-    guidanceText: {
-      type: Boolean,
-      default: false,
     },
   },
   emits: ['close', 'initForm', 'submit'],

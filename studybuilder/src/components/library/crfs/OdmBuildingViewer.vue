@@ -182,7 +182,7 @@
       <v-spacer />
       <v-switch
         v-model="showOdmXml"
-        :label="$t('OdmViewer.xml_code')"
+        :label="$t('OdmViewer.source_code')"
         color="primary"
         class="mr-6"
         inset
@@ -208,7 +208,15 @@
     </div>
     <div v-show="doc && showOdmXml" class="mt-4">
       <v-card color="primary" style="overflow-x: auto">
-        <pre v-show="!loading" class="ml-6 mt-6 pre" style="color: #ff0">{{
+        <div class="d-flex justify-end">
+          <v-btn
+            icon="mdi-content-copy"
+            variant="outlined"
+            border="0"
+            @click="copyXML"
+          />
+        </div>
+        <pre v-show="!loading" class="ml-6 pre" style="color: #ff0">{{
           xmlString
         }}</pre>
       </v-card>
@@ -221,7 +229,7 @@ import _isEmpty from 'lodash/isEmpty'
 import crfs from '@/api/crfs'
 import exportLoader from '@/utils/exportLoader'
 import { DateTime } from 'luxon'
-import { ref, watch, onMounted, computed } from 'vue'
+import { ref, watch, onMounted, computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { useShake } from '@/composables/shake'
@@ -246,6 +254,8 @@ const { t } = useI18n()
 
 const { isShaking, activateShake } = useShake()
 
+const notificationHub = inject('notificationHub')
+
 const allowedNamespaces = ref([])
 const selectedNamespaces = ref([])
 const showOdmXml = ref(false)
@@ -261,6 +271,10 @@ const data = ref({
   version: '',
   stylesheet: [
     {
+      title: t('OdmViewer.html'),
+      value: 'html',
+    },
+    {
       title: t('OdmViewer.crf_with_annotations'),
       value: 'with-annotations',
     },
@@ -269,8 +283,7 @@ const data = ref({
       value: 'falcon',
     },
   ],
-  selectedStylesheet: 'with-annotations',
-  export_to: 'v1',
+  selectedStylesheet: 'html',
 })
 const loading = ref(false)
 const xmlDownloadLoading = ref(false)
@@ -449,17 +462,10 @@ async function loadXml() {
 
   data.value.allowed_namespaces = getAllowedNamespaces()
   data.value.targets = `targets=${data.value.target_uid},${data.value.version}&`
-  crfs.getXml(data.value).then((resp) => {
-    const parser = new DOMParser()
-    xmlString.value = resp.data
-    xml = parser.parseFromString(resp.data, 'application/xml')
-    const xsltProcessor = new XSLTProcessor()
-    crfs.getXsl(data.value.selectedStylesheet).then((resp) => {
-      const xmlDoc = parser.parseFromString(resp.data, 'text/xml')
-      xsltProcessor.importStylesheet(xmlDoc)
-      doc.value = new XMLSerializer().serializeToString(
-        xsltProcessor.transformToDocument(xml)
-      )
+  if (data.value.selectedStylesheet === 'html') {
+    crfs.getReport(data.value).then((resp) => {
+      doc.value = resp.data
+      xmlString.value = resp.data
 
       let iframe = document.createElement('iframe')
       iframe.classList.add('frame')
@@ -470,7 +476,30 @@ async function loadXml() {
 
       loading.value = false
     })
-  })
+  } else {
+    crfs.getXml(data.value).then((resp) => {
+      const parser = new DOMParser()
+      xmlString.value = resp.data
+      xml = parser.parseFromString(resp.data, 'application/xml')
+      const xsltProcessor = new XSLTProcessor()
+      crfs.getXsl(data.value.selectedStylesheet).then((resp) => {
+        const xmlDoc = parser.parseFromString(resp.data, 'text/xml')
+        xsltProcessor.importStylesheet(xmlDoc)
+        doc.value = new XMLSerializer().serializeToString(
+          xsltProcessor.transformToDocument(xml)
+        )
+
+        let iframe = document.createElement('iframe')
+        iframe.classList.add('frame')
+        document.querySelector('iframe').replaceWith(iframe)
+        let iframeDoc = iframe.contentDocument
+        iframeDoc.write(doc.value)
+        iframeDoc.close()
+
+        loading.value = false
+      })
+    })
+  }
   router.push({
     name: 'CrfBuilder',
     params: {
@@ -518,6 +547,16 @@ function downloadXml() {
 
 function downloadPdf() {
   pdfDownloadLoading.value = true
+
+  if (data.value.selectedStylesheet === 'html') {
+    const iframe = document.querySelector('iframe')
+    if (iframe && iframe.contentWindow) {
+      iframe.contentWindow.print()
+    }
+    pdfDownloadLoading.value = false
+    return
+  }
+
   data.value.allowed_namespaces = getAllowedNamespaces()
   crfs.getPdf(data.value).then((resp) => {
     exportLoader.downloadFile(
@@ -533,6 +572,15 @@ function clearXml() {
   doc.value = null
   url = ''
   router.push({ name: 'Crfs', params: { tab: 'odm-viewer' } })
+}
+
+function copyXML() {
+  navigator.clipboard.writeText(xmlString.value)
+  notificationHub.add({
+    msg: t('OdmViewer.source_copied_to_clipboard'),
+    type: 'success',
+    timeout: 3000,
+  })
 }
 </script>
 <style>

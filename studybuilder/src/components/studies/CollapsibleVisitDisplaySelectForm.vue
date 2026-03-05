@@ -148,7 +148,7 @@ const observer = ref()
 
 const format = ref('range')
 const showCollapsibleGroupForm = ref(false)
-const checkVisits = true
+const checkVisits = ref(true)
 
 function collapsibleVisitGroupCreated() {
   showCollapsibleGroupForm.value = false

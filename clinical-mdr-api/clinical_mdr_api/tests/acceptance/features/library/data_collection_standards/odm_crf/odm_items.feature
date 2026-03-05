@@ -114,7 +114,7 @@ Feature: Manage ODM Items in OpenStudyBuilder API
     Scenario: User cannot create an ODM item without an English description
         When the user sends a request to create an ODM item without an English description
         Then the response status code must be 400
-        And the response must include the message "At least one description must be in English ('eng' or 'en')."
+        And the response must include the message "A Translated Text with text_type Description and language English ('eng' or 'en') must be provided."
     Test Coverage:
         | TestFile                                              | TestID                                                                    |
         | /tests/integration/api/old/test_odm_items_negative.py | @TestID: test_cannot_create_a_new_odm_item_without_an_english_description |

@@ -1,4 +1,5 @@
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
+const { getCurrStudyUid } = require("../../support/helper_functions");
 
 let branchName, branchShortName, randomisationGroup
 let branchDescription  = 'E2E Test Branch'
@@ -6,8 +7,6 @@ let branchDescription  = 'E2E Test Branch'
 When('The Study Branch is found', () => cy.searchAndCheckPresence(branchName, true))
 
 When('The Study Branch is no longer available', () => cy.searchAndCheckPresence(branchName, false))
-
-Given('A study without Study Arms has been selected', () => cy.selectTestStudy('Study_000004'))
 
 Given('The first available arm is selected for the branch', () => cy.selectFirstVSelect('study-arm'))
 
@@ -62,6 +61,8 @@ When('For the Random. code a text longer than 20 characters is provided in the S
     cy.fillInput('study-branch-arm-randomisation-group', 'valtest')
     cy.fillInput('study-branch-arm-code', 'a'.repeat(21))
 })
+
+Given('[API] The Study Branch is created within selected study', () => cy.createBranch(getCurrStudyUid()))
 
 function fillBranchData(branchName, branchShortName, randomisationGroup) {
     cy.fillInput('study-branch-arm-name', branchName)

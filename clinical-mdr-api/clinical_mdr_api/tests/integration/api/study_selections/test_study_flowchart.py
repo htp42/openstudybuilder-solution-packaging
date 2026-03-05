@@ -86,6 +86,7 @@ DETAILED_SOA_JSON_EXPORT_COLUMN_HEADERS = DETAILED_SOA_EXPORT_COLUMN_HEADERS + [
 OPERATIONAL_SOA_EXPORT_COLUMN_HEADERS = [
     "study_number",
     "study_version",
+    "library",
     "soa_group",
     "activity_group",
     "activity_subgroup",
@@ -102,6 +103,7 @@ OPERATIONAL_SOA_JSON_EXPORT_COLUMN_HEADERS = OPERATIONAL_SOA_EXPORT_COLUMN_HEADE
 OPERATIONAL_SOA_EXPORT_COLUMN_HEADERS_XLSX = [
     "Study number",
     "Study version",
+    "Library",
     "SoA group",
     "Activity group",
     "Activity subgroup",
@@ -1089,7 +1091,7 @@ def test_operational_soa_csv(
     rows = list(csv.reader(response.iter_lines(), dialect=csv.excel))
 
     # check dimensions
-    assert len(rows[0]) == 11, "Number of columns mismatch"
+    assert len(rows[0]) == 12, "Number of columns mismatch"
     assert (
         len(rows) == soa_test_data.NUM_OPERATIONAL_SOA_EXPORT_ROWS + 1
     ), "Number of rows mismatch"
@@ -1102,13 +1104,15 @@ def test_operational_soa_xlsx(
     """Tests XLS export of Operational SoA"""
 
     num_header_rows = 4
-    num_header_cols = 8
+    num_header_cols = 10
     expected_column_headers = [
         "lowest visibility layer",
+        "Library",
         "SoA group",
         "Group",
         "Subgroup",
         "Activity",
+        "Instance",
         "Topic Code",
         "ADaM Param Code",
         "Visits",
@@ -1139,16 +1143,16 @@ def test_operational_soa_xlsx(
     num_rows = len(rows)
     assert num_rows > num_header_rows, "worksheet 0 too few rows"
     assert (
-        num_rows == num_header_rows + soa_test_data.NUM_ACTIVITY_INSTANCES
-    ), "number of rows mismatch study-activity-instances"
+        num_rows == num_header_rows + soa_test_data.NUM_OPERATIONAL_SOA_XLSX_DATA_ROWS
+    ), "number of rows mismatch (activities + instances)"
 
     # check headers
     assert "study_version: " in worksheet["A1"].value.strip()
     assert "study_number: " in worksheet["A2"].value.strip()
     assert "Date/time of extraction: " in worksheet["A3"].value.strip()
     assert "By: " in worksheet["D3"].value.strip()
-    assert "Epochs" in worksheet["H3"].value
-    column_headers = [cell.value for row in worksheet["A4:H4"] for cell in row]
+    assert "Epochs" in worksheet["J3"].value
+    column_headers = [cell.value for row in worksheet["A4:J4"] for cell in row]
     assert column_headers == expected_column_headers, "Column headers mismatch"
 
     # verify the number of checkmarks

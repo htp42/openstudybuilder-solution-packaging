@@ -46,6 +46,7 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         And Select study with uid saved in previous step
         And The page 'activities/list' is opened for selected study
         And Study activity add button is clicked
+        And Form continue button is clicked
         And The user goes through selection from library form
         And Form save button is clicked
         And The test study '/activities/list' page is opened
@@ -75,6 +76,7 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         And Select study with uid saved in previous step
         And The page 'activities/list' is opened for selected study
         And Study activity add button is clicked
+        And Form continue button is clicked
         And The user goes through selection from library form
         And Form save button is clicked
         And The test study '/activities/list' page is opened
@@ -243,6 +245,8 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         And User search and select activity created via API
         And Form save button is clicked
         Then Warning that 'Retired' 'groups' can not be added to the study is displayed
+        And Fullscreen wizard is closed by clicking cancel button
+        And Action is confirmed by clicking continue
         And [API] Activity group is reactivated
         When Study activity add button is clicked
         And Activity from library is selected
@@ -281,6 +285,8 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         And User search and select activity created via API
         And Form save button is clicked
         Then Warning that 'Retired' 'subgroups' can not be added to the study is displayed
+        And Fullscreen wizard is closed by clicking cancel button
+        And Action is confirmed by clicking continue
         And [API] Activity subgroup is reactivated
         And User waits for 1 seconds
         When Study activity add button is clicked
@@ -293,22 +299,30 @@ Feature: Studies - Define Study - Study Activities - Study Activities
 
     Scenario: [Export][CSV] User must be able to export the data in CSV format
         Given The test study '/activities/list' page is opened
-        And The user exports the data in 'CSV' format
+        When User clicks table export button
+        And User selects 'CSV' format to export the table content
+        And Action is confirmed by clicking continue
         Then The study specific 'StudyActivities' file is downloaded in 'csv' format
 
     Scenario: [Export][Json] User must be able to export the data in JSON format
         Given The test study '/activities/list' page is opened
-        And The user exports the data in 'JSON' format
+        When User clicks table export button
+        And User selects 'JSON' format to export the table content
+        And Action is confirmed by clicking continue
         Then The study specific 'StudyActivities' file is downloaded in 'json' format
 
     Scenario: [Export][Xml] User must be able to export the data in XML format
         Given The test study '/activities/list' page is opened
-        And The user exports the data in 'XML' format
+        When User clicks table export button
+        And User selects 'XML' format to export the table content
+        And Action is confirmed by clicking continue
         Then The study specific 'StudyActivities' file is downloaded in 'xml' format
 
     Scenario: [Export][Excel] User must be able to export the data in EXCEL format
         Given The test study '/activities/list' page is opened
-        And The user exports the data in 'EXCEL' format
+        When User clicks table export button
+        And User selects 'EXCEL' format to export the table content
+        And Action is confirmed by clicking continue
         Then The study specific 'StudyActivities' file is downloaded in 'xlsx' format
 
     Scenario: User must be presented with 'red bell' when activity group has been updated
@@ -318,7 +332,12 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         And The test study '/activities/list' page is opened
         And The Study Activity is found
         And The red alert badge is not present
+        And [API] Activity new version is created
+        And Activity name created via API is fetched
+        And Overview page for activity created via API is opened
+        And I click 'Edit' button 
         When The activity group is updated for that study activity
+        And Form save button is clicked
         And The test study '/activities/list' page is opened
         And The Study Activity is found
         Then The red alert badge is present
@@ -331,7 +350,12 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         And The test study '/activities/list' page is opened
         And The Study Activity is found
         And The red alert badge is not present
+        And [API] Activity new version is created
+        And Activity name created via API is fetched
+        And Overview page for activity created via API is opened
+        And I click 'Edit' button 
         When The activity subgroup is updated for that study activity
+        And Form save button is clicked
         And The test study '/activities/list' page is opened
         And The Study Activity is found
         Then The red alert badge is present
@@ -344,7 +368,12 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         And The test study '/activities/list' page is opened
         And The Study Activity is found
         And The red alert badge is not present
+        And [API] Activity new version is created
+        And Activity name created via API is fetched
+        And Overview page for activity created via API is opened
+        And I click 'Edit' button 
         When The activity name is updated for that study activity
+        And Form save button is clicked
         And The test study '/activities/list' page is opened
         And The Study Activity is found
         Then The red alert badge is present
@@ -354,7 +383,12 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         And [API] Get SoA Group 'BIOMARKERS' id
         And [API] Activity is added to the study
         And Activity name created through API is found
+        And [API] Activity new version is created
+        And Activity name created via API is fetched
+        And Overview page for activity created via API is opened
+        And I click 'Edit' button 
         When The activity name is updated for that study activity
+        And Form save button is clicked
         And The test study '/activities/list' page is opened
         And The Study Activity is found
         And The user accepts the changes
@@ -369,7 +403,12 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         And [API] Get SoA Group 'BIOMARKERS' id
         And [API] Activity is added to the study
         And Activity name created through API is found
+        And [API] Activity new version is created
+        And Activity name created via API is fetched
+        And Overview page for activity created via API is opened
+        And I click 'Edit' button 
         When The activity name is updated for that study activity
+        And Form save button is clicked
         And The test study '/activities/list' page is opened
         And The Study Activity is found
         And The user declines the changes
@@ -380,7 +419,12 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         And [API] Get SoA Group 'BIOMARKERS' id
         And [API] Activity is added to the study
         And Activity name created through API is found
+        And [API] Activity new version is created
+        And Activity name created via API is fetched
+        And Overview page for activity created via API is opened
+        And I click 'Edit' button 
         When The activity name is updated for that study activity
+        And Form save button is clicked
         And The test study '/activities/list' page is opened
         And The Study Activity is found
         And The user declines the changes
@@ -397,7 +441,12 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         And [API] Get SoA Group 'BIOMARKERS' id
         And [API] Activity is added to the study
         And Activity name created through API is found
+        And [API] Activity new version is created
+        And Activity name created via API is fetched
+        And Overview page for activity created via API is opened
+        And I click 'Edit' button 
         When The activity name is updated for that study activity
+        And Form save button is clicked
         And The test study '/activities/list' page is opened
         When The user filters the table by red alert status
         Then The activities with red alert are present 
@@ -407,7 +456,12 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         And [API] Get SoA Group 'BIOMARKERS' id
         And [API] Activity is added to the study
         And Activity name created through API is found
+        And [API] Activity new version is created
+        And Activity name created via API is fetched
+        And Overview page for activity created via API is opened
+        And I click 'Edit' button 
         When The activity name is updated for that study activity
+        And Form save button is clicked
         And The test study '/activities/list' page is opened
         And The Study Activity is found
         And The user declines the changes
@@ -421,7 +475,12 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         And [API] Get SoA Group 'BIOMARKERS' id
         And [API] Activity is added to the study
         And Activity name created through API is found
+        And [API] Activity new version is created
+        And Activity name created via API is fetched
+        And Overview page for activity created via API is opened
+        And I click 'Edit' button 
         When The activity name is updated for that study activity
+        And Form save button is clicked
         And The test study '/activities/list' page is opened
         And The Study Activity is found
         And The user opens bulk review changes window
@@ -431,7 +490,12 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         And [API] Study Activity is created and approved
         And [API] Get SoA Group 'BIOMARKERS' id
         And [API] Activity is added to the study
+        And [API] Activity new version is created
+        And Activity name created via API is fetched
+        And Overview page for activity created via API is opened
+        And I click 'Edit' button 
         When The activity group is updated for that study activity
+        And Form save button is clicked
         And The test study '/activities/list' page is opened
         And The Study Activity is found
         And The user opens bulk review changes window

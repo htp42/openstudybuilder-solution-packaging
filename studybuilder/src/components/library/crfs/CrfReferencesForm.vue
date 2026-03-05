@@ -124,6 +124,7 @@ watch(
           ).value
         })
         selectedExtensions.value = resp.data.items
+        selectedExtensions.value.forEach((attr) => (attr.type = 'attr'))
       })
     }
     type.value =
@@ -148,6 +149,7 @@ async function submit() {
     cancelLabel: t('_global.cancel'),
     agreeLabel: t('_global.continue'),
   }
+  form.value.vendor.attributes = selectedExtensions.value
   if (form.value.uid.includes('OdmForm')) {
     crfs.addFormsToCollection([form.value], props.parent.uid, false).then(
       () => {

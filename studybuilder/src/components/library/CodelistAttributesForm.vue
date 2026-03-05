@@ -51,9 +51,9 @@
           <v-row>
             <v-col>
               <v-switch
-                v-model="form.ordinal"
+                v-model="form.is_ordinal"
                 color="primary"
-                :label="$t('CodelistAttributesForm.ordinal')"
+                :label="$t('CodelistAttributesForm.is_ordinal')"
               />
             </v-col>
           </v-row>
@@ -130,7 +130,7 @@ export default {
         'CodelistAttributesForm.subm_value',
         'CodelistAttributesForm.nci_pref_name',
         'CodelistAttributesForm.extensible',
-        'CodelistAttributesForm.ordinal',
+        'CodelistAttributesForm.is_ordinal',
         'CodelistAttributesForm.definition',
       ],
       working: false,
@@ -145,6 +145,7 @@ export default {
             submission_value: val.submission_value,
             nci_preferred_name: val.nci_preferred_name,
             extensible: val.extensible,
+            is_ordinal: val.is_ordinal,
             definition: val.definition,
           }
           this.formStore.save(this.form)

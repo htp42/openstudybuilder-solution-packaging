@@ -3,16 +3,17 @@
     <template #activator="{ props }">
       <slot name="button" :props="props">
         <v-btn
-          class="ml-2"
-          size="small"
+          class="ml-2 expandHoverBtn"
           variant="outlined"
           color="nnBaseBlue"
           v-bind="props"
           :title="$t('DataTableExportButton.export')"
           data-cy="table-export-button"
-          icon="mdi-download-outline"
           :loading="loading"
-        />
+        >
+          <v-icon left>mdi-download-outline</v-icon>
+          <span class="label">{{ $t('DataTableExportButton.export') }}</span>
+        </v-btn>
       </slot>
     </template>
     <v-list>
@@ -226,6 +227,7 @@ async function exportContent(format) {
   loading.value = true
   const result = await new Promise((resolve) => emit('export', resolve))
   if (!result) {
+    loading.value = false
     return
   }
   if (props.items.length) {

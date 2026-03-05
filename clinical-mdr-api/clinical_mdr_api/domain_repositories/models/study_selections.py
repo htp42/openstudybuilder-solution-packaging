@@ -532,6 +532,7 @@ class StudyDesignCell(StudySelection):
 class StudyArm(StudySelection):
     name = StringProperty()
     short_name = StringProperty()
+    label = StringProperty()
     arm_code = StringProperty()
     description = StringProperty()
     randomization_group = StringProperty()

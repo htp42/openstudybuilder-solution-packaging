@@ -40,7 +40,7 @@ class CTCodelistAttributesVO:
     preferred_term: str | None
     definition: str
     extensible: bool
-    ordinal: bool
+    is_ordinal: bool
 
     @classmethod
     def from_repository_values(
@@ -53,7 +53,7 @@ class CTCodelistAttributesVO:
         preferred_term: str | None,
         definition: str,
         extensible: bool,
-        ordinal: bool,
+        is_ordinal: bool,
     ) -> Self:
         if child_codelist_uids is None:
             child_codelist_uids = []
@@ -66,7 +66,7 @@ class CTCodelistAttributesVO:
             preferred_term=preferred_term,
             definition=definition,
             extensible=extensible,
-            ordinal=ordinal,
+            is_ordinal=is_ordinal,
         )
 
         return ct_codelist_attribute_vo
@@ -81,7 +81,7 @@ class CTCodelistAttributesVO:
         preferred_term: str | None,
         definition: str,
         extensible: bool,
-        ordinal: bool,
+        is_ordinal: bool,
         catalogue_exists_callback: Callable[[str], bool],
         codelist_exists_by_uid_callback: Callable[[str], bool] = lambda _: False,
         codelist_exists_by_name_callback: Callable[[str], bool] = lambda _: False,
@@ -125,7 +125,7 @@ class CTCodelistAttributesVO:
             preferred_term=preferred_term,
             definition=definition,
             extensible=extensible,
-            ordinal=bool(ordinal),
+            is_ordinal=bool(is_ordinal),
         )
 
         return ct_codelist_attribute_vo

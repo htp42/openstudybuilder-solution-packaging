@@ -9,8 +9,8 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
 )
 from clinical_mdr_api.models.concepts.odms.odm_common_models import (
     OdmAliasModel,
-    OdmDescriptionModel,
     OdmFormalExpressionModel,
+    OdmTranslatedTextModel,
 )
 from common.exceptions import AlreadyExistsException
 
@@ -19,7 +19,7 @@ from common.exceptions import AlreadyExistsException
 class OdmConditionVO(ConceptVO):
     oid: str | None
     formal_expressions: list[OdmFormalExpressionModel]
-    descriptions: list[OdmDescriptionModel]
+    translated_texts: list[OdmTranslatedTextModel]
     aliases: list[OdmAliasModel]
 
     @classmethod
@@ -28,14 +28,14 @@ class OdmConditionVO(ConceptVO):
         oid: str | None,
         name: str,
         formal_expressions: list[OdmFormalExpressionModel],
-        descriptions: list[OdmDescriptionModel],
+        translated_texts: list[OdmTranslatedTextModel],
         aliases: list[OdmAliasModel],
     ) -> Self:
         return cls(
             oid=oid,
             name=name,
             formal_expressions=formal_expressions,
-            descriptions=descriptions,
+            translated_texts=translated_texts,
             aliases=aliases,
             name_sentence_case=None,
             definition=None,

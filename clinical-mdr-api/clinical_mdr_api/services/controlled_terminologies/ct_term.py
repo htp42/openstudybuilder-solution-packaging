@@ -111,11 +111,19 @@ class CTTermService:
             )
             if (
                 ct_codelist_attributes_ar is not None
-                and ct_codelist_attributes_ar.ct_codelist_vo.ordinal
-                and codelist.order is None
+                and ct_codelist_attributes_ar.ct_codelist_vo.is_ordinal
+                and codelist.ordinal is None
             ):
                 raise exceptions.BusinessLogicException(
-                    msg=f"Codelist identified by {codelist.codelist_uid} is ordinal and order is required"
+                    msg=f"Codelist identified by {codelist.codelist_uid} is ordinal, therefore term ordinal value is required"
+                )
+            if (
+                ct_codelist_attributes_ar is not None
+                and not ct_codelist_attributes_ar.ct_codelist_vo.is_ordinal
+                and codelist.ordinal is not None
+            ):
+                raise BusinessLogicException(
+                    msg=f"Codelist identified by {codelist.codelist_uid} is not ordinal, therefore term ordinal value should be None"
                 )
             ct_codelist_name_ar = self._repos.ct_codelist_name_repository.find_by_uid(
                 codelist_uid=codelist.codelist_uid
@@ -129,6 +137,7 @@ class CTTermService:
                 CTTermCodelistVO(
                     codelist_uid=codelist.codelist_uid,
                     order=codelist.order,
+                    ordinal=codelist.ordinal,
                     submission_value=codelist.submission_value,
                     library_name=ct_codelist_name_ar.library.name,
                     codelist_submission_value=ct_codelist_attributes_ar.ct_codelist_vo.submission_value,
@@ -187,6 +196,7 @@ class CTTermService:
                 author_id=self.author_id,
                 order=cl.order,
                 submission_value=cl.submission_value,
+                ordinal=cl.ordinal,
             )
         codelists_vo = CTTermVO(codelists, [])
 
@@ -333,6 +343,7 @@ class CTTermService:
             CTTermCodelistVO(
                 codelist_uid=codelist.codelist_uid,
                 order=codelist.order,
+                ordinal=codelist.ordinal,
                 submission_value=codelist.submission_value,
                 library_name=codelist.library_name,
                 codelist_submission_value=codelist.codelist_submission_value,
@@ -395,6 +406,7 @@ class CTTermService:
             CTTermCodelistVO(
                 codelist_uid=codelist.codelist_uid,
                 order=codelist.order,
+                ordinal=codelist.ordinal,
                 submission_value=codelist.submission_value,
                 library_name=codelist.library_name,
                 codelist_submission_value=codelist.codelist_submission_value,

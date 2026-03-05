@@ -6,7 +6,6 @@ Feature: Library - Data Collection Standards - CRF Builder - Items
     Background: User must be logged in
         Given The user is logged in
         And The homepage is opened
-        And The multilingual CRFs option is toggled off in the settings menu
 
     Scenario: [Navigation] User must be able to navigate to the CRF Items page
         Given The '/library' page is opened
@@ -20,8 +19,6 @@ Feature: Library - Data Collection Standards - CRF Builder - Items
             | headers              |
             | OID                  |
             | Name                 |
-            | Description          |
-            | Design Notes         |
             | Type                 |
             | Length               |
             | SDS Var Name         |
@@ -33,10 +30,10 @@ Feature: Library - Data Collection Standards - CRF Builder - Items
         Then A table is visible with following options
             | options                                                         |
             | Add CRF Item                                                    |
-            | Filters                                                         |
-            | Columns                                                         |
+            | Select columns                                                  |
             | Export                                                          |
-            | search-field                                                    |
+            | Select filters                                                  |
+            | Search                                                          |
 
     Scenario: [Table][Columns][Visibility] User must be able to select visibility of columns in the table 
         Given The '/library/crf-builder/items' page is opened
@@ -50,6 +47,7 @@ Feature: Library - Data Collection Standards - CRF Builder - Items
         And User waits for CRF Items data to load
         When The 'add-crf-item' button is clicked
         And The CRF Item definition container is filled with data and saved
+        And Form continue button is clicked
         And Form continue button is clicked
         And Form continue button is clicked
         And Form continue button is clicked

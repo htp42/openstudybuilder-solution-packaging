@@ -9,7 +9,7 @@ from clinical_mdr_api.domain_repositories._utils.helpers import (
     acquire_write_lock_study_value,
 )
 from clinical_mdr_api.domain_repositories.generic_repository import (
-    manage_previous_connected_study_selection_relationships,
+    _manage_versioning_with_relations,
 )
 from clinical_mdr_api.domain_repositories.models.study import StudyRoot, StudyValue
 from clinical_mdr_api.domain_repositories.models.study_audit_trail import (
@@ -466,6 +466,7 @@ class StudySelectionBranchArmRepository:
         )
         return len(sdc_node) == 0
 
+    # pylint: disable=unused-argument
     def save(self, study_selection: StudySelectionBranchArmAR, author_id: str) -> None:
         """
         Persist the set of selected study branch arms from the aggregate to the database
@@ -567,13 +568,6 @@ class StudySelectionBranchArmRepository:
                 audit_node = self._get_audit_node(
                     study_selection, selected_object.study_selection_uid
                 )
-                # create the before node to the last_study_selection_node and audit trial to study_root
-                audit_node = self._set_before_audit_info(
-                    audit_node=audit_node,
-                    study_selection_node=last_study_selection_node,
-                    study_root_node=study_root_node,
-                    author_id=author_id,
-                )
 
                 audit_trail_nodes[selected_object.study_selection_uid] = audit_node
                 last_nodes[selected_object.study_selection_uid] = (
@@ -581,6 +575,7 @@ class StudySelectionBranchArmRepository:
                 )
                 if isinstance(audit_node, Delete):
                     self._add_new_selection(
+                        study_root_node,
                         latest_study_value_node,
                         order,
                         selected_object,
@@ -602,11 +597,8 @@ class StudySelectionBranchArmRepository:
                     ]
                 else:
                     audit_node = Create()
-                    audit_node.author_id = selected_object.author_id
-                    audit_node.date = selected_object.start_date
-                    audit_node.save()
-                    study_root_node.audit_trail.connect(audit_node)
                 self._add_new_selection(
+                    study_root_node,
                     latest_study_value_node,
                     order,
                     selected_object,
@@ -614,21 +606,6 @@ class StudySelectionBranchArmRepository:
                     False,
                     before_node=last_study_selection_node,
                 )
-
-    @staticmethod
-    def _set_before_audit_info(
-        audit_node: StudyAction,
-        study_selection_node: StudyBranchArm,
-        study_root_node: StudyRoot,
-        author_id: str,
-    ) -> StudyAction:
-        audit_node.author_id = author_id
-        audit_node.date = datetime.datetime.now(datetime.timezone.utc)
-        audit_node.save()
-
-        audit_node.has_before.connect(study_selection_node)
-        study_root_node.audit_trail.connect(audit_node)
-        return audit_node
 
     @staticmethod
     def branch_arm_arm_update_conflict(
@@ -669,6 +646,7 @@ class StudySelectionBranchArmRepository:
 
     @staticmethod
     def _add_new_selection(
+        study_root: StudyRoot,
         latest_study_value_node: StudyValue,
         order: int,
         selection: StudySelectionBranchArmVO,
@@ -702,16 +680,6 @@ class StudySelectionBranchArmRepository:
             latest_study_value_node.has_study_branch_arm.connect(
                 study_branch_arm_selection_node
             )
-        # Connect new node with audit trail
-        audit_node.has_after.connect(study_branch_arm_selection_node)
-
-        if before_node is not None:
-            manage_previous_connected_study_selection_relationships(
-                previous_item=before_node,
-                study_value_node=latest_study_value_node,
-                new_item=study_branch_arm_selection_node,
-                exclude_study_selection_relationships=[StudyArm],
-            )
 
         # check if arm root is set
         if selection.arm_root_uid:
@@ -730,6 +698,15 @@ class StudySelectionBranchArmRepository:
             )
             # connect to node
             study_branch_arm_selection_node.has_cohort.connect(study_cohort)
+
+        _manage_versioning_with_relations(
+            study_root=study_root,
+            action_type=type(audit_node),
+            before=before_node,
+            after=study_branch_arm_selection_node,
+            exclude_relationships=[StudyArm, StudyCohort],
+            author_id=selection.author_id,
+        )
 
     def generate_uid(self) -> str:
         return StudyBranchArm.get_next_free_uid_and_increment_counter()

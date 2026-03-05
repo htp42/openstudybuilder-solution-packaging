@@ -48,7 +48,7 @@ class CTCodelist(BaseModel):
             nci_preferred_name=ct_codelist_attributes_ar.ct_codelist_vo.preferred_term,
             definition=ct_codelist_attributes_ar.ct_codelist_vo.definition,
             extensible=ct_codelist_attributes_ar.ct_codelist_vo.extensible,
-            ordinal=ct_codelist_attributes_ar.ct_codelist_vo.ordinal,
+            is_ordinal=ct_codelist_attributes_ar.ct_codelist_vo.is_ordinal,
             library_name=Library.from_library_vo(
                 ct_codelist_attributes_ar.library
             ).name,
@@ -91,7 +91,7 @@ class CTCodelist(BaseModel):
 
     extensible: Annotated[bool, Field()]
 
-    ordinal: Annotated[bool, Field()]
+    is_ordinal: Annotated[bool, Field()]
 
     sponsor_preferred_name: Annotated[str, Field()]
 
@@ -113,6 +113,7 @@ class CTCodelistTermInput(PostInputModel):
         int | None,
         Field(gt=0, lt=settings.max_int_neo4j),
     ] = 999999
+    ordinal: Annotated[float | None, Field()] = None
     submission_value: Annotated[str, Field(min_length=1)]
 
 
@@ -123,7 +124,7 @@ class CTCodelistCreateInput(PostInputModel):
     nci_preferred_name: Annotated[str | None, Field(min_length=1)] = None
     definition: Annotated[str, Field(min_length=1)]
     extensible: Annotated[bool, Field()]
-    ordinal: Annotated[bool, Field()]
+    is_ordinal: Annotated[bool, Field()]
     sponsor_preferred_name: Annotated[str, Field(min_length=1)]
     template_parameter: Annotated[bool, Field()]
     parent_codelist_uid: Annotated[str | None, Field(min_length=1)] = None
@@ -268,6 +269,7 @@ class CTCodelistTerm(BaseModel):
             term_uid=ct_codelist_term_ar.ct_codelist_term_vo.term_uid,
             submission_value=ct_codelist_term_ar.ct_codelist_term_vo.submission_value,
             order=ct_codelist_term_ar.ct_codelist_term_vo.order,
+            ordinal=ct_codelist_term_ar.ct_codelist_term_vo.ordinal,
             library_name=ct_codelist_term_ar.ct_codelist_term_vo.library_name,
             sponsor_preferred_name=ct_codelist_term_ar.ct_codelist_term_vo.sponsor_preferred_name,
             sponsor_preferred_name_sentence_case=ct_codelist_term_ar.ct_codelist_term_vo.sponsor_preferred_name_sentence_case,
@@ -290,6 +292,7 @@ class CTCodelistTerm(BaseModel):
         int | None,
         Field(json_schema_extra={"nullable": True}),
     ]
+    ordinal: Annotated[float | None, Field(json_schema_extra={"nullable": True})] = None
     library_name: Annotated[str | None, Field()]
     sponsor_preferred_name: Annotated[str, Field()]
 

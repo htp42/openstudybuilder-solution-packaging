@@ -295,8 +295,9 @@ class USDMMapper:
             titles=[ddf_study_title],
             studyIdentifiers=self._get_study_identifiers(study),
             versionIdentifier="",
-            rationale="",
+            rationale="Missing metadata",
             instanceType="StudyVersion",
+            documentVersionIds=[s.id for s in usdm_study.documentedBy],
         )
 
         # Set DDF study version identifier
@@ -1109,13 +1110,20 @@ class USDMMapper:
     @trace_calls
     def _get_study_version(self, study: OSBStudy):
         osb_current_metadata = getattr(study, "current_metadata", None)
-        return str(
-            getattr(
-                getattr(osb_current_metadata, "version_metadata", None),
-                "version_number",
-                "",
-            )
-        )
+        if not osb_current_metadata:
+            return ""
+
+        if osb_version_metadata := getattr(
+            osb_current_metadata, "version_metadata", None
+        ):
+
+            rs = osb_version_metadata.study_status
+            if osb_version_metadata.version_number:
+                rs += f" v{osb_version_metadata.version_number}"
+
+            return rs
+
+        return ""
 
     @trace_calls
     def _get_study_encounters(self, study: OSBStudy):

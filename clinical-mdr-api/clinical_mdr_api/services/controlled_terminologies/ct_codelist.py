@@ -98,7 +98,7 @@ class CTCodelistService:
                 preferred_term=codelist_input.nci_preferred_name,
                 definition=codelist_input.definition,
                 extensible=codelist_input.extensible,
-                ordinal=codelist_input.ordinal,
+                is_ordinal=codelist_input.is_ordinal,
                 catalogue_exists_callback=self._repos.ct_catalogue_repository.catalogue_exists,
                 codelist_exists_by_uid_callback=self._repos.ct_codelist_attribute_repository.codelist_specific_exists_by_uid,
                 codelist_exists_by_name_callback=self._repos.ct_codelist_attribute_repository.codelist_specific_exists_by_name,
@@ -205,6 +205,7 @@ class CTCodelistService:
                     author_id=self.author_id,
                     order=term.order,
                     submission_value=term.submission_value,
+                    ordinal=term.ordinal,
                 )
 
         if ct_codelist_name_ar is None or ct_codelist_attributes_ar is None:
@@ -355,7 +356,12 @@ class CTCodelistService:
 
     @ensure_transaction(db)
     def add_term(
-        self, codelist_uid: str, term_uid: str, order: int | None, submission_value: str
+        self,
+        codelist_uid: str,
+        term_uid: str,
+        order: int | None,
+        submission_value: str,
+        ordinal: float | None = None,
     ) -> CTCodelist:
         ct_codelist_attributes_ar = (
             self._repos.ct_codelist_attribute_repository.find_by_uid(
@@ -370,9 +376,16 @@ class CTCodelistService:
                 msg=f"Codelist with UID '{codelist_uid}' isn't extensible.",
             )
 
-            if ct_codelist_attributes_ar.ct_codelist_vo.ordinal and order is None:
+            if ct_codelist_attributes_ar.ct_codelist_vo.is_ordinal and ordinal is None:
                 raise BusinessLogicException(
-                    msg=f"Codelist identified by {codelist_uid} is ordinal and order is required"
+                    msg=f"Codelist identified by {codelist_uid} is ordinal, therefore term ordinal value is required"
+                )
+            if (
+                ordinal is not None
+                and not ct_codelist_attributes_ar.ct_codelist_vo.is_ordinal
+            ):
+                raise BusinessLogicException(
+                    msg=f"Codelist identified by {codelist_uid} is not ordinal, therefore term ordinal value should be None"
                 )
 
             parent_codelist_uid = (
@@ -459,6 +472,7 @@ class CTCodelistService:
             author_id=self.author_id,
             order=order,
             submission_value=submission_value,
+            ordinal=ordinal,
         )
 
         if ct_codelist_attributes_ar is None or ct_codelist_name_ar is None:

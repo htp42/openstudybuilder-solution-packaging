@@ -193,12 +193,12 @@ def test_getting_versions_of_a_specific_odm_vendor_attribute(api_client):
 def test_updating_an_existing_odm_vendor_attribute(api_client):
     data = {
         "library_name": "Sponsor",
-        "name": "new name",
+        "name": "newName",
         "compatible_types": ["FormDef", "ItemRef"],
         "data_type": "string",
         "value_regex": "^[a-zA-Z]+$",
         "vendor_namespace_uid": "odm_vendor_namespace1",
-        "change_description": "regex changed and name changed to new name",
+        "change_description": "regex changed and name changed to newName",
     }
     response = api_client.patch(
         "concepts/odms/vendor-attributes/OdmVendorAttribute_000001", json=data
@@ -210,14 +210,14 @@ def test_updating_an_existing_odm_vendor_attribute(api_client):
 
     assert res["uid"] == "OdmVendorAttribute_000001"
     assert res["library_name"] == "Sponsor"
-    assert res["name"] == "new name"
+    assert res["name"] == "newName"
     assert res["compatible_types"] == ["FormDef", "ItemRef"]
     assert res["data_type"] == "string"
     assert res["value_regex"] == "^[a-zA-Z]+$"
     assert res["end_date"] is None
     assert res["status"] == "Draft"
     assert res["version"] == "0.2"
-    assert res["change_description"] == "regex changed and name changed to new name"
+    assert res["change_description"] == "regex changed and name changed to newName"
     assert res["author_username"] == "unknown-user@example.com"
     assert res["vendor_namespace"] == {
         "uid": "odm_vendor_namespace1",
@@ -276,7 +276,7 @@ def test_approving_an_odm_vendor_attribute(api_client):
 
     assert res["uid"] == "OdmVendorAttribute_000001"
     assert res["library_name"] == "Sponsor"
-    assert res["name"] == "new name"
+    assert res["name"] == "newName"
     assert res["compatible_types"] == ["FormDef", "ItemRef"]
     assert res["data_type"] == "string"
     assert res["value_regex"] == "^[a-zA-Z]+$"
@@ -309,7 +309,7 @@ def test_inactivating_a_specific_odm_vendor_attribute(api_client):
 
     assert res["uid"] == "OdmVendorAttribute_000001"
     assert res["library_name"] == "Sponsor"
-    assert res["name"] == "new name"
+    assert res["name"] == "newName"
     assert res["compatible_types"] == ["FormDef", "ItemRef"]
     assert res["data_type"] == "string"
     assert res["value_regex"] == "^[a-zA-Z]+$"
@@ -342,7 +342,7 @@ def test_reactivating_a_specific_odm_vendor_attribute(api_client):
 
     assert res["uid"] == "OdmVendorAttribute_000001"
     assert res["library_name"] == "Sponsor"
-    assert res["name"] == "new name"
+    assert res["name"] == "newName"
     assert res["compatible_types"] == ["FormDef", "ItemRef"]
     assert res["data_type"] == "string"
     assert res["value_regex"] == "^[a-zA-Z]+$"
@@ -375,7 +375,7 @@ def test_creating_a_new_odm_vendor_attribute_version(api_client):
 
     assert res["uid"] == "OdmVendorAttribute_000001"
     assert res["library_name"] == "Sponsor"
-    assert res["name"] == "new name"
+    assert res["name"] == "newName"
     assert res["compatible_types"] == ["FormDef", "ItemRef"]
     assert res["data_type"] == "string"
     assert res["value_regex"] == "^[a-zA-Z]+$"
@@ -489,7 +489,7 @@ def test_creating_a_new_odm_vendor_attribute_with_relation_to_odm_vendor_element
     assert res["vendor_namespace"] is None
     assert res["vendor_element"] == {
         "uid": "odm_vendor_element1",
-        "name": "nameOne",
+        "name": "NameOne",
         "compatible_types": ["FormDef", "ItemGroupDef", "ItemDef"],
         "status": "Final",
         "version": "1.0",

@@ -37,50 +37,83 @@ Feature: Studies - Define Study - Study Criteria - Run-in Criteria
     
     @unstable_disabled
     Scenario: User must be able to create the Run-in Criteria based on existing criteria template
-        Given The test study '/selection_criteria/Run-in%20Criteria' page is opened
+        Given [API] The criteria template is created with type 'run-in'
+        And The test study '/selection_criteria/Run-in%20Criteria' page is opened
+        And User clicks add study criteria button
+        When User selects to create criteria from template
+        And Form continue button is clicked
         When The 'runIn' criteria is copied from existing template
+        And Form save button is clicked
         Then The 'runIn' criteria created from existing template is visible within the table with correct data
 
     @smoke_test
     Scenario: [Create][From scratch] User must be able to create the Run-in Criteria from scratch
         Given The test study '/selection_criteria/Run-in%20Criteria' page is opened
+        When User clicks add study criteria button
+        And User selects to create criteria from scratch
+        And Form continue button is clicked
         When The 'runIn' criteria is created from scratch
-        Then The 'runIn' criteria created from new template is visible within the table with correct data
+        And Form continue button is clicked
+        And Form save button is clicked
+        Then The study criteria is searched and found
 
     Scenario: [Create][From studies][By Id] User must be able to select Run-in Criteria from other existing studies by study id
-        Given Go to 'CDISC DEV-0' study page 'selection_criteria/Run-in%20Criteria'
-        When The 'run-In' criteria is created from scratch
-        Then The 'run-In' criteria created from new template is visible within the table with correct data
+        When Get study 'CDISC DEV-0' uid
+        When The page 'selection_criteria/Run-in%20Criteria' is opened for selected study
+        When User clicks add study criteria button
+        And User selects to create criteria from scratch
+        And Form continue button is clicked
+        When The 'runIn' criteria is created from scratch
+        And Form continue button is clicked
+        And Form save button is clicked
+        Then The study criteria is searched and found
         Given The test study '/selection_criteria/Run-in%20Criteria' page is opened
-        When The 'Run-In' criteria is created from studies
+        When User clicks add study criteria button
+        And User selects to create criteria from study
+        And Form continue button is clicked
         And Study with 'CDISC DEV-0' id is selected to copy criteria from
+        And Form continue button is clicked
         And The 'Run-in' criteria from test study is copied
-        Then The 'Run-in Criteria' copied from test study is visible within the table with correct data
+        And Form save button is clicked
+        And User waits for the table
+        Then The study criteria is searched and found
 
     Scenario: [Export][CSV] User must be able to export the data in CSV format
         Given The test study '/selection_criteria/Run-in%20Criteria' page is opened
-        And The user exports the data in 'CSV' format
+        When User clicks table export button
+        And User selects 'CSV' format to export the table content
+        And Action is confirmed by clicking continue
         Then The study specific 'StudyCriteria' file is downloaded in 'csv' format
 
     Scenario: [Export][Json] User must be able to export the data in JSON format
         Given The test study '/selection_criteria/Run-in%20Criteria' page is opened
-        And The user exports the data in 'JSON' format
+        When User clicks table export button
+        And User selects 'JSON' format to export the table content
+        And Action is confirmed by clicking continue
         Then The study specific 'StudyCriteria' file is downloaded in 'json' format
 
     Scenario: [Export][Xml] User must be able to export the data in XML format
         Given The test study '/selection_criteria/Run-in%20Criteria' page is opened
-        And The user exports the data in 'XML' format
+        When User clicks table export button
+        And User selects 'XML' format to export the table content
+        And Action is confirmed by clicking continue
         Then The study specific 'StudyCriteria' file is downloaded in 'xml' format
 
     Scenario: [Export][Excel] User must be able to export the data in EXCEL format
         Given The test study '/selection_criteria/Run-in%20Criteria' page is opened
-        And The user exports the data in 'EXCEL' format
+        When User clicks table export button
+        And User selects 'EXCEL' format to export the table content
+        And Action is confirmed by clicking continue
         Then The study specific 'StudyCriteria' file is downloaded in 'xlsx' format
 
     @pending_implementation
     Scenario: User must be able to select Run-in Criteria from other existing studies by study acronym
         Given The test study '/selection_criteria/Run-in%20Criteria' page is opened
-        When The 'Run-In' criteria is created from studies
+        When User clicks add study criteria button
+        And User selects to create criteria from study
+        And Form continue button is clicked
         And The test study for 'Run-In' criteria copying is selected by study acronym
         And The 'Run-in' criteria from test study is copied
-        Then The 'Run-in Criteria' copied from test study is visible within the table with correct data
+        And Form save button is clicked
+        And User waits for the table
+        Then The study criteria is searched and found

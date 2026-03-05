@@ -77,6 +77,7 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
     @abc.abstractmethod
     def _add_new_selection(
         self,
+        study_root: StudyRoot,
         latest_study_value_node: StudyValue,
         order: int,
         selection: StudySelectionBaseVO,
@@ -248,9 +249,7 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
 
     def _get_audit_trail_nodes_to_reference(
         self,
-        study_root_node: StudyRoot,
         latest_study_value_node: StudyValue,
-        author_id: str,
         study_activity: StudySelectionBaseVO,
         study_selection: StudySelectionBaseAR,
     ):
@@ -263,11 +262,10 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
         audit_node = self._get_audit_node(
             study_selection, study_activity.study_selection_uid
         )
-        audit_node = self._set_before_audit_info(
-            last_study_selection_node, audit_node, study_root_node, author_id
-        )
+
         return audit_node, last_study_selection_node
 
+    # pylint: disable=unused-argument
     @trace_calls
     def save(
         self,
@@ -342,9 +340,7 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
             ):
                 audit_node, last_study_selection_node = (
                     self._get_audit_trail_nodes_to_reference(
-                        study_root_node=study_root_node,
                         latest_study_value_node=latest_study_value_node,
-                        author_id=author_id,
                         study_activity=study_activity,
                         study_selection=study_selection,
                     )
@@ -356,6 +352,7 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
 
                 if isinstance(audit_node, Delete):
                     self._add_new_selection(
+                        study_root_node,
                         latest_study_value_node,
                         order,
                         study_activity,
@@ -378,21 +375,16 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
             ):
                 audit_node, last_study_selection_node = (
                     self._get_audit_trail_nodes_to_reference(
-                        study_root_node=study_root_node,
                         latest_study_value_node=latest_study_value_node,
-                        author_id=author_id,
                         study_activity=selection,
                         study_selection=study_selection,
                     )
                 )
             else:
                 audit_node = Create()
-                audit_node.author_id = selection.author_id
-                audit_node.date = selection.start_date
-                audit_node.save()
-                study_root_node.audit_trail.connect(audit_node)
 
             self._add_new_selection(
+                study_root_node,
                 latest_study_value_node,
                 order,
                 selection,
@@ -400,21 +392,6 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
                 last_study_selection_node,
                 False,
             )
-
-    @staticmethod
-    def _set_before_audit_info(
-        study_activity_selection_node: StudySelection,
-        audit_node: StudyAction,
-        study_root_node: StudyRoot,
-        author_id: str,
-    ) -> StudyAction:
-        audit_node.author_id = author_id
-        audit_node.date = datetime.datetime.now(datetime.timezone.utc)
-        audit_node.save()
-
-        audit_node.has_before.connect(study_activity_selection_node)
-        study_root_node.audit_trail.connect(audit_node)
-        return audit_node
 
     @trace_calls
     def _get_selection_with_history(

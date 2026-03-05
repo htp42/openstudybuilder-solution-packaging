@@ -1,17 +1,16 @@
 Cypress.Commands.add('createAndOpenCodelist', () => {
   let number = Date.now()
   cy.request('POST', Cypress.env('API') + '/ct/codelists', {
-    catalogue_names: ['SEND CT'],
-    definition: `Definition${number}`,
-    extensible: true,
-    library_name: 'Sponsor',
-    name: `Name${number}`,
-    nci_preferred_name: `NCI${number}`,
-    sponsor_preferred_name: `SponsorName${number}`,
-    submission_value: `Submission${number}`,
-    template_parameter: false,
-    terms: [],
-    ordinal: true,
+    "extensible": true,
+    "is_ordinal": true,
+    "library_name": "Sponsor",
+    "template_parameter": false,
+    "catalogue_names": ['SEND CT'],
+    "sponsor_preferred_name":  `SponsorName${number}`,
+    "name": `Name${number}`,
+    "terms": [],
+    "definition": `Definition${number}`,
+    "submission_value": `Submission${number}`
   }).then((created_response) => {
     cy.log('Codelist - created - visiting')
     cy.visit('/library/ct_catalogues/All/' + created_response.body.codelist_uid)
@@ -32,6 +31,7 @@ Cypress.Commands.add('createAndOpenTerm', () => {
     sponsor_preferred_name: `SponsorName${number}`,
     sponsor_preferred_name_sentence_case: `SentanceName${number}`,
     synonyms: `Synonyms${number}`,
+    is_ordinal: false
   }).then((created_response) => {
     cy.log('Term - created - visiting')
     cy.visit('/terms/' + created_response.body.term_uid)

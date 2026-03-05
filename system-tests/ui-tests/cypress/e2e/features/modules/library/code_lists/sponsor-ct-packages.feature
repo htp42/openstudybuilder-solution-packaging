@@ -15,6 +15,7 @@ Feature: Library - Code Lists - Sponsor CT Packages
     #     Given The '/library/sponsor-ct-packages' page is opened
     #     When The Create First One button is pressed on the Sponsor CT Package page
     #     And The Sponsor CT Package form is populated and saved
+    #     And Form save button is clicked
     #     Then The table presents created Sponsor CT Package
 
     Scenario: [Create][Negative case] User must not be able to create multiple Sponsor CT Packages for the same date
@@ -22,6 +23,7 @@ Feature: Library - Code Lists - Sponsor CT Packages
         And [API] User creates a package if it doesn not exists
         And The '/library/sponsor-ct-packages' page is opened
         When Sponsor CT Package is created for the same date as already existing one
+        And Action is confirmed by clicking save
         Then The pop up displays 'A sponsor CTPackage already exists for this date'
 
     @smoke_test
@@ -29,9 +31,9 @@ Feature: Library - Code Lists - Sponsor CT Packages
         Given The '/library/sponsor-ct-packages' page is opened
         Then A table is visible with following options
             | options                                                         |
-            | Columns                                                         |
+            | Select columns                                                  |
             | Export                                                          |
-            | Add select boxes to table to allow selection of rows for export |
+            | Select rows                                                     |
 
         And A table is visible with following headers
             | headers                |

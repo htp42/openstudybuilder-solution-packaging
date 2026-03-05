@@ -34,9 +34,11 @@ from clinical_mdr_api.models.concepts.concept import (
 )
 from clinical_mdr_api.models.concepts.odms.odm_common_models import (
     OdmAliasModel,
-    OdmDescriptionModel,
     OdmRefVendor,
     OdmRefVendorAttributeModel,
+    OdmTranslatedTextModel,
+    OdmVendorElementRelationPostInput,
+    OdmVendorRelationPostInput,
 )
 from clinical_mdr_api.models.concepts.odms.odm_vendor_attribute import (
     OdmVendorAttributeRelationModel,
@@ -52,8 +54,11 @@ from clinical_mdr_api.models.controlled_terminologies.ct_term import (
     SimpleDictionaryTermModel,
     SimpleTermModel,
 )
-from clinical_mdr_api.models.utils import BaseModel, InputModel, PostInputModel
-from clinical_mdr_api.models.validators import has_english_description
+from clinical_mdr_api.models.utils import BaseModel, InputModel
+from clinical_mdr_api.models.validators import (
+    has_english_description,
+    translated_text_uniqueness_check,
+)
 from common.config import settings
 
 
@@ -201,6 +206,7 @@ class OdmItemUnitDefinitionWithRelationship(BaseModel):
                 simple_unit_definition_model = cls(
                     uid=unit_definition_uid,
                     name=unit_definition.concept_vo.name,
+                    version=unit_definition.item_metadata.version,
                     mandatory=unit_definition_rel.mandatory,
                     order=unit_definition_rel.order,
                     ucum=ucum,
@@ -210,6 +216,7 @@ class OdmItemUnitDefinitionWithRelationship(BaseModel):
                 simple_unit_definition_model = cls(
                     uid=unit_definition_uid,
                     name=None,
+                    version=None,
                     mandatory=False,
                     order=None,
                     ucum=None,
@@ -219,6 +226,7 @@ class OdmItemUnitDefinitionWithRelationship(BaseModel):
 
     uid: Annotated[str, Field()]
     name: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
+    version: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
     mandatory: Annotated[bool, Field()] = False
     order: Annotated[int | None, Field(json_schema_extra={"nullable": True})] = None
     ucum: Annotated[
@@ -244,7 +252,7 @@ class OdmItem(ConceptModel):
     )
     origin: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
     comment: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
-    descriptions: Annotated[list[OdmDescriptionModel], Field()]
+    translated_texts: Annotated[list[OdmTranslatedTextModel], Field()]
     aliases: Annotated[list[OdmAliasModel], Field()]
     unit_definitions: Annotated[list[OdmItemUnitDefinitionWithRelationship], Field()]
     codelist: Annotated[
@@ -252,7 +260,7 @@ class OdmItem(ConceptModel):
         Field(json_schema_extra={"nullable": True}),
     ] = None
     terms: Annotated[list[OdmItemTermRelationshipModel], Field()]
-    activity_instances: Annotated[list, Field()]
+    activity_instances: Annotated[list["ActivityInstanceRel"], Field()]
     vendor_elements: Annotated[list[OdmVendorElementRelationModel], Field()]
     vendor_attributes: Annotated[list[OdmVendorAttributeRelationModel], Field()]
     vendor_element_attributes: Annotated[
@@ -303,8 +311,9 @@ class OdmItem(ConceptModel):
             version=odm_item_ar.item_metadata.version,
             change_description=odm_item_ar.item_metadata.change_description,
             author_username=odm_item_ar.item_metadata.author_username,
-            descriptions=sorted(
-                odm_item_ar.concept_vo.descriptions, key=lambda item: item.name
+            translated_texts=sorted(
+                odm_item_ar.concept_vo.translated_texts,
+                key=lambda item: (item.text_type.value, item.text),
             ),
             aliases=sorted(odm_item_ar.concept_vo.aliases, key=lambda item: item.name),
             unit_definitions=sorted(
@@ -322,8 +331,11 @@ class OdmItem(ConceptModel):
                 key=lambda item: item.uid,
             ),
             codelist=CTCodelistAttributesSimpleModel.from_codelist_uid(
-                uid=odm_item_ar.concept_vo.codelist_uid,
+                uid=getattr(odm_item_ar.concept_vo.codelist, "uid", None),
                 find_codelist_attribute_by_codelist_uid=find_codelist_attribute_by_codelist_uid,
+                allows_multi_choice=getattr(
+                    odm_item_ar.concept_vo.codelist, "allows_multi_choice", None
+                ),
             ),
             terms=sorted(
                 [
@@ -339,6 +351,15 @@ class OdmItem(ConceptModel):
             activity_instances=[
                 ActivityInstanceRel(
                     activity_instance_uid=activity_instance["activity_instance_uid"],
+                    activity_instance_name=activity_instance.get(
+                        "activity_instance_name", None
+                    ),
+                    activity_instance_adam_param_code=activity_instance.get(
+                        "activity_instance_adam_param_code", None
+                    ),
+                    activity_instance_topic_code=activity_instance.get(
+                        "activity_instance_topic_code", None
+                    ),
                     activity_item_class_uid=activity_instance[
                         "activity_item_class_uid"
                     ],
@@ -516,7 +537,7 @@ class OdmItemRefModel(BaseModel):
 class OdmItemTermRelationshipInput(InputModel):
     uid: Annotated[str, Field(min_length=1)]
     mandatory: Annotated[bool, Field()] = True
-    order: Annotated[int | None, Field()] = 999999
+    order: Annotated[int | None, Field()] = None
     display_text: Annotated[str | None, Field()] = None
 
 
@@ -554,6 +575,11 @@ def check_length_and_significant_digits(model):
     return model
 
 
+class OdmItemCodelist(BaseModel):
+    uid: Annotated[str, Field(min_length=1)]
+    allows_multi_choice: Annotated[bool, Field()] = False
+
+
 class OdmItemPostInput(ConceptPostInput):
     oid: Annotated[str | None, Field(min_length=1)] = None
     datatype: Annotated[str, Field(min_length=1)]
@@ -566,21 +592,31 @@ class OdmItemPostInput(ConceptPostInput):
     sds_var_name: Annotated[str | None, Field()] = None
     origin: Annotated[str | None, Field()] = None
     comment: Annotated[str | None, Field()] = None
-    descriptions: list[OdmDescriptionModel] = Field(default_factory=list)
+    translated_texts: list[OdmTranslatedTextModel] = Field(default_factory=list)
     aliases: list[OdmAliasModel] = Field(default_factory=list)
-    codelist_uid: Annotated[str | None, Field(min_length=1)] = None
+    codelist: Annotated[OdmItemCodelist | None, Field()] = None
     unit_definitions: list[OdmItemUnitDefinitionRelationshipInput] = Field(
         default_factory=list
     )
     terms: list[OdmItemTermRelationshipInput] = Field(default_factory=list)
+    vendor_elements: list[OdmVendorElementRelationPostInput] = Field(
+        default_factory=list
+    )
+    vendor_element_attributes: list[OdmVendorRelationPostInput] = Field(
+        default_factory=list
+    )
+    vendor_attributes: list[OdmVendorRelationPostInput] = Field(default_factory=list)
 
     _ = model_validator(mode="after")(check_length_and_significant_digits)
-    _english_description_validator = field_validator("descriptions")(
+    _translated_text_uniqueness_check = field_validator("translated_texts")(
+        translated_text_uniqueness_check
+    )
+    _english_description_validator = field_validator("translated_texts")(
         has_english_description
     )
 
 
-class ActivityInstanceRel(PostInputModel):
+class ActivityInstanceRelInput(InputModel):
     activity_instance_uid: Annotated[str, Field(min_length=1)]
     activity_item_class_uid: Annotated[str, Field(min_length=1)]
     odm_form_uid: Annotated[str, Field(min_length=1)]
@@ -590,6 +626,12 @@ class ActivityInstanceRel(PostInputModel):
     preset_response_value: Annotated[str | None, Field()] = None
     value_condition: Annotated[str | None, Field()] = None
     value_dependent_map: Annotated[str | None, Field()] = None
+
+
+class ActivityInstanceRel(ActivityInstanceRelInput):
+    activity_instance_name: Annotated[str | None, Field()]
+    activity_instance_adam_param_code: Annotated[str | None, Field()]
+    activity_instance_topic_code: Annotated[str | None, Field()]
 
 
 class OdmItemPatchInput(ConceptPatchInput):
@@ -603,17 +645,23 @@ class OdmItemPatchInput(ConceptPatchInput):
     sds_var_name: Annotated[str | None, Field()]
     origin: Annotated[str | None, Field()]
     comment: Annotated[str | None, Field()]
-    descriptions: list[OdmDescriptionModel] = Field(default_factory=list)
+    translated_texts: list[OdmTranslatedTextModel] = Field(default_factory=list)
     aliases: list[OdmAliasModel] = Field(default_factory=list)
     unit_definitions: list[OdmItemUnitDefinitionRelationshipInput] = Field(
         default_factory=list
     )
-    codelist_uid: Annotated[str | None, Field(min_length=1)]
+    codelist: Annotated[OdmItemCodelist | None, Field()]
     terms: Annotated[list[OdmItemTermRelationshipInput], Field()]
-    activity_instances: list[ActivityInstanceRel] = Field(default_factory=list)
+    vendor_elements: Annotated[list[OdmVendorElementRelationPostInput], Field()]
+    vendor_element_attributes: Annotated[list[OdmVendorRelationPostInput], Field()]
+    vendor_attributes: Annotated[list[OdmVendorRelationPostInput], Field()]
+    activity_instances: list[ActivityInstanceRelInput] = Field(default_factory=list)
 
     _ = model_validator(mode="after")(check_length_and_significant_digits)
-    _english_description_validator = field_validator("descriptions")(
+    _translated_text_uniqueness_check = field_validator("translated_texts")(
+        translated_text_uniqueness_check
+    )
+    _english_description_validator = field_validator("translated_texts")(
         has_english_description
     )
 

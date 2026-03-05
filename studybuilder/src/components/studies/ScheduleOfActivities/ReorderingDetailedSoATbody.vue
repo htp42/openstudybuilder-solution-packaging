@@ -35,7 +35,10 @@
                   <div v-bind="props">
                     <span
                       :class="
-                        row.cells[0].style !== 'activity'
+                        row.cells[0].style.replace(
+                          /PlaceholderSubmitted|Placeholder/g,
+                          ''
+                        ) !== 'activity'
                           ? 'text-uppercase'
                           : ''
                       "
@@ -46,7 +49,12 @@
                 </template>
                 <span
                   :class="
-                    row.cells[0].style !== 'activity' ? 'text-uppercase' : ''
+                    row.cells[0].style.replace(
+                      /PlaceholderSubmitted|Placeholder/g,
+                      ''
+                    ) !== 'activity'
+                      ? 'text-uppercase'
+                      : ''
                   "
                 >
                   {{ row.cells[0].text }}
@@ -131,7 +139,10 @@ const [parent, soaRowsDrag] = useDragAndDrop([], {
       reorder(
         event.draggedNode.data.value.cells[0].refs[0].uid,
         event.state.targetIndex + 1 + orderAlignValue.value,
-        event.draggedNode.data.value.cells[0].style
+        event.draggedNode.data.value.cells[0].style.replace(
+          /PlaceholderSubmitted|Placeholder/g,
+          ''
+        )
       )
     }
   },
@@ -167,7 +178,12 @@ function initiateReorder() {
   // (eg. if we want to reorder groups we need to add SoA group parent of that group)
   // Because of that we have more items in a table then what we want to reorder.
   // orderAlignValue variable was introduced to align correct orders for reordering
-  if (props.selectedReorderItem.style === 'activity') {
+  if (
+    props.selectedReorderItem.style.replace(
+      /PlaceholderSubmitted|Placeholder/g,
+      ''
+    ) === 'activity'
+  ) {
     orderAlignValue.value = -3
   } else if (props.selectedReorderItem.style === 'subGroup') {
     orderAlignValue.value = -2
@@ -178,7 +194,12 @@ function initiateReorder() {
     soaRowsDrag.value = []
     if (props.selectedReorderItem.style === 'soaGroup') {
       props.soaRows.forEach((row) => {
-        if (row.cells[0].style === props.selectedReorderItem.style) {
+        if (
+          row.cells[0].style.replace(
+            /PlaceholderSubmitted|Placeholder/g,
+            ''
+          ) === props.selectedReorderItem.style
+        ) {
           soaRowsDrag.value.push(row)
         }
       })
@@ -200,7 +221,14 @@ function gatherReorderData(selectedReorderItem, index) {
   if (selectedReorderItem.order !== 1) {
     for (let i = index; i > 0; i--) {
       if (
-        props.soaRows[i].cells[0].style === selectedReorderItem.style &&
+        props.soaRows[i].cells[0].style.replace(
+          /PlaceholderSubmitted|Placeholder/g,
+          ''
+        ) ===
+          selectedReorderItem.style.replace(
+            /PlaceholderSubmitted|Placeholder/g,
+            ''
+          ) &&
         props.soaRows[i].order === 1
       ) {
         selectedReorderItem = props.soaRows[i].cells[0]
@@ -220,17 +248,31 @@ function gatherReorderData(selectedReorderItem, index) {
   }
   // And then down the table to gather all items with the same type (style)
   for (let i = index; i <= props.soaRows.length; i++) {
-    if (props.soaRows[i]?.cells[0]?.style === selectedReorderItem.style) {
+    if (
+      props.soaRows[i]?.cells[0]?.style.replace(
+        /PlaceholderSubmitted|Placeholder/g,
+        ''
+      ) ===
+      selectedReorderItem.style.replace(/PlaceholderSubmitted|Placeholder/g, '')
+    ) {
       soaRowsDrag.value.push(props.soaRows[i])
     } else if (
       props.soaRows[i]?.cells[0]?.style ===
-      getStopType(selectedReorderItem.style)
+      getStopType(
+        selectedReorderItem.style.replace(
+          /PlaceholderSubmitted|Placeholder/g,
+          ''
+        )
+      )
     ) {
       break
     }
   }
   if (selectedReorderItem.style !== 'soaGroup') {
-    getParents(index, selectedReorderItem.style)
+    getParents(
+      index,
+      selectedReorderItem.style.replace(/PlaceholderSubmitted|Placeholder/g, '')
+    )
   }
 }
 

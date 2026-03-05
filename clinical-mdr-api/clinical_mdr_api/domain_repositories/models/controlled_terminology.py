@@ -4,6 +4,7 @@ from neomodel import (
     ArrayProperty,
     BooleanProperty,
     DateProperty,
+    FloatProperty,
     IntegerProperty,
     One,
     RelationshipFrom,
@@ -57,7 +58,7 @@ class CTCodelistAttributesValue(ControlledTerminology):
     definition = StringProperty()
     extensible = BooleanProperty()
     synonyms = ArrayProperty()
-    ordinal = BooleanProperty(default=False)
+    is_ordinal = BooleanProperty(default=False)
 
 
 class CTCodelistAttributesRoot(ControlledTerminology):
@@ -164,6 +165,7 @@ class CodelistTermRelationship(ClinicalMdrRel):
     end_date: datetime | None = ZonedDateTimeProperty()
     author_id = StringProperty()
     order: int | None = IntegerProperty()
+    ordinal: float | None = FloatProperty()
 
 
 class CTCodelistRoot(ControlledTerminologyWithUID):

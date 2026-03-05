@@ -37,6 +37,7 @@ Feature: Studies - Define Study - Study Population
 
     Scenario: [Actions][Edit] User must be able to edit the Study Population
         Given The test study '/population' page is opened
+        When The edit content button is clicked
         When The population is edited
         And Form save button is clicked
         And The form is no longer available

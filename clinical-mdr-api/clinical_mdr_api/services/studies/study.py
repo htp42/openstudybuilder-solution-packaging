@@ -90,6 +90,7 @@ from clinical_mdr_api.services._utils import (  # type: ignore
 from common.auth.user import user
 from common.config import settings
 from common.exceptions import (
+    AlreadyExistsException,
     BusinessLogicException,
     NotFoundException,
     ValidationException,
@@ -516,13 +517,36 @@ class StudyService:
                 ]
                 if not sponsor_ct_package_with_latest_ct_package:
                     # create sponsor ct_package with today's date
-                    sponsor_ct_package_with_latest_ct_package = (
-                        self._repos.ct_package_repository.create_sponsor_package(
-                            extends_package=all_ct_packages[-1].uid,
-                            effective_date=date.today(),
-                            author_id=self.author_id,
+                    # Handle race condition: if another process creates the package concurrently,
+                    # catch AlreadyExistsException and fetch the existing package
+                    try:
+                        sponsor_ct_package_with_latest_ct_package = (
+                            self._repos.ct_package_repository.create_sponsor_package(
+                                extends_package=all_ct_packages[-1].uid,
+                                effective_date=date.today(),
+                                author_id=self.author_id,
+                            )
                         )
-                    )
+                    except AlreadyExistsException as exc:
+                        # Package was created by another process, fetch the existing one
+                        sponsor_ct_package_with_latest_ct_package = [
+                            ith
+                            for ith in self._repos.ct_package_repository.find_all(
+                                catalogue_name=settings.sdtm_ct_catalogue_name,
+                                standards_only=True,
+                                sponsor_only=True,
+                            )
+                            if ith.effective_date == date.today()
+                        ]
+                        # Should have exactly one package now
+                        if not sponsor_ct_package_with_latest_ct_package:
+                            raise NotFoundException(
+                                "Sponsor CT Package",
+                                f"Sponsor {settings.sdtm_ct_catalogue_name} {date.today()}",
+                            ) from exc
+                        sponsor_ct_package_with_latest_ct_package = (
+                            sponsor_ct_package_with_latest_ct_package[0]
+                        )
                     # create study standard version
                     self._repos.study_standard_version_repository.save(
                         StudyStandardVersionVO(

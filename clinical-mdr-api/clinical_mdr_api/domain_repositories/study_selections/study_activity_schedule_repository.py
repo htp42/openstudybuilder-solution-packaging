@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any
 
-from neomodel import db
+from neomodel import RelationshipDefinition, StructuredNode, db
 
 from clinical_mdr_api import utils
 from clinical_mdr_api.domain_repositories.models._utils import ListDistinct
@@ -10,6 +10,7 @@ from clinical_mdr_api.domain_repositories.models.study_selections import (
     StudyActivity,
     StudyActivitySchedule,
 )
+from clinical_mdr_api.domain_repositories.models.study_visit import StudyVisit
 from clinical_mdr_api.domain_repositories.study_selections import base
 from clinical_mdr_api.domains.study_selections.study_activity_schedule import (
     StudyActivityScheduleVO,
@@ -53,6 +54,11 @@ class StudyActivityScheduleRepository(base.StudySelectionRepository):
             author_id=study_action.author_id,
         )
 
+    def exclude_relationships(
+        self,
+    ) -> list[type[StructuredNode] | RelationshipDefinition | str]:
+        return [StudyActivity, StudyVisit]
+
     def perform_save(
         self,
         study_value_node: StudyValue,
@@ -74,8 +80,7 @@ class StudyActivityScheduleRepository(base.StudySelectionRepository):
             )
 
         # Create new node
-        schedule = StudyActivitySchedule(uid=selection_vo.uid)
-        schedule.save()
+        schedule = StudyActivitySchedule(uid=selection_vo.uid).save()
 
         study_activity_node = study_value_node.has_study_activity.get_or_none(
             uid=selection_vo.study_activity_uid

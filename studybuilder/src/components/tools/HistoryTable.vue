@@ -229,13 +229,14 @@ function refreshHistoryData(options) {
 
 function getPaginatedHistoryData() {
   if (props.items.length > dataOptions.value.itemsPerPage) {
+    const sliceStart =
+      dataOptions.value.itemsPerPage * (dataOptions.value.page - 1)
+    let sliceEnd = dataOptions.value.itemsPerPage * dataOptions.value.page
+    if (dataOptions.value.itemsPerPage === -1) {
+      sliceEnd = props.items.length
+    }
     historyItems.value = JSON.parse(
-      JSON.stringify(
-        props.items.slice(
-          dataOptions.value.itemsPerPage * (dataOptions.value.page - 1),
-          dataOptions.value.itemsPerPage * dataOptions.value.page
-        )
-      )
+      JSON.stringify(props.items.slice(sliceStart, sliceEnd))
     )
   } else {
     historyItems.value = props.items

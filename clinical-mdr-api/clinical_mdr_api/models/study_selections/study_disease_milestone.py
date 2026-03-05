@@ -80,7 +80,7 @@ class StudyDiseaseMilestoneOGM(BaseModel, StudyDiseaseMilestoneVO):
             json_schema_extra={"source": "has_after.author_id", "nullable": True},
         ),
     ]
-    author_username: Annotated[str | None, Field(json_schema_extra={"nullable": True})]  # type: ignore[assignment]
+    author_username: Annotated[str | None, Field(json_schema_extra={"nullable": True, "remove_from_wildcard": True})]  # type: ignore[assignment]
 
     disease_milestone_type: Annotated[
         str,

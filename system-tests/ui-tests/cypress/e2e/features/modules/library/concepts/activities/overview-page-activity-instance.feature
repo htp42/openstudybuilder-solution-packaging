@@ -1,4 +1,4 @@
-@REQ_ID:1070683
+@REQ_ID:1070683 @skip_on_prv_val
 
 Feature: Library - Concepts - Activities - Activity Instance Overview Page
     As a user, I want to verify that the Activity Instance Overview Page in the Concepts Library, can display correctly.
@@ -48,11 +48,12 @@ Feature: Library - Concepts - Activities - Activity Instance Overview Page
 
     Scenario: [COSMoS YAML] Verify that the instance overview page displays all sections correctly
         When I click on the COSMoS YAML tab
-        Then The COSMoS YAML page should be opened with Download button and Close button displayed
-        When The Download YAML content button is clicked
+        And 'Download YAML content' button is visible in the overview page
+        And 'Close YAML viewer' button is visible in the overview page
+        When I click 'Download YAML content' button
         Then The 'COSMoS-overview' file without timestamp is downloaded in 'yml' format
         # Ad the COSMoS YAML file should be saved with correct content (this step should be tested manually)
-        When I click on the Close button in the COSMoS YAML page
+        When I click 'Close YAML viewer' button
         Then Instance overview page is opened       
         
     Scenario: [Sections] Verify that the activities instance overview page displays correctly
@@ -73,7 +74,7 @@ Feature: Library - Concepts - Activities - Activity Instance Overview Page
         And The free text search field should be displayed in the 'Activity Items' table
 
     Scenario: [History] Verify that the activity group overview page displays correctly
-        When I click on the history button
+        When I click 'History' button
         Then The history page is opened
 
     Scenario: [Linking] Verify that the activities instance overview page can link to the correct groups, subgroups and activities

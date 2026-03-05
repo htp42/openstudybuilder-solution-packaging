@@ -25,5 +25,6 @@ def test_ct_config_values():
 def test_indexes_and_constraints():
     test_migration_018.test_indexes_and_constraints(migration)
 
+
 def test_migrate_activity_grouping():
     test_migration_018.test_migrate_activity_grouping(migration)

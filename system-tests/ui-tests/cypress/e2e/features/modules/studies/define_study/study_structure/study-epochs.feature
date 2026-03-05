@@ -15,8 +15,8 @@ Feature: Studies - Define Study - Study Structure - Study Epochs
     Scenario: [Table][Options] Page structure
         Given The test study '/study_structure/epochs' page is opened
         Then A table is visible with following options
-            | options                                                         |
-            | Add select boxes to table to allow selection of rows for export |
+            | options     |
+            | Select rows |
 
     @smoke_test
     Scenario: [Table][Columns][Names] User must be able to see the Study Visit table with following columns
@@ -47,6 +47,7 @@ Feature: Studies - Define Study - Study Structure - Study Epochs
     Scenario: [Create][Positve case] User must be able to add a Study Epoch
         Given The test study '/study_structure/epochs' page is opened
         When A new Study Epoch is added
+        And User intercepts epochs data
         And Form save button is clicked
         And User waits for epochs data
         When The form is no longer available
@@ -58,6 +59,7 @@ Feature: Studies - Define Study - Study Structure - Study Epochs
         And Study Epoch is found
         And The 'Edit' option is clicked from the three dot menu list
         When The Study Epoch is edited
+        And User intercepts epochs data
         And Form save button is clicked
         And User waits for epochs data
         When The form is no longer available
@@ -78,22 +80,30 @@ Feature: Studies - Define Study - Study Structure - Study Epochs
 
     Scenario: [Export][CSV] User must be able to export the data in CSV format
         Given The test study '/study_structure/epochs' page is opened
-        And The user exports the data in 'CSV' format
+        When User clicks table export button
+        And User selects 'CSV' format to export the table content
+        And Action is confirmed by clicking continue
         Then The study specific 'StudyEpochs' file is downloaded in 'csv' format
 
     Scenario: [Export][Json] User must be able to export the data in JSON format
         Given The test study '/study_structure/epochs' page is opened
-        And The user exports the data in 'JSON' format
+        When User clicks table export button
+        And User selects 'JSON' format to export the table content
+        And Action is confirmed by clicking continue
         Then The study specific 'StudyEpochs' file is downloaded in 'json' format
 
     Scenario: [Export][Xml] User must be able to export the data in XML format
         Given The test study '/study_structure/epochs' page is opened
-        And The user exports the data in 'XML' format
+        When User clicks table export button
+        And User selects 'XML' format to export the table content
+        And Action is confirmed by clicking continue
         Then The study specific 'StudyEpochs' file is downloaded in 'xml' format
 
     Scenario: [Export][Excel] User must be able to export the data in EXCEL format
         Given The test study '/study_structure/epochs' page is opened
-        And The user exports the data in 'EXCEL' format
+        When User clicks table export button
+        And User selects 'EXCEL' format to export the table content
+        And Action is confirmed by clicking continue
         Then The study specific 'StudyEpochs' file is downloaded in 'xlsx' format
 
     @manual_test

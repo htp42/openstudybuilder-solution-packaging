@@ -145,6 +145,7 @@ def test_arm_modify_actions_on_locked_study(api_client):
         json={
             "name": "Arm_Name_1",
             "short_name": "Arm_Short_Name_1",
+            "label": "Arm_Label_1",
             "code": "Arm_code_1",
             "description": "desc...",
             "randomization_group": "Randomization_Group_1",
@@ -182,6 +183,7 @@ def test_arm_modify_actions_on_locked_study(api_client):
         json={
             "name": "Arm_Name_2",
             "short_name": "Arm_Short_Name_2",
+            "label": "Arm_Label_2",
             "code": "Arm_code_2",
             "description": "desc...",
             "randomization_group": "Randomization_Group_2",
@@ -278,6 +280,7 @@ def test_study_arm_type_version_selecting_ct_package(api_client):
         json={
             "name": "Arm_Name_1" + suffix_txt,
             "short_name": "Arm_Short_Name_1" + suffix_txt,
+            "label": "Arm_Label_1" + suffix_txt,
             "code": "Arm_code_1" + suffix_txt,
             "description": "desc..." + suffix_txt,
             "randomization_group": "Randomization_Group_1" + suffix_txt,
@@ -379,6 +382,7 @@ def test_study_arm_ct_term_retrieval_at_date(api_client):
         json={
             "name": "Arm_Name_1" + suffix_txt,
             "short_name": "Arm_Short_Name_1" + suffix_txt,
+            "label": "Arm_Label_1" + suffix_txt,
             "code": "Arm_code_1" + suffix_txt,
             "description": "desc..." + suffix_txt,
             "randomization_group": "Randomization_Group_1" + suffix_txt,
@@ -428,7 +432,9 @@ def test_get_study_arms_csv_xml_excel(api_client, export_format):
 def test_batch_operations(api_client):
     test_study = TestUtils.create_study()
     arm_name_1 = "Arm_Name_1"
+    arm_label_1 = "Arm_Label_1"
     arm_name_2 = "Arm_Name_2"
+    arm_label_2 = "Arm_Label_2"
     response = api_client.post(
         f"/studies/{test_study.uid}/study-arms/batch",
         json=[
@@ -437,6 +443,7 @@ def test_batch_operations(api_client):
                 "content": {
                     "name": arm_name_1,
                     "short_name": "Arm_Short_Name_1",
+                    "label": arm_label_1,
                     "code": "Arm_code_1",
                     "description": "desc...",
                     "randomization_group": "Randomization_Group_1",
@@ -450,6 +457,7 @@ def test_batch_operations(api_client):
                     "name": arm_name_2,
                     "short_name": "Arm_Short_Name_2",
                     "code": "Arm_code_2",
+                    "label": arm_label_2,
                     "description": "desc...",
                     "randomization_group": "Randomization_Group_2",
                     "number_of_subjects": 2,
@@ -462,9 +470,11 @@ def test_batch_operations(api_client):
     res = response.json()
     assert res[0]["response_code"] == 201
     assert res[0]["content"]["name"] == arm_name_1
+    assert res[0]["content"]["label"] == arm_label_1
     assert res[0]["content"]["merge_branch_for_this_arm_for_sdtm_adam"] is True
     assert res[1]["response_code"] == 201
     assert res[1]["content"]["name"] == arm_name_2
+    assert res[1]["content"]["label"] == arm_label_2
     assert res[1]["content"]["merge_branch_for_this_arm_for_sdtm_adam"] is False
     study_arm_1_uid = res[0]["content"]["arm_uid"]
     study_arm_2_uid = res[1]["content"]["arm_uid"]
@@ -578,6 +588,7 @@ def test_study_arm_is_not_updated_when_same_payload_is_sent(api_client):
         arm_type_uid=investigational_arm.term_uid,
         name="Arm 1 name",
         short_name="Arm 1 short name",
+        label="Arm 1 label",
         description="Arm 1 description",
     )
 
@@ -587,6 +598,7 @@ def test_study_arm_is_not_updated_when_same_payload_is_sent(api_client):
         json={
             "name": "Arm 1 name",
             "short_name": "Arm 1 short name",
+            "label": "Arm 1 label",
             "description": "Arm 1 description",
             "arm_type_uid": investigational_arm.term_uid,
         },
@@ -595,6 +607,7 @@ def test_study_arm_is_not_updated_when_same_payload_is_sent(api_client):
     res = response.json()
     assert res["name"] == "Arm 1 name"
     assert res["short_name"] == "Arm 1 short name"
+    assert res["label"] == "Arm 1 label"
     assert res["description"] == "Arm 1 description"
     assert res["arm_type"]["term_uid"] == investigational_arm.term_uid
 

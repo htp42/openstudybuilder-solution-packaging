@@ -9,10 +9,15 @@ from clinical_mdr_api.domain_repositories._utils import helpers
 from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_codelist_attributes_repository import (
     CTCodelistAttributesRepository,
 )
+from clinical_mdr_api.domain_repositories.generic_repository import (
+    _manage_versioning_with_relations,
+)
 from clinical_mdr_api.domain_repositories.models.concepts import (
     NumericValueWithUnitRoot,
+    NumericValueWithUnitValue,
 )
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
+    CTTermContext,
     CTTermRoot,
 )
 from clinical_mdr_api.domain_repositories.models.study import StudyRoot, StudyValue
@@ -104,27 +109,14 @@ class StudyCompoundDosingRepository:
         )
 
     @staticmethod
-    def _set_before_audit_info(
-        audit_node: StudyAction,
-        study_selection_node: StudyCompoundDosing,
-        study_root_node: StudyRoot,
-        author_id: str,
-    ) -> StudyAction:
-        audit_node.author_id = author_id
-        audit_node.date = datetime.datetime.now(datetime.timezone.utc)
-        audit_node.save()
-
-        audit_node.has_before.connect(study_selection_node)
-        study_root_node.audit_trail.connect(audit_node)
-        return audit_node
-
-    @staticmethod
     def _add_new_selection(
+        study_root: StudyRoot,
         latest_study_value_node: StudyValue,
         order: int,
         selection: StudyCompoundDosingVO,
         audit_node: StudyAction,
         for_deletion: bool = False,
+        before_node: StudyCompoundDosing | None = None,
     ):
         study_compound_node = latest_study_value_node.has_study_compound.get_or_none(
             uid=selection.study_compound_uid
@@ -150,8 +142,6 @@ class StudyCompoundDosingRepository:
         if not for_deletion:
             # Connect new node with study value
             latest_study_value_node.has_study_compound_dosing.connect(selection_node)
-        # Connect new node with audit trail
-        audit_node.has_after.connect(selection_node)
 
         # Create relations
         selection_node.study_compound.connect(study_compound_node)
@@ -188,6 +178,15 @@ class StudyCompoundDosingRepository:
             # connect to reason_for_missing node
             selection_node.has_dose_frequency.connect(selected_term_node)
 
+        _manage_versioning_with_relations(
+            study_root=study_root,
+            action_type=type(audit_node),
+            before=before_node,
+            after=selection_node,
+            exclude_relationships=[NumericValueWithUnitValue, CTTermContext],
+            author_id=selection.author_id,
+        )
+
     def _get_audit_node(
         self, study_selection: StudySelectionCompoundDosingsAR, study_selection_uid: str
     ):
@@ -205,6 +204,7 @@ class StudyCompoundDosingRepository:
             return Create()
         return Delete()
 
+    # pylint: disable=unused-argument
     def save(
         self, study_selection: StudySelectionCompoundDosingsAR, author_id: str
     ) -> None:
@@ -253,6 +253,8 @@ class StudyCompoundDosingRepository:
 
         # audit trail nodes dictionary, holds the new nodes created for the audit trail
         audit_trail_nodes = {}
+        # dictionary of last nodes to traverse to their old connections
+        last_nodes = {}
 
         # loop through and remove selections
         for order, selection in selections_to_remove:
@@ -265,30 +267,36 @@ class StudyCompoundDosingRepository:
             audit_node = self._get_audit_node(
                 study_selection, selection.study_selection_uid
             )
-            audit_node = self._set_before_audit_info(
-                audit_node,
-                last_study_selection_node,
-                study_root_node,
-                author_id,
-            )
             audit_trail_nodes[selection.study_selection_uid] = audit_node
+            last_nodes[selection.study_selection_uid] = last_study_selection_node
+
             if isinstance(audit_node, Delete):
                 self._add_new_selection(
-                    latest_study_value_node, order, selection, audit_node, True
+                    study_root_node,
+                    latest_study_value_node,
+                    order,
+                    selection,
+                    audit_node,
+                    True,
+                    last_study_selection_node,
                 )
 
         # loop through and add selections
         for order, selection in selections_to_add:
+            last_study_selection_node = None
             if selection.study_selection_uid in audit_trail_nodes:
                 audit_node = audit_trail_nodes[selection.study_selection_uid]
+                last_study_selection_node = last_nodes[selection.study_selection_uid]
             else:
                 audit_node = Create()
-                audit_node.author_id = selection.author_id
-                audit_node.date = selection.start_date
-                audit_node.save()
-                study_root_node.audit_trail.connect(audit_node)
             self._add_new_selection(
-                latest_study_value_node, order, selection, audit_node, False
+                study_root_node,
+                latest_study_value_node,
+                order,
+                selection,
+                audit_node,
+                False,
+                last_study_selection_node,
             )
 
     def get_study_selection(

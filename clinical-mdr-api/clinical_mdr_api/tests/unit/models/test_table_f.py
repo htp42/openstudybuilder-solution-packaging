@@ -17,6 +17,7 @@ from clinical_mdr_api.services.utils.table_f import (
     TableWithFootnotes,
     table_to_docx,
     table_to_html,
+    table_to_xlsx,
     tables_to_html,
 )
 
@@ -527,3 +528,31 @@ def compare_docx_footnotes(
         assert (
             textx == footnote.text_plain
         ), f"footnote text doesn't match in row {row_idx}"
+
+
+def test_table_to_xlsx():
+    workbook = table_to_xlsx(TEST_TABLE)
+    worksheet = workbook.active
+
+    assert worksheet.title == TEST_TABLE.title
+    assert worksheet.max_row == len(TEST_TABLE.rows)
+    assert worksheet.max_column == len(TEST_TABLE.rows[0].cells)
+    assert worksheet.freeze_panes == "C4"
+
+    for r, row in enumerate(TEST_TABLE.rows, start=1):
+        for c, cell in enumerate(row.cells, start=1):
+            value = worksheet.cell(row=r, column=c).value
+            if value is None:
+                value = ""
+            assert value == cell.text
+
+    expected_merged = {
+        "B1:C1",
+        "B2:C2",
+        "B3:C3",
+        "B5:C5",
+        "B6:C6",
+        "A7:B7",
+    }
+    merged_ranges = {str(rng) for rng in worksheet.merged_cells.ranges}
+    assert expected_merged.issubset(merged_ranges)

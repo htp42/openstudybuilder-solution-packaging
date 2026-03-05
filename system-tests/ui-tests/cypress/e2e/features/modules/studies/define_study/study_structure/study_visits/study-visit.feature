@@ -22,13 +22,13 @@ Feature: Studies - Define Study - Study Structure - Study Visits
         Given The test study '/study_structure/visits' page is opened
         Then A table is visible with following options
             | options                                                         |
-            | Add content                                                     |
-            | Edit                                                            |
-            | Show version history                                            |
-            | Filters                                                         |
-            | Columns                                                         |
+            | Add visit                                                       |
+            | Edit in table                                                   |
+            | Select filters                                                  |
+            | Select columns                                                  |
             | Export                                                          |
-            | Add select boxes to table to allow selection of rows for export |
+            | Search                                                          |
+            | Show version history                                            |
 
     @smoke_test
     Scenario: [Table][Columns][Names] User must be able to see the Study Visit table with following columns
@@ -225,22 +225,30 @@ Feature: Studies - Define Study - Study Structure - Study Visits
 
     Scenario: [Export][CSV] User must be able to export the data in CSV format
         Given The test study '/study_structure/visits' page is opened
-        And The user exports the data in 'CSV' format
+        When User clicks table export button
+        And User selects 'CSV' format to export the table content
+        And Action is confirmed by clicking continue
         Then The study specific 'StudyVisits' file is downloaded in 'csv' format
 
     Scenario: [Export][Json] User must be able to export the data in JSON format
         Given The test study '/study_structure/visits' page is opened
-        And The user exports the data in 'JSON' format
+        When User clicks table export button
+        And User selects 'JSON' format to export the table content
+        And Action is confirmed by clicking continue
         Then The study specific 'StudyVisits' file is downloaded in 'json' format
 
     Scenario: [Export][Xml] User must be able to export the data in XML format
         Given The test study '/study_structure/visits' page is opened
-        And The user exports the data in 'XML' format
+        When User clicks table export button
+        And User selects 'XML' format to export the table content
+        And Action is confirmed by clicking continue
         Then The study specific 'StudyVisits' file is downloaded in 'xml' format
 
     Scenario: [Export][Excel] User must be able to export the data in EXCEL format
         Given The test study '/study_structure/visits' page is opened
-        And The user exports the data in 'EXCEL' format
+        When User clicks table export button
+        And User selects 'EXCEL' format to export the table content
+        And Action is confirmed by clicking continue
         Then The study specific 'StudyVisits' file is downloaded in 'xlsx' format
 
     @pending_implementation

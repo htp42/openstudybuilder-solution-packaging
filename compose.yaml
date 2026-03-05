@@ -89,6 +89,29 @@ services:
       UVICORN_ROOT_PATH: "/consumer-api"
       UVICORN_APP: consumer_api.consumer_api:app
 
+  # Extensions API image & service
+  extensionsapi:
+    build:
+      context: ./clinical-mdr-api
+      dockerfile: Dockerfile
+      args:
+        TARGET: ${BUILD_TARGET:-dev}
+    image: ${API_IMAGE:-}
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      NEO4J_DSN: "${NEO4J_DSN:-bolt://neo4j:changeme1234@database:7687/mdrdb}"
+      ALLOW_ORIGIN_REGEX: "${ALLOW_ORIGIN_REGEX:-.*}"
+      OAUTH_ENABLED: "${OAUTH_ENABLED:-False}"
+      OAUTH_RBAC_ENABLED: "${OAUTH_RBAC_ENABLED:-False}"
+      OAUTH_METADATA_URL: "${OAUTH_METADATA_URL:-}"
+      OAUTH_API_APP_ID: "${OAUTH_API_APP_ID:-}"
+      OAUTH_SWAGGER_APP_ID: "${OAUTH_SWAGGER_APP_ID:-}"
+      UVICORN_PORT: 5009
+      UVICORN_ROOT_PATH: "/extensions-api"
+      UVICORN_APP: extensions.extensions_api:app
+
   # Frontend image for production (see UI service for local development)
   frontend:
     build:
@@ -105,6 +128,10 @@ services:
       documentation:
         condition: service_healthy
       neodash:
+        condition: service_healthy
+      consumerapi:
+        condition: service_healthy
+      extensionsapi:
         condition: service_healthy
     ports:
       - "${BIND_ADDRESS:-127.0.0.1}:${FRONTEND_PORT:-5005}:5005"

@@ -729,7 +729,7 @@ def test_add_selection_2_no_timeframe_set(api_client):
     assert res["project_number"] == "123"
     assert res["project_name"] == "Project ABC"
     assert res["study_version"] is not None
-    assert res["study_endpoint_uid"] == "StudyEndpoint_000003"
+    assert res["study_endpoint_uid"] == "StudyEndpoint_000002"
     assert res["accepted_version"] is False
     assert res["study_objective"]["endpoint_count"] == 2
     assert res["study_objective"]["accepted_version"] is False
@@ -964,7 +964,7 @@ def test_check_list_has_2(api_client):  # pylint:disable=too-many-statements
     assert res["items"][1]["project_number"] == "123"
     assert res["items"][1]["project_name"] == "Project ABC"
     assert res["items"][1]["study_version"] is not None
-    assert res["items"][1]["study_endpoint_uid"] == "StudyEndpoint_000003"
+    assert res["items"][1]["study_endpoint_uid"] == "StudyEndpoint_000002"
     assert res["items"][1]["accepted_version"] is False
     assert res["items"][1]["study_objective"]["endpoint_count"] == 2
     assert res["items"][1]["study_objective"]["accepted_version"] is False
@@ -1151,7 +1151,7 @@ def test_patch_specific_new_study_objective(api_client):
     assert res["project_number"] == "123"
     assert res["project_name"] == "Project ABC"
     assert res["study_version"] is not None
-    assert res["study_endpoint_uid"] == "StudyEndpoint_000003"
+    assert res["study_endpoint_uid"] == "StudyEndpoint_000002"
     assert res["accepted_version"] is False
     assert res["study_objective"]["accepted_version"] is False
     assert res["study_objective"]["endpoint_count"] == 2
@@ -1225,7 +1225,7 @@ def test_patch_specific_remove_study_objective(api_client):
     assert res["project_number"] == "123"
     assert res["project_name"] == "Project ABC"
     assert res["study_version"] is not None
-    assert res["study_endpoint_uid"] == "StudyEndpoint_000003"
+    assert res["study_endpoint_uid"] == "StudyEndpoint_000002"
     assert res["accepted_version"] is False
     assert res["study_objective"] is None
     assert res["study_uid"] == "study_root"
@@ -1352,7 +1352,7 @@ def test_adding_selection_create(api_client):
     assert res["project_name"] == "Project ABC"
     assert res["study_uid"] == "study_root"
     assert res["study_version"] is not None
-    assert res["study_endpoint_uid"] == "StudyEndpoint_000008"
+    assert res["study_endpoint_uid"] == "StudyEndpoint_000003"
     assert res["study_objective"]["endpoint_count"] == 2
     assert res["study_objective"]["accepted_version"] is False
     assert res["study_objective"]["start_date"] is not None

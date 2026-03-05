@@ -66,18 +66,18 @@
     <template #actions>
       <v-btn
         data-cy="add-study-objective"
-        class="ml-2"
-        size="small"
+        class="ml-2 expandHoverBtn"
         variant="outlined"
         color="nnBaseBlue"
-        :title="$t('StudyObjectiveForm.add_title')"
         :disabled="
           !accessGuard.checkPermission($roles.STUDY_WRITE) ||
           studiesGeneralStore.selectedStudyVersion !== null
         "
-        icon="mdi-plus"
         @click.stop="showForm = true"
-      />
+      >
+        <v-icon left>mdi-plus</v-icon>
+        <span class="label">{{ $t('StudyObjectiveForm.add_title') }}</span>
+      </v-btn>
     </template>
     <template #[`item.name`]="{ item }">
       <NNParameterHighlighter

@@ -18,15 +18,15 @@
       <template #actions="">
         <slot name="extraActions" />
         <v-btn
-          class="ml-2"
-          size="small"
+          class="ml-2 expandHoverBtn"
           variant="outlined"
           color="nnBaseBlue"
           data-cy="add-clinical-programme"
-          :title="$t('ClinicalProgrammeForm.add_title')"
-          icon="mdi-plus"
           @click.stop="showForm"
-        />
+        >
+          <v-icon left>mdi-plus</v-icon>
+          <span class="label">{{ $t('ClinicalProgrammeForm.add_title') }}</span>
+        </v-btn>
       </template>
       <template #[`item.actions`]="{ item }">
         <ActionsMenu :actions="actions" :item="item" />

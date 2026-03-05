@@ -12,9 +12,10 @@ from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_codelist_a
     CTCodelistAttributesRepository,
 )
 from clinical_mdr_api.domain_repositories.generic_repository import (
-    manage_previous_connected_study_selection_relationships,
+    _manage_versioning_with_relations,
 )
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
+    CTTermContext,
     CTTermRoot,
 )
 from clinical_mdr_api.domain_repositories.models.study import StudyRoot, StudyValue
@@ -312,6 +313,7 @@ class StudySelectionElementRepository:
         )
         return len(sdc_node) > 0
 
+    # pylint: disable=unused-argument
     def save(self, study_selection: StudySelectionElementAR, author_id: str) -> None:
         """
         Persist the set of selected study element from the aggregate to the database
@@ -370,19 +372,13 @@ class StudySelectionElementRepository:
             audit_node = self._get_audit_node(
                 study_selection, selection.study_selection_uid
             )
-            # create the before node to the last_study_selection_node and audit trial to study_root
-            audit_node = self._set_before_audit_info(
-                audit_node=audit_node,
-                study_selection_node=last_study_selection_node,
-                study_root_node=study_root_node,
-                author_id=author_id,
-            )
             # storage of the removed node audit trail to after put the "after" relationship to the new one
             audit_trail_nodes[selection.study_selection_uid] = audit_node
             # storage of the removed node to after get its connections
             last_nodes[selection.study_selection_uid] = last_study_selection_node
             if isinstance(audit_node, Delete):
                 self._add_new_selection(
+                    study_root_node,
                     latest_study_value_node,
                     order,
                     selection,
@@ -403,11 +399,8 @@ class StudySelectionElementRepository:
                 last_study_selection_node = last_nodes[selection.study_selection_uid]
             else:
                 audit_node = Create()
-                audit_node.author_id = selection.author_id
-                audit_node.date = selection.start_date
-                audit_node.save()
-                study_root_node.audit_trail.connect(audit_node)
             self._add_new_selection(
+                study_root_node,
                 latest_study_value_node,
                 order,
                 selection,
@@ -417,22 +410,8 @@ class StudySelectionElementRepository:
             )
 
     @staticmethod
-    def _set_before_audit_info(
-        audit_node: StudyAction,
-        study_selection_node: StudyElement,
-        study_root_node: StudyRoot,
-        author_id: str,
-    ) -> StudyAction:
-        audit_node.author_id = author_id
-        audit_node.date = datetime.datetime.now(datetime.timezone.utc)
-        audit_node.save()
-
-        audit_node.has_before.connect(study_selection_node)
-        study_root_node.audit_trail.connect(audit_node)
-        return audit_node
-
-    @staticmethod
     def _add_new_selection(
+        study_root: StudyRoot,
         latest_study_value_node: StudyValue,
         order: int,
         selection: StudySelectionElementVO,
@@ -441,34 +420,25 @@ class StudySelectionElementRepository:
         before_node: StudyElement | None = None,
     ):
         # Create new element selection
-        study_element_selection_node = StudyElement(order=order).save()
-        study_element_selection_node.uid = selection.study_selection_uid
-        study_element_selection_node.accepted_version = selection.accepted_version
-        study_element_selection_node.name = selection.name
-        study_element_selection_node.short_name = selection.short_name
-        study_element_selection_node.element_code = selection.code
-        study_element_selection_node.description = selection.description
-        study_element_selection_node.planned_duration = selection.planned_duration
-        study_element_selection_node.start_rule = selection.start_rule
-        study_element_selection_node.end_rule = selection.end_rule
-        study_element_selection_node.element_colour = selection.element_colour
-        study_element_selection_node.save()
+        study_element_selection_node = StudyElement(
+            order=order,
+            uid=selection.study_selection_uid,
+            name=selection.name,
+            short_name=selection.short_name,
+            accepted_version=selection.accepted_version,
+            element_code=selection.code,
+            description=selection.description,
+            planned_duration=selection.planned_duration,
+            start_rule=selection.start_rule,
+            end_rule=selection.end_rule,
+            element_colour=selection.element_colour,
+        ).save()
 
         # Connect new node with study value
         if not for_deletion:
             # Connect new node with study value
             latest_study_value_node.has_study_element.connect(
                 study_element_selection_node
-            )
-        # Connect new node with audit trail
-        audit_node.has_after.connect(study_element_selection_node)
-
-        if before_node is not None:
-            manage_previous_connected_study_selection_relationships(
-                previous_item=before_node,
-                study_value_node=latest_study_value_node,
-                new_item=study_element_selection_node,
-                exclude_study_selection_relationships=[],
             )
 
         # check if element subtype is set
@@ -485,6 +455,17 @@ class StudySelectionElementRepository:
                 )
             )
             study_element_selection_node.element_subtype.connect(selected_term_node)
+
+        _manage_versioning_with_relations(
+            study_root=study_root,
+            action_type=type(audit_node),
+            before=before_node,
+            after=study_element_selection_node,
+            exclude_relationships=[
+                CTTermContext,
+            ],
+            author_id=selection.author_id,
+        )
 
     def generate_uid(self) -> str:
         return StudyElement.get_next_free_uid_and_increment_counter()

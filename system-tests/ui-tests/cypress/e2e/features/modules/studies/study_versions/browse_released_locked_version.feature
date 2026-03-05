@@ -10,8 +10,9 @@ Feature: Studies - Browse released or locked study definitions
         Rule: User must be able to browse the locked or released study definition data independent of the latest draft version.
 
                 Scenario Outline: [Study][Latest] User must be able to browse the latest study definition content when the study status is Draft
-                        Given The CDISC DEV-1111 study is selected
-                        When The '<page>' for '<study field>' is selected
+                        Given Get study 'CDISC DEV-1111' uid
+                        And Select study with uid saved in previous step
+                        And The page '<page>' is opened for selected study
                         Then The '<value>' is displayed
 
                         Examples:
@@ -27,10 +28,11 @@ Feature: Studies - Browse released or locked study definitions
 
 
                 Scenario Outline:  [Study][Locked] User must be able to browse the locked study definition content when the study previously has been locked
-                        Given The CDISC DEV-1111 study is selected
-                        And The Study Status page in Manage Study is accessed
+                        Given Get study 'CDISC DEV-1111' uid
+                        And Select study with uid saved in previous step
+                        And The page 'study_status/study_status' is opened for selected study
                         And The test study definition in status Locked and version 1 is selected
-                        When The '<page>' for '<study field>' is selected
+                        And The page '<page>' is opened for selected study
                         Then The '<value>' is displayed
 
                         Examples:
@@ -46,10 +48,11 @@ Feature: Studies - Browse released or locked study definitions
 
 
                 Scenario Outline:  [Study][Released] User must be able to browse the released study definition content when the study previously has been released
-                        Given The CDISC DEV-1111 study is selected
-                        And The Study Status page in Manage Study is accessed
+                        Given Get study 'CDISC DEV-1111' uid
+                        And Select study with uid saved in previous step
+                        And The page 'study_status/study_status' is opened for selected study
                         And The test study definition in status Released and version 1.1 is selected
-                        When The '<page>' for '<study field>' is selected
+                        And The page '<page>' is opened for selected study
                         Then The '<value>' is displayed
 
                         Examples:

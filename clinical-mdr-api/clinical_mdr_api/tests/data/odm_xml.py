@@ -15,52 +15,110 @@ EXPORT_FORM = """<?xml version="1.0" encoding="utf-8"?>
             </MeasurementUnit>
         </BasicDefinitions>
         <MetaDataVersion OID="MDV.0.1" Name="MDV.0.1" Description="Draft version">
-            <FormDef OID="oid1" Name="name1" Repeating="Yes" osb:version="1.0" osb:instruction="instruction1" osb:sponsorInstruction="sponsor_instruction1">
+            <FormDef OID="oid1" Name="name1" Repeating="Yes" osb:version="1.1">
                 <Description>
-                    <TranslatedText xml:lang="en">description1</TranslatedText>
+                    <TranslatedText xml:lang="en">Description1</TranslatedText>
                 </Description>
+                <osb:DesignNotes>
+                    <TranslatedText xml:lang="en">Design Notes1</TranslatedText>
+                </osb:DesignNotes>
+                <osb:CompletionInstructions>
+                    <TranslatedText xml:lang="en">Completion Instructions1</TranslatedText>
+                </osb:CompletionInstructions>
+                <osb:DisplayText>
+                    <TranslatedText xml:lang="en">Display Text1</TranslatedText>
+                </osb:DisplayText>
                 <Alias Name="name1" Context="context1" />
                 <ItemGroupRef ItemGroupOID="oid1" Mandatory="Yes" OrderNumber="1" CollectionExceptionConditionOID="oid2" prefix:nameThree="No" />
-                <prefix:nameOne />
+                <prefix:NameOne />
             </FormDef>
-            <ItemGroupDef OID="oid1" Name="name1" Repeating="No" Purpose="purpose1" SASDatasetName="sas_dataset_name1" Domain="XX:Domain XX|YY:Domain YY" osb:version="1.0" osb:instruction="instruction1" osb:sponsorInstruction="sponsor_instruction1">
+            <ItemGroupDef OID="oid1" Name="name1" Repeating="No" Purpose="purpose1" SASDatasetName="sas_dataset_name1" Domain="XX:Domain XX|YY:Domain YY" osb:version="1.1">
                 <osb:DomainColor>XX:#bfffff !important;</osb:DomainColor>
                 <osb:DomainColor>YY:#ffff96 !important;</osb:DomainColor>
                 <Description>
-                    <TranslatedText xml:lang="eng">description1</TranslatedText>
+                    <TranslatedText xml:lang="eng">Description1</TranslatedText>
                 </Description>
+                <osb:DesignNotes>
+                    <TranslatedText xml:lang="eng">Design Notes1</TranslatedText>
+                </osb:DesignNotes>
+                <osb:CompletionInstructions>
+                    <TranslatedText xml:lang="eng">Completion Instructions1</TranslatedText>
+                </osb:CompletionInstructions>
+                <osb:DisplayText>
+                    <TranslatedText xml:lang="eng">Display Text1</TranslatedText>
+                </osb:DisplayText>
                 <Alias Name="name1" Context="context1" />
                 <ItemRef ItemOID="oid1" Mandatory="Yes" OrderNumber="1" MethodOID="oid1" CollectionExceptionConditionOID="oid1" prefix:nameThree="No" />
+                <ItemRef ItemOID="oid999" Mandatory="Yes" OrderNumber="1" />
             </ItemGroupDef>
-            <ItemDef OID="oid1" Name="name1" Origin="origin1" DataType="string" Length="1" SignificantDigits="1" SASFieldName="sasfieldname1" SDSVarName="sdsvarname1" osb:version="1.0" osb:instruction="instruction1" osb:sponsorInstruction="sponsor_instruction1">
+            <ItemDef OID="oid1" Name="name1" Origin="origin1" DataType="string" Length="1" SignificantDigits="1" SASFieldName="sasfieldname1" SDSVarName="sdsvarname1" osb:version="1.0">
                 <Question>
-                    <TranslatedText xml:lang="en">name1</TranslatedText>
+                    <TranslatedText xml:lang="en">Question1</TranslatedText>
                 </Question>
                 <Description>
-                    <TranslatedText xml:lang="en">description1</TranslatedText>
+                    <TranslatedText xml:lang="en">Description1</TranslatedText>
                 </Description>
+                <osb:DesignNotes>
+                    <TranslatedText xml:lang="en">Design Notes1</TranslatedText>
+                </osb:DesignNotes>
+                <osb:CompletionInstructions>
+                    <TranslatedText xml:lang="en">Completion Instructions1</TranslatedText>
+                </osb:CompletionInstructions>
+                <osb:DisplayText>
+                    <TranslatedText xml:lang="en">Display Text1</TranslatedText>
+                </osb:DisplayText>
                 <Alias Name="name1" Context="context1" />
-                <CodeListRef CodeListOID="submission_value1@oid1" />
+                <CodeListRef CodeListOID="submission_value1@oid1" osb:allowsMultiChoice="True" />
                 <MeasurementUnitRef MeasurementUnitOID="unit_definition_root1" />
+            </ItemDef>
+            <ItemDef OID="oid999" Name="with activity instance" Origin="origin999" DataType="string" Length="1" SignificantDigits="1" SASFieldName="sasfieldname999" SDSVarName="sdsvarname999" osb:version="0.2">
+                <osb:ActivityInstance osb:adamCode="adam_code_a" osb:topicCode="topic code A" osb:isDerived="true">name A</osb:ActivityInstance>
             </ItemDef>
             <ConditionDef OID="oid1" Name="name1" osb:version="1.0">
                 <Description>
-                    <TranslatedText xml:lang="en">description1</TranslatedText>
+                    <TranslatedText xml:lang="en">Description1</TranslatedText>
                 </Description>
+                <osb:DesignNotes>
+                    <TranslatedText xml:lang="en">Design Notes1</TranslatedText>
+                </osb:DesignNotes>
+                <osb:CompletionInstructions>
+                    <TranslatedText xml:lang="en">Completion Instructions1</TranslatedText>
+                </osb:CompletionInstructions>
+                <osb:DisplayText>
+                    <TranslatedText xml:lang="en">Display Text1</TranslatedText>
+                </osb:DisplayText>
                 <FormalExpression Context="context1">expression1</FormalExpression>
             </ConditionDef>
             <ConditionDef OID="oid2" Name="name2" osb:version="1.0">
                 <Description>
-                    <TranslatedText xml:lang="en">description1</TranslatedText>
+                    <TranslatedText xml:lang="en">Description1</TranslatedText>
                 </Description>
+                <osb:DesignNotes>
+                    <TranslatedText xml:lang="en">Design Notes1</TranslatedText>
+                </osb:DesignNotes>
+                <osb:CompletionInstructions>
+                    <TranslatedText xml:lang="en">Completion Instructions1</TranslatedText>
+                </osb:CompletionInstructions>
+                <osb:DisplayText>
+                    <TranslatedText xml:lang="en">Display Text1</TranslatedText>
+                </osb:DisplayText>
                 <FormalExpression Context="context1">expression1</FormalExpression>
             </ConditionDef>
             <MethodDef OID="oid1" Name="name1" Type="type1" osb:version="1.0">
                 <Description>
-                    <TranslatedText xml:lang="en">description1</TranslatedText>
+                    <TranslatedText xml:lang="en">Description1</TranslatedText>
                 </Description>
+                <osb:DesignNotes>
+                    <TranslatedText xml:lang="en">Design Notes1</TranslatedText>
+                </osb:DesignNotes>
+                <osb:CompletionInstructions>
+                    <TranslatedText xml:lang="en">Completion Instructions1</TranslatedText>
+                </osb:CompletionInstructions>
+                <osb:DisplayText>
+                    <TranslatedText xml:lang="en">Display Text1</TranslatedText>
+                </osb:DisplayText>
                 <FormalExpression Context="context1">expression1</FormalExpression>
-            </MethodDef>            
+            </MethodDef>
             <CodeList OID="submission_value1@oid1" Name="codelist_root1" DataType="string" SASFormatName="submission_value1" osb:version="1.0">
                 <CodeListItem CodedValue="submission_value1" OrderNumber="1" osb:mandatory="False" osb:name="name1" osb:OID="term1" osb:version="1.0">
                     <Decode>
@@ -87,57 +145,123 @@ EXPORT_FORMS = """<?xml version="1.0" encoding="utf-8"?>
             </MeasurementUnit>
         </BasicDefinitions>
         <MetaDataVersion OID="MDV.0.1" Name="MDV.0.1" Description="Draft version">
-            <FormDef OID="oid1" Name="name1" Repeating="Yes" osb:version="1.0" osb:instruction="instruction1" osb:sponsorInstruction="sponsor_instruction1">
+            <FormDef OID="oid1" Name="name1" Repeating="Yes" osb:version="1.1">
                 <Description>
-                    <TranslatedText xml:lang="en">description1</TranslatedText>
+                    <TranslatedText xml:lang="en">Description1</TranslatedText>
                 </Description>
+                <osb:DesignNotes>
+                    <TranslatedText xml:lang="en">Design Notes1</TranslatedText>
+                </osb:DesignNotes>
+                <osb:CompletionInstructions>
+                    <TranslatedText xml:lang="en">Completion Instructions1</TranslatedText>
+                </osb:CompletionInstructions>
+                <osb:DisplayText>
+                    <TranslatedText xml:lang="en">Display Text1</TranslatedText>
+                </osb:DisplayText>
                 <Alias Name="name1" Context="context1" />
                 <ItemGroupRef ItemGroupOID="oid1" Mandatory="Yes" OrderNumber="1" CollectionExceptionConditionOID="oid2" prefix:nameThree="No" />
-                <prefix:nameOne>test value</prefix:nameOne>
+                <prefix:NameOne>test value</prefix:NameOne>
             </FormDef>
-            <FormDef OID="oid2" Name="name2" Repeating="Yes" osb:version="1.0"
-                osb:instruction="instruction1" osb:sponsorInstruction="sponsor_instruction1">
+            <FormDef OID="oid2" Name="name2" Repeating="Yes" osb:version="1.0">
                 <Description>
-                    <TranslatedText xml:lang="en">description1</TranslatedText>
+                    <TranslatedText xml:lang="en">Description1</TranslatedText>
                 </Description>
+                <osb:DesignNotes>
+                    <TranslatedText xml:lang="en">Design Notes1</TranslatedText>
+                </osb:DesignNotes>
+                <osb:CompletionInstructions>
+                    <TranslatedText xml:lang="en">Completion Instructions1</TranslatedText>
+                </osb:CompletionInstructions>
+                <osb:DisplayText>
+                    <TranslatedText xml:lang="en">Display Text1</TranslatedText>
+                </osb:DisplayText>
                 <Alias Name="name1" Context="context1" />
             </FormDef>
-            <ItemGroupDef OID="oid1" Name="name1" Repeating="No" Purpose="purpose1" SASDatasetName="sas_dataset_name1" Domain="XX:Domain XX|YY:Domain YY" osb:version="1.0" osb:instruction="instruction1" osb:sponsorInstruction="sponsor_instruction1">
+            <ItemGroupDef OID="oid1" Name="name1" Repeating="No" Purpose="purpose1" SASDatasetName="sas_dataset_name1" Domain="XX:Domain XX|YY:Domain YY" osb:version="1.1">
                 <osb:DomainColor>XX:#bfffff !important;</osb:DomainColor>
                 <osb:DomainColor>YY:#ffff96 !important;</osb:DomainColor>
                 <Description>
-                    <TranslatedText xml:lang="eng">description1</TranslatedText>
+                    <TranslatedText xml:lang="eng">Description1</TranslatedText>
                 </Description>
+                <osb:DesignNotes>
+                    <TranslatedText xml:lang="eng">Design Notes1</TranslatedText>
+                </osb:DesignNotes>
+                <osb:CompletionInstructions>
+                    <TranslatedText xml:lang="eng">Completion Instructions1</TranslatedText>
+                </osb:CompletionInstructions>
+                <osb:DisplayText>
+                    <TranslatedText xml:lang="eng">Display Text1</TranslatedText>
+                </osb:DisplayText>
                 <Alias Name="name1" Context="context1" />
                 <ItemRef ItemOID="oid1" Mandatory="Yes" OrderNumber="1" MethodOID="oid1" CollectionExceptionConditionOID="oid1" prefix:nameThree="No" />
+                <ItemRef ItemOID="oid999" Mandatory="Yes" OrderNumber="1" />
             </ItemGroupDef>
-            <ItemDef OID="oid1" Name="name1" Origin="origin1" DataType="string" Length="1" SignificantDigits="1" SASFieldName="sasfieldname1" SDSVarName="sdsvarname1" osb:version="1.0" osb:instruction="instruction1" osb:sponsorInstruction="sponsor_instruction1">
+            <ItemDef OID="oid1" Name="name1" Origin="origin1" DataType="string" Length="1" SignificantDigits="1" SASFieldName="sasfieldname1" SDSVarName="sdsvarname1" osb:version="1.0">
                 <Question>
-                    <TranslatedText xml:lang="en">name1</TranslatedText>
+                    <TranslatedText xml:lang="en">Question1</TranslatedText>
                 </Question>
                 <Description>
-                    <TranslatedText xml:lang="en">description1</TranslatedText>
+                    <TranslatedText xml:lang="en">Description1</TranslatedText>
                 </Description>
+                <osb:DesignNotes>
+                    <TranslatedText xml:lang="en">Design Notes1</TranslatedText>
+                </osb:DesignNotes>
+                <osb:CompletionInstructions>
+                    <TranslatedText xml:lang="en">Completion Instructions1</TranslatedText>
+                </osb:CompletionInstructions>
+                <osb:DisplayText>
+                    <TranslatedText xml:lang="en">Display Text1</TranslatedText>
+                </osb:DisplayText>
                 <Alias Name="name1" Context="context1" />
-                <CodeListRef CodeListOID="submission_value1@oid1" />
+                <CodeListRef CodeListOID="submission_value1@oid1" osb:allowsMultiChoice="True" />
                 <MeasurementUnitRef MeasurementUnitOID="unit_definition_root1" />
+            </ItemDef>
+            <ItemDef OID="oid999" Name="with activity instance" Origin="origin999" DataType="string" Length="1" SignificantDigits="1" SASFieldName="sasfieldname999" SDSVarName="sdsvarname999" osb:version="0.2">
+                <osb:ActivityInstance osb:adamCode="adam_code_a" osb:topicCode="topic code A" osb:isDerived="true">name A</osb:ActivityInstance>
             </ItemDef>
             <ConditionDef OID="oid1" Name="name1" osb:version="1.0">
                 <Description>
-                    <TranslatedText xml:lang="en">description1</TranslatedText>
+                    <TranslatedText xml:lang="en">Description1</TranslatedText>
                 </Description>
+                <osb:DesignNotes>
+                    <TranslatedText xml:lang="en">Design Notes1</TranslatedText>
+                </osb:DesignNotes>
+                <osb:CompletionInstructions>
+                    <TranslatedText xml:lang="en">Completion Instructions1</TranslatedText>
+                </osb:CompletionInstructions>
+                <osb:DisplayText>
+                    <TranslatedText xml:lang="en">Display Text1</TranslatedText>
+                </osb:DisplayText>
                 <FormalExpression Context="context1">expression1</FormalExpression>
             </ConditionDef>
             <ConditionDef OID="oid2" Name="name2" osb:version="1.0">
                 <Description>
-                    <TranslatedText xml:lang="en">description1</TranslatedText>
+                    <TranslatedText xml:lang="en">Description1</TranslatedText>
                 </Description>
+                <osb:DesignNotes>
+                    <TranslatedText xml:lang="en">Design Notes1</TranslatedText>
+                </osb:DesignNotes>
+                <osb:CompletionInstructions>
+                    <TranslatedText xml:lang="en">Completion Instructions1</TranslatedText>
+                </osb:CompletionInstructions>
+                <osb:DisplayText>
+                    <TranslatedText xml:lang="en">Display Text1</TranslatedText>
+                </osb:DisplayText>
                 <FormalExpression Context="context1">expression1</FormalExpression>
             </ConditionDef>
             <MethodDef OID="oid1" Name="name1" Type="type1" osb:version="1.0">
                 <Description>
-                    <TranslatedText xml:lang="en">description1</TranslatedText>
+                    <TranslatedText xml:lang="en">Description1</TranslatedText>
                 </Description>
+                <osb:DesignNotes>
+                    <TranslatedText xml:lang="en">Design Notes1</TranslatedText>
+                </osb:DesignNotes>
+                <osb:CompletionInstructions>
+                    <TranslatedText xml:lang="en">Completion Instructions1</TranslatedText>
+                </osb:CompletionInstructions>
+                <osb:DisplayText>
+                    <TranslatedText xml:lang="en">Display Text1</TranslatedText>
+                </osb:DisplayText>
                 <FormalExpression Context="context1">expression1</FormalExpression>
             </MethodDef>            
             <CodeList OID="submission_value1@oid1" Name="codelist_root1" DataType="string" SASFormatName="submission_value1" osb:version="1.0">
@@ -166,36 +290,76 @@ EXPORT_ITEM_GROUP = """<?xml version="1.0" encoding="utf-8"?>
             </MeasurementUnit>
         </BasicDefinitions>
         <MetaDataVersion OID="MDV.0.1" Name="MDV.0.1" Description="Draft version">
-            <ItemGroupDef OID="oid1" Name="name1" Repeating="No" Purpose="purpose1" SASDatasetName="sas_dataset_name1" Domain="XX:Domain XX|YY:Domain YY" osb:version="1.0" osb:instruction="instruction1" osb:sponsorInstruction="sponsor_instruction1">
+            <ItemGroupDef OID="oid1" Name="name1" Repeating="No" Purpose="purpose1" SASDatasetName="sas_dataset_name1" Domain="XX:Domain XX|YY:Domain YY" osb:version="1.1">
                 <osb:DomainColor>XX:#bfffff !important;</osb:DomainColor>
                 <osb:DomainColor>YY:#ffff96 !important;</osb:DomainColor>
                 <Description>
-                    <TranslatedText xml:lang="eng">description1</TranslatedText>
+                    <TranslatedText xml:lang="eng">Description1</TranslatedText>
                 </Description>
+                <osb:DesignNotes>
+                    <TranslatedText xml:lang="eng">Design Notes1</TranslatedText>
+                </osb:DesignNotes>
+                <osb:CompletionInstructions>
+                    <TranslatedText xml:lang="eng">Completion Instructions1</TranslatedText>
+                </osb:CompletionInstructions>
+                <osb:DisplayText>
+                    <TranslatedText xml:lang="eng">Display Text1</TranslatedText>
+                </osb:DisplayText>
                 <Alias Name="name1" Context="context1" />
                 <ItemRef ItemOID="oid1" Mandatory="Yes" OrderNumber="1" MethodOID="oid1" CollectionExceptionConditionOID="oid1" prefix:nameThree="No" />
+`                <ItemRef ItemOID="oid999" Mandatory="Yes" OrderNumber="1" />
             </ItemGroupDef>
-            <ItemDef OID="oid1" Name="name1" Origin="origin1" DataType="string" Length="1" SignificantDigits="1" SASFieldName="sasfieldname1" SDSVarName="sdsvarname1" osb:version="1.0" osb:instruction="instruction1" osb:sponsorInstruction="sponsor_instruction1">
+            <ItemDef OID="oid1" Name="name1" Origin="origin1" DataType="string" Length="1" SignificantDigits="1" SASFieldName="sasfieldname1" SDSVarName="sdsvarname1" osb:version="1.0">
                 <Question>
-                    <TranslatedText xml:lang="en">name1</TranslatedText>
+                    <TranslatedText xml:lang="en">Question1</TranslatedText>
                 </Question>
                 <Description>
-                    <TranslatedText xml:lang="en">description1</TranslatedText>
+                    <TranslatedText xml:lang="en">Description1</TranslatedText>
                 </Description>
+                <osb:DesignNotes>
+                    <TranslatedText xml:lang="en">Design Notes1</TranslatedText>
+                </osb:DesignNotes>
+                <osb:CompletionInstructions>
+                    <TranslatedText xml:lang="en">Completion Instructions1</TranslatedText>
+                </osb:CompletionInstructions>
+                <osb:DisplayText>
+                    <TranslatedText xml:lang="en">Display Text1</TranslatedText>
+                </osb:DisplayText>
                 <Alias Name="name1" Context="context1" />
-                <CodeListRef CodeListOID="submission_value1@oid1" />
+                <CodeListRef CodeListOID="submission_value1@oid1" osb:allowsMultiChoice="True" />
                 <MeasurementUnitRef MeasurementUnitOID="unit_definition_root1" />
+            </ItemDef>
+            <ItemDef OID="oid999" Name="with activity instance" Origin="origin999" DataType="string" Length="1" SignificantDigits="1" SASFieldName="sasfieldname999" SDSVarName="sdsvarname999" osb:version="0.2">
+                <osb:ActivityInstance osb:adamCode="adam_code_a" osb:topicCode="topic code A" osb:isDerived="true">name A</osb:ActivityInstance>
             </ItemDef>
             <ConditionDef OID="oid1" Name="name1" osb:version="1.0">
                 <Description>
-                    <TranslatedText xml:lang="en">description1</TranslatedText>
+                    <TranslatedText xml:lang="en">Description1</TranslatedText>
                 </Description>
+                <osb:DesignNotes>
+                    <TranslatedText xml:lang="en">Design Notes1</TranslatedText>
+                </osb:DesignNotes>
+                <osb:CompletionInstructions>
+                    <TranslatedText xml:lang="en">Completion Instructions1</TranslatedText>
+                </osb:CompletionInstructions>
+                <osb:DisplayText>
+                    <TranslatedText xml:lang="en">Display Text1</TranslatedText>
+                </osb:DisplayText>
                 <FormalExpression Context="context1">expression1</FormalExpression>
             </ConditionDef>
             <MethodDef OID="oid1" Name="name1" Type="type1" osb:version="1.0">
                 <Description>
-                    <TranslatedText xml:lang="en">description1</TranslatedText>
+                    <TranslatedText xml:lang="en">Description1</TranslatedText>
                 </Description>
+                <osb:DesignNotes>
+                    <TranslatedText xml:lang="en">Design Notes1</TranslatedText>
+                </osb:DesignNotes>
+                <osb:CompletionInstructions>
+                    <TranslatedText xml:lang="en">Completion Instructions1</TranslatedText>
+                </osb:CompletionInstructions>
+                <osb:DisplayText>
+                    <TranslatedText xml:lang="en">Display Text1</TranslatedText>
+                </osb:DisplayText>
                 <FormalExpression Context="context1">expression1</FormalExpression>
             </MethodDef>
             <CodeList OID="submission_value1@oid1" Name="codelist_root1" DataType="string" SASFormatName="submission_value1" osb:version="1.0">
@@ -226,15 +390,24 @@ EXPORT_ITEM = """<?xml version="1.0" encoding="utf-8"?>
                         </BasicDefinitions>
                         <MetaDataVersion OID="MDV.0.1" Name="MDV.0.1" Description="Draft version">
                             <ItemDef OID="oid1" Name="name1" Origin="origin1" DataType="string" Length="1" SignificantDigits="1" SASFieldName="sasfieldname1"
-                            SDSVarName="sdsvarname1" osb:version="1.0" osb:instruction="instruction1" osb:sponsorInstruction="sponsor_instruction1">
+                            SDSVarName="sdsvarname1" osb:version="1.0">
                                 <Question>
-                                    <TranslatedText xml:lang="en">name1</TranslatedText>
+                                    <TranslatedText xml:lang="en">Question1</TranslatedText>
                                 </Question>
                                 <Description>
-                                    <TranslatedText xml:lang="en">description1</TranslatedText>
+                                    <TranslatedText xml:lang="en">Description1</TranslatedText>
                                 </Description>
+                                <osb:DesignNotes>
+                                    <TranslatedText xml:lang="en">Design Notes1</TranslatedText>
+                                </osb:DesignNotes>
+                                <osb:CompletionInstructions>
+                                    <TranslatedText xml:lang="en">Completion Instructions1</TranslatedText>
+                                </osb:CompletionInstructions>
+                                <osb:DisplayText>
+                                    <TranslatedText xml:lang="en">Display Text1</TranslatedText>
+                                </osb:DisplayText>
                                 <Alias Name="name1" Context="context1" />
-                                <CodeListRef CodeListOID="submission_value1@oid1" />
+                                <CodeListRef CodeListOID="submission_value1@oid1" osb:allowsMultiChoice="True" />
                                 <MeasurementUnitRef MeasurementUnitOID="unit_definition_root1" />
                             </ItemDef>
                             <CodeList OID="submission_value1@oid1" Name="codelist_root1" DataType="string" SASFormatName="submission_value1" osb:version="1.0">
@@ -263,56 +436,108 @@ EXPORT_WITH_CSV = """<?xml version="1.0" encoding="utf-8"?>
             </MeasurementUnit>
         </BasicDefinitions>
         <MetaDataVersion OID="MDV.0.1" Name="MDV.0.1" Description="Draft version">
-            <FormDef OID="oid1" Name="name1" Repeating="Yes" CompletionInstructions="instruction1" ImplementationNotes="sponsor_instruction1" ov="1.0">
+            <FormDef OID="oid1" Name="name1" Repeating="Yes" ov="1.1">
                 <Description>
-                    <TranslatedText xml:lang="en">description1</TranslatedText>
+                    <TranslatedText xml:lang="en">Description1</TranslatedText>
                 </Description>
+                <osb:DesignNotes>
+                    <TranslatedText xml:lang="en">Design Notes1</TranslatedText>
+                </osb:DesignNotes>
+                <osb:CompletionInstructions>
+                    <TranslatedText xml:lang="en">Completion Instructions1</TranslatedText>
+                </osb:CompletionInstructions>
+                <osb:DisplayText>
+                    <TranslatedText xml:lang="en">Display Text1</TranslatedText>
+                </osb:DisplayText>
                 <Alias Name="name1" Context="context1" />
                 <osb:ItemGroupRef ItemGroupOID="oid1" Mandatory="Yes" OrderNumber="1" CollectionExceptionConditionOID="oid2" prefix:nameThree="No" />
-                <prefix:nameOne>test value</prefix:nameOne>
-                <Alias Name="instruction1" Context="CompletionInstructions" />
-                <Alias Name="sponsor_instruction1" Context="ImplementationNotes" />
+                <prefix:NameOne>test value</prefix:NameOne>
             </FormDef>
-            <ItemGroupDef OID="oid1" Name="name1" Repeating="No" Purpose="purpose1" SASDatasetName="sas_dataset_name1" Domain="XX:Domain XX|YY:Domain YY" osb:version="1.0" CompletionInstructions="instruction1" ImplementationNotes="sponsor_instruction1">
+            <ItemGroupDef OID="oid1" Name="name1" Repeating="No" Purpose="purpose1" SASDatasetName="sas_dataset_name1" Domain="XX:Domain XX|YY:Domain YY" osb:version="1.1">
                 <DomainColor>XX:#bfffff !important;</DomainColor>
                 <DomainColor>YY:#ffff96 !important;</DomainColor>
                 <Description>
-                    <TranslatedText xml:lang="eng">description1</TranslatedText>
+                    <TranslatedText xml:lang="eng">Description1</TranslatedText>
                 </Description>
+                <osb:DesignNotes>
+                    <TranslatedText xml:lang="eng">Design Notes1</TranslatedText>
+                </osb:DesignNotes>
+                <osb:CompletionInstructions>
+                    <TranslatedText xml:lang="eng">Completion Instructions1</TranslatedText>
+                </osb:CompletionInstructions>
+                <osb:DisplayText>
+                    <TranslatedText xml:lang="eng">Display Text1</TranslatedText>
+                </osb:DisplayText>
                 <Alias Name="name1" Context="context1" />
                 <osb:ItemRef ItemOID="oid1" Mandatory="Yes" OrderNumber="1" MethodOID="oid1" CollectionExceptionConditionOID="oid1" prefix:nameThree="No" />
-                <Alias Name="instruction1" Context="CompletionInstructions" />
-                <Alias Name="sponsor_instruction1" Context="ImplementationNotes" />
+                <osb:ItemRef ItemOID="oid999" Mandatory="Yes" OrderNumber="1" />
             </ItemGroupDef>
-            <ItemDef OID="oid1" Name="name1" Origin="origin1" DataType="string" Length="1" SignificantDigits="1" SASFieldName="sasfieldname1" SDSVarName="sdsvarname1" osb:version="1.0" CompletionInstructions="instruction1" ImplementationNotes="sponsor_instruction1">
+            <ItemDef OID="oid1" Name="name1" Origin="origin1" DataType="string" Length="1" SignificantDigits="1" SASFieldName="sasfieldname1" SDSVarName="sdsvarname1" osb:version="1.0">
                 <Question>
-                    <TranslatedText xml:lang="en">name1</TranslatedText>
+                    <TranslatedText xml:lang="en">Question1</TranslatedText>
                 </Question>
                 <Description>
-                    <TranslatedText xml:lang="en">description1</TranslatedText>
+                    <TranslatedText xml:lang="en">Description1</TranslatedText>
                 </Description>
+                <osb:DesignNotes>
+                    <TranslatedText xml:lang="en">Design Notes1</TranslatedText>
+                </osb:DesignNotes>
+                <osb:CompletionInstructions>
+                    <TranslatedText xml:lang="en">Completion Instructions1</TranslatedText>
+                </osb:CompletionInstructions>
+                <osb:DisplayText>
+                    <TranslatedText xml:lang="en">Display Text1</TranslatedText>
+                </osb:DisplayText>
                 <Alias Name="name1" Context="context1" />
-                <CodeListRef CodeListOID="submission_value1@oid1" />
+                <CodeListRef CodeListOID="submission_value1@oid1" osb:allowsMultiChoice="True" />
                 <osb:measurementUnitRef MeasurementUnitOID="unit_definition_root1" />
-                <Alias Name="instruction1" Context="CompletionInstructions" />
-                <Alias Name="sponsor_instruction1" Context="ImplementationNotes" />
+            </ItemDef>
+            <ItemDef OID="oid999" Name="with activity instance" Origin="origin999" DataType="string" Length="1" SignificantDigits="1" SASFieldName="sasfieldname999" SDSVarName="sdsvarname999" osb:version="0.2">
+                <osb:ActivityInstance osb:adamCode="adam_code_a" osb:topicCode="topic code A" osb:isDerived="true">name A</osb:ActivityInstance>
             </ItemDef>
             <ConditionDef OID="oid1" Name="name1" osb:version="1.0">
                 <Description>
-                    <TranslatedText xml:lang="en">description1</TranslatedText>
+                    <TranslatedText xml:lang="en">Description1</TranslatedText>
                 </Description>
+                <osb:DesignNotes>
+                    <TranslatedText xml:lang="en">Design Notes1</TranslatedText>
+                </osb:DesignNotes>
+                <osb:CompletionInstructions>
+                    <TranslatedText xml:lang="en">Completion Instructions1</TranslatedText>
+                </osb:CompletionInstructions>
+                <osb:DisplayText>
+                    <TranslatedText xml:lang="en">Display Text1</TranslatedText>
+                </osb:DisplayText>
                 <FormalExpression Context="context1">expression1</FormalExpression>
             </ConditionDef>
             <ConditionDef OID="oid2" Name="name2" osb:version="1.0">
                 <Description>
-                    <TranslatedText xml:lang="en">description1</TranslatedText>
+                    <TranslatedText xml:lang="en">Description1</TranslatedText>
                 </Description>
+                <osb:DesignNotes>
+                    <TranslatedText xml:lang="en">Design Notes1</TranslatedText>
+                </osb:DesignNotes>
+                <osb:CompletionInstructions>
+                    <TranslatedText xml:lang="en">Completion Instructions1</TranslatedText>
+                </osb:CompletionInstructions>
+                <osb:DisplayText>
+                    <TranslatedText xml:lang="en">Display Text1</TranslatedText>
+                </osb:DisplayText>
                 <FormalExpression Context="context1">expression1</FormalExpression>
             </ConditionDef>
             <MethodDef OID="oid1" Name="name1" Type="type1" osb:version="1.0">
                 <Description>
-                    <TranslatedText xml:lang="en">description1</TranslatedText>
+                    <TranslatedText xml:lang="en">Description1</TranslatedText>
                 </Description>
+                <osb:DesignNotes>
+                    <TranslatedText xml:lang="en">Design Notes1</TranslatedText>
+                </osb:DesignNotes>
+                <osb:CompletionInstructions>
+                    <TranslatedText xml:lang="en">Completion Instructions1</TranslatedText>
+                </osb:CompletionInstructions>
+                <osb:DisplayText>
+                    <TranslatedText xml:lang="en">Display Text1</TranslatedText>
+                </osb:DisplayText>
                 <FormalExpression Context="context1">expression1</FormalExpression>
             </MethodDef>
             <CodeList OID="submission_value1@oid1" Name="codelist_root1" DataType="string" SASFormatName="submission_value1" osb:version="1.0">
@@ -343,45 +568,47 @@ EXPORT_WITH_NAMESPACE = """<?xml version="1.0" encoding="utf-8"?>
         <MetaDataVersion OID="MDV.0.1" Name="MDV.0.1" Description="Draft version">
             <FormDef OID="oid1" Name="name1" Repeating="Yes">
                 <Description>
-                    <TranslatedText xml:lang="en">description1</TranslatedText>
+                    <TranslatedText xml:lang="en">Description1</TranslatedText>
                 </Description>
                 <Alias Name="name1" Context="context1" />
                 <ItemGroupRef ItemGroupOID="oid1" Mandatory="Yes" OrderNumber="1" CollectionExceptionConditionOID="oid2" prefix:nameThree="No" />
-                <prefix:nameOne>test value</prefix:nameOne>
+                <prefix:NameOne>test value</prefix:NameOne>
             </FormDef>
             <ItemGroupDef OID="oid1" Name="name1" Repeating="No" Purpose="purpose1" SASDatasetName="sas_dataset_name1" Domain="XX:Domain XX|YY:Domain YY">
                 <Description>
-                    <TranslatedText xml:lang="eng">description1</TranslatedText>
+                    <TranslatedText xml:lang="eng">Description1</TranslatedText>
                 </Description>
                 <Alias Name="name1" Context="context1" />
                 <ItemRef ItemOID="oid1" Mandatory="Yes" OrderNumber="1" MethodOID="oid1" CollectionExceptionConditionOID="oid1" prefix:nameThree="No" />
+                <ItemRef ItemOID="oid999" Mandatory="Yes" OrderNumber="1" />
             </ItemGroupDef>
             <ItemDef OID="oid1" Name="name1" Origin="origin1" DataType="string" Length="1" SignificantDigits="1" SASFieldName="sasfieldname1" SDSVarName="sdsvarname1">
                 <Question>
-                    <TranslatedText xml:lang="en">name1</TranslatedText>
+                    <TranslatedText xml:lang="en">Question1</TranslatedText>
                 </Question>
                 <Description>
-                    <TranslatedText xml:lang="en">description1</TranslatedText>
+                    <TranslatedText xml:lang="en">Description1</TranslatedText>
                 </Description>
                 <Alias Name="name1" Context="context1" />
                 <CodeListRef CodeListOID="submission_value1@oid1" />
                 <MeasurementUnitRef MeasurementUnitOID="unit_definition_root1" />
             </ItemDef>
+            <ItemDef OID="oid999" Name="with activity instance" Origin="origin999" DataType="string" Length="1" SignificantDigits="1" SASFieldName="sasfieldname999" SDSVarName="sdsvarname999" />
             <ConditionDef OID="oid1" Name="name1">
                 <Description>
-                    <TranslatedText xml:lang="en">description1</TranslatedText>
+                    <TranslatedText xml:lang="en">Description1</TranslatedText>
                 </Description>
                 <FormalExpression Context="context1">expression1</FormalExpression>
             </ConditionDef>
             <ConditionDef OID="oid2" Name="name2">
                 <Description>
-                    <TranslatedText xml:lang="en">description1</TranslatedText>
+                    <TranslatedText xml:lang="en">Description1</TranslatedText>
                 </Description>
                 <FormalExpression Context="context1">expression1</FormalExpression>
             </ConditionDef>
             <MethodDef OID="oid1" Name="name1" Type="type1">
                 <Description>
-                    <TranslatedText xml:lang="en">description1</TranslatedText>
+                    <TranslatedText xml:lang="en">Description1</TranslatedText>
                 </Description>
                 <FormalExpression Context="context1">expression1</FormalExpression>
             </MethodDef>
@@ -414,27 +641,66 @@ IMPORT_INPUT1 = """<?xml version="1.0" encoding="utf-8"?>
                     </MeasurementUnit>
                 </BasicDefinitions>
                 <MetaDataVersion OID="MDV.0.1" Name="MDV.0.1" Description="Draft version">
-                    <FormDef OID="F.DM" Name="Informed Consent and Demography" Repeating="No" osb:version="1.0" osb:instruction="form instruction" osb:sponsorInstruction="form sponsor instruction" osb:allows="uds">
+                    <FormDef OID="F.DM" Name="Informed Consent and Demography" Repeating="No" osb:version="1.0" osb:allows="uds">
                         <Description>
                             <TranslatedText xml:lang="en">Informed Consent and Demography form</TranslatedText>
+                            <TranslatedText xml:lang="da">Informed Consent and Demography formDA</TranslatedText>
                         </Description>
+                        <osb:DesignNotes>
+                            <TranslatedText xml:lang="en">form sponsor instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">form sponsor instructionDA</TranslatedText>
+                        </osb:DesignNotes>
+                        <osb:CompletionInstructions>
+                            <TranslatedText xml:lang="en">form instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">form instructionDA</TranslatedText>
+                        </osb:CompletionInstructions>
+                        <osb:DisplayText>
+                            <TranslatedText xml:lang="en">Informed Consent and Demography form</TranslatedText>
+                            <TranslatedText xml:lang="da">Informed Consent and Demography formDA</TranslatedText>
+                        </osb:DisplayText>
                         <Alias Name="name1" Context="context1" />
                         <ItemGroupRef ItemGroupOID="G.DM.IC" Mandatory="Yes" OrderNumber="1" osb:locked="Yes" clinspark:connectivity="Yes" />
                         <ItemGroupRef ItemGroupOID="G.DM.DM" Mandatory="Yes" OrderNumber="2" osb:locked="No" clinspark:connectivity="Yes" />
                     </FormDef>
-                    <FormDef OID="F.VS" Name="Vital Signs" Repeating="No" osb:version="1.0" osb:instruction="form instruction" osb:sponsorInstruction="form sponsor instruction" osb:allows="second">
+                    <FormDef OID="F.VS" Name="Vital Signs" Repeating="No" osb:version="1.0" osb:allows="second">
                         <Description>
                             <TranslatedText xml:lang="en">Vital signs form</TranslatedText>
+                            <TranslatedText xml:lang="da">Vital signs formDA</TranslatedText>
                         </Description>
+                        <osb:DesignNotes>
+                            <TranslatedText xml:lang="en">form sponsor instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">form sponsor instructionDA</TranslatedText>
+                        </osb:DesignNotes>
+                        <osb:CompletionInstructions>
+                            <TranslatedText xml:lang="en">form instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">form instructionDA</TranslatedText>
+                        </osb:CompletionInstructions>
+                        <osb:DisplayText>
+                            <TranslatedText xml:lang="en">Vital signs form</TranslatedText>
+                            <TranslatedText xml:lang="da">Vital signs formDA</TranslatedText>
+                        </osb:DisplayText>
                         <Alias Name="name1" Context="context1" />
                         <ItemGroupRef ItemGroupOID="G.VS.VS" Mandatory="Yes" OrderNumber="1" osb:locked="Yes" />
                         <ItemGroupRef ItemGroupOID="G.VS.BPP" Mandatory="Yes" OrderNumber="2" osb:locked="Yes" />
                     </FormDef>
-                    <ItemGroupDef OID="G.VS.BPP" Name="Blood pressure and pulse" Repeating="No" Purpose="Tabulation" SASDatasetName="VITALSIGNSBPP" Domain="submission_value_1:preferred_term1|submission_value3:preferred_term3" osb:version="1.0" osb:instruction="item group instruction" osb:sponsorInstruction="item group sponsor instruction" osb:gr="ig1">
+                    <ItemGroupDef OID="G.VS.BPP" Name="Blood pressure and pulse" Repeating="No" Purpose="Tabulation" SASDatasetName="VITALSIGNSBPP" Domain="submission_value_1:preferred_term1|submission_value3:preferred_term3" osb:version="1.0" osb:gr="ig1">
                         <osb:DomainColor>VS:#bfffff !important;</osb:DomainColor>
                         <Description>
                             <TranslatedText xml:lang="en">Blood pressure and pulse</TranslatedText>
+                            <TranslatedText xml:lang="da">Blood pressure and pulseDA</TranslatedText>
                         </Description>
+                        <osb:DesignNotes>
+                            <TranslatedText xml:lang="en">item group sponsor instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item group sponsor instructionDA</TranslatedText>
+                        </osb:DesignNotes>
+                        <osb:CompletionInstructions>
+                            <TranslatedText xml:lang="en">item group instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item group instructionDA</TranslatedText>
+                        </osb:CompletionInstructions>
+                        <osb:DisplayText>
+                            <TranslatedText xml:lang="en">Blood pressure and pulse</TranslatedText>
+                            <TranslatedText xml:lang="da">Blood pressure and pulseDA</TranslatedText>
+                        </osb:DisplayText>
                         <ItemRef ItemOID="I.SYSBP" Mandatory="Yes" OrderNumber="1" CollectionExceptionConditionOID="C.OID1" osb:sdv="Yes" />
                         <ItemRef ItemOID="I.DIABP" Mandatory="Yes" OrderNumber="2" osb:sdv="Yes" osb:dataEntryRequired="Yes" />
                         <ItemRef ItemOID="I.POSITION" Mandatory="Yes" OrderNumber="3" osb:sdv="Yes" />
@@ -443,11 +709,24 @@ IMPORT_INPUT1 = """<?xml version="1.0" encoding="utf-8"?>
                         <ItemRef ItemOID="I.PULSE" Mandatory="Yes" OrderNumber="6" osb:sdv="Yes" />
                         <Alias Name="name1" Context="context1" />
                     </ItemGroupDef>
-                    <ItemGroupDef OID="G.DM.DM" Name="General Demography" Repeating="No" Purpose="Tabulation" SASDatasetName="DEMOG" Domain="preferred_term1" osb:version="1.0" osb:instruction="item group instruction" osb:sponsorInstruction="item group sponsor instruction" osb:gr="ig2">
+                    <ItemGroupDef OID="G.DM.DM" Name="General Demography" Repeating="No" Purpose="Tabulation" SASDatasetName="DEMOG" Domain="preferred_term1" osb:version="1.0" osb:gr="ig2">
                         <osb:DomainColor>DM:#bfffff !important;</osb:DomainColor>
                         <Description>
                             <TranslatedText xml:lang="en">General Demographic item group</TranslatedText>
+                            <TranslatedText xml:lang="da">General Demographic item groupDA</TranslatedText>
                         </Description>
+                        <osb:DesignNotes>
+                            <TranslatedText xml:lang="en">item group sponsor instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item group sponsor instructionDA</TranslatedText>
+                        </osb:DesignNotes>
+                        <osb:CompletionInstructions>
+                            <TranslatedText xml:lang="en">item group instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item group instructionDA</TranslatedText>
+                        </osb:CompletionInstructions>
+                        <osb:DisplayText>
+                            <TranslatedText xml:lang="en">General Demographic item group</TranslatedText>
+                            <TranslatedText xml:lang="da">General Demographic item groupDA</TranslatedText>
+                        </osb:DisplayText>                    
                         <ItemRef ItemOID="I.BRTHDTCARGUS" Mandatory="Yes" OrderNumber="1" CollectionExceptionConditionOID="C.OID2" osb:sdv="Yes" />
                         <ItemRef ItemOID="I.BRTHDTC" Mandatory="Yes" OrderNumber="2" osb:sdv="Yes" MethodOID="M.OID1" />
                         <ItemRef ItemOID="I.AGE" Mandatory="Yes" OrderNumber="3" osb:sdv="Yes" />
@@ -460,11 +739,24 @@ IMPORT_INPUT1 = """<?xml version="1.0" encoding="utf-8"?>
                         <ItemRef ItemOID="I.PREVSUBJ" Mandatory="Yes" OrderNumber="10" osb:sdv="Yes" />
                         <Alias Name="name2" Context="context2" />
                     </ItemGroupDef>
-                    <ItemGroupDef OID="G.DM.IC" Name="Informed Consent" Repeating="No" Purpose="Tabulation" SASDatasetName="DEMOG" Domain="submission_value_1" osb:version="1.0" osb:instruction="item group instruction" osb:sponsorInstruction="item group sponsor instruction" osb:gr="ig3">
+                    <ItemGroupDef OID="G.DM.IC" Name="Informed Consent" Repeating="No" Purpose="Tabulation" SASDatasetName="DEMOG" Domain="submission_value_1" osb:version="1.0" osb:gr="ig3">
                         <osb:DomainColor>DM:#bfffff !important;</osb:DomainColor>
                         <Description>
                             <TranslatedText xml:lang="en">Informed Consent item group</TranslatedText>
+                            <TranslatedText xml:lang="da">Informed Consent item groupDA</TranslatedText>
                         </Description>
+                        <osb:DesignNotes>
+                            <TranslatedText xml:lang="en">item group sponsor instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item group sponsor instructionDA</TranslatedText>
+                        </osb:DesignNotes>
+                        <osb:CompletionInstructions>
+                            <TranslatedText xml:lang="en">item group instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item group instructionDA</TranslatedText>
+                        </osb:CompletionInstructions>
+                        <osb:DisplayText>
+                            <TranslatedText xml:lang="en">Informed Consent item group</TranslatedText>
+                            <TranslatedText xml:lang="da">Informed Consent item groupDA</TranslatedText>
+                        </osb:DisplayText>
                         <ItemRef ItemOID="I.STUDYID" Mandatory="Yes" OrderNumber="1" osb:sdv="Yes" />
                         <ItemRef ItemOID="I.RFICDAT" Mandatory="Yes" OrderNumber="2" osb:sdv="Yes" />
                         <ItemRef ItemOID="I.RFICTIM" Mandatory="Yes" OrderNumber="3" osb:sdv="Yes" />
@@ -473,222 +765,573 @@ IMPORT_INPUT1 = """<?xml version="1.0" encoding="utf-8"?>
                         <ItemRef ItemOID="I.RFICDATLAR2" Mandatory="Yes" OrderNumber="6" osb:sdv="Yes" />
                         <ItemRef ItemOID="I.RFICTIMLAR2" Mandatory="Yes" OrderNumber="7" osb:sdv="Yes" />
                     </ItemGroupDef>
-                    <ItemGroupDef OID="G.VS.VS" Name="Vital Signs" Repeating="Yes" Purpose="Tabulation" SASDatasetName="VITALSIGNS" Domain="" osb:version="1.0" osb:instruction="item group instruction" osb:sponsorInstruction="item group sponsor instruction" osb:gr="ig4">
+                    <ItemGroupDef OID="G.VS.VS" Name="Vital Signs" Repeating="Yes" Purpose="Tabulation" SASDatasetName="VITALSIGNS" Domain="" osb:version="1.0" osb:gr="ig4">
                         <osb:DomainColor>VS:#bfffff !important;</osb:DomainColor>
                         <Description>
                             <TranslatedText xml:lang="en">Vital signs</TranslatedText>
+                            <TranslatedText xml:lang="da">Vital signsDA</TranslatedText>
                         </Description>
+                        <osb:DesignNotes>
+                            <TranslatedText xml:lang="en">item group sponsor instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item group sponsor instructionDA</TranslatedText>
+                        </osb:DesignNotes>
+                        <osb:CompletionInstructions>
+                            <TranslatedText xml:lang="en">item group instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item group instructionDA</TranslatedText>
+                        </osb:CompletionInstructions>
+                        <osb:DisplayText>
+                            <TranslatedText xml:lang="en">Vital signs</TranslatedText>
+                            <TranslatedText xml:lang="da">Vital signsDA</TranslatedText>
+                        </osb:DisplayText>
                         <ItemRef ItemOID="I.STUDYID" Mandatory="Yes" OrderNumber="1" osb:sdv="Yes" />
                         <ItemRef ItemOID="I.SUBJID" Mandatory="Yes" OrderNumber="2" osb:sdv="Yes" />
                         <ItemRef ItemOID="I.VSDAT" Mandatory="Yes" OrderNumber="3" osb:sdv="Yes" />
                     </ItemGroupDef>
-                    <ItemDef OID="I.AGE" Name="Age" Origin="Collected Value" DataType="integer" Length="3" SASFieldName="AGE" SDSVarName="AGE" osb:version="1.0" osb:instruction="item instruction" osb:sponsorInstruction="item sponsor instruction" osb:allowsMultiChoice="true">
+                    <ItemDef OID="I.AGE" Name="Age" Origin="Collected Value" DataType="integer" Length="3" SASFieldName="AGE" SDSVarName="AGE" osb:version="1.0">
                         <Question>
                             <TranslatedText xml:lang="en">Age</TranslatedText>
+                            <TranslatedText xml:lang="da">AgeDA</TranslatedText>
                         </Question>
                         <Description>
                             <TranslatedText xml:lang="en">Age</TranslatedText>
+                            <TranslatedText xml:lang="da">AgeDA</TranslatedText>
                         </Description>
-                        <CodeListRef CodeListOID="codelist submission value1@I.AGE" />
+                        <osb:DesignNotes>
+                            <TranslatedText xml:lang="en">item sponsor instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item sponsor instructionDA</TranslatedText>
+                        </osb:DesignNotes>
+                        <osb:CompletionInstructions>
+                            <TranslatedText xml:lang="en">item instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item instructionDA</TranslatedText>
+                        </osb:CompletionInstructions>
+                        <osb:DisplayText>
+                            <TranslatedText xml:lang="en">Age</TranslatedText>
+                            <TranslatedText xml:lang="da">AgeDA</TranslatedText>
+                        </osb:DisplayText>
+                        <CodeListRef CodeListOID="codelist submission value1@I.AGE" osb:allowsMultiChoice="true" />
                         <MeasurementUnitRef MeasurementUnitOID="unit_definition_root1" />
                         <osb:Sometag osb:someAttr="a value" osb:version="1.0">inner text</osb:Sometag>
                     </ItemDef>
-                    <ItemDef OID="I.LOC" Name="Anatomical Location" Origin="Collected Value" DataType="string" Length="15" SASFieldName="LOCATION" SDSVarName="VSLOC where VSTESTCD=SYSBP | VSLOC where VSTESTCD=DIABP" osb:version="1.0" osb:instruction="item instruction" osb:sponsorInstruction="item sponsor instruction" osb:allowsMultiChoice="false">
+                    <ItemDef OID="I.LOC" Name="Anatomical Location" Origin="Collected Value" DataType="string" Length="15" SASFieldName="LOCATION" SDSVarName="VSLOC where VSTESTCD=SYSBP | VSLOC where VSTESTCD=DIABP" osb:version="1.0">
                         <Question>
                             <TranslatedText xml:lang="en">Anatomical Location</TranslatedText>
+                            <TranslatedText xml:lang="da">Anatomical LocationDA</TranslatedText>
                         </Question>
                         <Description>
                             <TranslatedText xml:lang="en">Anatomical Location of the measurement</TranslatedText>
+                            <TranslatedText xml:lang="da">Anatomical Location of the measurementDA</TranslatedText>
                         </Description>
+                        <osb:DesignNotes>
+                            <TranslatedText xml:lang="en">item sponsor instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item sponsor instructionDA</TranslatedText>
+                        </osb:DesignNotes>
+                        <osb:CompletionInstructions>
+                            <TranslatedText xml:lang="en">item instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item instructionDA</TranslatedText>
+                        </osb:CompletionInstructions>
+                        <osb:DisplayText>
+                            <TranslatedText xml:lang="en">Anatomical Location of the measurement</TranslatedText>
+                            <TranslatedText xml:lang="da">Anatomical Location of the measurementDA</TranslatedText>
+                        </osb:DisplayText>
                         <osb:Sometag osb:someAttr="a value" osb:version="1.0">inner text</osb:Sometag>
                     </ItemDef>
-                    <ItemDef OID="I.RFICDAT" Name="Date informed consent obtained" Origin="Collected Value" DataType="date" SASFieldName="RFICDAT" SDSVarName="RFICDTC, DSSTDTC" osb:version="1.0" osb:instruction="item instruction" osb:sponsorInstruction="item sponsor instruction">
+                    <ItemDef OID="I.RFICDAT" Name="Date informed consent obtained" Origin="Collected Value" DataType="date" SASFieldName="RFICDAT" SDSVarName="RFICDTC, DSSTDTC" osb:version="1.0">
                         <Question>
                             <TranslatedText xml:lang="en">Date informed consent obtained</TranslatedText>
+                            <TranslatedText xml:lang="da">Date informed consent obtainedDA</TranslatedText>
                         </Question>
                         <Description>
                             <TranslatedText xml:lang="en">Informed Consent DATE</TranslatedText>
+                            <TranslatedText xml:lang="da">Informed Consent DATEDA</TranslatedText>
                         </Description>
+                        <osb:DesignNotes>
+                            <TranslatedText xml:lang="en">item sponsor instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item sponsor instructionDA</TranslatedText>
+                        </osb:DesignNotes>
+                        <osb:CompletionInstructions>
+                            <TranslatedText xml:lang="en">item instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item instructionDA</TranslatedText>
+                        </osb:CompletionInstructions>
+                        <osb:DisplayText>
+                            <TranslatedText xml:lang="en">Informed Consent DATE</TranslatedText>
+                            <TranslatedText xml:lang="da">Informed Consent DATEDA</TranslatedText>
+                        </osb:DisplayText>
                     </ItemDef>
-                    <ItemDef OID="I.RFICDATLAR2" Name="Date informed consent obtained by Parents/Legally Acceptable Representative (LAR) Only to be completed in countries where Informed Consent from both parents is required [de-activated]" Origin="Collected Value" DataType="date" SASFieldName="RFICDAT" SDSVarName="RFICDTC, DSSTDTC" osb:version="1.0" osb:instruction="item instruction" osb:sponsorInstruction="item sponsor instruction">
+                    <ItemDef OID="I.RFICDATLAR2" Name="Date informed consent obtained by Parents/Legally Acceptable Representative (LAR) Only to be completed in countries where Informed Consent from both parents is required [de-activated]" Origin="Collected Value" DataType="date" SASFieldName="RFICDAT" SDSVarName="RFICDTC, DSSTDTC" osb:version="1.0">
                         <Question>
                             <TranslatedText xml:lang="en">Date informed consent obtained by Parents/Legally Acceptable Representative (LAR) Only to be completed in countries where Informed Consent from both parents is required [de-activated ]</TranslatedText>
+                            <TranslatedText xml:lang="da">Date informed consent obtained by Parents/Legally Acceptable Representative (LAR) Only to be completed in countries where Informed Consent from both parents is required [de-activated ]DA</TranslatedText>
                         </Question>
                         <Description>
                             <TranslatedText xml:lang="en">Informed Consent DATE (Legal or authorised representative 2)</TranslatedText>
+                            <TranslatedText xml:lang="da">Informed Consent DATE (Legal or authorised representative 2)DA</TranslatedText>
                         </Description>
+                        <osb:DesignNotes>
+                            <TranslatedText xml:lang="en">item sponsor instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item sponsor instructionDA</TranslatedText>
+                        </osb:DesignNotes>
+                        <osb:CompletionInstructions>
+                            <TranslatedText xml:lang="en">item instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item instructionDA</TranslatedText>
+                        </osb:CompletionInstructions>
+                        <osb:DisplayText>
+                            <TranslatedText xml:lang="en">Informed Consent DATE (Legal or authorised representative 2)</TranslatedText>
+                            <TranslatedText xml:lang="da">Informed Consent DATE (Legal or authorised representative 2)DA</TranslatedText>
+                        </osb:DisplayText>
                     </ItemDef>
-                    <ItemDef OID="I.RFICDATLAR1" Name="Date informed consent obtained by Parents/Legally Acceptable Representative (LAR) [de-activated]" Origin="Collected Value" DataType="date" SASFieldName="RFICDAT" SDSVarName="RFICDTC, DSSTDTC" osb:version="1.0" osb:instruction="item instruction" osb:sponsorInstruction="item sponsor instruction">
+                    <ItemDef OID="I.RFICDATLAR1" Name="Date informed consent obtained by Parents/Legally Acceptable Representative (LAR) [de-activated]" Origin="Collected Value" DataType="date" SASFieldName="RFICDAT" SDSVarName="RFICDTC, DSSTDTC" osb:version="1.0">
                         <Question>
                             <TranslatedText xml:lang="en">Date informed consent obtained by Parents/Legally Acceptable Representative (LAR) [de-activated ]</TranslatedText>
+                            <TranslatedText xml:lang="da">Date informed consent obtained by Parents/Legally Acceptable Representative (LAR) [de-activated ]DA</TranslatedText>
                         </Question>
                         <Description>
                             <TranslatedText xml:lang="en">Informed Consent Date (Legal or authorised representative 1)</TranslatedText>
+                            <TranslatedText xml:lang="da">Informed Consent Date (Legal or authorised representative 1)DA</TranslatedText>
                         </Description>
+                        <osb:DesignNotes>
+                            <TranslatedText xml:lang="en">item sponsor instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item sponsor instructionDA</TranslatedText>
+                        </osb:DesignNotes>
+                        <osb:CompletionInstructions>
+                            <TranslatedText xml:lang="en">item instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item instructionDA</TranslatedText>
+                        </osb:CompletionInstructions>
+                        <osb:DisplayText>
+                            <TranslatedText xml:lang="en">Informed Consent Date (Legal or authorised representative 1)</TranslatedText>
+                            <TranslatedText xml:lang="da">Informed Consent Date (Legal or authorised representative 1)DA</TranslatedText>
+                        </osb:DisplayText>
                     </ItemDef>
-                    <ItemDef OID="I.BRTHDTC" Name="Date of birth" Origin="Collected Value" DataType="date" SASFieldName="BRTHDAT" SDSVarName="BRTHDTC" osb:version="1.0" osb:instruction="item instruction" osb:sponsorInstruction="item sponsor instruction">
+                    <ItemDef OID="I.BRTHDTC" Name="Date of birth" Origin="Collected Value" DataType="date" SASFieldName="BRTHDAT" SDSVarName="BRTHDTC" osb:version="1.0">
                         <Question>
                             <TranslatedText xml:lang="en">Date of birth</TranslatedText>
+                            <TranslatedText xml:lang="da">Date of birthDA</TranslatedText>
                         </Question>
                         <Description>
                             <TranslatedText xml:lang="en">Date of birth</TranslatedText>
+                            <TranslatedText xml:lang="da">Date of birthDA</TranslatedText>
                         </Description>
+                        <osb:DesignNotes>
+                            <TranslatedText xml:lang="en">item sponsor instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item sponsor instructionDA</TranslatedText>
+                        </osb:DesignNotes>
+                        <osb:CompletionInstructions>
+                            <TranslatedText xml:lang="en">item instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item instructionDA</TranslatedText>
+                        </osb:CompletionInstructions>
+                        <osb:DisplayText>
+                            <TranslatedText xml:lang="en">Date of birth</TranslatedText>
+                            <TranslatedText xml:lang="da">Date of birthDA</TranslatedText>
+                        </osb:DisplayText>
                     </ItemDef>
-                    <ItemDef OID="I.BRTHDTCARGUS" Name="Date of birth (only for Argus interface) [hidden]" Origin="Collected Value" DataType="date" SASFieldName="BRTHDAT" SDSVarName="BRTHDTC" osb:version="1.0" osb:instruction="item instruction" osb:sponsorInstruction="item sponsor instruction">
+                    <ItemDef OID="I.BRTHDTCARGUS" Name="Date of birth (only for Argus interface) [hidden]" Origin="Collected Value" DataType="date" SASFieldName="BRTHDAT" SDSVarName="BRTHDTC" osb:version="1.0">
                         <Question>
                             <TranslatedText xml:lang="en">Date of birth (only for Argus interface) [hidden ]</TranslatedText>
+                            <TranslatedText xml:lang="da">Date of birth (only for Argus interface) [hidden ]DA</TranslatedText>
                         </Question>
                         <Description>
                             <TranslatedText xml:lang="en">Date of birth (only for Argus interface) [hidden ]</TranslatedText>
+                            <TranslatedText xml:lang="da">Date of birth (only for Argus interface) [hidden ]DA</TranslatedText>
                         </Description>
+                        <osb:DesignNotes>
+                            <TranslatedText xml:lang="en">item sponsor instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item sponsor instructionDA</TranslatedText>
+                        </osb:DesignNotes>
+                        <osb:CompletionInstructions>
+                            <TranslatedText xml:lang="en">item instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item instructionDA</TranslatedText>
+                        </osb:CompletionInstructions>
+                        <osb:DisplayText>
+                            <TranslatedText xml:lang="en">Date of birth (only for Argus interface) [hidden ]</TranslatedText>
+                            <TranslatedText xml:lang="da">Date of birth (only for Argus interface) [hidden ]DA</TranslatedText>
+                        </osb:DisplayText>
                         <CodeListRef CodeListOID="new codelist created by odm xml import" />
                     </ItemDef>
-                    <ItemDef OID="I.VSDAT" Name="Date of examination" Origin="Collected Value" DataType="date" SASFieldName="VSDAT" SDSVarName="VSDTC" osb:version="1.0" osb:instruction="item instruction" osb:sponsorInstruction="item sponsor instruction">
+                    <ItemDef OID="I.VSDAT" Name="Date of examination" Origin="Collected Value" DataType="date" SASFieldName="VSDAT" SDSVarName="VSDTC" osb:version="1.0">
                         <Question>
                             <TranslatedText xml:lang="en">Date of examination</TranslatedText>
+                            <TranslatedText xml:lang="da">Date of examinationDA</TranslatedText>
                         </Question>
                         <Description>
                             <TranslatedText xml:lang="en">Date of examination [de-activated ]</TranslatedText>
+                            <TranslatedText xml:lang="da">Date of examination [de-activated ]DA</TranslatedText>
                         </Description>
+                        <osb:DesignNotes>
+                            <TranslatedText xml:lang="en">item sponsor instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item sponsor instructionDA</TranslatedText>
+                        </osb:DesignNotes>
+                        <osb:CompletionInstructions>
+                            <TranslatedText xml:lang="en">item instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item instructionDA</TranslatedText>
+                        </osb:CompletionInstructions>
+                        <osb:DisplayText>
+                            <TranslatedText xml:lang="en">Date of examination [de-activated ]</TranslatedText>
+                            <TranslatedText xml:lang="da">Date of examination [de-activated ]DA</TranslatedText>
+                        </osb:DisplayText>
                     </ItemDef>
-                    <ItemDef OID="I.DIABP" Name="Diastolic blood pressure" Origin="Collected Value" DataType="integer" Length="3" SASFieldName="BP_DIASTOLIC" SDSVarName="VSORRES where VSTESTCD=DIABP, VSORRESU where VSTESTCD=DIABP" osb:version="1.0" osb:instruction="item instruction" osb:sponsorInstruction="item sponsor instruction">
+                    <ItemDef OID="I.DIABP" Name="Diastolic blood pressure" Origin="Collected Value" DataType="integer" Length="3" SASFieldName="BP_DIASTOLIC" SDSVarName="VSORRES where VSTESTCD=DIABP, VSORRESU where VSTESTCD=DIABP" osb:version="1.0">
                         <Question>
                             <TranslatedText xml:lang="en">Diastolic blood pressure</TranslatedText>
+                            <TranslatedText xml:lang="da">Diastolic blood pressureDA</TranslatedText>
                         </Question>
                         <Description>
                             <TranslatedText xml:lang="en">Diastolic blood pressure</TranslatedText>
+                            <TranslatedText xml:lang="da">Diastolic blood pressureDA</TranslatedText>
                         </Description>
+                        <osb:DesignNotes>
+                            <TranslatedText xml:lang="en">item sponsor instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item sponsor instructionDA</TranslatedText>
+                        </osb:DesignNotes>
+                        <osb:CompletionInstructions>
+                            <TranslatedText xml:lang="en">item instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item instructionDA</TranslatedText>
+                        </osb:CompletionInstructions>
+                        <osb:DisplayText>
+                            <TranslatedText xml:lang="en">Diastolic blood pressure</TranslatedText>
+                            <TranslatedText xml:lang="da">Diastolic blood pressureDA</TranslatedText>
+                        </osb:DisplayText>
                         <MeasurementUnitRef MeasurementUnitOID="unit_definition_root1" />
                     </ItemDef>
-                    <ItemDef OID="I.ETHNIC" Name="Ethnicity" Origin="Collected Value" DataType="string" Length="20" SASFieldName="ETHNIC" SDSVarName="ETHNIC" osb:version="1.0" osb:instruction="item instruction" osb:sponsorInstruction="item sponsor instruction">
+                    <ItemDef OID="I.ETHNIC" Name="Ethnicity" Origin="Collected Value" DataType="string" Length="20" SASFieldName="ETHNIC" SDSVarName="ETHNIC" osb:version="1.0">
                         <Question>
                             <TranslatedText xml:lang="en">Ethnicity</TranslatedText>
+                            <TranslatedText xml:lang="da">EthnicityDA</TranslatedText>
                         </Question>
                         <Description>
                             <TranslatedText xml:lang="en">Ethinicity</TranslatedText>
+                            <TranslatedText xml:lang="da">EthinicityDA</TranslatedText>
                         </Description>
+                        <osb:DesignNotes>
+                            <TranslatedText xml:lang="en">item sponsor instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item sponsor instructionDA</TranslatedText>
+                        </osb:DesignNotes>
+                        <osb:CompletionInstructions>
+                            <TranslatedText xml:lang="en">item instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item instructionDA</TranslatedText>
+                        </osb:CompletionInstructions>
+                        <osb:DisplayText>
+                            <TranslatedText xml:lang="en">Ethinicity</TranslatedText>
+                            <TranslatedText xml:lang="da">EthinicityDA</TranslatedText>
+                        </osb:DisplayText>
                     </ItemDef>
-                    <ItemDef OID="I.RFICTIMLAR1" Name="Informed Consent TIME obtained by Parents/Legally Acceptable Representative (LAR) [de-activated]" Origin="Collected Value" DataType="time" SASFieldName="RFICTIM" SDSVarName="RFICDTC, DSSTDTC" osb:version="1.0" osb:instruction="item instruction" osb:sponsorInstruction="item sponsor instruction">
+                    <ItemDef OID="I.RFICTIMLAR1" Name="Informed Consent TIME obtained by Parents/Legally Acceptable Representative (LAR) [de-activated]" Origin="Collected Value" DataType="time" SASFieldName="RFICTIM" SDSVarName="RFICDTC, DSSTDTC" osb:version="1.0">
                         <Question>
                             <TranslatedText xml:lang="en">Informed Consent TIME obtained by Parents/Legally Acceptable Representative (LAR) [de-activated ]</TranslatedText>
+                            <TranslatedText xml:lang="da">Informed Consent TIME obtained by Parents/Legally Acceptable Representative (LAR) [de-activated ]DA</TranslatedText>
                         </Question>
                         <Description>
                             <TranslatedText xml:lang="en">Informed Consent Time (Legal or authorised representative 1)</TranslatedText>
+                            <TranslatedText xml:lang="da">Informed Consent Time (Legal or authorised representative 1)DA</TranslatedText>
                         </Description>
+                        <osb:DesignNotes>
+                            <TranslatedText xml:lang="en">item sponsor instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item sponsor instructionDA</TranslatedText>
+                        </osb:DesignNotes>
+                        <osb:CompletionInstructions>
+                            <TranslatedText xml:lang="en">item instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item instructionDA</TranslatedText>
+                        </osb:CompletionInstructions>
+                        <osb:DisplayText>
+                            <TranslatedText xml:lang="en">Informed Consent Time (Legal or authorised representative 1)</TranslatedText>
+                            <TranslatedText xml:lang="da">Informed Consent Time (Legal or authorised representative 1)DA</TranslatedText>
+                        </osb:DisplayText>
                     </ItemDef>
-                    <ItemDef OID="I.RFICTIMLAR2" Name="Informed Consent Time obtained by Parents/Legally Acceptable Representative (LAR) Only to be completed in countries where Informed Consent from both parents is required [de-activated]" Origin="Collected Value" DataType="time" SASFieldName="RFICTIM" SDSVarName="RFICDTC, DSSTDTC" osb:version="1.0" osb:instruction="item instruction" osb:sponsorInstruction="item sponsor instruction">
+                    <ItemDef OID="I.RFICTIMLAR2" Name="Informed Consent Time obtained by Parents/Legally Acceptable Representative (LAR) Only to be completed in countries where Informed Consent from both parents is required [de-activated]" Origin="Collected Value" DataType="time" SASFieldName="RFICTIM" SDSVarName="RFICDTC, DSSTDTC" osb:version="1.0">
                         <Question>
                             <TranslatedText xml:lang="en">Informed Consent Time obtained by Parents/Legally Acceptable Representative (LAR) Only to be completed in countries where Informed Consent from both parents is required [de-activated ]</TranslatedText>
+                            <TranslatedText xml:lang="da">Informed Consent Time obtained by Parents/Legally Acceptable Representative (LAR) Only to be completed in countries where Informed Consent from both parents is required [de-activated ]DA</TranslatedText>
                         </Question>
                         <Description>
                             <TranslatedText xml:lang="en">Informed Consent Time (Legal or authorised representative 2)</TranslatedText>
+                            <TranslatedText xml:lang="da">Informed Consent Time (Legal or authorised representative 2)DA</TranslatedText>
                         </Description>
+                        <osb:DesignNotes>
+                            <TranslatedText xml:lang="en">item sponsor instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item sponsor instructionDA</TranslatedText>
+                        </osb:DesignNotes>
+                        <osb:CompletionInstructions>
+                            <TranslatedText xml:lang="en">item instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item instructionDA</TranslatedText>
+                        </osb:CompletionInstructions>
+                        <osb:DisplayText>
+                            <TranslatedText xml:lang="en">Informed Consent Time (Legal or authorised representative 2)</TranslatedText>
+                            <TranslatedText xml:lang="da">Informed Consent Time (Legal or authorised representative 2)DA</TranslatedText>
+                        </osb:DisplayText>
                     </ItemDef>
-                    <ItemDef OID="I.LATERALITY" Name="Laterality" Origin="Collected Value" DataType="string" Length="15" SASFieldName="LATERALITY" SDSVarName="VSLAT where VSTESTCD=SYSBP | VSLAT where VSTESTCD=DIABP" osb:version="1.0" osb:instruction="item instruction" osb:sponsorInstruction="item sponsor instruction">
+                    <ItemDef OID="I.LATERALITY" Name="Laterality" Origin="Collected Value" DataType="string" Length="15" SASFieldName="LATERALITY" SDSVarName="VSLAT where VSTESTCD=SYSBP | VSLAT where VSTESTCD=DIABP" osb:version="1.0">
                         <Question>
                             <TranslatedText xml:lang="en">Laterality</TranslatedText>
+                            <TranslatedText xml:lang="da">LateralityDA</TranslatedText>
                         </Question>
                         <Description>
                             <TranslatedText xml:lang="en">Laterality of the measurement</TranslatedText>
+                            <TranslatedText xml:lang="da">Laterality of the measurementDA</TranslatedText>
                         </Description>
+                        <osb:DesignNotes>
+                            <TranslatedText xml:lang="en">item sponsor instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item sponsor instructionDA</TranslatedText>
+                        </osb:DesignNotes>
+                        <osb:CompletionInstructions>
+                            <TranslatedText xml:lang="en">item instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item instructionDA</TranslatedText>
+                        </osb:CompletionInstructions>
+                        <osb:DisplayText>
+                            <TranslatedText xml:lang="en">Laterality of the measurement</TranslatedText>
+                            <TranslatedText xml:lang="da">Laterality of the measurementDA</TranslatedText>
+                        </osb:DisplayText>
                     </ItemDef>
-                    <ItemDef OID="I.POSITION" Name="Position" Origin="Collected Value" DataType="string" Length="15" SASFieldName="POSITION" SDSVarName="VSPOS where VSTESTCD=SYSBP | VSPOS where VSTESTCD=DIABP" osb:version="1.0" osb:instruction="item instruction" osb:sponsorInstruction="item sponsor instruction">
+                    <ItemDef OID="I.POSITION" Name="Position" Origin="Collected Value" DataType="string" Length="15" SASFieldName="POSITION" SDSVarName="VSPOS where VSTESTCD=SYSBP | VSPOS where VSTESTCD=DIABP" osb:version="1.0">
                         <Question>
                             <TranslatedText xml:lang="en">Position</TranslatedText>
+                            <TranslatedText xml:lang="da">PositionDA</TranslatedText>
                         </Question>
                         <Description>
                             <TranslatedText xml:lang="en">Position of the subject</TranslatedText>
+                            <TranslatedText xml:lang="da">Position of the subjectDA</TranslatedText>
                         </Description>
+                        <osb:DesignNotes>
+                            <TranslatedText xml:lang="en">item sponsor instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item sponsor instructionDA</TranslatedText>
+                        </osb:DesignNotes>
+                        <osb:CompletionInstructions>
+                            <TranslatedText xml:lang="en">item instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item instructionDA</TranslatedText>
+                        </osb:CompletionInstructions>
+                        <osb:DisplayText>
+                            <TranslatedText xml:lang="en">Position of the subject</TranslatedText>
+                            <TranslatedText xml:lang="da">Position of the subjectDA</TranslatedText>
+                        </osb:DisplayText>
                     </ItemDef>
-                    <ItemDef OID="I.PREVSUBJ" Name="Previous Subject No." Origin="Collected Value" DataType="string" Length="10" SASFieldName="PREVSUBJ" SDSVarName="PREVSUBJ" osb:version="1.0" osb:instruction="item instruction" osb:sponsorInstruction="item sponsor instruction">
+                    <ItemDef OID="I.PREVSUBJ" Name="Previous Subject No." Origin="Collected Value" DataType="string" Length="10" SASFieldName="PREVSUBJ" SDSVarName="PREVSUBJ" osb:version="1.0">
                         <Question>
                             <TranslatedText xml:lang="en">Previous Subject No.</TranslatedText>
+                            <TranslatedText xml:lang="da">Previous Subject No.DA</TranslatedText>
                         </Question>
                         <Description>
                             <TranslatedText xml:lang="en">Previous Subject No.</TranslatedText>
+                            <TranslatedText xml:lang="da">Previous Subject No.DA</TranslatedText>
                         </Description>
+                        <osb:DesignNotes>
+                            <TranslatedText xml:lang="en">item sponsor instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item sponsor instructionDA</TranslatedText>
+                        </osb:DesignNotes>
+                        <osb:CompletionInstructions>
+                            <TranslatedText xml:lang="en">item instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item instructionDA</TranslatedText>
+                        </osb:CompletionInstructions>
+                        <osb:DisplayText>
+                            <TranslatedText xml:lang="en">Previous Subject No.</TranslatedText>
+                            <TranslatedText xml:lang="da">Previous Subject No.DA</TranslatedText>
+                        </osb:DisplayText>
                     </ItemDef>
-                    <ItemDef OID="I.PULSE" Name="Pulse" Origin="Collected Value" DataType="integer" Length="3" SASFieldName="PULSE" SDSVarName="VSORRES/VSORRESU when VSTESTCD=PULSE" osb:version="1.0" osb:instruction="item instruction" osb:sponsorInstruction="item sponsor instruction">
+                    <ItemDef OID="I.PULSE" Name="Pulse" Origin="Collected Value" DataType="integer" Length="3" SASFieldName="PULSE" SDSVarName="VSORRES/VSORRESU when VSTESTCD=PULSE" osb:version="1.0">
                         <Question>
                             <TranslatedText xml:lang="en">Pulse</TranslatedText>
+                            <TranslatedText xml:lang="da">PulseDA</TranslatedText>
                         </Question>
                         <Description>
                             <TranslatedText xml:lang="en">Pulse</TranslatedText>
+                            <TranslatedText xml:lang="da">PulseDA</TranslatedText>
                         </Description>
+                        <osb:DesignNotes>
+                            <TranslatedText xml:lang="en">item sponsor instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item sponsor instructionDA</TranslatedText>
+                        </osb:DesignNotes>
+                        <osb:CompletionInstructions>
+                            <TranslatedText xml:lang="en">item instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item instructionDA</TranslatedText>
+                        </osb:CompletionInstructions>
+                        <osb:DisplayText>
+                            <TranslatedText xml:lang="en">Pulse</TranslatedText>
+                            <TranslatedText xml:lang="da">PulseDA</TranslatedText>
+                        </osb:DisplayText>
                         <MeasurementUnitRef MeasurementUnitOID="unit_definition_root1" />
                     </ItemDef>
-                    <ItemDef OID="I.RACE" Name="Race" Origin="Collected Value" DataType="string" Length="40" SASFieldName="RACE" SDSVarName="RACE" osb:version="1.0" osb:instruction="item instruction" osb:sponsorInstruction="item sponsor instruction">
+                    <ItemDef OID="I.RACE" Name="Race" Origin="Collected Value" DataType="string" Length="40" SASFieldName="RACE" SDSVarName="RACE" osb:version="1.0">
                         <Question>
                             <TranslatedText xml:lang="en">Race</TranslatedText>
+                            <TranslatedText xml:lang="da">RaceDA</TranslatedText>
                         </Question>
                         <Description>
                             <TranslatedText xml:lang="en">Race</TranslatedText>
+                            <TranslatedText xml:lang="da">RaceDA</TranslatedText>
                         </Description>
+                        <osb:DesignNotes>
+                            <TranslatedText xml:lang="en">item sponsor instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item sponsor instructionDA</TranslatedText>
+                        </osb:DesignNotes>
+                        <osb:CompletionInstructions>
+                            <TranslatedText xml:lang="en">item instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item instructionDA</TranslatedText>
+                        </osb:CompletionInstructions>
+                        <osb:DisplayText>
+                            <TranslatedText xml:lang="en">Race</TranslatedText>
+                            <TranslatedText xml:lang="da">RaceDA</TranslatedText>
+                        </osb:DisplayText>
                     </ItemDef>
-                    <ItemDef OID="I.RACEOTH" Name="Race other" Origin="Collected Value" DataType="string" Length="40" SASFieldName="RACEOTH" SDSVarName="RACEOTH in SUPPDM" osb:version="1.0" osb:instruction="item instruction" osb:sponsorInstruction="item sponsor instruction">
+                    <ItemDef OID="I.RACEOTH" Name="Race other" Origin="Collected Value" DataType="string" Length="40" SASFieldName="RACEOTH" SDSVarName="RACEOTH in SUPPDM" osb:version="1.0">
                         <Question>
                             <TranslatedText xml:lang="en">Race other</TranslatedText>
+                            <TranslatedText xml:lang="da">Race otherDA</TranslatedText>
                         </Question>
                         <Description>
                             <TranslatedText xml:lang="en">Race other</TranslatedText>
+                            <TranslatedText xml:lang="da">Race otherDA</TranslatedText>
                         </Description>
+                        <osb:DesignNotes>
+                            <TranslatedText xml:lang="en">item sponsor instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item sponsor instructionDA</TranslatedText>
+                        </osb:DesignNotes>
+                        <osb:CompletionInstructions>
+                            <TranslatedText xml:lang="en">item instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item instructionDA</TranslatedText>
+                        </osb:CompletionInstructions>
+                        <osb:DisplayText>
+                            <TranslatedText xml:lang="en">Race other</TranslatedText>
+                            <TranslatedText xml:lang="da">Race otherDA</TranslatedText>
+                        </osb:DisplayText>
                     </ItemDef>
-                    <ItemDef OID="I.SEXDEA" Name="Sex [de-activated]" Origin="Protocol Value" DataType="string" Length="15" SASFieldName="SEX" SDSVarName="SEX" osb:version="1.0" osb:instruction="item instruction" osb:sponsorInstruction="item sponsor instruction">
+                    <ItemDef OID="I.SEXDEA" Name="Sex [de-activated]" Origin="Protocol Value" DataType="string" Length="15" SASFieldName="SEX" SDSVarName="SEX" osb:version="1.0">
                         <Question>
                             <TranslatedText xml:lang="en">Sex [de-activated ]</TranslatedText>
+                            <TranslatedText xml:lang="da">Sex [de-activated ]DA</TranslatedText>
                         </Question>
                         <Description>
                             <TranslatedText xml:lang="en">Sex [de-activated ]</TranslatedText>
+                            <TranslatedText xml:lang="da">Sex [de-activated ]DA</TranslatedText>
                         </Description>
+                        <osb:DesignNotes>
+                            <TranslatedText xml:lang="en">item sponsor instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item sponsor instructionDA</TranslatedText>
+                        </osb:DesignNotes>
+                        <osb:CompletionInstructions>
+                            <TranslatedText xml:lang="en">item instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item instructionDA</TranslatedText>
+                        </osb:CompletionInstructions>
+                        <osb:DisplayText>
+                            <TranslatedText xml:lang="en">Sex [de-activated ]</TranslatedText>
+                            <TranslatedText xml:lang="da">Sex [de-activated ]DA</TranslatedText>
+                        </osb:DisplayText>
                     </ItemDef>
-                    <ItemDef OID="I.SEX" Name="Sex [read-only]" Origin="Collected Value" DataType="string" Length="15" SASFieldName="SEX" SDSVarName="SEX" osb:version="1.0" osb:instruction="item instruction" osb:sponsorInstruction="item sponsor instruction">
+                    <ItemDef OID="I.SEX" Name="Sex [read-only]" Origin="Collected Value" DataType="string" Length="15" SASFieldName="SEX" SDSVarName="SEX" osb:version="1.0">
                         <Question>
                             <TranslatedText xml:lang="en">Sex [read-only ]</TranslatedText>
+                            <TranslatedText xml:lang="da">Sex [read-only ]DA</TranslatedText>
                         </Question>
                         <Description>
                             <TranslatedText xml:lang="en">Sex [read-only ]</TranslatedText>
+                            <TranslatedText xml:lang="da">Sex [read-only ]DA</TranslatedText>
                         </Description>
+                        <osb:DesignNotes>
+                            <TranslatedText xml:lang="en">item sponsor instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item sponsor instructionDA</TranslatedText>
+                        </osb:DesignNotes>
+                        <osb:CompletionInstructions>
+                            <TranslatedText xml:lang="en">item instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item instructionDA</TranslatedText>
+                        </osb:CompletionInstructions>
+                        <osb:DisplayText>
+                            <TranslatedText xml:lang="en">Sex [read-only ]</TranslatedText>
+                            <TranslatedText xml:lang="da">Sex [read-only ]DA</TranslatedText>
+                        </osb:DisplayText>
                     </ItemDef>
-                    <ItemDef OID="I.STUDYID" Name="Study ID" Origin="Protocol Value" DataType="string" Length="11" SASFieldName="STUDYID" SDSVarName="STUDYID" osb:version="1.0" osb:instruction="item instruction" osb:sponsorInstruction="item sponsor instruction">
+                    <ItemDef OID="I.STUDYID" Name="Study ID" Origin="Protocol Value" DataType="string" Length="11" SASFieldName="STUDYID" SDSVarName="STUDYID" osb:version="1.0">
                         <Question>
                             <TranslatedText xml:lang="en">Study ID</TranslatedText>
+                            <TranslatedText xml:lang="da">Study IDDA</TranslatedText>
                         </Question>
                         <Description>
                             <TranslatedText xml:lang="en">Study Identifier</TranslatedText>
+                            <TranslatedText xml:lang="da">Study IdentifierDA</TranslatedText>
                         </Description>
-                        <CodeListRef CodeListOID="codelist submission value1@I.STUDYID" />
+                        <osb:DesignNotes>
+                            <TranslatedText xml:lang="en">item sponsor instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item sponsor instructionDA</TranslatedText>
+                        </osb:DesignNotes>
+                        <osb:CompletionInstructions>
+                            <TranslatedText xml:lang="en">item instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item instructionDA</TranslatedText>
+                        </osb:CompletionInstructions>
+                        <osb:DisplayText>
+                            <TranslatedText xml:lang="en">Study Identifier</TranslatedText>
+                            <TranslatedText xml:lang="da">Study IdentifierDA</TranslatedText>
+                        </osb:DisplayText>
+                        <CodeListRef CodeListOID="codelist submission value1@I.STUDYID" osb:allowsMultiChoice="False" />
                     </ItemDef>
-                    <ItemDef OID="I.SUBJID" Name="Subject No. [read-only]" Origin="Collected Value" DataType="string" Length="10" SASFieldName="SUBJID" SDSVarName="SUBJID" osb:version="1.0" osb:instruction="item instruction" osb:sponsorInstruction="item sponsor instruction">
+                    <ItemDef OID="I.SUBJID" Name="Subject No. [read-only]" Origin="Collected Value" DataType="string" Length="10" SASFieldName="SUBJID" SDSVarName="SUBJID" osb:version="1.0">
                         <Question>
                             <TranslatedText xml:lang="en">Subject No. [read-only ]</TranslatedText>
+                            <TranslatedText xml:lang="da">Subject No. [read-only ]DA</TranslatedText>
                         </Question>
                         <Description>
                             <TranslatedText xml:lang="en">Subject No.</TranslatedText>
+                            <TranslatedText xml:lang="da">Subject No.DA</TranslatedText>
                         </Description>
+                        <osb:DesignNotes>
+                            <TranslatedText xml:lang="en">item sponsor instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item sponsor instructionDA</TranslatedText>
+                        </osb:DesignNotes>
+                        <osb:CompletionInstructions>
+                            <TranslatedText xml:lang="en">item instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item instructionDA</TranslatedText>
+                        </osb:CompletionInstructions>
+                        <osb:DisplayText>
+                            <TranslatedText xml:lang="en">Subject No.</TranslatedText>
+                            <TranslatedText xml:lang="da">Subject No.DA</TranslatedText>
+                        </osb:DisplayText>
                     </ItemDef>
-                    <ItemDef OID="I.SYSBP" Name="Systolic blood pressure" Origin="Collected Value" DataType="integer" Length="3" SASFieldName="BP_SYSTOLIC" SDSVarName="VSORRES where VSTESTCD=SYSBP, VSORRESU where VSTESTCD=SYSBP" osb:version="1.0" osb:instruction="item instruction" osb:sponsorInstruction="item sponsor instruction">
+                    <ItemDef OID="I.SYSBP" Name="Systolic blood pressure" Origin="Collected Value" DataType="integer" Length="3" SASFieldName="BP_SYSTOLIC" SDSVarName="VSORRES where VSTESTCD=SYSBP, VSORRESU where VSTESTCD=SYSBP" osb:version="1.0">
                         <Question>
                             <TranslatedText xml:lang="en">Systolic blood pressure</TranslatedText>
+                            <TranslatedText xml:lang="da">Systolic blood pressureDA</TranslatedText>
                         </Question>
                         <Description>
                             <TranslatedText xml:lang="en">Systolic blood pressure</TranslatedText>
+                            <TranslatedText xml:lang="da">Systolic blood pressureDA</TranslatedText>
                         </Description>
+                        <osb:DesignNotes>
+                            <TranslatedText xml:lang="en">item sponsor instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item sponsor instructionDA</TranslatedText>
+                        </osb:DesignNotes>
+                        <osb:CompletionInstructions>
+                            <TranslatedText xml:lang="en">item instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item instructionDA</TranslatedText>
+                        </osb:CompletionInstructions>
+                        <osb:DisplayText>
+                            <TranslatedText xml:lang="en">Systolic blood pressure</TranslatedText>
+                            <TranslatedText xml:lang="da">Systolic blood pressureDA</TranslatedText>
+                        </osb:DisplayText>
                         <MeasurementUnitRef MeasurementUnitOID="unit_definition_root1" />
                     </ItemDef>
-                    <ItemDef OID="I.RFICTIM" Name="Time informed consent obtained" Origin="Collected Value" DataType="time" SASFieldName="RFICTIM" SDSVarName="RFICDTC, DSSTDTC" osb:version="1.0" osb:instruction="item instruction" osb:sponsorInstruction="item sponsor instruction">
+                    <ItemDef OID="I.RFICTIM" Name="Time informed consent obtained" Origin="Collected Value" DataType="time" SASFieldName="RFICTIM" SDSVarName="RFICDTC, DSSTDTC" osb:version="1.0">
                         <Question>
                             <TranslatedText xml:lang="en">Time informed consent obtained</TranslatedText>
+                            <TranslatedText xml:lang="da">Time informed consent obtainedDA</TranslatedText>
                         </Question>
                         <Description>
                             <TranslatedText xml:lang="en">Informed Consent time</TranslatedText>
+                            <TranslatedText xml:lang="da">Informed Consent timeDA</TranslatedText>
                         </Description>
+                        <osb:DesignNotes>
+                            <TranslatedText xml:lang="en">item sponsor instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item sponsor instructionDA</TranslatedText>
+                        </osb:DesignNotes>
+                        <osb:CompletionInstructions>
+                            <TranslatedText xml:lang="en">item instruction</TranslatedText>
+                            <TranslatedText xml:lang="da">item instructionDA</TranslatedText>
+                        </osb:CompletionInstructions>
+                        <osb:DisplayText>
+                            <TranslatedText xml:lang="en">Informed Consent time</TranslatedText>
+                            <TranslatedText xml:lang="da">Informed Consent timeDA</TranslatedText>
+                        </osb:DisplayText>
                     </ItemDef>
                     <ConditionDef OID="C.OID1" Name="Condition1">
                         <Description>
                             <TranslatedText xml:lang="en">Condition 1 Description</TranslatedText>
+                            <TranslatedText xml:lang="da">Condition 1 DescriptionDA</TranslatedText>
                         </Description>
                         <Question>
                             <TranslatedText xml:lang="en">Condition 1 Description Name</TranslatedText>
+                            <TranslatedText xml:lang="da">Condition 1 Description NameDA</TranslatedText>
                         </Question>
                         <FormalExpression Context="XPath">Formal Expression 1</FormalExpression>
                     </ConditionDef>
@@ -760,7 +1403,7 @@ IMPORT_OUTPUT1 = {
             "vendor_elements": [],
             "vendor_attributes": [
                 {
-                    "uid": "OdmVendorAttribute_000008",
+                    "uid": "OdmVendorAttribute_000007",
                     "name": "connectivity",
                     "data_type": "string",
                     "compatible_types": ["ItemGroupRef"],
@@ -785,6 +1428,14 @@ IMPORT_OUTPUT1 = {
             "url": "url2",
             "vendor_elements": [
                 {
+                    "uid": "odm_vendor_element2",
+                    "name": "NameTwo",
+                    "compatible_types": ["FormDef", "ItemGroupDef", "ItemDef"],
+                    "status": "Final",
+                    "version": "1.0",
+                    "possible_actions": ["inactivate", "new_version"],
+                },
+                {
                     "uid": "OdmVendorElement_000001",
                     "name": "Sometag",
                     "compatible_types": ["ItemDef"],
@@ -792,18 +1443,10 @@ IMPORT_OUTPUT1 = {
                     "version": "1.0",
                     "possible_actions": ["inactivate", "new_version"],
                 },
-                {
-                    "uid": "odm_vendor_element2",
-                    "name": "nameTwo",
-                    "compatible_types": ["FormDef", "ItemGroupDef", "ItemDef"],
-                    "status": "Final",
-                    "version": "1.0",
-                    "possible_actions": ["inactivate", "new_version"],
-                },
             ],
             "vendor_attributes": [
                 {
-                    "uid": "OdmVendorAttribute_000006",
+                    "uid": "OdmVendorAttribute_000005",
                     "name": "allows",
                     "data_type": "string",
                     "compatible_types": ["FormDef"],
@@ -812,16 +1455,7 @@ IMPORT_OUTPUT1 = {
                     "possible_actions": ["inactivate", "new_version"],
                 },
                 {
-                    "uid": "OdmVendorAttribute_000001",
-                    "name": "allowsMultiChoice",
-                    "data_type": "string",
-                    "compatible_types": ["ItemDef"],
-                    "status": "Final",
-                    "version": "1.0",
-                    "possible_actions": ["inactivate", "new_version"],
-                },
-                {
-                    "uid": "OdmVendorAttribute_000005",
+                    "uid": "OdmVendorAttribute_000004",
                     "name": "dataEntryRequired",
                     "data_type": "string",
                     "compatible_types": ["ItemRef"],
@@ -830,7 +1464,7 @@ IMPORT_OUTPUT1 = {
                     "possible_actions": ["inactivate", "new_version"],
                 },
                 {
-                    "uid": "OdmVendorAttribute_000003",
+                    "uid": "OdmVendorAttribute_000002",
                     "name": "gr",
                     "data_type": "string",
                     "compatible_types": ["ItemGroupDef"],
@@ -839,7 +1473,7 @@ IMPORT_OUTPUT1 = {
                     "possible_actions": ["inactivate", "new_version"],
                 },
                 {
-                    "uid": "OdmVendorAttribute_000007",
+                    "uid": "OdmVendorAttribute_000006",
                     "name": "locked",
                     "data_type": "string",
                     "compatible_types": ["ItemGroupRef"],
@@ -848,7 +1482,7 @@ IMPORT_OUTPUT1 = {
                     "possible_actions": ["inactivate", "new_version"],
                 },
                 {
-                    "uid": "OdmVendorAttribute_000004",
+                    "uid": "OdmVendorAttribute_000003",
                     "name": "sdv",
                     "data_type": "string",
                     "compatible_types": ["ItemRef"],
@@ -868,35 +1502,10 @@ IMPORT_OUTPUT1 = {
             "version": "1.0",
             "author_username": "unknown-user@example.com",
             "change_description": "Approved version",
-            "uid": "OdmVendorAttribute_000006",
+            "uid": "OdmVendorAttribute_000005",
             "name": "allows",
             "library_name": "Sponsor",
             "compatible_types": ["FormDef"],
-            "data_type": "string",
-            "value_regex": None,
-            "vendor_namespace": {
-                "uid": "odm_vendor_namespace2",
-                "name": "OSB",
-                "prefix": "osb",
-                "url": "url2",
-                "status": "Final",
-                "version": "1.0",
-                "possible_actions": ["inactivate", "new_version"],
-            },
-            "vendor_element": None,
-            "possible_actions": ["inactivate", "new_version"],
-        },
-        {
-            "start_date": "2022-12-01T13:06:41.198850+00:00",
-            "end_date": None,
-            "status": "Final",
-            "version": "1.0",
-            "author_username": "unknown-user@example.com",
-            "change_description": "Approved version",
-            "uid": "OdmVendorAttribute_000001",
-            "name": "allowsMultiChoice",
-            "library_name": "Sponsor",
-            "compatible_types": ["ItemDef"],
             "data_type": "string",
             "value_regex": None,
             "vendor_namespace": {
@@ -918,7 +1527,7 @@ IMPORT_OUTPUT1 = {
             "version": "1.0",
             "author_username": "unknown-user@example.com",
             "change_description": "Approved version",
-            "uid": "OdmVendorAttribute_000008",
+            "uid": "OdmVendorAttribute_000007",
             "name": "connectivity",
             "library_name": "Sponsor",
             "compatible_types": ["ItemGroupRef"],
@@ -943,7 +1552,7 @@ IMPORT_OUTPUT1 = {
             "version": "1.0",
             "author_username": "unknown-user@example.com",
             "change_description": "Approved version",
-            "uid": "OdmVendorAttribute_000005",
+            "uid": "OdmVendorAttribute_000004",
             "name": "dataEntryRequired",
             "library_name": "Sponsor",
             "compatible_types": ["ItemRef"],
@@ -968,7 +1577,7 @@ IMPORT_OUTPUT1 = {
             "version": "1.0",
             "author_username": "unknown-user@example.com",
             "change_description": "Approved version",
-            "uid": "OdmVendorAttribute_000003",
+            "uid": "OdmVendorAttribute_000002",
             "name": "gr",
             "library_name": "Sponsor",
             "compatible_types": ["ItemGroupDef"],
@@ -993,7 +1602,7 @@ IMPORT_OUTPUT1 = {
             "version": "1.0",
             "author_username": "unknown-user@example.com",
             "change_description": "Approved version",
-            "uid": "OdmVendorAttribute_000007",
+            "uid": "OdmVendorAttribute_000006",
             "name": "locked",
             "library_name": "Sponsor",
             "compatible_types": ["ItemGroupRef"],
@@ -1018,7 +1627,7 @@ IMPORT_OUTPUT1 = {
             "version": "1.0",
             "author_username": "unknown-user@example.com",
             "change_description": "Approved version",
-            "uid": "OdmVendorAttribute_000004",
+            "uid": "OdmVendorAttribute_000003",
             "name": "sdv",
             "library_name": "Sponsor",
             "compatible_types": ["ItemRef"],
@@ -1043,7 +1652,7 @@ IMPORT_OUTPUT1 = {
             "version": "1.0",
             "author_username": "unknown-user@example.com",
             "change_description": "Approved version",
-            "uid": "OdmVendorAttribute_000002",
+            "uid": "OdmVendorAttribute_000001",
             "name": "someAttr",
             "library_name": "Sponsor",
             "compatible_types": [],
@@ -1062,6 +1671,29 @@ IMPORT_OUTPUT1 = {
         },
     ],
     "vendor_elements": [
+        {
+            "start_date": "2022-12-12T09:16:09.313000+00:00",
+            "end_date": None,
+            "status": "Final",
+            "version": "1.0",
+            "author_username": "unknown-user@example.com",
+            "change_description": "Approved version",
+            "uid": "odm_vendor_element2",
+            "name": "NameTwo",
+            "library_name": "Sponsor",
+            "vendor_namespace": {
+                "uid": "odm_vendor_namespace2",
+                "name": "OSB",
+                "prefix": "osb",
+                "url": "url2",
+                "status": "Final",
+                "version": "1.0",
+                "possible_actions": ["inactivate", "new_version"],
+            },
+            "vendor_attributes": [],
+            "compatible_types": ["FormDef", "ItemGroupDef", "ItemDef"],
+            "possible_actions": ["inactivate", "new_version"],
+        },
         {
             "start_date": "2022-12-01T13:06:41.819393+00:00",
             "end_date": None,
@@ -1083,7 +1715,7 @@ IMPORT_OUTPUT1 = {
             },
             "vendor_attributes": [
                 {
-                    "uid": "OdmVendorAttribute_000002",
+                    "uid": "OdmVendorAttribute_000001",
                     "name": "someAttr",
                     "data_type": "string",
                     "compatible_types": [],
@@ -1093,29 +1725,6 @@ IMPORT_OUTPUT1 = {
                 }
             ],
             "compatible_types": ["ItemDef"],
-            "possible_actions": ["inactivate", "new_version"],
-        },
-        {
-            "start_date": "2022-12-12T09:16:09.313000+00:00",
-            "end_date": None,
-            "status": "Final",
-            "version": "1.0",
-            "author_username": "unknown-user@example.com",
-            "change_description": "Approved version",
-            "uid": "odm_vendor_element2",
-            "name": "nameTwo",
-            "library_name": "Sponsor",
-            "vendor_namespace": {
-                "uid": "odm_vendor_namespace2",
-                "name": "OSB",
-                "prefix": "osb",
-                "url": "url2",
-                "status": "Final",
-                "version": "1.0",
-                "possible_actions": ["inactivate", "new_version"],
-            },
-            "vendor_attributes": [],
-            "compatible_types": ["FormDef", "ItemGroupDef", "ItemDef"],
             "possible_actions": ["inactivate", "new_version"],
         },
     ],
@@ -1138,6 +1747,7 @@ IMPORT_OUTPUT1 = {
             "forms": [
                 {
                     "uid": "OdmForm_000001",
+                    "oid": "F.DM",
                     "name": "Informed Consent and Demography",
                     "version": "1.0",
                     "order_number": 999999,
@@ -1147,6 +1757,7 @@ IMPORT_OUTPUT1 = {
                 },
                 {
                     "uid": "OdmForm_000002",
+                    "oid": "F.VS",
                     "name": "Vital Signs",
                     "version": "1.0",
                     "order_number": 999999,
@@ -1172,14 +1783,47 @@ IMPORT_OUTPUT1 = {
             "oid": "F.DM",
             "repeating": "No",
             "sdtm_version": "",
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Informed Consent and Demography form",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Informed Consent and Demography form",
-                    "instruction": "form instruction",
-                    "sponsor_instruction": "form sponsor instruction",
-                }
+                    "text": "Informed Consent and Demography form",
+                },
+                {
+                    "text_type": "Description",
+                    "language": "da",
+                    "text": "Informed Consent and Demography formDA",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "en",
+                    "text": "form instruction",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "da",
+                    "text": "form instructionDA",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "en",
+                    "text": "form sponsor instruction",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "da",
+                    "text": "form sponsor instructionDA",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "en",
+                    "text": "Informed Consent and Demography form",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "da",
+                    "text": "Informed Consent and Demography formDA",
+                },
             ],
             "aliases": [{"context": "context1", "name": "name1"}],
             "item_groups": [
@@ -1194,7 +1838,7 @@ IMPORT_OUTPUT1 = {
                     "vendor": {
                         "attributes": [
                             {
-                                "uid": "OdmVendorAttribute_000007",
+                                "uid": "OdmVendorAttribute_000006",
                                 "name": "locked",
                                 "data_type": "string",
                                 "value_regex": None,
@@ -1202,7 +1846,7 @@ IMPORT_OUTPUT1 = {
                                 "vendor_namespace_uid": "odm_vendor_namespace2",
                             },
                             {
-                                "uid": "OdmVendorAttribute_000008",
+                                "uid": "OdmVendorAttribute_000007",
                                 "name": "connectivity",
                                 "data_type": "string",
                                 "value_regex": None,
@@ -1223,7 +1867,7 @@ IMPORT_OUTPUT1 = {
                     "vendor": {
                         "attributes": [
                             {
-                                "uid": "OdmVendorAttribute_000007",
+                                "uid": "OdmVendorAttribute_000006",
                                 "name": "locked",
                                 "data_type": "string",
                                 "value_regex": None,
@@ -1231,7 +1875,7 @@ IMPORT_OUTPUT1 = {
                                 "vendor_namespace_uid": "odm_vendor_namespace2",
                             },
                             {
-                                "uid": "OdmVendorAttribute_000008",
+                                "uid": "OdmVendorAttribute_000007",
                                 "name": "connectivity",
                                 "data_type": "string",
                                 "value_regex": None,
@@ -1245,7 +1889,7 @@ IMPORT_OUTPUT1 = {
             "vendor_elements": [],
             "vendor_attributes": [
                 {
-                    "uid": "OdmVendorAttribute_000006",
+                    "uid": "OdmVendorAttribute_000005",
                     "name": "allows",
                     "data_type": "string",
                     "value_regex": None,
@@ -1269,14 +1913,47 @@ IMPORT_OUTPUT1 = {
             "oid": "F.VS",
             "repeating": "No",
             "sdtm_version": "",
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Vital signs form",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Vital signs form",
-                    "instruction": "form instruction",
-                    "sponsor_instruction": "form sponsor instruction",
-                }
+                    "text": "Vital signs form",
+                },
+                {
+                    "text_type": "Description",
+                    "language": "da",
+                    "text": "Vital signs formDA",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "en",
+                    "text": "form instruction",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "da",
+                    "text": "form instructionDA",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "en",
+                    "text": "form sponsor instruction",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "da",
+                    "text": "form sponsor instructionDA",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "en",
+                    "text": "Vital signs form",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "da",
+                    "text": "Vital signs formDA",
+                },
             ],
             "aliases": [{"context": "context1", "name": "name1"}],
             "item_groups": [
@@ -1291,7 +1968,7 @@ IMPORT_OUTPUT1 = {
                     "vendor": {
                         "attributes": [
                             {
-                                "uid": "OdmVendorAttribute_000007",
+                                "uid": "OdmVendorAttribute_000006",
                                 "name": "locked",
                                 "data_type": "string",
                                 "value_regex": None,
@@ -1312,7 +1989,7 @@ IMPORT_OUTPUT1 = {
                     "vendor": {
                         "attributes": [
                             {
-                                "uid": "OdmVendorAttribute_000007",
+                                "uid": "OdmVendorAttribute_000006",
                                 "name": "locked",
                                 "data_type": "string",
                                 "value_regex": None,
@@ -1326,7 +2003,7 @@ IMPORT_OUTPUT1 = {
             "vendor_elements": [],
             "vendor_attributes": [
                 {
-                    "uid": "OdmVendorAttribute_000006",
+                    "uid": "OdmVendorAttribute_000005",
                     "name": "allows",
                     "data_type": "string",
                     "value_regex": None,
@@ -1356,14 +2033,47 @@ IMPORT_OUTPUT1 = {
             "origin": "",
             "purpose": "Tabulation",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Blood pressure and pulse",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Blood pressure and pulse",
-                    "instruction": "item group instruction",
-                    "sponsor_instruction": "item group sponsor instruction",
-                }
+                    "text": "Blood pressure and pulse",
+                },
+                {
+                    "text_type": "Description",
+                    "language": "da",
+                    "text": "Blood pressure and pulseDA",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "en",
+                    "text": "item group instruction",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "da",
+                    "text": "item group instructionDA",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "en",
+                    "text": "item group sponsor instruction",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "da",
+                    "text": "item group sponsor instructionDA",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "en",
+                    "text": "Blood pressure and pulse",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "da",
+                    "text": "Blood pressure and pulseDA",
+                },
             ],
             "aliases": [{"context": "context1", "name": "name1"}],
             "sdtm_domains": [
@@ -1409,7 +2119,7 @@ IMPORT_OUTPUT1 = {
                     "vendor": {
                         "attributes": [
                             {
-                                "uid": "OdmVendorAttribute_000004",
+                                "uid": "OdmVendorAttribute_000003",
                                 "name": "sdv",
                                 "data_type": "string",
                                 "value_regex": None,
@@ -1435,7 +2145,7 @@ IMPORT_OUTPUT1 = {
                     "vendor": {
                         "attributes": [
                             {
-                                "uid": "OdmVendorAttribute_000004",
+                                "uid": "OdmVendorAttribute_000003",
                                 "name": "sdv",
                                 "data_type": "string",
                                 "value_regex": None,
@@ -1443,7 +2153,7 @@ IMPORT_OUTPUT1 = {
                                 "vendor_namespace_uid": "odm_vendor_namespace2",
                             },
                             {
-                                "uid": "OdmVendorAttribute_000005",
+                                "uid": "OdmVendorAttribute_000004",
                                 "name": "dataEntryRequired",
                                 "data_type": "string",
                                 "value_regex": None,
@@ -1469,7 +2179,7 @@ IMPORT_OUTPUT1 = {
                     "vendor": {
                         "attributes": [
                             {
-                                "uid": "OdmVendorAttribute_000004",
+                                "uid": "OdmVendorAttribute_000003",
                                 "name": "sdv",
                                 "data_type": "string",
                                 "value_regex": None,
@@ -1495,7 +2205,7 @@ IMPORT_OUTPUT1 = {
                     "vendor": {
                         "attributes": [
                             {
-                                "uid": "OdmVendorAttribute_000004",
+                                "uid": "OdmVendorAttribute_000003",
                                 "name": "sdv",
                                 "data_type": "string",
                                 "value_regex": None,
@@ -1521,7 +2231,7 @@ IMPORT_OUTPUT1 = {
                     "vendor": {
                         "attributes": [
                             {
-                                "uid": "OdmVendorAttribute_000004",
+                                "uid": "OdmVendorAttribute_000003",
                                 "name": "sdv",
                                 "data_type": "string",
                                 "value_regex": None,
@@ -1547,7 +2257,7 @@ IMPORT_OUTPUT1 = {
                     "vendor": {
                         "attributes": [
                             {
-                                "uid": "OdmVendorAttribute_000004",
+                                "uid": "OdmVendorAttribute_000003",
                                 "name": "sdv",
                                 "data_type": "string",
                                 "value_regex": None,
@@ -1561,7 +2271,7 @@ IMPORT_OUTPUT1 = {
             "vendor_elements": [],
             "vendor_attributes": [
                 {
-                    "uid": "OdmVendorAttribute_000003",
+                    "uid": "OdmVendorAttribute_000002",
                     "name": "gr",
                     "data_type": "string",
                     "value_regex": None,
@@ -1589,14 +2299,47 @@ IMPORT_OUTPUT1 = {
             "origin": "",
             "purpose": "Tabulation",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "General Demographic item group",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "General Demographic item group",
-                    "instruction": "item group instruction",
-                    "sponsor_instruction": "item group sponsor instruction",
-                }
+                    "text": "General Demographic item group",
+                },
+                {
+                    "text_type": "Description",
+                    "language": "da",
+                    "text": "General Demographic item groupDA",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "en",
+                    "text": "item group instruction",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "da",
+                    "text": "item group instructionDA",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "en",
+                    "text": "item group sponsor instruction",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "da",
+                    "text": "item group sponsor instructionDA",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "en",
+                    "text": "General Demographic item group",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "da",
+                    "text": "General Demographic item groupDA",
+                },
             ],
             "aliases": [{"context": "context2", "name": "name2"}],
             "sdtm_domains": [
@@ -1630,7 +2373,7 @@ IMPORT_OUTPUT1 = {
                     "vendor": {
                         "attributes": [
                             {
-                                "uid": "OdmVendorAttribute_000004",
+                                "uid": "OdmVendorAttribute_000003",
                                 "name": "sdv",
                                 "data_type": "string",
                                 "value_regex": None,
@@ -1656,7 +2399,7 @@ IMPORT_OUTPUT1 = {
                     "vendor": {
                         "attributes": [
                             {
-                                "uid": "OdmVendorAttribute_000004",
+                                "uid": "OdmVendorAttribute_000003",
                                 "name": "sdv",
                                 "data_type": "string",
                                 "value_regex": None,
@@ -1682,7 +2425,7 @@ IMPORT_OUTPUT1 = {
                     "vendor": {
                         "attributes": [
                             {
-                                "uid": "OdmVendorAttribute_000004",
+                                "uid": "OdmVendorAttribute_000003",
                                 "name": "sdv",
                                 "data_type": "string",
                                 "value_regex": None,
@@ -1708,7 +2451,7 @@ IMPORT_OUTPUT1 = {
                     "vendor": {
                         "attributes": [
                             {
-                                "uid": "OdmVendorAttribute_000004",
+                                "uid": "OdmVendorAttribute_000003",
                                 "name": "sdv",
                                 "data_type": "string",
                                 "value_regex": None,
@@ -1734,7 +2477,7 @@ IMPORT_OUTPUT1 = {
                     "vendor": {
                         "attributes": [
                             {
-                                "uid": "OdmVendorAttribute_000004",
+                                "uid": "OdmVendorAttribute_000003",
                                 "name": "sdv",
                                 "data_type": "string",
                                 "value_regex": None,
@@ -1760,7 +2503,7 @@ IMPORT_OUTPUT1 = {
                     "vendor": {
                         "attributes": [
                             {
-                                "uid": "OdmVendorAttribute_000004",
+                                "uid": "OdmVendorAttribute_000003",
                                 "name": "sdv",
                                 "data_type": "string",
                                 "value_regex": None,
@@ -1786,7 +2529,7 @@ IMPORT_OUTPUT1 = {
                     "vendor": {
                         "attributes": [
                             {
-                                "uid": "OdmVendorAttribute_000004",
+                                "uid": "OdmVendorAttribute_000003",
                                 "name": "sdv",
                                 "data_type": "string",
                                 "value_regex": None,
@@ -1812,7 +2555,7 @@ IMPORT_OUTPUT1 = {
                     "vendor": {
                         "attributes": [
                             {
-                                "uid": "OdmVendorAttribute_000004",
+                                "uid": "OdmVendorAttribute_000003",
                                 "name": "sdv",
                                 "data_type": "string",
                                 "value_regex": None,
@@ -1838,7 +2581,7 @@ IMPORT_OUTPUT1 = {
                     "vendor": {
                         "attributes": [
                             {
-                                "uid": "OdmVendorAttribute_000004",
+                                "uid": "OdmVendorAttribute_000003",
                                 "name": "sdv",
                                 "data_type": "string",
                                 "value_regex": None,
@@ -1864,7 +2607,7 @@ IMPORT_OUTPUT1 = {
                     "vendor": {
                         "attributes": [
                             {
-                                "uid": "OdmVendorAttribute_000004",
+                                "uid": "OdmVendorAttribute_000003",
                                 "name": "sdv",
                                 "data_type": "string",
                                 "value_regex": None,
@@ -1878,7 +2621,7 @@ IMPORT_OUTPUT1 = {
             "vendor_elements": [],
             "vendor_attributes": [
                 {
-                    "uid": "OdmVendorAttribute_000003",
+                    "uid": "OdmVendorAttribute_000002",
                     "name": "gr",
                     "data_type": "string",
                     "value_regex": None,
@@ -1906,14 +2649,47 @@ IMPORT_OUTPUT1 = {
             "origin": "",
             "purpose": "Tabulation",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Informed Consent item group",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Informed Consent item group",
-                    "instruction": "item group instruction",
-                    "sponsor_instruction": "item group sponsor instruction",
-                }
+                    "text": "Informed Consent item group",
+                },
+                {
+                    "text_type": "Description",
+                    "language": "da",
+                    "text": "Informed Consent item groupDA",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "en",
+                    "text": "item group instruction",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "da",
+                    "text": "item group instructionDA",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "en",
+                    "text": "item group sponsor instruction",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "da",
+                    "text": "item group sponsor instructionDA",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "en",
+                    "text": "Informed Consent item group",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "da",
+                    "text": "Informed Consent item groupDA",
+                },
             ],
             "aliases": [],
             "sdtm_domains": [
@@ -1947,7 +2723,7 @@ IMPORT_OUTPUT1 = {
                     "vendor": {
                         "attributes": [
                             {
-                                "uid": "OdmVendorAttribute_000004",
+                                "uid": "OdmVendorAttribute_000003",
                                 "name": "sdv",
                                 "data_type": "string",
                                 "value_regex": None,
@@ -1973,7 +2749,7 @@ IMPORT_OUTPUT1 = {
                     "vendor": {
                         "attributes": [
                             {
-                                "uid": "OdmVendorAttribute_000004",
+                                "uid": "OdmVendorAttribute_000003",
                                 "name": "sdv",
                                 "data_type": "string",
                                 "value_regex": None,
@@ -1999,7 +2775,7 @@ IMPORT_OUTPUT1 = {
                     "vendor": {
                         "attributes": [
                             {
-                                "uid": "OdmVendorAttribute_000004",
+                                "uid": "OdmVendorAttribute_000003",
                                 "name": "sdv",
                                 "data_type": "string",
                                 "value_regex": None,
@@ -2025,7 +2801,7 @@ IMPORT_OUTPUT1 = {
                     "vendor": {
                         "attributes": [
                             {
-                                "uid": "OdmVendorAttribute_000004",
+                                "uid": "OdmVendorAttribute_000003",
                                 "name": "sdv",
                                 "data_type": "string",
                                 "value_regex": None,
@@ -2051,7 +2827,7 @@ IMPORT_OUTPUT1 = {
                     "vendor": {
                         "attributes": [
                             {
-                                "uid": "OdmVendorAttribute_000004",
+                                "uid": "OdmVendorAttribute_000003",
                                 "name": "sdv",
                                 "data_type": "string",
                                 "value_regex": None,
@@ -2077,7 +2853,7 @@ IMPORT_OUTPUT1 = {
                     "vendor": {
                         "attributes": [
                             {
-                                "uid": "OdmVendorAttribute_000004",
+                                "uid": "OdmVendorAttribute_000003",
                                 "name": "sdv",
                                 "data_type": "string",
                                 "value_regex": None,
@@ -2103,7 +2879,7 @@ IMPORT_OUTPUT1 = {
                     "vendor": {
                         "attributes": [
                             {
-                                "uid": "OdmVendorAttribute_000004",
+                                "uid": "OdmVendorAttribute_000003",
                                 "name": "sdv",
                                 "data_type": "string",
                                 "value_regex": None,
@@ -2117,7 +2893,7 @@ IMPORT_OUTPUT1 = {
             "vendor_elements": [],
             "vendor_attributes": [
                 {
-                    "uid": "OdmVendorAttribute_000003",
+                    "uid": "OdmVendorAttribute_000002",
                     "name": "gr",
                     "data_type": "string",
                     "value_regex": None,
@@ -2145,14 +2921,47 @@ IMPORT_OUTPUT1 = {
             "origin": "",
             "purpose": "Tabulation",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Vital signs",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Vital signs",
-                    "instruction": "item group instruction",
-                    "sponsor_instruction": "item group sponsor instruction",
-                }
+                    "text": "Vital signs",
+                },
+                {
+                    "text_type": "Description",
+                    "language": "da",
+                    "text": "Vital signsDA",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "en",
+                    "text": "item group instruction",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "da",
+                    "text": "item group instructionDA",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "en",
+                    "text": "item group sponsor instruction",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "da",
+                    "text": "item group sponsor instructionDA",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "en",
+                    "text": "Vital signs",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "da",
+                    "text": "Vital signsDA",
+                },
             ],
             "aliases": [],
             "sdtm_domains": [],
@@ -2173,7 +2982,7 @@ IMPORT_OUTPUT1 = {
                     "vendor": {
                         "attributes": [
                             {
-                                "uid": "OdmVendorAttribute_000004",
+                                "uid": "OdmVendorAttribute_000003",
                                 "name": "sdv",
                                 "data_type": "string",
                                 "value_regex": None,
@@ -2199,7 +3008,7 @@ IMPORT_OUTPUT1 = {
                     "vendor": {
                         "attributes": [
                             {
-                                "uid": "OdmVendorAttribute_000004",
+                                "uid": "OdmVendorAttribute_000003",
                                 "name": "sdv",
                                 "data_type": "string",
                                 "value_regex": None,
@@ -2225,7 +3034,7 @@ IMPORT_OUTPUT1 = {
                     "vendor": {
                         "attributes": [
                             {
-                                "uid": "OdmVendorAttribute_000004",
+                                "uid": "OdmVendorAttribute_000003",
                                 "name": "sdv",
                                 "data_type": "string",
                                 "value_regex": None,
@@ -2239,7 +3048,7 @@ IMPORT_OUTPUT1 = {
             "vendor_elements": [],
             "vendor_attributes": [
                 {
-                    "uid": "OdmVendorAttribute_000003",
+                    "uid": "OdmVendorAttribute_000002",
                     "name": "gr",
                     "data_type": "string",
                     "value_regex": None,
@@ -2271,20 +3080,64 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "AGE",
             "origin": "Collected Value",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Age",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Age",
-                    "instruction": "item instruction",
-                    "sponsor_instruction": "item sponsor instruction",
-                }
+                    "text": "Age",
+                },
+                {
+                    "text_type": "Description",
+                    "language": "da",
+                    "text": "AgeDA",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "en",
+                    "text": "Age",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "da",
+                    "text": "AgeDA",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "en",
+                    "text": "item instruction",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "da",
+                    "text": "item instructionDA",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "en",
+                    "text": "item sponsor instruction",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "da",
+                    "text": "item sponsor instructionDA",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "en",
+                    "text": "Age",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "da",
+                    "text": "AgeDA",
+                },
             ],
             "aliases": [],
             "unit_definitions": [
                 {
                     "uid": "unit_definition_root1",
                     "name": "name1",
+                    "version": "0.1",
                     "mandatory": True,
                     "order": 999999,
                     "ucum": {
@@ -2298,8 +3151,10 @@ IMPORT_OUTPUT1 = {
             "codelist": {
                 "uid": "editable_cr",
                 "name": "codelist attributes value1",
+                "version": "1.0",
                 "submission_value": "codelist submission value1",
                 "preferred_term": "codelist preferred term",
+                "allows_multi_choice": True,
             },
             "terms": [
                 {
@@ -2320,19 +3175,10 @@ IMPORT_OUTPUT1 = {
                     "value": "inner text",
                 }
             ],
-            "vendor_attributes": [
-                {
-                    "uid": "OdmVendorAttribute_000001",
-                    "name": "allowsMultiChoice",
-                    "data_type": "string",
-                    "value_regex": None,
-                    "value": "true",
-                    "vendor_namespace_uid": "odm_vendor_namespace2",
-                }
-            ],
+            "vendor_attributes": [],
             "vendor_element_attributes": [
                 {
-                    "uid": "OdmVendorAttribute_000002",
+                    "uid": "OdmVendorAttribute_000001",
                     "name": "someAttr",
                     "data_type": "string",
                     "value_regex": None,
@@ -2361,14 +3207,57 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "VSLOC where VSTESTCD=SYSBP | VSLOC where VSTESTCD=DIABP",
             "origin": "Collected Value",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Anatomical Location",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Anatomical Location of the measurement",
-                    "instruction": "item instruction",
-                    "sponsor_instruction": "item sponsor instruction",
-                }
+                    "text": "Anatomical Location of the measurement",
+                },
+                {
+                    "text_type": "Description",
+                    "language": "da",
+                    "text": "Anatomical Location of the measurementDA",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "en",
+                    "text": "Anatomical Location",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "da",
+                    "text": "Anatomical LocationDA",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "en",
+                    "text": "item instruction",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "da",
+                    "text": "item instructionDA",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "en",
+                    "text": "item sponsor instruction",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "da",
+                    "text": "item sponsor instructionDA",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "en",
+                    "text": "Anatomical Location of the measurement",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "da",
+                    "text": "Anatomical Location of the measurementDA",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -2382,19 +3271,10 @@ IMPORT_OUTPUT1 = {
                     "value": "inner text",
                 }
             ],
-            "vendor_attributes": [
-                {
-                    "uid": "OdmVendorAttribute_000001",
-                    "name": "allowsMultiChoice",
-                    "data_type": "string",
-                    "value_regex": None,
-                    "value": "false",
-                    "vendor_namespace_uid": "odm_vendor_namespace2",
-                }
-            ],
+            "vendor_attributes": [],
             "vendor_element_attributes": [
                 {
-                    "uid": "OdmVendorAttribute_000002",
+                    "uid": "OdmVendorAttribute_000001",
                     "name": "someAttr",
                     "data_type": "string",
                     "value_regex": None,
@@ -2423,14 +3303,57 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "RFICDTC, DSSTDTC",
             "origin": "Collected Value",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Date informed consent obtained",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Informed Consent DATE",
-                    "instruction": "item instruction",
-                    "sponsor_instruction": "item sponsor instruction",
-                }
+                    "text": "Informed Consent DATE",
+                },
+                {
+                    "text_type": "Description",
+                    "language": "da",
+                    "text": "Informed Consent DATEDA",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "en",
+                    "text": "Date informed consent obtained",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "da",
+                    "text": "Date informed consent obtainedDA",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "en",
+                    "text": "item instruction",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "da",
+                    "text": "item instructionDA",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "en",
+                    "text": "item sponsor instruction",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "da",
+                    "text": "item sponsor instructionDA",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "en",
+                    "text": "Informed Consent DATE",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "da",
+                    "text": "Informed Consent DATEDA",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -2461,14 +3384,57 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "RFICDTC, DSSTDTC",
             "origin": "Collected Value",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Date informed consent obtained by Parents/Legally Acceptable Representative (LAR) Only to be completed in countries where Informed Consent from both parents is required [de-activated ]",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Informed Consent DATE (Legal or authorised representative 2)",
-                    "instruction": "item instruction",
-                    "sponsor_instruction": "item sponsor instruction",
-                }
+                    "text": "Informed Consent DATE (Legal or authorised representative 2)",
+                },
+                {
+                    "text_type": "Description",
+                    "language": "da",
+                    "text": "Informed Consent DATE (Legal or authorised representative 2)DA",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "en",
+                    "text": "Date informed consent obtained by Parents/Legally Acceptable Representative (LAR) Only to be completed in countries where Informed Consent from both parents is required [de-activated ]",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "da",
+                    "text": "Date informed consent obtained by Parents/Legally Acceptable Representative (LAR) Only to be completed in countries where Informed Consent from both parents is required [de-activated ]DA",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "en",
+                    "text": "item instruction",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "da",
+                    "text": "item instructionDA",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "en",
+                    "text": "item sponsor instruction",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "da",
+                    "text": "item sponsor instructionDA",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "en",
+                    "text": "Informed Consent DATE (Legal or authorised representative 2)",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "da",
+                    "text": "Informed Consent DATE (Legal or authorised representative 2)DA",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -2499,14 +3465,57 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "RFICDTC, DSSTDTC",
             "origin": "Collected Value",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Date informed consent obtained by Parents/Legally Acceptable Representative (LAR) [de-activated ]",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Informed Consent Date (Legal or authorised representative 1)",
-                    "instruction": "item instruction",
-                    "sponsor_instruction": "item sponsor instruction",
-                }
+                    "text": "Informed Consent Date (Legal or authorised representative 1)",
+                },
+                {
+                    "text_type": "Description",
+                    "language": "da",
+                    "text": "Informed Consent Date (Legal or authorised representative 1)DA",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "en",
+                    "text": "Date informed consent obtained by Parents/Legally Acceptable Representative (LAR) [de-activated ]",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "da",
+                    "text": "Date informed consent obtained by Parents/Legally Acceptable Representative (LAR) [de-activated ]DA",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "en",
+                    "text": "item instruction",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "da",
+                    "text": "item instructionDA",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "en",
+                    "text": "item sponsor instruction",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "da",
+                    "text": "item sponsor instructionDA",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "en",
+                    "text": "Informed Consent Date (Legal or authorised representative 1)",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "da",
+                    "text": "Informed Consent Date (Legal or authorised representative 1)DA",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -2537,14 +3546,57 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "BRTHDTC",
             "origin": "Collected Value",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Date of birth",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Date of birth",
-                    "instruction": "item instruction",
-                    "sponsor_instruction": "item sponsor instruction",
-                }
+                    "text": "Date of birth",
+                },
+                {
+                    "text_type": "Description",
+                    "language": "da",
+                    "text": "Date of birthDA",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "en",
+                    "text": "Date of birth",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "da",
+                    "text": "Date of birthDA",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "en",
+                    "text": "item instruction",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "da",
+                    "text": "item instructionDA",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "en",
+                    "text": "item sponsor instruction",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "da",
+                    "text": "item sponsor instructionDA",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "en",
+                    "text": "Date of birth",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "da",
+                    "text": "Date of birthDA",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -2575,22 +3627,67 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "BRTHDTC",
             "origin": "Collected Value",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Date of birth (only for Argus interface) [hidden ]",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Date of birth (only for Argus interface) [hidden ]",
-                    "instruction": "item instruction",
-                    "sponsor_instruction": "item sponsor instruction",
-                }
+                    "text": "Date of birth (only for Argus interface) [hidden ]",
+                },
+                {
+                    "text_type": "Description",
+                    "language": "da",
+                    "text": "Date of birth (only for Argus interface) [hidden ]DA",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "en",
+                    "text": "Date of birth (only for Argus interface) [hidden ]",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "da",
+                    "text": "Date of birth (only for Argus interface) [hidden ]DA",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "en",
+                    "text": "item instruction",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "da",
+                    "text": "item instructionDA",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "en",
+                    "text": "item sponsor instruction",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "da",
+                    "text": "item sponsor instructionDA",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "en",
+                    "text": "Date of birth (only for Argus interface) [hidden ]",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "da",
+                    "text": "Date of birth (only for Argus interface) [hidden ]DA",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
             "codelist": {
                 "uid": "CTCodelist_000001",
                 "name": "cnew codelist created by odm xml import",
+                "version": "1.0",
                 "submission_value": "cnew codelist created by odm xml import",
                 "preferred_term": "new codelist created by odm xml import",
+                "allows_multi_choice": False,
             },
             "terms": [
                 {
@@ -2628,14 +3725,57 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "VSDTC",
             "origin": "Collected Value",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Date of examination",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Date of examination [de-activated ]",
-                    "instruction": "item instruction",
-                    "sponsor_instruction": "item sponsor instruction",
-                }
+                    "text": "Date of examination [de-activated ]",
+                },
+                {
+                    "text_type": "Description",
+                    "language": "da",
+                    "text": "Date of examination [de-activated ]DA",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "en",
+                    "text": "Date of examination",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "da",
+                    "text": "Date of examinationDA",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "en",
+                    "text": "item instruction",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "da",
+                    "text": "item instructionDA",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "en",
+                    "text": "item sponsor instruction",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "da",
+                    "text": "item sponsor instructionDA",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "en",
+                    "text": "Date of examination [de-activated ]",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "da",
+                    "text": "Date of examination [de-activated ]DA",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -2666,20 +3806,64 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "VSORRES where VSTESTCD=DIABP, VSORRESU where VSTESTCD=DIABP",
             "origin": "Collected Value",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Diastolic blood pressure",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Diastolic blood pressure",
-                    "instruction": "item instruction",
-                    "sponsor_instruction": "item sponsor instruction",
-                }
+                    "text": "Diastolic blood pressure",
+                },
+                {
+                    "text_type": "Description",
+                    "language": "da",
+                    "text": "Diastolic blood pressureDA",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "en",
+                    "text": "Diastolic blood pressure",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "da",
+                    "text": "Diastolic blood pressureDA",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "en",
+                    "text": "item instruction",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "da",
+                    "text": "item instructionDA",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "en",
+                    "text": "item sponsor instruction",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "da",
+                    "text": "item sponsor instructionDA",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "en",
+                    "text": "Diastolic blood pressure",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "da",
+                    "text": "Diastolic blood pressureDA",
+                },
             ],
             "aliases": [],
             "unit_definitions": [
                 {
                     "uid": "unit_definition_root1",
                     "name": "name1",
+                    "version": "0.1",
                     "mandatory": True,
                     "order": 999999,
                     "ucum": {
@@ -2717,14 +3901,57 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "ETHNIC",
             "origin": "Collected Value",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Ethnicity",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Ethinicity",
-                    "instruction": "item instruction",
-                    "sponsor_instruction": "item sponsor instruction",
-                }
+                    "text": "Ethinicity",
+                },
+                {
+                    "text_type": "Description",
+                    "language": "da",
+                    "text": "EthinicityDA",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "en",
+                    "text": "Ethnicity",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "da",
+                    "text": "EthnicityDA",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "en",
+                    "text": "item instruction",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "da",
+                    "text": "item instructionDA",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "en",
+                    "text": "item sponsor instruction",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "da",
+                    "text": "item sponsor instructionDA",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "en",
+                    "text": "Ethinicity",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "da",
+                    "text": "EthinicityDA",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -2755,14 +3982,57 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "RFICDTC, DSSTDTC",
             "origin": "Collected Value",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Informed Consent TIME obtained by Parents/Legally Acceptable Representative (LAR) [de-activated ]",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Informed Consent Time (Legal or authorised representative 1)",
-                    "instruction": "item instruction",
-                    "sponsor_instruction": "item sponsor instruction",
-                }
+                    "text": "Informed Consent Time (Legal or authorised representative 1)",
+                },
+                {
+                    "text_type": "Description",
+                    "language": "da",
+                    "text": "Informed Consent Time (Legal or authorised representative 1)DA",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "en",
+                    "text": "Informed Consent TIME obtained by Parents/Legally Acceptable Representative (LAR) [de-activated ]",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "da",
+                    "text": "Informed Consent TIME obtained by Parents/Legally Acceptable Representative (LAR) [de-activated ]DA",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "en",
+                    "text": "item instruction",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "da",
+                    "text": "item instructionDA",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "en",
+                    "text": "item sponsor instruction",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "da",
+                    "text": "item sponsor instructionDA",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "en",
+                    "text": "Informed Consent Time (Legal or authorised representative 1)",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "da",
+                    "text": "Informed Consent Time (Legal or authorised representative 1)DA",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -2793,14 +4063,57 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "RFICDTC, DSSTDTC",
             "origin": "Collected Value",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Informed Consent Time obtained by Parents/Legally Acceptable Representative (LAR) Only to be completed in countries where Informed Consent from both parents is required [de-activated ]",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Informed Consent Time (Legal or authorised representative 2)",
-                    "instruction": "item instruction",
-                    "sponsor_instruction": "item sponsor instruction",
-                }
+                    "text": "Informed Consent Time (Legal or authorised representative 2)",
+                },
+                {
+                    "text_type": "Description",
+                    "language": "da",
+                    "text": "Informed Consent Time (Legal or authorised representative 2)DA",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "en",
+                    "text": "Informed Consent Time obtained by Parents/Legally Acceptable Representative (LAR) Only to be completed in countries where Informed Consent from both parents is required [de-activated ]",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "da",
+                    "text": "Informed Consent Time obtained by Parents/Legally Acceptable Representative (LAR) Only to be completed in countries where Informed Consent from both parents is required [de-activated ]DA",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "en",
+                    "text": "item instruction",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "da",
+                    "text": "item instructionDA",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "en",
+                    "text": "item sponsor instruction",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "da",
+                    "text": "item sponsor instructionDA",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "en",
+                    "text": "Informed Consent Time (Legal or authorised representative 2)",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "da",
+                    "text": "Informed Consent Time (Legal or authorised representative 2)DA",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -2831,14 +4144,57 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "VSLAT where VSTESTCD=SYSBP | VSLAT where VSTESTCD=DIABP",
             "origin": "Collected Value",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Laterality",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Laterality of the measurement",
-                    "instruction": "item instruction",
-                    "sponsor_instruction": "item sponsor instruction",
-                }
+                    "text": "Laterality of the measurement",
+                },
+                {
+                    "text_type": "Description",
+                    "language": "da",
+                    "text": "Laterality of the measurementDA",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "en",
+                    "text": "Laterality",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "da",
+                    "text": "LateralityDA",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "en",
+                    "text": "item instruction",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "da",
+                    "text": "item instructionDA",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "en",
+                    "text": "item sponsor instruction",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "da",
+                    "text": "item sponsor instructionDA",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "en",
+                    "text": "Laterality of the measurement",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "da",
+                    "text": "Laterality of the measurementDA",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -2869,14 +4225,57 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "VSPOS where VSTESTCD=SYSBP | VSPOS where VSTESTCD=DIABP",
             "origin": "Collected Value",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Position",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Position of the subject",
-                    "instruction": "item instruction",
-                    "sponsor_instruction": "item sponsor instruction",
-                }
+                    "text": "Position of the subject",
+                },
+                {
+                    "text_type": "Description",
+                    "language": "da",
+                    "text": "Position of the subjectDA",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "en",
+                    "text": "Position",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "da",
+                    "text": "PositionDA",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "en",
+                    "text": "item instruction",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "da",
+                    "text": "item instructionDA",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "en",
+                    "text": "item sponsor instruction",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "da",
+                    "text": "item sponsor instructionDA",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "en",
+                    "text": "Position of the subject",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "da",
+                    "text": "Position of the subjectDA",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -2907,14 +4306,57 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "PREVSUBJ",
             "origin": "Collected Value",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Previous Subject No.",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Previous Subject No.",
-                    "instruction": "item instruction",
-                    "sponsor_instruction": "item sponsor instruction",
-                }
+                    "text": "Previous Subject No.",
+                },
+                {
+                    "text_type": "Description",
+                    "language": "da",
+                    "text": "Previous Subject No.DA",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "en",
+                    "text": "Previous Subject No.",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "da",
+                    "text": "Previous Subject No.DA",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "en",
+                    "text": "item instruction",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "da",
+                    "text": "item instructionDA",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "en",
+                    "text": "item sponsor instruction",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "da",
+                    "text": "item sponsor instructionDA",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "en",
+                    "text": "Previous Subject No.",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "da",
+                    "text": "Previous Subject No.DA",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -2945,20 +4387,64 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "VSORRES/VSORRESU when VSTESTCD=PULSE",
             "origin": "Collected Value",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Pulse",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Pulse",
-                    "instruction": "item instruction",
-                    "sponsor_instruction": "item sponsor instruction",
-                }
+                    "text": "Pulse",
+                },
+                {
+                    "text_type": "Description",
+                    "language": "da",
+                    "text": "PulseDA",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "en",
+                    "text": "Pulse",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "da",
+                    "text": "PulseDA",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "en",
+                    "text": "item instruction",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "da",
+                    "text": "item instructionDA",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "en",
+                    "text": "item sponsor instruction",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "da",
+                    "text": "item sponsor instructionDA",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "en",
+                    "text": "Pulse",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "da",
+                    "text": "PulseDA",
+                },
             ],
             "aliases": [],
             "unit_definitions": [
                 {
                     "uid": "unit_definition_root1",
                     "name": "name1",
+                    "version": "0.1",
                     "mandatory": True,
                     "order": 999999,
                     "ucum": {
@@ -2996,14 +4482,57 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "RACE",
             "origin": "Collected Value",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Race",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Race",
-                    "instruction": "item instruction",
-                    "sponsor_instruction": "item sponsor instruction",
-                }
+                    "text": "Race",
+                },
+                {
+                    "text_type": "Description",
+                    "language": "da",
+                    "text": "RaceDA",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "en",
+                    "text": "Race",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "da",
+                    "text": "RaceDA",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "en",
+                    "text": "item instruction",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "da",
+                    "text": "item instructionDA",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "en",
+                    "text": "item sponsor instruction",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "da",
+                    "text": "item sponsor instructionDA",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "en",
+                    "text": "Race",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "da",
+                    "text": "RaceDA",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -3034,14 +4563,57 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "RACEOTH in SUPPDM",
             "origin": "Collected Value",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Race other",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Race other",
-                    "instruction": "item instruction",
-                    "sponsor_instruction": "item sponsor instruction",
-                }
+                    "text": "Race other",
+                },
+                {
+                    "text_type": "Description",
+                    "language": "da",
+                    "text": "Race otherDA",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "en",
+                    "text": "Race other",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "da",
+                    "text": "Race otherDA",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "en",
+                    "text": "item instruction",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "da",
+                    "text": "item instructionDA",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "en",
+                    "text": "item sponsor instruction",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "da",
+                    "text": "item sponsor instructionDA",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "en",
+                    "text": "Race other",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "da",
+                    "text": "Race otherDA",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -3072,14 +4644,57 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "SEX",
             "origin": "Protocol Value",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Sex [de-activated ]",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Sex [de-activated ]",
-                    "instruction": "item instruction",
-                    "sponsor_instruction": "item sponsor instruction",
-                }
+                    "text": "Sex [de-activated ]",
+                },
+                {
+                    "text_type": "Description",
+                    "language": "da",
+                    "text": "Sex [de-activated ]DA",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "en",
+                    "text": "Sex [de-activated ]",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "da",
+                    "text": "Sex [de-activated ]DA",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "en",
+                    "text": "item instruction",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "da",
+                    "text": "item instructionDA",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "en",
+                    "text": "item sponsor instruction",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "da",
+                    "text": "item sponsor instructionDA",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "en",
+                    "text": "Sex [de-activated ]",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "da",
+                    "text": "Sex [de-activated ]DA",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -3110,14 +4725,57 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "SEX",
             "origin": "Collected Value",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Sex [read-only ]",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Sex [read-only ]",
-                    "instruction": "item instruction",
-                    "sponsor_instruction": "item sponsor instruction",
-                }
+                    "text": "Sex [read-only ]",
+                },
+                {
+                    "text_type": "Description",
+                    "language": "da",
+                    "text": "Sex [read-only ]DA",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "en",
+                    "text": "Sex [read-only ]",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "da",
+                    "text": "Sex [read-only ]DA",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "en",
+                    "text": "item instruction",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "da",
+                    "text": "item instructionDA",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "en",
+                    "text": "item sponsor instruction",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "da",
+                    "text": "item sponsor instructionDA",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "en",
+                    "text": "Sex [read-only ]",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "da",
+                    "text": "Sex [read-only ]DA",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -3148,22 +4806,67 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "STUDYID",
             "origin": "Protocol Value",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Study ID",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Study Identifier",
-                    "instruction": "item instruction",
-                    "sponsor_instruction": "item sponsor instruction",
-                }
+                    "text": "Study Identifier",
+                },
+                {
+                    "text_type": "Description",
+                    "language": "da",
+                    "text": "Study IdentifierDA",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "en",
+                    "text": "Study ID",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "da",
+                    "text": "Study IDDA",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "en",
+                    "text": "item instruction",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "da",
+                    "text": "item instructionDA",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "en",
+                    "text": "item sponsor instruction",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "da",
+                    "text": "item sponsor instructionDA",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "en",
+                    "text": "Study Identifier",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "da",
+                    "text": "Study IdentifierDA",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
             "codelist": {
                 "uid": "editable_cr",
                 "name": "codelist attributes value1",
+                "version": "1.0",
                 "submission_value": "codelist submission value1",
                 "preferred_term": "codelist preferred term",
+                "allows_multi_choice": False,
             },
             "terms": [
                 {
@@ -3201,14 +4904,57 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "SUBJID",
             "origin": "Collected Value",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Subject No. [read-only ]",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Subject No.",
-                    "instruction": "item instruction",
-                    "sponsor_instruction": "item sponsor instruction",
-                }
+                    "text": "Subject No.",
+                },
+                {
+                    "text_type": "Description",
+                    "language": "da",
+                    "text": "Subject No.DA",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "en",
+                    "text": "Subject No. [read-only ]",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "da",
+                    "text": "Subject No. [read-only ]DA",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "en",
+                    "text": "item instruction",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "da",
+                    "text": "item instructionDA",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "en",
+                    "text": "item sponsor instruction",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "da",
+                    "text": "item sponsor instructionDA",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "en",
+                    "text": "Subject No.",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "da",
+                    "text": "Subject No.DA",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -3239,20 +4985,64 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "VSORRES where VSTESTCD=SYSBP, VSORRESU where VSTESTCD=SYSBP",
             "origin": "Collected Value",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Systolic blood pressure",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Systolic blood pressure",
-                    "instruction": "item instruction",
-                    "sponsor_instruction": "item sponsor instruction",
-                }
+                    "text": "Systolic blood pressure",
+                },
+                {
+                    "text_type": "Description",
+                    "language": "da",
+                    "text": "Systolic blood pressureDA",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "en",
+                    "text": "Systolic blood pressure",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "da",
+                    "text": "Systolic blood pressureDA",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "en",
+                    "text": "item instruction",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "da",
+                    "text": "item instructionDA",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "en",
+                    "text": "item sponsor instruction",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "da",
+                    "text": "item sponsor instructionDA",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "en",
+                    "text": "Systolic blood pressure",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "da",
+                    "text": "Systolic blood pressureDA",
+                },
             ],
             "aliases": [],
             "unit_definitions": [
                 {
                     "uid": "unit_definition_root1",
                     "name": "name1",
+                    "version": "0.1",
                     "mandatory": True,
                     "order": 999999,
                     "ucum": {
@@ -3290,14 +5080,57 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "RFICDTC, DSSTDTC",
             "origin": "Collected Value",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Time informed consent obtained",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Informed Consent time",
-                    "instruction": "item instruction",
-                    "sponsor_instruction": "item sponsor instruction",
-                }
+                    "text": "Informed Consent time",
+                },
+                {
+                    "text_type": "Description",
+                    "language": "da",
+                    "text": "Informed Consent timeDA",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "en",
+                    "text": "Time informed consent obtained",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "da",
+                    "text": "Time informed consent obtainedDA",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "en",
+                    "text": "item instruction",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "da",
+                    "text": "item instructionDA",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "en",
+                    "text": "item sponsor instruction",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "da",
+                    "text": "item sponsor instructionDA",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "en",
+                    "text": "Informed Consent time",
+                },
+                {
+                    "text_type": "osb:DisplayText",
+                    "language": "da",
+                    "text": "Informed Consent timeDA",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -3325,14 +5158,27 @@ IMPORT_OUTPUT1 = {
             "formal_expressions": [
                 {"context": "XPath", "expression": "Formal Expression 1"}
             ],
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Condition 1 Description Name",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Condition 1 Description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Condition 1 Description",
+                },
+                {
+                    "text_type": "Description",
+                    "language": "da",
+                    "text": "Condition 1 DescriptionDA",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "en",
+                    "text": "Condition 1 Description Name",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "da",
+                    "text": "Condition 1 Description NameDA",
+                },
             ],
             "aliases": [],
             "possible_actions": ["inactivate", "new_version"],
@@ -3351,27 +5197,31 @@ IMPORT_OUTPUT1 = {
             "formal_expressions": [
                 {"context": "XPath", "expression": "Formal Expression 2"}
             ],
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Condition 2 Description Name",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Condition 2 Description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
+                    "text": "Condition 2 Description",
                 },
                 {
-                    "name": "Condition 3 Description Name",
+                    "text_type": "Description",
                     "language": "dan",
-                    "description": "Condition 3 Description",
-                    "instruction": None,
-                    "sponsor_instruction": None,
+                    "text": "Condition 3 Description",
                 },
                 {
-                    "name": "Condition 4 Description Name",
+                    "text_type": "Question",
+                    "language": "en",
+                    "text": "Condition 2 Description Name",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "dan",
+                    "text": "Condition 3 Description Name",
+                },
+                {
+                    "text_type": "Question",
                     "language": "ar",
-                    "description": "Please update this description",
-                    "instruction": None,
-                    "sponsor_instruction": None,
+                    "text": "Condition 4 Description Name",
                 },
             ],
             "aliases": [],
@@ -3394,27 +5244,31 @@ IMPORT_OUTPUT1 = {
             "formal_expressions": [
                 {"context": "XPath", "expression": "Formal Expression 1"}
             ],
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Method 1 Description Name",
-                    "language": "ar",
-                    "description": "Please update this description",
-                    "instruction": None,
-                    "sponsor_instruction": None,
-                },
-                {
-                    "name": "Method 2 Description Name",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Method 1 Description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
+                    "text": "Method 1 Description",
                 },
                 {
-                    "name": "Method 3 Description Name",
+                    "text_type": "Description",
                     "language": "da",
-                    "description": "Method 2 Description",
-                    "instruction": None,
-                    "sponsor_instruction": None,
+                    "text": "Method 2 Description",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "ar",
+                    "text": "Method 1 Description Name",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "en",
+                    "text": "Method 2 Description Name",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "da",
+                    "text": "Method 3 Description Name",
                 },
             ],
             "aliases": [],
@@ -3436,7 +5290,7 @@ IMPORT_OUTPUT1 = {
             "template_parameter": False,
             "library_name": "Sponsor",
             "possible_actions": ["new_version"],
-            "ordinal": False,
+            "is_ordinal": False,
             "paired_codes_codelist_uid": None,
             "paired_names_codelist_uid": None,
         }
@@ -3449,6 +5303,7 @@ IMPORT_OUTPUT1 = {
                 {
                     "codelist_uid": "CTCodelist_000001",
                     "order": None,
+                    "ordinal": None,
                     "submission_value": "codelistitem codedvalue",
                     "library_name": "Sponsor",
                     "codelist_name": "cnew codelist created by odm xml import",
@@ -3476,10 +5331,16 @@ IMPORT_INPUT2 = """<?xml version="1.0" encoding="utf-8"?>
                 </GlobalVariables>
                 <BasicDefinitions/>
                 <MetaDataVersion OID="MDV.0.1" Name="MDV.0.1" Description="Draft version">
-                    <FormDef OID="oid1" Name="name1" Repeated="Yes" osb:newAttribute="someValue" CompletionInstructions="instruction1" ImplementationNotes="sponsor_instruction1">
+                    <FormDef OID="oid1" Name="name1" Repeated="Yes" osb:newAttribute="someValue">
                         <Description>
                             <TranslatedText xml:lang="en">description1</TranslatedText>
                         </Description>
+                        <osb:DesignNotes>
+                            <TranslatedText xml:lang="en">sponsor_instruction1</TranslatedText>
+                        </osb:DesignNotes>
+                        <osb:CompletionInstructions>
+                            <TranslatedText xml:lang="en">instruction1</TranslatedText>
+                        </osb:CompletionInstructions>
                         <NameOne>test value</NameOne>
                         <Alias Name="instruction1" Context="CompletionInstructions" />
                         <Alias Name="sponsor_instruction1" Context="ImplementationNotes" />
@@ -3504,7 +5365,7 @@ IMPORT_OUTPUT2 = {
             "vendor_elements": [
                 {
                     "uid": "OdmVendorElement_000001",
-                    "name": "nameOne",
+                    "name": "NameOne",
                     "compatible_types": ["FormDef"],
                     "status": "Final",
                     "version": "1.0",
@@ -3529,7 +5390,7 @@ IMPORT_OUTPUT2 = {
             "vendor_elements": [
                 {
                     "uid": "odm_vendor_element2",
-                    "name": "nameTwo",
+                    "name": "NameTwo",
                     "compatible_types": ["FormDef", "ItemGroupDef", "ItemDef"],
                     "status": "Final",
                     "version": "1.0",
@@ -3586,7 +5447,7 @@ IMPORT_OUTPUT2 = {
             "author_username": "unknown-user@example.com",
             "change_description": "Approved version",
             "uid": "OdmVendorElement_000001",
-            "name": "nameOne",
+            "name": "NameOne",
             "library_name": "Sponsor",
             "vendor_namespace": {
                 "uid": "OdmVendorNamespace_000001",
@@ -3609,7 +5470,7 @@ IMPORT_OUTPUT2 = {
             "author_username": "unknown-user@example.com",
             "change_description": "Approved version",
             "uid": "odm_vendor_element2",
-            "name": "nameTwo",
+            "name": "NameTwo",
             "library_name": "Sponsor",
             "vendor_namespace": {
                 "uid": "odm_vendor_namespace2",
@@ -3644,6 +5505,7 @@ IMPORT_OUTPUT2 = {
             "forms": [
                 {
                     "uid": "OdmForm_000001",
+                    "oid": "oid1",
                     "name": "name1",
                     "version": "1.0",
                     "order_number": 999999,
@@ -3669,21 +5531,29 @@ IMPORT_OUTPUT2 = {
             "oid": "oid1",
             "repeating": "Yes",
             "sdtm_version": "",
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "description1",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "description1",
-                    "instruction": "instruction1",
-                    "sponsor_instruction": "sponsor_instruction1",
-                }
+                    "text": "description1",
+                },
+                {
+                    "text_type": "osb:CompletionInstructions",
+                    "language": "en",
+                    "text": "instruction1",
+                },
+                {
+                    "text_type": "osb:DesignNotes",
+                    "language": "en",
+                    "text": "sponsor_instruction1",
+                },
             ],
             "aliases": [],
             "item_groups": [],
             "vendor_elements": [
                 {
                     "uid": "OdmVendorElement_000001",
-                    "name": "nameOne",
+                    "name": "NameOne",
                     "value": "test value",
                 }
             ],
@@ -4642,7 +6512,7 @@ CLINSPARK_OUTPUT = {
                 },
                 {
                     "uid": "odm_vendor_element1",
-                    "name": "nameOne",
+                    "name": "NameOne",
                     "compatible_types": ["FormDef", "ItemGroupDef", "ItemDef"],
                     "status": "Final",
                     "version": "1.0",
@@ -4650,7 +6520,7 @@ CLINSPARK_OUTPUT = {
                 },
                 {
                     "uid": "odm_vendor_element3",
-                    "name": "nameThree",
+                    "name": "NameThree",
                     "compatible_types": ["FormDef", "ItemGroupDef", "ItemDef"],
                     "status": "Final",
                     "version": "1.0",
@@ -4960,7 +6830,7 @@ CLINSPARK_OUTPUT = {
             "author_username": "unknown-user@example.com",
             "change_description": "Approved version",
             "uid": "odm_vendor_element1",
-            "name": "nameOne",
+            "name": "NameOne",
             "library_name": "Sponsor",
             "vendor_namespace": {
                 "uid": "odm_vendor_namespace1",
@@ -5001,7 +6871,7 @@ CLINSPARK_OUTPUT = {
             "author_username": "unknown-user@example.com",
             "change_description": "Approved version",
             "uid": "odm_vendor_element3",
-            "name": "nameThree",
+            "name": "NameThree",
             "library_name": "Sponsor",
             "compatible_types": ["FormDef", "ItemGroupDef", "ItemDef"],
             "vendor_namespace": {
@@ -5046,6 +6916,7 @@ CLINSPARK_OUTPUT = {
             "forms": [
                 {
                     "uid": "OdmForm_000005",
+                    "oid": "F.38",
                     "name": "Administration of <Investigational medicinal product> 1",
                     "version": "1.0",
                     "order_number": 999999,
@@ -5055,6 +6926,7 @@ CLINSPARK_OUTPUT = {
                 },
                 {
                     "uid": "OdmForm_000003",
+                    "oid": "F.52",
                     "name": "Body Measurements (with BMI) 1",
                     "version": "1.0",
                     "order_number": 999999,
@@ -5064,6 +6936,7 @@ CLINSPARK_OUTPUT = {
                 },
                 {
                     "uid": "OdmForm_000002",
+                    "oid": "F.98",
                     "name": "Demography 1",
                     "version": "1.0",
                     "order_number": 999999,
@@ -5073,6 +6946,7 @@ CLINSPARK_OUTPUT = {
                 },
                 {
                     "uid": "OdmForm_000001",
+                    "oid": "F.47",
                     "name": "Informed Consent 1",
                     "version": "1.0",
                     "order_number": 999999,
@@ -5082,6 +6956,7 @@ CLINSPARK_OUTPUT = {
                 },
                 {
                     "uid": "OdmForm_000004",
+                    "oid": "F.37",
                     "name": "Vital Signs (Single Measurement) 1",
                     "version": "1.0",
                     "order_number": 999999,
@@ -5107,7 +6982,7 @@ CLINSPARK_OUTPUT = {
             "oid": "F.38",
             "repeating": "Yes",
             "sdtm_version": "",
-            "descriptions": [],
+            "translated_texts": [],
             "aliases": [],
             "item_groups": [
                 {
@@ -5169,14 +7044,12 @@ CLINSPARK_OUTPUT = {
             "oid": "F.52",
             "repeating": "Yes",
             "sdtm_version": "",
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Body Measurements form including weight, height and BMI calculation. Expected use for screening visit.",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Body Measurements form including weight, height and BMI calculation. Expected use for screening visit.",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Body Measurements form including weight, height and BMI calculation. Expected use for screening visit.",
+                },
             ],
             "aliases": [],
             "item_groups": [
@@ -5209,7 +7082,7 @@ CLINSPARK_OUTPUT = {
             "oid": "F.98",
             "repeating": "Yes",
             "sdtm_version": "",
-            "descriptions": [],
+            "translated_texts": [],
             "aliases": [],
             "item_groups": [
                 {
@@ -5241,7 +7114,7 @@ CLINSPARK_OUTPUT = {
             "oid": "F.47",
             "repeating": "No",
             "sdtm_version": "",
-            "descriptions": [],
+            "translated_texts": [],
             "aliases": [],
             "item_groups": [
                 {
@@ -5308,7 +7181,7 @@ CLINSPARK_OUTPUT = {
             "oid": "F.37",
             "repeating": "Yes",
             "sdtm_version": "",
-            "descriptions": [],
+            "translated_texts": [],
             "aliases": [],
             "item_groups": [
                 {
@@ -5346,14 +7219,12 @@ CLINSPARK_OUTPUT = {
             "origin": "",
             "purpose": "Tabulation",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Exposure as Collected",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Exposure as Collected",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Exposure as Collected",
+                },
             ],
             "aliases": [],
             "sdtm_domains": [],
@@ -5636,14 +7507,12 @@ CLINSPARK_OUTPUT = {
             "origin": "",
             "purpose": "Tabulation",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Body Measurements",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Body Measurements",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Body Measurements",
+                },
             ],
             "aliases": [],
             "sdtm_domains": [],
@@ -5761,14 +7630,12 @@ CLINSPARK_OUTPUT = {
             "origin": "",
             "purpose": "Tabulation",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Demographics",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Demographics",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Demographics",
+                },
             ],
             "aliases": [],
             "sdtm_domains": [],
@@ -5931,7 +7798,7 @@ CLINSPARK_OUTPUT = {
             "origin": "",
             "purpose": "Tabulation",
             "comment": None,
-            "descriptions": [],
+            "translated_texts": [],
             "aliases": [],
             "sdtm_domains": [],
             "items": [
@@ -6042,7 +7909,7 @@ CLINSPARK_OUTPUT = {
             "origin": "",
             "purpose": "Tabulation",
             "comment": None,
-            "descriptions": [],
+            "translated_texts": [],
             "aliases": [],
             "sdtm_domains": [],
             "items": [
@@ -6114,7 +7981,7 @@ CLINSPARK_OUTPUT = {
             "origin": "",
             "purpose": "Tabulation",
             "comment": None,
-            "descriptions": [],
+            "translated_texts": [],
             "aliases": [],
             "sdtm_domains": [],
             "items": [
@@ -6216,14 +8083,12 @@ CLINSPARK_OUTPUT = {
             "origin": "",
             "purpose": "Tabulation",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Exposure as Collected",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Exposure as Collected",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Exposure as Collected",
+                },
             ],
             "aliases": [],
             "sdtm_domains": [],
@@ -6371,14 +8236,12 @@ CLINSPARK_OUTPUT = {
             "origin": "",
             "purpose": "Tabulation",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Vital Signs",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Vital Signs",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Vital Signs",
+                },
             ],
             "aliases": [],
             "sdtm_domains": [],
@@ -6485,14 +8348,17 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "DM:ETHNIC",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Subject self-reported ethnicity",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Ethnicity",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Ethnicity",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "en",
+                    "text": "Subject self-reported ethnicity",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -6523,14 +8389,17 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "DM:RACE",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Subject self-reported race - American Indian Or Alaska Native",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Race - American Indian Or Alaska Native",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Race - American Indian Or Alaska Native",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "en",
+                    "text": "Subject self-reported race - American Indian Or Alaska Native",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -6561,14 +8430,17 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "DM:RACE",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Subject self-reported race - Asian",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Race - Asian",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Race - Asian",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "en",
+                    "text": "Subject self-reported race - Asian",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -6599,14 +8471,17 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "DM:RACE",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Subject self-reported race - Black or African American",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Race - Black Or African American",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Race - Black Or African American",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "en",
+                    "text": "Subject self-reported race - Black or African American",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -6637,14 +8512,17 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "DM:RACE",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Subject self-reported race - Native Hawaiian or Other Pacific Islander",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Race - Native Hawaiian Or Other Pacific Islander",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Race - Native Hawaiian Or Other Pacific Islander",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "en",
+                    "text": "Subject self-reported race - Native Hawaiian or Other Pacific Islander",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -6675,14 +8553,17 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "DM:RACE",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Subject self-reported race - White",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Race - White",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Race - White",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "en",
+                    "text": "Subject self-reported race - White",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -6713,22 +8594,27 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "DM:SEX",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Sex",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Sex",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Sex",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "en",
+                    "text": "Sex",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
             "codelist": {
                 "uid": "CTCodelist_000005",
                 "name": "DM Sex",
+                "version": "1.0",
                 "submission_value": "SEX",
                 "preferred_term": "DM Sex",
+                "allows_multi_choice": False,
             },
             "terms": [
                 {
@@ -6775,20 +8661,24 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "DM:AGE",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Age",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Age",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Age",
+                },
+                {
+                    "text_type": "Question",
+                    "language": "en",
+                    "text": "Age",
+                },
             ],
             "aliases": [],
             "unit_definitions": [
                 {
                     "uid": "unit_definition_root1",
                     "name": "name1",
+                    "version": "0.1",
                     "mandatory": True,
                     "order": 999999,
                     "ucum": {
@@ -6826,14 +8716,12 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "DM:PREVUBJ",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Previous Subject No.",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Previous Subject No.",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -6864,22 +8752,22 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "DS:DSCAT",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "DSCAT",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "DSCAT",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
             "codelist": {
                 "uid": "CTCodelist_000002",
                 "name": "DS_DSCAT",
+                "version": "1.0",
                 "submission_value": "DSCAT",
                 "preferred_term": "DS_DSCAT",
+                "allows_multi_choice": False,
             },
             "terms": [
                 {
@@ -6935,22 +8823,22 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "DS:DSDECOD",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "DSDECOD",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "DSDECOD",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
             "codelist": {
                 "uid": "CTCodelist_000003",
                 "name": "DS_DSTERM",
+                "version": "1.0",
                 "submission_value": "NCOMPLT",
                 "preferred_term": "DS_DSTERM",
+                "allows_multi_choice": False,
             },
             "terms": [
                 {
@@ -7060,14 +8948,12 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "DS:DSSTDTC",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Date and time informed consent obtained",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Date and time informed consent obtained",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -7098,22 +8984,22 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "<Investigational medicinal product>",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "<Investigational medicinal product>",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
             "codelist": {
                 "uid": "CTCodelist_000008",
                 "name": "EC_ECTRT<IMP1>",
+                "version": "1.0",
                 "submission_value": "Name of Treatment",
                 "preferred_term": "EC_ECTRT<IMP1>",
+                "allows_multi_choice": False,
             },
             "terms": [
                 {
@@ -7169,22 +9055,22 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "ECCAT",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "ECCAT",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
             "codelist": {
                 "uid": "CTCodelist_000006",
                 "name": "EC_ECCAT",
+                "version": "1.0",
                 "submission_value": "Category of Treatment",
                 "preferred_term": "EC_ECCAT",
+                "allows_multi_choice": False,
             },
             "terms": [
                 {
@@ -7222,22 +9108,22 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "ECMOOD",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "ECMOOD",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
             "codelist": {
                 "uid": "CTCodelist_000007",
                 "name": "EC_ECMOOD",
+                "version": "1.0",
                 "submission_value": "Mood",
                 "preferred_term": "EC_ECMOOD",
+                "allows_multi_choice": False,
             },
             "terms": [
                 {
@@ -7284,22 +9170,22 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "ECPRESP",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "ECPRESP",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
             "codelist": {
                 "uid": "CTCodelist_000001",
                 "name": "No Yes Response",
+                "version": "1.0",
                 "submission_value": "NY",
                 "preferred_term": "No Yes Response",
+                "allows_multi_choice": False,
             },
             "terms": [
                 {
@@ -7337,22 +9223,22 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Has the investigational medicinal product been administered to the subject?",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Has the investigational medicinal product been administered to the subject?",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
             "codelist": {
                 "uid": "CTCodelist_000001",
                 "name": "No Yes Response",
+                "version": "1.0",
                 "submission_value": "NY",
                 "preferred_term": "No Yes Response",
+                "allows_multi_choice": False,
             },
             "terms": [
                 {
@@ -7399,14 +9285,12 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "Protocol",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Administered by",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Administered by",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -7437,14 +9321,12 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Bleeding episode no.",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Bleeding episode no.",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -7475,14 +9357,12 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "Protocol",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Checked by",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Checked by",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -7513,14 +9393,12 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "Protocol",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Comment",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Comment",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -7551,14 +9429,12 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Start date and time of prescription",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Start date and time of prescription",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -7589,14 +9465,12 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Actual Dose",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Actual Dose",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -7627,22 +9501,22 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Dose form",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Dose form",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
             "codelist": {
                 "uid": "CTCodelist_000009",
                 "name": "EC_dose_form",
+                "version": "1.0",
                 "submission_value": "FRM",
                 "preferred_term": "EC_dose_form",
+                "allows_multi_choice": False,
             },
             "terms": [
                 {
@@ -7689,14 +9563,12 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "Protocol",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "DUN (Dispensing Unit No.)",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "DUN (Dispensing Unit No.)",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -7727,14 +9599,12 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "End date and time of administration",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "End date and time of administration",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -7765,22 +9635,22 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Injection site",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Injection site",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
             "codelist": {
                 "uid": "CTCodelist_000013",
                 "name": "EC_injection_site",
+                "version": "1.0",
                 "submission_value": "LOC",
                 "preferred_term": "EC_injection_site",
+                "allows_multi_choice": False,
             },
             "terms": [
                 {
@@ -7836,22 +9706,22 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Laterality",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Laterality",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
             "codelist": {
                 "uid": "CTCodelist_000012",
                 "name": "EC_laterality",
+                "version": "1.0",
                 "submission_value": "LAT",
                 "preferred_term": "EC_laterality",
+                "allows_multi_choice": False,
             },
             "terms": [
                 {
@@ -7898,14 +9768,12 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "Protocol",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Morphology of injection site",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Morphology of injection site",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -7936,14 +9804,12 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "Protocol",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Number of injections",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Number of injections",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -7974,14 +9840,12 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Prescribed dose",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Prescribed dose",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -8012,22 +9876,22 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "Protocol",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Requirements for dosing met?",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Requirements for dosing met?",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
             "codelist": {
                 "uid": "CTCodelist_000001",
                 "name": "No Yes Response",
+                "version": "1.0",
                 "submission_value": "NY",
                 "preferred_term": "No Yes Response",
+                "allows_multi_choice": False,
             },
             "terms": [
                 {
@@ -8074,22 +9938,22 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Route",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Route",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
             "codelist": {
                 "uid": "CTCodelist_000011",
                 "name": "EC_route",
+                "version": "1.0",
                 "submission_value": "ROUTE",
                 "preferred_term": "EC_route",
+                "allows_multi_choice": False,
             },
             "terms": [
                 {
@@ -8136,14 +10000,12 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Seq. no.",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Seq. no.",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -8174,14 +10036,12 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Specify reason",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Specify reason",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -8212,14 +10072,12 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Start date and time of administration",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Start date and time of administration",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -8250,14 +10108,12 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Surgery no.",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Surgery no.",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -8288,22 +10144,22 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Type of treatment",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Type of treatment",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
             "codelist": {
                 "uid": "CTCodelist_000010",
                 "name": "EC_type_of_treatment",
+                "version": "1.0",
                 "submission_value": "TREATMENT TYPE",
                 "preferred_term": "EC_type_of_treatment",
+                "allows_multi_choice": False,
             },
             "terms": [
                 {
@@ -8386,20 +10242,19 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "Protocol",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Volume administered",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Volume administered",
+                },
             ],
             "aliases": [],
             "unit_definitions": [
                 {
                     "uid": "unit_definition_root1",
                     "name": "name1",
+                    "version": "0.1",
                     "mandatory": True,
                     "order": 999999,
                     "ucum": {
@@ -8437,14 +10292,12 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "Protocol",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "ICF Notes",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "ICF Notes",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -8475,14 +10328,12 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "DS:ICFVER",
             "origin": "Protocol",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "ICF Version",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "ICF Version",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -8513,20 +10364,19 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "BMI",
             "origin": "Protocol",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "BMI",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "BMI",
+                },
             ],
             "aliases": [],
             "unit_definitions": [
                 {
                     "uid": "unit_definition_root1",
                     "name": "name1",
+                    "version": "0.1",
                     "mandatory": True,
                     "order": 999999,
                     "ucum": {
@@ -8564,22 +10414,22 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "VS:VSCAT",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "VSCAT",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "VSCAT",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
             "codelist": {
                 "uid": "CTCodelist_000004",
                 "name": "VS_VSCAT",
+                "version": "1.0",
                 "submission_value": "VSCAT",
                 "preferred_term": "VS_VSCAT",
+                "allows_multi_choice": False,
             },
             "terms": [
                 {
@@ -8626,22 +10476,22 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "VSCAT",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "VSCAT",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
             "codelist": {
                 "uid": "CTCodelist_000004",
                 "name": "VS_VSCAT",
+                "version": "1.0",
                 "submission_value": "VSCAT",
                 "preferred_term": "VS_VSCAT",
+                "allows_multi_choice": False,
             },
             "terms": [
                 {
@@ -8688,14 +10538,12 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "VS:VSDTC",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Date and time of examination",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Date and time of examination",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -8726,14 +10574,12 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Date of examination",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Date of examination",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -8764,20 +10610,19 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "DIABP",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Diastolic blood pressure",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Diastolic blood pressure",
+                },
             ],
             "aliases": [],
             "unit_definitions": [
                 {
                     "uid": "unit_definition_root1",
                     "name": "name1",
+                    "version": "0.1",
                     "mandatory": True,
                     "order": 999999,
                     "ucum": {
@@ -8815,22 +10660,22 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "VS:FASTING",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Was the subject fasting when the body measurement was done?",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Was the subject fasting when the body measurement was done?",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
             "codelist": {
                 "uid": "CTCodelist_000001",
                 "name": "No Yes Response",
+                "version": "1.0",
                 "submission_value": "NY",
                 "preferred_term": "No Yes Response",
+                "allows_multi_choice": False,
             },
             "terms": [
                 {
@@ -8877,20 +10722,19 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "HEIGHT",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Height",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Height",
+                },
             ],
             "aliases": [],
             "unit_definitions": [
                 {
                     "uid": "unit_definition_root1",
                     "name": "name1",
+                    "version": "0.1",
                     "mandatory": True,
                     "order": 999999,
                     "ucum": {
@@ -8928,14 +10772,12 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "PULSE",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Pulse",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Pulse",
+                },
             ],
             "aliases": [],
             "unit_definitions": [],
@@ -8966,20 +10808,19 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "SYSBP",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Systolic blood pressure",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Systolic blood pressure",
+                },
             ],
             "aliases": [],
             "unit_definitions": [
                 {
                     "uid": "unit_definition_root1",
                     "name": "name1",
+                    "version": "0.1",
                     "mandatory": True,
                     "order": 999999,
                     "ucum": {
@@ -9017,20 +10858,19 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "WEIGHT",
             "origin": "CRF",
             "comment": None,
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Body weight",
+                    "text_type": "Question",
                     "language": "en",
-                    "description": "Please update this description",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Body weight",
+                },
             ],
             "aliases": [],
             "unit_definitions": [
                 {
                     "uid": "unit_definition_root1",
                     "name": "name1",
+                    "version": "0.1",
                     "mandatory": True,
                     "order": 999999,
                     "ucum": {
@@ -9070,14 +10910,12 @@ CLINSPARK_OUTPUT = {
                     "expression": "var HEIGHT_FORM_STUDY_EVENT = 'VISIT 1'; var HEIGHT_FORM_NAME = 'Body Measurements (with BMI)' var bmi = null; var fixedNum = itemJson.item.significantDigits + 1; var weight = findFirstItemValueByName(formJson, 'VS_weight_VSTESTCD-VSORRES'); // update Study Event and Form Name as needed to look up previously-collected data var heightForm = findFormData(HEIGHT_FORM_STUDY_EVENT, HEIGHT_FORM_NAME); var height = findFirstItemValueByName(heightForm[0],'VS_height_VSTESTCD-VSORRES') if (height && weight) { //BMI = ( Weight in Kilograms / ( Height in Meters x Height in Meters ) ) //var heightMtr = (height / 100); bmi = (Math.round((weight / (height * height)) * 10) / 10); } return {'value': bmi.toPrecision(fixedNum +1), 'measurementUnitName': 'kg/m2'};",
                 }
             ],
-            "descriptions": [
+            "translated_texts": [
                 {
-                    "name": "Calculation of BMI based on height and weight",
+                    "text_type": "Description",
                     "language": "en",
-                    "description": "Calculation of BMI based on height and weight",
-                    "instruction": "Please update this instruction",
-                    "sponsor_instruction": "Please update this sponsor instruction",
-                }
+                    "text": "Calculation of BMI based on height and weight",
+                },
             ],
             "aliases": [],
             "possible_actions": ["inactivate", "new_version"],

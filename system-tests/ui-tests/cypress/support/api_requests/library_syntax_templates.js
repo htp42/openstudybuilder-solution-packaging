@@ -159,9 +159,7 @@ const createObjectiveBody = (customName = '') => {
       "indication_uids": [
         `${indication_uid}`
       ],
-      "category_uids": [
-        `${objective_category_uid}`
-      ]
+      "category_uids": []
   }
 }
 

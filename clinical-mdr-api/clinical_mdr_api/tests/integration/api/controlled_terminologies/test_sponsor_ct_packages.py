@@ -176,6 +176,106 @@ def test_post_sponsor_ct_package(api_client):
     )
 
 
+def test_post_sponsor_ct_package_duplicate_prevention(api_client):
+    """Test that creating a duplicate Sponsor CT Package is prevented and returns 409 with clear error message"""
+    db.cypher_query("CREATE CONSTRAINT FOR (p:CTPackage) REQUIRE (p.uid) IS NODE KEY")
+
+    # Create first sponsor package
+    effective_date = (date.today() - timedelta(days=2)).strftime("%Y-%m-%d")
+    response = api_client.post(
+        f"{URL}/sponsor",
+        json={
+            "extends_package": cdisc_package_name,
+            "effective_date": effective_date,
+        },
+    )
+    assert_response_status_code(response, 201)
+    first_package = response.json()
+
+    # Attempt to create duplicate with same effective date
+    response = api_client.post(
+        f"{URL}/sponsor",
+        json={
+            "extends_package": cdisc_package_name,
+            "effective_date": effective_date,
+        },
+    )
+    assert_response_status_code(response, 409)
+    error_response = response.json()
+    assert "type" in error_response
+    assert error_response["type"] == "AlreadyExistsException"
+    assert "message" in error_response
+    assert "sponsor" in error_response["message"].lower()
+    assert "ctpackage" in error_response["message"].lower()
+    assert "already exists" in error_response["message"].lower()
+
+    # Verify only one package exists with this date
+    all_packages = api_client.get(f"{URL}?sponsor_only=true").json()
+    packages_with_date = [
+        pkg for pkg in all_packages if pkg["effective_date"] == effective_date
+    ]
+    assert len(packages_with_date) == 1
+    assert packages_with_date[0]["uid"] == first_package["uid"]
+
+
+def test_post_sponsor_ct_package_error_message_clarity(api_client):
+    """Test that error message is clear and user-friendly when attempting to create duplicate package"""
+    db.cypher_query("CREATE CONSTRAINT FOR (p:CTPackage) REQUIRE (p.uid) IS NODE KEY")
+
+    # Create first sponsor package with today's date
+    effective_date = date.today().strftime("%Y-%m-%d")
+    response = api_client.post(
+        f"{URL}/sponsor",
+        json={
+            "extends_package": cdisc_package_name,
+            "effective_date": effective_date,
+        },
+    )
+    # This should fail because test_data fixture already creates one for today
+    assert_response_status_code(response, 409)
+    error_response = response.json()
+
+    # Verify error message is clear
+    assert "message" in error_response
+    error_message = error_response["message"].lower()
+    assert "sponsor" in error_message
+    assert "ctpackage" in error_message or "ct package" in error_message
+    assert "already exists" in error_message or "exists" in error_message
+    assert "date" in error_message
+
+
+def test_query_codelists_with_sponsor_package_robustness(api_client):
+    """Defensive test: Verify that querying codelists with a sponsor package name works correctly"""
+    db.cypher_query("CREATE CONSTRAINT FOR (p:CTPackage) REQUIRE (p.uid) IS NODE KEY")
+
+    # Create a sponsor package
+    effective_date = (date.today() - timedelta(days=3)).strftime("%Y-%m-%d")
+    package = create_sponsor_package(api_client, effective_date)
+    package_name = package["name"]
+
+    # Query codelists with the sponsor package - should work without errors
+    response = api_client.get(
+        f"ct/codelists?package={urllib.parse.quote_plus(package_name)}&page_size=10&is_sponsor=true"
+    )
+    assert_response_status_code(response, 200)
+    codelists_response = response.json()
+    assert "items" in codelists_response
+    assert isinstance(codelists_response["items"], list)
+
+    # Verify the query doesn't throw MultipleNodesReturned error
+    # (which would manifest as a 400 or 500 error)
+    assert response.status_code in [200, 201]
+
+    # Verify we can query terms as well
+    response = api_client.get(
+        f"ct/terms?package={urllib.parse.quote_plus(package_name)}&page_size=10&is_sponsor=true"
+    )
+    assert_response_status_code(response, 200)
+    terms_response = response.json()
+    assert "items" in terms_response
+    assert isinstance(terms_response["items"], list)
+
+
 def test_get_codelists_sponsor_ct_package(api_client):
     package = create_sponsor_package(
         api_client, (date.today() - timedelta(days=1)).strftime("%Y-%m-%d")
@@ -245,7 +345,7 @@ def test_get_codelists_identical_sponsor_ct_package_nochanges(api_client):
     all_codelists = api_client.get("ct/codelists?page_size=0").json()["items"]
 
     # Validate that all codelists in sponsor package are contained as is in the full list
-    assert all([codelist in all_codelists for codelist in sponsor_package_codelists])
+    assert all(codelist in all_codelists for codelist in sponsor_package_codelists)
 
 
 def test_get_terms_identical_sponsor_ct_package_nochanges(api_client):
@@ -264,7 +364,7 @@ def test_get_terms_identical_sponsor_ct_package_nochanges(api_client):
     all_terms = api_client.get("ct/terms?page_size=0").json()["items"]
 
     # Validate that all terms in sponsor package are contained as is in the full list
-    assert all([codelist in all_terms for codelist in sponsor_package_terms])
+    assert all(term in all_terms for term in sponsor_package_terms)
 
 
 def test_sponsor_ct_package_is_persistent_sponsor_codelists(api_client):

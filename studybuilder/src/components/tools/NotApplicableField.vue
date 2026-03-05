@@ -12,7 +12,7 @@
         :label="naLabel"
         hide-details
         :disabled="disabled"
-        @change="cleanFunction"
+        @update:model-value="props.cleanFunction"
       />
     </v-col>
   </v-row>

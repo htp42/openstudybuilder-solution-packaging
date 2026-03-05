@@ -1,6 +1,6 @@
 <template>
   <SimpleFormDialog
-    ref="form"
+    ref="formDialog"
     :title="title"
     :help-items="helpItems"
     :open="open"
@@ -58,104 +58,111 @@
   </SimpleFormDialog>
 </template>
 
-<script>
+<script setup>
+import { computed, inject, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import SimpleFormDialog from '@/components/tools/SimpleFormDialog.vue'
 import crfs from '@/api/crfs'
 import terms from '@/api/controlledTerminology/terms'
 import crfTypes from '@/constants/crfTypes'
 
-export default {
-  components: {
-    SimpleFormDialog,
+const props = defineProps({
+  open: Boolean,
+  editItem: {
+    type: Object,
+    default: null,
   },
-  inject: ['formRules'],
-  props: {
-    open: Boolean,
-    editItem: {
-      type: Object,
-      default: null,
-    },
-    parentUid: {
-      type: String,
-      default: null,
-    },
-    parentType: {
-      type: String,
-      default: null,
-    },
+  parentUid: {
+    type: String,
+    default: null,
   },
-  emits: ['close'],
-  data() {
-    return {
-      form: {},
-      helpItems: [],
-      dataTypes: [],
-      compatibleTypes: [
-        'FormDef',
-        'ItemGroupDef',
-        'ItemDef',
-        'ItemGroupRef',
-        'ItemRef',
-      ],
-    }
+  parentType: {
+    type: String,
+    default: null,
   },
-  computed: {
-    title() {
-      return this.editItem.uid
-        ? this.$t('CRFExtensions.edit_attr')
-        : this.$t('CRFExtensions.new_attr')
-    },
-  },
-  watch: {
-    editItem(value) {
-      this.initForm(value)
-    },
-  },
-  created() {
-    this.crfTypes = crfTypes
-  },
-  mounted() {
-    terms.getTermsByCodelist('dataType').then((resp) => {
-      this.dataTypes = resp.data.items
-    })
-  },
-  methods: {
-    async cancel() {
-      this.close()
-    },
-    close() {
-      this.$refs.observer.reset()
-      this.$emit('close')
-    },
-    async submit() {
-      if (this.parentType === crfTypes.NAMESPACE) {
-        this.form.vendor_namespace_uid = this.parentUid
-      } else {
-        this.form.vendor_element_uid = this.parentUid
+})
+
+const emit = defineEmits(['close'])
+
+const { t } = useI18n()
+const formRules = inject('formRules')
+
+const formDialog = ref(null)
+const observer = ref(null)
+
+const form = ref({})
+const helpItems = ref([])
+const dataTypes = ref([])
+const compatibleTypes = ref([
+  'FormDef',
+  'ItemGroupDef',
+  'ItemDef',
+  'ItemGroupRef',
+  'ItemRef',
+])
+
+const title = computed(() =>
+  props.editItem?.uid
+    ? t('CRFExtensions.edit_attr')
+    : t('CRFExtensions.new_attr')
+)
+
+watch(
+  () => props.editItem,
+  (value) => {
+    initForm(value)
+  }
+)
+
+onMounted(() => {
+  terms.getTermsByCodelist('dataType').then((resp) => {
+    dataTypes.value = resp.data.items
+  })
+  initForm(props.editItem)
+})
+
+const cancel = async () => {
+  close()
+}
+
+const close = () => {
+  observer.value?.reset?.()
+  emit('close')
+}
+
+const submit = async () => {
+  if (props.parentType === crfTypes.NAMESPACE) {
+    form.value.vendor_namespace_uid = props.parentUid
+  } else {
+    form.value.vendor_element_uid = props.parentUid
+  }
+
+  if (props.editItem?.uid) {
+    await crfs.editAttribute(props.editItem.uid, form.value).then(
+      () => {
+        close()
+      },
+      () => {
+        if (formDialog.value) {
+          formDialog.value.working = false
+        }
       }
-      if (this.editItem.uid) {
-        await crfs.editAttribute(this.editItem.uid, this.form).then(
-          () => {
-            this.close()
-          },
-          () => {
-            this.$refs.form.working = false
-          }
-        )
-      } else {
-        await crfs.createAttribute(this.form).then(
-          () => {
-            this.close()
-          },
-          () => {
-            this.$refs.form.working = false
-          }
-        )
+    )
+  } else {
+    await crfs.createAttribute(form.value).then(
+      () => {
+        close()
+      },
+      () => {
+        if (formDialog.value) {
+          formDialog.value.working = false
+        }
       }
-    },
-    initForm(item) {
-      this.form = item
-    },
-  },
+    )
+  }
+}
+
+const initForm = (item) => {
+  form.value = item || {}
 }
 </script>

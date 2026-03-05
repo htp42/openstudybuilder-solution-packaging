@@ -53,6 +53,7 @@
           item-title="submission_value"
           class="ml-4 w-50"
           :rules="[formRules.required]"
+          :disabled="props.disabled"
           @updatecodelist="changeCodelist"
         />
       </div>

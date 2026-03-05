@@ -1,4 +1,3 @@
-import datetime
 from typing import Any, TypeVar
 
 from neomodel import Q, db
@@ -8,7 +7,7 @@ from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_codelist_a
     CTCodelistAttributesRepository,
 )
 from clinical_mdr_api.domain_repositories.generic_repository import (
-    manage_previous_connected_study_selection_relationships,
+    _manage_versioning_with_relations,
 )
 from clinical_mdr_api.domain_repositories.models._utils import ListDistinct
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
@@ -78,13 +77,11 @@ class StudyDiseaseMilestoneRepository:
         filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
         study_value_version: str | None = None,
-        **kwargs,
     ) -> tuple[list[StudyDiseaseMilestoneOGM], int]:
         q_filters = self.create_query_filter_statement_neomodel(
             study_uid=study_uid,
             study_value_version=study_value_version,
             filter_by=filter_by,
-            **kwargs,
         )
         q_filters = merge_q_query_filters(q_filters, filter_operator=filter_operator)
         sort_paths = get_order_by_clause(
@@ -237,8 +234,6 @@ class StudyDiseaseMilestoneRepository:
             study_value is None, msg="Study doesn't have draft version."
         )
 
-        if not create:
-            previous_item = study_value.has_study_disease_milestone.get(uid=item.uid)
         new_study_disease_milestone = StudyDiseaseMilestone(
             uid=item.uid,
             accepted_version=item.accepted_version,
@@ -263,84 +258,40 @@ class StudyDiseaseMilestoneRepository:
         )
 
         if create:
-            self.manage_versioning_create(
-                study_root=study_root, item=item, new_item=new_study_disease_milestone
+            _manage_versioning_with_relations(
+                study_root=study_root,
+                action_type=Create,
+                before=None,
+                after=new_study_disease_milestone,
+                author_id=self.author_id,
             )
             new_study_disease_milestone.study_value.connect(study_value)
         else:
+            exclude_relationships = [StudyDiseaseMilestone.has_disease_milestone_type]
+            previous_item = study_value.has_study_disease_milestone.get(uid=item.uid)
             if delete is False:
                 # update
-                self.manage_versioning_update(
+                _manage_versioning_with_relations(
                     study_root=study_root,
-                    item=item,
-                    # pylint: disable=possibly-used-before-assignment
-                    previous_item=previous_item,
-                    new_item=new_study_disease_milestone,
+                    action_type=Edit,
+                    before=previous_item,
+                    after=new_study_disease_milestone,
+                    exclude_relationships=exclude_relationships,
+                    author_id=self.author_id,
                 )
                 new_study_disease_milestone.study_value.connect(study_value)
             else:
                 # delete
-                self.manage_versioning_delete(
+                _manage_versioning_with_relations(
                     study_root=study_root,
-                    item=item,
-                    previous_item=previous_item,
-                    new_item=new_study_disease_milestone,
+                    action_type=Delete,
+                    before=previous_item,
+                    after=new_study_disease_milestone,
+                    exclude_relationships=exclude_relationships,
+                    author_id=self.author_id,
                 )
-            manage_previous_connected_study_selection_relationships(
-                previous_item=previous_item,
-                study_value_node=study_value,
-                new_item=new_study_disease_milestone,
-            )
+
         return item
-
-    def manage_versioning_create(
-        self,
-        study_root: StudyRoot,
-        item: StudyDiseaseMilestoneVO,
-        new_item: StudyDiseaseMilestone,
-    ):
-        action = Create(
-            date=datetime.datetime.now(datetime.timezone.utc),
-            status=item.status.value,
-            author_id=item.author_id,
-        )
-        action.save()
-        action.has_after.connect(new_item)
-        study_root.audit_trail.connect(action)
-
-    def manage_versioning_update(
-        self,
-        study_root: StudyRoot,
-        item: StudyDiseaseMilestoneVO,
-        previous_item: StudyDiseaseMilestone,
-        new_item: StudyDiseaseMilestone,
-    ):
-        action = Edit(
-            date=datetime.datetime.now(datetime.timezone.utc),
-            status=item.status.value,
-            author_id=item.author_id,
-        )
-        action.save()
-        action.has_before.connect(previous_item)
-        action.has_after.connect(new_item)
-        study_root.audit_trail.connect(action)
-
-    def manage_versioning_delete(
-        self,
-        study_root: StudyRoot,
-        item: StudyDiseaseMilestoneVO,
-        previous_item: StudyDiseaseMilestone,
-        new_item: StudyDiseaseMilestone,
-    ):
-        action = Delete(
-            date=datetime.datetime.now(datetime.timezone.utc),
-            status=item.status.value,
-            author_id=item.author_id,
-        )
-        action.save()
-        action.has_before.connect(previous_item)
-        action.has_after.connect(new_item)
-        study_root.audit_trail.connect(action)
 
     def get_distinct_headers(
         self,

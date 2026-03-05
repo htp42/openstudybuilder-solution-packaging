@@ -12,9 +12,10 @@ from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_codelist_a
     CTCodelistAttributesRepository,
 )
 from clinical_mdr_api.domain_repositories.generic_repository import (
-    manage_previous_connected_study_selection_relationships,
+    _manage_versioning_with_relations,
 )
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
+    CTTermContext,
     CTTermRoot,
 )
 from clinical_mdr_api.domain_repositories.models.study import StudyRoot, StudyValue
@@ -44,6 +45,7 @@ class SelectionHistoryArm:
     study_uid: str | None
     arm_name: str
     arm_short_name: str
+    arm_label: str | None
     arm_code: str | None
     arm_description: str | None
     arm_randomization_group: str | None
@@ -161,6 +163,7 @@ class StudySelectionArmRepository:
                 sar.uid AS uid,
                 sar.name AS name,
                 sar.short_name AS short_name,
+                sar.label AS label,
                 apoc.coll.sum([cohort in study_cohorts WHERE cohort.number_of_subjects is not null | cohort.number_of_subjects])AS number_of_subjects,
                 study_cohorts
         """
@@ -232,6 +235,7 @@ class StudySelectionArmRepository:
                 sar.uid AS study_selection_uid,
                 sar.name AS arm_name,
                 sar.short_name AS arm_short_name,
+                sar.label AS arm_label,
                 sar.arm_code AS arm_code,
                 sar.description AS arm_description,
                 sar.order AS order,
@@ -261,6 +265,7 @@ class StudySelectionArmRepository:
                 study_uid=selection["study_uid"],
                 name=selection["arm_name"],
                 short_name=selection["arm_short_name"],
+                label=selection["arm_label"],
                 code=selection["arm_code"],
                 description=selection["arm_description"],
                 study_selection_uid=selection["study_selection_uid"],
@@ -350,6 +355,7 @@ class StudySelectionArmRepository:
             return Create()
         return Delete()
 
+    # pylint: disable=unused-argument
     def save(self, study_selection: StudySelectionArmAR, author_id: str) -> None:
         """
         Persist the set of selected study arms from the aggregate to the database
@@ -408,19 +414,14 @@ class StudySelectionArmRepository:
             audit_node = self._get_audit_node(
                 study_selection, selection.study_selection_uid
             )
-            # create the before node to the last_study_selection_node and audit trial to study_root
-            audit_node = self._set_before_audit_info(
-                audit_node=audit_node,
-                study_selection_node=last_study_selection_node,
-                study_root_node=study_root_node,
-                author_id=author_id,
-            )
+
             # storage of the removed node audit trail to after put the "after" relationship to the new one
             audit_trail_nodes[selection.study_selection_uid] = audit_node
             # storage of the removed node to after get its connections
             last_nodes[selection.study_selection_uid] = last_study_selection_node
             if isinstance(audit_node, Delete):
                 self._add_new_selection(
+                    study_root_node,
                     latest_study_value_node,
                     order,
                     selection,
@@ -442,11 +443,9 @@ class StudySelectionArmRepository:
             else:
                 # if the audi_node doesn't exists, then create a new one
                 audit_node = Create()
-                audit_node.author_id = selection.author_id
-                audit_node.date = selection.start_date
-                audit_node.save()
-                study_root_node.audit_trail.connect(audit_node)
+
             self._add_new_selection(
+                study_root_node,
                 latest_study_value_node,
                 order,
                 selection,
@@ -454,21 +453,6 @@ class StudySelectionArmRepository:
                 for_deletion=False,
                 before_node=last_study_selection_node,
             )
-
-    @staticmethod
-    def _set_before_audit_info(
-        audit_node: StudyAction,
-        study_selection_node: StudyArm,
-        study_root_node: StudyRoot,
-        author_id: str,
-    ) -> StudyAction:
-        audit_node.author_id = author_id
-        audit_node.date = datetime.datetime.now(datetime.timezone.utc)
-        audit_node.save()
-
-        audit_node.has_before.connect(study_selection_node)
-        study_root_node.audit_trail.connect(audit_node)
-        return audit_node
 
     @staticmethod
     def arm_exists_by(
@@ -487,6 +471,7 @@ class StudySelectionArmRepository:
 
     @staticmethod
     def _add_new_selection(
+        study_root: StudyRoot,
         latest_study_value_node: StudyValue,
         order: int,
         selection: StudySelectionArmVO,
@@ -500,6 +485,7 @@ class StudySelectionArmRepository:
             order=order,
             name=selection.name,
             short_name=selection.short_name,
+            label=selection.label,
             arm_code=selection.code,
             description=selection.description,
             randomization_group=selection.randomization_group,
@@ -512,16 +498,6 @@ class StudySelectionArmRepository:
         if not for_deletion:
             # Connect new node with study value
             latest_study_value_node.has_study_arm.connect(study_arm_selection_node)
-        # Connect new node with audit trail
-        audit_node.has_after.connect(study_arm_selection_node)
-
-        if before_node is not None:
-            manage_previous_connected_study_selection_relationships(
-                previous_item=before_node,
-                study_value_node=latest_study_value_node,
-                new_item=study_arm_selection_node,
-                exclude_study_selection_relationships=[],
-            )
 
         # check if arm type is set
         if selection.arm_type_uid:
@@ -535,10 +511,18 @@ class StudySelectionArmRepository:
                     catalogue_name=settings.sdtm_ct_catalogue_name,
                 )
             )
-
             # connect to node
             # pylint: disable=no-member
             study_arm_selection_node.arm_type.connect(selected_arm_type_node)
+
+        _manage_versioning_with_relations(
+            study_root=study_root,
+            action_type=type(audit_node),
+            before=before_node,
+            after=study_arm_selection_node,
+            exclude_relationships=[CTTermContext],
+            author_id=selection.author_id,
+        )
 
     def generate_uid(self) -> str:
         return StudyArm.get_next_free_uid_and_increment_counter()
@@ -598,6 +582,7 @@ class StudySelectionArmRepository:
                 all_sa.uid AS study_selection_uid,
                 all_sa.name AS arm_name,
                 all_sa.short_name AS arm_short_name,
+                all_sa.label AS arm_label,
                 all_sa.arm_code AS arm_code,
                 all_sa.description AS arm_description,
                 all_sa.order AS order,
@@ -632,6 +617,7 @@ class StudySelectionArmRepository:
                     study_uid=study_uid,
                     arm_name=res["arm_name"],
                     arm_short_name=res["arm_short_name"],
+                    arm_label=res["arm_label"],
                     arm_code=res["arm_code"],
                     arm_description=res["arm_description"],
                     arm_randomization_group=res["randomization_group"],

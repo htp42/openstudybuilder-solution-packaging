@@ -23,7 +23,11 @@ from clinical_mdr_api.domain_repositories.models.standard_data_model import (
     DatasetVariable,
     VariableClass,
 )
-from clinical_mdr_api.domains.enums import StudyDesignClassEnum, StudySourceVariableEnum
+from clinical_mdr_api.domains.enums import (
+    LibraryItemStatus,
+    StudyDesignClassEnum,
+    StudySourceVariableEnum,
+)
 from clinical_mdr_api.main import app
 from clinical_mdr_api.models.biomedical_concepts.activity_instance_class import (
     ActivityInstanceClass,
@@ -86,10 +90,19 @@ from clinical_mdr_api.models.concepts.medicinal_product import (
 )
 from clinical_mdr_api.models.concepts.odms.odm_common_models import (
     OdmAliasModel,
-    OdmDescriptionModel,
+    OdmFormalExpressionModel,
+    OdmTranslatedTextModel,
+)
+from clinical_mdr_api.models.concepts.odms.odm_condition import (
+    OdmCondition,
+    OdmConditionPostInput,
 )
 from clinical_mdr_api.models.concepts.odms.odm_form import OdmForm, OdmFormPostInput
-from clinical_mdr_api.models.concepts.odms.odm_item import OdmItem, OdmItemPostInput
+from clinical_mdr_api.models.concepts.odms.odm_item import (
+    OdmItem,
+    OdmItemCodelist,
+    OdmItemPostInput,
+)
 from clinical_mdr_api.models.concepts.odms.odm_item_group import (
     OdmItemGroup,
     OdmItemGroupPostInput,
@@ -97,6 +110,18 @@ from clinical_mdr_api.models.concepts.odms.odm_item_group import (
 from clinical_mdr_api.models.concepts.odms.odm_study_event import (
     OdmStudyEvent,
     OdmStudyEventPostInput,
+)
+from clinical_mdr_api.models.concepts.odms.odm_vendor_attribute import (
+    OdmVendorAttribute,
+    OdmVendorAttributePostInput,
+)
+from clinical_mdr_api.models.concepts.odms.odm_vendor_element import (
+    OdmVendorElement,
+    OdmVendorElementPostInput,
+)
+from clinical_mdr_api.models.concepts.odms.odm_vendor_namespace import (
+    OdmVendorNamespace,
+    OdmVendorNamespacePostInput,
 )
 from clinical_mdr_api.models.concepts.pharmaceutical_product import (
     PharmaceuticalProduct,
@@ -348,11 +373,21 @@ from clinical_mdr_api.services.concepts.compound_service import CompoundService
 from clinical_mdr_api.services.concepts.medicinal_products_service import (
     MedicinalProductService,
 )
+from clinical_mdr_api.services.concepts.odms.odm_conditions import OdmConditionService
 from clinical_mdr_api.services.concepts.odms.odm_forms import OdmFormService
 from clinical_mdr_api.services.concepts.odms.odm_item_groups import OdmItemGroupService
 from clinical_mdr_api.services.concepts.odms.odm_items import OdmItemService
 from clinical_mdr_api.services.concepts.odms.odm_study_events import (
     OdmStudyEventService,
+)
+from clinical_mdr_api.services.concepts.odms.odm_vendor_attributes import (
+    OdmVendorAttributeService,
+)
+from clinical_mdr_api.services.concepts.odms.odm_vendor_elements import (
+    OdmVendorElementService,
+)
+from clinical_mdr_api.services.concepts.odms.odm_vendor_namespaces import (
+    OdmVendorNamespaceService,
 )
 from clinical_mdr_api.services.concepts.pharmaceutical_products_service import (
     PharmaceuticalProductService,
@@ -529,6 +564,7 @@ from clinical_mdr_api.tests.utils.checks import (
 from common.auth.dependencies import dummy_user_test_auth
 from common.auth.user import clear_users_cache
 from common.config import settings
+from common.utils import VisitClass, VisitSubclass
 
 log = logging.getLogger(__name__)
 
@@ -1999,7 +2035,7 @@ class TestUtils:
         visit_type_uid: str,
         show_visit: bool,
         visit_contact_mode_uid: str,
-        visit_class: str,
+        visit_class: VisitClass,
         is_global_anchor_visit: bool,
         time_reference_uid: str | None = None,
         time_value: int | None = None,
@@ -2012,7 +2048,7 @@ class TestUtils:
         start_rule: str | None = None,
         end_rule: str | None = None,
         epoch_allocation_uid: str | None = None,
-        visit_subclass: str | None = None,
+        visit_subclass: VisitSubclass | None = None,
     ) -> StudyVisit:
         service: StudyVisitService = StudyVisitService(study_uid=study_uid)
         study_visit_input: StudyVisitCreateInput = StudyVisitCreateInput(
@@ -2313,12 +2349,12 @@ class TestUtils:
         oid=None,
         repeating="Yes",
         sdtm_version=None,
-        descriptions: list[OdmDescriptionModel] | None = None,
+        translated_texts: list[OdmTranslatedTextModel] | None = None,
         aliases: list[OdmAliasModel] | None = None,
         approve: bool = True,
     ) -> OdmForm:
-        if not descriptions:
-            descriptions = []
+        if not translated_texts:
+            translated_texts = []
         if not aliases:
             aliases = []
 
@@ -2330,7 +2366,7 @@ class TestUtils:
             oid=cls.random_if_none(oid),
             repeating=repeating,
             sdtm_version=cls.random_if_none(sdtm_version),
-            descriptions=descriptions,
+            translated_texts=translated_texts,
             aliases=aliases,
         )
 
@@ -2351,13 +2387,13 @@ class TestUtils:
         origin=None,
         purpose=None,
         comment=None,
-        descriptions: list[OdmDescriptionModel] | None = None,
+        translated_texts: list[OdmTranslatedTextModel] | None = None,
         aliases: list[OdmAliasModel] | None = None,
         sdtm_domain_uids=None,
         approve: bool = True,
     ) -> OdmItemGroup:
-        if not descriptions:
-            descriptions = []
+        if not translated_texts:
+            translated_texts = []
         if not aliases:
             aliases = []
         if not sdtm_domain_uids:
@@ -2375,7 +2411,7 @@ class TestUtils:
             origin=cls.random_if_none(origin),
             purpose=cls.random_if_none(purpose),
             comment=cls.random_if_none(comment),
-            descriptions=descriptions,
+            translated_texts=translated_texts,
             aliases=aliases,
             sdtm_domain_uids=sdtm_domain_uids,
         )
@@ -2399,17 +2435,17 @@ class TestUtils:
         sds_var_name=None,
         origin=None,
         comment=None,
-        descriptions: list[OdmDescriptionModel] | None = None,
+        translated_texts: list[OdmTranslatedTextModel] | None = None,
         aliases: list[OdmAliasModel] | None = None,
-        codelist_uid=None,
+        codelist: OdmItemCodelist | None = None,
         unit_definitions=None,
         terms=None,
         approve: bool = True,
     ) -> OdmItem:
         if not terms:
             terms = []
-        if not descriptions:
-            descriptions = []
+        if not translated_texts:
+            translated_texts = []
         if not unit_definitions:
             unit_definitions = []
         if not aliases:
@@ -2429,14 +2465,129 @@ class TestUtils:
             sds_var_name=cls.random_if_none(sds_var_name),
             origin=cls.random_if_none(origin),
             comment=cls.random_if_none(comment),
-            descriptions=descriptions,
+            translated_texts=translated_texts,
             aliases=aliases,
-            codelist_uid=codelist_uid,
+            codelist=codelist,
             unit_definitions=unit_definitions,
             terms=terms,
         )
 
         result: OdmItem = service.create(concept_input=payload)
+        if approve:
+            service.approve(result.uid)
+        return result
+
+    @classmethod
+    def create_odm_condition(
+        cls,
+        name=None,
+        library_name=LIBRARY_NAME,
+        oid=None,
+        formal_expressions: list[OdmFormalExpressionModel] | None = None,
+        translated_texts: list[OdmTranslatedTextModel] | None = None,
+        aliases: list[OdmAliasModel] | None = None,
+        approve: bool = True,
+    ) -> OdmCondition:
+        if not formal_expressions:
+            formal_expressions = []
+        if not translated_texts:
+            translated_texts = []
+        if not aliases:
+            aliases = []
+
+        service: OdmConditionService = OdmConditionService()
+
+        payload: OdmConditionPostInput = OdmConditionPostInput(
+            library_name=library_name,
+            name=cls.random_if_none(name),
+            oid=cls.random_if_none(oid),
+            formal_expressions=formal_expressions,
+            translated_texts=translated_texts,
+            aliases=aliases,
+        )
+
+        result: OdmCondition = service.create(concept_input=payload)  # type: ignore[assignment]
+        if approve:
+            service.approve(result.uid)
+        return result
+
+    @classmethod
+    def create_odm_vendor_namespace(
+        cls,
+        name=None,
+        library_name=LIBRARY_NAME,
+        prefix=None,
+        url=None,
+        approve: bool = True,
+    ) -> OdmVendorNamespace:
+        service: OdmVendorNamespaceService = OdmVendorNamespaceService()
+
+        payload: OdmVendorNamespacePostInput = OdmVendorNamespacePostInput(
+            library_name=library_name,
+            name=cls.random_if_none(name),
+            prefix=prefix,
+            url=url,
+        )
+
+        result: OdmVendorNamespace = service.create(concept_input=payload)  # type: ignore[assignment]
+        if approve:
+            service.approve(result.uid)
+        return result
+
+    @classmethod
+    def create_odm_vendor_element(
+        cls,
+        name=None,
+        library_name=LIBRARY_NAME,
+        compatible_types=None,
+        vendor_namespace_uid=None,
+        approve: bool = True,
+    ) -> OdmVendorElement:
+        if not compatible_types:
+            compatible_types = []
+
+        service: OdmVendorElementService = OdmVendorElementService()
+
+        payload: OdmVendorElementPostInput = OdmVendorElementPostInput(
+            library_name=library_name,
+            name=cls.random_if_none(name),
+            compatible_types=compatible_types,
+            vendor_namespace_uid=vendor_namespace_uid,
+        )
+
+        result: OdmVendorElement = service.create(concept_input=payload)  # type: ignore[assignment]
+        if approve:
+            service.approve(result.uid)
+        return result
+
+    @classmethod
+    def create_odm_vendor_attribute(
+        cls,
+        name=None,
+        library_name=LIBRARY_NAME,
+        compatible_types=None,
+        data_type=None,
+        value_regex=None,
+        vendor_namespace_uid=None,
+        vendor_element_uid=None,
+        approve: bool = True,
+    ) -> OdmVendorAttribute:
+        if not compatible_types:
+            compatible_types = []
+
+        service: OdmVendorAttributeService = OdmVendorAttributeService()
+
+        payload: OdmVendorAttributePostInput = OdmVendorAttributePostInput(
+            library_name=library_name,
+            name=cls.random_if_none(name),
+            compatible_types=compatible_types,
+            data_type=data_type,
+            value_regex=value_regex,
+            vendor_namespace_uid=vendor_namespace_uid,
+            vendor_element_uid=vendor_element_uid,
+        )
+
+        result: OdmVendorAttribute = service.create(concept_input=payload)  # type: ignore[assignment]
         if approve:
             service.approve(result.uid)
         return result
@@ -2530,6 +2681,7 @@ class TestUtils:
         sponsor_preferred_name: str | None = None,
         sponsor_preferred_name_sentence_case: str | None = None,
         order: int | None = None,
+        ordinal: float | None = None,
         library_name: str = CT_CODELIST_LIBRARY_SPONSOR,
         approve: bool = True,
         effective_date: datetime | None = None,
@@ -2544,6 +2696,7 @@ class TestUtils:
                 codelist_uid=codelist_uid,
                 submission_value=submission_value,
                 order=order,
+                ordinal=ordinal,
             )
         ]
         payload = CTTermCreateInput(
@@ -2731,7 +2884,7 @@ class TestUtils:
                 name_sentence_case: $uid + 'name'})
                 MERGE (codelist_root)-[:HAS_ATTRIBUTES_ROOT]->(codelist_a_root:CTCodelistAttributesRoot)
                 -[:LATEST]->(codelist_a_value:CTCodelistAttributesValue {definition:$uid + ' DEF',
-                name:$uid + ' NAME', preferred_term:$uid + ' PREF', submission_value:$submission_value, extensible:true, ordinal:false})
+                name:$uid + ' NAME', preferred_term:$uid + ' PREF', submission_value:$submission_value, extensible:true, is_ordinal:false})
                 MERGE (catalogue)-[:HAS_CODELIST]->(codelist_root)
                 MERGE (codelist_ver_root)-[name_final:LATEST_FINAL]->(codelist_ver_value)
                 MERGE (codelist_ver_root)-[name_hasver:HAS_VERSION]->(codelist_ver_value)
@@ -2761,6 +2914,7 @@ class TestUtils:
         sponsor_preferred_name: str | None = None,
         definition: str | None = None,
         extensible: bool = False,
+        is_ordinal: bool = False,
         template_parameter: bool = False,
         parent_codelist_uid: str | None = None,
         terms: list[CTCodelistTermInput] | None = None,
@@ -2785,7 +2939,7 @@ class TestUtils:
             ),
             definition=cls.random_if_none(definition, prefix="definition-"),
             extensible=extensible,
-            ordinal=False,
+            is_ordinal=is_ordinal,
             sponsor_preferred_name=cls.random_if_none(
                 sponsor_preferred_name, prefix="name-"
             ),
@@ -3040,7 +3194,7 @@ class TestUtils:
         return UnitDefinitionService().get_by_uid(
             uid=unit_uid,
             at_specific_date=at_specified_datetime,
-            status=status,
+            status=LibraryItemStatus(status) if status is not None else None,
             version=version,
         )
 
@@ -4005,6 +4159,7 @@ class TestUtils:
         study_uid: str,
         name: str,
         short_name: str,
+        label: str | None = None,
         code: str | None = None,
         description: str | None = None,
         randomization_group: str | None = None,
@@ -4015,6 +4170,7 @@ class TestUtils:
         arm_input = StudySelectionArmCreateInput(
             name=name,
             short_name=short_name,
+            label=label,
             code=code,
             description=description,
             randomization_group=randomization_group,

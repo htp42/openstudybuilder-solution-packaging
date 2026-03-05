@@ -1,4 +1,4 @@
-from neomodel import NodeSet
+from neomodel import NodeSet, db
 from neomodel.sync_.match import (
     Collect,
     NodeNameResolver,
@@ -157,7 +157,20 @@ class SponsorModelDatasetRepository(  # type: ignore[misc]
             state=ar.sponsor_model_dataset_vo.state,
             extended_domain=ar.sponsor_model_dataset_vo.extended_domain,
         )
+
         self._db_save_node(new_instance)
+
+        # Add extra properties using Cypher (neomodel only saves defined properties)
+        if ar.sponsor_model_dataset_vo.extra_properties:
+            # Sanitize key names for Neo4j (replace spaces and dashes with underscores)
+            sanitized_props = {
+                key.replace(" ", "_").replace("-", "_"): value
+                for key, value in ar.sponsor_model_dataset_vo.extra_properties.items()
+            }
+            db.cypher_query(
+                "MATCH (n) WHERE elementId(n) = $element_id SET n += $extra_props",
+                {"element_id": new_instance.element_id, "extra_props": sanitized_props},
+            )
 
         # Connect with root
         root.has_sponsor_model_instance.connect(new_instance)
@@ -222,6 +235,41 @@ class SponsorModelDatasetRepository(  # type: ignore[misc]
             sponsor_model_version,
             enrich_build_order,
         ) = get_sponsor_model_info_from_dataset(value)
+
+        # Extract extra properties from the Neo4j node
+        known_fields = {
+            "is_basic_std",
+            "xml_path",
+            "xml_title",
+            "structure",
+            "purpose",
+            "is_cdisc_std",
+            "source_ig",
+            "standard_ref",
+            "comment",
+            "ig_comment",
+            "map_domain_flag",
+            "suppl_qual_flag",
+            "include_in_raw",
+            "gen_raw_seqno_flag",
+            "label",
+            "state",
+            "extended_domain",
+            "id",
+            "element_id",
+        }
+        extra_props = {}
+        for key in dir(value):
+            if not key.startswith("_") and hasattr(value, key):
+                attr = getattr(value, key)
+                # Only include simple data types (not methods, relationships, etc.)
+                if (
+                    key not in known_fields
+                    and not callable(attr)
+                    and not hasattr(attr, "_all")
+                ):
+                    extra_props[key] = attr
+
         return SponsorModelDatasetAR.from_repository_values(
             dataset_uid=root.uid,
             sponsor_model_dataset_vo=SponsorModelDatasetVO.from_repository_values(
@@ -249,6 +297,7 @@ class SponsorModelDatasetRepository(  # type: ignore[misc]
                 label=value.label,
                 state=value.state,
                 extended_domain=value.extended_domain,
+                extra_properties=extra_props if extra_props else None,
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=library.name,

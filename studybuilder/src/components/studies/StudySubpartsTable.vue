@@ -80,19 +80,19 @@
     </template>
     <template #actions="">
       <v-btn
-        class="ml-2"
-        size="small"
+        class="ml-2 expandHoverBtn"
         variant="outlined"
         color="nnBaseBlue"
-        :title="$t('StudySubparts.add_subpart')"
         :disabled="
           !accessGuard.checkPermission($roles.STUDY_WRITE) ||
           Boolean(studiesGeneralStore.selectedStudy.study_parent_part) ||
           studiesGeneralStore.selectedStudyVersion !== null
         "
-        icon="mdi-plus"
         @click.stop="openForm()"
-      />
+      >
+        <v-icon left>mdi-plus</v-icon>
+        <span class="label">{{ $t('StudySubparts.add_subpart') }}</span>
+      </v-btn>
     </template>
     <template #[`item.actions`]="{ item }">
       <ActionsMenu :actions="actions" :item="item" />

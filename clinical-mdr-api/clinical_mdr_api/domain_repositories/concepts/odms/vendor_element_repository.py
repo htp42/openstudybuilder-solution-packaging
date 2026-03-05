@@ -29,6 +29,7 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryVO,
 )
 from clinical_mdr_api.models.concepts.odms.odm_vendor_element import OdmVendorElement
+from clinical_mdr_api.services._utils import ensure_transaction
 from common.exceptions import BusinessLogicException
 from common.utils import convert_to_datetime
 
@@ -120,6 +121,18 @@ apoc.coll.toSet([vendor_attribute in vendor_attributes | vendor_attribute.uid]) 
         ar: OdmVendorElementAR,
         force_new_value_node: bool = False,
     ) -> VersionValue:
+        current_latest = root.has_latest_value.single()
+        old_has_vendor_attribute_nodes = (
+            current_latest.has_vendor_attribute.all() if current_latest else []
+        )
+        new_has_vendor_attribute_nodes = [
+            old_vendor_attribute_root.has_latest_value.single()
+            for old_has_vendor_attribute_node in old_has_vendor_attribute_nodes
+            if (
+                old_vendor_attribute_root := old_has_vendor_attribute_node.has_root.single()
+            )
+        ]
+
         new_value = super()._get_or_create_value(root, ar, force_new_value_node)
 
         new_value.belongs_to_vendor_namespace.disconnect_all()
@@ -133,6 +146,15 @@ apoc.coll.toSet([vendor_attribute in vendor_attributes | vendor_attribute.uid]) 
             )
             if vendor_namespace_value:
                 new_value.belongs_to_vendor_namespace.connect(vendor_namespace_value)
+
+        for new_has_vendor_attribute_node in new_has_vendor_attribute_nodes:
+            new_value.has_vendor_attribute.connect(new_has_vendor_attribute_node)
+
+        if ar.should_disconnect_relationships:
+            for old_has_vendor_attribute_node in old_has_vendor_attribute_nodes:
+                current_latest.has_vendor_attribute.disconnect(
+                    old_has_vendor_attribute_node
+                )
 
         return new_value
 
@@ -207,3 +229,35 @@ apoc.coll.toSet([vendor_attribute in vendor_attributes | vendor_attribute.uid]) 
             compatible_types=rs[0][1],
             value=rs[0][2],
         )
+
+    @ensure_transaction(db)
+    def _connect_relationships_to_new_value_node(
+        self, root: VersionRoot, _: VersionValue
+    ) -> None:
+        """
+        Upgrades all incoming HAS_VENDOR_ELEMENT relationships to the second latest version to point
+        to the latest version of OdmVendorElementValue, preserving relationship properties.
+        """
+        query = f"""
+        MATCH (root:{self.root_class.__name__} {{uid: $root_uid}})-[ver_rel:HAS_VERSION]->(value:{self.value_class.__name__})
+
+        WITH root, ver_rel, value
+        ORDER BY ver_rel.start_date DESC, ver_rel.end_date DESC
+        LIMIT 2
+        WITH root, collect(value) AS values
+        WITH root, values[0] as latest_value, values[1] as second_latest_value
+
+        MATCH (:OdmFormRoot|OdmItemGroupRoot|OdmItemRoot)-[p_ver_rel:HAS_VERSION]->
+        (parent_value:OdmFormValue|OdmItemGroupValue|OdmItemValue)-[has_vendor_element:HAS_VENDOR_ELEMENT]->(second_latest_value)
+        WHERE p_ver_rel.end_date IS NULL AND p_ver_rel.status = "Draft"
+
+        WITH latest_value, has_vendor_element, parent_value,
+            has_vendor_element.value AS value
+
+        CREATE (parent_value)-[new_has_vendor_element:HAS_VENDOR_ELEMENT]->(latest_value)
+
+        SET new_has_vendor_element.value = value
+
+        DELETE has_vendor_element
+        """
+        db.cypher_query(query, {"root_uid": root.uid})

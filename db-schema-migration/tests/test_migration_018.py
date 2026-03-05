@@ -49,11 +49,8 @@ def test_ct_config_values(migration):
     common.test_ct_config_values(db, logger)
 
 
-
 def test_migrate_activity_grouping(migration):
-    logger.info(
-        "Verify activity grouping migration results"
-    )
+    logger.info("Verify activity grouping migration results")
 
     records, _ = run_cypher_query(
         DB_DRIVER,
@@ -83,6 +80,4 @@ def test_migrate_activity_grouping(migration):
 
 @pytest.mark.order(after="test_migrate_activity_grouping")
 def test_repeat_migrate_activity_grouping(migration):
-    assert not migration_018.migrate_activity_grouping(
-        DB_DRIVER, logger
-    )
+    assert not migration_018.migrate_activity_grouping(DB_DRIVER, logger)

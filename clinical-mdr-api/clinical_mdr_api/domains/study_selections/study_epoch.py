@@ -113,7 +113,9 @@ class StudyEpochVO:
         # if there is one visit in last epoch we want to add a fixed 7 day period to the epoch duration
         # to display it in the visit overview
         if len(self._visits) == 1:
-            return self.get_start_day() + settings.fixed_week_period
+            return (
+                self.get_start_day() if self.get_start_day() is not None else 0
+            ) + settings.fixed_week_period
         return self.last_visit.study_day_number
 
     def get_end_week(self):
@@ -134,7 +136,9 @@ class StudyEpochVO:
         # if there is one visit in last epoch we want to add a fixed 7 day period to the epoch duration
         # to display it in the visit overview
         if len(self._visits) == 1:
-            return self.get_start_week() + 1
+            return (
+                self.get_start_week() if self.get_start_week() is not None else 0
+            ) + 1
         return self.last_visit.study_week_number
 
     @property

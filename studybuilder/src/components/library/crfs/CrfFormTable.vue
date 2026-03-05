@@ -6,6 +6,7 @@
       :items="forms"
       item-value="uid"
       :items-length="total"
+      :initial-sort-by="[{ key: 'name', order: 'asc' }]"
       column-data-resource="concepts/odms/forms"
       export-data-url="concepts/odms/forms"
       export-object-label="CRFForms"
@@ -13,16 +14,16 @@
     >
       <template #actions="">
         <v-btn
-          class="ml-2"
-          size="small"
+          class="ml-2 expandHoverBtn"
           variant="outlined"
           color="nnBaseBlue"
-          :title="$t('CRFForms.add_form')"
           data-cy="add-crf-form"
-          :disabled="!checkPermission($roles.LIBRARY_WRITE)"
-          icon="mdi-plus"
+          :disabled="!accessGuard.checkPermission($roles.LIBRARY_WRITE)"
           @click.stop="openForm"
-        />
+        >
+          <v-icon left>mdi-plus</v-icon>
+          <span class="label">{{ $t('CRFForms.add_form') }}</span>
+        </v-btn>
       </template>
       <template #[`item.name`]="{ item }">
         <v-tooltip bottom>
@@ -36,53 +37,6 @@
             </div>
           </template>
           <span>{{ item.name }}</span>
-        </v-tooltip>
-      </template>
-      <template #[`item.description`]="{ item }">
-        <v-tooltip bottom>
-          <template #activator="{ props }">
-            <div
-              v-bind="props"
-              v-html="
-                sanitizeHTMLHandler(
-                  getDescriptionAttribute(item, 'description', true)
-                )
-              "
-            />
-          </template>
-          <span>{{ getDescriptionAttribute(item, 'description', false) }}</span>
-        </v-tooltip>
-      </template>
-      <template #[`item.sponsor_instruction`]="{ item }">
-        <v-tooltip bottom>
-          <template #activator="{ props }">
-            <div
-              v-bind="props"
-              v-html="
-                sanitizeHTMLHandler(
-                  getDescriptionAttribute(item, 'sponsor_instruction', true)
-                )
-              "
-            />
-          </template>
-          <span>{{
-            getDescriptionAttribute(item, 'sponsor_instruction', false)
-          }}</span>
-        </v-tooltip>
-      </template>
-      <template #[`item.instruction`]="{ item }">
-        <v-tooltip bottom>
-          <template #activator="{ props }">
-            <div
-              v-bind="props"
-              v-html="
-                sanitizeHTMLHandler(
-                  getDescriptionAttribute(item, 'instruction', true)
-                )
-              "
-            />
-          </template>
-          <span>{{ getDescriptionAttribute(item, 'instruction', false) }}</span>
         </v-tooltip>
       </template>
       <template #[`item.repeating`]="{ item }">
@@ -112,6 +66,7 @@
         :title="formHistoryTitle"
         :headers="headers"
         :items="formHistoryItems"
+        :items-total="formHistoryItems.length"
         @close="closeFormHistory"
       />
     </v-dialog>
@@ -121,7 +76,9 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { computed, inject, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import NNTable from '@/components/tools/NNTable.vue'
 import StatusChip from '@/components/tools/StatusChip.vue'
 import ActionsMenu from '@/components/tools/ActionsMenu.vue'
@@ -133,312 +90,253 @@ import filteringParameters from '@/utils/filteringParameters'
 import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
 import CrfApprovalSummaryConfirmDialog from '@/components/library/crfs/CrfApprovalSummaryConfirmDialog.vue'
 import crfTypes from '@/constants/crfTypes'
-import parameters from '@/constants/parameters'
 import { useAccessGuard } from '@/composables/accessGuard'
 import { useCrfsStore } from '@/stores/crfs'
-import { computed } from 'vue'
-import { sanitizeHTML } from '@/utils/sanitize'
 import CrfNewVersionSummaryConfirmDialog from '@/components/library/crfs/CrfNewVersionSummaryConfirmDialog.vue'
 
-export default {
-  components: {
-    NNTable,
-    StatusChip,
-    ActionsMenu,
-    CrfFormForm,
-    HistoryTable,
-    ConfirmDialog,
-    CrfApprovalSummaryConfirmDialog,
-    CrfNewVersionSummaryConfirmDialog,
+const props = defineProps({
+  elementProp: {
+    type: Object,
+    default: null,
   },
-  inject: ['notificationHub'],
-  props: {
-    elementProp: {
-      type: Object,
-      default: null,
-    },
-  },
-  setup() {
-    const crfsStore = useCrfsStore()
+})
 
-    return {
-      fetchForms: crfsStore.fetchForms,
-      total: computed(() => crfsStore.totalForms),
-      forms: computed(() => crfsStore.forms),
-      ...useAccessGuard(),
+const { t } = useI18n()
+const notificationHub = inject('notificationHub')
+const roles = inject('roles')
+const accessGuard = useAccessGuard()
+
+const table = ref(null)
+const confirm = ref(null)
+const confirmApproval = ref(null)
+const confirmNewVersion = ref(null)
+
+const showForm = ref(false)
+const selectedForm = ref(null)
+const filters = ref('')
+const showFormHistory = ref(false)
+const formHistoryItems = ref([])
+
+const crfsStore = useCrfsStore()
+const total = computed(() => crfsStore.totalForms)
+const forms = computed(() => crfsStore.forms)
+
+const headers = computed(() => [
+  { title: '', key: 'actions', width: '1%' },
+  { title: t('CRFForms.oid'), key: 'oid' },
+  { title: t('_global.name'), key: 'name' },
+  {
+    title: t('CRFFormTable.repeating'),
+    key: 'repeating',
+    width: '1%',
+  },
+  { title: t('_global.version'), key: 'version', width: '1%' },
+  { title: t('_global.status'), key: 'status', width: '1%' },
+])
+
+const formHistoryTitle = computed(() => {
+  if (selectedForm.value) {
+    return t('CRFFormTable.form_history_title', {
+      formUid: selectedForm.value.uid,
+    })
+  }
+  return ''
+})
+
+async function deleteForm(item) {
+  let relationships = 0
+  await crfs.getRelationships(item.uid, 'forms').then((resp) => {
+    if (resp.data.OdmStudyEvent && resp.data.OdmStudyEvent.length > 0) {
+      relationships = resp.data.OdmStudyEvent.length
     }
-  },
-  data() {
-    return {
-      actions: [
-        {
-          label: this.$t('_global.approve'),
-          icon: 'mdi-check-decagram',
-          iconColor: 'success',
-          condition: (item) =>
-            item.possible_actions.find((action) => action === 'approve'),
-          accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.approve,
-        },
-        {
-          label: this.$t('_global.edit'),
-          icon: 'mdi-pencil-outline',
-          iconColor: 'primary',
-          condition: (item) =>
-            item.possible_actions.find((action) => action === 'edit'),
-          accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.edit,
-        },
-        {
-          label: this.$t('_global.view'),
-          icon: 'mdi-eye-outline',
-          iconColor: 'primary',
-          condition: (item) => item.status === statuses.FINAL,
-          click: this.view,
-        },
-        {
-          label: this.$t('_global.new_version'),
-          icon: 'mdi-plus-circle-outline',
-          iconColor: 'primary',
-          condition: (item) =>
-            item.possible_actions.find((action) => action === 'new_version'),
-          accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.newVersion,
-        },
-        {
-          label: this.$t('_global.inactivate'),
-          icon: 'mdi-close-octagon-outline',
-          iconColor: 'primary',
-          condition: (item) =>
-            item.possible_actions.find((action) => action === 'inactivate'),
-          accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.inactivate,
-        },
-        {
-          label: this.$t('_global.reactivate'),
-          icon: 'mdi-undo-variant',
-          iconColor: 'primary',
-          condition: (item) =>
-            item.possible_actions.find((action) => action === 'reactivate'),
-          accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.reactivate,
-        },
-        {
-          label: this.$t('_global.delete'),
-          icon: 'mdi-delete-outline',
-          iconColor: 'error',
-          condition: (item) =>
-            item.possible_actions.find((action) => action === 'delete'),
-          accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.delete,
-        },
-        {
-          label: this.$t('_global.history'),
-          icon: 'mdi-history',
-          click: this.openFormHistory,
-        },
-      ],
-      headers: [
-        { title: '', key: 'actions', width: '1%' },
-        { title: this.$t('CRFForms.oid'), key: 'oid' },
-        { title: this.$t('_global.name'), key: 'name' },
-        {
-          title: this.$t('_global.description'),
-          key: 'description',
-          filteringName: 'descriptions.description',
-        },
-        {
-          title: this.$t('CRFDescriptions.sponsor_instruction'),
-          key: 'sponsor_instruction',
-          filteringName: 'descriptions.sponsor_instruction',
-        },
-        {
-          title: this.$t('CRFDescriptions.instruction'),
-          key: 'instruction',
-          filteringName: 'descriptions.instruction',
-        },
-        {
-          title: this.$t('CRFFormTable.repeating'),
-          key: 'repeating',
-          width: '1%',
-        },
-        { title: this.$t('_global.version'), key: 'version', width: '1%' },
-        { title: this.$t('_global.status'), key: 'status', width: '1%' },
-      ],
-      showForm: false,
-      showHistory: false,
-      selectedForm: null,
-      filters: '',
-      showFormHistory: false,
-      formHistoryItems: [],
-    }
-  },
-  computed: {
-    formHistoryTitle() {
-      if (this.selectedForm) {
-        return this.$t('CRFFormTable.form_history_title', {
-          formUid: this.selectedForm.uid,
-        })
-      }
-      return ''
-    },
-  },
-  watch: {
-    elementProp(value) {
-      if (value.tab === 'forms' && value.type === crfTypes.FORM && value.uid) {
-        this.edit({ uid: value.uid })
-      }
-    },
-  },
-  mounted() {
-    if (
-      this.elementProp.tab === 'forms' &&
-      this.elementProp.type === crfTypes.FORM &&
-      this.elementProp.uid
-    ) {
-      this.edit({ uid: this.elementProp.uid })
-    }
-  },
-  created() {
-    this.statuses = statuses
-  },
-  methods: {
-    sanitizeHTMLHandler(html) {
-      return sanitizeHTML(html)
-    },
-    getDescriptionAttribute(item, attr, short) {
-      const engDesc = item.descriptions.find((el) =>
-        [parameters.EN, parameters.ENG].includes(el.language)
-      )
-      if (engDesc && engDesc[attr]) {
-        return short
-          ? engDesc[attr].length > 40
-            ? engDesc[attr].substring(0, 40) + '...'
-            : engDesc[attr]
-          : engDesc[attr]
-      }
-      return ''
-    },
-    async delete(item) {
-      let relationships = 0
-      await crfs.getRelationships(item.uid, 'forms').then((resp) => {
-        if (resp.data.OdmStudyEvent && resp.data.OdmStudyEvent.length > 0) {
-          relationships = resp.data.OdmStudyEvent.length
-        }
-      })
-      const options = {
-        type: 'warning',
-        cancelLabel: this.$t('_global.cancel'),
-        agreeLabel: this.$t('_global.continue'),
-      }
-      if (
-        relationships < 1 ||
-        (await this.$refs.confirm.open(
-          `${this.$t('CRFForms.delete_warning', { count: relationships })}`,
-          options
-        ))
-      ) {
-        crfs.delete('forms', item.uid).then(() => {
-          this.$refs.table.filterTable()
+  })
+  const options = {
+    type: 'warning',
+    cancelLabel: t('_global.cancel'),
+    agreeLabel: t('_global.continue'),
+  }
 
-          this.notificationHub.add({
-            msg: this.$t('CRFForms.deleted'),
-          })
-        })
-      }
-    },
-    async approve(item) {
-      if (
-        await this.$refs.confirmApproval.open({
-          agreeLabel: this.$t('CRFForms.approve_form'),
-          form: item,
-        })
-      ) {
-        crfs.approve('forms', item.uid).then(() => {
-          this.$refs.table.filterTable()
-
-          this.notificationHub.add({
-            msg: this.$t('CRFForms.approved'),
-          })
-        })
-      }
-    },
-    inactivate(item) {
-      crfs.inactivate('forms', item.uid).then(() => {
-        this.$refs.table.filterTable()
-
-        this.notificationHub.add({
-          msg: this.$t('CRFForms.inactivated'),
-        })
+  if (
+    relationships < 1 ||
+    (await confirm.value?.open(
+      `${t('CRFForms.delete_warning', { count: relationships })}`,
+      options
+    ))
+  ) {
+    crfs.delete('forms', item.uid).then(() => {
+      table.value?.filterTable?.()
+      notificationHub?.add({
+        msg: t('CRFForms.deleted'),
       })
-    },
-    reactivate(item) {
-      crfs.reactivate('forms', item.uid).then(() => {
-        this.$refs.table.filterTable()
-
-        this.notificationHub.add({
-          msg: this.$t('CRFForms.reactivated'),
-        })
-      })
-    },
-    async newVersion(item) {
-      if (
-        await this.$refs.confirmNewVersion.open({
-          agreeLabel: this.$t('CRFForms.create_new_version'),
-          form: item,
-        })
-      ) {
-        crfs.newVersion('forms', item.uid).then(() => {
-          this.$refs.table.filterTable()
-
-          this.notificationHub.add({
-            msg: this.$t('_global.new_version_success'),
-          })
-        })
-      }
-    },
-    edit(item) {
-      crfs.getForm(item.uid).then((resp) => {
-        this.selectedForm = resp.data
-        this.showForm = true
-      })
-    },
-    view(item) {
-      crfs.getForm(item.uid).then((resp) => {
-        this.selectedForm = resp.data
-        this.showForm = true
-      })
-    },
-    openForm() {
-      this.selectedForm = null
-      this.showForm = true
-    },
-    async closeForm() {
-      this.showForm = false
-      this.selectedForm = null
-      this.$refs.table.filterTable()
-    },
-    async openFormHistory(form) {
-      this.selectedForm = form
-      const resp = await crfs.getFormAuditTrail(form.uid)
-      this.formHistoryItems = resp.data
-      this.showFormHistory = true
-    },
-    closeFormHistory() {
-      this.selectedForm = null
-      this.showFormHistory = false
-    },
-    async getForms(filters, options, filtersUpdated) {
-      if (filters) {
-        this.filters = filters
-      }
-      const params = filteringParameters.prepareParameters(
-        options,
-        filters,
-        filtersUpdated
-      )
-      this.fetchForms(params)
-    },
-  },
+    })
+  }
 }
+
+async function approve(item) {
+  const ok = await confirmApproval.value?.open({
+    agreeLabel: t('CRFForms.approve_form'),
+    form: item,
+  })
+  if (ok) {
+    crfs.approve('forms', item.uid).then(() => {
+      table.value?.filterTable?.()
+      notificationHub?.add({
+        msg: t('CRFForms.approved'),
+      })
+    })
+  }
+}
+
+function inactivate(item) {
+  crfs.inactivate('forms', item.uid).then(() => {
+    table.value?.filterTable?.()
+    notificationHub?.add({
+      msg: t('CRFForms.inactivated'),
+    })
+  })
+}
+
+function reactivate(item) {
+  crfs.reactivate('forms', item.uid).then(() => {
+    table.value?.filterTable?.()
+    notificationHub?.add({
+      msg: t('CRFForms.reactivated'),
+    })
+  })
+}
+
+async function newVersion(item) {
+  const ok = await confirmNewVersion.value?.open({
+    agreeLabel: t('CRFForms.create_new_version'),
+    form: item,
+  })
+  if (ok) {
+    crfs.newVersion('forms', item.uid).then(() => {
+      table.value?.filterTable?.()
+      notificationHub?.add({
+        msg: t('_global.new_version_success'),
+      })
+    })
+  }
+}
+
+function view(item) {
+  crfs.getForm(item.uid).then((resp) => {
+    selectedForm.value = resp.data
+    showForm.value = true
+  })
+}
+
+function openForm() {
+  selectedForm.value = null
+  showForm.value = true
+}
+
+async function closeForm() {
+  showForm.value = false
+  selectedForm.value = null
+  table.value?.filterTable?.()
+}
+
+async function openFormHistory(form) {
+  selectedForm.value = form
+  const resp = await crfs.getFormAuditTrail(form.uid)
+  formHistoryItems.value = resp.data
+  showFormHistory.value = true
+}
+
+function closeFormHistory() {
+  selectedForm.value = null
+  showFormHistory.value = false
+}
+
+async function getForms(filterString, options, filtersUpdated) {
+  if (filterString) {
+    filters.value = filterString
+  }
+  const params = filteringParameters.prepareParameters(
+    options,
+    filterString,
+    filtersUpdated
+  )
+  crfsStore.fetchForms(params)
+}
+
+const actions = computed(() => [
+  {
+    label: t('_global.approve'),
+    icon: 'mdi-check-decagram',
+    iconColor: 'success',
+    condition: (item) =>
+      item.possible_actions.find((action) => action === 'approve'),
+    accessRole: roles.LIBRARY_WRITE,
+    click: approve,
+  },
+  {
+    label: t('_global.edit'),
+    icon: 'mdi-pencil-outline',
+    iconColor: 'primary',
+    condition: (item) =>
+      item.possible_actions.find((action) => action === 'edit'),
+    accessRole: roles.LIBRARY_WRITE,
+    click: view,
+  },
+  {
+    label: t('_global.view'),
+    icon: 'mdi-eye-outline',
+    iconColor: 'primary',
+    condition: (item) => item.status === statuses.FINAL,
+    click: view,
+  },
+  {
+    label: t('_global.new_version'),
+    icon: 'mdi-plus-circle-outline',
+    iconColor: 'primary',
+    condition: (item) =>
+      item.possible_actions.find((action) => action === 'new_version'),
+    accessRole: roles.LIBRARY_WRITE,
+    click: newVersion,
+  },
+  {
+    label: t('_global.inactivate'),
+    icon: 'mdi-close-octagon-outline',
+    iconColor: 'primary',
+    condition: (item) =>
+      item.possible_actions.find((action) => action === 'inactivate'),
+    accessRole: roles.LIBRARY_WRITE,
+    click: inactivate,
+  },
+  {
+    label: t('_global.reactivate'),
+    icon: 'mdi-undo-variant',
+    iconColor: 'primary',
+    condition: (item) =>
+      item.possible_actions.find((action) => action === 'reactivate'),
+    accessRole: roles.LIBRARY_WRITE,
+    click: reactivate,
+  },
+  {
+    label: t('_global.delete'),
+    icon: 'mdi-delete-outline',
+    iconColor: 'error',
+    condition: (item) =>
+      item.possible_actions.find((action) => action === 'delete'),
+    accessRole: roles.LIBRARY_WRITE,
+    click: deleteForm,
+  },
+  {
+    label: t('_global.history'),
+    icon: 'mdi-history',
+    click: openFormHistory,
+  },
+])
+
+watch(
+  () => props.elementProp,
+  (value) => {
+    if (value?.tab === 'forms' && value?.type === crfTypes.FORM && value?.uid) {
+      view({ uid: value.uid })
+    }
+  }
+)
 </script>

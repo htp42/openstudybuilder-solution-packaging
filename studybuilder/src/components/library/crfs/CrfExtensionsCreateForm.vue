@@ -1,6 +1,6 @@
 <template>
   <SimpleFormDialog
-    ref="form"
+    ref="formDialog"
     :title="title"
     :help-items="helpItems"
     :open="open"
@@ -45,73 +45,80 @@
   </SimpleFormDialog>
 </template>
 
-<script>
+<script setup>
+import { computed, inject, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import SimpleFormDialog from '@/components/tools/SimpleFormDialog.vue'
 import crfs from '@/api/crfs'
 
-export default {
-  components: {
-    SimpleFormDialog,
+const props = defineProps({
+  open: Boolean,
+  editItem: {
+    type: Object,
+    default: null,
   },
-  inject: ['formRules'],
-  props: {
-    open: Boolean,
-    editItem: {
-      type: Object,
-      default: null,
-    },
-  },
-  emits: ['close'],
-  data() {
-    return {
-      form: {},
-      helpItems: [],
-    }
-  },
-  computed: {
-    title() {
-      return this.editItem.uid
-        ? this.$t('CRFExtensions.edit_namespace')
-        : this.$t('CRFExtensions.new_namespace')
-    },
-  },
-  watch: {
-    editItem(value) {
-      this.initForm(value)
-    },
-  },
-  methods: {
-    async cancel() {
-      this.close()
-    },
-    close() {
-      this.$refs.observer.reset()
-      this.$emit('close')
-    },
-    async submit() {
-      if (this.editItem.uid) {
-        crfs.editNamespace(this.editItem.uid, this.form).then(
-          () => {
-            this.close()
-          },
-          () => {
-            this.$refs.form.working = false
-          }
-        )
-      } else {
-        crfs.createNamespace(this.form).then(
-          () => {
-            this.close()
-          },
-          () => {
-            this.$refs.form.working = false
-          }
-        )
+})
+
+const emit = defineEmits(['close'])
+
+const formRules = inject('formRules')
+const { t } = useI18n()
+
+const formDialog = ref(null)
+const observer = ref(null)
+
+const form = ref({})
+const helpItems = ref([])
+
+const title = computed(() =>
+  props.editItem?.uid
+    ? t('CRFExtensions.edit_namespace')
+    : t('CRFExtensions.new_namespace')
+)
+
+watch(
+  () => props.editItem,
+  (value) => {
+    initForm(value)
+  }
+)
+
+const cancel = async () => {
+  close()
+}
+
+const close = () => {
+  observer.value?.reset?.()
+  emit('close')
+}
+
+const submit = async () => {
+  if (props.editItem?.uid) {
+    crfs.editNamespace(props.editItem.uid, form.value).then(
+      () => {
+        close()
+      },
+      () => {
+        if (formDialog.value) {
+          formDialog.value.working = false
+        }
       }
-    },
-    initForm(item) {
-      this.form = item
-    },
-  },
+    )
+  } else {
+    crfs.createNamespace(form.value).then(
+      () => {
+        close()
+      },
+      () => {
+        if (formDialog.value) {
+          formDialog.value.working = false
+        }
+      }
+    )
+  }
+}
+
+const initForm = (item) => {
+  form.value = item || {}
 }
 </script>

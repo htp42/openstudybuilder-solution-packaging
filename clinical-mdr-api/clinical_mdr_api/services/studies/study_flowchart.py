@@ -162,6 +162,8 @@ OPERATIONAL_XLSX_STYLES = {
     "group": "Heading 4",
     "subGroup": "Heading 4",
     "activity": "Heading 4",
+    "library": "Heading 4",
+    "instance": "Heading 4",
     "activityRequest": "Heading 4",
     "activityRequestFinal": "Heading 4",
     "activityPlaceholder": "Heading 4",
@@ -1149,7 +1151,7 @@ class StudyFlowchartService:
                             style="studyVersion",
                         )
                     ]
-                    + [TableCell(span=0, style="studyVersion")] * 2
+                    + [TableCell(span=0, style="studyVersion")] * 4
                 ),
                 TableRow(
                     cells=[
@@ -1159,7 +1161,7 @@ class StudyFlowchartService:
                             style="studyNumber",
                         )
                     ]
-                    + [TableCell(span=0, style="studyNumber")] * 2
+                    + [TableCell(span=0, style="studyNumber")] * 4
                 ),
                 TableRow(
                     cells=[
@@ -1174,16 +1176,20 @@ class StudyFlowchartService:
                         TableCell(span=0, style="extractedBy"),
                         TableCell(),
                         TableCell(),
+                        TableCell(),
+                        TableCell(),
                         TableCell("Epochs", style="header1"),
                     ]
                 ),
                 TableRow(
                     cells=[
                         TableCell("lowest visibility layer", style="header3"),
+                        TableCell("Library", style="header3"),
                         TableCell("SoA group", style="header3"),
                         TableCell("Group", style="header3"),
                         TableCell("Subgroup", style="header3"),
                         TableCell("Activity", style="header3"),
+                        TableCell("Instance", style="header3"),
                         TableCell("Topic Code", style="header3"),
                         TableCell("ADaM Param Code", style="header3"),
                         TableCell("Visits", style="header1"),
@@ -1249,12 +1255,6 @@ class StudyFlowchartService:
         ]
 
         for study_selection_activity in selection_activities:
-            # Do not show activity instance placeholders
-            if layout == SoALayout.OPERATIONAL and not getattr(
-                study_selection_activity, "activity_instance", None
-            ):
-                continue
-
             rows.append(row := TableRow())
 
             # Visibility
@@ -1283,6 +1283,14 @@ class StudyFlowchartService:
 
             if layout == SoALayout.OPERATIONAL:
                 row.cells.append(TableCell(visibility, style="visibility"))
+
+                # Library
+                row.cells.append(
+                    TableCell(
+                        study_selection_activity.activity.library_name or "",
+                        style="library",
+                    )
+                )
 
             # SoA Group
             row.cells.append(
@@ -1322,6 +1330,18 @@ class StudyFlowchartService:
             )
 
             if layout == SoALayout.OPERATIONAL:
+                # Instance
+                row.cells.append(
+                    TableCell(
+                        (
+                            study_selection_activity.activity_instance.name
+                            if study_selection_activity.activity_instance
+                            else ""
+                        ),
+                        style="instance",
+                    )
+                )
+
                 # Topic Code
                 row.cells.append(
                     TableCell(
@@ -1561,7 +1581,7 @@ class StudyFlowchartService:
         if num_visits_in_group == 1:
             if (
                 getattr(visit, visit_timing_property) is not None
-                and visit.visit_class != VisitClass.SPECIAL_VISIT.name
+                and visit.visit_class != VisitClass.SPECIAL_VISIT
             ):
                 return f"{getattr(visit, visit_timing_property):d}"
 
@@ -1600,7 +1620,7 @@ class StudyFlowchartService:
             visit.min_visit_window_value,
             visit.max_visit_window_value,
         ):
-            if visit.visit_class == VisitClass.SPECIAL_VISIT.name:
+            if visit.visit_class == VisitClass.SPECIAL_VISIT:
                 return ""
             if visit.min_visit_window_value == visit.max_visit_window_value == 0:
                 # visit window is zero
@@ -2471,8 +2491,9 @@ class StudyFlowchartService:
                 <-[:HAS_STUDY_ACTIVITY_INSTANCE]-(study_value)
             WHERE NOT (study_activity)-[:BEFORE]-()
             MATCH (study_activity_instance)-[:HAS_SELECTED_ACTIVITY_INSTANCE]->(activity_instance_value:ActivityInstanceValue)
-            WITH has_version,study_value, study_activity_schedule, study_visit, study_epoch, study_activity_instance, study_activity, activity_instance_value,
-            head([(study_activity)-[:HAS_SELECTED_ACTIVITY]->(activity_value:ActivityValue) | activity_value]) as activity,
+            MATCH (study_activity)-[:HAS_SELECTED_ACTIVITY]->(activity_value:ActivityValue)<-[:HAS_VERSION]-(:ActivityRoot)<-[:CONTAINS_CONCEPT]-(lib:Library)
+            WITH has_version,study_value, study_activity_schedule, study_visit, study_epoch, study_activity_instance, study_activity, activity_instance_value, lib,
+            head([(study_activity)-[:HAS_SELECTED_ACTIVITY]->(av:ActivityValue) | av]) as activity,
             head([(study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]->(study_activity_subgroup:StudyActivitySubGroup)
                 -[:HAS_SELECTED_ACTIVITY_SUBGROUP]->(activity_subgroup_value:ActivitySubGroupValue) 
                     | {
@@ -2501,6 +2522,7 @@ class StudyFlowchartService:
                     ELSE "LATEST on "+apoc.temporal.format(datetime(), 'yyyy-MM-dd HH:mm:ss zzz')
                 END as study_version,
                 study_value.study_number AS study_number,
+                lib.name AS library,
                 study_visit.short_visit_label AS visit,
                 epoch_name AS epoch,
                 activity.name AS activity,

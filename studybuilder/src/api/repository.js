@@ -8,8 +8,8 @@ import { useErrorHandler } from '@/composables/errorHandler'
 
 const _axios = axios.create()
 
-_axios.interceptors.request.use(
-  async function (config) {
+const requestInterceptors = {
+  onFulfilled: async function (config) {
     const studiesGeneralStore = useStudiesGeneralStore()
     if (config.method === 'get' && config.url.indexOf('studies/') !== -1) {
       if (config.params) {
@@ -49,19 +49,18 @@ _axios.interceptors.request.use(
 
     return config
   },
-  function (error) {
+  onRejected: function (error) {
     // Do something with request error
     return Promise.reject(error)
-  }
-)
+  },
+}
 
-// Add a response interceptor
-_axios.interceptors.response.use(
-  function (response) {
+const responseInterceptors = {
+  onFulfilled: function (response) {
     // Just return unchanged response data
     return response
   },
-  function (error) {
+  onRejected: function (error) {
     console.log(error)
     if (error.config && !error.config.ignoreErrors) {
       if (!error.response) {
@@ -80,7 +79,19 @@ _axios.interceptors.response.use(
       }
     }
     return Promise.reject(error)
-  }
+  },
+}
+
+_axios.interceptors.request.use(
+  requestInterceptors.onFulfilled,
+  requestInterceptors.onRejected
+)
+
+// Add a response interceptor
+_axios.interceptors.response.use(
+  responseInterceptors.onFulfilled,
+  responseInterceptors.onRejected
 )
 
 export default _axios
+export { requestInterceptors, responseInterceptors }

@@ -15,6 +15,7 @@ class CTTermCodelist(BaseModel):
     ]
     submission_value: Annotated[str, Field()]
     order: Annotated[int | None, Field(json_schema_extra={"nullable": True})]
+    ordinal: Annotated[float | None, Field(json_schema_extra={"nullable": True})] = None
     start_date: datetime
 
     library_name: Annotated[str, Field()]

@@ -75,9 +75,9 @@
         <v-btn
           v-if="editMode"
           class="ml-2"
-          size="small"
           variant="outlined"
           color="nnBaseBlue"
+          rounded
           :title="$t('_global.cancel')"
           data-cy="close-edit-mode"
           @click.stop="closeEditMode"
@@ -89,34 +89,34 @@
         <v-progress-circular v-show="loading" indeterminate color="primary" />
         <v-btn
           v-show="!loading"
-          class="ml-2"
-          size="small"
+          class="ml-2 expandHoverBtn"
           variant="outlined"
           color="nnBaseBlue"
-          :title="$t('NNTableTooltips.add_content')"
           :disabled="
             !accessGuard.checkPermission($roles.STUDY_WRITE) ||
             studiesGeneralStore.selectedStudyVersion !== null
           "
           data-cy="add-visit"
-          icon="mdi-plus"
           @click.stop="openForm"
-        />
+        >
+          <v-icon left>mdi-plus</v-icon>
+          <span class="label">{{ $t('StudyVisitTable.add_visit') }}</span>
+        </v-btn>
         <v-btn
           v-if="!editMode && !loading"
-          class="ml-2"
-          size="small"
+          class="ml-2 expandHoverBtn"
           variant="outlined"
           color="nnBaseBlue"
-          :title="$t('_global.edit')"
           data-cy="edit-study-visits"
           :disabled="
             !accessGuard.checkPermission($roles.STUDY_WRITE) ||
             studiesGeneralStore.selectedStudyVersion !== null
           "
-          icon="mdi-pencil-outline"
           @click.stop="openEditMode"
-        />
+        >
+          <v-icon left>mdi-pencil-outline</v-icon>
+          <span class="label">{{ $t('_global.edit_in_table') }}</span>
+        </v-btn>
         <v-progress-circular
           v-show="loading"
           indeterminate

@@ -2670,11 +2670,12 @@ END
                     }) AS odm_items
                 }
                 RETURN  COLLECT( distinct {
-                    activity_item_class_uid: activity_item_class_root.uid, 
-                    activity_item_class_name: activity_item_class_value.name, 
-                    ct_terms:ct_terms, 
+                    activity_item_class_uid: activity_item_class_root.uid,
+                    activity_item_class_name: activity_item_class_value.name,
+                    ct_terms:ct_terms,
                     unit_definitions: unit_definitions,
                     is_adam_param_specific: activity_item.is_adam_param_specific,
+                    text_value: activity_item.text_value,
                     odm_forms: odm_forms,
                     odm_item_groups: odm_item_groups,
                     odm_items: odm_items

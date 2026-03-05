@@ -180,7 +180,20 @@ class SponsorModelDatasetVariableRepository(  # type: ignore[misc]
             enrich_build_order=ar.sponsor_model_dataset_variable_vo.enrich_build_order,
             enrich_rule=ar.sponsor_model_dataset_variable_vo.enrich_rule,
         )
+
         self._db_save_node(new_instance)
+
+        # Add extra properties using Cypher (neomodel only saves defined properties)
+        if ar.sponsor_model_dataset_variable_vo.extra_properties:
+            # Sanitize key names for Neo4j (replace spaces and dashes with underscores)
+            sanitized_props = {
+                key.replace(" ", "_").replace("-", "_"): value
+                for key, value in ar.sponsor_model_dataset_variable_vo.extra_properties.items()
+            }
+            db.cypher_query(
+                "MATCH (n) WHERE elementId(n) = $element_id SET n += $extra_props",
+                {"element_id": new_instance.element_id, "extra_props": sanitized_props},
+            )
 
         # Connect with root
         root.has_sponsor_model_instance.connect(new_instance)
@@ -283,6 +296,60 @@ class SponsorModelDatasetVariableRepository(  # type: ignore[misc]
                 sponsor_model_version,
                 _,
             ) = get_sponsor_model_info_from_dataset(dataset_value, return_ordinal=False)
+
+        # Extract extra properties from the Neo4j node
+        known_fields = {
+            "is_basic_std",
+            "label",
+            "variable_type",
+            "length",
+            "display_format",
+            "xml_datatype",
+            "core",
+            "origin",
+            "origin_type",
+            "origin_source",
+            "role",
+            "term",
+            "algorithm",
+            "qualifiers",
+            "is_cdisc_std",
+            "comment",
+            "ig_comment",
+            "class_table",
+            "class_column",
+            "map_var_flag",
+            "fixed_mapping",
+            "include_in_raw",
+            "nn_internal",
+            "value_lvl_where_cols",
+            "value_lvl_label_col",
+            "value_lvl_collect_ct_val",
+            "value_lvl_ct_codelist_id_col",
+            "enrich_build_order",
+            "enrich_rule",
+            "id",
+            "element_id",
+            "implemented_variable_class_inconsistency",
+            "implemented_variable_class_uid",
+            "implemented_parent_dataset_class_uid",
+            "implemented_parent_dataset_class",
+            "implemented_variable_class",
+            "references_codelist",
+            "references_terms",
+        }
+        extra_props = {}
+        for key in dir(value):
+            if not key.startswith("_") and hasattr(value, key):
+                attr = getattr(value, key)
+                # Only include simple data types (not methods, relationships, etc.)
+                if (
+                    key not in known_fields
+                    and not callable(attr)
+                    and not hasattr(attr, "_all")
+                ):
+                    extra_props[key] = attr
+
         return SponsorModelDatasetVariableAR.from_repository_values(
             variable_uid=root.uid,
             sponsor_model_dataset_variable_vo=SponsorModelDatasetVariableVO.from_repository_values(
@@ -324,6 +391,7 @@ class SponsorModelDatasetVariableRepository(  # type: ignore[misc]
                 value_lvl_ct_codelist_id_col=value.value_lvl_ct_codelist_id_col,
                 enrich_build_order=value.enrich_build_order,
                 enrich_rule=value.enrich_rule,
+                extra_properties=extra_props if extra_props else None,
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=library.name,

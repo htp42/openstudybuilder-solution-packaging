@@ -13,13 +13,13 @@
     @save="submit"
   >
     <template #[`step.form`]="{ step }">
-      <v-form :ref="`observer_${step}`">
+      <v-form :ref="`observer${step}`">
         <v-card elevation="4" class="mx-auto pa-4">
           <div class="text-h5 mb-4">
             {{ $t('CRFForms.definition') }}
           </div>
           <v-row>
-            <v-col cols="6">
+            <v-col cols="4">
               <v-text-field
                 v-model="form.name"
                 :label="$t('CRFItems.name') + '*'"
@@ -30,7 +30,7 @@
                 :readonly="isReadOnly"
               />
             </v-col>
-            <v-col cols="6">
+            <v-col cols="4">
               <v-text-field
                 v-model="form.oid"
                 :label="$t('CRFItems.oid')"
@@ -40,8 +40,6 @@
                 :readonly="isReadOnly"
               />
             </v-col>
-          </v-row>
-          <v-row>
             <v-col cols="4">
               <v-select
                 v-model="form.datatype"
@@ -53,12 +51,13 @@
                 :rules="[formRules.required]"
                 density="compact"
                 :clearable="!isReadOnly"
-                class="mt-3"
                 :readonly="isReadOnly"
                 @update:model-value="checkIfNumeric()"
               />
             </v-col>
-            <v-col v-if="lengthFieldCheck" cols="4">
+          </v-row>
+          <v-row>
+            <v-col v-if="lengthFieldCheck" cols="6">
               <v-text-field
                 v-model="form.length"
                 :label="$t('CRFItems.length')"
@@ -71,7 +70,7 @@
                 :readonly="isReadOnly"
               />
             </v-col>
-            <v-col v-if="digitsFieldCheck" cols="4">
+            <v-col v-if="digitsFieldCheck" cols="6">
               <v-text-field
                 v-model="form.significant_digits"
                 :label="$t('CRFItems.significant_digits')"
@@ -83,64 +82,6 @@
                 type="number"
                 :readonly="isReadOnly"
               />
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col cols="6">
-              <div class="subtitle-2">
-                {{ $t('_global.description') }}
-              </div>
-              <div>
-                <QuillEditor
-                  v-model:content="engDescription.description"
-                  content-type="html"
-                  :toolbar="customToolbar"
-                  :read-only="isReadOnly"
-                />
-              </div>
-            </v-col>
-            <v-col cols="6">
-              <div class="subtitle-2">
-                {{ $t('CRFDescriptions.sponsor_instruction') }}
-              </div>
-              <div>
-                <QuillEditor
-                  v-model:content="engDescription.sponsor_instruction"
-                  content-type="html"
-                  :toolbar="customToolbar"
-                  :read-only="isReadOnly"
-                />
-              </div>
-            </v-col>
-          </v-row>
-        </v-card>
-        <v-card elevation="4" class="mx-auto mt-3 pa-4">
-          <div class="text-h5 mb-4">
-            {{ $t('CRFForms.display') }}
-          </div>
-          <v-row>
-            <v-col cols="3">
-              <v-text-field
-                v-model="engDescription.name"
-                :label="$t('CRFDescriptions.name')"
-                data-cy="form-oid-name"
-                density="compact"
-                :clearable="!isReadOnly"
-                :readonly="isReadOnly"
-              />
-            </v-col>
-            <v-col cols="9">
-              <div class="subtitle-2">
-                {{ $t('CRFDescriptions.instruction') }}
-              </div>
-              <div>
-                <QuillEditor
-                  v-model:content="engDescription.instruction"
-                  content-type="html"
-                  :toolbar="customToolbar"
-                  :read-only="isReadOnly"
-                />
-              </div>
             </v-col>
           </v-row>
         </v-card>
@@ -198,6 +139,14 @@
         </v-card>
       </v-form>
     </template>
+    <template #[`step.translated_texts`]="{ step }">
+      <v-form :ref="`observer${step}`">
+        <CrfTranslatedTextSelection
+          v-model="form.translated_texts"
+          :read-only="isReadOnly"
+        />
+      </v-form>
+    </template>
     <template #[`step.extensions`]>
       <CrfExtensionsManagementTable
         type="ItemDef"
@@ -207,17 +156,12 @@
       />
     </template>
     <template #[`step.alias`]="{ step }">
-      <v-form :ref="`observer_${step}`">
+      <v-form :ref="`observer${step}`">
         <CrfAliasSelection v-model="form.aliases" :read-only="isReadOnly" />
       </v-form>
     </template>
-    <template #[`step.description`]="{ step }">
-      <v-form :ref="`observer_${step}`">
-        <CrfDescriptionSelection v-model="desc" :read-only="isReadOnly" />
-      </v-form>
-    </template>
     <template #[`step.codelist`]="{ step }">
-      <v-form :ref="`observer_${step}`">
+      <v-form :ref="`observer${step}`">
         <v-data-table
           height="135px"
           :headers="selectedCodelistHeaders"
@@ -268,26 +212,54 @@
       </v-col>
     </template>
     <template #[`step.terms`]="{ step }">
-      <v-form :ref="`observer_${step}`">
-        <v-data-table :headers="selectedTermsHeaders" :items="selectedTerms">
-          <template #[`item.mandatory`]="{ item }">
-            <v-checkbox v-model="item.mandatory" :readonly="isReadOnly" />
-          </template>
-          <template #[`item.display_text`]="{ item }">
-            <v-text-field
-              v-model="item.display_text"
-              :readonly="isReadOnly"
-              density="compact"
-            />
-          </template>
-          <template #[`item.delete`]="{ item }">
-            <v-btn
-              icon="mdi-delete-outline"
-              class="mt-1"
-              variant="text"
-              :readonly="isReadOnly"
-              @click="removeTerm(item)"
-            />
+      <v-form :ref="`observer${step}`">
+        <v-data-table
+          :headers="selectedTermsHeaders"
+          :items="selectedTerms"
+          hide-default-body
+        >
+          <template #tbody="{ items }">
+            <tbody v-if="items.length > 0" ref="termsTable">
+              <tr v-for="item in items" :key="item.term_uid">
+                <td>
+                  <v-icon
+                    :style="isReadOnly ? '' : { cursor: 'pointer' }"
+                    :readonly="isReadOnly"
+                  >
+                    mdi-arrow-up-down
+                  </v-icon>
+                </td>
+                <td>{{ item.term_uid }}</td>
+                <td>{{ item.name }}</td>
+                <td>
+                  <v-checkbox v-model="item.mandatory" :readonly="isReadOnly" />
+                </td>
+                <td>
+                  <v-text-field
+                    v-model="item.display_text"
+                    :readonly="isReadOnly"
+                    density="compact"
+                  />
+                </td>
+                <td>
+                  <v-btn
+                    icon="mdi-delete-outline"
+                    class="mt-1"
+                    variant="text"
+                    :readonly="isReadOnly"
+                    @click="removeTerm(item)"
+                  />
+                </td>
+              </tr>
+            </tbody>
+
+            <tbody v-else>
+              <tr>
+                <td :colspan="selectedTermsHeaders.length" class="text-center">
+                  {{ $t('CRFItems.no_terms_selected') }}
+                </td>
+              </tr>
+            </tbody>
           </template>
         </v-data-table>
       </v-form>
@@ -297,7 +269,7 @@
         <NNTable
           :headers="termsHeaders"
           item-value="uid"
-          :items="terms"
+          :items="termsList"
           :items-length="totalTerms"
           hide-export-button
           only-text-search
@@ -310,8 +282,8 @@
               icon="mdi-plus"
               class="mt-1"
               variant="text"
-              :readonly="
-                isReadOnly ||
+              :readonly="isReadOnly"
+              :disabled="
                 selectedTerms.find((e) => e.term_uid === item.term_uid)
               "
               @click="addTerm(item)"
@@ -321,26 +293,27 @@
       </v-col>
     </template>
     <template #[`step.unit`]="{ step }">
-      <v-form :ref="`observer_${step}`">
+      <v-form :ref="`observer${step}`">
         <NNTable
           :headers="unitHeaders"
           item-value="uid"
           disable-filtering
           :items="chosenUnits"
+          :items-length="chosenUnits.length"
           hide-export-button
           hide-default-switches
         >
           <template #actions="">
             <v-btn
-              class="ml-2"
-              size="small"
+              class="ml-2 expandHoverBtn"
               variant="outlined"
               color="nnBaseBlue"
-              :label="$t('CRFItemGroups.new_translation')"
               :readonly="isReadOnly"
-              icon="mdi-plus"
               @click.stop="addUnit"
-            />
+            >
+              <v-icon left>mdi-plus</v-icon>
+              <span class="label">{{ $t('CRFItems.add_unit') }}</span>
+            </v-btn>
           </template>
           <template #[`item.name`]="{ index }">
             <v-autocomplete
@@ -373,7 +346,7 @@
       </v-form>
     </template>
     <template #[`step.activity_instance_links`]="{ step }">
-      <v-form :ref="`observer_${step}`">
+      <v-form :ref="`observer${step}`">
         <v-card
           v-for="(activityInstance, idx) in form.activity_instances"
           :key="idx"
@@ -685,7 +658,7 @@
       </v-form>
     </template>
     <template #[`step.change_description`]="{ step }">
-      <v-form :ref="`observer_${step}`">
+      <v-form :ref="`observer${step}`">
         <v-row>
           <v-col>
             <v-text-field
@@ -713,7 +686,10 @@
   <CrfNewVersionSummaryConfirmDialog ref="confirmNewVersion" />
 </template>
 
-<script>
+<script setup>
+import { computed, inject, onMounted, ref, watch } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useI18n } from 'vue-i18n'
 import crfs from '@/api/crfs'
 import codelistApi from '@/api/controlledTerminology/codelists'
 import NNTable from '@/components/tools/NNTable.vue'
@@ -723,1018 +699,1002 @@ import HorizontalStepperForm from '@/components/tools/HorizontalStepperForm.vue'
 import controlledTerminology from '@/api/controlledTerminology'
 import constants from '@/constants/libraries'
 import CrfAliasSelection from '@/components/library/crfs/CrfAliasSelection.vue'
-import CrfDescriptionSelection from '@/components/library/crfs/CrfDescriptionSelection.vue'
-import { QuillEditor } from '@vueup/vue-quill'
+import CrfTranslatedTextSelection from '@/components/library/crfs/CrfTranslatedTextSelection.vue'
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
-import crfTypes from '@/constants/crfTypes'
 import ActionsMenu from '@/components/tools/ActionsMenu.vue'
-import actions from '@/constants/actions'
-import parameters from '@/constants/parameters'
+import actionTypes from '@/constants/actions'
 import CrfExtensionsManagementTable from '@/components/library/crfs/CrfExtensionsManagementTable.vue'
 import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
-import { useAppStore } from '@/stores/app'
-import { computed } from 'vue'
 import { useUnitsStore } from '@/stores/units'
 import filteringParameters from '@/utils/filteringParameters'
-import regex from '@/utils/regex'
 import CrfNewVersionSummaryConfirmDialog from '@/components/library/crfs/CrfNewVersionSummaryConfirmDialog.vue'
 import CrfApprovalSummaryConfirmDialog from '@/components/library/crfs/CrfApprovalSummaryConfirmDialog.vue'
 import _isEmpty from 'lodash/isEmpty'
 import activities from '@/api/activities'
 import { useAccessGuard } from '@/composables/accessGuard'
+import { useDragAndDrop } from '@formkit/drag-and-drop/vue'
 
-export default {
-  components: {
-    NNTable,
-    HorizontalStepperForm,
-    CrfAliasSelection,
-    CrfDescriptionSelection,
-    QuillEditor,
-    ActionsMenu,
-    CrfExtensionsManagementTable,
-    ConfirmDialog,
-    CrfNewVersionSummaryConfirmDialog,
-    CrfApprovalSummaryConfirmDialog,
+const notificationHub = inject('notificationHub')
+const formRules = inject('formRules')
+const roles = inject('roles')
+
+const props = defineProps({
+  selectedItem: {
+    type: Object,
+    default: null,
   },
-  inject: ['notificationHub', 'formRules'],
-  props: {
-    selectedItem: {
-      type: Object,
-      default: null,
-    },
-    startStep: {
-      type: String,
-      default: null,
-    },
-    readOnlyProp: {
-      type: Boolean,
-      default: false,
-    },
+  startStep: {
+    type: String,
+    default: null,
   },
-  emits: ['updateItem', 'close', 'linkItem'],
-  setup() {
-    const appStore = useAppStore()
-    const unitsStore = useUnitsStore()
-    const accessGuard = useAccessGuard()
+  readOnlyProp: {
+    type: Boolean,
+    default: false,
+  },
+})
 
-    const { isShaking, activateShake } = useShake()
+const emit = defineEmits(['updateItem', 'close', 'linkItem'])
 
-    return {
-      isShaking,
-      activateShake,
-      checkPermission: accessGuard.checkPermission,
-      fetchUnits: unitsStore.fetchUnits,
-      userData: computed(() => appStore.userData),
-      units: computed(() => unitsStore.units),
-      clearEmptyHtml: regex.clearEmptyHtml,
+const { t } = useI18n()
+const { checkPermission } = useAccessGuard()
+
+const unitsStore = useUnitsStore()
+const { units } = storeToRefs(unitsStore)
+const { isShaking, activateShake } = useShake()
+
+const stepper = ref(null)
+const confirm = ref(null)
+const confirmApproval = ref(null)
+const confirmNewVersion = ref(null)
+
+const observer1 = ref(null)
+const observer2 = ref(null)
+const observer3 = ref(null)
+const observer4 = ref(null)
+const observer5 = ref(null)
+const observer6 = ref(null)
+const observer7 = ref(null)
+const observer8 = ref(null)
+
+function getObserver(step) {
+  const observers = {
+    1: observer1,
+    2: observer2,
+    3: observer3,
+    4: observer4,
+    5: observer5,
+    6: observer6,
+    7: observer7,
+    8: observer8,
+  }
+  return observers[step]?.value
+}
+
+const helpItems = [
+  'CRFItems.name',
+  'CRFItems.oid',
+  'CRFItems.data_type',
+  'CRFItems.length',
+  'CRFItems.significant_digits',
+  'CRFItems.sas_name',
+  'CRFItems.sds_name',
+  'CRFItems.origin',
+  'CRFItems.comment',
+  'CRFItems.context',
+]
+
+function createDefaultActivityInstance() {
+  return {
+    activity_instance_uid: '',
+    activity_item_class_uid: '',
+    odm_form_uid: '',
+    odm_item_group_uid: '',
+    order: 999999,
+    preset_response_value: '',
+    primary: false,
+    value_condition: '',
+    value_dependent_map: '',
+    availableActivityItemClasses: [],
+    availableParentForms: [],
+    vendor_elements: [],
+    vendor_element_attributes: [],
+    vendor_attributes: [],
+  }
+}
+
+function createEmptyForm() {
+  return {
+    oid: 'I.',
+    aliases: [],
+    translated_texts: [],
+    activity_instances: [createDefaultActivityInstance()],
+  }
+}
+
+const [termsTable, selectedTerms] = useDragAndDrop([], {
+  disabled: props.readOnlyProp,
+})
+
+const form = ref(createEmptyForm())
+const originalForm = ref({})
+const selectedExtensions = ref([])
+
+const selectedCodelists = ref([])
+const chosenUnits = ref([{ name: '', mandatory: true }])
+
+const codelists = ref([])
+const options = ref({})
+const total = ref(0)
+const filters = ref('')
+const filtersUpdated = ref(false)
+const library = undefined
+
+const origins = ref([])
+const dataTypes = ref([])
+const termsList = ref([])
+const totalTerms = ref(0)
+
+const lengthFieldCheck = ref(false)
+const digitsFieldCheck = ref(false)
+const originFieldCheck = ref(true)
+
+const loading = ref(false)
+const readOnly = ref(props.readOnlyProp)
+
+const filteringTerms = ref([])
+const selectedFilteringTerms = ref([])
+const search = ref('')
+const termsFilterOperator = ref('or')
+
+const availableActivityInstances = ref([])
+const availableParentItemGroups = ref([])
+
+const selectedCodelistHeaders = ref([
+  { title: t('CtCatalogueTable.concept_id'), key: 'codelist_uid' },
+  { title: t('CtCatalogueTable.cd_name'), key: 'attributes.name' },
+  {
+    title: t('CtCatalogueTable.submission_value'),
+    key: 'attributes.submission_value',
+  },
+  {
+    title: t('CtCatalogueTable.nci_pref_name'),
+    key: 'attributes.nci_preferred_name',
+  },
+  {
+    title: t('CRFItems.multiple_choice'),
+    key: 'allowsMultiChoice',
+  },
+  { title: '', key: 'delete' },
+])
+
+const codelistHeaders = ref([
+  { title: t('CtCatalogueTable.concept_id'), key: 'codelist_uid' },
+  { title: t('CtCatalogueTable.cd_name'), key: 'attributes.name' },
+  {
+    title: t('CtCatalogueTable.submission_value'),
+    key: 'attributes.submission_value',
+  },
+  {
+    title: t('CtCatalogueTable.nci_pref_name'),
+    key: 'attributes.nci_preferred_name',
+  },
+  { title: '', key: 'actions' },
+])
+
+const unitHeaders = ref([
+  { title: t('CRFItemGroups.name'), key: 'name', width: '25%' },
+  { title: t('CRFItems.sponsor_unit'), key: 'oid', width: '20%' },
+  { title: t('UnitTable.ucum_unit'), key: 'ucum' },
+  { title: t('UnitTable.ct_units'), key: 'terms', width: '30%' },
+  { title: t('_global.mandatory'), key: 'mandatory' },
+  { title: '', key: 'delete' },
+])
+
+const termsHeaders = ref([
+  { title: t('CtCatalogueTable.concept_id'), key: 'term_uid' },
+  { title: t('_global.name'), key: 'sponsor_preferred_name' },
+  { title: '', key: 'add' },
+])
+
+const selectedTermsHeaders = ref([
+  {
+    title: '',
+    key: 'order',
+  },
+  {
+    title: t('CtCatalogueTable.concept_id'),
+    key: 'term_uid',
+    width: '10%',
+  },
+  {
+    title: t('CRFItems.sponsor_pref_name'),
+    key: 'name',
+    width: '40%',
+  },
+  { title: t('_global.mandatory'), key: 'mandatory', width: '5%' },
+  {
+    title: t('CRFItems.displayed_name'),
+    key: 'display_text',
+    width: '40%',
+  },
+  { title: '', key: 'delete', width: '1%' },
+])
+
+const steps = ref([])
+
+function buildCreateSteps() {
+  return [
+    { name: 'form', title: t('CRFItems.item_details') },
+    {
+      name: 'translated_texts',
+      title: t('CRFItems.translated_text_details'),
+    },
+    {
+      name: 'extensions',
+      title: t('CRFForms.vendor_extensions'),
+    },
+    { name: 'alias', title: t('CRFItemGroups.alias_details') },
+  ]
+}
+
+function buildEditSteps() {
+  return [
+    { name: 'form', title: t('CRFItems.item_details') },
+    {
+      name: 'translated_texts',
+      title: t('CRFItems.translated_text_details'),
+    },
+    {
+      name: 'extensions',
+      title: t('CRFForms.vendor_extensions'),
+    },
+    { name: 'alias', title: t('CRFItemGroups.alias_details') },
+    {
+      name: 'activity_instance_links',
+      title: t('CRFItems.activity_instance_links'),
+    },
+    { name: 'change_description', title: t('CRFForms.change_desc') },
+  ]
+}
+
+function dedupeSteps() {
+  const unique = Array.from(new Set(steps.value.map((a) => a.name))).map(
+    (name) => {
+      return steps.value.find((a) => a.name === name)
     }
-  },
-  data() {
-    return {
-      helpItems: [
-        'CRFItems.name',
-        'CRFItems.oid',
-        'CRFItems.data_type',
-        'CRFItems.length',
-        'CRFItems.significant_digits',
-        'CRFItems.sponsor_instruction',
-        'CRFItems.instruction',
-        'CRFItems.sas_name',
-        'CRFItems.sds_name',
-        'CRFItems.origin',
-        'CRFItems.comment',
-        'CRFItems.context',
-      ],
-      form: {
-        oid: 'I.',
-        aliases: [],
-        descriptions: [],
-        activity_instances: [
-          {
-            activity_instance_uid: '',
-            activity_item_class_uid: '',
-            odm_form_uid: '',
-            odm_item_group_uid: '',
-            order: 999999,
-            preset_response_value: '',
-            primary: false,
-            value_condition: '',
-            value_dependent_map: '',
-            availableActivityItemClasses: [],
-            availableParentForms: [],
-          },
-        ],
-      },
-      originalForm: {},
-      desc: [],
-      selectedExtensions: [],
-      selectedCodelistHeaders: [
-        { title: this.$t('CtCatalogueTable.concept_id'), key: 'codelist_uid' },
-        { title: this.$t('CtCatalogueTable.cd_name'), key: 'attributes.name' },
-        {
-          title: this.$t('CtCatalogueTable.submission_value'),
-          key: 'attributes.submission_value',
-        },
-        {
-          title: this.$t('CtCatalogueTable.nci_pref_name'),
-          key: 'attributes.nci_preferred_name',
-        },
-        {
-          title: this.$t('CRFItems.multiple_choice'),
-          key: 'allowsMultiChoice',
-        },
-        { title: '', key: 'delete' },
-      ],
-      codelistHeaders: [
-        { title: this.$t('CtCatalogueTable.concept_id'), key: 'codelist_uid' },
-        { title: this.$t('CtCatalogueTable.cd_name'), key: 'attributes.name' },
-        {
-          title: this.$t('CtCatalogueTable.submission_value'),
-          key: 'attributes.submission_value',
-        },
-        {
-          title: this.$t('CtCatalogueTable.nci_pref_name'),
-          key: 'attributes.nci_preferred_name',
-        },
-        { title: '', key: 'actions' },
-      ],
-      unitHeaders: [
-        { title: this.$t('CRFItemGroups.name'), key: 'name', width: '25%' },
-        { title: this.$t('CRFItems.sponsor_unit'), key: 'oid', width: '20%' },
-        { title: this.$t('UnitTable.ucum_unit'), key: 'ucum' },
-        { title: this.$t('UnitTable.ct_units'), key: 'terms', width: '30%' },
-        { title: this.$t('_global.mandatory'), key: 'mandatory' },
-        { title: '', key: 'delete' },
-      ],
-      termsHeaders: [
-        { title: this.$t('CtCatalogueTable.concept_id'), key: 'term_uid' },
-        { title: this.$t('_global.name'), key: 'name.sponsor_preferred_name' },
-        { title: '', key: 'add' },
-      ],
-      selectedTermsHeaders: [
-        {
-          title: this.$t('CtCatalogueTable.concept_id'),
-          key: 'term_uid',
-          width: '10%',
-        },
-        {
-          title: this.$t('CRFItems.sponsor_pref_name'),
-          key: 'name',
-          width: '40%',
-        },
-        { title: this.$t('_global.mandatory'), key: 'mandatory', width: '5%' },
-        {
-          title: this.$t('CRFItems.displayed_name'),
-          key: 'display_text',
-          width: '40%',
-        },
-        { title: '', key: 'delete', width: '1%' },
-      ],
-      aliases: [],
-      aliasesTotal: 0,
-      alias: {},
-      steps: [],
-      createSteps: [
-        { name: 'form', title: this.$t('CRFItems.item_details') },
-        {
-          name: 'extensions',
-          title: this.$t('CRFForms.vendor_extensions'),
-        },
-        {
-          name: 'description',
-          title: this.$t('CRFItemGroups.description_details'),
-        },
-        { name: 'alias', title: this.$t('CRFItemGroups.alias_details') },
-      ],
-      editSteps: [
-        { name: 'form', title: this.$t('CRFItems.item_details') },
-        {
-          name: 'extensions',
-          title: this.$t('CRFForms.vendor_extensions'),
-        },
-        {
-          name: 'description',
-          title: this.$t('CRFItemGroups.description_details'),
-        },
-        { name: 'alias', title: this.$t('CRFItemGroups.alias_details') },
-        {
-          name: 'activity_instance_links',
-          title: this.$t('CRFItems.activity_instance_links'),
-        },
-        { name: 'change_description', title: this.$t('CRFForms.change_desc') },
-      ],
-      origins: [],
-      chosenUnits: [{ name: '', mandatory: true }],
-      codelists: [],
-      selectedCodelists: [],
-      options: {},
-      total: 0,
-      filters: '',
-      dataTypes: [],
-      descKey: 0,
-      customToolbar: [
-        ['bold', 'italic', 'underline'],
-        [{ script: 'sub' }, { script: 'super' }],
-        [{ list: 'ordered' }, { list: 'bullet' }],
-      ],
-      engDescription: {
-        library_name: constants.LIBRARY_SPONSOR,
-        language: parameters.EN,
-      },
-      terms: [],
-      selectedTerms: [],
-      readOnly: this.readOnlyProp,
-      actions: [
-        {
-          label: this.$t('_global.approve'),
-          icon: 'mdi-check-decagram',
-          iconColor: 'success',
-          condition: () => !this.readOnly,
-          click: this.approve,
-        },
-        {
-          label: this.$t('_global.new_version'),
-          icon: 'mdi-plus-circle-outline',
-          iconColor: 'primary',
-          condition: () => this.readOnly,
-          click: this.newVersion,
-        },
-        {
-          label: this.$t('_global.delete'),
-          icon: 'mdi-delete-outline',
-          iconColor: 'error',
-          condition: (item) =>
-            item.possible_actions
-              ? item.possible_actions.find(
-                  (action) => action === actions.DELETE
-                )
-              : false,
-          click: this.delete,
-        },
-      ],
-      lengthFieldCheck: false,
-      digitsFieldCheck: false,
-      originFieldCheck: true,
-      loading: false,
-      filteringTerms: [],
-      selectedFilteringTerms: [],
-      search: '',
-      operators: ['or', 'and'],
-      termsFilterOperator: 'or',
-      totalTerms: 0,
-      availableActivityInstances: [],
-      availableParentItemGroups: [],
-    }
-  },
-  computed: {
-    isReadOnly() {
-      return this.readOnly || !this.checkPermission(this.$roles.LIBRARY_WRITE)
-    },
-    title() {
-      return this.isEdit()
-        ? this.readOnly
-          ? this.$t('CRFItems.crf_item') + ' - ' + this.form.name
-          : this.$t('CRFItems.edit_item') + ' - ' + this.form.name
-        : this.$t('CRFItems.add_item')
-    },
-    formUrl() {
-      if (this.isEdit()) {
-        return `${window.location.href.replace('crf-tree', 'items')}/item/${this.selectedItem.uid}`
-      }
-      return null
-    },
-    hasActivityInstanceLinksChanged() {
-      const current = JSON.stringify(this.form.activity_instances)
-      const original = JSON.stringify(this.originalForm.activity_instances)
+  )
+  steps.value = unique
+}
 
-      return current !== original
-    },
-  },
-  watch: {
-    readOnlyProp(value) {
-      this.readOnly = value
-    },
-    selectedCodelists() {
-      this.getCodeListTerms()
-    },
-    userData: {
-      handler() {
-        if (!this.userData.multilingual) {
-          this.steps = this.steps.filter(function (obj) {
-            return obj.name !== 'description'
-          })
-        } else {
-          this.steps = this.createSteps
-        }
-      },
-    },
-    selectedItem: {
-      handler(value) {
-        if (this.isEdit()) {
-          this.steps = this.editSteps
-          if (value.datatype.indexOf('STRING') !== -1) {
-            this.steps.splice(1, 0, {
-              name: 'codelist',
-              title: this.$t('CRFItems.codelist_details'),
-            })
-            this.steps.splice(2, 0, {
-              name: 'terms',
-              title: this.$t('CRFItems.codelist_subset'),
-            })
-          }
-          this.initForm(value)
-        } else {
-          this.steps = this.createSteps
-        }
-        if (!this.userData.multilingual) {
-          this.steps = this.steps.filter(function (obj) {
-            return obj.name !== 'description'
-          })
-        }
-        const uniqueSteps = Array.from(
-          new Set(this.steps.map((a) => a.name))
-        ).map((name) => {
-          return this.steps.find((a) => a.name === name)
-        })
-        this.steps = uniqueSteps
-      },
-      immediate: true,
-    },
-    options: {
-      handler() {
-        this.fetchCodelists()
-      },
-      deep: true,
-    },
-    search() {
-      this.fetchTerms()
-    },
-    selectedFilteringTerms() {
-      this.fetchCodelists()
-    },
-    termsFilterOperator() {
-      this.fetchCodelists()
-    },
-  },
-  created() {
-    this.crfTypes = crfTypes
-  },
-  async mounted() {
-    if (this.startStep) {
-      this.$refs.stepper.goToStep(this.startStep)
-    }
+function isEdit() {
+  if (props.selectedItem) {
+    return Object.keys(props.selectedItem).length !== 0
+  }
+  return false
+}
 
-    this.fetchCodelists()
-    terms.getTermsByCodelist('originType').then((resp) => {
-      this.origins = resp.data.items
-    })
-    terms.getTermsByCodelist('dataType').then((resp) => {
-      this.dataTypes = resp.data.items.sort((a, b) =>
-        a.submission_value.localeCompare(b.submission_value)
-      )
-    })
-    this.fetchUnits({ page_size: 0 })
-    if (this.isEdit()) {
-      this.steps = this.editSteps
+watch(
+  () => props.readOnlyProp,
+  (value) => {
+    readOnly.value = value
+  }
+)
+
+watch(
+  selectedCodelists,
+  () => {
+    getCodeListTerms()
+  },
+  { deep: true }
+)
+
+watch(
+  () => props.selectedItem,
+  (value) => {
+    if (isEdit() && value) {
+      steps.value = buildEditSteps()
+      initForm(value)
     } else {
-      this.steps = this.createSteps
+      steps.value = buildCreateSteps()
     }
-    if (!this.userData.multilingual) {
-      this.steps = this.steps.filter(function (obj) {
-        return obj.name !== 'description'
-      })
-    }
-
-    crfs.getRelationships(this.selectedItem.uid, 'items').then(async (resp) => {
-      const itemGroupUids = resp.data['OdmItemGroup'] || []
-
-      if (_isEmpty(itemGroupUids)) {
-        this.availableParentItemGroups = []
-        return
-      }
-
-      const params = {
-        filters: { uid: { v: itemGroupUids } },
-        page_size: 0,
-      }
-      const res = await crfs.get('item-groups', { params })
-      this.availableParentItemGroups = res.data.items
-    })
+    dedupeSteps()
   },
-  methods: {
-    isAlreadyDefined(activityInstance) {
-      const key = `${activityInstance.odm_item_group_uid}|${activityInstance.odm_form_uid}|${activityInstance.activity_instance_uid}|${activityInstance.activity_item_class_uid}`
+  { immediate: true }
+)
 
-      const count = this.form.activity_instances.filter(
-        (ai) =>
-          `${ai.odm_item_group_uid}|${ai.odm_form_uid}|${ai.activity_instance_uid}|${ai.activity_item_class_uid}` ===
-          key
-      ).length
-      return count > 1
-    },
-    addActivityInstance() {
-      this.form.activity_instances.push({
-        activity_instance_uid: '',
-        activity_item_class_uid: '',
-        odm_form_uid: '',
-        odm_item_group_uid: '',
-        order: 999999,
-        preset_response_value: '',
-        primary: false,
-        value_condition: '',
-        value_dependent_map: '',
-        availableActivityItemClasses: [],
-        availableParentForms: [],
-      })
-    },
-    removeActivityInstance(idx) {
-      this.form.activity_instances.splice(idx, 1)
-    },
-    onItemGroupChange(value, idx) {
-      this.form.activity_instances[idx].odm_form_uid = null
-      if (!value) {
-        return
-      }
+watch(
+  options,
+  () => {
+    fetchCodelists()
+  },
+  { deep: true }
+)
 
-      this.loadItemGroupForms(value).then((forms) => {
-        this.form.activity_instances[idx].availableParentForms = forms
-      })
-    },
-    async loadItemGroupForms(itemGroupUid) {
-      return crfs.getRelationships(itemGroupUid, 'item-groups').then((resp) => {
-        const formUids = resp.data['OdmForm'] || []
+watch(search, () => {
+  fetchTerms()
+})
 
-        if (_isEmpty(formUids)) {
-          return []
+watch(
+  selectedFilteringTerms,
+  () => {
+    fetchCodelists()
+  },
+  { deep: true }
+)
+
+watch(termsFilterOperator, () => {
+  fetchCodelists()
+})
+
+const isReadOnly = computed(() => {
+  return readOnly.value || !checkPermission(roles.LIBRARY_WRITE)
+})
+
+const title = computed(() => {
+  if (!isEdit()) {
+    return t('CRFItems.add_item')
+  }
+
+  const prefix = readOnly.value
+    ? t('CRFItems.crf_item')
+    : t('CRFItems.edit_item')
+  return `${prefix} - ${form.value.name}`
+})
+
+const formUrl = computed(() => {
+  if (!isEdit()) {
+    return null
+  }
+  return `${window.location.href.replace('crf-tree', 'items')}/item/${props.selectedItem.uid}`
+})
+
+const hasActivityInstanceLinksChanged = computed(() => {
+  const current = JSON.stringify(form.value.activity_instances)
+  const original = JSON.stringify(originalForm.value.activity_instances)
+  return current !== original
+})
+
+const actions = computed(() => [
+  {
+    label: t('_global.approve'),
+    icon: 'mdi-check-decagram',
+    iconColor: 'success',
+    condition: () => !readOnly.value,
+    click: approve,
+  },
+  {
+    label: t('_global.new_version'),
+    icon: 'mdi-plus-circle-outline',
+    iconColor: 'primary',
+    condition: () => readOnly.value,
+    click: newVersion,
+  },
+  {
+    label: t('_global.delete'),
+    icon: 'mdi-delete-outline',
+    iconColor: 'error',
+    condition: (item) =>
+      item.possible_actions
+        ? item.possible_actions.find((action) => action === actionTypes.DELETE)
+        : false,
+    click: deleteItem,
+  },
+])
+
+onMounted(async () => {
+  if (props.startStep) {
+    stepper.value?.goToStep(props.startStep)
+  }
+
+  fetchCodelists()
+
+  terms.getTermsByCodelist('originType').then((resp) => {
+    origins.value = resp.data.items
+  })
+
+  terms.getTermsByCodelist('dataType').then((resp) => {
+    dataTypes.value = resp.data.items.sort((a, b) =>
+      a.submission_value.localeCompare(b.submission_value)
+    )
+  })
+
+  unitsStore.fetchUnits({ page_size: 0 })
+
+  if (props.selectedItem?.uid) {
+    crfs
+      .getRelationships(props.selectedItem.uid, 'items')
+      .then(async (resp) => {
+        const itemGroupUids = resp.data['OdmItemGroup'] || []
+
+        if (_isEmpty(itemGroupUids)) {
+          availableParentItemGroups.value = []
+          return
         }
 
         const params = {
-          filters: { uid: { v: formUids } },
+          filters: { uid: { v: itemGroupUids } },
           page_size: 0,
         }
-
-        return crfs.get('forms', { params }).then((res) => {
-          return res.data.items
-        })
+        const res = await crfs.get('item-groups', { params })
+        availableParentItemGroups.value = res.data.items
       })
-    },
-    async resetActivityInstances() {
-      this.form.activity_instances = [...this.originalForm.activity_instances]
-    },
-    onActivityInstanceChange(idx) {
-      this.form.activity_instances[idx].activity_item_class_uid = null
+  }
+})
 
-      this.form.activity_instances[idx].availableActivityItemClasses =
-        this.loadActivityInstanceItemClasses(idx)
-    },
-    loadActivityInstanceItemClasses(idx) {
-      const ai = this.availableActivityInstances.find(
-        (inst) =>
-          inst.uid === this.form.activity_instances[idx].activity_instance_uid
+function isAlreadyDefined(activityInstance) {
+  const key = `${activityInstance.odm_item_group_uid}|${activityInstance.odm_form_uid}|${activityInstance.activity_instance_uid}|${activityInstance.activity_item_class_uid}`
+  const count = form.value.activity_instances.filter(
+    (ai) =>
+      `${ai.odm_item_group_uid}|${ai.odm_form_uid}|${ai.activity_instance_uid}|${ai.activity_item_class_uid}` ===
+      key
+  ).length
+  return count > 1
+}
+
+function addActivityInstance() {
+  form.value.activity_instances.push(createDefaultActivityInstance())
+}
+
+function removeActivityInstance(idx) {
+  form.value.activity_instances.splice(idx, 1)
+}
+
+function onItemGroupChange(value, idx) {
+  form.value.activity_instances[idx].odm_form_uid = null
+  if (!value) {
+    return
+  }
+  loadItemGroupForms(value).then((forms) => {
+    form.value.activity_instances[idx].availableParentForms = forms
+  })
+}
+
+async function loadItemGroupForms(itemGroupUid) {
+  return crfs.getRelationships(itemGroupUid, 'item-groups').then((resp) => {
+    const formUids = resp.data['OdmForm'] || []
+
+    if (_isEmpty(formUids)) {
+      return []
+    }
+
+    const params = {
+      filters: { uid: { v: formUids } },
+      page_size: 0,
+    }
+
+    return crfs.get('forms', { params }).then((res) => {
+      return res.data.items
+    })
+  })
+}
+
+function resetActivityInstances() {
+  form.value.activity_instances = [...originalForm.value.activity_instances]
+}
+
+function onActivityInstanceChange(idx) {
+  form.value.activity_instances[idx].activity_item_class_uid = null
+  form.value.activity_instances[idx].availableActivityItemClasses =
+    loadActivityInstanceItemClasses(idx)
+}
+
+function loadActivityInstanceItemClasses(idx) {
+  const ai = availableActivityInstances.value.find(
+    (inst) =>
+      inst.uid === form.value.activity_instances[idx].activity_instance_uid
+  )
+  return ai?.activity_items?.map((item) => item.activity_item_class) || []
+}
+
+function lengthRequired(value) {
+  if (
+    ['STRING', 'TEXT'].includes(form.value.datatype) ||
+    (form.value.significant_digits !== null &&
+      form.value.significant_digits !== undefined)
+  ) {
+    return formRules.required(value)
+  }
+  return true
+}
+
+function significantDigitsRequired(value) {
+  if (form.value.length !== null && form.value.length !== undefined) {
+    return formRules.required(value)
+  }
+  return true
+}
+
+function checkFieldAvailable(dataType) {
+  digitsFieldCheck.value = false
+  originFieldCheck.value = true
+  lengthFieldCheck.value = true
+
+  if (!['TEXT', 'STRING', 'INTEGER', 'FLOAT'].includes(dataType)) {
+    lengthFieldCheck.value = false
+    form.value.length = null
+  }
+
+  if (dataType === 'FLOAT') {
+    digitsFieldCheck.value = true
+  }
+
+  if (dataType === 'COMMENT') {
+    originFieldCheck.value = false
+  }
+}
+
+function getItem() {
+  crfs.getItem(props.selectedItem.uid).then((resp) => {
+    initForm(resp.data)
+  })
+}
+
+async function newVersion() {
+  if (
+    await confirmNewVersion.value.open({
+      agreeLabel: t('CRFItems.create_new_version'),
+      item: props.selectedItem,
+    })
+  ) {
+    crfs.newVersion('items', props.selectedItem.uid).then((resp) => {
+      emit('updateItem', resp.data)
+      readOnly.value = false
+      getItem()
+
+      notificationHub.add({
+        msg: t('_global.new_version_success'),
+      })
+    })
+  }
+}
+
+async function approve() {
+  if (
+    await confirmApproval.value.open({
+      agreeLabel: t('CRFItems.approve_item'),
+      item: props.selectedItem,
+    })
+  ) {
+    crfs.approve('items', props.selectedItem.uid).then((resp) => {
+      emit('updateItem', resp.data)
+      readOnly.value = true
+      close()
+      getItem()
+
+      notificationHub.add({
+        msg: t('CRFItems.approved'),
+      })
+    })
+  }
+}
+
+async function deleteItem() {
+  let relationships = 0
+  await crfs.getRelationships(props.selectedItem.uid, 'items').then((resp) => {
+    if (resp.data.OdmItemGroup && resp.data.OdmItemGroup.length > 0) {
+      relationships = resp.data.OdmItemGroup.length
+    }
+  })
+
+  const options = {
+    type: 'warning',
+    cancelLabel: t('_global.cancel'),
+    agreeLabel: t('_global.continue'),
+  }
+
+  let shouldDelete = relationships === 0
+  if (relationships > 0) {
+    shouldDelete = await confirm.value.open(
+      `${t('CRFItems.delete_warning', { count: relationships })}`,
+      options
+    )
+  }
+  if (shouldDelete) {
+    crfs.delete('items', props.selectedItem.uid).then(() => {
+      emit('close')
+    })
+  }
+
+  if (
+    relationships > 0 &&
+    (await confirm.value?.open(
+      `${t('CRFItems.delete_warning', { count: relationships })}`,
+      options
+    ))
+  ) {
+    crfs.delete('items', props.selectedItem.uid).then(() => {
+      emit('close')
+    })
+  } else if (relationships === 0) {
+    crfs.delete('items', props.selectedItem.uid).then(() => {
+      emit('close')
+    })
+  }
+}
+
+function checkIfNumeric() {
+  if (form.value.datatype) {
+    if (
+      form.value.datatype.includes('INTEGER') ||
+      form.value.datatype.includes('FLOAT') ||
+      form.value.datatype.includes('DOUBLE')
+    ) {
+      steps.value.splice(2, 0, {
+        name: 'unit',
+        title: t('CRFItems.unit_details'),
+      })
+      steps.value = steps.value.filter((obj) => {
+        return obj.name !== 'codelist' && obj.name !== 'terms'
+      })
+    } else if (form.value.datatype.includes('STRING')) {
+      steps.value = steps.value.filter((obj) => {
+        return obj.name !== 'unit'
+      })
+      steps.value.splice(2, 0, {
+        name: 'codelist',
+        title: t('CRFItems.codelist_details'),
+      })
+      steps.value.splice(3, 0, {
+        name: 'terms',
+        title: t('CRFItems.codelist_subset'),
+      })
+    }
+
+    if (
+      !form.value.datatype.includes('STRING') &&
+      !form.value.datatype.includes('TEXT')
+    ) {
+      steps.value = steps.value.filter((obj) => {
+        return obj.name !== 'codelist' && obj.name !== 'terms'
+      })
+    }
+    if (
+      !form.value.datatype.includes('INTEGER') &&
+      !form.value.datatype.includes('FLOAT') &&
+      !form.value.datatype.includes('DOUBLE')
+    ) {
+      steps.value = steps.value.filter((obj) => {
+        return obj.name !== 'unit'
+      })
+    }
+  } else {
+    steps.value = steps.value.filter((obj) => {
+      return (
+        obj.name !== 'unit' && obj.name !== 'codelist' && obj.name !== 'terms'
       )
+    })
+  }
 
-      return ai?.activity_items?.map((item) => item.activity_item_class) || []
-    },
-    lengthRequired(value) {
-      if (
-        ['STRING', 'TEXT'].includes(this.form.datatype) ||
-        (this.form.significant_digits !== null &&
-          this.form.significant_digits !== undefined)
-      ) {
-        return this.formRules.required(value)
-      }
-      return true
-    },
-    significantDigitsRequired(value) {
-      if (this.form.length !== null && this.form.length !== undefined) {
-        return this.formRules.required(value)
-      }
-      return true
-    },
-    checkFieldAvailable(dataType) {
-      this.digitsFieldCheck = false
-      this.originFieldCheck = true
-      this.lengthFieldCheck = true
+  dedupeSteps()
+  checkFieldAvailable(form.value.datatype)
+}
 
-      if (!['TEXT', 'STRING', 'INTEGER', 'FLOAT'].includes(dataType)) {
-        this.lengthFieldCheck = false
-        this.form.length = null
-      }
+function close() {
+  notificationHub.clearErrors()
+  form.value = {
+    oid: 'I.',
+    aliases: [],
+    translated_texts: [],
+  }
+  chosenUnits.value = [{ name: '', mandatory: true }]
+  selectedCodelists.value = []
+  selectedTerms.value = []
+  selectedExtensions.value = []
+  stepper.value?.reset()
+  emit('close')
+}
 
-      if (dataType === 'FLOAT') {
-        this.digitsFieldCheck = true
-      }
+function getCodeListTerms(filtersArg, optionsArg, filtersUpdatedArg) {
+  const params = filteringParameters.prepareParameters(
+    optionsArg,
+    filtersArg,
+    filtersUpdatedArg
+  )
+  params.include_removed = false
 
-      if (dataType === 'COMMENT') {
-        this.originFieldCheck = false
+  if (selectedCodelists.value[0]) {
+    params.codelist_uid = selectedCodelists.value[0].codelist_uid
+    codelistApi.getCodelistTerms(params.codelist_uid, params).then((resp) => {
+      termsList.value = resp.data.items
+      if (form.value.terms) {
+        selectedTerms.value = form.value.terms
       }
-    },
-    getItem() {
-      crfs.getItem(this.selectedItem.uid).then((resp) => {
-        this.initForm(resp.data)
-      })
-    },
-    async newVersion() {
-      if (
-        await this.$refs.confirmNewVersion.open({
-          agreeLabel: this.$t('CRFItems.create_new_version'),
-          item: this.selectedItem,
-        })
-      ) {
-        crfs.newVersion('items', this.selectedItem.uid).then((resp) => {
-          this.$emit('updateItem', resp.data)
-          this.readOnly = false
-          this.getItem()
+      totalTerms.value = resp.data.total
+    })
+  } else {
+    termsList.value = []
+  }
+}
 
-          this.notificationHub.add({
-            msg: this.$t('_global.new_version_success'),
-          })
-        })
-      }
-    },
-    async approve() {
-      if (
-        await this.$refs.confirmApproval.open({
-          agreeLabel: this.$t('CRFItems.approve_item'),
-          item: this.selectedItem,
-        })
-      ) {
-        crfs.approve('items', this.selectedItem.uid).then((resp) => {
-          this.$emit('updateItem', resp.data)
-          this.readOnly = true
-          this.close()
-          this.getItem()
+function addTerm(item) {
+  item.mandatory = true
+  if (!selectedTerms.value.some((el) => el.term_uid === item.term_uid)) {
+    const itemToAdd = { ...item }
+    itemToAdd.name = itemToAdd.sponsor_preferred_name
+    selectedTerms.value.push(itemToAdd)
+  }
+}
 
-          this.notificationHub.add({
-            msg: this.$t('CRFItems.approved'),
-          })
-        })
-      }
-    },
-    async delete() {
-      let relationships = 0
-      await crfs
-        .getRelationships(this.selectedItem.uid, 'items')
-        .then((resp) => {
-          if (resp.data.OdmItemGroup && resp.data.OdmItemGroup.length > 0) {
-            relationships = resp.data.OdmItemGroup.length
-          }
-        })
-      const options = {
-        type: 'warning',
-        cancelLabel: this.$t('_global.cancel'),
-        agreeLabel: this.$t('_global.continue'),
-      }
-      if (
-        relationships > 0 &&
-        (await this.$refs.confirm.open(
-          `${this.$t('CRFItems.delete_warning', { count: relationships })}`,
-          options
-        ))
-      ) {
-        crfs.delete('items', this.selectedItem.uid).then(() => {
-          this.$emit('close')
-        })
-      } else if (relationships === 0) {
-        crfs.delete('items', this.selectedItem.uid).then(() => {
-          this.$emit('close')
-        })
-      }
-    },
-    setDesc(desc) {
-      this.desc = desc
-    },
-    getObserver(step) {
-      return this.$refs[`observer_${step}`]
-    },
-    checkIfNumeric() {
-      if (this.form.datatype) {
-        if (
-          this.form.datatype.indexOf('INTEGER') !== -1 ||
-          this.form.datatype.indexOf('FLOAT') !== -1 ||
-          this.form.datatype.indexOf('DOUBLE') !== -1
-        ) {
-          this.steps.splice(1, 0, {
-            name: 'unit',
-            title: this.$t('CRFItems.unit_details'),
-          })
-          this.steps = this.steps.filter(function (obj) {
-            return obj.name !== 'codelist' && obj.name !== 'terms'
-          })
-        } else if (this.form.datatype.indexOf('STRING') !== -1) {
-          this.steps = this.steps.filter(function (obj) {
-            return obj.name !== 'unit'
-          })
-          this.steps.splice(1, 0, {
-            name: 'codelist',
-            title: this.$t('CRFItems.codelist_details'),
-          })
-          this.steps.splice(2, 0, {
-            name: 'terms',
-            title: this.$t('CRFItems.codelist_subset'),
-          })
-        }
-        if (
-          this.form.datatype.indexOf('STRING') === -1 &&
-          this.form.datatype.indexOf('TEXT') === -1
-        ) {
-          this.steps = this.steps.filter(function (obj) {
-            return obj.name !== 'codelist' && obj.name !== 'terms'
-          })
-        }
-        if (
-          this.form.datatype.indexOf('INTEGER') === -1 &&
-          this.form.datatype.indexOf('FLOAT') === -1 &&
-          this.form.datatype.indexOf('DOUBLE') === -1
-        ) {
-          this.steps = this.steps.filter(function (obj) {
-            return obj.name !== 'unit'
-          })
-        }
-      } else {
-        this.steps = this.steps.filter(function (obj) {
-          return (
-            obj.name !== 'unit' &&
-            obj.name !== 'codelist' &&
-            obj.name !== 'terms'
-          )
-        })
-      }
-      const uniqueSteps = Array.from(
-        new Set(this.steps.map((a) => a.name))
-      ).map((name) => {
-        return this.steps.find((a) => a.name === name)
-      })
-      this.steps = uniqueSteps
-      this.checkFieldAvailable(this.form.datatype)
-    },
-    close() {
-      this.notificationHub.clearErrors()
-      this.form = {
-        oid: 'I.',
-        aliases: [],
-      }
-      this.desc = []
-      this.chosenUnits = [{ name: '', mandatory: true }]
-      this.selectedCodelists = []
-      this.selectedTerms = []
-      this.selectedExtensions = []
-      this.engDescription = {
-        library_name: constants.LIBRARY_SPONSOR,
-        language: parameters.EN,
-      }
-      this.$refs.stepper.reset()
-      this.$emit('close')
-    },
-    getCodeListTerms(filters, options, filtersUpdated) {
-      const params = filteringParameters.prepareParameters(
-        options,
-        filters,
-        filtersUpdated
-      )
-      params.include_removed = false
+function removeTerm(item) {
+  selectedTerms.value = selectedTerms.value.filter(
+    (el) => el.term_uid !== item.term_uid
+  )
+}
 
-      if (this.selectedCodelists[0]) {
-        params.codelist_uid = this.selectedCodelists[0].codelist_uid
-        codelistApi
-          .getCodelistTerms(params.codelist_uid, params)
-          .then((resp) => {
-            this.terms = resp.data.items
-            if (this.form.terms) {
-              this.selectedTerms = this.form.terms
-            }
-            this.totalTerms = resp.data.total
-          })
-      } else {
-        this.terms = []
-      }
-    },
-    addTerm(item) {
-      item.mandatory = true
-      if (!this.selectedTerms.some((el) => el.term_uid === item.term_uid)) {
-        const itemToAdd = Object.assign({}, item)
-        itemToAdd.name = itemToAdd.name.sponsor_preferred_name
-        this.selectedTerms.push(itemToAdd)
-      }
-    },
-    removeTerm(item) {
-      this.selectedTerms = this.selectedTerms.filter(
-        (el) => el.term_uid !== item.term_uid
-      )
-    },
-    async submit() {
-      if (this.isReadOnly) {
-        this.close()
-        return
-      }
+async function submit() {
+  if (isReadOnly.value) {
+    close()
+    return
+  }
 
-      this.notificationHub.clearErrors()
+  notificationHub.clearErrors()
 
-      await this.setDescription()
-      this.form.library_name = constants.LIBRARY_SPONSOR
-      if (this.form.oid === 'I.') {
-        this.form.oid = null
-      }
-      this.chosenUnits = this.chosenUnits.filter((el) => {
-        return el.name !== ''
-      })
-      this.form.unit_definitions =
-        this.chosenUnits.length === 0
-          ? []
-          : this.chosenUnits.map((e) => ({
-              uid: e.uid ? e.uid : e.name.uid,
-              mandatory: e.mandatory,
-            }))
-      if (
-        !['BASE64FLOAT', 'DOUBLE', 'FLOAT', 'HEXFLOAT', 'INTEGER'].includes(
-          this.form.datatype
-        )
-      ) {
-        this.form.unit_definitions = []
-      }
-      if (this.form.datatype !== 'STRING') {
-        this.form.codelist_uid = null
-        this.form.terms = []
-      } else {
-        this.form.codelist_uid = this.selectedCodelists[0]
-          ? this.selectedCodelists[0].codelist_uid
-          : null
-        this.form.terms = this.selectedTerms.map((el) => ({
-          uid: el.term_uid,
-          mandatory: el.mandatory,
-          display_text: el.display_text,
+  form.value.library_name = constants.LIBRARY_SPONSOR
+  if (form.value.oid === 'I.') {
+    form.value.oid = null
+  }
+
+  chosenUnits.value = chosenUnits.value.filter((el) => {
+    return el.name !== ''
+  })
+
+  form.value.unit_definitions =
+    chosenUnits.value.length === 0
+      ? []
+      : chosenUnits.value.map((e) => ({
+          uid: e.uid ? e.uid : e.name.uid,
+          mandatory: e.mandatory,
         }))
+
+  if (
+    !['BASE64FLOAT', 'DOUBLE', 'FLOAT', 'HEXFLOAT', 'INTEGER'].includes(
+      form.value.datatype
+    )
+  ) {
+    form.value.unit_definitions = []
+  }
+
+  if (form.value.datatype === 'STRING') {
+    if (
+      !_isEmpty(selectedCodelists.value) &&
+      selectedCodelists.value[0].codelist_uid
+    ) {
+      form.value.codelist = {
+        uid: selectedCodelists.value[0].codelist_uid,
+        allows_multi_choice: form.value.allows_multi_choice,
       }
-      if (this.form.length == '') {
-        this.form.length = null
+    } else {
+      form.value.codelist = null
+    }
+    form.value.terms = selectedTerms.value.map((el, idx) => ({
+      uid: el.term_uid,
+      mandatory: el.mandatory,
+      display_text: el.display_text,
+      order: idx + 1,
+    }))
+  } else {
+    form.value.codelist = null
+    form.value.terms = []
+  }
+
+  if (form.value.length == '') {
+    form.value.length = null
+  }
+  if (form.value.significant_digits == '') {
+    form.value.significant_digits = null
+  }
+
+  const elements = []
+  const attributes = []
+  let elementAttributes = []
+
+  selectedExtensions.value.forEach((ex) => {
+    if (ex.type) {
+      attributes.push(ex)
+    } else {
+      elements.push(ex)
+      if (ex.vendor_attributes) {
+        elementAttributes = [...elementAttributes, ...ex.vendor_attributes]
       }
-      if (this.form.significant_digits == '') {
-        this.form.significant_digits = null
-      }
-      try {
-        if (this.isEdit()) {
-          await crfs
-            .updateItem(this.form, this.selectedItem.uid)
-            .then(async () => {
-              await this.linkExtensions(this.selectedItem.uid)
-              this.notificationHub.add({
-                msg: this.$t('CRFItems.item_updated'),
-              })
-              this.close()
-            })
-        } else {
-          await crfs.createItem(this.form).then(async (resp) => {
-            await this.linkExtensions(resp.data.uid)
-            this.notificationHub.add({
-              msg: this.$t('CRFItems.item_created'),
-            })
-            this.$emit('linkItem', resp)
-            this.close()
+    }
+  })
+
+  form.value.vendor_elements = elements
+  form.value.vendor_element_attributes = elementAttributes
+  form.value.vendor_attributes = attributes
+
+  try {
+    if (isEdit()) {
+      await crfs
+        .updateItem(form.value, props.selectedItem.uid)
+        .then(async () => {
+          notificationHub.add({
+            msg: t('CRFItems.item_updated'),
           })
-        }
-      } finally {
-        this.$refs.stepper.loading = false
-      }
-    },
-    setExtensions(extensions) {
-      this.selectedExtensions = extensions
-    },
-    async linkExtensions(uid) {
-      let elements = []
-      let attributes = []
-      let eleAttributes = []
-      this.selectedExtensions.forEach((ex) => {
-        if (ex.type) {
-          attributes.push(ex)
-        } else {
-          elements.push(ex)
-          if (ex.vendor_attributes) {
-            eleAttributes = [...eleAttributes, ...ex.vendor_attributes]
-          }
-        }
+          close()
+        })
+    } else {
+      await crfs.createItem(form.value).then(async (resp) => {
+        notificationHub.add({
+          msg: t('CRFItems.item_created'),
+        })
+        emit('linkItem', resp)
+        close()
       })
-      const data = {
-        elements: elements,
-        element_attributes: eleAttributes,
-        attributes: attributes,
-      }
-      await crfs.setExtensions('items', uid, data)
-    },
-    addUnit() {
-      this.chosenUnits.push({ name: '', mandatory: true })
-    },
-    removeUnit(index) {
-      this.chosenUnits.splice(index, 1)
-    },
-    setUnit(index) {
-      this.chosenUnits[index].ucum = this.chosenUnits[index].name.ucum
-        ? this.chosenUnits[index].name.ucum.name
-        : ''
-      this.chosenUnits[index].oid = this.chosenUnits[index].name.name
-      this.chosenUnits[index].terms = this.chosenUnits[index].name.ct_units[0]
-        ? this.chosenUnits[index].name.ct_units[0].term_name
-        : ''
-      this.chosenUnits[index].uid = this.chosenUnits[index].name.uid
-    },
-    getAliases(filters, options, filtersUpdated) {
-      const params = filteringParameters.prepareParameters(
-        options,
-        filters,
-        filtersUpdated
-      )
-      crfs.getAliases(params).then((resp) => {
-        this.aliases = resp.data.items
-        this.aliasesTotal = resp.data.total
-      })
-    },
-    addAlias() {
-      if (!this.alias.name || !this.alias.context) {
-        return
-      }
-      const alias = {
-        name: this.alias.name,
-        context: this.alias.context,
-      }
+    }
+  } finally {
+    if (stepper.value) {
+      stepper.value.loading = false
+    }
+  }
+}
 
-      const isDuplicate = this.aliases.some(
-        (a) => a.name === alias.name && a.context === alias.context
-      )
+function setExtensions(extensions) {
+  selectedExtensions.value = extensions
+}
 
-      if (!isDuplicate) {
-        this.aliases.push({ ...alias })
-      }
+function addUnit() {
+  chosenUnits.value.push({ name: '', mandatory: true })
+}
 
-      this.form.aliases.push({ ...alias })
-      this.alias = {}
-    },
-    async setDescription() {
-      const descArray = []
+function removeUnit(index) {
+  chosenUnits.value.splice(index, 1)
+}
 
-      if (!this.engDescription.name) {
-        this.engDescription.name = this.form.name
-      }
-      this.engDescription.description = this.clearEmptyHtml(
-        this.engDescription.description
-      )
-      this.engDescription.instruction = this.clearEmptyHtml(
-        this.engDescription.instruction
-      )
-      this.engDescription.sponsor_instruction = this.clearEmptyHtml(
-        this.engDescription.sponsor_instruction
-      )
-      descArray.push(this.engDescription)
-      this.form.descriptions = [...descArray, ...this.desc]
-    },
-    async initForm(item) {
-      this.loading = true
-      this.originalForm = JSON.parse(JSON.stringify(item))
+function setUnit(index) {
+  chosenUnits.value[index].ucum = chosenUnits.value[index].name.ucum
+    ? chosenUnits.value[index].name.ucum.name
+    : ''
+  chosenUnits.value[index].oid = chosenUnits.value[index].name.name
+  chosenUnits.value[index].terms = chosenUnits.value[index].name.ct_units[0]
+    ? chosenUnits.value[index].name.ct_units[0].term_name
+    : ''
+  chosenUnits.value[index].uid = chosenUnits.value[index].name.uid
+}
 
-      this.form = item
-      this.form.aliases = item.aliases
-      if (
-        item.descriptions.some((el) =>
-          [parameters.EN, parameters.ENG].includes(el.language)
-        )
-      ) {
-        this.engDescription = item.descriptions.find((el) =>
-          [parameters.EN, parameters.ENG].includes(el.language)
-        )
-      }
-      this.desc = item.descriptions.filter(
-        (el) => ![parameters.EN, parameters.ENG].includes(el.language)
-      )
-      if (!item.unit_definitions || item.unit_definitions.length === 0) {
-        this.chosenUnits = []
-      } else {
-        item.unit_definitions.forEach((e) => {
-          if (!this.chosenUnits.some((el) => el.uid === e.uid)) {
-            this.chosenUnits.unshift({
-              uid: e.uid,
-              oid: e.name,
-              name: e.name,
-              ucum: e.ucum ? e.ucum.name : '',
-              terms: e.ct_units[0] ? e.ct_units[0].name : '',
-              mandatory: e.mandatory,
-            })
-          }
+async function initForm(item) {
+  loading.value = true
+  originalForm.value = JSON.parse(JSON.stringify(item))
+
+  form.value = item
+  form.value.aliases = item.aliases
+  form.value.translated_texts = item.translated_texts
+
+  if (!item.unit_definitions || item.unit_definitions.length === 0) {
+    chosenUnits.value = [{ name: '', mandatory: true }]
+  } else {
+    item.unit_definitions.forEach((e) => {
+      if (!chosenUnits.value.some((el) => el.uid === e.uid)) {
+        chosenUnits.value.unshift({
+          uid: e.uid,
+          oid: e.name,
+          name: e.name,
+          ucum: e.ucum ? e.ucum.name : '',
+          terms: e.ct_units[0] ? e.ct_units[0].name : '',
+          mandatory: e.mandatory,
         })
       }
-      if (this.selectedCodelists.length === 0 && item.codelist) {
-        this.selectedCodelists.push({
-          codelist_uid: item.codelist.uid,
-          attributes: {
-            name: item.codelist.name,
-            submission_value: item.codelist.submission_value,
-            nci_preferred_name: item.codelist.preferred_term,
-          },
-        })
-      }
-      if (item.terms) {
-        this.selectedTerms = item.terms
-      }
+    })
+  }
 
-      this.form.change_description = this.$t('_global.draft_change')
-      this.checkIfNumeric()
-      item.vendor_attributes.forEach((attr) => (attr.type = 'attr'))
-      item.vendor_elements.forEach((element) => {
-        element.vendor_attributes = item.vendor_element_attributes.filter(
-          (attribute) => attribute.vendor_element_uid === element.uid
+  if (selectedCodelists.value.length === 0 && item.codelist) {
+    selectedCodelists.value.push({
+      codelist_uid: item.codelist.uid,
+      attributes: {
+        name: item.codelist.name,
+        submission_value: item.codelist.submission_value,
+        nci_preferred_name: item.codelist.preferred_term,
+      },
+    })
+    form.value.allows_multi_choice = item.codelist.allows_multi_choice
+  }
+
+  if (item.terms) {
+    selectedTerms.value = item.terms
+  }
+
+  form.value.change_description = t('_global.draft_change')
+  checkIfNumeric()
+
+  item.vendor_attributes.forEach((attr) => (attr.type = 'attr'))
+  item.vendor_elements.forEach((element) => {
+    element.vendor_attributes = item.vendor_element_attributes.filter(
+      (attribute) => attribute.vendor_element_uid === element.uid
+    )
+  })
+
+  selectedExtensions.value = [
+    ...item.vendor_attributes,
+    ...item.vendor_elements,
+  ]
+
+  const activityInstancesResp = await activities.get(
+    { page_size: 0 },
+    'activity-instances'
+  )
+  availableActivityInstances.value = activityInstancesResp.data.items
+
+  for (const [idx, ai] of form.value.activity_instances.entries()) {
+    if (ai.odm_item_group_uid) {
+      const forms = await loadItemGroupForms(ai.odm_item_group_uid)
+      form.value.activity_instances[idx].availableParentForms = forms
+      originalForm.value.activity_instances[idx].availableParentForms = forms
+    }
+
+    if (ai.activity_instance_uid) {
+      const activityItemClasses = loadActivityInstanceItemClasses(idx)
+      form.value.activity_instances[idx].availableActivityItemClasses =
+        activityItemClasses
+      originalForm.value.activity_instances[idx].availableActivityItemClasses =
+        activityItemClasses
+    }
+  }
+
+  loading.value = false
+}
+
+function fetchCodelists(filtersArg, optionsArg, filtersUpdatedArg) {
+  filters.value = filtersArg
+  filtersUpdated.value = !!filtersUpdatedArg
+
+  if (filtersUpdated.value) {
+    options.value.page = 1
+  }
+
+  const params = {
+    page_number: options.value.page,
+    page_size: options.value.itemsPerPage,
+    total_count: true,
+    library_name: library,
+  }
+
+  if (filters.value !== undefined) {
+    params.filters = filters.value
+  }
+
+  if (selectedFilteringTerms.value.length > 0) {
+    params.term_filter = {
+      term_uids: selectedFilteringTerms.value.map((term) => term.term_uid),
+      operator: termsFilterOperator.value,
+    }
+  }
+
+  controlledTerminology.getCodelists(params).then((resp) => {
+    codelists.value = resp.data.items.filter(
+      (ar) =>
+        !selectedCodelists.value.some(
+          (rm) => rm.codelist_uid === ar.codelist_uid
         )
-      })
-      this.selectedExtensions = [
-        ...item.vendor_attributes,
-        ...item.vendor_elements,
-      ]
+    )
+    total.value = resp.data.total
+  })
+}
 
-      const activity_instances = await activities.get(
-        { page_size: 0 },
-        'activity-instances'
-      )
-      this.availableActivityInstances = activity_instances.data.items
+function fetchTerms() {
+  const params = {
+    filters: {
+      sponsor_preferred_name: {
+        v: [search.value ? search.value : ''],
+        op: 'co',
+      },
+    },
+    page_size: 20,
+  }
+  controlledTerminology.getCodelistTerms(params).then((resp) => {
+    filteringTerms.value = [...resp.data.items, ...selectedFilteringTerms.value]
+  })
+}
 
-      for (const [idx, ai] of this.form.activity_instances.entries()) {
-        if (ai.odm_item_group_uid) {
-          const forms = await this.loadItemGroupForms(ai.odm_item_group_uid)
-          this.form.activity_instances[idx].availableParentForms = forms
-          this.originalForm.activity_instances[idx].availableParentForms = forms
-        }
+function addCodelist(item) {
+  if (selectedCodelists.value.length === 0) {
+    selectedCodelists.value.push(item)
+    codelists.value.splice(codelists.value.indexOf(item), 1)
+  }
+}
 
-        if (ai.activity_instance_uid) {
-          const activityItemClasses = this.loadActivityInstanceItemClasses(idx)
-          this.form.activity_instances[idx].availableActivityItemClasses =
-            activityItemClasses
-          this.originalForm.activity_instances[
-            idx
-          ].availableActivityItemClasses = activityItemClasses
-        }
-      }
-
-      this.loading = false
-    },
-    isEdit() {
-      if (this.selectedItem) {
-        return Object.keys(this.selectedItem).length !== 0
-      }
-      return false
-    },
-    fetchCodelists(filters) {
-      this.filters = filters
-      if (this.filtersUpdated) {
-        this.options.page = 1
-      }
-      const params = {
-        page_number: this.options.page,
-        page_size: this.options.itemsPerPage,
-        total_count: true,
-        library_name: this.library,
-      }
-      if (this.filters !== undefined) {
-        params.filters = this.filters
-      }
-      if (this.selectedFilteringTerms.length > 0) {
-        params.term_filter = {
-          term_uids: this.selectedFilteringTerms.map((term) => term.term_uid),
-          operator: this.termsFilterOperator,
-        }
-      }
-      controlledTerminology.getCodelists(params).then((resp) => {
-        this.codelists = resp.data.items.filter(
-          (ar) =>
-            !this.selectedCodelists.find(
-              (rm) => rm.codelist_uid === ar.codelist_uid
-            )
-        )
-        this.total = resp.data.total
-      })
-    },
-    fetchTerms() {
-      const params = {
-        filters: {
-          'name.sponsor_preferred_name': {
-            v: [this.search ? this.search : ''],
-            op: 'co',
-          },
-        },
-        page_size: 20,
-      }
-      controlledTerminology.getCodelistTerms(params).then((resp) => {
-        this.filteringTerms = [
-          ...resp.data.items,
-          ...this.selectedFilteringTerms,
-        ]
-      })
-    },
-    addCodelist(item) {
-      if (this.selectedCodelists.length === 0) {
-        this.selectedCodelists.push(item)
-        this.codelists.splice(this.codelists.indexOf(item), 1)
-      }
-    },
-    removeCodelist(item) {
-      this.selectedCodelists = []
-      this.codelists.unshift(item)
-    },
-  },
+function removeCodelist(item) {
+  selectedCodelists.value = []
+  codelists.value.unshift(item)
 }
 </script>
 <style scoped>

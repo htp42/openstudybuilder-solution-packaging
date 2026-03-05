@@ -4,7 +4,7 @@ import { generateShortUniqueName } from "../../support/helper_functions";
 
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
 
-export let activityName, synonym = `Synonym${Date.now()}`, currentSubgroupName, currentGroupName
+export let activityName, synonym, currentSubgroupName, currentGroupName
 const nciconceptid = "NCIID", nciconceptname = "NCINAME", abbreviation = "ABB", definition = "DEF"
 
 When('The Add activity button is clicked', () => cy.clickButton('add-activity'))
@@ -39,6 +39,10 @@ Then('The user is not able to save activity with already existing synonym and er
     cy.get('div[data-cy="form-body"]').should('be.visible');
     cy.get('.v-alert').should('be.visible').should('contain.text', 'Following Activities already have the provided synonyms');
 })
+
+When('Open the activity overview page', () => {
+    cy.get('tbody.v-data-table__tbody').contains('a', activityName).click({ force: true });
+});
 
 Then('The newly added activity is visible in the table', () => {
     cy.checkRowByIndex(0, 'Activity name', activityName)
@@ -163,13 +167,26 @@ Then('The version history displays correct data for activity subgroup', () => {
     })
 })
 
+When('The Multiple instance allowed checkbox is set to {string}', (value) => {
+    cy.get('[data-cy="activityform-multipleselection-checkbox"] input').then(el => {
+    value == 'true' ? cy.wrap(el).check( {force: true} ) : cy.wrap(el).uncheck()
+    })
+});
+
+Then('The Multiple instance allowed field is set to {string}', (expected) => {
+    cy.get('.summary-label').contains('Multiple instances allowed')
+      .parent()
+      .find('.summary-value')
+      .should('have.text', expected);
+});
+
 When('The current activity group is edited', () => {
     cy.groupNewVersion(group_uid)
     cy.intercept('**/subgroups?**').as('subgroups')
     cy.visit(`/library/activities/activity-groups/${group_uid}/overview`)
     cy.wait('@subgroups').then((request) => {
         currentSubgroupName = request.response.body.items[0].name
-        cy.get('[title="Edit"]').click()
+        cy.contains('.v-card-title button', 'Edit').click()
         cy.fillInput('groupform-activity-group-field', `NewName ${Date.now()}`)
         cy.fillInput('groupform-change-description-field', 'DefChange Desc')
     })
@@ -195,6 +212,7 @@ function fillNewActivityData(fillOptionalData = false, customGroup = '') {
     cy.selectFirstVSelect('activityform-activity-subgroup-dropdown')
     cy.fillInput('activityform-activity-name-field', activityName)
     if (fillOptionalData) {
+        synonym = `Synonym${Date.now()}`
         cy.fillInputNew('activityform-synonyms-field', synonym)
         cy.fillInput('activityform-nci-concept-id-field', nciconceptid)
         cy.fillInput('activityform-nci-concept-name-field', nciconceptname)

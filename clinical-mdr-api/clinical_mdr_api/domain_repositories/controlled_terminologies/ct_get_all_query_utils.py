@@ -259,6 +259,7 @@ def create_term_codelist_vos_from_cypher_result(term_dict: dict[str, Any]) -> CT
             codelist_uid=cl["codelist_uid"],
             submission_value=cl["submission_value"],
             order=cl["order"],
+            ordinal=cl.get("ordinal"),
             library_name=cl["library_name"],
             codelist_name=cl["codelist_name"],
             codelist_submission_value=cl["codelist_submission_value"],
@@ -501,8 +502,8 @@ def create_codelist_attributes_aggregate_instances_from_cypher_result(
             extensible=codelist_dict.get(f"value_node{specific_suffix}").get(
                 "extensible"
             ),
-            ordinal=bool(
-                codelist_dict.get(f"value_node{specific_suffix}").get("ordinal")
+            is_ordinal=bool(
+                codelist_dict.get(f"value_node{specific_suffix}").get("is_ordinal")
             ),
         ),
         library=LibraryVO.from_input_values_2(
@@ -553,7 +554,7 @@ def format_codelist_filter_sort_keys(key: str, prefix: str | None = None) -> str
         )
     if key == "template_parameter":
         return "is_template_parameter"
-    if key in ["name", "definition", "submission_value", "extensible", "ordinal"]:
+    if key in ["name", "definition", "submission_value", "extensible", "is_ordinal"]:
         return f"value_node_{prefix}.{key}" if prefix else f"value_node.{key}"
     # Property coming from relationship
     if key in [

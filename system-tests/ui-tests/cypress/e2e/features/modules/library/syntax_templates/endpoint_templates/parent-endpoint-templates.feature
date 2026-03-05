@@ -49,6 +49,8 @@ Feature: Library - Syntax Templates - Endpoints - Parent
         Given The 'library/endpoint_templates' page is opened
         And The Add template button is clicked
         When The endpoint template form is filled with base data
+        And Form continue button is clicked
+        And Form continue button is clicked
         And Template indexes are set for 'endpoint'
         And Form save button is clicked
         And The endpoint template is found
@@ -59,7 +61,9 @@ Feature: Library - Syntax Templates - Endpoints - Parent
         Given The 'library/endpoint_templates' page is opened
         And The Add template button is clicked
         When The endpoint template form is filled with base data
-        And Indexes are set as not applicable
+        And Form continue button is clicked
+        And Form continue button is clicked
+        And All Not Applicable checkboxes are checked
         And Form save button is clicked
         And The pop up displays 'Endpoint template added'
         And The endpoint template is found
@@ -74,6 +78,8 @@ Feature: Library - Syntax Templates - Endpoints - Parent
         And The endpoint template is found
         When The 'Edit' option is clicked from the three dot menu list
         And The endpoint metadata update is started
+        And Form continue button is clicked
+        And Form continue button is clicked
         And Template indexes are cleared and updated for 'endpoint'
         And Form continue button is clicked
         And Template change description is provided
@@ -89,7 +95,7 @@ Feature: Library - Syntax Templates - Endpoints - Parent
     Scenario: [Create][Mandatory fields] User must not be able to create Endpoint template without: Template Text
         Given The 'library/endpoint_templates' page is opened
         And The Add template button is clicked
-        When The Template is added without template text
+        When Form continue button is clicked
         Then The validation appears for Template name
         And The form is not closed
 
@@ -98,7 +104,9 @@ Feature: Library - Syntax Templates - Endpoints - Parent
         And [API] Create endpoint template
         And The Add template button is clicked
         And The endpoint template form is filled with already existing name
-        And Indexes are set as not applicable
+        And Form continue button is clicked
+        And Form continue button is clicked
+        And All Not Applicable checkboxes are checked
         And Form save button is clicked
         Then The pop up displays 'already exists'
         And The form is not closed
@@ -107,6 +115,8 @@ Feature: Library - Syntax Templates - Endpoints - Parent
         Given The 'library/endpoint_templates' page is opened
         And The Add template button is clicked
         And The endpoint template form is filled with base data
+        And Form continue button is clicked
+        And Form continue button is clicked
         When Template indexes are set for 'endpoint'
         And Indication or Disorder index is cleared
         And Form save button is clicked
@@ -117,6 +127,8 @@ Feature: Library - Syntax Templates - Endpoints - Parent
         Given The 'library/endpoint_templates' page is opened
         And The Add template button is clicked
         And The endpoint template form is filled with base data
+        And Form continue button is clicked
+        And Form continue button is clicked
         When Template indexes are set for 'endpoint'
         And Category index is cleared for 'endpoint' template
         And Form save button is clicked
@@ -127,6 +139,8 @@ Feature: Library - Syntax Templates - Endpoints - Parent
         Given The 'library/endpoint_templates' page is opened
         And The Add template button is clicked
         And The endpoint template form is filled with base data
+        And Form continue button is clicked
+        And Form continue button is clicked
         When Template indexes are set for 'endpoint'
         And Subcategory index is cleared for 'endpoint' template
         And Form save button is clicked
@@ -214,6 +228,8 @@ Feature: Library - Syntax Templates - Endpoints - Parent
         Then The item has status 'Draft' and version '1.1'
         When The 'Edit' option is clicked from the three dot menu list
         And The endpoint metadata update is started
+        And Form continue button is clicked
+        And Form continue button is clicked
         And Template indexes are cleared and updated for 'endpoint'
         And Form continue button is clicked
         And Template change description is provided
@@ -283,7 +299,9 @@ Feature: Library - Syntax Templates - Endpoints - Parent
         Given The 'library/endpoint_templates' page is opened
         And The Add template button is clicked
         And The endpoint template form is filled with base data
-        And Indexes are set as not applicable
+        And Form continue button is clicked
+        And Form continue button is clicked
+        And All Not Applicable checkboxes are checked
         When Fullscreen wizard is closed by clicking cancel button
         And Action is confirmed by clicking continue
         Then The form is no longer available
@@ -295,6 +313,8 @@ Feature: Library - Syntax Templates - Endpoints - Parent
         And The endpoint template is found
         When The 'Edit' option is clicked from the three dot menu list
         When The endpoint template edition form is filled with data
+        And Form continue button is clicked
+        And Form continue button is clicked
         And Fullscreen wizard is closed by clicking cancel button
         And Action is confirmed by clicking continue
         Then The form is no longer available

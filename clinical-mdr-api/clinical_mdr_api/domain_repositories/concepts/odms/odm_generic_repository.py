@@ -16,7 +16,6 @@ from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
 from clinical_mdr_api.domain_repositories.models.generic import VersionValue
 from clinical_mdr_api.domain_repositories.models.odm import (
     OdmAlias,
-    OdmDescription,
     OdmFormalExpression,
     OdmFormRoot,
     OdmFormValue,
@@ -24,22 +23,25 @@ from clinical_mdr_api.domain_repositories.models.odm import (
     OdmItemGroupValue,
     OdmItemRoot,
     OdmItemValue,
+    OdmTranslatedText,
     OdmVendorAttributeRoot,
     OdmVendorAttributeValue,
     OdmVendorElementRoot,
     OdmVendorElementValue,
 )
 from clinical_mdr_api.domains.concepts.utils import RelationType
+from clinical_mdr_api.domains.enums import OdmTranslatedTextTypeEnum
 from clinical_mdr_api.models.concepts.odms.odm_common_models import (
     OdmAliasModel,
-    OdmDescriptionModel,
     OdmElementWithParentUid,
     OdmFormalExpressionModel,
+    OdmTranslatedTextModel,
 )
 from clinical_mdr_api.repositories._utils import (
     CypherQueryBuilder,
     FilterDict,
     FilterOperator,
+    calculate_total_count_from_query_result,
     sb_clear_cache,
 )
 from common.exceptions import BusinessLogicException
@@ -106,13 +108,14 @@ class OdmGenericRepository(ConceptGenericRepository[_AggregateRootType], ABC):
         extracted_items = self._retrieve_concepts_from_cypher_res(
             result_array, attributes_names
         )
-
-        count_result, _ = db.cypher_query(
-            query=query.count_query, params=query.parameters
+        total_amount = calculate_total_count_from_query_result(
+            len(extracted_items), page_number, page_size, total_count
         )
-        total_amount = (
-            count_result[0][0] if len(count_result) > 0 and total_count else 0
-        )
+        if total_amount is None:
+            count_result, _ = db.cypher_query(
+                query=query.count_query, params=query.parameters
+            )
+            total_amount = count_result[0][0] if len(count_result) > 0 else 0
 
         return extracted_items, total_amount
 
@@ -403,34 +406,23 @@ class OdmGenericRepository(ConceptGenericRepository[_AggregateRootType], ABC):
 
         return None
 
-    def connect_descriptions(
-        self, descriptions: list[OdmDescriptionModel], new_value: VersionValue
+    def connect_translated_texts(
+        self, translated_texts: list[OdmTranslatedTextModel], new_value: VersionValue
     ):
-        new_value.has_description.disconnect_all()
+        new_value.has_translated_text.disconnect_all()
 
-        for description in descriptions:
-            params: dict[str, Any] = {
-                "name": description.name,
-                "language": description.language,
+        for translated_text in translated_texts:
+            params: dict[str, str | OdmTranslatedTextTypeEnum] = {
+                "text": translated_text.text,
+                "language": translated_text.language,
+                "text_type": translated_text.text_type.value,
             }
-            for attr in ["description", "instruction", "sponsor_instruction"]:
-                value = getattr(description, attr)
-                if value is not None:
-                    params[attr] = value
-                else:
-                    params[f"{attr}__isnull"] = True
 
-            description_node = OdmDescription.nodes.get_or_none(**params)
-            if not description_node:
-                description_node = OdmDescription(
-                    name=description.name,
-                    language=description.language,
-                    description=description.description,
-                    instruction=description.instruction,
-                    sponsor_instruction=description.sponsor_instruction,
-                )
-                description_node.save()
-            new_value.has_description.connect(description_node)
+            translated_text_node = OdmTranslatedText.nodes.get_or_none(**params)
+            if not translated_text_node:
+                translated_text_node = OdmTranslatedText(**params)
+                translated_text_node.save()
+            new_value.has_translated_text.connect(translated_text_node)
 
     def connect_aliases(self, aliases: list[OdmAliasModel], new_value: VersionValue):
         new_value.has_alias.disconnect_all()

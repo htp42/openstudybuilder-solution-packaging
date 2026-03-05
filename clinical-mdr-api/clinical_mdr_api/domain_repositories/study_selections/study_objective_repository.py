@@ -12,9 +12,10 @@ from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_codelist_a
     CTCodelistAttributesRepository,
 )
 from clinical_mdr_api.domain_repositories.generic_repository import (
-    manage_previous_connected_study_selection_relationships,
+    _manage_versioning_with_relations,
 )
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
+    CTTermContext,
     CTTermRoot,
 )
 from clinical_mdr_api.domain_repositories.models.study import StudyRoot, StudyValue
@@ -28,6 +29,8 @@ from clinical_mdr_api.domain_repositories.models.study_selections import StudyOb
 from clinical_mdr_api.domain_repositories.models.syntax import (
     ObjectiveRoot,
     ObjectiveTemplateRoot,
+    ObjectiveTemplateValue,
+    ObjectiveValue,
 )
 from clinical_mdr_api.domains.study_selections.study_selection_objective import (
     StudySelectionObjectivesAR,
@@ -233,6 +236,7 @@ class StudySelectionObjectiveRepository:
             return Create()
         return Delete()
 
+    # pylint: disable=unused-argument
     def save(self, study_selection: StudySelectionObjectivesAR, author_id: str) -> None:
         """
         Persist the set of selected study objectives from the aggregate to the database
@@ -288,18 +292,13 @@ class StudySelectionObjectiveRepository:
             audit_node = self._get_audit_node(
                 study_selection, study_objective.study_selection_uid
             )
-            audit_node = self._set_before_audit_info(
-                audit_node=audit_node,
-                study_objective_selection_node=last_study_selection_node,
-                study_root_node=study_root_node,
-                author_id=author_id,
-            )
             audit_trail_nodes[study_objective.study_selection_uid] = (
                 audit_node,
                 last_study_selection_node,
             )
             if isinstance(audit_node, Delete):
                 self._add_new_selection(
+                    study_root_node,
                     latest_study_value_node,
                     order,
                     study_objective,
@@ -317,11 +316,8 @@ class StudySelectionObjectiveRepository:
                 ]
             else:
                 audit_node = Create()
-                audit_node.author_id = selection.author_id
-                audit_node.date = selection.start_date
-                audit_node.save()
-                study_root_node.audit_trail.connect(audit_node)
             self._add_new_selection(
+                study_root_node,
                 latest_study_value_node,
                 order,
                 selection,
@@ -330,23 +326,9 @@ class StudySelectionObjectiveRepository:
                 False,
             )
 
-    @staticmethod
-    def _set_before_audit_info(
-        audit_node: StudyAction,
-        study_objective_selection_node: StudyObjective,
-        study_root_node: StudyRoot,
-        author_id: str,
-    ) -> StudyAction:
-        audit_node.author_id = author_id
-        audit_node.date = datetime.datetime.now(datetime.timezone.utc)
-        audit_node.save()
-
-        audit_node.has_before.connect(study_objective_selection_node)
-        study_root_node.audit_trail.connect(audit_node)
-        return audit_node
-
     def _add_new_selection(
         self,
+        study_root: StudyRoot,
         latest_study_value_node: StudyValue,
         order: int,
         selection: StudySelectionObjectiveVO,
@@ -355,17 +337,17 @@ class StudySelectionObjectiveRepository:
         for_deletion: bool = False,
     ):
         # Create new objective selection
-        study_objective_selection_node = StudyObjective(order=order)
-        study_objective_selection_node.uid = selection.study_selection_uid
-        study_objective_selection_node.accepted_version = selection.accepted_version
-        study_objective_selection_node.save()
+        study_objective_selection_node = StudyObjective(
+            order=order,
+            uid=selection.study_selection_uid,
+            accepted_version=selection.accepted_version,
+        ).save()
+
         if not for_deletion:
             # Connect new node with study value
             latest_study_value_node.has_study_objective.connect(
                 study_objective_selection_node
             )
-        # Connect new node with audit trail
-        audit_node.has_after.connect(study_objective_selection_node)
 
         # check if objective is set
         if selection.objective_uid:
@@ -407,14 +389,18 @@ class StudySelectionObjectiveRepository:
             study_objective_selection_node.has_objective_level.connect(
                 selected_objective_level_node
             )
-
-        if last_study_selection_node:
-            manage_previous_connected_study_selection_relationships(
-                previous_item=last_study_selection_node,
-                study_value_node=latest_study_value_node,
-                new_item=study_objective_selection_node,
-                exclude_study_selection_relationships=[],
-            )
+        _manage_versioning_with_relations(
+            study_root=study_root,
+            action_type=type(audit_node),
+            before=last_study_selection_node,
+            after=study_objective_selection_node,
+            exclude_relationships=[
+                ObjectiveValue,
+                ObjectiveTemplateValue,
+                CTTermContext,
+            ],
+            author_id=selection.author_id,
+        )
 
     def study_objective_exists(self, study_objective_uid: str) -> bool:
         """

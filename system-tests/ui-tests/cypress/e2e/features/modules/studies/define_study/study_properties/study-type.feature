@@ -45,58 +45,75 @@ Feature: Studies - Define Study - Study Properties - Study Type
         Then The online help panel shows 'Study Type' panel with content 'Overall description of the study by selection of prespecified controlled terms. This information is part of the mandatory SDTM.TS domain (Trial Summary).'
 
     Scenario: [Actions][Edit] Editing the study type
-        Given The test study '/study_properties/type' page is opened
-        When The study type is fully defined
+        Given [API] The null study type is created for the main test study
+        And The test study '/study_properties/type' page is opened
+        When The edit content button is clicked
+        And The study type is fully defined
         And Form save button is clicked
         Then The study type data is reflected in the table
 
     Scenario: [Actions][Edit][Stop rule][None] User must be able to use NONE value for study stop rule
-        Given The test study '/study_properties/type' page is opened
-        When The Study Stop Rule NONE option is selected
+        Given [API] The null study type is created for the main test study
+        And The test study '/study_properties/type' page is opened
+        When The edit content button is clicked
         Then The Study Stop Rule field is disabled
 
     Scenario: [Actions][Edit][Minimum duration][N/A] User must be able to use NA value for the Confirmed response minimum duration
-        Given The test study '/study_properties/type' page is opened
-        When The Confirmed response minimum duration NA option is selected
+        Given [API] The null study type is created for the main test study
+        And The test study '/study_properties/type' page is opened
+        When The edit content button is clicked
+        And The Confirmed response minimum duration NA option is selected
         Then The Confirmed response minimum duration field is disabled
 
     Scenario: [Actions][Edit][Development Stage] User must be able to set study Development Stage to Pilot Stage
-        Given A test study is selected
-        And The study type is not defined
-        When The test study '/study_properties/type' page is opened
+        Given [API] The null study type is created for the main test study
+        And The test study '/study_properties/type' page is opened
+        And The edit content button is clicked
         And The user sets study development stage to 'Pilot Stage'
+        And User intercepts study design request
+        When Form save button is clicked
         Then The study development stage is 'Pilot Stage'
    
     Scenario: [Actions][Edit][Development Stage] User must be able to set study Development Stage to Pivotal Stage
-        Given A test study is selected
-        And The study type is not defined
-        When The test study '/study_properties/type' page is opened
+        Given [API] The null study type is created for the main test study
+        And The test study '/study_properties/type' page is opened
+        And The edit content button is clicked
         And The user sets study development stage to 'Pivotal Stage'
+        And User intercepts study design request
+        When Form save button is clicked
         Then The study development stage is 'Pivotal Stage'
    
     Scenario: [Actions][Edit][Development Stage] User must be able to set study Development Stage to Post-market Stage
-        Given A test study is selected
-        And The study type is not defined
-        When The test study '/study_properties/type' page is opened
+        Given [API] The null study type is created for the main test study
+        And The test study '/study_properties/type' page is opened
+        And The edit content button is clicked
         And The user sets study development stage to 'Post-market Stage'
+        And User intercepts study design request
+        When Form save button is clicked
         Then The study development stage is 'Post-market Stage'
 
     @pending_implementation
     Scenario: User must be able to copy the study type data from other existing study without overwriting the data
+        Given [API] The null study type is created for the main test study
         Given The test study '/study_properties/type' page is opened
         And Another study with study type defined exists
-        When The study type is partially defined
+        When The edit content button is clicked
+        And The study type is partially defined
         And Form save button is clicked
         And The study type is copied from another study without overwriting
+        And Form save button is clicked
         Then Only the missing information is filled from another study in the study type form
 
     @pending_implementation
     Scenario: User must be able to copy the study type data from other existing study with overwriting the data
-        Given The test study '/study_properties/type' page is opened
+        Given [API] The null study type is created for the main test study
+        And The test study '/study_properties/type' page is opened
         And Another study with study type defined exists
-        When The study type is fully defined
+        When The edit content button is clicked
+        And The study type is fully defined
         And Form save button is clicked
         And The study type is copied from another study with overwriting
+        And Form save button is clicked
         Then All the informations are overwritten in the study type
 
     @manual_test

@@ -22,7 +22,7 @@
       <template #bottom />
       <template #item="{ item, index }">
         <tr style="background-color: var(--v-dfltBackground-base)">
-          <td width="45%" :class="'font-weight-bold'">
+          <td style="width: 45%" :class="'font-weight-bold'">
             <v-row class="align-center">
               <v-btn variant="text" icon class="ml-12 hide" />
               <CrfTreeReorderButtons
@@ -54,22 +54,22 @@
               </span>
             </v-row>
           </td>
-          <td width="10%">
+          <td style="width: 10%">
             <CrfTreeTooltipsHandler :item="item" value="mandatory" />
             <CrfTreeTooltipsHandler :item="item" value="locked" />
             <CrfTreeTooltipsHandler :item="item" value="refAttrs" />
           </td>
-          <td width="10%">
+          <td style="width: 10%">
             <CrfTreeTooltipsHandler :item="item" value="dataType" />
             <CrfTreeTooltipsHandler :item="item" value="vendor" />
           </td>
-          <td width="10%">
+          <td style="width: 10%">
             <StatusChip :status="item.status" />
           </td>
-          <td width="10%">
+          <td style="width: 10%">
             {{ item.version }}
           </td>
-          <td width="15%">
+          <td style="width: 15%">
             <v-btn width="150px" rounded size="small" class="hide" />
           </td>
         </tr>
@@ -104,7 +104,11 @@
   <CrfNewVersionSummaryConfirmDialog ref="confirmNewVersion" />
 </template>
 
-<script>
+<script setup>
+import { computed, inject, onMounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+
 import crfs from '@/api/crfs'
 import CrfTreeTooltipsHandler from '@/components/library/crfs/CrfTreeTooltipsHandler.vue'
 import StatusChip from '@/components/tools/StatusChip.vue'
@@ -117,215 +121,219 @@ import CrfTreeReorderButtons from '@/components/library/crfs/CrfTreeReorderButto
 import crfTypes from '@/constants/crfTypes'
 import CrfNewVersionSummaryConfirmDialog from '@/components/library/crfs/CrfNewVersionSummaryConfirmDialog.vue'
 
-export default {
-  components: {
-    CrfTreeTooltipsHandler,
-    StatusChip,
-    ActionsMenu,
-    CrfItemForm,
-    CrfExportForm,
-    CrfReferencesForm,
-    CrfTreeReorderButtons,
-    CrfNewVersionSummaryConfirmDialog,
+const props = defineProps({
+  parentItemGroup: {
+    type: Object,
+    default: null,
   },
-  inject: ['notificationHub'],
-  props: {
-    parentItemGroup: {
-      type: Object,
-      default: null,
-    },
-    columns: {
-      type: Array,
-      default: null,
-    },
-    refreshItems: {
-      type: Number,
-      default: null,
-    },
-    sortMode: {
-      type: Boolean,
-      default: false,
-    },
+  columns: {
+    type: Array,
+    default: null,
   },
-  emits: ['updateParentItemGroupItem'],
-  data() {
-    return {
-      items: [],
-      loading: false,
-      selectedItem: {},
-      showItemForm: false,
-      actions: [
-        {
-          label: this.$t('CRFTree.open_def'),
-          icon: 'mdi-eye-outline',
-          click: this.openDefinition,
-        },
-        {
-          label: this.$t('CRFTree.edit_reference'),
-          icon: 'mdi-pencil-outline',
-          click: this.editAttributes,
-          condition: (item) => item.status === statuses.DRAFT,
-          accessRole: this.$roles.LIBRARY_WRITE,
-        },
-        {
-          label: this.$t('CRFTree.preview_odm'),
-          icon: 'mdi-file-xml-box',
-          click: this.previewODM,
-        },
-        {
-          label: this.$t('_global.approve'),
-          icon: 'mdi-check-decagram',
-          click: this.approve,
-          condition: (item) => item.status === statuses.DRAFT,
-          accessRole: this.$roles.LIBRARY_WRITE,
-        },
-        {
-          label: this.$t('_global.new_version'),
-          icon: 'mdi-plus-circle-outline',
-          click: this.newVersion,
-          condition: (item) => item.status === statuses.FINAL,
-          accessRole: this.$roles.LIBRARY_WRITE,
-        },
-        {
-          label: this.$t('_global.export'),
-          icon: 'mdi-download-outline',
-          click: this.openExportForm,
-        },
-      ],
-      showExportForm: false,
-      showAttributesForm: false,
-    }
+  refreshItems: {
+    type: Number,
+    default: null,
   },
-  watch: {
-    refreshItems() {
-      this.fetchItems()
-    },
+  sortMode: {
+    type: Boolean,
+    default: false,
   },
-  created() {
-    this.statuses = statuses
-  },
-  mounted() {
-    this.fetchItems()
-  },
-  methods: {
-    async newVersion(item) {
-      if (
-        await this.$refs.confirmNewVersion.open({
-          agreeLabel: this.$t('CRFItems.create_new_version'),
-          item: item,
-        })
-      ) {
-        this.loading = true
+})
 
-        crfs
-          .newVersion('items', item.uid)
-          .then((resp) => {
-            if (this.parentItemGroup.status === statuses.DRAFT) {
-              this.updateItem(resp.data)
-            }
+const emit = defineEmits(['updateParentItemGroupItem'])
 
-            this.notificationHub.add({
-              msg: this.$t('_global.new_version_success'),
-            })
-          })
-          .finally(() => {
-            this.loading = false
-          })
-      }
-    },
-    async approve(item) {
-      this.loading = true
+const notificationHub = inject('notificationHub')
+const roles = inject('roles')
+const router = useRouter()
+const { t } = useI18n()
 
-      crfs
-        .approve('items', item.uid)
-        .then((resp) => {
-          this.updateItem(resp.data)
+const items = ref([])
+const loading = ref(false)
+const selectedItem = ref({})
+const showItemForm = ref(false)
+const showExportForm = ref(false)
+const showAttributesForm = ref(false)
 
-          this.notificationHub.add({
-            msg: this.$t('CRFItems.approved'),
-          })
+const confirmNewVersion = ref(null)
+
+const actions = computed(() => [
+  {
+    label: t('CRFTree.open_def'),
+    icon: 'mdi-eye-outline',
+    click: openDefinition,
+  },
+  {
+    label: t('CRFTree.edit_reference'),
+    icon: 'mdi-pencil-outline',
+    click: editAttributes,
+    condition: (item) => item.status === statuses.DRAFT,
+    accessRole: roles.LIBRARY_WRITE,
+  },
+  {
+    label: t('CRFTree.preview_odm'),
+    icon: 'mdi-file-xml-box',
+    click: previewODM,
+  },
+  {
+    label: t('_global.approve'),
+    icon: 'mdi-check-decagram',
+    click: approve,
+    condition: (item) => item.status === statuses.DRAFT,
+    accessRole: roles.LIBRARY_WRITE,
+  },
+  {
+    label: t('_global.new_version'),
+    icon: 'mdi-plus-circle-outline',
+    click: newVersion,
+    condition: (item) => item.status === statuses.FINAL,
+    accessRole: roles.LIBRARY_WRITE,
+  },
+  {
+    label: t('_global.export'),
+    icon: 'mdi-download-outline',
+    click: openExportForm,
+  },
+])
+
+watch(
+  () => props.refreshItems,
+  () => {
+    fetchItems()
+  }
+)
+
+onMounted(() => {
+  fetchItems()
+})
+
+async function newVersion(item) {
+  if (
+    await confirmNewVersion.value?.open({
+      agreeLabel: t('CRFItems.create_new_version'),
+      item: item,
+    })
+  ) {
+    loading.value = true
+
+    crfs
+      .newVersion('items', item.uid)
+      .then((resp) => {
+        if (props.parentItemGroup?.status === statuses.DRAFT) {
+          updateItem(resp.data)
+        }
+
+        notificationHub?.add({
+          msg: t('_global.new_version_success'),
         })
-        .finally(() => {
-          this.loading = false
-        })
-    },
-    async fetchItems() {
-      this.loading = true
-      this.items = []
-      for (const items of this.parentItemGroup.items) {
-        let rs = await crfs.get(`items/${items.uid}`, {
-          params: { version: items.version },
-        })
-        this.items.push({ ...items, ...rs.data })
-      }
-      this.loading = false
-    },
-    updateItem(item) {
-      this.items = this.items.map((i) =>
-        i.uid === item.uid ? { ...i, ...item } : i
-      )
-      this.$emit('updateParentItemGroupItem', this.parentItemGroup, item)
-    },
-    openDefinition(item) {
-      this.selectedItem = item
-      this.showItemForm = true
-    },
-    closeDefinition() {
-      this.selectedItem = {}
-      this.showItemForm = false
-      this.fetchItems()
-    },
-    openExportForm(item) {
-      this.selectedItem = item
-      this.showExportForm = true
-    },
-    closeExportForm() {
-      this.selectedItem = {}
-      this.showExportForm = false
-    },
-    editAttributes(item) {
-      this.selectedItem = item
-      this.showAttributesForm = true
-    },
-    closeAttributesForm() {
-      this.selectedItem = {}
-      this.showAttributesForm = false
-    },
-    previewODM(item) {
-      this.$router.push({
-        name: 'CrfBuilder',
-        params: {
-          tab: 'odm-viewer',
-          uid: item.uid,
-          type: crfTypes.ITEM,
-        },
       })
+      .finally(() => {
+        loading.value = false
+      })
+  }
+}
+
+async function approve(item) {
+  loading.value = true
+
+  crfs
+    .approve('items', item.uid)
+    .then((resp) => {
+      updateItem(resp.data)
+
+      notificationHub?.add({
+        msg: t('CRFItems.approved'),
+      })
+    })
+    .finally(() => {
+      loading.value = false
+    })
+}
+
+async function fetchItems() {
+  if (!props.parentItemGroup) {
+    return
+  }
+
+  loading.value = true
+  items.value = []
+  for (const item of props.parentItemGroup.items ?? []) {
+    const rs = await crfs.get(`items/${item.uid}`, {
+      params: { version: item.version },
+    })
+    items.value.push({ ...item, ...rs.data })
+  }
+  loading.value = false
+}
+
+function updateItem(item) {
+  items.value = items.value.map((i) =>
+    i.uid === item.uid ? { ...i, ...item } : i
+  )
+  emit('updateParentItemGroupItem', props.parentItemGroup, item)
+}
+
+function openDefinition(item) {
+  selectedItem.value = item
+  showItemForm.value = true
+}
+
+function closeDefinition() {
+  selectedItem.value = {}
+  showItemForm.value = false
+  fetchItems()
+}
+
+function openExportForm(item) {
+  selectedItem.value = item
+  showExportForm.value = true
+}
+
+function closeExportForm() {
+  selectedItem.value = {}
+  showExportForm.value = false
+}
+
+function editAttributes(item) {
+  selectedItem.value = item
+  showAttributesForm.value = true
+}
+
+function closeAttributesForm() {
+  selectedItem.value = {}
+  showAttributesForm.value = false
+}
+
+function previewODM(item) {
+  router.push({
+    name: 'CrfBuilder',
+    params: {
+      tab: 'odm-viewer',
+      uid: item.uid,
+      type: crfTypes.ITEM,
     },
-    orderUp(item, index) {
-      if (index === 0) {
-        return
-      } else {
-        this.items[index].order_number--
-        this.items[index - 1].order_number++
-        this.items.sort((a, b) => {
-          return a.order_number - b.order_number
-        })
-        crfs.addItemsToItemGroup(this.items, this.parentItemGroup.uid, true)
-      }
-    },
-    orderDown(item, index) {
-      if (index === this.items.length - 1) {
-        return
-      } else {
-        this.items[index].order_number++
-        this.items[index + 1].order_number--
-        this.items.sort((a, b) => {
-          return a.order_number - b.order_number
-        })
-        crfs.addItemsToItemGroup(this.items, this.parentItemGroup.uid, true)
-      }
-    },
-  },
+  })
+}
+
+function orderUp(item, index) {
+  if (index === 0) {
+    return
+  }
+
+  items.value[index].order_number--
+  items.value[index - 1].order_number++
+  items.value.sort((a, b) => a.order_number - b.order_number)
+  crfs.addItemsToItemGroup(items.value, props.parentItemGroup.uid, true)
+}
+
+function orderDown(item, index) {
+  if (index === items.value.length - 1) {
+    return
+  }
+
+  items.value[index].order_number++
+  items.value[index + 1].order_number--
+  items.value.sort((a, b) => a.order_number - b.order_number)
+  crfs.addItemsToItemGroup(items.value, props.parentItemGroup.uid, true)
 }
 </script>
 <style scoped>

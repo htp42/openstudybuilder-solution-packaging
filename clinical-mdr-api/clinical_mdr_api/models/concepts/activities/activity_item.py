@@ -99,6 +99,7 @@ class ActivityItem(BaseModel):
     ct_terms: list[CompactCTTerm] = Field(default_factory=list)
     unit_definitions: list[CompactUnitDefinition] = Field(default_factory=list)
     is_adam_param_specific: Annotated[bool, Field()]
+    text_value: Annotated[str | None, Field()] = None
 
 
 class ActivityItemCreateInput(PostInputModel):
@@ -110,3 +111,4 @@ class ActivityItemCreateInput(PostInputModel):
     ct_terms: Annotated[list[CTTermsInput], Field()]
     unit_definition_uids: Annotated[list[str], Field()]
     is_adam_param_specific: Annotated[bool, Field()]
+    text_value: Annotated[str | None, Field()] = None

@@ -60,7 +60,7 @@
             :hide-export-button="false"
             :hide-default-switches="true"
             :export-data-url="`concepts/activities/activity-groups/${route.params.id}/subgroups`"
-            :disable-filtering="false"
+            disable-filtering
             :hide-search-field="false"
             :modifiable-table="true"
             :no-padding="true"

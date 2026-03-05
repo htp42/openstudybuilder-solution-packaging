@@ -1,4 +1,5 @@
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
+const { getCurrStudyUid } = require("../../support/helper_functions");
 
 let transitionRule
 
@@ -32,6 +33,8 @@ Then('The transition rule is visible in the correct table column', () => {
 Then('The transition rule is changed to have {int} characters', (numberOfCharacters) => fillTransitionRule('x'.repeat(numberOfCharacters)))
 
 Then('The warning message about transition rule exceeding 200 characters is displayed', () => cy.contains('[role="alert"]', 'This field must not exceed 200 characters').should('be.visible'))
+
+Then('[API] Link Study Element to Epoch and Study Arm within selected study', () => cy.createDesignMatrix(getCurrStudyUid()))
 
 function perfomAction(epochName, actionLocator) {
     cy.contains('table thead th', epochName).invoke('index').then(index => {

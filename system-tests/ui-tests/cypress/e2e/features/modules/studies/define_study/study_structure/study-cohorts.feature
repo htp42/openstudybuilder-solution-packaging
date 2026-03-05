@@ -7,10 +7,12 @@ Feature: Studies - Define Study - Study Structure - Manually Defined Study Cohor
 
     Background: User is logged in
         Given The user is logged in
-        And The study for testing manually defined study structure is selected
+        When Get study 'CDISC DEV-9878' uid
+        And Select study with uid saved in previous step
         And [API] Uid of study type 'Investigational Arm' is fetched
-        And A study with Study Arms has been selected
-        And The study 'cohorts' page is opened for that study
+        And [API] The Study Arm exists within selected study
+        Then The page 'study_structure/cohorts' is opened for selected study
+        And User waits for table to load
 
     @smoke_test
     Scenario: [Navigation] User must be able to navigate to Study Cohorts page using side menu
@@ -22,8 +24,11 @@ Feature: Studies - Define Study - Study Structure - Manually Defined Study Cohor
     Scenario: [Table][Options] User must be able to see the Study Cohorts table with following options
         Then A table is visible with following options
             | options                                                         |
-            | Columns                                                         |
-            | Add select boxes to table to allow selection of rows for export |
+            | Select columns                                                  |
+            | Export                                                          |
+            | Select rows                                                     |
+            | Search                                                          |
+            | Show version history                                            |
 
     @smoke_test
     Scenario: [Table][Columns][Names] User must be able to see the Study Cohorts table with following columns
@@ -93,7 +98,7 @@ Feature: Studies - Define Study - Study Structure - Manually Defined Study Cohor
         And The Cohort name field is not populated
         And The Cohort short name field is not populated
         And The Cohort code field is not populated
-        And The 'save-button' button is clicked
+        And Form save button is clicked
         Then The form is not closed
 
     Scenario: [Create][Uniqueness check][Name] User must not be able to create two Cohorts within one study using the same Cohort name
@@ -155,19 +160,27 @@ Feature: Studies - Define Study - Study Structure - Manually Defined Study Cohor
         Then The message "Value must be less than 99" is displayed
 
     Scenario: [Export][CSV] User must be able to export the data in CSV format
-        And The user exports the data in 'CSV' format
+        When User clicks table export button
+        And User selects 'CSV' format to export the table content
+        And Action is confirmed by clicking continue
         Then The study specific 'StudyCohorts' file is downloaded in 'csv' format
 
     Scenario: [Export][Json] User must be able to export the data in JSON format
-        And The user exports the data in 'JSON' format
+        When User clicks table export button
+        And User selects 'JSON' format to export the table content
+        And Action is confirmed by clicking continue
         Then The study specific 'StudyCohorts' file is downloaded in 'json' format
 
     Scenario: [Export][Xml] User must be able to export the data in XML format
-        And The user exports the data in 'XML' format
+        When User clicks table export button
+        And User selects 'XML' format to export the table content
+        And Action is confirmed by clicking continue
         Then The study specific 'StudyCohorts' file is downloaded in 'xml' format
 
     Scenario: [Export][Excel] User must be able to export the data in EXCEL format
-        And The user exports the data in 'EXCEL' format
+        When User clicks table export button
+        And User selects 'EXCEL' format to export the table content
+        And Action is confirmed by clicking continue
         Then The study specific 'StudyCohorts' file is downloaded in 'xlsx' format
 
     @manual_test

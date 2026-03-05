@@ -43,6 +43,15 @@ from common.telemetry import trace_calls
 
 class StudySelectionMixin:
 
+    def check_if_study_exists(self, study_uid: str):
+        exceptions.NotFoundException.raise_if_not(
+            self._repos.study_definition_repository.study_exists_by_uid(
+                study_uid=study_uid
+            ),
+            "Study",
+            study_uid,
+        )
+
     @trace_calls
     def update_ctterm_maps(self, terms_at_specific_datetime: datetime | None = None):
         study_epoch_types = set()

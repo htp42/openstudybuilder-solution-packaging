@@ -6,7 +6,6 @@ Feature: Library - Data Collection Standards - CRF Builder - Item Groups
     Background: User is logged in the system
         Given The user is logged in
         And The homepage is opened
-        And The multilingual CRFs option is toggled off in the settings menu
 
     Scenario: [Navigation] User must be able to navigate to the Items Group page
         Given The '/library' page is opened
@@ -20,8 +19,6 @@ Feature: Library - Data Collection Standards - CRF Builder - Item Groups
             | headers              |
             | OID                  |
             | Name                 |
-            | Description          |
-            | Design Notes         |
             | Repeating            |
             | Version              |
             | Status               |
@@ -31,10 +28,10 @@ Feature: Library - Data Collection Standards - CRF Builder - Item Groups
         Then A table is visible with following options
             | options                                                         |
             | Add CRF Item Group                                              |
-            | Filters                                                         |
-            | Columns                                                         |
+            | Select columns                                                  |
             | Export                                                          |
-            | search-field                                                    |
+            | Select filters                                                  |
+            | Search                                                          |
 
     Scenario: [Table][Columns][Visibility] User must be able to select visibility of columns in the table 
         Given The '/library/crf-builder/item-groups' page is opened
@@ -45,6 +42,7 @@ Feature: Library - Data Collection Standards - CRF Builder - Item Groups
         Given The '/library/crf-builder/item-groups' page is opened
         When The 'add-crf-item-group' button is clicked
         And The CRF Item Group definition container is filled with data
+        And Form continue button is clicked
         And Form continue button is clicked
         And Form continue button is clicked
         And Form save button is clicked
@@ -95,6 +93,7 @@ Feature: Library - Data Collection Standards - CRF Builder - Item Groups
         And The CRF Item Group definition container is filled with data
         And Form continue button is clicked
         And Form continue button is clicked
+        And Form continue button is clicked
         And Form save button is clicked
         And Created CRF Item Group is found
         When The 'Delete' option is clicked from the three dot menu list
@@ -102,8 +101,12 @@ Feature: Library - Data Collection Standards - CRF Builder - Item Groups
 
     Scenario: User must not be able to create CRF Item Group without Name provided
         Given The '/library/crf-builder/item-groups' page is opened
-        And The CRF Item Group definition is filled without name provided and the next button is clicked
-        Then The validation appears for the CRF Item Group Name field
+        When The 'add-crf-item-group' button is clicked
+        And Form continue button is clicked
+        And Form continue button is clicked
+        And Form continue button is clicked
+        And Form save button is clicked
+        Then The pop up displays 'Name must be provided'
 
     @manual_test    
     Scenario: User must be able to read change history of selected element

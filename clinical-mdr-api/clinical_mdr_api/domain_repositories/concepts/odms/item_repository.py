@@ -34,9 +34,9 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
 )
 from clinical_mdr_api.models.concepts.odms.odm_common_models import (
     OdmAliasModel,
-    OdmDescriptionModel,
+    OdmTranslatedTextModel,
 )
-from clinical_mdr_api.models.concepts.odms.odm_item import OdmItem
+from clinical_mdr_api.models.concepts.odms.odm_item import OdmItem, OdmItemCodelist
 from clinical_mdr_api.services._utils import ensure_transaction
 from clinical_mdr_api.utils import db_result_to_list
 from common.exceptions import NotFoundException
@@ -61,7 +61,7 @@ class ItemRepository(OdmGenericRepository[OdmItemAR]):
                 """
                 MATCH (oiv:OdmItemValue)-[ltai:LINKS_TO_ACTIVITY_ITEM]->(ai:ActivityItem)
                 MATCH (ai)<-[:HAS_ACTIVITY_ITEM]-(aicr:ActivityItemClassRoot)
-                MATCH (ai)<-[:CONTAINS_ACTIVITY_ITEM]-(:ActivityInstanceValue)<-[:LATEST]-(air:ActivityInstanceRoot)
+                MATCH (ai)<-[:CONTAINS_ACTIVITY_ITEM]-(aiv:ActivityInstanceValue)<-[:LATEST]-(air:ActivityInstanceRoot)
                 WHERE elementId(oiv) = $element_id
                 MATCH (oigr:OdmItemGroupRoot)-[:HAS_VERSION]->(oigv:OdmItemGroupValue)
                 MATCH (oiv)<-[:ITEM_REF]-(oigv)-[:LINKS_TO_ACTIVITY_ITEM]->(ai)
@@ -70,6 +70,9 @@ class ItemRepository(OdmGenericRepository[OdmItemAR]):
                 MATCH (ai)<-[:HAS_ACTIVITY_ITEM]-(aicr:ActivityItemClassRoot)
                 RETURN DISTINCT
                     air.uid AS activity_instance_uid,
+                    aiv.name AS activity_instance_name,
+                    aiv.adam_param_code AS activity_instance_adam_param_code,
+                    aiv.topic_code AS activity_instance_topic_code,
                     aicr.uid AS activity_item_class_uid,
                     ofr.uid AS odm_form_uid,
                     oigr.uid AS odm_item_group_uid,
@@ -97,15 +100,13 @@ class ItemRepository(OdmGenericRepository[OdmItemAR]):
                 sds_var_name=value.sds_var_name,
                 origin=value.origin,
                 comment=value.comment,
-                descriptions=[
-                    OdmDescriptionModel(
-                        name=description_value.name,
-                        language=description_value.language,
-                        description=description_value.description,
-                        instruction=description_value.instruction,
-                        sponsor_instruction=description_value.sponsor_instruction,
+                translated_texts=[
+                    OdmTranslatedTextModel(
+                        text_type=translated_text_value.text_type,
+                        language=translated_text_value.language,
+                        text=translated_text_value.text,
                     )
-                    for description_value in value.has_description.all()
+                    for translated_text_value in value.has_translated_text.all()
                 ],
                 aliases=[
                     OdmAliasModel(name=alias_value.name, context=alias_value.context)
@@ -115,7 +116,17 @@ class ItemRepository(OdmGenericRepository[OdmItemAR]):
                     unit_definition.uid
                     for unit_definition in value.has_unit_definition.all()
                 ],
-                codelist_uid=codelist.uid if codelist else None,
+                codelist=(
+                    OdmItemCodelist(
+                        uid=codelist.uid,
+                        allows_multi_choice=value.has_codelist.relationship(
+                            codelist
+                        ).allows_multi_choice
+                        or False,
+                    )
+                    if codelist
+                    else None
+                ),
                 term_uids=[
                     term.uid
                     for term_context in value.has_codelist_term.all()
@@ -166,24 +177,30 @@ class ItemRepository(OdmGenericRepository[OdmItemAR]):
                 sds_var_name=input_dict.get("sds_var_name"),
                 origin=input_dict.get("origin"),
                 comment=input_dict.get("comment"),
-                descriptions=[
-                    OdmDescriptionModel(
-                        name=description["name"],
-                        language=description.get("language", None),
-                        description=description.get("description", None),
-                        instruction=description.get("instruction", None),
-                        sponsor_instruction=description.get(
-                            "sponsor_instruction", None
-                        ),
+                translated_texts=[
+                    OdmTranslatedTextModel(
+                        text_type=translated_text["text_type"],
+                        language=translated_text["language"],
+                        text=translated_text["text"],
                     )
-                    for description in input_dict["descriptions"]
+                    for translated_text in input_dict["translated_texts"]
                 ],
                 aliases=[
                     OdmAliasModel(name=alias["name"], context=alias["context"])
                     for alias in input_dict["aliases"]
                 ],
                 unit_definition_uids=input_dict["unit_definition_uids"],
-                codelist_uid=input_dict["codelist_uid"],
+                codelist=(
+                    OdmItemCodelist(
+                        uid=input_dict["codelist"]["uid"],
+                        allows_multi_choice=input_dict["codelist"][
+                            "allows_multi_choice"
+                        ]
+                        or False,
+                    )
+                    if input_dict.get("codelist", None)
+                    else None
+                ),
                 term_uids=input_dict["term_uids"],
                 activity_instances=input_dict["activity_instances"],
                 vendor_element_uids=input_dict["vendor_element_uids"],
@@ -225,20 +242,19 @@ concept_value.sds_var_name as sds_var_name,
 concept_value.origin as origin,
 concept_value.comment as comment,
 
-[(concept_value)-[:HAS_DESCRIPTION]->(dv:OdmDescription) |
-{name: dv.name, language: dv.language, description: dv.description, instruction: dv.instruction, sponsor_instruction: dv.sponsor_instruction}] AS descriptions,
+[(concept_value)-[:HAS_TRANSLATED_TEXT]->(dv:OdmTranslatedText) | {text_type: dv.text_type, language: dv.language, text: dv.text}] AS translated_texts,
 
 [(concept_value)-[:HAS_ALIAS]->(av:OdmAlias) | {name: av.name, context: av.context}] AS aliases,
 
 [(concept_value)-[hud:HAS_UNIT_DEFINITION]->(udr:UnitDefinitionRoot)-[:LATEST]->(udv:UnitDefinitionValue) |
 {uid: udr.uid, name: udv.name, mandatory: hud.mandatory, order: hud.order}] AS unit_definitions,
 
-head([(concept_value)-[:HAS_CODELIST]->(ctcr:CTCodelistRoot)-[:HAS_ATTRIBUTES_ROOT]->
-(:CTCodelistAttributesRoot)-[:LATEST]->(ctcav:CTCodelistAttributesValue) | ctcr.uid]) AS codelist_uid,
+head([(concept_value)-[hc:HAS_CODELIST]->(ctcr:CTCodelistRoot)-[:HAS_ATTRIBUTES_ROOT]->
+(:CTCodelistAttributesRoot)-[:LATEST]->(ctcav:CTCodelistAttributesValue) | {uid: ctcr.uid, allows_multi_choice: hc.allows_multi_choice}]) AS codelist,
 
 [(concept_value)-[hct:HAS_CODELIST_TERM]->(:CTTermContext)-[:HAS_SELECTED_TERM]->
 (cttr:CTTermRoot)-[:HAS_NAME_ROOT]->(cttnr:CTTermNameRoot)-[:LATEST]->(cttnv:CTTermNameValue) |
-{uid: cttr.uid, name: cttnv.name, mandatory: hct.mandatory, order: hct.order}] AS terms,
+{uid: cttr.uid, name: cttnv.name, display_text: hct.display_text, mandatory: hct.mandatory, order: hct.order}] AS terms,
 
 [(concept_value)-[hve:HAS_VENDOR_ELEMENT]->(vev:OdmVendorElementValue)<-[:HAS_VERSION]-(ver:OdmVendorElementRoot) |
 {uid: ver.uid, name: vev.name, value: hve.value}] AS vendor_elements,
@@ -257,9 +273,12 @@ CALL {
     MATCH (ofr:OdmFormRoot)-[:HAS_VERSION]->(ofv:OdmFormValue)
     MATCH (oigv)<-[:ITEM_GROUP_REF]-(ofv)-[:LINKS_TO_ACTIVITY_ITEM]->(ai)
     MATCH (ai)<-[:HAS_ACTIVITY_ITEM]-(aicr:ActivityItemClassRoot)
-    MATCH (ai)<-[:CONTAINS_ACTIVITY_ITEM]-(:ActivityInstanceValue)<-[:LATEST]-(air:ActivityInstanceRoot)
+    MATCH (ai)<-[:CONTAINS_ACTIVITY_ITEM]-(aiv:ActivityInstanceValue)<-[:LATEST]-(air:ActivityInstanceRoot)
     RETURN COLLECT(DISTINCT {
         activity_instance_uid: air.uid,
+        activity_instance_name: aiv.name,
+        activity_instance_adam_param_code: aiv.adam_param_code,
+        activity_instance_topic_code: aiv.topic_code,
         activity_item_class_uid: aicr.uid,
         odm_form_uid: ofr.uid,
         odm_item_group_uid: oigr.uid,
@@ -289,13 +308,16 @@ apoc.coll.toSet([vendor_element_attribute in vendor_element_attributes | vendor_
         self.manage_vendor_relationships(
             current_latest, new_value, ar.should_disconnect_relationships
         )
-        self.connect_descriptions(ar.concept_vo.descriptions, new_value)
+        self.connect_translated_texts(ar.concept_vo.translated_texts, new_value)
         self.connect_aliases(ar.concept_vo.aliases, new_value)
 
         new_value.has_codelist.disconnect_all()
-        if ar.concept_vo.codelist_uid is not None:
-            codelist = CTCodelistRoot.nodes.get_or_none(uid=ar.concept_vo.codelist_uid)
-            new_value.has_codelist.connect(codelist)
+        if ar.concept_vo.codelist is not None:
+            codelist = CTCodelistRoot.nodes.get_or_none(uid=ar.concept_vo.codelist.uid)
+            new_value.has_codelist.connect(
+                codelist,
+                {"allows_multi_choice": ar.concept_vo.codelist.allows_multi_choice},
+            )
 
         for activity_instance in ar.concept_vo.activity_instances:
             db.cypher_query(
@@ -357,15 +379,13 @@ apoc.coll.toSet([vendor_element_attribute in vendor_element_attributes | vendor_
     def _has_data_changed(self, ar: OdmItemAR, value: OdmItemValue) -> bool:
         are_concept_properties_changed = super()._has_data_changed(ar=ar, value=value)
 
-        description_nodes = {
-            OdmDescriptionModel(
-                name=description_node.name,
-                language=description_node.language,
-                description=description_node.description,
-                instruction=description_node.instruction,
-                sponsor_instruction=description_node.sponsor_instruction,
+        translated_text_nodes = {
+            OdmTranslatedTextModel(
+                text_type=translated_text_node.text_type,
+                language=translated_text_node.language,
+                text=translated_text_node.text,
             )
-            for description_node in value.has_description.all()
+            for translated_text_node in value.has_translated_text.all()
         }
         alias_nodes = {
             OdmAliasModel(name=alias_node.name, context=alias_node.context)
@@ -374,9 +394,12 @@ apoc.coll.toSet([vendor_element_attribute in vendor_element_attributes | vendor_
         unit_definition_uids = {
             unit_definition.uid for unit_definition in value.has_unit_definition.all()
         }
-        codelist_uid = (
-            codelist.uid if (codelist := value.has_codelist.get_or_none()) else None
-        )
+        if codelist := value.has_codelist.get_or_none():
+            rel = value.has_codelist.relationship(codelist)
+            codelist = (codelist.uid, rel.allows_multi_choice or False)
+        else:
+            codelist = None
+
         term_uids = {
             term.uid
             for term_context in value.has_codelist_term.all()
@@ -425,10 +448,14 @@ apoc.coll.toSet([vendor_element_attribute in vendor_element_attributes | vendor_
         ]
 
         are_rels_changed = (
-            set(ar.concept_vo.descriptions) != description_nodes
+            set(ar.concept_vo.translated_texts) != translated_text_nodes
             or set(ar.concept_vo.aliases) != alias_nodes
             or set(ar.concept_vo.unit_definition_uids) != unit_definition_uids
-            or ar.concept_vo.codelist_uid != codelist_uid
+            or (
+                getattr(ar.concept_vo.codelist, "uid", None),
+                getattr(ar.concept_vo.codelist, "allows_multi_choice", None),
+            )
+            != codelist
             or set(ar.concept_vo.term_uids) != term_uids
             or sorted(ar_activity_instances) != sorted(activity_instances)
         )
@@ -616,7 +643,7 @@ apoc.coll.toSet([vendor_element_attribute in vendor_element_attributes | vendor_
     def remove_all_codelist_terms_from_item(self, item_uid: str):
         db.cypher_query(
             """
-                MATCH (:OdmItemRoot {uid: $uid})-[r:HAS_CODELIST_TERM]->(:CTTermContext)
+                MATCH (:OdmItemRoot {uid: $uid})-[:LATEST]->(:OdmItemValue)-[r:HAS_CODELIST_TERM]->(:CTTermContext)
                 DELETE r
                 """,
             params={"uid": item_uid},

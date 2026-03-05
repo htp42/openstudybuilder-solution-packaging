@@ -172,6 +172,7 @@ class ActivityRoot(ConceptRoot):
 
 class ActivityItem(ClinicalMdrNode):
     is_adam_param_specific = BooleanProperty(False)
+    text_value = StringProperty()
     has_activity_item_class = RelationshipFrom(
         ActivityItemClassRoot,
         "HAS_ACTIVITY_ITEM",

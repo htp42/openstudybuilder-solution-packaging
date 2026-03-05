@@ -64,7 +64,7 @@ Feature: Manage ODM Methods in OpenStudyBuilder API
     Scenario: User cannot create a new ODM method without an English description
         When the user sends a request to create an ODM method without an English description
         Then the response status code must be 400
-        And the response must include the message "At least one description must be in English ('eng' or 'en')."
+        And the response must include the message "A Translated Text with text_type Description and language English ('eng' or 'en') must be provided."
     Test Coverage:
         | TestFile                                                | TestID                                                                      |
         | /tests/integration/api/old/test_odm_methods_negative.py | @TestID: test_cannot_create_a_new_odm_method_without_an_english_description |

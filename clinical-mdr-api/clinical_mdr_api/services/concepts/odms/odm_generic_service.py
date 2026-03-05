@@ -13,20 +13,18 @@ from clinical_mdr_api.domain_repositories.concepts.odms.item_group_repository im
 from clinical_mdr_api.domain_repositories.concepts.odms.item_repository import (
     ItemRepository,
 )
-from clinical_mdr_api.domains.concepts.odms.form import OdmFormAR
-from clinical_mdr_api.domains.concepts.odms.item import OdmItemAR
-from clinical_mdr_api.domains.concepts.odms.item_group import OdmItemGroupAR
 from clinical_mdr_api.domains.concepts.odms.vendor_attribute import OdmVendorAttributeAR
 from clinical_mdr_api.domains.concepts.utils import (
     RelationType,
     VendorAttributeCompatibleType,
     VendorElementCompatibleType,
 )
+from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.models.concepts.odms.odm_common_models import (
     OdmVendorElementRelationPostInput,
     OdmVendorRelationPostInput,
-    OdmVendorsPostInput,
 )
+from clinical_mdr_api.models.utils import BaseModel
 from clinical_mdr_api.services._utils import ensure_transaction
 from clinical_mdr_api.services.concepts.concept_generic_service import (
     ConceptGenericService,
@@ -44,10 +42,10 @@ class OdmGenericService(ConceptGenericService[_AggregateRootType], ABC):
         input_elements: list[OdmVendorElementRelationPostInput],
     ):
         """
-        Raises an error if any ODM vendor element that is not present in the input is used by any of the given ODM element attributes.
+        Raises an error if any ODM vendor element that is not present in the input is used by any of the present ODM element attributes.
 
         Args:
-            attribute_uids (list[str]): The uids of the ODM element attributes.
+            attribute_uids (list[str]): The input ODM element attributes.
             input_elements (list[OdmVendorElementRelationPostInput]): The input ODM vendor elements.
 
         Returns:
@@ -66,6 +64,7 @@ class OdmGenericService(ConceptGenericService[_AggregateRootType], ABC):
         odm_vendor_attribute_element_uids = {
             odm_vendor_attribute_ar.concept_vo.vendor_element_uid
             for odm_vendor_attribute_ar in odm_vendor_attribute_ars
+            if odm_vendor_attribute_ar.concept_vo.vendor_element_uid
         }
 
         BusinessLogicException.raise_if_not(
@@ -307,8 +306,9 @@ class OdmGenericService(ConceptGenericService[_AggregateRootType], ABC):
     def pre_management(
         self,
         uid: str,
-        odm_vendors_post_input: OdmVendorsPostInput,
-        odm_ar: OdmFormAR | OdmItemGroupAR | OdmItemAR,
+        odm_vendor_element_post_input: list[OdmVendorElementRelationPostInput],
+        odm_vendor_element_attribute_post_input: list[OdmVendorRelationPostInput],
+        odm_ar: _AggregateRootType,
         repo: FormRepository | ItemGroupRepository | ItemRepository,
     ):
         """
@@ -317,7 +317,7 @@ class OdmGenericService(ConceptGenericService[_AggregateRootType], ABC):
         Args:
             uid (str): The uid of the ODM form, item group, or item.
             odm_vendors_post_input (OdmVendorsPostInput): The ODM vendors.
-            odm_ar (OdmFormAR | OdmItemGroupAR | OdmItemAR): The ODM form, item group, or item.
+            odm_ar (_AggregateRootType): The ODM form, item group, or item.
             repo (FormRepository | ItemGroupRepository | ItemRepository): The repository for the ODM form, item group, or item.
 
         Returns:
@@ -327,7 +327,7 @@ class OdmGenericService(ConceptGenericService[_AggregateRootType], ABC):
             odm_ar.concept_vo.vendor_element_attribute_uids
         ) - {
             element_attribute.uid
-            for element_attribute in odm_vendors_post_input.element_attributes
+            for element_attribute in odm_vendor_element_attribute_post_input
         }
         for removed_vendor_attribute_uid in removed_vendor_attribute_uids:
             repo.remove_relation(
@@ -337,9 +337,9 @@ class OdmGenericService(ConceptGenericService[_AggregateRootType], ABC):
             )
 
         new_vendor_element_uids = {
-            element.uid for element in odm_vendors_post_input.elements
+            element.uid for element in odm_vendor_element_post_input
         } - set(odm_ar.concept_vo.vendor_element_uids)
-        for element in odm_vendors_post_input.elements:
+        for element in odm_vendor_element_post_input:
             if element.uid in new_vendor_element_uids:
                 repo.add_relation(
                     uid=uid,
@@ -462,3 +462,148 @@ class OdmGenericService(ConceptGenericService[_AggregateRootType], ABC):
                     force_new_value_node=True,
                     ignore_exc=True,
                 )
+
+    @ensure_transaction(db)
+    def add_vendor_elements(
+        self,
+        uid: str,
+        odm_vendor_element_post_input: list[OdmVendorElementRelationPostInput],
+        odm_vendor_element_attribute_post_input: list[OdmVendorRelationPostInput],
+        odm_repository: FormRepository | ItemGroupRepository | ItemRepository,
+        override: bool = False,
+    ):
+        if override:
+            self.fail_if_non_present_vendor_elements_are_used_by_current_odm_element_attributes(
+                [ae.uid for ae in odm_vendor_element_attribute_post_input],
+                odm_vendor_element_post_input,
+            )
+
+            odm_repository.remove_relation(
+                uid=uid,
+                relation_uid=None,
+                relationship_type=RelationType.VENDOR_ELEMENT,
+                disconnect_all=True,
+            )
+
+        for vendor_element in odm_vendor_element_post_input:
+            odm_repository.add_relation(
+                uid=uid,
+                relation_uid=vendor_element.uid,
+                relationship_type=RelationType.VENDOR_ELEMENT,
+                parameters={
+                    "value": vendor_element.value,
+                },
+            )
+
+        return self._find_by_uid_or_raise_not_found(uid)
+
+    @ensure_transaction(db)
+    def add_vendor_attributes(
+        self,
+        uid: str,
+        odm_vendor_attribute_post_input: list[OdmVendorRelationPostInput],
+        odm_repository: FormRepository | ItemGroupRepository | ItemRepository,
+        override: bool = False,
+    ):
+        if override:
+            odm_repository.remove_relation(
+                uid=uid,
+                relation_uid=None,
+                relationship_type=RelationType.VENDOR_ATTRIBUTE,
+                disconnect_all=True,
+            )
+
+        for vendor_attribute in odm_vendor_attribute_post_input:
+            odm_repository.add_relation(
+                uid=uid,
+                relation_uid=vendor_attribute.uid,
+                relationship_type=RelationType.VENDOR_ATTRIBUTE,
+                parameters={
+                    "value": vendor_attribute.value,
+                },
+            )
+
+        return self._find_by_uid_or_raise_not_found(uid)
+
+    @ensure_transaction(db)
+    def add_vendor_element_attributes(
+        self,
+        uid: str,
+        odm_vendor_element_attribute_post_input: list[OdmVendorRelationPostInput],
+        odm_ar: _AggregateRootType,
+        odm_repository: FormRepository | ItemGroupRepository | ItemRepository,
+        override: bool = False,
+    ):
+        self.fail_if_these_attributes_cannot_be_added(
+            odm_vendor_element_attribute_post_input,
+            odm_ar.concept_vo.vendor_element_uids,
+        )
+
+        if override:
+            odm_repository.remove_relation(
+                uid=uid,
+                relation_uid=None,
+                relationship_type=RelationType.VENDOR_ELEMENT_ATTRIBUTE,
+                disconnect_all=True,
+            )
+
+        for vendor_element_attribute in odm_vendor_element_attribute_post_input:
+            odm_repository.add_relation(
+                uid=uid,
+                relation_uid=vendor_element_attribute.uid,
+                relationship_type=RelationType.VENDOR_ELEMENT_ATTRIBUTE,
+                parameters={
+                    "value": vendor_element_attribute.value,
+                },
+            )
+
+        return self._find_by_uid_or_raise_not_found(uid)
+
+    @ensure_transaction(db)
+    def manage_vendors(
+        self,
+        uid: str,
+        element_compatible_type: VendorElementCompatibleType,
+        attribute_compatible_type: VendorAttributeCompatibleType,
+        odm_vendor_element_post_input: list[OdmVendorElementRelationPostInput],
+        odm_vendor_element_attribute_post_input: list[OdmVendorRelationPostInput],
+        odm_vendor_attribute_post_input: list[OdmVendorRelationPostInput],
+        odm_repository: FormRepository | ItemGroupRepository | ItemRepository,
+    ) -> BaseModel:
+        odm_ar = self._find_by_uid_or_raise_not_found(uid)
+
+        BusinessLogicException.raise_if(
+            odm_ar.item_metadata.status != LibraryItemStatus.DRAFT,
+            msg=self.OBJECT_NOT_IN_DRAFT,
+        )
+
+        self.are_elements_vendor_compatible(
+            odm_vendor_element_post_input, compatible_type=element_compatible_type
+        )
+        self.fail_if_these_attributes_cannot_be_added(
+            odm_vendor_attribute_post_input, compatible_type=attribute_compatible_type
+        )
+
+        self.pre_management(
+            uid,
+            odm_vendor_element_post_input,
+            odm_vendor_element_attribute_post_input,
+            odm_ar,
+            odm_repository,
+        )
+
+        odm_ar = self.add_vendor_elements(
+            uid,
+            odm_vendor_element_post_input,
+            odm_vendor_element_attribute_post_input,
+            odm_repository,
+            True,
+        )
+        self.add_vendor_element_attributes(
+            uid, odm_vendor_element_attribute_post_input, odm_ar, odm_repository, True
+        )
+        self.add_vendor_attributes(
+            uid, odm_vendor_attribute_post_input, odm_repository, True
+        )
+
+        return self.get_by_uid(uid)

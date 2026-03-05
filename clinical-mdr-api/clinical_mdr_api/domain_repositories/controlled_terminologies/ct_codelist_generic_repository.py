@@ -51,6 +51,7 @@ from clinical_mdr_api.repositories._utils import (
     CypherQueryBuilder,
     FilterDict,
     FilterOperator,
+    calculate_total_count_from_query_result,
     sb_clear_cache,
     validate_filters_and_add_search_string,
 )
@@ -228,13 +229,14 @@ class CTCodelistGenericRepository(
             result_array, attributes_names
         )
 
-        total = 0
-        if total_count:
+        total = calculate_total_count_from_query_result(
+            len(extracted_items), page_number, page_size, total_count
+        )
+        if total is None:
             count_result, _ = db.cypher_query(
                 query=query.count_query, params=query.parameters
             )
-            if len(count_result) > 0:
-                total = count_result[0][0]
+            total = count_result[0][0] if len(count_result) > 0 else 0
 
         return GenericFilteringReturn(items=extracted_items, total=total)
 
@@ -438,6 +440,7 @@ class CTCodelistGenericRepository(
         author_id: str,
         order: int,
         submission_value: str,
+        ordinal: float | None = None,
     ) -> None:
         """
         Method adds term identified by term_uid to the codelist identified by codelist_uid.
@@ -512,6 +515,7 @@ class CTCodelistGenericRepository(
                 "end_date": None,
                 "author_id": author_id,
                 "order": order,
+                "ordinal": ordinal,
             },
         )
 

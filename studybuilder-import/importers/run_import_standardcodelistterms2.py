@@ -138,8 +138,8 @@ MDR_MIGRATION_CATEGORY_FOR_SUBSTANCE_USE = load_env(
     "MDR_MIGRATION_CATEGORY_FOR_SUBSTANCE_USE"
 )
 MDR_DATA_SUPPLIER_TYPE = load_env("MDR_DATA_SUPPLIER_TYPE")
-MDR_MIGRATION_LOCK_STUDY_MILESTONE = load_env("MDR_MIGRATION_LOCK_STUDY_MILESTONE")
-MDR_MIGRATION_UNLOCK_STUDY_MILESTONE = load_env("MDR_MIGRATION_UNLOCK_STUDY_MILESTONE")
+MDR_MIGRATION_REASON_FOR_LOCK = load_env("MDR_MIGRATION_REASON_FOR_LOCK")
+MDR_MIGRATION_REASON_FOR_UNLOCK = load_env("MDR_MIGRATION_REASON_FOR_UNLOCK")
 
 
 # Import terms to standard codelists in sponsor library
@@ -273,8 +273,8 @@ class StandardCodelistTerms2(BaseImporter):
             (MDR_MIGRATION_CATEGORY_FOR_EXPOSURE, "Category for Exposure"),
             (MDR_MIGRATION_CATEGORY_FOR_SUBSTANCE_USE, "Category for Substance Use"),
             (MDR_DATA_SUPPLIER_TYPE, "Data Supplier Type"),
-            (MDR_MIGRATION_LOCK_STUDY_MILESTONE, "Lock Study Milestone"),
-            (MDR_MIGRATION_UNLOCK_STUDY_MILESTONE, "Unlock Study Milestone"),
+            (MDR_MIGRATION_REASON_FOR_LOCK, "Reason For Lock"),
+            (MDR_MIGRATION_REASON_FOR_UNLOCK, "Reason For Unlock"),
         ]
 
         timeout = aiohttp.ClientTimeout(None)

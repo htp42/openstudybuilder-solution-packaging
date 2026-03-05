@@ -6,3 +6,4 @@ include =
     clinical_mdr_api/*
     consumer_api/*
     common/*
+    extensions/*

@@ -1,5 +1,4 @@
 import random
-import sys
 import unittest
 from dataclasses import dataclass
 from typing import Iterable
@@ -583,7 +582,7 @@ class TestStudyService(unittest.TestCase):
         # then
         another_repo_instance = StudyDefinitionRepositoryFake(test_db)
         db_content = another_repo_instance.find_all(
-            page_number=1, page_size=sys.maxsize
+            page_number=1, page_size=settings.max_int_neo4j - 1
         ).items
         self.assertEqual(len(db_content), 1)
         for study_definition_ar in db_content:
@@ -959,7 +958,7 @@ class TestStudyService(unittest.TestCase):
         # then
         another_repo_instance = StudyDefinitionRepositoryFake(test_db)
         db_content = another_repo_instance.find_all(
-            page_number=1, page_size=sys.maxsize
+            page_number=1, page_size=settings.max_int_neo4j - 1
         ).items
 
         self.assertEqual(len(db_content), 1)
@@ -1084,7 +1083,7 @@ class TestStudyService(unittest.TestCase):
         # then
         another_repo_instance = StudyDefinitionRepositoryFake(test_db)
         db_content = another_repo_instance.find_all(
-            page_number=1, page_size=sys.maxsize
+            page_number=1, page_size=settings.max_int_neo4j - 1
         ).items
 
         self.assertEqual(len(db_content), 1)
@@ -1321,7 +1320,7 @@ class TestStudyService(unittest.TestCase):
         # then
         another_repo_instance = StudyDefinitionRepositoryFake(test_db)
         db_content = another_repo_instance.find_all(
-            page_number=1, page_size=sys.maxsize
+            page_number=1, page_size=settings.max_int_neo4j - 1
         ).items
 
         self.assertEqual(len(db_content), 1)
@@ -1582,7 +1581,7 @@ class TestStudyService(unittest.TestCase):
         # then
         another_repo_instance = StudyDefinitionRepositoryFake(test_db)
         db_content = another_repo_instance.find_all(
-            page_number=1, page_size=sys.maxsize
+            page_number=1, page_size=settings.max_int_neo4j - 1
         ).items
 
         self.assertEqual(len(db_content), 1)
@@ -1739,7 +1738,7 @@ class TestStudyService(unittest.TestCase):
         # then
         another_repo_instance = StudyDefinitionRepositoryFake(test_db)
         db_content = another_repo_instance.find_all(
-            page_number=1, page_size=sys.maxsize
+            page_number=1, page_size=settings.max_int_neo4j - 1
         ).items
 
         self.assertEqual(len(db_content), 1)
@@ -1887,7 +1886,7 @@ class TestStudyService(unittest.TestCase):
         # then
         another_repo_instance = StudyDefinitionRepositoryFake(test_db)
         db_content = another_repo_instance.find_all(
-            page_number=1, page_size=sys.maxsize
+            page_number=1, page_size=settings.max_int_neo4j - 1
         ).items
 
         self.assertEqual(len(db_content), 1)

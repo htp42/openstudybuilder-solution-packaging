@@ -5,21 +5,20 @@ let studyType = 'Expanded Access', trialType = 'Adhesion Performance Study', pha
 let extensionStudy = 'Yes', adaptiveDesign = 'Yes', postAuthSafetyIndicator = 'Yes'
 let confirmedResponseMinValue = '50', confirmedResponseUnit = 'days', stopRules = 'Test stop rule'
 
+When('[API] The null study type is created for the main test study', () => cy.nullStudyType(Cypress.env('TEST_STUDY_UID')))
+
+When('User intercepts study design request', () => cy.intercept('**?include_sections=high_level_study_design').as('studyDesignRequest'))
+
 When('The study type is fully defined', () => {
-    cy.nullStudyType(Cypress.env('TEST_STUDY_UID'))
-    cy.wait(1000)
-    cy.reload()
-    cy.wait(1000)
-    startEdition()
     cy.selectAutoComplete('study-type', studyType)
     cy.selectMultipleSelect('trial-type', trialType)
     cy.selectAutoComplete('study-phase-classification', phaseClassification)
-    cy.selectRadio('extension-study', extensionStudy)
-    cy.selectRadio('adaptive-design', adaptiveDesign)
+    cy.selectRadioButton('extension-study', extensionStudy)
+    cy.selectRadioButton('adaptive-design', adaptiveDesign)
     cy.contains('.v-checkbox', 'NONE').find('input').uncheck()
     cy.fillInput('stop-rule', stopRules)
-    cy.setDuratinField('confirmed-resp-min-dur',confirmedResponseMinValue, confirmedResponseUnit)
-    cy.selectRadio('post-auth-safety-indicator', postAuthSafetyIndicator)
+    cy.setDuration('confirmed-resp-min-dur',confirmedResponseMinValue, confirmedResponseUnit)
+    cy.selectRadioButton('post-auth-safety-indicator', postAuthSafetyIndicator)
 })
 
 Then('The study type data is reflected in the table', () => {
@@ -30,21 +29,9 @@ Then('The study type data is reflected in the table', () => {
     cy.tableContains(postAuthSafetyIndicator)
 })
 
-When('The Study Stop Rule NONE option is selected', () => {
-    cy.nullStudyType(Cypress.env('TEST_STUDY_UID'))
-    cy.wait(1000)
-    cy.reload()
-    cy.wait(1000)
-    startEdition()
-})
-
 Then('The Study Stop Rule field is disabled', () => cy.get('[data-cy="stop-rule"] input').should('be.disabled'))
 
 When('The Confirmed response minimum duration NA option is selected', () => {
-    cy.nullStudyType(Cypress.env('TEST_STUDY_UID'))
-    cy.wait(5000)
-    cy.reload()
-    startEdition()
     cy.get('[data-cy="not-applicable-checkbox"] input').check()
 })
 
@@ -54,13 +41,9 @@ Then('The Confirmed response minimum duration field is disabled', () => {
 })
 
 When('The study type is partially defined', () => {
-    cy.nullStudyType(Cypress.env('TEST_STUDY_UID'))
-    cy.wait(5000)
-    cy.reload()
-    startEdition()
     cy.selectAutoComplete('study-type', studyType)
-    cy.setDuratinField('confirmed-resp-min-dur', confirmedResponseMinValue, confirmedResponseUnit)
-    cy.selectRadio('post-auth-safety-indicator', type.post_auth_safety_indicator)
+    cy.setDuration('confirmed-resp-min-dur', confirmedResponseMinValue, confirmedResponseUnit)
+    cy.selectRadioButton('post-auth-safety-indicator', type.post_auth_safety_indicator)
 })
 
 When('The study type is copied from another study without overwriting', () => {
@@ -68,8 +51,6 @@ When('The study type is copied from another study without overwriting', () => {
     cy.selectVSelect('study-id', 'CDISC DEV-1234')
     cy.clickButton('overwrite-no', true)
     cy.clickButton('ok-form')
-    cy.clickButton('save-button')
-    cy.wait(2000)
 })
 
 Then('Only the missing information is filled from another study in the study type form', () => {
@@ -89,8 +70,6 @@ When('The study type is copied from another study with overwriting', () => {
     cy.selectVSelect('study-id', 'CDISC DEV-1234')
     cy.clickButton('overwrite-yes', true)
     cy.clickButton('ok-form')
-    cy.clickButton('save-button')
-    cy.wait(2000)
 })
 
 Then('All the informations are overwritten in the study type', () => {
@@ -104,24 +83,10 @@ Then('All the informations are overwritten in the study type', () => {
     })
 })
 
-When('The study type is not defined', () => {
-    cy.nullStudyType(getCurrStudyUid())
-})
-
-When('The user sets study development stage to {string}', (stage) => {
-    startEdition()
-    cy.selectVSelect('development_stage', stage)
-    cy.intercept('**?include_sections=high_level_study_design').as('studyDesignRequest')
-    cy.clickButton('save-button')
-})
+When('The user sets study development stage to {string}', (stage) => cy.selectVSelect('development_stage', stage))
 
 When('The study development stage is {string}', (stage) => {
     cy.wait('@studyDesignRequest').then((request) => {
         expect(request.response.body.current_metadata.high_level_study_design.development_stage_code.sponsor_preferred_name).to.eq(stage)
     })
 })
-
-function startEdition() {
-    cy.clickButton('edit-content')
-    cy.wait(1000)
-}

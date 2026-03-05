@@ -3,7 +3,9 @@ const { When, Then } = require("@badeball/cypress-cucumber-preprocessor");
 When('User waits for table to load', () => cy.waitForTable())
 
 When('The {string} submenu is clicked in the {string} section', (submenu, section) => {
-    cy.openFromSidebar(section, submenu)
+    cy.get('.v-navigation-drawer__content').within(() => {
+        cy.clickButton(section).within(() => cy.clickButton(submenu))
+    })
 })
 
 When('The {string} tab is selected', (tabName) => {
@@ -12,10 +14,6 @@ When('The {string} tab is selected', (tabName) => {
 
 When('The {string} button is clicked', (button) => {
     cy.clickButton(button)
-})
-
-When('The {string} button is clicked in Protocol Process page', (button) => {
-    cy.get(`.v-card-text [data-cy="${button}"]`).click({force: true})
 })
 
 When('The {string} is clicked in the dropdown', (item) => cy.contains('.v-overlay__content .v-list-item', item).click())
@@ -55,6 +53,20 @@ Then('The online help panel shows {string} panel with content {string}', (panelN
         })
     })
 })
+
+Then('All Not Applicable checkboxes are checked', () => cy.get('[data-cy="not-applicable-checkbox"] input').each((btn) => cy.wrap(btn).check()))
+
+Then('The edit content button is clicked', () => {
+    cy.clickButton('edit-content')
+    cy.wait(1000)
+})
+
+Then('The pencil button is clicked', () => {
+    cy.get('button .mdi-pencil-outline').click()
+    cy.wait(1000)
+})
+
+Then('The plus button is clicked', () => cy.get('button .mdi-plus').click())
 
 function expandPagesDropdown(tileName) {
     cy.wait(500)

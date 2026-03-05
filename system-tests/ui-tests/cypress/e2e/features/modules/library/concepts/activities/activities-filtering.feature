@@ -1,4 +1,4 @@
-@REQ_ID:1070683
+@REQ_ID:1070683 @skip_on_prv_val
 
 Feature: Library - Concepts - Activities - Activities - Filtering
     As a user, I want to manage every Activities in the Concepts Library

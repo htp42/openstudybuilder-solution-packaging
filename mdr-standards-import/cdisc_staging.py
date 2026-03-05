@@ -1942,6 +1942,44 @@ def make_sponsor_term_name(term_data):
         newname = "Follow-up"
         method = "Special case for 'Clinical Study Follow-up'"
 
+    # Updates related to codelist C66737 - Trial Phase Response. ICH M11 preferred term do not match NCI/CDISC preferred term
+    elif term_data["term_cid"] == "C54721":
+        # Rename Early Phase I -> Early Phase 1
+         newname = "Early Phase 1"
+         method = "Special case for 'Trial Phase Response'"
+    elif term_data["term_cid"] == "C15600":
+        # Rename Phase I Trial -> Phase 1
+         newname = "Phase 1"
+         method = "Special case for 'Trial Phase Response'"
+    elif term_data["term_cid"] == "C15693":
+        # Rename Phase I/II Trial ->  Phase 1/Phase 2
+        newname = "Phase 1/Phase 2"
+        method = "Special case for 'Trial Phase Response'"
+    elif term_data["term_cid"] == "C198366":
+        # Rename Phase I/II/III Trial ->  Phase 1/Phase 2/Phase 3
+        newname = "Phase 1/Phase 2/Phase 3"
+        method = "Special case for 'Trial Phase Response'"
+    elif term_data["term_cid"] == "C198367":
+        # Rename Phase I/III Trial -> Phase 1/Phase 3
+        newname = "Phase 1/Phase 3"
+        method = "Special case for 'Trial Phase Response'"
+    elif term_data["term_cid"] == "C15601":
+        # Rename Phase II Trial -> Phase 2
+        newname = "Phase 2"
+        method = "Special case for 'Trial Phase Response'"
+    elif term_data["term_cid"] == "C15694":
+        # Rename Phase II/III Trial -> Phase 2/Phase 3
+        newname = "Phase 2/Phase 3"
+        method = "Special case for 'Trial Phase Response'"
+    elif term_data["term_cid"] == "C15602":
+        # Rename Phase III Trial -> Phase 3
+        newname = "Phase 3"
+        method = "Special case for 'Trial Phase Response'"
+    elif term_data["term_cid"] == "C15603":
+        # Rename Phase IV Trial -> Phase 4
+        newname = "Phase 4"
+        method = "Special case for 'Trial Phase Response'"
+
     elif "C99077" in term_data["cl_cid"]:
         # Study type codelist
 

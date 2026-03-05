@@ -75,19 +75,21 @@
       </template>
       <template #actions="">
         <v-btn
-          class="ml-2"
-          size="small"
+          class="ml-2 expandHoverBtn"
           variant="outlined"
           color="nnBaseBlue"
-          :title="$t('StudyArmsTable.cohorts_stepper')"
           :disabled="
             !accessGuard.checkPermission($roles.STUDY_WRITE) ||
             studiesGeneralStore.selectedStudyVersion !== null
           "
-          :icon="editStepper ? 'mdi-pencil' : 'mdi-plus'"
           @click.stop="showCohortsStepper = true"
           @close="showCohortsStepper = false"
-        />
+        >
+          <v-icon left>{{
+            editStepper ? 'mdi-pencil-outline' : 'mdi-plus'
+          }}</v-icon>
+          <span class="label">{{ $t('StudyArmsTable.cohorts_stepper') }}</span>
+        </v-btn>
       </template>
     </NNTable>
     <v-dialog
@@ -188,6 +190,7 @@ const headers = [
     width: '7%',
   },
   { title: t('StudyArmsTable.name'), key: 'name' },
+  { title: t('StudyArmsTable.label'), key: 'label' },
   { title: t('StudyArmsTable.short_name'), key: 'short_name' },
   {
     title: t('StudyArmsTable.number_of_participants'),

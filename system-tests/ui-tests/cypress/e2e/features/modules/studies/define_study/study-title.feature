@@ -18,7 +18,8 @@ Feature: Studies - Define Study - Study Title
         Given The test study '/study_title' page is opened
         And A test study is selected
         When The 'Edit study title' button is clicked
-        And The study title form is filled with new title and saved
+        And The study title form is filled with new title
+        And Action is confirmed by clicking save
         Then The study selected has new title appended
 
     Scenario: [Actions][Edit] User must be able to copy the Study Title from currently existing study
@@ -26,6 +27,7 @@ Feature: Studies - Define Study - Study Title
         And A test study is selected
         When The 'Edit study title' button is clicked
         And The study title is copied from another study
+        And Action is confirmed by clicking save
         Then The study selected has new title copied
 
     Scenario: [Online help] User must be able to read online help for the page

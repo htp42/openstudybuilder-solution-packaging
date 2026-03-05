@@ -17,6 +17,7 @@ from clinical_mdr_api.models.utils import (
     get_latest_on_datetime_str,
 )
 from common.config import settings
+from common.utils import VisitClass, VisitSubclass
 
 
 class StudyVisitCreateInput(PostInputModel):
@@ -58,8 +59,8 @@ class StudyVisitCreateInput(PostInputModel):
     end_rule: Annotated[str | None, Field()] = None
     visit_contact_mode_uid: Annotated[str, Field()]
     epoch_allocation_uid: Annotated[str | None, Field()] = None
-    visit_class: Annotated[str, Field()]
-    visit_subclass: Annotated[str | None, Field()] = None
+    visit_class: Annotated[VisitClass, Field()]
+    visit_subclass: Annotated[VisitSubclass | None, Field()] = None
     is_global_anchor_visit: Annotated[bool, Field()]
     is_soa_milestone: Annotated[bool, Field()] = False
     visit_name: Annotated[str | None, Field()] = None
@@ -118,8 +119,8 @@ class StudyVisitEditInput(PatchInputModel):
     end_rule: Annotated[str | None, Field()] = None
     visit_contact_mode_uid: Annotated[str, Field()]
     epoch_allocation_uid: Annotated[str | None, Field()] = None
-    visit_class: Annotated[str, Field()]
-    visit_subclass: Annotated[str | None, Field()] = None
+    visit_class: Annotated[VisitClass | None, Field()] = None
+    visit_subclass: Annotated[VisitSubclass | None, Field()] = None
     is_global_anchor_visit: Annotated[bool, Field()]
     is_soa_milestone: Annotated[bool, Field()] = False
     visit_name: Annotated[str | None, Field()] = None
@@ -307,9 +308,9 @@ class StudyVisitBase(BaseModel):
     visit_window_unit_name: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
-    visit_class: Annotated[str, Field()]
+    visit_class: Annotated[VisitClass, Field()]
     visit_subclass: Annotated[
-        str | None, Field(json_schema_extra={"nullable": True})
+        VisitSubclass | None, Field(json_schema_extra={"nullable": True})
     ] = None
     is_global_anchor_visit: Annotated[bool, Field()]
     is_soa_milestone: Annotated[bool, Field()]
@@ -339,7 +340,7 @@ class StudyVisitBase(BaseModel):
         cls,
         visit: StudyVisitVO,
         study_value_version: str | None = None,
-        derive_props_based_on_timeline: bool = True,
+        derive_props_based_on_timeline: bool = False,
     ) -> Self:
         timepoint = visit.timepoint
         return cls(
@@ -392,7 +393,11 @@ class StudyVisitBase(BaseModel):
             ),
             visit_subname=visit.visit_subname,
             visit_sublabel_reference=visit.visit_sublabel_reference,
-            visit_name=visit.visit_name,
+            visit_name=(
+                visit.visit_name
+                if derive_props_based_on_timeline
+                else visit.visit_name_sc.name
+            ),
             visit_short_name=(
                 str(visit.visit_short_name)
                 if derive_props_based_on_timeline
@@ -424,8 +429,8 @@ class StudyVisitBase(BaseModel):
             start_date=visit.start_date,
             author_username=visit.author_username or visit.author_id,
             possible_actions=visit.possible_actions,
-            visit_class=visit.visit_class.name,
-            visit_subclass=visit.visit_subclass.name if visit.visit_subclass else None,
+            visit_class=visit.visit_class,  # type: ignore[arg-type]
+            visit_subclass=visit.visit_subclass if visit.visit_subclass else None,
             is_global_anchor_visit=visit.is_global_anchor_visit,
             is_soa_milestone=visit.is_soa_milestone,
             repeating_frequency_uid=(

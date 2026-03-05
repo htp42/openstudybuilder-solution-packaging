@@ -156,6 +156,7 @@ class ActivityInstance(ActivityBase):
                     ct_terms=ct_terms,
                     unit_definitions=unit_definitions,
                     is_adam_param_specific=activity_item.is_adam_param_specific,
+                    text_value=activity_item.text_value,
                 )
             )
 
@@ -269,6 +270,7 @@ class ActivityInstance(ActivityBase):
                     ct_terms=ct_terms,
                     unit_definitions=unit_definitions,
                     is_adam_param_specific=activity_item.is_adam_param_specific,
+                    text_value=activity_item.text_value,
                 )
             )
 
@@ -451,6 +453,7 @@ class SimplifiedActivityItem(BaseModel):
     unit_definitions: list[CompactUnitDefinition] = Field(default_factory=list)
     activity_item_class: Annotated[SimpleActivityItemClassForActivityInstance, Field()]
     is_adam_param_specific: Annotated[bool, Field()]
+    text_value: Annotated[str | None, Field()] = None
 
 
 class SimpleActivityInstanceGrouping(SimpleActivityGrouping):
@@ -516,6 +519,7 @@ class ActivityInstanceOverview(BaseModel):
                     is_adam_param_specific=activity_item.get(
                         "is_adam_param_specific", False
                     ),
+                    text_value=activity_item.get("text_value"),
                 )
             )
 

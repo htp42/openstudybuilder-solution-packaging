@@ -45,6 +45,8 @@ Feature: Library - Syntax Templates - Criteria - Exclusion - Parent
     Given The 'library/criteria_templates/Exclusion/parent' page is opened
     And The Add template button is clicked
     When The criteria template form is filled with base data
+    And Form continue button is clicked
+    And Form continue button is clicked
     And Template indexes are set for 'criterion'
     And User intercept getCriteria request
     And Form save button is clicked
@@ -57,7 +59,9 @@ Feature: Library - Syntax Templates - Criteria - Exclusion - Parent
     Given The 'library/criteria_templates/Exclusion/parent' page is opened
     And The Add template button is clicked
     When The criteria template form is filled with base data
-    And Indexes are set as not applicable
+    And Form continue button is clicked
+    And Form continue button is clicked
+    And All Not Applicable checkboxes are checked
     And User intercept getCriteria request
     And Form save button is clicked
     And User awaits for the getCriteria request to finish
@@ -73,6 +77,8 @@ Feature: Library - Syntax Templates - Criteria - Exclusion - Parent
     And The criteria is found
     When The 'Edit' option is clicked from the three dot menu list
     And The criteria metadata update is initiated
+    And Form continue button is clicked
+    And Form continue button is clicked
     And Template indexes are cleared and updated for 'criterion'
     And Form continue button is clicked
     And Template change description is provided
@@ -86,7 +92,7 @@ Feature: Library - Syntax Templates - Criteria - Exclusion - Parent
   Scenario: [Create][Mandatory fields] User must not be able to create Exclusion Criteria template without: Template Text
     Given The 'library/criteria_templates/Exclusion/parent' page is opened
     And The Add template button is clicked
-    When The Template is added without template text
+    When Form continue button is clicked
     Then The validation appears for Template name
     And The form is not closed
 
@@ -94,6 +100,8 @@ Feature: Library - Syntax Templates - Criteria - Exclusion - Parent
     Given The 'library/criteria_templates/Exclusion/parent' page is opened
     And The Add template button is clicked
     And The criteria template form is filled with base data
+    And Form continue button is clicked
+    And Form continue button is clicked
     When Template indexes are set for 'criterion'
     And Indication or Disorder index is cleared
     Then Form save button is clicked
@@ -104,6 +112,8 @@ Feature: Library - Syntax Templates - Criteria - Exclusion - Parent
     Given The 'library/criteria_templates/Exclusion/parent' page is opened
     And The Add template button is clicked
     And The criteria template form is filled with base data
+    And Form continue button is clicked
+    And Form continue button is clicked
     When Template indexes are set for 'criterion'
     And Category index is cleared for 'criterion' template
     Then Form save button is clicked
@@ -114,6 +124,8 @@ Feature: Library - Syntax Templates - Criteria - Exclusion - Parent
     Given The 'library/criteria_templates/Exclusion/parent' page is opened
     And The Add template button is clicked
     And The criteria template form is filled with base data
+    And Form continue button is clicked
+    And Form continue button is clicked
     When Template indexes are set for 'criterion'
     And Subcategory index is cleared for 'criterion' template
     Then Form save button is clicked
@@ -212,6 +224,8 @@ Feature: Library - Syntax Templates - Criteria - Exclusion - Parent
     Then The item has status 'Draft' and version '1.1'
     When The 'Edit' option is clicked from the three dot menu list
     And The criteria metadata update is initiated
+    And Form continue button is clicked
+    And Form continue button is clicked
     And Template indexes are cleared and updated for 'criterion'
     And Form continue button is clicked
     And Template change description is provided
@@ -273,7 +287,9 @@ Feature: Library - Syntax Templates - Criteria - Exclusion - Parent
     Given The 'library/criteria_templates/Exclusion/parent' page is opened
     And The Add template button is clicked
     And The criteria template edition form is filled with data
-    And Indexes are set as not applicable
+    And Form continue button is clicked
+    And Form continue button is clicked
+    And All Not Applicable checkboxes are checked
     When Fullscreen wizard is closed by clicking cancel button
     And Action is confirmed by clicking continue
     Then The form is no longer available
@@ -287,7 +303,9 @@ Feature: Library - Syntax Templates - Criteria - Exclusion - Parent
     And The criteria is found
     When The 'Edit' option is clicked from the three dot menu list
     And The criteria template edition form is filled with data
-    And Indexes are set as not applicable
+    And Form continue button is clicked
+    And Form continue button is clicked
+    And All Not Applicable checkboxes are checked
     And Fullscreen wizard is closed by clicking cancel button
     And Action is confirmed by clicking continue
     Then The form is no longer available

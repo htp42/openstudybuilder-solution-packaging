@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Any
 
 from pydantic import ConfigDict, Field
 
@@ -11,7 +11,7 @@ from clinical_mdr_api.models.utils import InputModel
 
 
 class SponsorModelDatasetVariable(SponsorModelBase):
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, extra="allow")
 
     uid: Annotated[
         str | None, Field(json_schema_extra={"source": "uid", "nullable": True})
@@ -321,45 +321,57 @@ class SponsorModelDatasetVariable(SponsorModelBase):
         cls,
         sponsor_model_dataset_variable_ar: SponsorModelDatasetVariableAR,
     ) -> "SponsorModelDatasetVariable":
-        return cls(
-            uid=sponsor_model_dataset_variable_ar.uid,
-            is_basic_std=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.is_basic_std,
-            label=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.label,
-            order=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.order,
-            variable_type=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.variable_type,
-            length=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.length,
-            display_format=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.display_format,
-            xml_datatype=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.xml_datatype,
-            core=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.core,
-            origin=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.origin,
-            origin_type=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.origin_type,
-            origin_source=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.origin_source,
-            role=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.role,
-            term=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.term,
-            algorithm=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.algorithm,
-            qualifiers=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.qualifiers,
-            is_cdisc_std=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.is_cdisc_std,
-            comment=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.comment,
-            ig_comment=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.ig_comment,
-            class_table=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.class_table,
-            class_column=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.class_column,
-            map_var_flag=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.map_var_flag,
-            fixed_mapping=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.fixed_mapping,
-            include_in_raw=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.include_in_raw,
-            nn_internal=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.nn_internal,
-            value_lvl_where_cols=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.value_lvl_where_cols,
-            value_lvl_label_col=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.value_lvl_label_col,
-            value_lvl_collect_ct_val=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.value_lvl_collect_ct_val,
-            value_lvl_ct_codelist_id_col=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.value_lvl_ct_codelist_id_col,
-            enrich_build_order=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.enrich_build_order,
-            enrich_rule=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.enrich_rule,
-            library_name=Library.from_library_vo(
+        base_data = {
+            "uid": sponsor_model_dataset_variable_ar.uid,
+            "is_basic_std": sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.is_basic_std,
+            "label": sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.label,
+            "order": sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.order,
+            "variable_type": sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.variable_type,
+            "length": sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.length,
+            "display_format": sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.display_format,
+            "xml_datatype": sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.xml_datatype,
+            "core": sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.core,
+            "origin": sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.origin,
+            "origin_type": sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.origin_type,
+            "origin_source": sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.origin_source,
+            "role": sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.role,
+            "term": sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.term,
+            "algorithm": sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.algorithm,
+            "qualifiers": sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.qualifiers,
+            "is_cdisc_std": sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.is_cdisc_std,
+            "comment": sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.comment,
+            "ig_comment": sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.ig_comment,
+            "class_table": sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.class_table,
+            "class_column": sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.class_column,
+            "map_var_flag": sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.map_var_flag,
+            "fixed_mapping": sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.fixed_mapping,
+            "include_in_raw": sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.include_in_raw,
+            "nn_internal": sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.nn_internal,
+            "value_lvl_where_cols": sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.value_lvl_where_cols,
+            "value_lvl_label_col": sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.value_lvl_label_col,
+            "value_lvl_collect_ct_val": sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.value_lvl_collect_ct_val,
+            "value_lvl_ct_codelist_id_col": sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.value_lvl_ct_codelist_id_col,
+            "enrich_build_order": sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.enrich_build_order,
+            "enrich_rule": sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.enrich_rule,
+            "library_name": Library.from_library_vo(
                 sponsor_model_dataset_variable_ar.library
             ).name,
-        )
+        }
+
+        # Add extra properties if they exist
+        if (
+            sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.extra_properties
+        ):
+            base_data.update(
+                sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.extra_properties
+            )
+
+        return cls(**base_data)  # type: ignore[arg-type]
 
 
 class SponsorModelDatasetVariableInput(InputModel):
+    model_config = ConfigDict(extra="allow")  # Allow extra fields
+
     target_data_model_catalogue: Annotated[str | None, Field()] = "SDTMIG"
     dataset_uid: Annotated[
         str,
@@ -432,3 +444,10 @@ class SponsorModelDatasetVariableInput(InputModel):
     library_name: Annotated[
         str | None, Field(description="Defaults to CDISC", min_length=1)
     ] = "CDISC"
+
+    def get_extra_fields(self) -> dict[str, Any]:
+        """Return fields that were passed but aren't in the defined model."""
+        defined_fields = set(self.model_fields.keys())
+        all_fields = set(self.model_dump().keys())
+        extra_fields = all_fields - defined_fields
+        return {field: getattr(self, field) for field in extra_fields}

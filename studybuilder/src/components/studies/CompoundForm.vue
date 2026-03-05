@@ -10,8 +10,8 @@
     @close="close"
     @save="submit"
   >
-    <template #[`step.type_of_treatment`]="{ step }">
-      <v-form :ref="`observer_${step}`">
+    <template #[`step.type_of_treatment`]>
+      <v-form ref="observer_1">
         <NotApplicableField
           ref="naField"
           :clean-function="cleanTypeOfTreatment"
@@ -21,7 +21,7 @@
           <template #mainField="{ notApplicable }">
             <v-autocomplete
               v-model="form.type_of_treatment"
-              :data-cy="$t('StudyCompoundForm.type_of_treatment')"
+              data-cy="type-of-treatment"
               :label="$t('StudyCompoundForm.type_of_treatment')"
               :items="typeOfTreatments"
               item-title="sponsor_preferred_name"
@@ -38,8 +38,8 @@
         </NotApplicableField>
       </v-form>
     </template>
-    <template #[`step.compoundAlias`]="{ step }">
-      <v-form :ref="`observer_${step}`">
+    <template #[`step.compoundAlias`]>
+      <v-form ref="observer_2">
         <div v-if="showAlerts" class="mx-0">
           <v-alert
             v-if="!form.compound_alias && form.compoundSimple"
@@ -62,6 +62,7 @@
               v-model="form.compoundSimple"
               :label="$t('StudyCompoundForm.compound')"
               :items="compounds"
+              data-cy="compound"
               item-title="name"
               item-value="uid"
               return-object
@@ -76,6 +77,7 @@
               v-model="form.compound_alias"
               :label="$t('StudyCompoundForm.compound_alias')"
               :items="compoundAliases"
+              data-cy="compound-alias"
               item-title="name"
               item-value="uid"
               return-object
@@ -95,8 +97,9 @@
                   <v-text-field
                     :model-value="preferedSynonym"
                     :label="$t('StudyCompoundForm.preferred_alias')"
+                    data-cy="preffered-alias"
                     density="compact"
-                    readonly
+                    disabled
                     variant="filled"
                     hide-details
                   />
@@ -105,8 +108,9 @@
                   <v-text-field
                     :model-value="otherSynonyms"
                     :label="$t('StudyCompoundForm.other_aliases')"
+                    data-cy="other-aliases"
                     density="compact"
-                    readonly
+                    disabled
                     variant="filled"
                     hide-details
                   />
@@ -117,6 +121,7 @@
                   <YesNoField
                     :model-value="form.compound.is_sponsor_compound"
                     :label="$t('StudyCompoundForm.sponsor_compound')"
+                    data-cy="sponsor-compound"
                     inline
                     disabled
                     hide-details
@@ -128,10 +133,11 @@
                       form.compound.definition ? form.compound.definition : '-'
                     "
                     :label="$t('StudyCompoundForm.compound_definition')"
+                    data-cy="compound-definition"
                     density="compact"
                     auto-grow
                     rows="1"
-                    readonly
+                    disabled
                     variant="filled"
                     hide-details
                   />
@@ -147,6 +153,7 @@
               v-model="form.medicinalProduct"
               :label="$t('StudyCompoundForm.medicinal_product')"
               :items="medicinalProducts"
+              data-cy="medicinal-product"
               item-title="name"
               item-value="uid"
               return-object
@@ -166,8 +173,9 @@
                   <v-text-field
                     :model-value="form.medicinalProduct.dispenser.name"
                     :label="$t('StudyCompoundForm.dispensed_in')"
+                    data-cy="dispensed-in"
                     density="compact"
-                    readonly
+                    disabled
                     variant="filled"
                     hide-details
                   />
@@ -176,8 +184,9 @@
                   <v-text-field
                     :model-value="form.medicinalProduct.delivery_device.name"
                     :label="$t('StudyCompoundForm.device')"
+                    data-cy="device"
                     density="compact"
-                    readonly
+                    disabled
                     variant="filled"
                     hide-details
                   />
@@ -201,8 +210,9 @@
                       activeSubstance.inn ? activeSubstance.inn : '-'
                     "
                     :label="$t('ActiveSubstance.inn')"
+                    data-cy="active-substance"
                     density="compact"
-                    readonly
+                    disabled
                     variant="filled"
                     hide-details
                   />
@@ -215,8 +225,9 @@
                         : '-'
                     "
                     :label="$t('ActiveSubstance.analyte_number')"
+                    data-cy="analyte-number"
                     density="compact"
-                    readonly
+                    disabled
                     variant="filled"
                     hide-details
                   />
@@ -229,8 +240,9 @@
                         : '-'
                     "
                     :label="$t('ActiveSubstance.long_number')"
+                    data-cy="long-number"
                     density="compact"
-                    readonly
+                    disabled
                     variant="filled"
                     hide-details
                   />
@@ -243,8 +255,9 @@
                         : '-'
                     "
                     :label="$t('ActiveSubstance.short_number')"
+                    data-cy="short-number"
                     density="compact"
-                    readonly
+                    disabled
                     variant="filled"
                     hide-details
                   />
@@ -260,8 +273,9 @@
                         : '-'
                     "
                     :label="$t('CompoundAliasForm.substance')"
+                    data-cy="substance"
                     density="compact"
-                    readonly
+                    disabled
                     variant="filled"
                     hide-details
                   />
@@ -270,8 +284,9 @@
                   <v-text-field
                     :model-value="getPclassLabel(activeSubstance)"
                     :label="$t('CompoundAliasForm.pharmacological_class')"
+                    data-cy="pharmacological-class"
                     density="compact"
-                    readonly
+                    disabled
                     variant="filled"
                     hide-details
                   />
@@ -282,14 +297,14 @@
         </template>
       </v-form>
     </template>
-    <template #[`step.compound`]="{ step }">
-      <v-form v-if="form.compound" :ref="`observer_${step}`">
+    <template #[`step.compound`]>
+      <v-form v-if="form.compound" ref="observer_3">
         <v-row>
           <v-col>
             <v-textarea
               v-model="form.other_info"
-              :data-cy="$t('StudyCompoundForm.other')"
               :label="$t('StudyCompoundForm.other')"
+              data-cy="other-information"
               auto-grow
               rows="1"
               density="compact"
@@ -302,9 +317,11 @@
   </HorizontalStepperForm>
 </template>
 
-<script>
-import compoundAliases from '@/api/concepts/compoundAliases'
-import compounds from '@/api/concepts/compounds'
+<script setup>
+import { computed, inject, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+import compoundAliasesApi from '@/api/concepts/compoundAliases'
+import compoundsApi from '@/api/concepts/compounds'
 import compoundsSimple from '@/api/concepts/compoundsSimple'
 import constants from '@/constants/studyCompounds'
 import HorizontalStepperForm from '@/components/tools/HorizontalStepperForm.vue'
@@ -315,368 +332,370 @@ import terms from '@/api/controlledTerminology/terms'
 import YesNoField from '@/components/tools/YesNoField.vue'
 import { useStudiesCompoundsStore } from '@/stores/studies-compounds'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
-import medicinalProducts from '@/api/concepts/medicinalProducts'
+import medicinalProductsApi from '@/api/concepts/medicinalProducts'
 import pharmaceuticalProducts from '@/api/concepts/pharmaceuticalProducts'
 
-export default {
-  components: {
-    HorizontalStepperForm,
-    NotApplicableField,
-    YesNoField,
-  },
-  inject: ['notificationHub', 'formRules'],
-  props: {
-    studyCompound: {
-      type: Object,
-      default: undefined,
-    },
-  },
-  emits: ['added', 'close'],
-  setup() {
-    const studiesCompoundsStore = useStudiesCompoundsStore()
-    const studiesGeneralStore = useStudiesGeneralStore()
+const notificationHub = inject('notificationHub')
+const formRules = inject('formRules')
 
-    return {
-      studiesCompoundsStore,
-      studiesGeneralStore,
-    }
+const props = defineProps({
+  studyCompound: {
+    type: Object,
+    default: undefined,
   },
-  data() {
-    return {
-      showAlerts: false,
-      compoundAliases: [],
-      medicinalProducts: [],
-      activeSubstances: [],
-      compounds: [],
-      helpItems: [
-        'StudyCompoundForm.type_of_treatment',
-        'StudyCompoundForm.compound',
-        'StudyCompoundForm.medicinal_product',
-        'StudyCompoundForm.other',
-      ],
-      form: this.getInitialForm(),
-      typeOfTreatments: [],
-      steps: this.getInitialSteps(),
-    }
-  },
-  computed: {
-    preferedSynonym() {
-      const preferedSynonym = this.compoundAliases.find(
-        (item) => item.is_preferred_synonym
-      )
-      return preferedSynonym ? preferedSynonym.name : '-'
-    },
-    otherSynonyms() {
-      const otherSynonyms = this.compoundAliases.filter(
-        (item) => !item.is_preferred_synonym
-      )
+})
+const emit = defineEmits(['added', 'close'])
 
-      return otherSynonyms.length
-        ? otherSynonyms.map((item) => item.name).join(', ')
-        : '-'
-    },
-    title() {
-      if (this.studyCompound) {
-        return this.$t('StudyCompoundForm.edit_title')
+const { t } = useI18n()
+const studiesCompoundsStore = useStudiesCompoundsStore()
+const studiesGeneralStore = useStudiesGeneralStore()
+
+const showAlerts = ref(false)
+const compoundAliases = ref([])
+const medicinalProducts = ref([])
+const activeSubstances = ref([])
+const compounds = ref([])
+const helpItems = [
+  'StudyCompoundForm.type_of_treatment',
+  'StudyCompoundForm.compound',
+  'StudyCompoundForm.medicinal_product',
+  'StudyCompoundForm.other',
+]
+const form = ref(getInitialForm())
+const typeOfTreatments = ref([])
+const steps = ref(getInitialSteps())
+const naField = ref()
+const stepper = ref()
+const observer_1 = ref()
+const observer_2 = ref()
+const observer_3 = ref()
+
+const preferedSynonym = computed(() => {
+  const preferedSynonym = compoundAliases.value.find(
+    (item) => item.is_preferred_synonym
+  )
+  return preferedSynonym ? preferedSynonym.name : '-'
+})
+const otherSynonyms = computed(() => {
+  const otherSynonyms = compoundAliases.value.filter(
+    (item) => !item.is_preferred_synonym
+  )
+  return otherSynonyms.length
+    ? otherSynonyms.map((item) => item.name).join(', ')
+    : '-'
+})
+const title = computed(() => {
+  if (props.studyCompound) {
+    return t('StudyCompoundForm.edit_title')
+  }
+  return t('StudyCompoundForm.add_title')
+})
+const typeOfTreatment_uidNADisabled = computed(() => {
+  if (
+    (naField.value && naField.value.notApplicable) ||
+    (props.studyCompound && !props.studyCompound.compound)
+  ) {
+    return false
+  }
+  if (!form.value.type_of_treatment) {
+    return true
+  }
+  const types = [
+    constants.TYPE_OF_TREATMENT_INVESTIGATIONAL_PRODUCT,
+    constants.TYPE_OF_TREATMENT_CURRENT_TREATMENT,
+    constants.TYPE_OF_TREATMENT_COMPARATIVE_TREATMENT,
+  ]
+  if (
+    !types.find(
+      (item) => item === form.value.type_of_treatment.sponsor_preferred_name
+    )
+  ) {
+    return true
+  }
+  const studyCompounds =
+    studiesCompoundsStore.getStudyCompoundsByTypeOfTreatment(
+      form.value.type_of_treatment.term_uid
+    )
+  if (studyCompounds.length) {
+    return true
+  }
+  const NAstudyCompounds =
+    studiesCompoundsStore.getNAStudyCompoundsByTypeOfTreatment(
+      form.value.type_of_treatment.term_uid
+    )
+  return !!NAstudyCompounds.length
+})
+
+watch(
+  () => props.studyCompound,
+  (val) => {
+    if (val) {
+      form.value.type_of_treatment = {
+        term_uid: val.type_of_treatment.term_uid,
+        sponsor_preferred_name: val.type_of_treatment.term_name,
       }
-      return this.$t('StudyCompoundForm.add_title')
-    },
-    typeOfTreatment_uidNADisabled() {
-      if (
-        (this.$refs.naField && this.$refs.naField.notApplicable) ||
-        (this.studyCompound && !this.studyCompound.compound)
-      ) {
-        return false
-      }
-      if (!this.form.type_of_treatment) {
-        return true
-      }
-      const types = [
-        constants.TYPE_OF_TREATMENT_INVESTIGATIONAL_PRODUCT,
-        constants.TYPE_OF_TREATMENT_CURRENT_TREATMENT,
-        constants.TYPE_OF_TREATMENT_COMPARATIVE_TREATMENT,
-      ]
-      if (
-        !types.find(
-          (item) => item === this.form.type_of_treatment.sponsor_preferred_name
-        )
-      ) {
-        return true
-      }
-      const studyCompounds =
-        this.studiesCompoundsStore.getStudyCompoundsByTypeOfTreatment(
-          this.form.type_of_treatment.term_uid
-        )
-      if (studyCompounds.length) {
-        return true
-      }
-      const NAstudyCompounds =
-        this.studiesCompoundsStore.getNAStudyCompoundsByTypeOfTreatment(
-          this.form.type_of_treatment.term_uid
-        )
-      return !!NAstudyCompounds.length
-    },
-  },
-  watch: {
-    studyCompound: {
-      handler: function (val) {
-        if (val) {
-          this.form.type_of_treatment = {
-            term_uid: val.type_of_treatment.term_uid,
-            sponsor_preferred_name: val.type_of_treatment.term_name,
-          }
-          this.form.other_info = val.other_info
-          if (val.compound) {
-            this.form.compound = val.compound
-            this.form.compoundSimple = {
-              uid: val.compound.uid,
-              name: val.compound.name,
-            }
-            let filters = {
-              compound_uid: { v: [val.compound.uid] },
-              status: { v: [statuses.FINAL] },
-            }
-            compoundAliases.getFiltered({ filters }).then((resp) => {
-              this.compoundAliases = resp.data.items
-            })
-            filters = {
-              'compound.uid': { v: [val.compound.uid] },
-              status: { v: [statuses.FINAL] },
-            }
-            medicinalProducts.getFiltered({ filters }).then((resp) => {
-              this.medicinalProducts = resp.data.items.map((item) => {
-                item.name = item.name + ' (' + item.dose_frequency?.name + ')'
-                return item
-              })
-            })
-          } else {
-            this.steps = [
-              {
-                name: 'type_of_treatment',
-                title: this.$t('StudyCompoundForm.step1_title'),
-              },
-            ]
-          }
-          if (val.compound_alias) {
-            this.form.compound_alias = val.compound_alias
-          }
-          if (val.medicinal_product) {
-            this.form.medicinalProduct = val.medicinal_product
-          }
-          if (val.dosage_form) {
-            this.form.dosage_form_uid = val.dosage_form.term_uid
-          }
-          if (val.route_of_administration) {
-            this.form.route_of_administration_uid =
-              val.route_of_administration.term_uid
-          }
-          if (val.dispensed_in) {
-            this.form.dispenser_uid = val.dispensed_in.term_uid
-          }
-          if (val.device) {
-            this.form.delivery_device_uid = val.device.term_uid
-          }
-          if (val.strength_value) {
-            this.form.strength_value_uid = val.strength_value.uid
-          }
+      form.value.other_info = val.other_info
+      if (val.compound) {
+        form.value.compound = val.compound
+        form.value.compoundSimple = {
+          uid: val.compound.uid,
+          name: val.compound.name,
         }
-      },
-      immediate: true,
-    },
-    compoundAliases(newValue) {
-      if (newValue) {
-        // Auto-select preferred alias only for Create form.
-        // Edit form should preserve the current value of compound alias.
-        if (!this.studyCompound) {
-          const preferedSynonym = this.compoundAliases.find(
-            (item) => item.is_preferred_synonym
-          )
-          this.form.compound_alias = preferedSynonym
-        }
-      }
-    },
-    'form.compoundSimple'(newValue) {
-      this.showAlerts = false
-      if (newValue) {
-        if (
-          !this.studyCompound ||
-          this.studyCompound.compound.uid !== newValue.uid
-        ) {
-          this.form.compound_alias = null
-        }
-        this.form.medicinalProduct = null
         let filters = {
-          compound_uid: { v: [newValue.uid] },
+          compound_uid: { v: [val.compound.uid] },
           status: { v: [statuses.FINAL] },
         }
-        compoundAliases.getFiltered({ filters }).then((resp) => {
-          this.compoundAliases = resp.data.items
-          this.showAlerts = true
+        compoundAliasesApi.getFiltered({ filters }).then((resp) => {
+          compoundAliases.value = resp.data.items
         })
         filters = {
-          'compound.uid': { v: [newValue.uid] },
+          'compound.uid': { v: [val.compound.uid] },
           status: { v: [statuses.FINAL] },
         }
-        medicinalProducts.getFiltered({ filters }).then((resp) => {
-          this.medicinalProducts = resp.data.items.map((item) => {
-            item.name = `${item.name} (${item.dose_frequency ? item.dose_frequency.name : ''})`
+        medicinalProductsApi.getFiltered({ filters }).then((resp) => {
+          medicinalProducts.value = resp.data.items.map((item) => {
+            item.name = item.name + ' (' + item.dose_frequency?.name + ')'
             return item
           })
-          this.showAlerts = true
         })
-        if (newValue.uid) {
-          compounds.getObject(newValue.uid).then((resp) => {
-            this.form.compound = resp.data
-          })
-        }
-      }
-    },
-    'form.medicinalProduct': {
-      handler: function (newValue) {
-        if (newValue) {
-          this.activeSubstances = []
-          medicinalProducts.getObject(newValue.uid).then((resp) => {
-            resp.data.pharmaceutical_products.forEach((item) =>
-              pharmaceuticalProducts.getObject(item.uid).then((resp) => {
-                const ingredients = resp.data.formulations
-                  .map((formulation) => formulation.ingredients)
-                  .flat()
-                  .map((ingredient) => ingredient.active_substance)
-                  .flat()
-                this.activeSubstances =
-                  this.activeSubstances.concat(ingredients)
-              })
-            )
-          })
-        }
-      },
-      immediate: true,
-    },
-  },
-  mounted() {
-    const filters = {
-      status: { v: [statuses.FINAL] },
-    }
-    compoundsSimple.getFiltered({ filters }).then((resp) => {
-      this.compounds = resp.data.items
-    })
-    terms.getTermsByCodelist('typeOfTreatment').then((resp) => {
-      this.typeOfTreatments = resp.data.items
-    })
-  },
-  methods: {
-    close() {
-      this.$emit('close')
-      this.notificationHub.clearErrors()
-      this.form = this.getInitialForm()
-      this.$refs.stepper.reset()
-      this.$refs.naField.reset()
-    },
-    getInitialForm() {
-      return {
-        compound: null,
-        compoundSimple: null,
-        compound_alias: null,
-        medicinalProduct: null,
-        type_of_treatment: null,
-        dosage_form_uid: null,
-        strength_value_uid: null,
-        route_of_administration_uid: null,
-        dispenser_uid: null,
-        delivery_device_uid: null,
-        other_info: null,
-      }
-    },
-    getInitialSteps() {
-      return [
-        {
-          name: 'type_of_treatment',
-          title: this.$t('StudyCompoundForm.step1_title'),
-        },
-        {
-          name: 'compoundAlias',
-          title: this.$t('StudyCompoundForm.step2_title'),
-        },
-        { name: 'compound', title: this.$t('StudyCompoundForm.step3_title') },
-      ]
-    },
-    getObserver(step) {
-      return this.$refs[`observer_${step}`]
-    },
-    cleanTypeOfTreatment(value) {
-      if (value) {
-        this.steps = [
+      } else {
+        steps.value = [
           {
             name: 'type_of_treatment',
-            title: this.$t('StudyCompoundForm.step1_title'),
+            title: t('StudyCompoundForm.step1_title'),
           },
         ]
-      } else {
-        this.steps = this.getInitialSteps()
       }
-    },
-    getPclassLabel(activeSubstance) {
-      const labels = []
-      if (activeSubstance.unii && activeSubstance.unii.pclass_name) {
-        labels.push(activeSubstance.unii.pclass_name)
+      if (val.compound_alias) {
+        form.value.compound_alias = val.compound_alias
       }
-
-      if (activeSubstance.unii && activeSubstance.unii.pclass_id) {
-        labels.push(`(${activeSubstance.unii.pclass_id})`)
+      if (val.medicinal_product) {
+        form.value.medicinalProduct = val.medicinal_product
       }
-      return labels.length ? labels.join(' ') : '-'
-    },
-    async submit() {
-      this.notificationHub.clearErrors()
-
-      const data = JSON.parse(JSON.stringify(this.form))
-      data.type_of_treatment_uid = data.type_of_treatment.term_uid
-      delete data.type_of_treatment
-      delete data.compound
-
-      if (data.medicinalProduct) {
-        data.medicinal_product_uid = data.medicinalProduct.uid
+      if (val.dosage_form) {
+        form.value.dosage_form_uid = val.dosage_form.term_uid
       }
-
-      if (data.compound_alias) {
-        data.compound_alias_uid = data.compound_alias.uid || null
-      } else {
-        data.reason_for_missing_null_value_uid =
-          studyConstants.TERM_NOT_APPLICABLE
+      if (val.route_of_administration) {
+        form.value.route_of_administration_uid =
+          val.route_of_administration.term_uid
       }
-
-      let action = null
-      let notification = null
-      let args = null
-      let event
-      if (!this.studyCompound) {
-        action = 'addStudyCompound'
-        notification = 'add_success'
-        event = 'added'
-        args = { studyUid: this.studiesGeneralStore.selectedStudy.uid, data }
-      } else {
-        action = 'updateStudyCompound'
-        notification = 'update_success'
-        args = {
-          studyUid: this.studiesGeneralStore.selectedStudy.uid,
-          studyCompoundUid: this.studyCompound.study_compound_uid,
-          data,
-        }
+      if (val.dispensed_in) {
+        form.value.dispenser_uid = val.dispensed_in.term_uid
       }
-      try {
-        await this.studiesCompoundsStore[action](args)
-        this.notificationHub.add({
-          msg: this.$t(`StudyCompoundForm.${notification}`),
-        })
-        if (event) {
-          this.$emit(event)
-        }
-        this.close()
-      } finally {
-        this.$refs.stepper.loading = false
+      if (val.device) {
+        form.value.delivery_device_uid = val.device.term_uid
       }
-    },
+      if (val.strength_value) {
+        form.value.strength_value_uid = val.strength_value.uid
+      }
+    }
   },
+  { immediate: true }
+)
+
+watch(compoundAliases, (newValue) => {
+  if (newValue) {
+    // Auto-select preferred alias only for Create form.
+    // Edit form should preserve the current value of compound alias.
+    if (!props.studyCompound) {
+      const preferedSynonym = compoundAliases.value.find(
+        (item) => item.is_preferred_synonym
+      )
+      form.value.compound_alias = preferedSynonym
+    }
+  }
+})
+
+watch(
+  () => form.value.compoundSimple,
+  (newValue) => {
+    showAlerts.value = false
+    if (newValue) {
+      if (
+        !props.studyCompound ||
+        props.studyCompound.compound.uid !== newValue.uid
+      ) {
+        form.value.compound_alias = null
+      }
+      form.value.medicinalProduct = null
+      let filters = {
+        compound_uid: { v: [newValue.uid] },
+        status: { v: [statuses.FINAL] },
+      }
+      compoundAliasesApi.getFiltered({ filters }).then((resp) => {
+        compoundAliases.value = resp.data.items
+        showAlerts.value = true
+      })
+      filters = {
+        'compound.uid': { v: [newValue.uid] },
+        status: { v: [statuses.FINAL] },
+      }
+      medicinalProductsApi.getFiltered({ filters }).then((resp) => {
+        medicinalProducts.value = resp.data.items.map((item) => {
+          item.name = `${item.name} (${item.dose_frequency ? item.dose_frequency.name : ''})`
+          return item
+        })
+        showAlerts.value = true
+      })
+      if (newValue.uid) {
+        compoundsApi.getObject(newValue.uid).then((resp) => {
+          form.value.compound = resp.data
+        })
+      }
+    }
+  }
+)
+watch(
+  () => form.value.medicinalProduct,
+  (newValue) => {
+    if (newValue) {
+      activeSubstances.value = []
+      medicinalProductsApi.getObject(newValue.uid).then((resp) => {
+        resp.data.pharmaceutical_products.forEach((item) =>
+          pharmaceuticalProducts.getObject(item.uid).then((resp) => {
+            const ingredients = resp.data.formulations
+              .map((formulation) => formulation.ingredients)
+              .flat()
+              .map((ingredient) => ingredient.active_substance)
+              .flat()
+            activeSubstances.value = activeSubstances.value.concat(ingredients)
+          })
+        )
+      })
+    }
+  },
+  { immediate: true }
+)
+
+onMounted(() => {
+  const filters = {
+    status: { v: [statuses.FINAL] },
+  }
+  compoundsSimple.getFiltered({ filters }).then((resp) => {
+    compounds.value = resp.data.items
+  })
+  terms.getTermsByCodelist('typeOfTreatment').then((resp) => {
+    typeOfTreatments.value = resp.data.items
+  })
+})
+
+function close() {
+  emit('close')
+  notificationHub.clearErrors()
+  form.value = getInitialForm()
+  stepper.value.reset()
+  naField.value.reset()
+}
+function getInitialForm() {
+  return {
+    compound: null,
+    compoundSimple: null,
+    compound_alias: null,
+    medicinalProduct: null,
+    type_of_treatment: null,
+    dosage_form_uid: null,
+    strength_value_uid: null,
+    route_of_administration_uid: null,
+    dispenser_uid: null,
+    delivery_device_uid: null,
+    other_info: null,
+  }
+}
+function getInitialSteps() {
+  return [
+    {
+      name: 'type_of_treatment',
+      title: t('StudyCompoundForm.step1_title'),
+    },
+    {
+      name: 'compoundAlias',
+      title: t('StudyCompoundForm.step2_title'),
+    },
+    { name: 'compound', title: t('StudyCompoundForm.step3_title') },
+  ]
+}
+function getObserver(step) {
+  if (step === 1) {
+    return observer_1.value
+  }
+  if (step === 2) {
+    return observer_2.value
+  }
+  if (step === 3) {
+    return observer_3.value
+  }
+}
+function cleanTypeOfTreatment(value) {
+  if (value) {
+    steps.value = [
+      {
+        name: 'type_of_treatment',
+        title: t('StudyCompoundForm.step1_title'),
+      },
+    ]
+  } else {
+    steps.value = getInitialSteps()
+  }
+}
+function getPclassLabel(activeSubstance) {
+  const labels = []
+  if (activeSubstance.unii && activeSubstance.unii.pclass_name) {
+    labels.push(activeSubstance.unii.pclass_name)
+  }
+
+  if (activeSubstance.unii && activeSubstance.unii.pclass_id) {
+    labels.push(`(${activeSubstance.unii.pclass_id})`)
+  }
+  return labels.length ? labels.join(' ') : '-'
+}
+async function submit() {
+  notificationHub.clearErrors()
+
+  const data = JSON.parse(JSON.stringify(form.value))
+  data.type_of_treatment_uid = data.type_of_treatment.term_uid
+  delete data.type_of_treatment
+  delete data.compound
+
+  if (data.medicinalProduct) {
+    data.medicinal_product_uid = data.medicinalProduct.uid
+  }
+
+  if (data.compound_alias) {
+    data.compound_alias_uid = data.compound_alias.uid || null
+  } else {
+    data.reason_for_missing_null_value_uid = studyConstants.TERM_NOT_APPLICABLE
+  }
+
+  let action = null
+  let notification = null
+  let args = null
+  let event
+  if (!props.studyCompound) {
+    action = 'addStudyCompound'
+    notification = 'add_success'
+    event = 'added'
+    args = { studyUid: studiesGeneralStore.selectedStudy.uid, data }
+  } else {
+    action = 'updateStudyCompound'
+    notification = 'update_success'
+    args = {
+      studyUid: studiesGeneralStore.selectedStudy.uid,
+      studyCompoundUid: props.studyCompound.study_compound_uid,
+      data,
+    }
+  }
+  try {
+    await studiesCompoundsStore[action](args)
+    notificationHub.add({
+      msg: t(`StudyCompoundForm.${notification}`),
+    })
+    if (event) {
+      emit(event)
+    }
+    close()
+  } finally {
+    stepper.value.loading = false
+  }
 }
 </script>
 

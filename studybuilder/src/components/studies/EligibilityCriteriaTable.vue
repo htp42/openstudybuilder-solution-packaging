@@ -65,18 +65,20 @@
     <template #actions>
       <v-btn
         data-cy="add-study-criteria"
-        class="ml-2"
-        size="small"
+        class="ml-2 expandHoverBtn"
         variant="outlined"
         color="nnBaseBlue"
-        :title="$t('EligibilityCriteriaTable.add_criteria')"
         :disabled="
           !accessGuard.checkPermission($roles.STUDY_WRITE) ||
           studiesGeneralStore.selectedStudyVersion !== null
         "
-        icon="mdi-plus"
         @click.stop="addCriteria"
-      />
+      >
+        <v-icon left>mdi-plus</v-icon>
+        <span class="label">{{
+          $t('EligibilityCriteriaTable.add_criteria')
+        }}</span>
+      </v-btn>
     </template>
     <template #[`item.order`]="{ item }">
       {{ item.order }}

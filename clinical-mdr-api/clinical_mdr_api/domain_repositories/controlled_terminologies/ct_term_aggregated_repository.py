@@ -34,6 +34,8 @@ from clinical_mdr_api.repositories._utils import (
     CypherQueryBuilder,
     FilterDict,
     FilterOperator,
+    calculate_total_count_from_query_result,
+    validate_filter_by_dict,
     validate_filters_and_add_search_string,
 )
 from common.exceptions import ValidationException
@@ -255,6 +257,16 @@ class CTTermAggregatedRepository:
             include_removed_terms=include_removed_terms,
         )
 
+        filter_by = validate_filter_by_dict(filter_by)
+        filtering_active = (
+            filter_by is not None
+            and len(filter_by) > 0
+            or library is not None
+            or package is not None
+            or codelist_name is not None
+            or codelist_uid is not None
+        )
+
         # Build alias_clause
         alias_clause = (
             self.sponsor_alias_clause(package=package)
@@ -269,6 +281,7 @@ class CTTermAggregatedRepository:
             implicit_sort_by="term_uid",
             page_number=page_number,
             page_size=page_size,
+            one_element_extra=filtering_active,
             filter_by=FilterDict.model_validate({"elements": filter_by}),
             filter_operator=filter_operator,
             total_count=total_count,
@@ -291,14 +304,22 @@ class CTTermAggregatedRepository:
                 )
             )
 
-        total = 0
-        if total_count:
-            count_result, _ = db.cypher_query(
-                query=query.count_query, params=query.parameters
-            )
-            if len(count_result) > 0:
-                total = count_result[0][0]
-
+        total = calculate_total_count_from_query_result(
+            len(terms_ars),
+            page_number,
+            page_size,
+            total_count,
+            extra_requested=filtering_active,
+        )
+        if 0 < page_size < len(terms_ars):
+            terms_ars = terms_ars[:page_size]
+        if total is None:
+            if not filtering_active:
+                count_query = "MATCH (term_root:CTTermRoot) RETURN count(term_root) AS total_count"
+                count_result, _ = db.cypher_query(query=count_query)
+                total = count_result[0][0] if len(count_result) > 0 else 0
+            else:
+                total = -1
         return terms_ars, total
 
     def get_distinct_headers(
@@ -751,13 +772,14 @@ class CTTermAggregatedRepository:
                 """
         alias_clause = """
                 DISTINCT term_root, codelist_term, codelist_root, codelist_name_value, codelist_attributes_value, codelist_library, ht
-                WITH 
+                WITH
                     codelist_root.uid AS codelist_uid,
                     codelist_name_value.name AS codelist_name,
                     codelist_attributes_value.submission_value AS codelist_submission_value,
                     codelist_attributes_value.concept_id AS codelist_concept_id,
                     codelist_term.submission_value AS term_submission_value,
                     ht.order AS term_order,
+                    ht.ordinal AS term_ordinal,
                     ht.start_date AS term_start_date,
                     codelist_library.name AS library_name
                 """
@@ -790,6 +812,7 @@ class CTTermAggregatedRepository:
                     codelist_uid=cl_dictionary["codelist_uid"],
                     submission_value=cl_dictionary["term_submission_value"],
                     order=cl_dictionary["term_order"],
+                    ordinal=cl_dictionary.get("term_ordinal"),
                     library_name=cl_dictionary["library_name"],
                     codelist_name=cl_dictionary["codelist_name"],
                     codelist_submission_value=cl_dictionary[

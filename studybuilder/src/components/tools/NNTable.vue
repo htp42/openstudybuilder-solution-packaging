@@ -26,6 +26,7 @@
             data-cy="search-field"
             variant="outlined"
           />
+          <slot name="afterSearch" />
         </div>
 
         <slot name="beforeSwitches" />
@@ -72,29 +73,29 @@
           />
           <v-btn
             v-if="!disableFiltering && !onlyTextSearch"
-            class="ml-2"
-            size="small"
+            class="ml-2 expandHoverBtn"
             variant="outlined"
             color="nnBaseBlue"
-            :title="$t('NNTableTooltips.filters')"
             data-cy="filters-button"
             :active="showFilterBar"
-            icon="mdi-filter-outline"
             @click="enableFiltering"
-          />
+          >
+            <v-icon left>mdi-filter-outline</v-icon>
+            <span class="label">{{ $t('NNTableTooltips.filters') }}</span>
+          </v-btn>
           <v-menu rounded offset-y :close-on-content-click="false">
             <template #activator="{ props }">
               <v-btn
                 v-if="(modifiableTable || modifyOnlyColumns) && !onlyTextSearch"
-                class="ml-2"
-                size="small"
+                class="ml-2 expandHoverBtn"
                 variant="outlined"
                 color="nnBaseBlue"
                 v-bind="props"
-                :title="$t('NNTableTooltips.columns_layout')"
                 data-cy="columns-layout-button"
-                icon="mdi-table-column"
-              />
+              >
+                <v-icon left>mdi-table-column</v-icon>
+                <span class="label">Select columns</span>
+              </v-btn>
             </template>
             <v-list data-cy="show-columns-form" class="columnList">
               <v-list-item>
@@ -135,14 +136,14 @@
           />
           <v-btn
             v-if="historyDataFetcher"
-            class="ml-2"
-            size="small"
+            class="ml-2 expandHoverBtn"
             variant="outlined"
             color="nnBaseBlue"
-            :title="$t('NNTableTooltips.history')"
-            icon="mdi-history"
             @click="openHistory"
-          />
+          >
+            <v-icon left>mdi-history</v-icon>
+            <span class="label">Show version history</span>
+          </v-btn>
         </div>
 
         <slot name="beforeTable" />
@@ -212,9 +213,10 @@
               :fixed-header="fixedHeader"
               :no-data-text="noDataText"
               :hide-default-footer="hideDefaultFooter"
+              :items-length="itemsLength === -1 ? 99999999 : itemsLength"
               disable-sort
               v-bind="$attrs"
-              @update:options="filterTable"
+              @update:options="handleTableOptionsUpdate"
               @update:sort-by="customSort"
             >
               <template
@@ -324,6 +326,89 @@
                   v-bind="scope"
                   :show-select-boxes="showSelectBoxes"
                 />
+              </template>
+              <template #bottom="{ isDisabled }">
+                <div class="v-data-table-footer">
+                  <div class="v-data-table-footer__items-per-page">
+                    <span>{{ $t('Settings.rows') }}:</span>
+                    <v-select
+                      :model-value="currentItemsPerPageValue"
+                      :items="computedItemsPerPageOptions"
+                      variant="outlined"
+                      density="compact"
+                      hide-details
+                      :disabled="isDisabled"
+                      @update:model-value="
+                        (value) => updateItemsPerPage(value, currentPageNumber)
+                      "
+                    />
+                  </div>
+                  <div class="v-data-table-footer__info">
+                    {{ getPaginationStartNumber() }}-{{
+                      getPaginationEndNumber()
+                    }}
+                    of
+                    {{ getPaginationTotalDisplay() }}
+                  </div>
+                  <div class="v-data-table-footer__pagination">
+                    <v-btn
+                      icon="$first"
+                      variant="text"
+                      :disabled="currentPageNumber === 1 || isDisabled"
+                      @click="updatePage(1, currentItemsPerPageValue)"
+                    />
+                    <v-btn
+                      icon="$prev"
+                      variant="text"
+                      :disabled="currentPageNumber === 1 || isDisabled"
+                      @click="
+                        updatePage(
+                          currentPageNumber - 1,
+                          currentItemsPerPageValue
+                        )
+                      "
+                    />
+                    <v-btn
+                      icon="$next"
+                      variant="text"
+                      :disabled="
+                        isDisabled ||
+                        (props.itemsLength > 0 &&
+                          currentPageNumber >=
+                            Math.ceil(
+                              props.itemsLength / currentItemsPerPageValue
+                            ))
+                      "
+                      @click="
+                        updatePage(
+                          currentPageNumber + 1,
+                          currentItemsPerPageValue
+                        )
+                      "
+                    />
+                    <v-btn
+                      icon="$last"
+                      variant="text"
+                      :disabled="
+                        isDisabled ||
+                        props.itemsLength === -1 ||
+                        (props.itemsLength > 0 &&
+                          currentPageNumber >=
+                            Math.ceil(
+                              props.itemsLength / currentItemsPerPageValue
+                            ))
+                      "
+                      @click="
+                        updatePage(
+                          Math.ceil(
+                            props.itemsLength / currentItemsPerPageValue
+                          ),
+                          currentItemsPerPageValue
+                        )
+                      "
+                    />
+                  </div>
+                </div>
               </template>
             </v-data-table-server>
           </template>
@@ -589,6 +674,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  itemsLength: {
+    type: Number,
+    default: 0,
+  },
 })
 const emit = defineEmits(['filter', 'customSort'])
 
@@ -617,6 +706,8 @@ const confirm = ref()
 const selectedColumns = ref([])
 const loadFilters = ref(false)
 const externalColumns = ref([])
+const currentPageNumber = ref(1)
+const currentItemsPerPageValue = ref(25)
 
 const headerActions = [
   {
@@ -641,7 +732,7 @@ const headerActions = [
   },
 ]
 let timeout
-let savedOptions
+let savedOptions = {}
 let savedFilters = '{}'
 
 const computedItemsPerPage = computed(() => {
@@ -721,10 +812,20 @@ watch(itemsToFilter, () => {
   })
 })
 
+watch(search, (newValue, oldValue) => {
+  if (newValue !== oldValue) {
+    currentPageNumber.value = 1
+  }
+})
+
 onMounted(() => {
   showSelectBoxes.value = props.showSelect
   tablesLayoutStore.initiateColumns()
   updateColumns()
+
+  // Initialize pagination state
+  currentItemsPerPageValue.value = computedItemsPerPage.value
+
   if (props.showFilterBarByDefault) {
     itemsToFilter.value = props.headers.filter(
       (header) => header.key !== 'actions' && !header.noFilter
@@ -882,11 +983,13 @@ function clearFilters() {
   apiParams.clear()
   search.value = null
   trigger.value += 1
+  currentPageNumber.value = 1
   emit('filter')
 }
 function columnFilter(params) {
   apiParams.set(params.column, params.data)
   savedOptions.page = 1
+  currentPageNumber.value = 1
   filterTable()
 }
 
@@ -894,10 +997,32 @@ function filterTable(options) {
   loading.value = true
   if (timeout) clearTimeout(timeout)
   if (options) {
-    savedOptions = options
+    savedOptions = { ...savedOptions, ...options }
   } else {
-    options = savedOptions
+    options = savedOptions || {}
   }
+
+  // Reset to page 1 if search term changes
+  if (options.search && options.search !== (savedOptions.search || '')) {
+    options.page = 1
+    savedOptions.page = 1
+    currentPageNumber.value = 1
+  }
+
+  // Ensure page is never less than 1, and ignore Vuetify's page calculation when itemsLength is -1
+  if (options.page && options.page < 1) {
+    options.page = 1
+    savedOptions.page = 1
+    currentPageNumber.value = 1
+  } else if (
+    options.page &&
+    options.page !== currentPageNumber.value &&
+    props.itemsLength !== -1
+  ) {
+    // Only sync with Vuetify's page when we have a known total
+    currentPageNumber.value = options.page
+  }
+
   apiParams.delete('*')
   if (options.search) {
     apiParams.set('*', [options.search])
@@ -972,6 +1097,83 @@ function customSort(data) {
 }
 function setExternalColumns(columns) {
   externalColumns.value = columns
+}
+function updatePage(newPage, itemsPerPage) {
+  // Ensure page number is never less than 1
+  const validPage = Math.max(1, newPage)
+  currentPageNumber.value = validPage
+  currentItemsPerPageValue.value = itemsPerPage
+  const newOptions = {
+    ...savedOptions,
+    page: validPage,
+    itemsPerPage: itemsPerPage,
+  }
+  filterTable(newOptions)
+}
+function updateItemsPerPage(newItemsPerPage) {
+  currentPageNumber.value = 1
+  currentItemsPerPageValue.value = newItemsPerPage
+  const newOptions = {
+    ...savedOptions,
+    page: 1,
+    itemsPerPage: newItemsPerPage,
+  }
+  filterTable(newOptions)
+}
+
+function handleTableOptionsUpdate(options) {
+  // Prevent page 0 or negative pages from ever being processed
+  if (options.page && options.page < 1) {
+    options.page = 1
+  }
+
+  // When itemsLength is -1, ignore Vuetify's page calculations completely
+  if (props.itemsLength === -1) {
+    // Only update if it's a legitimate change (search, sort, items per page)
+    const legitimateUpdate =
+      options.search !== undefined ||
+      options.sortBy !== undefined ||
+      (options.itemsPerPage &&
+        options.itemsPerPage !== currentItemsPerPageValue.value)
+
+    if (legitimateUpdate) {
+      // Keep our current page unless it's a search/filter change
+      if (options.search !== undefined) {
+        options.page = 1
+        currentPageNumber.value = 1
+      } else {
+        options.page = currentPageNumber.value
+      }
+    } else {
+      // Ignore page-only updates when total is unknown
+      return
+    }
+  }
+
+  filterTable(options)
+}
+
+function getPaginationStartNumber() {
+  return (currentPageNumber.value - 1) * currentItemsPerPageValue.value + 1
+}
+
+function getPaginationEndNumber() {
+  if (currentItemsPerPageValue.value === -1) {
+    return props.items.length
+  }
+
+  if (props.itemsLength === -1) {
+    return currentPageNumber.value * currentItemsPerPageValue.value
+  }
+
+  return Math.min(
+    currentPageNumber.value * currentItemsPerPageValue.value,
+    props.itemsLength
+  )
+}
+
+function getPaginationTotalDisplay() {
+  return props.itemsLength === -1 ? 'many' : props.itemsLength
 }
 
 defineExpose({

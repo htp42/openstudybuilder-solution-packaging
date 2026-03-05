@@ -26,7 +26,7 @@ def create_random_ct_codelist_attributes_vo(
         preferred_term=random_str(),
         definition=random_str(),
         extensible=True,
-        ordinal=False,
+        is_ordinal=False,
     )
     return random_ct_codelist_attributes_vo
 

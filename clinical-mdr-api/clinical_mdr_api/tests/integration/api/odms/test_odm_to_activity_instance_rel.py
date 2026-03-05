@@ -334,10 +334,10 @@ def test_add_activity_instance_relationship_to_odm_item(api_client):
             "sds_var_name": "sds_var_name1",
             "origin": "origin1",
             "comment": "comment1",
-            "descriptions": [],
+            "translated_texts": [],
             "aliases": [],
             "unit_definitions": [],
-            "codelist_uid": None,
+            "codelist": None,
             "terms": [],
             "activity_instances": [
                 {
@@ -352,6 +352,9 @@ def test_add_activity_instance_relationship_to_odm_item(api_client):
                     "value_dependent_map": "value_dependent_map1",
                 }
             ],
+            "vendor_elements": [],
+            "vendor_element_attributes": [],
+            "vendor_attributes": [],
             "change_description": "Adding activity instance relationship",
         },
     )
@@ -389,6 +392,14 @@ def test_get_odm_item_with_activity_instance_relationship(api_client):
         res["activity_instances"][0]["activity_instance_uid"]
         == activity_instances[0].uid
     )
+    assert res["activity_instances"][0]["activity_instance_name"] == "name A"
+    assert (
+        res["activity_instances"][0]["activity_instance_adam_param_code"]
+        == "adam_code_a"
+    )
+    assert (
+        res["activity_instances"][0]["activity_instance_topic_code"] == "topic code A"
+    )
     assert (
         res["activity_instances"][0]["activity_item_class_uid"]
         == activity_item_classes[0].uid
@@ -411,8 +422,11 @@ def test_activity_instance_relationship_to_odm_item(api_client):
             "oid": "oid1",
             "sdtm_version": "123",
             "repeating": "No",
-            "descriptions": [],
+            "translated_texts": [],
             "aliases": [],
+            "vendor_elements": [],
+            "vendor_element_attributes": [],
+            "vendor_attributes": [],
             "change_description": "Adding activity instance relationship",
         },
     )
@@ -433,12 +447,15 @@ def test_remove_activity_instance_relationship_from_odm_item(api_client):
             "sds_var_name": "sds_var_name1",
             "origin": "origin1",
             "comment": "comment1",
-            "descriptions": [],
+            "translated_texts": [],
             "aliases": [],
             "unit_definitions": [],
-            "codelist_uid": None,
+            "codelist": None,
             "terms": [],
             "activity_instances": [],
+            "vendor_elements": [],
+            "vendor_element_attributes": [],
+            "vendor_attributes": [],
             "change_description": "Removing activity instance relationship",
         },
     )
@@ -463,10 +480,10 @@ def test_cannot_add_more_than_two_same_activity_instance_to_odm_item(api_client)
             "sds_var_name": "sds_var_name1",
             "origin": "origin1",
             "comment": "comment1",
-            "descriptions": [],
+            "translated_texts": [],
             "aliases": [],
             "unit_definitions": [],
-            "codelist_uid": None,
+            "codelist": None,
             "terms": [],
             "activity_instances": [
                 {
@@ -492,6 +509,9 @@ def test_cannot_add_more_than_two_same_activity_instance_to_odm_item(api_client)
                     "value_dependent_map": "value_dependent_map2",
                 },
             ],
+            "vendor_elements": [],
+            "vendor_element_attributes": [],
+            "vendor_attributes": [],
             "change_description": "Adding more than one same activity instance",
         },
     )

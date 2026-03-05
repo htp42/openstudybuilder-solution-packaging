@@ -12,7 +12,8 @@ Feature: Studies - Define Study - Study Structure - Design Matrix
     Scenario: [Test data] Data needed for verfication of design specification is created
         And [API] The epoch with type 'Pre Treatment' and subtype 'Run-in' exists in selected study
         And [API] The epoch with type 'Treatment' and subtype 'Intervention' exists in selected study
-        And The Study Arm exists within the study
+        And [API] Uid of study type 'Investigational Arm' is fetched
+        And [API] The Study Arm exists within the study
         And [API] Uids are fetched for element subtype 'Run-in'
         And [API] Element is created for the test study
         And [API] Uids are fetched for element subtype 'Treatment'
@@ -43,7 +44,7 @@ Feature: Studies - Define Study - Study Structure - Design Matrix
         And User sets row page to 10 in the settings menu
         Given The test study '/study_structure/design_matrix' page is opened
         And User waits for the table
-        And The Edit button is clicked
+        And I click 'Edit' button
         Then User triggers dropdown for element assignment to epoch 'Run-in'
         And 0 element is selected
         Then User triggers dropdown for element assignment to epoch 'Intervention'
@@ -57,7 +58,7 @@ Feature: Studies - Define Study - Study Structure - Design Matrix
         Given The test study '/study_structure/design_matrix' page is opened
         And User waits for the table
         When Transion rules are enabled
-        And The Edit button is clicked
+        And I click 'Edit' button
         Then User open transition rules edit mode for epoch 'Run-in'
         And Transition rules edit window is opened
         And User sets transition rule
@@ -88,7 +89,7 @@ Feature: Studies - Define Study - Study Structure - Design Matrix
         Given The test study '/study_structure/design_matrix' page is opened
         And User waits for the table
         When Transion rules are enabled
-        And The Edit button is clicked
+        And I click 'Edit' button
         Then User open transition rules edit mode for epoch 'Run-in'
         And The transition rule is changed to have 201 characters
         Then The warning message about transition rule exceeding 200 characters is displayed

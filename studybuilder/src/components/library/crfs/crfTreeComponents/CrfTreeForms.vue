@@ -23,7 +23,7 @@
       <template #bottom />
       <template #item="{ item, internalItem, toggleExpand, isExpanded, index }">
         <tr style="background-color: rgb(var(--v-theme-dfltBackgroundLight2))">
-          <td width="45%" :class="'font-weight-bold'">
+          <td style="width: 45%" :class="'font-weight-bold'">
             <v-row class="align-center">
               <v-btn
                 v-if="isExpanded(internalItem)"
@@ -69,20 +69,20 @@
               </span>
             </v-row>
           </td>
-          <td width="10%">
+          <td style="width: 10%">
             <CrfTreeTooltipsHandler :item="item" value="mandatory" />
             <CrfTreeTooltipsHandler :item="item" value="locked" />
           </td>
-          <td width="10%">
+          <td style="width: 10%">
             <CrfTreeTooltipsHandler :item="item" value="repeating" />
           </td>
-          <td width="10%">
+          <td style="width: 10%">
             <StatusChip :status="item.status" />
           </td>
-          <td width="10%">
+          <td style="width: 10%">
             {{ item.version }}
           </td>
-          <td width="15%">
+          <td style="width: 15%">
             <v-menu v-if="item.status !== statuses.FINAL" offset-y>
               <template #activator="{ props }">
                 <div>
@@ -181,7 +181,11 @@
   <CrfNewVersionSummaryConfirmDialog ref="confirmNewVersion" />
 </template>
 
-<script>
+<script setup>
+import { computed, inject, onMounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+
 import crfs from '@/api/crfs'
 import CrfTreeItemGroups from '@/components/library/crfs/crfTreeComponents/CrfTreeItemGroups.vue'
 import CrfTreeTooltipsHandler from '@/components/library/crfs/CrfTreeTooltipsHandler.vue'
@@ -199,326 +203,332 @@ import CrfTreeReorderButtons from '@/components/library/crfs/CrfTreeReorderButto
 import CrfApprovalSummaryConfirmDialog from '@/components/library/crfs/CrfApprovalSummaryConfirmDialog.vue'
 import CrfNewVersionSummaryConfirmDialog from '@/components/library/crfs/CrfNewVersionSummaryConfirmDialog.vue'
 
-export default {
-  components: {
-    CrfTreeItemGroups,
-    CrfTreeTooltipsHandler,
-    StatusChip,
-    CrfLinkForm,
-    ActionsMenu,
-    CrfFormForm,
-    CrfExportForm,
-    CrfReferencesForm,
-    CrfItemGroupForm,
-    CrfTreeReorderButtons,
-    CrfApprovalSummaryConfirmDialog,
-    CrfNewVersionSummaryConfirmDialog,
+const props = defineProps({
+  parentCollection: {
+    type: Object,
+    default: null,
   },
-  inject: ['notificationHub'],
-  props: {
-    parentCollection: {
-      type: Object,
-      default: null,
-    },
-    columns: {
-      type: Array,
-      default: null,
-    },
-    refreshForms: {
-      type: Number,
-      default: null,
-    },
-    expandFormsForCollection: {
-      type: String,
-      default: null,
-    },
-    sortMode: {
-      type: Boolean,
-      default: false,
-    },
+  columns: {
+    type: Array,
+    default: null,
   },
-  emits: ['updateParentCollectionForm'],
-  data() {
-    return {
-      forms: [],
-      loading: false,
-      showFormForm: false,
-      showLinkForm: false,
-      selectedForm: {},
-      refreshItemGroups: 0,
-      actions: [
-        {
-          label: this.$t('CRFTree.open_def'),
-          icon: 'mdi-eye-outline',
-          click: this.openDefinition,
-        },
-        {
-          label: this.$t('CRFTree.edit_reference'),
-          icon: 'mdi-pencil-outline',
-          click: this.editAttributes,
-          condition: (item) => item.status === statuses.DRAFT,
-          accessRole: this.$roles.LIBRARY_WRITE,
-        },
-        {
-          label: this.$t('CRFTree.preview_odm'),
-          icon: 'mdi-file-xml-box',
-          click: this.previewODM,
-        },
-        {
-          label: this.$t('_global.approve'),
-          icon: 'mdi-check-decagram',
-          click: this.approve,
-          condition: (item) => item.status === statuses.DRAFT,
-          accessRole: this.$roles.LIBRARY_WRITE,
-        },
-        {
-          label: this.$t('_global.new_version'),
-          icon: 'mdi-plus-circle-outline',
-          click: this.newVersion,
-          condition: (item) => item.status === statuses.FINAL,
-          accessRole: this.$roles.LIBRARY_WRITE,
-        },
-        {
-          label: this.$t('_global.export'),
-          icon: 'mdi-download-outline',
-          click: this.openExportForm,
-        },
-        {
-          label: this.$t('CRFTree.expand'),
-          icon: 'mdi-arrow-expand-down',
-          condition: (item) => item.item_groups.length > 0,
-          click: this.expandAll,
-        },
-      ],
-      expanded: [],
-      expandGroupsForForm: [],
-      showExportForm: false,
-      showAttributesForm: false,
-      showCreateForm: false,
+  refreshForms: {
+    type: Number,
+    default: null,
+  },
+  expandFormsForCollection: {
+    type: String,
+    default: null,
+  },
+  sortMode: {
+    type: Boolean,
+    default: false,
+  },
+})
+
+const emit = defineEmits(['updateParentCollectionForm'])
+
+const notificationHub = inject('notificationHub')
+const roles = inject('roles')
+const router = useRouter()
+const { t } = useI18n()
+
+const forms = ref([])
+const loading = ref(false)
+const showFormForm = ref(false)
+const showLinkForm = ref(false)
+const selectedForm = ref({})
+const refreshItemGroups = ref(0)
+const expanded = ref([])
+const expandGroupsForForm = ref([])
+const showExportForm = ref(false)
+const showAttributesForm = ref(false)
+const showCreateForm = ref(false)
+
+const confirmApproval = ref(null)
+const confirmNewVersion = ref(null)
+
+const actions = computed(() => [
+  {
+    label: t('CRFTree.open_def'),
+    icon: 'mdi-eye-outline',
+    click: openDefinition,
+  },
+  {
+    label: t('CRFTree.edit_reference'),
+    icon: 'mdi-pencil-outline',
+    click: editAttributes,
+    condition: (item) => item.status === statuses.DRAFT,
+    accessRole: roles.LIBRARY_WRITE,
+  },
+  {
+    label: t('CRFTree.preview_odm'),
+    icon: 'mdi-file-xml-box',
+    click: previewODM,
+  },
+  {
+    label: t('_global.approve'),
+    icon: 'mdi-check-decagram',
+    click: approve,
+    condition: (item) => item.status === statuses.DRAFT,
+    accessRole: roles.LIBRARY_WRITE,
+  },
+  {
+    label: t('_global.new_version'),
+    icon: 'mdi-plus-circle-outline',
+    click: newVersion,
+    condition: (item) => item.status === statuses.FINAL,
+    accessRole: roles.LIBRARY_WRITE,
+  },
+  {
+    label: t('_global.export'),
+    icon: 'mdi-download-outline',
+    click: openExportForm,
+  },
+  {
+    label: t('CRFTree.expand'),
+    icon: 'mdi-arrow-expand-down',
+    condition: (item) => item.item_groups.length > 0,
+    click: expandAll,
+  },
+])
+
+watch(
+  () => props.refreshForms,
+  () => {
+    fetchForms()
+  }
+)
+
+watch(
+  () => props.expandFormsForCollection,
+  (value) => {
+    if (!_isEmpty(value) && value === props.parentCollection?.uid) {
+      expanded.value = forms.value
+        .map((form) => (form.item_groups.length > 0 ? form.name : null))
+        .filter((val) => val !== null)
+
+      expandGroupsForForm.value = forms.value
+        .map((form) => (form.item_groups.length > 0 ? form.uid : null))
+        .filter((val) => val !== null)
     }
-  },
-  watch: {
-    refreshForms() {
-      this.fetchForms()
-    },
-    expandFormsForCollection(value) {
-      if (!_isEmpty(value) && value === this.parentCollection.uid) {
-        this.expanded = this.forms
-          .map((form) => (form.item_groups.length > 0 ? form.name : null))
-          .filter(function (val) {
-            return val !== null
-          })
-        this.expandGroupsForForm = this.forms
-          .map((form) => (form.item_groups.length > 0 ? form.uid : null))
-          .filter(function (val) {
-            return val !== null
-          })
-      }
-    },
-  },
-  created() {
-    this.statuses = statuses
-  },
-  mounted() {
-    this.fetchForms()
-  },
-  methods: {
-    async newVersion(item) {
-      this.expanded = this.expanded.filter((e) => e !== item.name)
+  }
+)
 
-      if (
-        await this.$refs.confirmNewVersion.open({
-          agreeLabel: this.$t('CRFForms.create_new_version'),
-          form: item,
-        })
-      ) {
-        this.loading = true
+onMounted(() => {
+  fetchForms()
+})
 
-        crfs
-          .newVersion('forms', item.uid)
-          .then((resp) => {
-            if (this.parentCollection.status === statuses.DRAFT) {
-              this.updateForm(resp.data)
-            }
+async function newVersion(item) {
+  expanded.value = expanded.value.filter((e) => e !== item.name)
 
-            this.expandAll(item)
-            this.notificationHub.add({
-              msg: this.$t('_global.new_version_success'),
-            })
-          })
-          .finally(() => {
-            this.loading = false
-          })
-      }
-    },
-    async approve(item) {
-      this.expanded = this.expanded.filter((e) => e !== item.name)
+  if (
+    await confirmNewVersion.value?.open({
+      agreeLabel: t('CRFForms.create_new_version'),
+      form: item,
+    })
+  ) {
+    loading.value = true
 
-      if (
-        await this.$refs.confirmApproval.open({
-          agreeLabel: this.$t('CRFForms.approve_form'),
-          form: item,
-        })
-      ) {
-        this.loading = true
-
-        crfs
-          .approve('forms', item.uid)
-          .then((resp) => {
-            this.updateForm(resp.data)
-
-            this.expandAll(item)
-            this.notificationHub.add({
-              msg: this.$t('CRFForms.approved'),
-            })
-          })
-          .finally(() => {
-            this.loading = false
-          })
-      }
-    },
-    updateFormItemGroup(affectedForm, updatedItemGroup) {
-      if (affectedForm.status === statuses.DRAFT) {
-        const form = this.forms.find((f) => f.uid === affectedForm.uid)
-
-        if (form) {
-          form.item_groups = form.item_groups.map((f) =>
-            f.uid === updatedItemGroup.uid ? { ...f, ...updatedItemGroup } : f
-          )
+    crfs
+      .newVersion('forms', item.uid)
+      .then((resp) => {
+        if (props.parentCollection?.status === statuses.DRAFT) {
+          updateForm(resp.data)
         }
-      }
-    },
-    openCreateAndAddForm(item) {
-      this.selectedForm = item
-      this.showCreateForm = true
-    },
-    closeCreateAndAddForm() {
-      this.showCreateForm = false
-      this.selectedForm = {}
-    },
-    linkItemGroup(group) {
-      const payload = [
-        {
-          uid: group.data.uid,
-          order_number: this.selectedForm.item_groups.length,
-          mandatory: 'No',
-          collection_exception_condition_oid: null,
-          vendor: { attributes: [] },
-        },
-      ]
-      crfs
-        .addItemGroupsToForm(payload, this.selectedForm.uid, false)
-        .then(() => {
-          this.fetchForms()
-        })
-    },
-    async fetchForms() {
-      this.loading = true
-      this.forms = []
-      for (const form of this.parentCollection.forms) {
-        const rs = await crfs.get(`forms/${form.uid}`, {
-          params: { version: form.version },
-        })
-        this.forms.push({ ...form, ...rs.data })
-      }
 
-      this.refreshItemGroups += 1
-      this.loading = false
-      if (
-        !_isEmpty(this.expandFormsForCollection) &&
-        this.expandFormsForCollection === this.parentCollection.uid
-      ) {
-        this.expanded = this.forms
-          .map((form) => (form.item_groups.length > 0 ? form.name : null))
-          .filter(function (val) {
-            return val !== null
-          })
-        this.expandGroupsForForm = this.forms
-          .map((form) => (form.item_groups.length > 0 ? form.uid : null))
-          .filter(function (val) {
-            return val !== null
-          })
-      }
-    },
-    updateForm(form) {
-      this.forms = this.forms.map((f) =>
-        f.uid === form.uid ? { ...f, ...form } : f
-      )
-      this.$emit('updateParentCollectionForm', this.parentCollection, form)
-    },
-    openDefinition(item) {
-      this.selectedForm = item
-      this.showFormForm = true
-    },
-    closeDefinition() {
-      this.selectedForm = {}
-      this.showFormForm = false
-      this.fetchForms()
-    },
-    openLinkForm(item) {
-      this.selectedForm = item
-      this.showLinkForm = true
-    },
-    closeLinkForm() {
-      this.showLinkForm = false
-      this.selectedForm = {}
-      this.fetchForms()
-    },
-    async expandAll(item) {
-      await this.expanded.push(item.name)
-      this.expandGroupsForForm = [item.uid]
-    },
-    openExportForm(item) {
-      this.selectedForm = item
-      this.showExportForm = true
-    },
-    closeExportForm() {
-      this.selectedForm = {}
-      this.showExportForm = false
-    },
-    editAttributes(item) {
-      this.selectedForm = item
-      this.showAttributesForm = true
-    },
-    closeAttributesForm() {
-      this.selectedForm = {}
-      this.showAttributesForm = false
-    },
-    previewODM(item) {
-      this.$router.push({
-        name: 'CrfBuilder',
-        params: {
-          tab: 'odm-viewer',
-          uid: item.uid,
-          type: crfTypes.FORM,
-        },
+        expandAll(item)
+        notificationHub?.add({
+          msg: t('_global.new_version_success'),
+        })
       })
-    },
-    orderUp(item, index) {
-      if (index === 0) {
-        return
-      } else {
-        this.forms[index].order_number--
-        this.forms[index - 1].order_number++
-        this.forms.sort((a, b) => {
-          return a.order_number - b.order_number
+      .finally(() => {
+        loading.value = false
+      })
+  }
+}
+
+async function approve(item) {
+  expanded.value = expanded.value.filter((e) => e !== item.name)
+
+  if (
+    await confirmApproval.value?.open({
+      agreeLabel: t('CRFForms.approve_form'),
+      form: item,
+    })
+  ) {
+    loading.value = true
+
+    crfs
+      .approve('forms', item.uid)
+      .then((resp) => {
+        updateForm(resp.data)
+
+        expandAll(item)
+        notificationHub?.add({
+          msg: t('CRFForms.approved'),
         })
-        crfs.addFormsToCollection(this.forms, this.parentCollection.uid, true)
-      }
+      })
+      .finally(() => {
+        loading.value = false
+      })
+  }
+}
+
+function updateFormItemGroup(affectedForm, updatedItemGroup) {
+  if (affectedForm.status === statuses.DRAFT) {
+    const form = forms.value.find((f) => f.uid === affectedForm.uid)
+
+    if (form) {
+      form.item_groups = form.item_groups.map((f) =>
+        f.uid === updatedItemGroup.uid ? { ...f, ...updatedItemGroup } : f
+      )
+    }
+  }
+}
+
+function openCreateAndAddForm(item) {
+  selectedForm.value = item
+  showCreateForm.value = true
+}
+
+function closeCreateAndAddForm() {
+  showCreateForm.value = false
+  selectedForm.value = {}
+}
+
+function linkItemGroup(group) {
+  const payload = [
+    {
+      uid: group.data.uid,
+      order_number: selectedForm.value.item_groups.length,
+      mandatory: 'No',
+      collection_exception_condition_oid: null,
+      vendor: { attributes: [] },
     },
-    orderDown(item, index) {
-      if (index === this.forms.length - 1) {
-        return
-      } else {
-        this.forms[index].order_number++
-        this.forms[index + 1].order_number--
-        this.forms.sort((a, b) => {
-          return a.order_number - b.order_number
-        })
-        crfs.addFormsToCollection(this.forms, this.parentCollection.uid, true)
-      }
+  ]
+
+  crfs.addItemGroupsToForm(payload, selectedForm.value.uid, false).then(() => {
+    fetchForms()
+  })
+}
+
+async function fetchForms() {
+  if (!props.parentCollection) {
+    return
+  }
+
+  loading.value = true
+  forms.value = []
+  for (const form of props.parentCollection.forms ?? []) {
+    const rs = await crfs.get(`forms/${form.uid}`, {
+      params: { version: form.version },
+    })
+    forms.value.push({ ...form, ...rs.data })
+  }
+
+  refreshItemGroups.value += 1
+  loading.value = false
+
+  if (
+    !_isEmpty(props.expandFormsForCollection) &&
+    props.expandFormsForCollection === props.parentCollection.uid
+  ) {
+    expanded.value = forms.value
+      .map((form) => (form.item_groups.length > 0 ? form.name : null))
+      .filter((val) => val !== null)
+
+    expandGroupsForForm.value = forms.value
+      .map((form) => (form.item_groups.length > 0 ? form.uid : null))
+      .filter((val) => val !== null)
+  }
+}
+
+function updateForm(form) {
+  forms.value = forms.value.map((f) =>
+    f.uid === form.uid ? { ...f, ...form } : f
+  )
+  emit('updateParentCollectionForm', props.parentCollection, form)
+}
+
+function openDefinition(item) {
+  selectedForm.value = item
+  showFormForm.value = true
+}
+
+function closeDefinition() {
+  selectedForm.value = {}
+  showFormForm.value = false
+  fetchForms()
+}
+
+function openLinkForm(item) {
+  selectedForm.value = item
+  showLinkForm.value = true
+}
+
+function closeLinkForm() {
+  showLinkForm.value = false
+  selectedForm.value = {}
+  fetchForms()
+}
+
+async function expandAll(item) {
+  await expanded.value.push(item.name)
+  expandGroupsForForm.value = [item.uid]
+}
+
+function openExportForm(item) {
+  selectedForm.value = item
+  showExportForm.value = true
+}
+
+function closeExportForm() {
+  selectedForm.value = {}
+  showExportForm.value = false
+}
+
+function editAttributes(item) {
+  selectedForm.value = item
+  showAttributesForm.value = true
+}
+
+function closeAttributesForm() {
+  selectedForm.value = {}
+  showAttributesForm.value = false
+}
+
+function previewODM(item) {
+  router.push({
+    name: 'CrfBuilder',
+    params: {
+      tab: 'odm-viewer',
+      uid: item.uid,
+      type: crfTypes.FORM,
     },
-  },
+  })
+}
+
+function orderUp(item, index) {
+  if (index === 0) {
+    return
+  }
+
+  forms.value[index].order_number--
+  forms.value[index - 1].order_number++
+  forms.value.sort((a, b) => a.order_number - b.order_number)
+  crfs.addFormsToCollection(forms.value, props.parentCollection.uid, true)
+}
+
+function orderDown(item, index) {
+  if (index === forms.value.length - 1) {
+    return
+  }
+
+  forms.value[index].order_number++
+  forms.value[index + 1].order_number--
+  forms.value.sort((a, b) => a.order_number - b.order_number)
+  crfs.addFormsToCollection(forms.value, props.parentCollection.uid, true)
 }
 </script>
 <style scoped>

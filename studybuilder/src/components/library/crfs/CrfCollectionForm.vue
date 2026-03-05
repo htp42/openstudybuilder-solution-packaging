@@ -1,6 +1,6 @@
 <template>
   <SimpleFormDialog
-    ref="form"
+    ref="formDialog"
     :title="title"
     :help-items="helpItems"
     :open="open"
@@ -94,7 +94,7 @@
         </v-row>
       </v-form>
     </template>
-    <template v-if="checkPermission($roles.LIBRARY_WRITE)" #actions>
+    <template v-if="accessGuard.checkPermission($roles.LIBRARY_WRITE)" #actions>
       <v-btn v-if="readOnly" class="primary mr-2" @click="newVersion">
         {{ $t('_global.new_version') }}
       </v-btn>
@@ -113,239 +113,245 @@
   <CrfApprovalSummaryConfirmDialog ref="confirmApproval" />
 </template>
 
-<script>
+<script setup>
+import { computed, inject, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import SimpleFormDialog from '@/components/tools/SimpleFormDialog.vue'
 import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
 import CrfApprovalSummaryConfirmDialog from '@/components/library/crfs/CrfApprovalSummaryConfirmDialog.vue'
 import crfs from '@/api/crfs'
-import _isEqual from 'lodash/isEqual'
-import statuses from '@/constants/statuses'
+import statusesConst from '@/constants/statuses'
 import { useFormStore } from '@/stores/form'
 import { useAccessGuard } from '@/composables/accessGuard'
 
-export default {
-  components: {
-    SimpleFormDialog,
-    ConfirmDialog,
-    CrfApprovalSummaryConfirmDialog,
+const props = defineProps({
+  selectedCollection: {
+    type: Object,
+    default: null,
   },
-  inject: ['notificationHub', 'formRules'],
-  props: {
-    selectedCollection: {
-      type: Object,
-      default: null,
-    },
-    open: Boolean,
-    readOnlyProp: Boolean,
-  },
-  emits: ['updateCollection', 'close'],
-  setup() {
-    const formStore = useFormStore()
-    const accessGuard = useAccessGuard()
+  open: Boolean,
+  readOnlyProp: Boolean,
+})
 
-    return {
-      checkPermission: accessGuard.checkPermission,
-      formStore,
-    }
-  },
-  data() {
-    return {
-      form: {},
-      helpItems: [
-        'CRFCollections.name',
-        'CRFCollections.oid',
-        'CRFCollections.effective_date',
-        'CRFCollections.retired_date',
-      ],
-      effectiveDateMenu: false,
-      retiredDateMenu: false,
-      readOnly: this.readOnlyProp,
-    }
-  },
-  computed: {
-    isDisabled() {
-      return this.readOnly || !this.checkPermission(this.$roles.LIBRARY_WRITE)
-    },
-    title() {
-      return this.isEdit()
-        ? this.$t('CRFCollections.edit_collection') + ' - ' + this.form.name
-        : this.$t('CRFCollections.add_collection')
-    },
-    effectiveDateDisp() {
-      if (this.form.effective_date) {
-        return this.formatDate(this.form.effective_date)
-      }
-      return ''
-    },
-    retiredDateDisp() {
-      if (this.form.retired_date) {
-        return this.formatDate(this.form.retired_date)
-      }
-      return ''
-    },
-    formUrl() {
-      if (this.isEdit()) {
-        return `${window.location.href.replace('crf-tree', 'collections')}/collection/${this.selectedCollection.uid}`
-      }
-      return null
-    },
-  },
-  watch: {
-    selectedCollection(value) {
-      if (value) {
-        this.form = { ...value }
-        this.form.effective_date = this.form.effective_date
-          ? new Date(this.form.effective_date)
-          : null
-        this.form.retired_date = this.form.retired_date
-          ? new Date(this.form.retired_date)
-          : null
-        this.formStore.save(this.form)
-      }
-    },
-    readOnlyProp(value) {
-      this.readOnly = value
-    },
-  },
-  created() {
-    this.statuses = statuses
-  },
-  mounted() {
-    if (this.isEdit()) {
-      this.form = { ...this.selectedCollection }
-      this.form.effective_date = new Date(this.form.effective_date)
-      this.form.retired_date = new Date(this.form.retired_date)
-      this.formStore.save(this.form)
-    }
-  },
-  methods: {
-    formatDate(value) {
-      if (value.length <= 10) {
-        return value
-      }
-      let month = 1 + value.getMonth()
-      if (month < 10) {
-        month = `0${month}`
-      }
-      let day = value.getDate()
-      if (day < 10) {
-        day = `0${day}`
-      }
-      const date = `${value.getFullYear()}-${month}-${day}`
-      if (date === '1970-01-01') {
-        return null
-      }
-      return `${value.getFullYear()}-${month}-${day}`
-    },
-    newVersion() {
-      crfs
-        .newVersion('study-events', this.selectedCollection.uid)
-        .then((resp) => {
-          this.$emit('updateCollection', resp.data)
-          this.readOnly = false
+const emit = defineEmits(['updateCollection', 'close'])
 
-          this.notificationHub.add({
-            msg: this.$t('_global.new_version_success'),
-          })
+const { t } = useI18n()
+
+const notificationHub = inject('notificationHub')
+const roles = inject('roles')
+const accessGuard = useAccessGuard()
+
+const formRules = inject('formRules')
+
+const formStore = useFormStore()
+
+const formDialog = ref(null)
+const observer = ref(null)
+const confirmApproval = ref(null)
+
+const form = ref({})
+const helpItems = ref([
+  'CRFCollections.name',
+  'CRFCollections.oid',
+  'CRFCollections.effective_date',
+  'CRFCollections.retired_date',
+])
+const effectiveDateMenu = ref(false)
+const retiredDateMenu = ref(false)
+const readOnly = ref(props.readOnlyProp)
+
+const statuses = statusesConst
+
+const isEdit = computed(() => {
+  if (props.selectedCollection) {
+    return Object.keys(props.selectedCollection).length !== 0
+  }
+  return false
+})
+
+const isDisabled = computed(
+  () => readOnly.value || !accessGuard.checkPermission(roles?.LIBRARY_WRITE)
+)
+
+const title = computed(() => {
+  return isEdit.value
+    ? t('CRFCollections.edit_collection') + ' - ' + form.value.name
+    : t('CRFCollections.add_collection')
+})
+
+const effectiveDateDisp = computed(() => {
+  if (form.value.effective_date) {
+    return formatDate(form.value.effective_date)
+  }
+  return ''
+})
+
+const retiredDateDisp = computed(() => {
+  if (form.value.retired_date) {
+    return formatDate(form.value.retired_date)
+  }
+  return ''
+})
+
+const formUrl = computed(() => {
+  if (!isEdit.value) {
+    return null
+  }
+  const href = globalThis.window?.location?.href
+  if (!href) {
+    return null
+  }
+  return `${href.replace('crf-tree', 'collections')}/collection/${props.selectedCollection.uid}`
+})
+
+watch(
+  () => props.selectedCollection,
+  (value) => {
+    if (value) {
+      form.value = { ...value }
+      form.value.effective_date = form.value.effective_date
+        ? new Date(form.value.effective_date)
+        : null
+      form.value.retired_date = form.value.retired_date
+        ? new Date(form.value.retired_date)
+        : null
+      formStore.save(form.value)
+    }
+  }
+)
+
+watch(
+  () => props.readOnlyProp,
+  (value) => {
+    readOnly.value = value
+  }
+)
+
+onMounted(() => {
+  if (isEdit.value) {
+    form.value = { ...props.selectedCollection }
+    form.value.effective_date = new Date(form.value.effective_date)
+    form.value.retired_date = new Date(form.value.retired_date)
+    formStore.save(form.value)
+  }
+})
+
+function formatDate(value) {
+  if (typeof value === 'string' && value.length <= 10) {
+    return value
+  }
+  let month = 1 + value.getMonth()
+  if (month < 10) {
+    month = `0${month}`
+  }
+  let day = value.getDate()
+  if (day < 10) {
+    day = `0${day}`
+  }
+  const date = `${value.getFullYear()}-${month}-${day}`
+  if (date === '1970-01-01') {
+    return null
+  }
+  return `${value.getFullYear()}-${month}-${day}`
+}
+
+function newVersion() {
+  crfs.newVersion('study-events', props.selectedCollection.uid).then((resp) => {
+    emit('updateCollection', resp.data)
+    readOnly.value = false
+
+    notificationHub?.add({
+      msg: t('_global.new_version_success'),
+    })
+  })
+}
+
+async function approve() {
+  const ok = await confirmApproval.value?.open({
+    agreeLabel: t('CRFCollections.approve_collection'),
+    collection: props.selectedCollection,
+  })
+  if (ok) {
+    crfs.approve('study-events', props.selectedCollection.uid).then((resp) => {
+      emit('updateCollection', resp.data)
+      readOnly.value = true
+      close()
+
+      notificationHub?.add({
+        msg: t('CRFCollections.approved'),
+      })
+    })
+  }
+}
+
+async function submit() {
+  if (isDisabled.value) {
+    close()
+    return
+  }
+
+  const { valid } = (await observer.value?.validate?.()) || { valid: false }
+  if (!valid) return
+
+  notificationHub?.clearErrors?.()
+
+  if (form.value.effective_date) {
+    form.value.effective_date = formatDate(form.value.effective_date)
+  }
+  if (form.value.retired_date) {
+    form.value.retired_date = formatDate(form.value.retired_date)
+  }
+
+  if (isEdit.value) {
+    crfs.updateCollection(form.value, props.selectedCollection.uid).then(
+      () => {
+        notificationHub?.add({
+          msg: t('CRFCollections.updated'),
         })
-    },
-    async approve() {
-      if (
-        await this.$refs.confirmApproval.open({
-          agreeLabel: this.$t('CRFCollections.approve_collection'),
-          collection: this.selectedCollection,
-        })
-      ) {
-        crfs
-          .approve('study-events', this.selectedCollection.uid)
-          .then((resp) => {
-            this.$emit('updateCollection', resp.data)
-            this.readOnly = true
-            this.close()
-
-            this.notificationHub.add({
-              msg: this.$t('CRFCollections.approved'),
-            })
-          })
-      }
-    },
-    async submit() {
-      if (this.isDisabled) {
-        this.close()
-        return
-      }
-
-      const { valid } = await this.$refs.observer.validate()
-      if (!valid) return
-
-      this.notificationHub.clearErrors()
-
-      if (this.form.effective_date) {
-        this.form.effective_date = this.formatDate(this.form.effective_date)
-      }
-      if (this.form.retired_date) {
-        this.form.retired_date = this.formatDate(this.form.retired_date)
-      }
-      if (this.isEdit()) {
-        crfs.updateCollection(this.form, this.selectedCollection.uid).then(
-          () => {
-            this.notificationHub.add({
-              msg: this.$t('CRFCollections.updated'),
-            })
-            this.close()
-          },
-          () => {
-            this.$refs.form.working = false
-          }
-        )
-      } else {
-        crfs.createCollection(this.form).then(
-          () => {
-            this.notificationHub.add({
-              msg: this.$t('CRFCollections.created'),
-            })
-            this.close()
-          },
-          () => {
-            this.$refs.form.working = false
-          }
-        )
-      }
-    },
-    async cancel() {
-      if (
-        this.storedForm === '' ||
-        _isEqual(this.storedForm, JSON.stringify(this.form))
-      ) {
-        this.close()
-      } else {
-        const options = {
-          type: 'warning',
-          cancelLabel: this.$t('_global.cancel'),
-          agreeLabel: this.$t('_global.continue'),
-        }
-        if (
-          await this.$refs.form.confirm(
-            this.$t('_global.cancel_changes'),
-            options
-          )
-        ) {
-          this.close()
+        close()
+      },
+      () => {
+        if (formDialog.value) {
+          formDialog.value.working = false
         }
       }
-    },
-    close() {
-      this.notificationHub.clearErrors()
-      this.form = {}
-      this.$refs.observer.reset()
-      this.$emit('close')
-    },
-    isEdit() {
-      if (this.selectedCollection) {
-        return Object.keys(this.selectedCollection).length !== 0
+    )
+  } else {
+    crfs.createCollection(form.value).then(
+      () => {
+        notificationHub?.add({
+          msg: t('CRFCollections.created'),
+        })
+        close()
+      },
+      () => {
+        if (formDialog.value) {
+          formDialog.value.working = false
+        }
       }
-      return false
-    },
-  },
+    )
+  }
+}
+
+async function cancel() {
+  const options = {
+    type: 'warning',
+    cancelLabel: t('_global.cancel'),
+    agreeLabel: t('_global.continue'),
+  }
+  const ok = await formDialog.value?.confirm?.(
+    t('_global.cancel_changes'),
+    options
+  )
+  if (ok) {
+    close()
+  }
+}
+
+function close() {
+  notificationHub?.clearErrors?.()
+  form.value = {}
+  observer.value?.reset?.()
+  emit('close')
 }
 </script>

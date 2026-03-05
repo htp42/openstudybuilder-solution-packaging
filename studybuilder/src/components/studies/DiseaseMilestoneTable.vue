@@ -46,18 +46,18 @@
       <template #actions="">
         <v-btn
           data-cy="create-disease-milestone"
-          class="ml-2"
-          size="small"
+          class="ml-2 expandHoverBtn"
           variant="outlined"
           color="nnBaseBlue"
-          :title="$t('DiseaseMilestoneForm.add_title')"
           :disabled="
             !accessGuard.checkPermission($roles.STUDY_WRITE) ||
             studiesGeneralStore.selectedStudyVersion !== null
           "
-          icon="mdi-plus"
           @click="createDiseaseMilestone()"
-        />
+        >
+          <v-icon left>mdi-plus</v-icon>
+          <span class="label">{{ $t('DiseaseMilestoneForm.add_title') }}</span>
+        </v-btn>
       </template>
       <template #[`item.actions`]="{ item }">
         <div class="pr-0 mr-0">

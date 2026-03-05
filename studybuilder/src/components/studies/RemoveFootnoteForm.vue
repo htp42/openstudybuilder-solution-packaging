@@ -27,10 +27,12 @@
 
 <script setup>
 import SimpleFormDialog from '@/components/tools/SimpleFormDialog.vue'
-import { ref, watch } from 'vue'
+import { inject, ref, watch } from 'vue'
 import filteringParameters from '@/utils/filteringParameters'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 import study from '@/api/study'
+
+const notificationHub = inject('notificationHub')
 
 const studiesGeneralStore = useStudiesGeneralStore()
 const emit = defineEmits(['close'])
@@ -90,7 +92,16 @@ function submit() {
       studiesGeneralStore.selectedStudy.uid,
       footnotesToSave
     )
-    .then(() => {
+    .then((resp) => {
+      for (const subResp of resp.data) {
+        if (subResp.response_code >= 400) {
+          notificationHub.add({
+            msg: subResp.content.message,
+            type: 'error',
+            timeout: 0,
+          })
+        }
+      }
       emit('close')
     })
 }

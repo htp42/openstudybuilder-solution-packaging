@@ -9,7 +9,7 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
 )
 from clinical_mdr_api.models.concepts.odms.odm_common_models import (
     OdmAliasModel,
-    OdmDescriptionModel,
+    OdmTranslatedTextModel,
 )
 from common.exceptions import AlreadyExistsException
 from common.utils import booltostr
@@ -20,7 +20,7 @@ class OdmFormVO(ConceptVO):
     oid: str | None
     repeating: str | int | None
     sdtm_version: str | None
-    descriptions: list[OdmDescriptionModel]
+    translated_texts: list[OdmTranslatedTextModel]
     aliases: list[OdmAliasModel]
     item_group_uids: list[str]
     vendor_attribute_uids: list[str]
@@ -34,7 +34,7 @@ class OdmFormVO(ConceptVO):
         name: str,
         sdtm_version: str | None,
         repeating: str | int | None,
-        descriptions: list[OdmDescriptionModel],
+        translated_texts: list[OdmTranslatedTextModel],
         aliases: list[OdmAliasModel],
         item_group_uids: list[str],
         vendor_element_uids: list[str],
@@ -46,7 +46,7 @@ class OdmFormVO(ConceptVO):
             name=name,
             sdtm_version=sdtm_version,
             repeating=repeating,
-            descriptions=descriptions,
+            translated_texts=translated_texts,
             aliases=aliases,
             item_group_uids=item_group_uids,
             vendor_element_uids=vendor_element_uids,
@@ -163,6 +163,7 @@ class OdmFormAR(OdmARBase):
 class OdmFormRefVO:
     uid: str
     name: str
+    oid: str
     version: str
     study_event_uid: str
     order_number: int
@@ -175,6 +176,7 @@ class OdmFormRefVO:
         cls,
         uid: str,
         name: str,
+        oid: str,
         version: str,
         study_event_uid: str,
         order_number: int,
@@ -185,6 +187,7 @@ class OdmFormRefVO:
         return cls(
             uid=uid,
             name=name,
+            oid=oid,
             version=version,
             study_event_uid=study_event_uid,
             order_number=order_number,

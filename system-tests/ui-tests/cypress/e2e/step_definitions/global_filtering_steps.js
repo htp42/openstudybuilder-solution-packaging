@@ -17,7 +17,7 @@ When('The user filters field {string}', (fieldName) => {
 
 When('The user filters study list by field {string}', (fieldName) => {
     cy.longWaitForTable()
-    cy.get('button[title="Filters"]').click()
+    cy.contains('button', 'Select filters').click()
     cy.contains('.filterAutocompleteLabel [role="combobox"]', fieldName).click().then(() => {
         cy.get('.v-overlay__content .v-list').filter(':visible').should('not.contain', 'No data available')
         cy.get('.v-overlay__content .v-list').filter(':visible').find('.v-list-item-title').first().then((element) => {

@@ -20,7 +20,7 @@ from clinical_mdr_api.models.concepts.activities.activity import (
 from clinical_mdr_api.models.concepts.concept import VersionProperties
 from clinical_mdr_api.models.concepts.odms.odm_common_models import (
     OdmAliasModel,
-    OdmDescriptionModel,
+    OdmTranslatedTextModel,
 )
 from clinical_mdr_api.models.controlled_terminologies.ct_term import (
     SimpleDictionaryTermModel,
@@ -546,6 +546,7 @@ class CypherQueryBuilder:
         wildcard_properties_list: list[str] | None = None,
         format_filter_sort_keys: Callable | None = None,
         union_match_clause: str | None = None,
+        one_element_extra: bool = False,
     ):
         if wildcard_properties_list is None:
             wildcard_properties_list = []
@@ -557,6 +558,7 @@ class CypherQueryBuilder:
         self.implicit_sort_by = implicit_sort_by
         self.page_number = page_number
         self.page_size = page_size
+        self.one_element_extra = one_element_extra
         self.filter_by = filter_by
         self.filter_operator = filter_operator
         self.total_count = total_count
@@ -898,7 +900,7 @@ class CypherQueryBuilder:
                                         )
                                     elif (
                                         get_field_type(attr_desc.annotation)
-                                        is OdmDescriptionModel
+                                        is OdmTranslatedTextModel
                                     ):
                                         _predicates.append(
                                             f"any(attr in {attribute} WHERE toLower(attr.name) {_parsed_operator} $wildcard_{index})"
@@ -1025,11 +1027,13 @@ class CypherQueryBuilder:
         validate_max_skip_clause(page_number=self.page_number, page_size=self.page_size)
 
         # Set clause
-        self.pagination_clause = "SKIP $page_number * $page_size LIMIT $page_size"
+        self.pagination_clause = "SKIP $skip_number LIMIT $limit_number"
 
         # Add corresponding parameters
-        self.parameters["page_number"] = self.page_number - 1
-        self.parameters["page_size"] = self.page_size
+        self.parameters["skip_number"] = (self.page_number - 1) * self.page_size
+        self.parameters["limit_number"] = (
+            self.page_size + 1 if self.one_element_extra else self.page_size
+        )
 
     def build_sort_clause(self) -> None:
         _sort_clause = "ORDER BY "
@@ -1253,3 +1257,37 @@ def sb_clear_cache(caches: list[str] | None = None):
         return wrapper
 
     return decorator
+
+
+def calculate_total_count_from_query_result(
+    result_count: int,
+    page_number: int,
+    page_size: int,
+    total_count: bool,
+    extra_requested: bool = False,
+) -> int | None:
+    """
+    Given the number of results returned from a paginated query,
+    calculate the total count of items if possible.
+    """
+    if not total_count:
+        # Total count not requested, return 0
+        return 0
+    if page_size == 0 and page_number == 1:
+        # All results requested in a single page
+        return result_count
+    if result_count == 0 and page_number > 1:
+        # No results on a page beyond the first means there may be more results
+        # but we cannot know how many
+        return None
+    if result_count < page_size:
+        # Fewer results than page size implies this is the last page
+        return (page_number - 1) * page_size + result_count
+    if extra_requested and result_count == page_size:
+        # We got a full page and no extra item, so we can assume this is the last page
+        return page_number * page_size
+    if extra_requested and result_count == page_size + 1:
+        # More results than page size implies we requested one extra item to check for more
+        return -1
+    # Otherwise, we cannot determine the total count
+    return None

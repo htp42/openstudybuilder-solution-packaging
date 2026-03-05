@@ -124,7 +124,7 @@ def test_create_odm_vendor_element_with_relation_to_the_odm_vendor_namespace(
 ):
     data = {
         "library_name": "Sponsor",
-        "name": "newName",
+        "name": "NewName",
         "compatible_types": ["FormDef"],
         "vendor_namespace_uid": "OdmVendorNamespace_000001",
     }
@@ -136,7 +136,7 @@ def test_create_odm_vendor_element_with_relation_to_the_odm_vendor_namespace(
 
     assert res["uid"] == "OdmVendorElement_000001"
     assert res["library_name"] == "Sponsor"
-    assert res["name"] == "newName"
+    assert res["name"] == "NewName"
     assert res["end_date"] is None
     assert res["status"] == "Draft"
     assert res["version"] == "0.1"

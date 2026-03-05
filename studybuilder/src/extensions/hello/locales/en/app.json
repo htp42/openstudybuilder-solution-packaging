@@ -1,0 +1,11 @@
+{
+  "HelloExtension": {
+    "menu_label": "Hello Extension",
+    "title": "Hello Extension Title",
+    "description": "Description of what this extension does",
+    "save": "Save",
+    "cancel": "Cancel",
+    "success_message": "Operation completed successfully",
+    "error_message": "An error occurred"
+  }
+}

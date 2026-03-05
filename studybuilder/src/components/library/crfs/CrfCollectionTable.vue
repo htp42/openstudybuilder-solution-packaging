@@ -7,6 +7,7 @@
       item-value="uid"
       sort-desc
       :items-length="total"
+      :initial-sort-by="[{ key: 'name', order: 'asc' }]"
       column-data-resource="concepts/odms/study-events"
       export-data-url="concepts/odms/study-events"
       export-object-label="CRFCollections"
@@ -14,16 +15,16 @@
     >
       <template #actions="">
         <v-btn
-          class="ml-2"
-          size="small"
+          class="ml-2 expandHoverBtn"
           variant="outlined"
           color="nnBaseBlue"
-          :title="$t('CRFCollections.add_collection')"
           data-cy="add-crf-collection"
-          :disabled="!checkPermission($roles.LIBRARY_WRITE)"
-          icon="mdi-plus"
+          :disabled="!accessGuard.checkPermission($roles.LIBRARY_WRITE)"
           @click.stop="openForm()"
-        />
+        >
+          <v-icon left>mdi-plus</v-icon>
+          <span class="label">{{ $t('CRFCollections.add_collection') }}</span>
+        </v-btn>
       </template>
       <template #[`item.actions`]="{ item }">
         <ActionsMenu :actions="actions" :item="item" />
@@ -58,6 +59,7 @@
         :title="collectionHistoryTitle"
         :headers="headers"
         :items="collectionHistoryItems"
+        :items-total="collectionHistoryItems.length"
         @close="closeCollectionHistory"
       />
     </v-dialog>
@@ -65,7 +67,9 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { computed, inject, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import NNTable from '@/components/tools/NNTable.vue'
 import ActionsMenu from '@/components/tools/ActionsMenu.vue'
 import crfs from '@/api/crfs'
@@ -78,240 +82,215 @@ import crfTypes from '@/constants/crfTypes'
 import statuses from '@/constants/statuses'
 import { useAccessGuard } from '@/composables/accessGuard'
 import { useCrfsStore } from '@/stores/crfs'
-import { computed } from 'vue'
+const props = defineProps({
+  elementProp: {
+    type: Object,
+    default: null,
+  },
+})
 
-export default {
-  components: {
-    NNTable,
-    ActionsMenu,
-    HistoryTable,
-    CrfApprovalSummaryConfirmDialog,
-    CrfCollectionForm,
-    StatusChip,
-  },
-  inject: ['notificationHub'],
-  props: {
-    elementProp: {
-      type: Object,
-      default: null,
-    },
-  },
-  setup() {
-    const crfsStore = useCrfsStore()
+const { t } = useI18n()
+const notificationHub = inject('notificationHub')
+const roles = inject('roles')
+const accessGuard = useAccessGuard()
 
-    return {
-      fetchCollections: crfsStore.fetchCollections,
-      total: computed(() => crfsStore.totalCollections),
-      collections: computed(() => crfsStore.collections),
-      ...useAccessGuard(),
-    }
-  },
-  data() {
-    return {
-      actions: [
-        {
-          label: this.$t('_global.approve'),
-          icon: 'mdi-check-decagram',
-          iconColor: 'success',
-          condition: (item) =>
-            item.possible_actions.find((action) => action === 'approve'),
-          accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.approve,
-        },
-        {
-          label: this.$t('_global.edit'),
-          icon: 'mdi-pencil-outline',
-          iconColor: 'primary',
-          condition: (item) =>
-            item.possible_actions.find((action) => action === 'edit'),
-          accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.edit,
-        },
-        {
-          label: this.$t('_global.delete'),
-          icon: 'mdi-delete-outline',
-          iconColor: 'error',
-          condition: (item) =>
-            item.possible_actions.find((action) => action === 'delete'),
-          accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.deleteCollection,
-        },
-        {
-          label: this.$t('_global.new_version'),
-          icon: 'mdi-plus-circle-outline',
-          iconColor: 'primary',
-          condition: (item) =>
-            item.possible_actions.find((action) => action === 'new_version'),
-          accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.newCollectionVersion,
-        },
-        {
-          label: this.$t('_global.inactivate'),
-          icon: 'mdi-close-octagon-outline',
-          iconColor: 'primary',
-          condition: (item) =>
-            item.possible_actions.find((action) => action === 'inactivate'),
-          accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.inactivateCollection,
-        },
-        {
-          label: this.$t('_global.reactivate'),
-          icon: 'mdi-undo-variant',
-          iconColor: 'primary',
-          condition: (item) =>
-            item.possible_actions.find((action) => action === 'reactivate'),
-          accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.reactivateCollection,
-        },
-        {
-          label: this.$t('_global.history'),
-          icon: 'mdi-history',
-          click: this.openCollectionHistory,
-        },
-      ],
-      headers: [
-        { title: '', key: 'actions', width: '1%' },
-        { title: this.$t('CRFCollections.oid'), key: 'oid' },
-        { title: this.$t('_global.name'), key: 'name' },
-        {
-          title: this.$t('CRFCollections.effective_date'),
-          key: 'effective_date',
-        },
-        { title: this.$t('CRFCollections.retired_date'), key: 'retired_date' },
-        { title: this.$t('_global.version'), key: 'version' },
-        { title: this.$t('_global.status'), key: 'status' },
-      ],
-      showForm: false,
-      showCollectionHistory: false,
-      selectedCollection: null,
-      filters: '',
-      collectionHistoryItems: [],
-    }
-  },
-  computed: {
-    collectionHistoryTitle() {
-      if (this.selectedCollection) {
-        return this.$t('CRFCollections.collection_history_title', {
-          collectionUid: this.selectedCollection.uid,
-        })
-      }
-      return ''
-    },
-  },
-  watch: {
-    elementProp(value) {
-      if (
-        value.tab === 'collections' &&
-        value.type === crfTypes.COLLECTION &&
-        value.uid
-      ) {
-        this.edit({ uid: value.uid })
-      }
-    },
-  },
-  created() {
-    this.statuses = statuses
-  },
-  mounted() {
-    if (
-      this.elementProp.tab === 'collections' &&
-      this.elementProp.type === crfTypes.COLLECTION &&
-      this.elementProp.uid
-    ) {
-      crfs.getCollection(this.elementProp.uid).then((resp) => {
-        this.edit(resp.data)
+const table = ref(null)
+const confirmApproval = ref(null)
+
+const showForm = ref(false)
+const showCollectionHistory = ref(false)
+const selectedCollection = ref(null)
+const filters = ref('')
+const collectionHistoryItems = ref([])
+
+const crfsStore = useCrfsStore()
+const total = computed(() => crfsStore.totalCollections)
+const collections = computed(() => crfsStore.collections)
+
+const headers = computed(() => [
+  { title: '', key: 'actions', width: '1%' },
+  { title: t('CRFCollections.oid'), key: 'oid' },
+  { title: t('_global.name'), key: 'name' },
+  { title: t('CRFCollections.effective_date'), key: 'effective_date' },
+  { title: t('CRFCollections.retired_date'), key: 'retired_date' },
+  { title: t('_global.version'), key: 'version' },
+  { title: t('_global.status'), key: 'status' },
+])
+
+const collectionHistoryTitle = computed(() => {
+  if (selectedCollection.value) {
+    return t('CRFCollections.collection_history_title', {
+      collectionUid: selectedCollection.value.uid,
+    })
+  }
+  return ''
+})
+
+async function approve(item) {
+  const ok = await confirmApproval.value?.open({
+    agreeLabel: t('CRFCollections.approve_collection'),
+    collection: item,
+  })
+  if (ok) {
+    crfs.approve('study-events', item.uid).then(() => {
+      table.value?.filterTable?.()
+      notificationHub?.add({
+        msg: t('CRFCollections.approved'),
       })
-    }
-  },
-  methods: {
-    async approve(item) {
-      if (
-        await this.$refs.confirmApproval.open({
-          agreeLabel: this.$t('CRFCollections.approve_collection'),
-          collection: item,
-        })
-      ) {
-        crfs.approve('study-events', item.uid).then(() => {
-          this.$refs.table.filterTable()
-
-          this.notificationHub.add({
-            msg: this.$t('CRFCollections.approved'),
-          })
-        })
-      }
-    },
-    inactivateCollection(item) {
-      crfs.inactivate('study-events', item.uid).then(() => {
-        this.$refs.table.filterTable()
-
-        this.notificationHub.add({
-          msg: this.$t('CRFCollections.inactivated'),
-        })
-      })
-    },
-    reactivateCollection(item) {
-      crfs.reactivate('study-events', item.uid).then(() => {
-        this.$refs.table.filterTable()
-
-        this.notificationHub.add({
-          msg: this.$t('CRFCollections.reactivated'),
-        })
-      })
-    },
-    newCollectionVersion(item) {
-      crfs.newVersion('study-events', item.uid).then(() => {
-        this.$refs.table.filterTable()
-
-        this.notificationHub.add({
-          msg: this.$t('_global.new_version_success'),
-        })
-      })
-    },
-    deleteCollection(item) {
-      crfs.delete('study-events', item.uid).then(() => {
-        this.$refs.table.filterTable()
-
-        this.notificationHub.add({
-          msg: this.$t('CRFCollections.deleted'),
-        })
-      })
-    },
-    edit(item) {
-      crfs.getCollection(item.uid).then((resp) => {
-        this.selectedCollection = resp.data
-        this.showForm = true
-      })
-    },
-    async openCollectionHistory(collection) {
-      this.selectedCollection = collection
-      const resp = await crfs.getCollectionAuditTrail(collection.uid)
-      this.collectionHistoryItems = resp.data
-      this.showCollectionHistory = true
-    },
-    closeCollectionHistory() {
-      this.showCollectionHistory = false
-      this.selectedCollection = null
-    },
-    openForm() {
-      this.selectedCollection = null
-      this.showForm = true
-    },
-    closeForm() {
-      this.selectedCollection = null
-      this.showForm = false
-      this.$refs.table.filterTable()
-    },
-    getCollections(filters, options, filtersUpdated) {
-      if (filters) {
-        this.filters = filters
-      }
-      const params = filteringParameters.prepareParameters(
-        options,
-        filters,
-        filtersUpdated
-      )
-      this.fetchCollections(params)
-    },
-  },
+    })
+  }
 }
+
+function inactivateCollection(item) {
+  crfs.inactivate('study-events', item.uid).then(() => {
+    table.value?.filterTable?.()
+    notificationHub?.add({
+      msg: t('CRFCollections.inactivated'),
+    })
+  })
+}
+
+function reactivateCollection(item) {
+  crfs.reactivate('study-events', item.uid).then(() => {
+    table.value?.filterTable?.()
+    notificationHub?.add({
+      msg: t('CRFCollections.reactivated'),
+    })
+  })
+}
+
+function newCollectionVersion(item) {
+  crfs.newVersion('study-events', item.uid).then(() => {
+    table.value?.filterTable?.()
+    notificationHub?.add({
+      msg: t('_global.new_version_success'),
+    })
+  })
+}
+
+function deleteCollection(item) {
+  crfs.delete('study-events', item.uid).then(() => {
+    table.value?.filterTable?.()
+    notificationHub?.add({
+      msg: t('CRFCollections.deleted'),
+    })
+  })
+}
+
+function edit(item) {
+  crfs.getCollection(item.uid).then((resp) => {
+    selectedCollection.value = resp.data
+    showForm.value = true
+  })
+}
+
+async function openCollectionHistory(collection) {
+  selectedCollection.value = collection
+  const resp = await crfs.getCollectionAuditTrail(collection.uid)
+  collectionHistoryItems.value = resp.data
+  showCollectionHistory.value = true
+}
+
+function closeCollectionHistory() {
+  showCollectionHistory.value = false
+  selectedCollection.value = null
+}
+
+function openForm() {
+  selectedCollection.value = null
+  showForm.value = true
+}
+
+function closeForm() {
+  selectedCollection.value = null
+  showForm.value = false
+  table.value?.filterTable?.()
+}
+
+function getCollections(filterString, options, filtersUpdated) {
+  if (filterString) {
+    filters.value = filterString
+  }
+  const params = filteringParameters.prepareParameters(
+    options,
+    filterString,
+    filtersUpdated
+  )
+  crfsStore.fetchCollections(params)
+}
+
+const actions = computed(() => [
+  {
+    label: t('_global.approve'),
+    icon: 'mdi-check-decagram',
+    iconColor: 'success',
+    condition: (item) =>
+      item.possible_actions.find((action) => action === 'approve'),
+    accessRole: roles.LIBRARY_WRITE,
+    click: approve,
+  },
+  {
+    label: t('_global.edit'),
+    icon: 'mdi-pencil-outline',
+    iconColor: 'primary',
+    condition: (item) =>
+      item.possible_actions.find((action) => action === 'edit'),
+    accessRole: roles.LIBRARY_WRITE,
+    click: edit,
+  },
+  {
+    label: t('_global.delete'),
+    icon: 'mdi-delete-outline',
+    iconColor: 'error',
+    condition: (item) =>
+      item.possible_actions.find((action) => action === 'delete'),
+    accessRole: roles.LIBRARY_WRITE,
+    click: deleteCollection,
+  },
+  {
+    label: t('_global.new_version'),
+    icon: 'mdi-plus-circle-outline',
+    iconColor: 'primary',
+    condition: (item) =>
+      item.possible_actions.find((action) => action === 'new_version'),
+    accessRole: roles.LIBRARY_WRITE,
+    click: newCollectionVersion,
+  },
+  {
+    label: t('_global.inactivate'),
+    icon: 'mdi-close-octagon-outline',
+    iconColor: 'primary',
+    condition: (item) =>
+      item.possible_actions.find((action) => action === 'inactivate'),
+    accessRole: roles.LIBRARY_WRITE,
+    click: inactivateCollection,
+  },
+  {
+    label: t('_global.reactivate'),
+    icon: 'mdi-undo-variant',
+    iconColor: 'primary',
+    condition: (item) =>
+      item.possible_actions.find((action) => action === 'reactivate'),
+    accessRole: roles.LIBRARY_WRITE,
+    click: reactivateCollection,
+  },
+  {
+    label: t('_global.history'),
+    icon: 'mdi-history',
+    click: openCollectionHistory,
+  },
+])
+
+watch(
+  () => props.elementProp,
+  (value) => {
+    if (
+      value?.tab === 'collections' &&
+      value?.type === crfTypes.COLLECTION &&
+      value?.uid
+    ) {
+      edit({ uid: value.uid })
+    }
+  }
+)
 </script>

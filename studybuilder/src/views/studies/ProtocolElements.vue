@@ -6,15 +6,16 @@
       <v-spacer />
       <v-btn
         v-if="tab === 'tab-1'"
-        class="ml-2"
-        size="small"
+        class="ml-2 expandHoverBtn"
         variant="outlined"
         color="nnBaseBlue"
-        icon="mdi-cog-outline"
         :disabled="lockSettings"
         :loading="soaContentLoadingStore.loading"
         @click="openSoaSettings"
-      />
+      >
+        <v-icon left>mdi-cog-outline</v-icon>
+        <span class="label">{{ $t('ProtocolFlowchart.soa_settings') }}</span>
+      </v-btn>
     </div>
     <v-tabs v-model="tab" bg-color="white">
       <v-tab v-for="item of tabs" :key="item.tab" :value="item.tab">

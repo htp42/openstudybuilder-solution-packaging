@@ -27,12 +27,12 @@
           </v-col>
           <v-col cols="4">
             <label>{{ $t('OdmViewer.stylesheet') }}</label>
-            <v-radio-group v-model="exportParams.stylesheet">
+            <v-radio-group v-model="exportParams.selectedStylesheet">
               <v-radio
                 :label="$t('OdmViewer.crf_with_annotations')"
-                value="sdtm"
+                value="with-annotations"
               />
-              <v-radio :label="$t('OdmViewer.blank')" value="blank" />
+              <v-radio :label="$t('OdmViewer.falcon')" value="falcon" />
             </v-radio-group>
           </v-col>
         </v-row>
@@ -50,127 +50,140 @@
   </v-card>
 </template>
 
-<script>
+<script setup>
+import { inject, reactive, ref } from 'vue'
+
 import crfs from '@/api/crfs'
+import statuses from '@/constants/statuses'
 import exportLoader from '@/utils/exportLoader'
 import { DateTime } from 'luxon'
-import statuses from '@/constants/statuses'
 
-export default {
-  inject: ['formRules'],
-  props: {
-    open: Boolean,
-    item: {
-      type: Object,
-      default: null,
-    },
-    type: {
-      type: String,
-      default: null,
-    },
+const props = defineProps({
+  open: Boolean,
+  item: {
+    type: Object,
+    default: null,
   },
-  emits: ['close'],
-  data() {
-    return {
-      formats: ['PDF', 'HTML', 'XML'],
-      draft: false,
-      format: null,
-      exportParams: {
-        target_type: '',
-        stylesheet: 'sdtm',
-        export_to: 'v1',
-        target_uid: '',
-        status: '',
-      },
-      loading: false,
-    }
+  type: {
+    type: String,
+    default: null,
   },
-  methods: {
-    async exportElement() {
-      const { valid } = await this.$refs.observer.validate()
-      if (!valid) return
-      this.loading = true
-      this.setExportParams(this.item)
-      switch (this.format) {
-        case 'PDF':
-          this.exportPdf()
-          break
-        case 'HTML':
-          this.exportHtml()
-          break
-        case 'XML':
-          this.exportXml()
-      }
-    },
-    exportPdf() {
-      crfs
-        .getPdf(this.exportParams)
-        .then((resp) => {
-          exportLoader.downloadFile(
-            resp.data,
-            'application/pdf',
-            this.getDownloadFileName()
-          )
-          this.close()
-        })
-        .finally(() => {
-          this.loading = false
-        })
-    },
-    exportHtml() {
-      crfs
-        .getXml(this.exportParams)
-        .then(async (resp) => {
-          const parser = new DOMParser()
-          const xml = parser.parseFromString(resp.data, 'application/xml')
-          const xsltProcessor = new XSLTProcessor()
-          crfs.getXsl(this.exportParams.stylesheet).then((resp) => {
-            const xmlDoc = parser.parseFromString(resp.data, 'text/xml')
-            xsltProcessor.importStylesheet(xmlDoc)
-            exportLoader.downloadFile(
-              new XMLSerializer().serializeToString(
-                xsltProcessor.transformToDocument(xml)
-              ),
-              'text/html',
-              this.getDownloadFileName()
-            )
-            this.close()
-          })
-        })
-        .finally(() => {
-          this.loading = false
-        })
-    },
-    exportXml() {
-      crfs
-        .getXml(this.exportParams)
-        .then((resp) => {
-          exportLoader.downloadFile(
-            resp.data,
-            'text/xml',
-            this.getDownloadFileName()
-          )
-          this.close()
-        })
-        .finally(() => {
-          this.loading = false
-        })
-    },
-    setExportParams() {
-      this.exportParams.target_uid = this.item.uid
-      this.exportParams.target_type = this.type
-      this.exportParams.status = this.draft
-        ? `${statuses.FINAL}&status=${statuses.DRAFT}`.toLowerCase()
-        : statuses.FINAL.toLowerCase()
-    },
-    getDownloadFileName() {
-      const stylesheet = this.type === 'sdtm' ? '_sdtm_crf_' : '_blank_crf_'
-      const templateName = this.item.name
-      return `${templateName + stylesheet + DateTime.local().toFormat('yyyy-MM-dd HH:mm')}`
-    },
-    close() {
-      this.$emit('close')
-    },
-  },
+})
+
+const emit = defineEmits(['close'])
+
+const formRules = inject('formRules')
+
+const observer = ref(null)
+
+const formats = ['PDF', 'HTML', 'XML']
+const draft = ref(false)
+const format = ref(null)
+
+const exportParams = reactive({
+  target_type: '',
+  selectedStylesheet: 'with-annotations',
+  status: '',
+  allowed_namespaces: '&allowed_namespaces=*',
+})
+
+const loading = ref(false)
+
+const close = () => {
+  emit('close')
+}
+
+const setExportParams = (item, type) => {
+  exportParams.targets = `targets=${item.uid}&`
+  exportParams.target_type = type
+  exportParams.status = draft.value
+    ? `${statuses.FINAL}&status=${statuses.DRAFT}`.toLowerCase()
+    : statuses.FINAL.toLowerCase()
+}
+
+const getDownloadFileName = (item) => {
+  let stylesheet = '_with_annotations_crf_'
+  if (exportParams.selectedStylesheet === 'falcon') {
+    stylesheet = '_falcon_crf_'
+  }
+  const templateName = item.name
+  return `${templateName + stylesheet + DateTime.local().toFormat('yyyy-MM-dd HH:mm')}`
+}
+
+const exportPdf = (item) => {
+  console.log('exportPdf called', exportParams)
+  crfs
+    .getPdf(exportParams)
+    .then((resp) => {
+      exportLoader.downloadFile(
+        resp.data,
+        'application/pdf',
+        getDownloadFileName(item)
+      )
+      close()
+    })
+    .finally(() => {
+      loading.value = false
+    })
+}
+
+const exportHtml = (item) => {
+  crfs
+    .getXml(exportParams)
+    .then(async (resp) => {
+      const parser = new globalThis.DOMParser()
+      const xml = parser.parseFromString(resp.data, 'application/xml')
+      const xsltProcessor = new globalThis.XSLTProcessor()
+      crfs.getXsl(exportParams.selectedStylesheet).then((xslResp) => {
+        const xmlDoc = parser.parseFromString(xslResp.data, 'text/xml')
+        xsltProcessor.importStylesheet(xmlDoc)
+        exportLoader.downloadFile(
+          new globalThis.XMLSerializer().serializeToString(
+            xsltProcessor.transformToDocument(xml)
+          ),
+          'text/html',
+          getDownloadFileName(item)
+        )
+        close()
+      })
+    })
+    .finally(() => {
+      loading.value = false
+    })
+}
+
+const exportXml = (item) => {
+  crfs
+    .getXml(exportParams)
+    .then((resp) => {
+      exportLoader.downloadFile(
+        resp.data,
+        'text/xml',
+        getDownloadFileName(item)
+      )
+      close()
+    })
+    .finally(() => {
+      loading.value = false
+    })
+}
+
+const exportElement = async () => {
+  const { valid } = await observer.value.validate()
+  if (!valid) return
+
+  loading.value = true
+  setExportParams(props.item, props.type)
+
+  switch (format.value) {
+    case 'PDF':
+      exportPdf(props.item)
+      break
+    case 'HTML':
+      exportHtml(props.item)
+      break
+    case 'XML':
+      exportXml(props.item)
+  }
 }
 </script>

@@ -17,12 +17,6 @@ from clinical_mdr_api.domains.concepts.utils import (
     VendorAttributeCompatibleType,
     VendorElementCompatibleType,
 )
-from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
-from clinical_mdr_api.models.concepts.odms.odm_common_models import (
-    OdmVendorElementRelationPostInput,
-    OdmVendorRelationPostInput,
-    OdmVendorsPostInput,
-)
 from clinical_mdr_api.models.concepts.odms.odm_item import (
     OdmItem,
     OdmItemPatchInput,
@@ -35,7 +29,6 @@ from clinical_mdr_api.services._utils import ensure_transaction, get_input_or_ne
 from clinical_mdr_api.services.concepts.odms.odm_generic_service import (
     OdmGenericService,
 )
-from clinical_mdr_api.utils import normalize_string
 from common.exceptions import BusinessLogicException, NotFoundException
 
 
@@ -79,13 +72,13 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
                 sds_var_name=concept_input.sds_var_name,
                 origin=concept_input.origin,
                 comment=concept_input.comment,
-                descriptions=concept_input.descriptions,
+                translated_texts=concept_input.translated_texts,
                 aliases=concept_input.aliases,
                 unit_definition_uids=[
                     unit_definition.uid
                     for unit_definition in concept_input.unit_definitions
                 ],
-                codelist_uid=concept_input.codelist_uid,
+                codelist=concept_input.codelist,
                 term_uids=[term.uid for term in concept_input.terms],
                 activity_instances=[],
                 vendor_element_uids=[],
@@ -142,13 +135,13 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
                 sds_var_name=concept_edit_input.sds_var_name,
                 origin=concept_edit_input.origin,
                 comment=concept_edit_input.comment,
-                descriptions=concept_edit_input.descriptions,
+                translated_texts=concept_edit_input.translated_texts,
                 aliases=concept_edit_input.aliases,
                 unit_definition_uids=[
                     unit_definition.uid
                     for unit_definition in concept_edit_input.unit_definitions
                 ],
-                codelist_uid=concept_edit_input.codelist_uid,
+                codelist=concept_edit_input.codelist,
                 term_uids=[term.uid for term in concept_edit_input.terms],
                 activity_instances=[
                     model.model_dump()
@@ -170,8 +163,19 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
     def create(self, concept_input: OdmItemPostInput) -> OdmItem:
         item = super().create(concept_input)
 
-        self._manage_terms(item.uid, concept_input.codelist_uid, concept_input.terms)
+        self._manage_terms(
+            item.uid, getattr(concept_input.codelist, "uid", None), concept_input.terms
+        )
         self._manage_unit_definitions(item.uid, concept_input.unit_definitions)
+        super().manage_vendors(
+            item.uid,
+            VendorElementCompatibleType.ITEM_DEF,
+            VendorAttributeCompatibleType.ITEM_DEF,
+            concept_input.vendor_elements,
+            concept_input.vendor_element_attributes,
+            concept_input.vendor_attributes,
+            self._repos.odm_item_repository,
+        )
 
         return self._transform_aggregate_root_to_pydantic_model(
             self._repos.odm_item_repository.find_by_uid_2(item.uid)
@@ -182,9 +186,21 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
         super().edit_draft(uid, concept_edit_input)
 
         self._manage_terms(
-            uid, concept_edit_input.codelist_uid, concept_edit_input.terms, True
+            uid,
+            getattr(concept_edit_input.codelist, "uid", None),
+            concept_edit_input.terms,
+            True,
         )
         self._manage_unit_definitions(uid, concept_edit_input.unit_definitions, True)
+        super().manage_vendors(
+            uid,
+            VendorElementCompatibleType.ITEM_DEF,
+            VendorAttributeCompatibleType.ITEM_DEF,
+            concept_edit_input.vendor_elements,
+            concept_edit_input.vendor_element_attributes,
+            concept_edit_input.vendor_attributes,
+            self._repos.odm_item_repository,
+        )
 
         return self._transform_aggregate_root_to_pydantic_model(
             self._repos.odm_item_repository.find_by_uid_2(uid)
@@ -236,7 +252,9 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
 
         super().inactivate_final(uid, cascade_inactivate, force_new_value_node)
 
-        self._manage_terms(uid, old_item.concept_vo.codelist_uid, terms, True)
+        self._manage_terms(
+            uid, getattr(old_item.concept_vo.codelist, "uid", None), terms, True
+        )
         self._manage_unit_definitions(uid, unit_definitions, True)
 
         return self._transform_aggregate_root_to_pydantic_model(
@@ -289,7 +307,9 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
 
         super().reactivate_retired(uid, cascade_reactivate, force_new_value_node)
 
-        self._manage_terms(uid, old_item.concept_vo.codelist_uid, terms, True)
+        self._manage_terms(
+            uid, getattr(old_item.concept_vo.codelist, "uid", None), terms, True
+        )
         self._manage_unit_definitions(uid, unit_definitions, True)
 
         return self._transform_aggregate_root_to_pydantic_model(
@@ -345,7 +365,9 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
             uid, cascade_new_version, force_new_value_node, ignore_exc
         )
 
-        self._manage_terms(uid, old_item.concept_vo.codelist_uid, terms, True)
+        self._manage_terms(
+            uid, getattr(old_item.concept_vo.codelist, "uid", None), terms, True
+        )
         self._manage_unit_definitions(uid, unit_definitions, True)
 
         return self._transform_aggregate_root_to_pydantic_model(
@@ -386,11 +408,19 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
                         ct_term, codelist_submission_value=submission_value
                     )
                 )
+                props = self._repos.ct_term_attributes_repository.get_codelist_to_term_properties(
+                    input_term.uid, codelist_uid
+                )
+
                 value.has_codelist_term.connect(
                     selected_term_node,
                     {
                         "mandatory": input_term.mandatory,
-                        "order": input_term.order,
+                        "order": (
+                            input_term.order
+                            if input_term.order is not None
+                            else props.get("order", 999999) or 999999
+                        ),
                         "display_text": (
                             input_term.display_text
                             if not any(
@@ -464,151 +494,6 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
             ),
             None,
         )
-
-    @db.transaction
-    def add_vendor_elements(
-        self,
-        uid: str,
-        odm_vendor_relation_post_input: list[OdmVendorElementRelationPostInput],
-        override: bool = False,
-    ) -> OdmItem:
-        odm_item_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
-
-        BusinessLogicException.raise_if(
-            odm_item_ar.item_metadata.status != LibraryItemStatus.DRAFT,
-            msg=self.OBJECT_NOT_IN_DRAFT,
-        )
-
-        self.are_elements_vendor_compatible(
-            odm_vendor_relation_post_input, VendorElementCompatibleType.ITEM_DEF
-        )
-
-        if override:
-            self.fail_if_non_present_vendor_elements_are_used_by_current_odm_element_attributes(
-                odm_item_ar._concept_vo.vendor_element_attribute_uids,
-                odm_vendor_relation_post_input,
-            )
-
-            self._repos.odm_item_repository.remove_relation(
-                uid=uid,
-                relation_uid=None,
-                relationship_type=RelationType.VENDOR_ELEMENT,
-                disconnect_all=True,
-            )
-
-        for vendor_element in odm_vendor_relation_post_input:
-            self._repos.odm_item_repository.add_relation(
-                uid=uid,
-                relation_uid=vendor_element.uid,
-                relationship_type=RelationType.VENDOR_ELEMENT,
-                parameters={
-                    "value": vendor_element.value,
-                },
-            )
-
-        odm_item_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
-
-        return self._transform_aggregate_root_to_pydantic_model(odm_item_ar)
-
-    @db.transaction
-    def add_vendor_attributes(
-        self,
-        uid: str,
-        odm_vendor_relation_post_input: list[OdmVendorRelationPostInput],
-        override: bool = False,
-    ) -> OdmItem:
-        odm_item_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
-
-        BusinessLogicException.raise_if(
-            odm_item_ar.item_metadata.status != LibraryItemStatus.DRAFT,
-            msg=self.OBJECT_NOT_IN_DRAFT,
-        )
-
-        self.fail_if_these_attributes_cannot_be_added(
-            odm_vendor_relation_post_input,
-            compatible_type=VendorAttributeCompatibleType.ITEM_DEF,
-        )
-
-        if override:
-            self._repos.odm_item_repository.remove_relation(
-                uid=uid,
-                relation_uid=None,
-                relationship_type=RelationType.VENDOR_ATTRIBUTE,
-                disconnect_all=True,
-            )
-
-        for vendor_attribute in odm_vendor_relation_post_input:
-            self._repos.odm_item_repository.add_relation(
-                uid=uid,
-                relation_uid=vendor_attribute.uid,
-                relationship_type=RelationType.VENDOR_ATTRIBUTE,
-                parameters={
-                    "value": vendor_attribute.value,
-                },
-            )
-
-        odm_item_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
-
-        return self._transform_aggregate_root_to_pydantic_model(odm_item_ar)
-
-    @db.transaction
-    def add_vendor_element_attributes(
-        self,
-        uid: str,
-        odm_vendor_relation_post_input: list[OdmVendorRelationPostInput],
-        override: bool = False,
-    ) -> OdmItem:
-        odm_item_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
-
-        BusinessLogicException.raise_if(
-            odm_item_ar.item_metadata.status != LibraryItemStatus.DRAFT,
-            msg=self.OBJECT_NOT_IN_DRAFT,
-        )
-
-        self.fail_if_these_attributes_cannot_be_added(
-            odm_vendor_relation_post_input,
-            odm_item_ar.concept_vo.vendor_element_uids,
-        )
-
-        if override:
-            self._repos.odm_item_repository.remove_relation(
-                uid=uid,
-                relation_uid=None,
-                relationship_type=RelationType.VENDOR_ELEMENT_ATTRIBUTE,
-                disconnect_all=True,
-            )
-
-        for vendor_element_attribute in odm_vendor_relation_post_input:
-            self._repos.odm_item_repository.add_relation(
-                uid=uid,
-                relation_uid=vendor_element_attribute.uid,
-                relationship_type=RelationType.VENDOR_ELEMENT_ATTRIBUTE,
-                parameters={
-                    "value": vendor_element_attribute.value,
-                },
-            )
-
-        odm_item_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
-
-        return self._transform_aggregate_root_to_pydantic_model(odm_item_ar)
-
-    def manage_vendors(
-        self,
-        uid: str,
-        odm_vendors_post_input: OdmVendorsPostInput,
-    ) -> OdmItem:
-        odm_item_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))
-
-        self.pre_management(
-            uid, odm_vendors_post_input, odm_item_ar, self._repos.odm_item_repository
-        )
-        self.add_vendor_elements(uid, odm_vendors_post_input.elements, True)
-        self.add_vendor_element_attributes(
-            uid, odm_vendors_post_input.element_attributes, True
-        )
-        self.add_vendor_attributes(uid, odm_vendors_post_input.attributes, True)
-
-        return self.get_by_uid(uid)
 
     @ensure_transaction(db)
     def get_active_relationships(self, uid: str):

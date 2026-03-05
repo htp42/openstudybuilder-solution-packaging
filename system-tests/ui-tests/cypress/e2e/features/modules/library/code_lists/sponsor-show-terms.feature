@@ -12,13 +12,12 @@ Feature: Library - Code Lists - Sponsor - Show Terms
         Then The 'Terms listing' page is shown
         Then A table is visible with following options
             | options                                                         |
-            | Columns                                                         |
+            | Select columns                                                  |
             | Export                                                          |
-            | Filters                                                         |
-            | Add select boxes to table to allow selection of rows for export |
-            | search-field                                                    |
-            # | show-removed-terms                                            | to be implemented
-
+            | Select filters                                                  |
+            | Select rows                                                     |
+            | Search                                                          |
+            
 @pending_development
     Scenario: [Table][Columns][Names] User must be able to see the columns list on the main page as below
         Given The '/library/sponsor' page is opened

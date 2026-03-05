@@ -15,9 +15,6 @@ When('The user selects {string} specification', (specification_to_select) => {
 const study_id = "CDISC DEV-0";
 const filePath = `cypress/downloads/Clinical Transparency ${study_id}.xml`
 
-When("The study disclosure page for CDISC DEV-0 is accessed", () => cy.visitStudyPageForStudyId(study_id, 'study_disclosure'))
-
-
 Then('The correct study values are presented for Identification', () => {
     cy.wait('@specification_data').then((data) => {
         cy.getRowIndex('Study ID').then(index => cy.checkRowByIndex(index, 'Values', data.response.body.unique_protocol_identification_number))

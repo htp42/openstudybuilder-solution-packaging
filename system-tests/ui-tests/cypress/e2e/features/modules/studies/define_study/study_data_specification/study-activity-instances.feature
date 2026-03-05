@@ -59,11 +59,11 @@ Feature: Studies - Define Study - Study Data Specifications - Study Activity Ins
         Given The test study '/data_specifications/instances' page is opened
         Then A table is visible with following options
             | options                                                         |
-            | Filters                                                         |
-            | Columns                                                         |
+            | Select filters                                                  |
+            | Select columns                                                  |
             | Export                                                          |
+            | Search                                                          |
             | Show version history                                            |
-            | Add select boxes to table to allow selection of rows for export |
 
     Scenario: [Placeholder][Submitted] User must be able to see submitted placeholder in the Activity Instances table
         Given The test study '/activities/list' page is opened

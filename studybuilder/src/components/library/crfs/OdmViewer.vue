@@ -219,15 +219,8 @@
         </v-col>
       </v-row>
     </div>
-    <div v-show="doc && !showOdmXml" class="mt-4">
+    <div v-show="doc" class="mt-4">
       <iframe />
-    </div>
-    <div v-show="doc && showOdmXml" class="mt-4">
-      <v-card color="primary" style="overflow-x: auto">
-        <pre v-show="!loading" class="ml-6 mt-6 pre" style="color: #ff0">{{
-          xmlString
-        }}</pre>
-      </v-card>
     </div>
   </div>
 </template>
@@ -243,8 +236,6 @@ import { useShake } from '@/composables/shake'
 const { t } = useI18n()
 
 const { isShaking, activateShake } = useShake()
-
-const showOdmXml = ref(false)
 
 const selectedCollections = ref([])
 const collections = ref([])
@@ -267,7 +258,6 @@ const data = ref({
     },
   ],
   selectedStylesheet: 'falcon',
-  export_to: 'v1',
 })
 const loading = ref(false)
 const exportLoading = ref(false)

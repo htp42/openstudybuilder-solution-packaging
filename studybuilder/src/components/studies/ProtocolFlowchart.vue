@@ -40,15 +40,17 @@
         <v-menu rounded location="bottom">
           <template #activator="{ props }">
             <v-btn
-              class="ml-2"
-              size="small"
+              class="ml-2 expandHoverBtn"
               variant="outlined"
               color="nnBaseBlue"
               v-bind="props"
-              :title="$t('DataTableExportButton.export')"
-              icon="mdi-download-outline"
               :loading="soaContentLoadingStore.loading"
-            />
+            >
+              <v-icon left>mdi-download-outline</v-icon>
+              <span class="label">{{
+                $t('DataTableExportButton.export')
+              }}</span>
+            </v-btn>
           </template>
           <v-list>
             <v-list-item link @click="downloadCSV">
@@ -71,42 +73,71 @@
       <div class="text-center">
         {{ $t('ProtocolFlowchart.split_info_2') }}
       </div>
-      <div class="d-flex flex-column align-center pa-6">
+      <div class="d-flex flex-column align-center pa-2">
         <v-btn-toggle
           v-model="toggle"
-          style="overflow-x: auto"
+          class="btn-toggle"
           variant="outlined"
           divided
           multiple
         >
           <v-slide-group show-arrows>
-            <v-btn
+            <div
               v-for="visit in groupedVisits"
               :key="visit.uid"
-              selected-class="split-class"
-              variant="outlined"
-              rounded="0"
-              elevation="0"
-              :value="visit.uid"
-              :disabled="!switchIsEnabled(['protocol'])"
-              @click="splitSoA(visit.uid)"
+              class="slide-div"
             >
-              <template #prepend>
-                <v-icon
+              <v-btn
+                selected-class="split-class"
+                variant="outlined"
+                rounded="0"
+                class="mt-2"
+                height="40px"
+                elevation="0"
+                :value="visit.uid"
+                :disabled="!switchIsEnabled(['protocol'])"
+                @click="splitSoA(visit.uid)"
+              >
+                <template #prepend>
+                  <v-icon
+                    v-if="toggle.includes(visit.uid)"
+                    icon="mdi-content-cut"
+                    class="horizontal-flip"
+                  />
+                </template>
+                {{ visit.group || visit.name }}
+              </v-btn>
+
+              <Transition name="slide-fade">
+                <div
                   v-if="toggle.includes(visit.uid)"
-                  icon="mdi-content-cut"
-                  class="horizontal-flip"
-                />
-              </template>
-              {{ visit.group || visit.name }}
-            </v-btn>
+                  style="text-align: center"
+                >
+                  <v-btn
+                    variant="outlined"
+                    class="mt-n2 go-to-btn"
+                    elevation="0"
+                    :loading="splitLoading"
+                    @click="scrollToSplit(visit)"
+                  >
+                    {{ $t('_global.go_to') }}
+                    <template #loader>
+                      <v-progress-linear
+                        style="width: 75%"
+                        rounded
+                        indeterminate
+                      />
+                    </template>
+                  </v-btn>
+                </div>
+              </Transition>
+            </div>
           </v-slide-group>
         </v-btn-toggle>
       </div>
     </div>
     <div
       id="protocolFlowchart"
-      class="mt-4"
       v-html="sanitizeHTMLHandler(protocolFlowchart)"
     />
   </div>
@@ -123,7 +154,6 @@ import unitConstants from '@/constants/units'
 import units from '@/api/units'
 import { useAccessGuard } from '@/composables/accessGuard'
 import { sanitizeHTML } from '@/utils/sanitize'
-import studyEpochsApi from '@/api/studyEpochs'
 
 const props = defineProps({
   update: {
@@ -133,6 +163,10 @@ const props = defineProps({
   layout: {
     type: String,
     default: 'protocol',
+  },
+  studyVisits: {
+    type: Array,
+    default: null,
   },
 })
 
@@ -148,6 +182,7 @@ const preferredTimeUnits = ref([])
 const toggle = ref([])
 const groupedVisits = ref([])
 const showSplitMenu = ref(false)
+const splitLoading = ref(false)
 
 watch(
   () => props.layout,
@@ -173,15 +208,22 @@ onMounted(() => {
   getSoASplits()
 })
 
+function scrollToSplit(visit) {
+  toggle.value = toggle.value.filter(
+    (item) => !(typeof item === 'number' && Number.isInteger(item))
+  )
+  const uidSet = new Set(toggle.value)
+  const index = groupedVisits.value
+    .filter((item) => uidSet.has(item.uid))
+    .map((item) => item.uid)
+    .indexOf(visit.uid)
+  const els = document.querySelectorAll('table')
+  els[index + 1].scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
 async function loadVisits() {
   try {
-    const resp = await studyEpochsApi.getStudyVisits(
-      studiesGeneralStore.selectedStudy.uid,
-      { page_size: 0 }
-    )
-    const items = resp.data.items
-
-    const visits = items.map((v) => ({
+    const visits = props.studyVisits.map((v) => ({
       name: v.visit_short_name,
       uid: v.uid,
       show_visit: v.show_visit,
@@ -190,17 +232,26 @@ async function loadVisits() {
 
     const result = []
     let lastGroup = null
+    let lastVisitInGroup = null
 
     for (const visit of visits.slice(1)) {
       if (!visit.show_visit) {
         continue
       }
       if (!visit.group) {
+        if (lastVisitInGroup) {
+          result.push(lastVisitInGroup)
+          lastVisitInGroup = null
+        }
         result.push(visit)
         lastGroup = null
       } else {
-        if (visit.group !== lastGroup) {
-          result.push(visit)
+        if (!lastGroup) {
+          lastVisitInGroup = visit
+        } else if (visit.group === lastGroup) {
+          lastVisitInGroup = visit
+        } else {
+          result.push(lastVisitInGroup)
         }
         lastGroup = visit.group
       }
@@ -211,6 +262,7 @@ async function loadVisits() {
   }
 }
 async function splitSoA(visitUid) {
+  splitLoading.value = true
   if (toggle.value.includes(visitUid)) {
     const payload = { uid: visitUid }
     await study.splitSoA(studiesGeneralStore.selectedStudy.uid, payload)
@@ -253,6 +305,7 @@ function updateFlowchart() {
     })
     .then((resp) => {
       protocolFlowchart.value = resp.data
+      splitLoading.value = false
     })
     .catch(stopLoading())
 }
@@ -293,12 +346,26 @@ function stopLoading() {
   border-inline-start-style: solid !important;
   border-left-color: red !important;
   border-left-width: medium !important;
+  width: -webkit-fill-available;
 }
 .layoutSelect {
   max-width: 200px;
 }
 .horizontal-flip {
   transform: rotate(180deg);
+}
+.btn-toggle {
+  overflow-x: auto;
+  height: 70px !important;
+}
+.slide-div {
+  display: inline-block;
+  vertical-align: top;
+}
+.go-to-btn {
+  width: -webkit-fill-available;
+  border-bottom-left-radius: 5px !important;
+  border-bottom-right-radius: 5px !important;
 }
 #protocolFlowchart {
   padding-bottom: 1em;
@@ -374,5 +441,33 @@ function stopLoading() {
       }
     }
   }
+}
+
+.slide-fade-enter-active {
+  transition: all 0.3s ease-out;
+}
+
+.slide-fade-enter-from {
+  transform: translateY(15px);
+}
+
+.slide-fade-leave-active {
+  animation: slideOut 0.2s ease-out;
+}
+
+@keyframes slideOut {
+  0% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-30px);
+  }
+  100% {
+    transform: translateX(150px);
+  }
+}
+
+.slide-fade-leave-to {
+  transform: translateX(150px);
 }
 </style>

@@ -1,10 +1,11 @@
 import re
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Literal
 from urllib.parse import quote
 
-from fastapi import APIRouter, File, Path, Query, Response, UploadFile
+from fastapi import APIRouter, File, Path, Query, Request, Response, UploadFile
 from fastapi.responses import StreamingResponse
+from pydantic import StringConstraints
 
 from clinical_mdr_api.domains.concepts.utils import ExporterType, TargetType
 from clinical_mdr_api.models.utils import CustomPage
@@ -15,10 +16,11 @@ from clinical_mdr_api.services.concepts.odms.odm_clinspark_import import (
 from clinical_mdr_api.services.concepts.odms.odm_csv_exporter import (
     OdmCsvExporterService,
 )
+from clinical_mdr_api.services.concepts.odms.odm_data_extractor import OdmDataExtractor
 from clinical_mdr_api.services.concepts.odms.odm_metadata import (
     get_odm_aliases,
-    get_odm_descriptions,
     get_odm_formal_expressions,
+    get_odm_translated_texts,
 )
 from clinical_mdr_api.services.concepts.odms.odm_xml_exporter import (
     OdmXmlExporterService,
@@ -29,6 +31,7 @@ from clinical_mdr_api.services.concepts.odms.odm_xml_importer import (
 from clinical_mdr_api.services.concepts.odms.odm_xml_stylesheets import (
     OdmXmlStylesheetService,
 )
+from common import templating
 from common.auth import rbac
 from common.auth.dependencies import security
 from common.config import settings
@@ -36,6 +39,13 @@ from common.exceptions import ValidationException
 
 # Prefixed with "/concepts/odms/metadata"
 router = APIRouter()
+
+OP_ANNOTATION = Annotated[
+    Literal["co", "eq"],
+    Query(
+        description="Operator to use for filtering. `co` for contains, `eq` for equals. Default is `co`."
+    ),
+]
 
 
 @router.get(
@@ -50,48 +60,69 @@ router = APIRouter()
 def get_aliases(
     page_number: _generic_descriptions.PAGE_NUMBER_QUERY = settings.default_page_number,
     page_size: _generic_descriptions.PAGE_SIZE_QUERY = settings.default_page_size,
+    sort_by: Annotated[
+        str,
+        StringConstraints(strip_whitespace=True),
+        Query(
+            description="""Comma separated list of fields to sort by. Available fields are: `name`, `context`. Prefix with `-` for descending order.
+            E.g. `-name,context` sorts by name in descending order and then by context in ascending order.""",
+        ),
+    ] = "",
     search: Annotated[
         str | None,
         Query(description="Search by name or context. Search is case insensitive."),
     ] = None,
+    op: OP_ANNOTATION = "co",
 ) -> CustomPage:
     aliases, total = get_odm_aliases(
-        page_size=page_size, page_number=page_number, search=search
+        page_number=page_number,
+        page_size=page_size,
+        sort_by=sort_by,
+        search=search,
+        op=op,
     )
     return CustomPage(items=aliases, size=page_size, page=page_number, total=total)
 
 
 @router.get(
-    "/descriptions",
+    "/translated-texts",
     dependencies=[security, rbac.LIBRARY_READ],
-    summary="Listing of ODM Descriptions",
+    summary="Listing of ODM Translated Texts",
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
     },
 )
-def get_descriptions(
+def get_translated_texts(
     page_number: _generic_descriptions.PAGE_NUMBER_QUERY = settings.default_page_number,
     page_size: _generic_descriptions.PAGE_SIZE_QUERY = settings.default_page_size,
-    exclude_english: Annotated[
-        bool,
-        Query(description="Exclude English descriptions (excludes `en` and `eng`)."),
-    ] = False,
+    sort_by: Annotated[
+        str,
+        StringConstraints(strip_whitespace=True),
+        Query(
+            description="""Comma separated list of fields to sort by. Available fields are: `text_type`, `language` and `text`. Prefix with `-` for descending order.
+            E.g. `-language,text_type` sorts by language in descending order and then by text_type in ascending order.""",
+        ),
+    ] = "",
     search: Annotated[
         str | None,
         Query(
-            description="Search by name, description, instruction or sponsor instruction. Search is case insensitive."
+            description="Search by text_type, language or text. Search is case insensitive."
         ),
     ] = None,
+    op: OP_ANNOTATION = "co",
 ) -> CustomPage:
-    descriptions, total = get_odm_descriptions(
-        page_size=page_size,
+    translated_texts, total = get_odm_translated_texts(
         page_number=page_number,
+        page_size=page_size,
+        sort_by=sort_by,
         search=search,
-        exclude_english=exclude_english,
+        op=op,
     )
 
-    return CustomPage(items=descriptions, size=page_size, page=page_number, total=total)
+    return CustomPage(
+        items=translated_texts, size=page_size, page=page_number, total=total
+    )
 
 
 @router.get(
@@ -104,21 +135,79 @@ def get_descriptions(
     },
 )
 def get_formal_expressions(
-    page_size: _generic_descriptions.PAGE_SIZE_QUERY = settings.default_page_size,
     page_number: _generic_descriptions.PAGE_NUMBER_QUERY = settings.default_page_number,
+    page_size: _generic_descriptions.PAGE_SIZE_QUERY = settings.default_page_size,
+    sort_by: Annotated[
+        str,
+        StringConstraints(strip_whitespace=True),
+        Query(
+            description="""Comma separated list of fields to sort by. Available fields are: `context` and `expression`. Prefix with `-` for descending order.
+            E.g. `-context,expression` sorts by context in descending order and then by expression in ascending order.""",
+        ),
+    ] = "",
     search: Annotated[
         str | None,
         Query(
             description="Search by context or expression. Search is case insensitive."
         ),
     ] = None,
+    op: OP_ANNOTATION = "co",
 ) -> CustomPage:
     formal_expressions, total = get_odm_formal_expressions(
-        page_size=page_size, page_number=page_number, search=search
+        page_number=page_number,
+        page_size=page_size,
+        sort_by=sort_by,
+        search=search,
+        op=op,
     )
 
     return CustomPage(
         items=formal_expressions, size=page_size, page=page_number, total=total
+    )
+
+
+@router.post(
+    "/report",
+    dependencies=[security, rbac.LIBRARY_READ],
+    summary="Export ODM Report",
+    status_code=200,
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {"application/html": {}},
+        },
+        403: _generic_descriptions.ERROR_403,
+        404: _generic_descriptions.ERROR_404,
+    },
+    response_class=Response,
+)
+def get_odm_report(
+    request: Request,
+    target_type: TargetType,
+    targets: Annotated[
+        list[str],
+        Query(
+            description="List of UIDs and (optionally) versions separated by comma. E.g. `uid1,v1` or `uid1` for latest version.",
+        ),
+    ],
+):
+    odm_data_extractor = OdmDataExtractor(target_type, targets)
+
+    return templating.templates.TemplateResponse(
+        "odm/crf.html",
+        {
+            "request": request,
+            "data": {
+                "odm_forms": odm_data_extractor.odm_forms,
+                "odm_item_groups": odm_data_extractor.odm_item_groups,
+                "odm_items": odm_data_extractor.odm_items,
+            },
+        },
+        headers={
+            "Content-Disposition": f'attachment; filename="{datetime.now().strftime('odm_report_%Y%m%d_%H%M%S.html')}"',
+            "X-Content-Type-Options": "nosniff",
+            "Content-Security-Policy": "default-src 'none'",
+        },
     )
 
 
@@ -176,14 +265,11 @@ def get_odm_document(
 ):
     if allowed_namespaces is None:
         allowed_namespaces = []
+
     odm_xml_export_service = OdmXmlExporterService(
-        target_type,
-        targets,
-        allowed_namespaces,
-        pdf,
-        stylesheet,
-        mapper_file,
+        target_type, targets, allowed_namespaces, pdf, stylesheet, mapper_file
     )
+
     content = odm_xml_export_service.get_odm_document()
 
     if pdf:

@@ -39,7 +39,7 @@
             <div v-html="sanitizeHTML(item.details)" />
           </template>
           <template #[`item.state`]="{ item }">
-            <div :class="'px-1 ' + getActivityStateBackground(item)">
+            <div class="px-1">
               {{ getActivityState(item) }}
             </div>
           </template>
@@ -167,7 +167,11 @@ const headers = [
     key: 'details',
     width: '200px',
   },
-  { title: t('StudyActivityInstances.state'), key: 'state', width: '100px' },
+  {
+    title: t('StudyActivityInstances.library_status'),
+    key: 'state',
+    width: '100px',
+  },
   {
     title: t('StudyActivityInstances.important'),
     key: 'important',
@@ -408,24 +412,11 @@ function transformInstances(instances) {
     return instance
   })
 }
-function getActivityStateBackground(activity) {
-  if (activity.is_required_for_activity) {
-    return 'mandatory'
-  } else if (activity.is_default_selected_for_activity) {
-    return 'defaulted'
-  }
-  if (instances.value.length === 1) {
-    return 'suggestion'
-  }
-}
 function getActivityState(activity) {
   if (activity.is_required_for_activity) {
-    return t('StudyActivityInstances.mandatory')
+    return t('StudyActivityInstances.required')
   } else if (activity.is_default_selected_for_activity) {
     return t('StudyActivityInstances.defaulted')
-  }
-  if (instances.value.length === 1) {
-    return t('StudyActivityInstances.suggestion')
   }
 }
 function submit() {
@@ -523,11 +514,24 @@ function setMultipleActivityInstances(is_reviewed = false) {
   activitiesStore
     .batchSelectStudyActivityInstances(selectedStudy.value.uid, data)
     .then(
-      () => {
-        notificationHub.add({
-          msg: t('StudyActivityInstances.instance_created'),
-          type: 'success',
-        })
+      (resp) => {
+        const errors = []
+        for (const subResp of resp.data) {
+          if (subResp.response_code >= 400) {
+            errors.push(subResp.content.message)
+            notificationHub.add({
+              msg: subResp.content.message,
+              type: 'error',
+              timeout: 0,
+            })
+          }
+        }
+        if (!errors.length) {
+          notificationHub.add({
+            msg: t('StudyActivityInstances.instance_created'),
+            type: 'success',
+          })
+        }
         close()
       },
       () => {
@@ -555,18 +559,6 @@ function close() {
 </script>
 
 <style scoped>
-.defaulted {
-  background-color: darkseagreen;
-  border-radius: 5px;
-}
-.mandatory {
-  background-color: rgb(202, 124, 124);
-  border-radius: 5px;
-}
-.suggestion {
-  background-color: rgb(217, 201, 106);
-  border-radius: 5px;
-}
 .compact-select :deep(.v-field__input) {
   white-space: normal;
   min-height: 40px;

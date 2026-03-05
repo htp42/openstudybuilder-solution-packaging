@@ -18,6 +18,7 @@ class StudySelectionArmVO:
     study_uid: str | None
     name: str
     short_name: str
+    label: str
     code: str | None
     description: str | None
     randomization_group: str | None
@@ -40,6 +41,7 @@ class StudySelectionArmVO:
         study_uid: str | None = None,
         name: str | None = None,
         short_name: str | None = None,
+        label: str | None = None,
         code: str | None = None,
         description: str | None = None,
         randomization_group: str | None = None,
@@ -59,6 +61,7 @@ class StudySelectionArmVO:
         :param study_selection_uid
         :param name
         :param short_name
+        :param label
         :param code
         :param description
         :param randomization_group
@@ -86,6 +89,7 @@ class StudySelectionArmVO:
             study_selection_uid=normalize_string(study_selection_uid),
             name=name or "",
             short_name=short_name or "",
+            label=label or "",
             code=code,
             description=description,
             randomization_group=randomization_group,

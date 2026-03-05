@@ -24,7 +24,7 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
 )
 from clinical_mdr_api.models.concepts.odms.odm_common_models import (
     OdmAliasModel,
-    OdmDescriptionModel,
+    OdmTranslatedTextModel,
 )
 from clinical_mdr_api.models.concepts.odms.odm_form import OdmForm
 from clinical_mdr_api.services._utils import ensure_transaction
@@ -51,15 +51,13 @@ class FormRepository(OdmGenericRepository[OdmFormAR]):
                 name=value.name,
                 sdtm_version=value.sdtm_version,
                 repeating=value.repeating,
-                descriptions=[
-                    OdmDescriptionModel(
-                        name=description_value.name,
-                        language=description_value.language,
-                        description=description_value.description,
-                        instruction=description_value.instruction,
-                        sponsor_instruction=description_value.sponsor_instruction,
+                translated_texts=[
+                    OdmTranslatedTextModel(
+                        text_type=translated_text_value.text_type,
+                        language=translated_text_value.language,
+                        text=translated_text_value.text,
                     )
-                    for description_value in value.has_description.all()
+                    for translated_text_value in value.has_translated_text.all()
                 ],
                 aliases=[
                     OdmAliasModel(name=alias_value.name, context=alias_value.context)
@@ -108,17 +106,13 @@ class FormRepository(OdmGenericRepository[OdmFormAR]):
                 name=input_dict["name"],
                 sdtm_version=input_dict.get("sdtm_version"),
                 repeating=input_dict.get("repeating"),
-                descriptions=[
-                    OdmDescriptionModel(
-                        name=description["name"],
-                        language=description.get("language", None),
-                        description=description.get("description", None),
-                        instruction=description.get("instruction", None),
-                        sponsor_instruction=description.get(
-                            "sponsor_instruction", None
-                        ),
+                translated_texts=[
+                    OdmTranslatedTextModel(
+                        text_type=translated_text["text_type"],
+                        language=translated_text["language"],
+                        text=translated_text["text"],
                     )
-                    for description in input_dict["descriptions"]
+                    for translated_text in input_dict["translated_texts"]
                 ],
                 aliases=[
                     OdmAliasModel(name=alias["name"], context=alias["context"])
@@ -158,8 +152,7 @@ concept_value.oid AS oid,
 toString(concept_value.repeating) AS repeating,
 concept_value.sdtm_version AS sdtm_version,
 
-[(concept_value)-[:HAS_DESCRIPTION]->(dv:OdmDescription) |
-{name: dv.name, language: dv.language, description: dv.description, instruction: dv.instruction, sponsor_instruction: dv.sponsor_instruction}] AS descriptions,
+[(concept_value)-[:HAS_TRANSLATED_TEXT]->(dv:OdmTranslatedText) | {text_type: dv.text_type, language: dv.language, text: dv.text}] AS translated_texts,
 
 [(concept_value)-[:HAS_ALIAS]->(av:OdmAlias) | {name: av.name, context: av.context}] AS aliases,
 
@@ -221,7 +214,7 @@ apoc.coll.toSet([vendor_element_attribute in vendor_element_attributes | vendor_
         self.manage_vendor_relationships(
             current_latest, new_value, ar.should_disconnect_relationships
         )
-        self.connect_descriptions(ar.concept_vo.descriptions, new_value)
+        self.connect_translated_texts(ar.concept_vo.translated_texts, new_value)
         self.connect_aliases(ar.concept_vo.aliases, new_value)
 
         return new_value
@@ -240,15 +233,13 @@ apoc.coll.toSet([vendor_element_attribute in vendor_element_attributes | vendor_
     def _has_data_changed(self, ar: OdmFormAR, value: OdmFormValue) -> bool:
         are_concept_properties_changed = super()._has_data_changed(ar=ar, value=value)
 
-        description_nodes = {
-            OdmDescriptionModel(
-                name=description_node.name,
-                language=description_node.language,
-                description=description_node.description,
-                instruction=description_node.instruction,
-                sponsor_instruction=description_node.sponsor_instruction,
+        translated_text_nodes = {
+            OdmTranslatedTextModel(
+                text_type=translated_text_node.text_type,
+                language=translated_text_node.language,
+                text=translated_text_node.text,
             )
-            for description_node in value.has_description.all()
+            for translated_text_node in value.has_translated_text.all()
         }
         alias_nodes = {
             OdmAliasModel(name=alias_node.name, context=alias_node.context)
@@ -256,7 +247,7 @@ apoc.coll.toSet([vendor_element_attribute in vendor_element_attributes | vendor_
         }
 
         are_rels_changed = (
-            set(ar.concept_vo.descriptions) != description_nodes
+            set(ar.concept_vo.translated_texts) != translated_text_nodes
             or set(ar.concept_vo.aliases) != alias_nodes
         )
 
@@ -282,6 +273,7 @@ apoc.coll.toSet([vendor_element_attribute in vendor_element_attributes | vendor_
             WITH value, ref, collect(hv_rel) AS hv_rels
             
             RETURN
+                value.oid AS oid,
                 value.name AS name,
                 hv_rels[0].version AS version,
                 ref.order_number AS order_number,
@@ -298,13 +290,14 @@ apoc.coll.toSet([vendor_element_attribute in vendor_element_attributes | vendor_
 
         return OdmFormRefVO.from_repository_values(
             uid=uid,
-            name=rs[0][0],
-            version=rs[0][1],
+            oid=rs[0][0],
+            name=rs[0][1],
             study_event_uid=study_event_uid,
-            order_number=rs[0][2],
-            mandatory=rs[0][3],
-            locked=rs[0][4],
-            collection_exception_condition_oid=rs[0][5],
+            version=rs[0][2],
+            order_number=rs[0][3],
+            mandatory=rs[0][4],
+            locked=rs[0][5],
+            collection_exception_condition_oid=rs[0][6],
         )
 
     @ensure_transaction(db)

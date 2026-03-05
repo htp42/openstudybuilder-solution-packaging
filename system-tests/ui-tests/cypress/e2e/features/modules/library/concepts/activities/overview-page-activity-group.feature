@@ -22,11 +22,12 @@ Feature: Library - Concepts - Activities - Activity Group Overview Page
 
     Scenario: [COSMoS YAML] Verify that the group overview page displays all sections correctly
         When I click on the COSMoS YAML tab
-        Then The COSMoS YAML page should be opened with Download button and Close button displayed
-        When The Download YAML content button is clicked
+        And 'Download YAML content' button is visible in the overview page
+        And 'Close YAML viewer' button is visible in the overview page
+        When I click 'Download YAML content' button
         Then The 'COSMoS-overview' file without timestamp is downloaded in 'yml' format
         # And the COSMoS YAML file should be saved with correct content (this step should be tested manually)
-        When I click on the Close button in the COSMoS YAML page
+        When I click 'Close YAML viewer' button
         Then Group overview page is opened   
 
     Scenario: [Sections] Verify that the activity group overview page displays correctly
@@ -40,7 +41,7 @@ Feature: Library - Concepts - Activities - Activity Group Overview Page
         And The free text search field should be displayed in the 'Activity subgroups' table
 
     Scenario: [History] Verify that the activity group overview page displays correctly
-        When I click on the history button
+        When I click 'History' button
         Then The history page is opened
     
     Scenario: [Linking] Verify that the activities group overview page can link to the correct subgroup
@@ -111,33 +112,6 @@ Feature: Library - Concepts - Activities - Activity Group Overview Page
 
     Scenario: [Table][Search][Case sensitivity] User must be able to search item ignoring case sensitivity in subroup table
         And User searches for subgroup by using lowecased name in linked Subgroups table
-        Then 1 result is present in the 'Activity subgroup' table
-        And Subgroup name is present in first row of the Activity Subgroup table
-
-    Scenario: [Table][Filtering] User must have access to filters
-        And Filters for the 'Activity subgroup' table are expanded
-        Then Following filters are available in the table 'Activity subgroup'
-        | filter by   |
-        | Name        |
-        | Definition  |
-        | Version     |
-        | Status      |
-
-    Scenario: [Table][Filtering] User must be able to narrow down table result by using Name filter
-        And User waits for linked 'Activity subgroup' table data to load
-        And 2 result is present in the 'Activity subgroup' table
-        And Filters for the 'Activity subgroup' table are expanded
-        And Subgroup name is selected from filters
-        Then 1 result is present in the 'Activity subgroup' table
-        And Subgroup name is present in first row of the Activity Subgroup table
-
-    Scenario: [Table][Filtering][Search] User must be able combine search and filters
-        And User waits for linked 'Activity subgroup' table data to load
-        And Filters for the 'Activity subgroup' table are expanded
-        And Subgroup name is selected from filters
-        When User searches for non-existing item in 'Activity subgroups' table
-        Then The Activity subgroups table is empty
-        And User searches for subgroup in linked Subgroups table
         Then 1 result is present in the 'Activity subgroup' table
         And Subgroup name is present in first row of the Activity Subgroup table
 

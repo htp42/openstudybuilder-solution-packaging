@@ -121,8 +121,32 @@ class Question:
 
 
 @dataclass
+class OsbDesignNotes:
+    translated_text: list[TranslatedText]
+    _custom_element_name = "osb:DesignNotes"
+
+
+@dataclass
+class OsbCompletionInstructions:
+    translated_text: list[TranslatedText]
+    _custom_element_name = "osb:CompletionInstructions"
+
+
+@dataclass
+class OsbDisplayText:
+    translated_text: list[TranslatedText]
+    _custom_element_name = "osb:DisplayText"
+
+
+@dataclass
 class CodeListRef:
     codelist_oid: Attribute
+
+    def __init__(self, codelist_oid: Attribute, **kwargs):
+        self.codelist_oid = codelist_oid
+
+        for key, val in kwargs.items():
+            setattr(self, key, val)
 
 
 @dataclass
@@ -146,6 +170,9 @@ class ConditionDef:
     oid: Attribute
     name: Attribute
     description: Description
+    osb_design_notes: OsbDesignNotes | None
+    osb_completion_instructions: OsbCompletionInstructions | None
+    osb_display_text: OsbDisplayText | None
     aliases: list[Alias]
     formal_expressions: list[FormalExpression]
 
@@ -154,6 +181,9 @@ class ConditionDef:
         oid: Attribute,
         name: Attribute,
         description: Description,
+        osb_design_notes: OsbDesignNotes | None,
+        osb_completion_instructions: OsbCompletionInstructions | None,
+        osb_display_text: OsbDisplayText | None,
         aliases: list[Alias],
         formal_expressions: list[FormalExpression],
         **kwargs,
@@ -161,11 +191,23 @@ class ConditionDef:
         self.oid = oid
         self.name = name
         self.description = description
+        self.osb_design_notes = osb_design_notes
+        self.osb_completion_instructions = osb_completion_instructions
+        self.osb_display_text = osb_display_text
         self.aliases = aliases
         self.formal_expressions = formal_expressions
 
         if not self.description.translated_text:
             del self.description
+        if not self.osb_design_notes or not self.osb_design_notes.translated_text:
+            del self.osb_design_notes
+        if (
+            not self.osb_completion_instructions
+            or not self.osb_completion_instructions.translated_text
+        ):
+            del self.osb_completion_instructions
+        if not self.osb_display_text or not self.osb_display_text.translated_text:
+            del self.osb_display_text
 
         for key, val in kwargs.items():
             setattr(self, key, val)
@@ -176,6 +218,9 @@ class MethodDef:
     name: Attribute
     type: Attribute
     description: Description
+    osb_design_notes: OsbDesignNotes | None
+    osb_completion_instructions: OsbCompletionInstructions | None
+    osb_display_text: OsbDisplayText | None
     aliases: list[Alias]
     formal_expressions: list[FormalExpression]
 
@@ -185,6 +230,9 @@ class MethodDef:
         name: Attribute,
         method_type: Attribute,
         description: Description,
+        osb_design_notes: OsbDesignNotes | None,
+        osb_completion_instructions: OsbCompletionInstructions | None,
+        osb_display_text: OsbDisplayText | None,
         aliases: list[Alias],
         formal_expressions: list[FormalExpression],
         **kwargs,
@@ -193,14 +241,35 @@ class MethodDef:
         self.name = name
         self.type = method_type
         self.description = description
+        self.osb_design_notes = osb_design_notes
+        self.osb_completion_instructions = osb_completion_instructions
+        self.osb_display_text = osb_display_text
         self.aliases = aliases
         self.formal_expressions = formal_expressions
 
         if not self.description.translated_text:
             del self.description
+        if not self.osb_design_notes or not self.osb_design_notes.translated_text:
+            del self.osb_design_notes
+        if (
+            not self.osb_completion_instructions
+            or not self.osb_completion_instructions.translated_text
+        ):
+            del self.osb_completion_instructions
+        if not self.osb_display_text or not self.osb_display_text.translated_text:
+            del self.osb_display_text
 
         for key, val in kwargs.items():
             setattr(self, key, val)
+
+
+@dataclass
+class OsbActivityInstance:
+    _string: str
+    adam_code: Attribute
+    topic_code: Attribute
+    is_derived: Attribute
+    _custom_element_name: str = "osb:ActivityInstance"
 
 
 class ItemDef:
@@ -214,7 +283,11 @@ class ItemDef:
     sds_var_name: Attribute
     question: Question
     description: Description
+    osb_design_notes: OsbDesignNotes | None
+    osb_completion_instructions: OsbCompletionInstructions | None
+    osb_display_text: OsbDisplayText | None
     aliases: list[Alias]
+    activity_instances: list[OsbActivityInstance]
     codelist_ref: CodeListRef
     measurement_unit_refs: list[MeasurementUnitRef]
 
@@ -230,7 +303,11 @@ class ItemDef:
         sds_var_name: Attribute,
         question: Question,
         description: Description,
+        osb_design_notes: OsbDesignNotes | None,
+        osb_completion_instructions: OsbCompletionInstructions | None,
+        osb_display_text: OsbDisplayText | None,
         aliases: list[Alias],
+        activity_instances: list[OsbActivityInstance],
         codelist_ref: CodeListRef,
         measurement_unit_refs: list[MeasurementUnitRef],
         **kwargs,
@@ -245,7 +322,12 @@ class ItemDef:
         self.sds_var_name = sds_var_name
         self.question = question
         self.description = description
+        self.osb_design_notes = osb_design_notes
+        self.osb_completion_instructions = osb_completion_instructions
+        self.osb_design_notes = osb_design_notes
+        self.osb_display_text = osb_display_text
         self.aliases = aliases
+        self.activity_instances = activity_instances
         self.codelist_ref = codelist_ref
         self.measurement_unit_refs = measurement_unit_refs
 
@@ -255,6 +337,15 @@ class ItemDef:
             del self.description
         if not self.question.translated_text:
             del self.question
+        if not self.osb_design_notes or not self.osb_design_notes.translated_text:
+            del self.osb_design_notes
+        if (
+            not self.osb_completion_instructions
+            or not self.osb_completion_instructions.translated_text
+        ):
+            del self.osb_completion_instructions
+        if not self.osb_display_text or not self.osb_display_text.translated_text:
+            del self.osb_display_text
 
         for key, val in kwargs.items():
             setattr(self, key, val)
@@ -308,6 +399,9 @@ class ItemGroupDef:
     domain: Attribute
     osb_domain_colors: list[OsbDomainColor]
     description: Description
+    osb_design_notes: OsbDesignNotes | None
+    osb_completion_instructions: OsbCompletionInstructions | None
+    osb_display_text: OsbDisplayText | None
     aliases: list[Alias]
     item_refs: list[ItemRef]
 
@@ -321,6 +415,9 @@ class ItemGroupDef:
         domain: Attribute,
         osb_domain_colors: list[OsbDomainColor],
         description: Description,
+        osb_design_notes: OsbDesignNotes | None,
+        osb_completion_instructions: OsbCompletionInstructions | None,
+        osb_display_text: OsbDisplayText | None,
         aliases: list[Alias],
         item_refs: list[ItemRef],
         **kwargs,
@@ -333,11 +430,23 @@ class ItemGroupDef:
         self.domain = domain
         self.osb_domain_colors = osb_domain_colors
         self.description = description
+        self.osb_design_notes = osb_design_notes
+        self.osb_completion_instructions = osb_completion_instructions
+        self.osb_display_text = osb_display_text
         self.aliases = aliases
         self.item_refs = item_refs
 
         if not self.description.translated_text:
             del self.description
+        if not self.osb_design_notes or not self.osb_design_notes.translated_text:
+            del self.osb_design_notes
+        if (
+            not self.osb_completion_instructions
+            or not self.osb_completion_instructions.translated_text
+        ):
+            del self.osb_completion_instructions
+        if not self.osb_display_text or not self.osb_display_text.translated_text:
+            del self.osb_display_text
 
         for key, val in kwargs.items():
             setattr(self, key, val)
@@ -374,6 +483,9 @@ class FormDef:
     name: Attribute
     repeating: Attribute
     description: Description
+    osb_design_notes: OsbDesignNotes | None
+    osb_completion_instructions: OsbCompletionInstructions | None
+    osb_display_text: OsbDisplayText | None
     aliases: list[Alias]
     item_group_refs: list[ItemGroupRef]
 
@@ -383,6 +495,9 @@ class FormDef:
         name: Attribute,
         repeating: Attribute,
         description: Description,
+        osb_design_notes: OsbDesignNotes | None,
+        osb_completion_instructions: OsbCompletionInstructions | None,
+        osb_display_text: OsbDisplayText | None,
         aliases: list[Alias],
         item_group_refs: list[ItemGroupRef],
         **kwargs,
@@ -391,11 +506,23 @@ class FormDef:
         self.name = name
         self.repeating = repeating
         self.description = description
+        self.osb_design_notes = osb_design_notes
+        self.osb_completion_instructions = osb_completion_instructions
+        self.osb_display_text = osb_display_text
         self.aliases = aliases
         self.item_group_refs = item_group_refs
 
         if not self.description.translated_text:
             del self.description
+        if not self.osb_design_notes or not self.osb_design_notes.translated_text:
+            del self.osb_design_notes
+        if (
+            not self.osb_completion_instructions
+            or not self.osb_completion_instructions.translated_text
+        ):
+            del self.osb_completion_instructions
+        if not self.osb_display_text or not self.osb_display_text.translated_text:
+            del self.osb_display_text
 
         for key, val in kwargs.items():
             setattr(self, key, val)

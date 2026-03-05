@@ -187,7 +187,6 @@ def pre_load_counter_nodes(tx: Transaction):
         "OdmItemCounter",
         "OdmItemGroupCounter",
         "OdmStudyEventCounter",
-        "OdmTemplateCounter",
         "OdmVendorAttributeCounter",
         "OdmVendorNamespaceCounter",
         "PharmaceuticalProductCounter",
@@ -253,7 +252,7 @@ with driver.session(database=DATABASE) as session:
 
     for query in build_schema_queries():
         print(query)
-        session.run(querystring)
+        session.run(query)
 
     print(
         "\n-- Preloading TemplateParameter tree (Activity, Activity Group, Findings, Dose unit...) --"

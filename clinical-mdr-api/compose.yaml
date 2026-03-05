@@ -73,6 +73,24 @@ services:
     ports:
       - "${BIND_ADDRESS:-127.0.0.1}:${CONSUMER_API_PORT:-8008}:8000"
 
+  # Extensions API service
+  extensions-api:
+    image: ${API_IMAGE:-clinical-mdr-api}
+    environment:
+      NEO4J_DSN: "${NEO4J_DSN:-bolt://neo4j:changeme1234@database:7687/neo4j}"
+      ALLOW_ORIGIN_REGEX: "${ALLOW_ORIGIN_REGEX:-.*}"
+      OAUTH_ENABLED: "${OAUTH_ENABLED:-False}"
+      OAUTH_RBAC_ENABLED: "${OAUTH_RBAC_ENABLED:-False}"
+      OAUTH_METADATA_URL: "${OAUTH_METADATA_URL:-}"
+      OAUTH_API_APP_ID: "${OAUTH_API_APP_ID:-}"
+      OAUTH_API_APP_SECRET: "${OAUTH_API_APP_SECRET:-}"
+      OAUTH_SWAGGER_APP_ID: "${OAUTH_SWAGGER_APP_ID:-}"
+      UVICORN_APP: "extensions.extensions_api:app"
+      UVICORN_LOG_CONFIG: "${UVICORN_LOG_CONFIG:-}"
+      PRODEX_API_MOCK: "true"
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:${EXTENSIONS_API_PORT:-8009}:8000"
+
   # OpenStudyBuilder API service for running tests in pipeline
   dev:
     extends:
@@ -100,6 +118,15 @@ services:
       - type: bind
         source: ./consumer_api/apiVersion
         target: /app/consumer_api/apiVersion
+      - type: bind
+        source: ./extensions/reports
+        target: /app/extensions/reports
+      - type: bind
+        source: ./extensions/openapi.json
+        target: /app/extensions/openapi.json
+      - type: bind
+        source: ./extensions/apiVersion
+        target: /app/extensions/apiVersion
 
   allure:
     working_dir: /app

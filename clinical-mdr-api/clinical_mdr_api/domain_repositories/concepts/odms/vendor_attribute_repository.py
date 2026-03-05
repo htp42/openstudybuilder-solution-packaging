@@ -33,6 +33,7 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
 from clinical_mdr_api.models.concepts.odms.odm_vendor_attribute import (
     OdmVendorAttribute,
 )
+from clinical_mdr_api.services._utils import ensure_transaction
 from common.exceptions import BusinessLogicException
 from common.utils import convert_to_datetime
 
@@ -290,3 +291,61 @@ vendor_element.uid AS vendor_element_uid
             value=rs[0][4],
             vendor_namespace_uid=rs[0][5],
         )
+
+    @ensure_transaction(db)
+    def _connect_relationships_to_new_value_node(
+        self, root: VersionRoot, _: VersionValue
+    ) -> None:
+        """
+        - Upgrades all incoming HAS_VENDOR_ELEMENT_ATTRIBUTE relationships to the second latest version to point
+        to the latest version of OdmVendorAttributeValue, preserving relationship properties.
+        - Upgrades all incoming HAS_VENDOR_ATTRIBUTE relationships to the second latest version to point
+        to the latest version of OdmVendorAttributeValue, preserving relationship properties.
+        """
+        query = f"""
+        MATCH (root:{self.root_class.__name__} {{uid: $root_uid}})-[ver_rel:HAS_VERSION]->(value:{self.value_class.__name__})
+
+        WITH root, ver_rel, value
+        ORDER BY ver_rel.start_date DESC, ver_rel.end_date DESC
+        LIMIT 2
+        WITH root, collect(value) AS values
+        WITH root, values[0] as latest_value, values[1] as second_latest_value
+
+        MATCH (:OdmFormRoot|OdmItemGroupRoot|OdmItemRoot)-[p_ver_rel:HAS_VERSION]->
+        (parent_value:OdmFormValue|OdmItemGroupValue|OdmItemValue)-[has_vendor_element_attribute:HAS_VENDOR_ELEMENT_ATTRIBUTE]->(second_latest_value)
+        WHERE p_ver_rel.end_date IS NULL AND p_ver_rel.status = "Draft"
+
+        WITH latest_value, has_vendor_element_attribute, parent_value,
+            has_vendor_element_attribute.value AS value
+
+        CREATE (parent_value)-[new_has_vendor_element_attribute:HAS_VENDOR_ELEMENT_ATTRIBUTE]->(latest_value)
+
+        SET new_has_vendor_element_attribute.value = value
+
+        DELETE has_vendor_element_attribute
+        """
+        db.cypher_query(query, {"root_uid": root.uid})
+
+        query = f"""
+        MATCH (root:{self.root_class.__name__} {{uid: $root_uid}})-[ver_rel:HAS_VERSION]->(value:{self.value_class.__name__})
+
+        WITH root, ver_rel, value
+        ORDER BY ver_rel.start_date DESC, ver_rel.end_date DESC
+        LIMIT 2
+        WITH root, collect(value) AS values
+        WITH root, values[0] as latest_value, values[1] as second_latest_value
+
+        MATCH (:OdmFormRoot|OdmItemGroupRoot|OdmItemRoot)-[p_ver_rel:HAS_VERSION]->
+        (parent_value:OdmFormValue|OdmItemGroupValue|OdmItemValue)-[has_vendor_attribute:HAS_VENDOR_ATTRIBUTE]->(second_latest_value)
+        WHERE p_ver_rel.end_date IS NULL AND p_ver_rel.status = "Draft"
+
+        WITH latest_value, has_vendor_attribute, parent_value,
+            has_vendor_attribute.value AS value
+
+        CREATE (parent_value)-[new_has_vendor_attribute:HAS_VENDOR_ATTRIBUTE]->(latest_value)
+
+        SET new_has_vendor_attribute.value = value
+
+        DELETE has_vendor_attribute
+        """
+        db.cypher_query(query, {"root_uid": root.uid})

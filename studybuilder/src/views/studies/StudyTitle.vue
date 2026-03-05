@@ -18,20 +18,20 @@
     <div class="d-flex">
       <v-spacer />
       <v-btn
-        class="ml-2"
-        size="small"
+        class="ml-2 expandHoverBtn"
         variant="outlined"
         color="nnBaseBlue"
-        :title="$t('StudyTitleView.edit_title')"
         :data-cy="$t('StudyTitleView.edit_title')"
         :disabled="
           !checkPermission($roles.STUDY_WRITE) ||
           selectedStudyVersion !== null ||
           Boolean(selectedStudy.study_parent_part)
         "
-        icon="mdi-pencil-outline"
         @click.stop="openForm"
-      />
+      >
+        <v-icon left>mdi-pencil-outline</v-icon>
+        <span class="label">{{ $t('StudyTitleView.edit_title') }}</span>
+      </v-btn>
     </div>
     <v-sheet elevation="0" class="pa-4 title" rounded>
       {{ $t('StudyTitleView.title') }}<br />

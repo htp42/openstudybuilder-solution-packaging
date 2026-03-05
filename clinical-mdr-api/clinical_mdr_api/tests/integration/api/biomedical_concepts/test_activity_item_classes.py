@@ -53,6 +53,7 @@ dataset_class: DatasetClass
 variable_class: VariableClass
 data_type_codelist: CTCodelist
 role_codelist: CTCodelist
+response_codelist: CTCodelist
 dataset: Dataset
 dataset_variable: DatasetVariable
 data_model_catalogue_name: str
@@ -79,6 +80,7 @@ def test_data():
     global data_type_term
     global role_codelist
     global role_term
+    global response_codelist
     global variable_class
     global dataset_class
     global dataset
@@ -104,6 +106,9 @@ def test_data():
     )
     role_term = TestUtils.create_ct_term(
         sponsor_preferred_name="Role", codelist_uid=role_codelist.codelist_uid
+    )
+    response_codelist = TestUtils.create_ct_codelist(
+        name="RESPONSE", submission_value="RESPONSE", extensible=True, approve=True
     )
     data_model = TestUtils.create_data_model()
     data_model_catalogue_name = TestUtils.create_data_model_catalogue()
@@ -640,13 +645,16 @@ def test_edit_activity_item_class(api_client):
     assert res["nci_concept_id"] == "new nci concept id"
     assert res["display_name"] == "new display name for item class"
     assert res["order"] == 45
-    assert res["activity_instance_classes"][0]["name"] == "Activity IC after edit"
-    assert res["activity_instance_classes"][0]["mandatory"] is False
-    assert (
-        res["activity_instance_classes"][0]["is_adam_param_specific_enabled"] is False
+    ic_after_edit = next(
+        x
+        for x in res["activity_instance_classes"]
+        if x["uid"] == activity_instance_class_after_edit.uid
     )
-    assert res["activity_instance_classes"][0]["is_additional_optional"] is True
-    assert res["activity_instance_classes"][0]["is_default_linked"] is True
+    assert ic_after_edit["name"] == "Activity IC after edit"
+    assert ic_after_edit["mandatory"] is False
+    assert ic_after_edit["is_adam_param_specific_enabled"] is False
+    assert ic_after_edit["is_additional_optional"] is True
+    assert ic_after_edit["is_default_linked"] is True
     assert res["version"] == "0.2"
     assert res["status"] == "Draft"
     assert res["possible_actions"] == ["approve", "delete", "edit"]
@@ -661,14 +669,16 @@ def test_edit_activity_item_class(api_client):
     assert get_res["nci_concept_id"] == "new nci concept id"
     assert get_res["display_name"] == "new display name for item class"
     assert get_res["order"] == 45
-    assert get_res["activity_instance_classes"][1]["name"] == "Activity IC after edit"
-    assert get_res["activity_instance_classes"][1]["mandatory"] is False
-    assert (
-        get_res["activity_instance_classes"][1]["is_adam_param_specific_enabled"]
-        is False
+    ic_after_edit = next(
+        x
+        for x in res["activity_instance_classes"]
+        if x["uid"] == activity_instance_class_after_edit.uid
     )
-    assert get_res["activity_instance_classes"][1]["is_additional_optional"] is True
-    assert get_res["activity_instance_classes"][1]["is_default_linked"] is True
+    assert ic_after_edit["name"] == "Activity IC after edit"
+    assert ic_after_edit["mandatory"] is False
+    assert ic_after_edit["is_adam_param_specific_enabled"] is False
+    assert ic_after_edit["is_additional_optional"] is True
+    assert ic_after_edit["is_default_linked"] is True
     assert get_res["version"] == "0.2"
     assert get_res["status"] == "Draft"
     assert get_res["possible_actions"] == ["approve", "delete", "edit"]
@@ -683,6 +693,21 @@ def test_edit_activity_item_class(api_client):
     res = response.json()
     assert_response_status_code(response, 200)
     assert res["variable_classes"] == [{"uid": variable_class.uid}]
+
+    # Edit Valid codelist mapping and verify
+    response = api_client.patch(
+        f"/activity-item-classes/{activity_item_class.uid}/valid-codelist-mappings",
+        json={"valid_codelist_uids": [response_codelist.codelist_uid]},
+    )
+    res = response.json()
+    assert_response_status_code(response, 200)
+
+    response = api_client.get(
+        f"/activity-item-classes/{activity_item_class.uid}/datasets/{dataset.uid}/codelists?valid_codelists_for_item=True",
+    )
+    res = response.json()
+    assert len(res["items"]) == 1
+    assert res["items"][0]["codelist_uid"] == response_codelist.codelist_uid
 
 
 def test_post_activity_item_class(api_client):
@@ -824,7 +849,13 @@ def test_get_activity_item_class_codelists(api_client):
         },
     )
 
-    # So fetching terms with this ActivityItemClass and Dataset
+    # Also map the item class to a response codelist
+    api_client.patch(
+        f"/activity-item-classes/{activity_item_classes_all[0].uid}/valid-codelist-mappings",
+        json={"valid_codelist_uids": [response_codelist.codelist_uid]},
+    )
+
+    # Fetching terms with this ActivityItemClass and Dataset
     # Will return those Variables
     # Which will in turn map a Codelist, whose Terms should be returned
     response = api_client.get(
@@ -898,6 +929,15 @@ def test_get_activity_item_class_codelists(api_client):
     # term uids should be None, indicating that all terms of the codelist are available
     assert len(res["items"]) == 1
     assert res["items"][0]["term_uids"] is None
+
+    # Finally, fetching using the valid codelists filter
+    # Will only return the specific codelists marked as valid
+    response = api_client.get(
+        f"/activity-item-classes/{activity_item_classes_all[0].uid}/datasets/{dataset.uid}/codelists?valid_codelists_for_item=True",
+    )
+    res = response.json()
+    assert len(res["items"]) == 1
+    assert res["items"][0]["codelist_uid"] == response_codelist.codelist_uid
 
 
 def test_get_activity_item_class_overview(api_client: TestClient) -> None:

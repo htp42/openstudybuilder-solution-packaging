@@ -1,4 +1,4 @@
-@REQ_ID:1070683
+@REQ_ID:1070683 @skip_on_prv_val
 
 Feature: Library - Concepts - Activities - Activities - Basic Scope
     As a user, I want to manage every Activities in the Concepts Library
@@ -16,13 +16,13 @@ Feature: Library - Concepts - Activities - Activities - Basic Scope
         And The '/library/activities/activities' page is opened
         Then A table is visible with following options
             | options                                                         |
-            | Add activity                                                    |
-            | Filters                                                         |
-            | Columns                                                         |
+            | Select columns                                                  |
             | Export                                                          |
+            | Select filters                                                  |
+            | Select rows                                                     |
+            | Search                                                          |
+            | Add activity                                                    |
             | Show version history                                            |
-            | Add select boxes to table to allow selection of rows for export |
-            | search-field                                                    |
 
     @smoke_test
      Scenario: [Table][Columns][Names] User must be able to see the columns list on the main page as below
@@ -56,32 +56,35 @@ Feature: Library - Concepts - Activities - Activities - Basic Scope
         Then The table page presents correct data
 
     @smoke_test
-    Scenario: [Create][Positive case] User must be able to add a new activity
-        And The '/library/activities/activities' page is opened
-        And User sets status filter to 'all'
-        When The Add activity button is clicked
+    Scenario: [Create][Positive case] User must be able to add a new activity with multiple instances allowed
+        Given The '/library/activities/activities' page is opened
+        When User sets status filter to 'all'
+        And The Add activity button is clicked
         And The activity form is filled with all data
-        #TODO And The 'Multiple instance allowed' checkbox is set to true by default
+        And The Multiple instance allowed checkbox is set to 'true'
         And Form save button is clicked
         Then Message confiriming activity creation is displayed
         And User waits for activity filter request to finish
-        And Activity is searched for and found
-        And The newly added activity is visible in the table
+        When Activity is searched for and found
+        Then The newly added activity is visible in the table
         And The item has status 'Draft' and version '0.1'
+        When Open the activity overview page
+        Then The Multiple instance allowed field is set to 'Yes'
 
-    @pending_implementation
     Scenario: [Create][Positive case] User must be able to add a new activity with no multiple instances allowed
-        And The '/library/activities/activities' page is opened
-        And User sets status filter to 'all'
-        When The Add activity button is clicked
+        Given The '/library/activities/activities' page is opened
+        When User sets status filter to 'all'
+        And The Add activity button is clicked
         And The activity form is filled with all data
-        And The 'Multiple instance allowed' checkbox is set to 'false' by user
+        And The Multiple instance allowed checkbox is set to 'false'
         And Form save button is clicked
         Then Message confiriming activity creation is displayed
         And User waits for activity filter request to finish
-        And Activity is searched for and found
+        When Activity is searched for and found
         And The newly added activity is visible in the table
         And The item has status 'Draft' and version '0.1'
+        When Open the activity overview page
+        Then The Multiple instance allowed field is set to 'No'
 
     Scenario: [Actions][Inactivate] User must be able to inactivate the approved version of the activity
         And [API] Activity in status Draft exists

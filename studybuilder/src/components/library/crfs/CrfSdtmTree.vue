@@ -4,12 +4,6 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import UnderConstruction from '@/components/layout/UnderConstruction'
-
-export default {
-  components: {
-    UnderConstruction,
-  },
-}
 </script>

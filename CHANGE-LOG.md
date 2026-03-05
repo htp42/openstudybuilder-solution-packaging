@@ -1,5 +1,97 @@
 # OpenStudyBuilder (OSB) Commits changelog
 
+## V 2.5
+
+New Features and Enhancements
+============
+
+### Fixes and Enhancements
+
+- The menu Library > Concepts > Activities > Activity Instances, now support editing of core attributes and associated activity items.
+- The menu Library > Concepts > Activities > Activity Instances, now support defining the Activity Instance Class Categoric Finding including relationship to Categoric Response terms.
+- Tables action buttons now expand on hover.
+- Online help pop-ups are now movable by drag and drop (like dialog windows).
+
+### New Feature
+
+- The new "CRF Library Versions" report in NeoDash compares two versions of CRF forms in the CRF library.
+- The system now supports the ability to develop UI and API extensions that can be deployed as an integrated part of the OSB system. See more details in the following readme files within the GitHub repository:
+  https://github.com/NovoNordisk-OpenSource/openstudybuilder-solution/tree/main/clinical-mdr-api/exte…
+  https://github.com/NovoNordisk-OpenSource/openstudybuilder-solution/tree/main/studybuilder/src/exte…
+
+### Performance Improvements
+- Faster UI performance of Detailed SoA page.
+- Faster saving of audit trail information when creating/editing/deleting study selections, e.g. Study Activities, Visits, Epochs, Arms etc.
+- Faster page load when opening detail page of activity instance classes.
+- Faster loading and filtering of Library tables: Codelists, Activities.
+
+### End-to-End Automated test enhancements
+- Various code improvements to ensure easier maintenance and overall tests stability.
+- Library > Concepts > Activities > Activities: Defined and implemented tests for multiple instance allowed checkbox.
+- Studies > Define Study > Study Structure > Study Arms: Defined and implemented tests for study arm label.
+- Studies > Define Study > Study Activities > Study Activities: Updated tests to reflect change to placeholder handling actions.
+- Studies > Define Study > Study Activities > SoA > Detailed view: Defined and implemented tests for data exports.
+- Studies > Define Study > Study Activities > SoA > Protocol view: Defined and implemented tests for data exports.
+- Studies > Define Study > Study Interventions > Study Compounds: Defined and implemented tests for Study Compunds.
+- Studies > Define Study > Study Interventions > Study Compound Dosings: Defined and implemented tests for Study Compunds Dosings.
+- Studies > Study List > Copy Study: Updated tests to use custom test study with fully defined structured created via API.
+- Reports > Neodash: Defined and implemened tests for CRFs versioning.
+
+Solved Bugs
+============
+
+### API
+
+- Fix ODM Item to Term relationship
+
+### About Page
+
+- UI fetches cached (i.e. old) SBOMs by default
+
+### Library
+
+ **API** 
+
+- CT Terms order not retained
+- Fix Odm Vendor Extension versioning
+
+ **Concepts > Activity Instances > Overview Page** 
+
+- Broken layout when topic code is very long
+
+ **Data Collection Standards -> CRF Builder** 
+
+- When you provide a wrong value for an attribute of a vendor extension, then we you save the item is created but the error is displayed, creating duplicate
+
+ **Data Collection Standards > CRF Builder > CRF Items** 
+
+- Unable to assign term in Step 3
+
+ **Data Collection Standards > CRF Builder > Items** 
+
+- Broken pagination for Units table
+- CRF Item History page is not displaying the Number of Row
+
+### Studies
+
+ **Define Study -> Study Structure -> Disease Milestones** 
+
+- Error thrown when performing search
+
+ **Define Study > Study Activities** 
+
+- Cannot edit subgroup of activity placeholder
+- Issue with searching activity by name
+
+ **Define Study > Study Activities > Detailed SoA** 
+
+- Unable to reorder activities in 'patient reported outcome' sub-group
+
+ **Define Study > Study Structure > Study Visits** 
+
+- Unique visit number is not always unique
+
+
 ## V 2.4
 
 New Features and Enhancements

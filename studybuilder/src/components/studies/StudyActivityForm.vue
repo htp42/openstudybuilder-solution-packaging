@@ -435,6 +435,7 @@
               :items="flowchartGroups"
               item-title="sponsor_preferred_name"
               style="min-width: 250px"
+              autocomplete="off"
               class="mt-6 ml-2"
               rounded="lg"
               variant="outlined"
@@ -458,6 +459,7 @@
               data-cy="flowchart-group"
               :items="flowchartGroups"
               item-title="sponsor_preferred_name"
+              autocomplete="off"
               style="min-width: 250px"
               class="mt-2 mb-n4"
               rounded="lg"
@@ -1196,7 +1198,7 @@ function getActivities(filters, options) {
         for (const sa of selectedActivities.value) {
           activities.value[
             activities.value.indexOf(
-              activities.value.find((ac) => ac.item_key === sa.item_key)
+              activities.value.find((ac) => ac.uid === sa.uid)
             )
           ] = sa
         }

@@ -30,6 +30,8 @@ from clinical_mdr_api.repositories._utils import (
     CypherQueryBuilder,
     FilterDict,
     FilterOperator,
+    calculate_total_count_from_query_result,
+    validate_filter_by_dict,
     validate_filters_and_add_search_string,
 )
 from common.exceptions import BusinessLogicException, ValidationException
@@ -146,6 +148,62 @@ class CTCodelistAggregatedRepository:
         )
         return codelist_name_ar, codelist_attributes_ar, paired_codelists
 
+    def minimal_count_query(
+        self,
+        catalogue_name: str | None,
+        library: str | None,
+        package: str | None,
+        is_sponsor: bool,
+        filter_by: dict[str, dict[str, Any]] | None,
+        term_filter: dict[str, str | list[Any]] | None,
+    ) -> tuple[str | None, dict[str, Any]]:
+
+        # if library_name is included in the filters, with a single value,
+        # remove it and instead use the library parameter
+        if filter_by and "library_name" in filter_by and not library:
+            library_filter: list[str] = filter_by["library_name"]["v"]
+            if len(library_filter) == 1 and library_filter[0] in ("CDISC", "Sponsor"):
+                library = library_filter[0]
+                del filter_by["library_name"]
+
+        filter_by = validate_filter_by_dict(filter_by)
+        # if filters are provided, no minimal query can be made
+        if filter_by is not None and len(filter_by) > 0:
+            return None, {}
+        # if term filters are provided, no minimal query can be made
+        if term_filter is not None and len(term_filter) > 0:
+            return None, {}
+
+        where_clauses = []
+        params = {}
+        if catalogue_name:
+            where_clauses.append(
+                "(codelist_root)<-[:HAS_CODELIST]-(:CTCatalogue {name: $catalogue_name})"
+            )
+            params["catalogue_name"] = catalogue_name
+        if library:
+            where_clauses.append(
+                "(:Library {name: $library})-[:CONTAINS_CODELIST]->(codelist_root)"
+            )
+            params["library"] = library
+        if package:
+            where_clauses.append(
+                """
+                (:CTPackage {name: $package})-[:CONTAINS_CODELIST]->(:CTPackageCodelist)-[:CONTAINS_ATTRIBUTES]->
+                (:CTCodelistAttributesValue)<-[:HAS_VERSION]-(:CTCodelistAttributesRoot)<-[:HAS_ATTRIBUTES_ROOT]-(codelist_root)
+                """
+            )
+            params["package"] = package
+        if is_sponsor:
+            where_clauses.append(
+                "(:Library {name: 'Sponsor'})-[:CONTAINS_CODELIST]->(codelist_root)"
+            )
+        query = "MATCH (codelist_root:CTCodelistRoot)"
+        if where_clauses:
+            query += " WHERE " + " AND ".join(where_clauses)
+        query += " RETURN count(DISTINCT codelist_root) AS count"
+        return query, params
+
     def find_all_aggregated_result(
         self,
         catalogue_name: str | None = None,
@@ -204,6 +262,16 @@ class CTCodelistAggregatedRepository:
             self.sponsor_alias_clause if is_sponsor else self.generic_alias_clause
         )
 
+        minimal_count_query, minimal_count_params = self.minimal_count_query(
+            catalogue_name=catalogue_name,
+            library=library,
+            package=package,
+            is_sponsor=is_sponsor,
+            filter_by=filter_by,
+            term_filter=term_filter,
+        )
+        filtering_active = minimal_count_query is None
+
         query = CypherQueryBuilder(
             match_clause=match_clause,
             alias_clause=alias_clause,
@@ -215,6 +283,7 @@ class CTCodelistAggregatedRepository:
             total_count=total_count,
             wildcard_properties_list=list_codelist_wildcard_properties(),
             format_filter_sort_keys=format_codelist_filter_sort_keys,
+            one_element_extra=filtering_active,
         )
 
         query.parameters.update(filter_query_parameters)
@@ -231,13 +300,20 @@ class CTCodelistAggregatedRepository:
                 )
             )
 
-        total = 0
-        if total_count:
+        total = calculate_total_count_from_query_result(
+            len(codelists_ars),
+            page_number,
+            page_size,
+            total_count,
+            extra_requested=filtering_active,
+        )
+        if 0 < page_size < len(codelists_ars):
+            codelists_ars = codelists_ars[:page_size]
+        if total is None:
             count_result, _ = db.cypher_query(
-                query=query.count_query, params=query.parameters
+                query=minimal_count_query, params=minimal_count_params
             )
-            if len(count_result) > 0:
-                total = count_result[0][0]
+            total = count_result[0][0] if len(count_result) > 0 else 0
 
         return codelists_ars, total
 
@@ -574,6 +650,7 @@ class CTCodelistAggregatedRepository:
             ct_term_root.uid AS term_uid,
             ct_cl_term.submission_value AS submission_value,
             ht.order AS order,
+            ht.ordinal AS ordinal,
             ht.start_date AS start_date,
             ht.end_date AS end_date,
             tav.definition AS definition,
@@ -629,13 +706,14 @@ class CTCodelistAggregatedRepository:
                 term_dictionary[attribute_name] = term_property
             codelist_term_ars.append(CTCodelistTermAR.from_result_dict(term_dictionary))
 
-        total = 0
-        if total_count:
+        total = calculate_total_count_from_query_result(
+            len(codelist_term_ars), page_number, page_size, total_count
+        )
+        if total is None:
             count_result, _ = db.cypher_query(
                 query=query.count_query, params=query.parameters
             )
-            if len(count_result) > 0:
-                total = count_result[0][0]
+            total = count_result[0][0] if len(count_result) > 0 else 0
 
         return codelist_term_ars, total
 
@@ -744,6 +822,7 @@ class CTCodelistAggregatedRepository:
             ct_term_root.uid AS term_uid,
             ct_cl_term.submission_value AS submission_value,
             ht.order AS order,
+            ht.ordinal AS ordinal,
             ht.start_date AS start_date,
             ht.end_date AS end_date,
             tav.definition AS definition,

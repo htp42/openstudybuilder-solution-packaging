@@ -21,14 +21,14 @@
       <v-menu rounded location="bottom">
         <template #activator="{ props }">
           <v-btn
-            size="small"
             color="nnGreen1"
-            class="ml-2 text-white"
+            class="ml-2 text-white expandHoverBtn"
             v-bind="props"
-            :title="$t('DataTableExportButton.export')"
-            icon="mdi-download-outline"
             :loading="soaContentLoadingStore.loading"
-          />
+          >
+            <v-icon left>mdi-download-outline</v-icon>
+            <span class="label">{{ $t('DataTableExportButton.export') }}</span>
+          </v-btn>
         </template>
         <v-list>
           <v-list-item link @click="downloadCSV">

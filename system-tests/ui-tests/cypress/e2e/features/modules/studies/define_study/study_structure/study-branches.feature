@@ -7,10 +7,11 @@ Feature: Studies - Define Study - Study Structure - Manually Defined Study Branc
 
     Background: User is logged in
         Given The user is logged in
-        And The study for testing manually defined study structure is selected
+        When Get study 'CDISC DEV-9878' uid
+        And Select study with uid saved in previous step
         And [API] Uid of study type 'Investigational Arm' is fetched
-        And A study with Study Arms has been selected
-        And The study 'branches' page is opened for that study
+        And [API] The Study Arm exists within selected study
+        Then The page 'study_structure/branches' is opened for selected study
         And User waits for table to load
 
     @smoke_test
@@ -24,8 +25,11 @@ Feature: Studies - Define Study - Study Structure - Manually Defined Study Branc
     Scenario: [Table][Options] User must be able to see the Study Branches table with following options
         Then A table is visible with following options
             | options                                                         |
-            | Columns                                                         |
-            | Add select boxes to table to allow selection of rows for export |
+            | Select columns                                                  |
+            | Export                                                          |
+            | Select rows                                                     |
+            | Search                                                          |
+            | Show version history                                            |
 
     @smoke_test
     Scenario: [Table][Columns][Names] User must be able to see the Study Branches table with following columns
@@ -147,19 +151,27 @@ Feature: Studies - Define Study - Study Structure - Manually Defined Study Branc
         Then The message 'This field must not exceed 20 characters' is displayed
 
     Scenario: [Export][CSV] User must be able to export the data in CSV format
-        And The user exports the data in 'CSV' format
+        When User clicks table export button
+        And User selects 'CSV' format to export the table content
+        And Action is confirmed by clicking continue
         Then The study specific 'StudyBranches' file is downloaded in 'csv' format
 
     Scenario: [Export][Json] User must be able to export the data in JSON format
-        And The user exports the data in 'JSON' format
+        When User clicks table export button
+        And User selects 'JSON' format to export the table content
+        And Action is confirmed by clicking continue
         Then The study specific 'StudyBranches' file is downloaded in 'json' format
 
     Scenario: [Export][Xml] User must be able to export the data in XML format
-        And The user exports the data in 'XML' format
+        When User clicks table export button
+        And User selects 'XML' format to export the table content
+        And Action is confirmed by clicking continue
         Then The study specific 'StudyBranches' file is downloaded in 'xml' format
 
     Scenario: [Export][Excel] User must be able to export the data in EXCEL format
-        And The user exports the data in 'EXCEL' format
+        When User clicks table export button
+        And User selects 'EXCEL' format to export the table content
+        And Action is confirmed by clicking continue
         Then The study specific 'StudyBranches' file is downloaded in 'xlsx' format
 
     @manual_test
