@@ -44,13 +44,12 @@ jobs:
       - name: Add upstream remote
         run: |
           git remote add upstream https://github.com/${{ env.UPSTREAM_REPO }}.git || true
-          git fetch upstream --tags
 
       - name: Check for new tags
         id: check-tags
         run: |
-          # Get all version tags from upstream (format: v*.*.*)
-          UPSTREAM_TAGS=$(git tag -l 'v*.*.*' --sort=-v:refname)
+          # Get all version tags from upstream (format: v*.*.*) without creating local refs
+          UPSTREAM_TAGS=$(git ls-remote --tags upstream 'refs/tags/v*.*.*' | awk '{print $2}' | sed 's|refs/tags/||' | sort -V -r)
 
           # If a specific tag was requested via workflow_dispatch
           if [ -n "${{ github.event.inputs.tag }}" ]; then
@@ -99,6 +98,9 @@ jobs:
           TAG="${{ steps.check-tags.outputs.new_tag }}"
 
           echo "Merging upstream tag ${TAG} into main..."
+
+          # Fetch only this specific tag (avoids polluting local refs with other upstream tags)
+          git fetch upstream "refs/tags/${TAG}:refs/tags/${TAG}"
 
           # Make sure we're on main
           git checkout main
