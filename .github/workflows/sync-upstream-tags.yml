@@ -112,7 +112,7 @@ jobs:
 
           # Push updated main branch and the tag
           git push origin main
-          git push origin "refs/tags/${TAG}" --force
+          git push origin "+refs/tags/${TAG}:refs/tags/${TAG}"
 
           echo "Successfully merged upstream ${TAG} into main and tagged"
 
