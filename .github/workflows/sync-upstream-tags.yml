@@ -99,15 +99,28 @@ jobs:
 
           echo "Merging upstream tag ${TAG} into main..."
 
-          # Fetch only this specific tag (avoids polluting local refs with other upstream tags)
+          # Fetch the specific tag
           git fetch upstream "refs/tags/${TAG}:refs/tags/${TAG}"
+
+          # Also fetch upstream main to capture any PR merge commits that include the tag
+          git fetch upstream main
 
           # Make sure we're on main
           git checkout main
 
-          # Merge the upstream tag into main (preserving our custom changes)
-          # This combines upstream code with our fork-specific files
-          git merge "${TAG}" --no-edit -m "Merge upstream ${TAG} into main"
+          # If the tag has been merged into upstream/main (via a PR), merge upstream/main
+          # so we include the PR merge commit too. Otherwise, merge the tag directly.
+          UPSTREAM_MAIN=$(git rev-parse FETCH_HEAD)
+          if git merge-base --is-ancestor "${TAG}" "${UPSTREAM_MAIN}"; then
+            echo "Tag ${TAG} is already merged into upstream/main — merging upstream/main to include PR merge commit"
+            MERGE_TARGET="${UPSTREAM_MAIN}"
+          else
+            echo "Tag ${TAG} is not yet in upstream/main — merging tag directly"
+            MERGE_TARGET="${TAG}"
+          fi
+
+          # Merge the upstream changes into main (preserving our custom changes)
+          git merge "${MERGE_TARGET}" --no-edit -m "Merge upstream ${TAG} into main"
 
           # Create a fork-specific tag on the merged result
           git tag -f "${TAG}" HEAD
