@@ -96,7 +96,7 @@ services:
       dockerfile: Dockerfile
       args:
         TARGET: ${BUILD_TARGET:-dev}
-    image: ${API_IMAGE:-}
+    image: ${EXTENSIONSAPI_IMAGE:-htp42/openstudybuilder:extensionsapi-${VERSION:-latest}}
     depends_on:
       database:
         condition: service_healthy
