@@ -75,7 +75,7 @@ jobs:
         id: matrix
         run: |
           # Define all services
-          ALL_SERVICES='["database", "api", "consumerapi", "frontend", "documentation", "neodash"]'
+          ALL_SERVICES='["database", "api", "consumerapi", "extensionsapi", "frontend", "documentation", "neodash"]'
 
           # Get excluded images
           EXCLUDE="${{ github.event.inputs.exclude_images }}"
