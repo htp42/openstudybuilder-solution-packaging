@@ -785,34 +785,6 @@ class StudySelectionActivityInstanceRepository(
         origin_type_root: CTTermRoot | None = nodes.get("origin_type_root")
         origin_source_root: CTTermRoot | None = nodes.get("origin_source_root")
 
-        # Validate that reviewed instances cannot have is_important or baseline visits changed
-        if last_study_selection_node and last_study_selection_node.is_reviewed:
-            # Check if is_important is being changed
-            is_important_changed = (
-                last_study_selection_node.is_important != selection.is_important
-            )
-
-            # Check if baseline visits are being changed
-            previous_baseline_uids = {
-                visit.uid for visit in last_study_selection_node.has_baseline.all()
-            }
-            new_baseline_uids = {
-                visit["uid"]
-                for visit in (selection.study_activity_instance_baseline_visits or [])
-            }
-            baseline_visits_changed = previous_baseline_uids != new_baseline_uids
-
-            # Raise exception if either field is being changed on a reviewed instance
-            BusinessLogicException.raise_if(
-                is_important_changed,
-                msg=f"Cannot modify 'is_important' property on a reviewed StudyActivityInstance with UID '{selection.study_selection_uid}'.",
-            )
-
-            BusinessLogicException.raise_if(
-                baseline_visits_changed,
-                msg=f"Cannot modify baseline visits on a reviewed StudyActivityInstance with UID '{selection.study_selection_uid}'.",
-            )
-
         # Create new activity selection
         study_activity_instance_selection_node = StudyActivityInstance(
             uid=selection.study_selection_uid,

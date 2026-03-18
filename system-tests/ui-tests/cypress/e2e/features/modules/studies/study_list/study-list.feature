@@ -34,7 +34,7 @@ Feature: Studies - Study List - Study List
     Scenario: [Table][Columns][Visibility] User must be able to use column selection option
         Given The '/studies/select_or_add_study/active' page is opened
         When The first column is selected from Select Columns option for table with actions
-        Then The table contain only selected column
+        Then The table contain only selected column and actions column
 
     Scenario Outline: [Table][Filtering] User must be able to filter the table by text fields
         Given The '/studies/select_or_add_study/active' page is opened

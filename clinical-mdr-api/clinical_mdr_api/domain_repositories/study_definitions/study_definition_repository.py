@@ -811,44 +811,6 @@ return *
         # and we are done
         return GenericFilteringReturn(items=studies, total=snapshots.total)
 
-    def find_study_snapshot_history(
-        self,
-        study_uid: str,
-        sort_by: dict[str, bool] | None = None,
-        page_number: int = 1,
-        page_size: int = 0,
-        filter_by: dict[str, dict[str, Any]] | None = None,
-        filter_operator: FilterOperator = FilterOperator.AND,
-        total_count: bool = False,
-    ) -> GenericFilteringReturn[StudyDefinitionAR]:
-        study_snapshots = self._retrieve_study_snapshot_history(
-            study_uid=study_uid,
-            sort_by=sort_by,
-            page_number=page_number,
-            page_size=page_size,
-            filter_by=filter_by,
-            filter_operator=filter_operator,
-            total_count=total_count,
-        )
-
-        studies: list[StudyDefinitionAR] = [
-            StudyDefinitionAR.from_snapshot(s) for s in study_snapshots.items
-        ]
-
-        return GenericFilteringReturn(items=studies, total=study_snapshots.total)
-
-    def _retrieve_study_snapshot_history(
-        self,
-        study_uid: str,
-        sort_by: dict[str, bool] | None = None,
-        page_number: int = 1,
-        page_size: int = 0,
-        filter_by: dict[str, dict[str, Any]] | None = None,
-        filter_operator: FilterOperator = FilterOperator.AND,
-        total_count: bool = False,
-    ) -> GenericFilteringReturn[StudyDefinitionSnapshot]:
-        raise NotImplementedError
-
     def get_occupied_study_subpart_ids(
         self, study_parent_part_uid: str, subpart_uid: str | None = None
     ):

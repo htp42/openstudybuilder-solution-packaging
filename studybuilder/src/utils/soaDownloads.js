@@ -56,9 +56,7 @@ async function excelDownload(layout) {
 }
 
 function download(response, type) {
-  const filename =
-    studiesGeneralStore.selectedStudy.current_metadata.identification_metadata
-      .study_id + type
+  const filename = studiesGeneralStore.studyId + type
   exportLoader.downloadFile(
     response.data,
     response.headers['content-type'],

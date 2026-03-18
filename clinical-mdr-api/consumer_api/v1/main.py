@@ -94,7 +94,11 @@ def get_study_visits(
         int, PAGE_NUMBER_QUERY
     ] = settings.default_page_number_consumer_api,
     study_version_number: Annotated[
-        str | None, Query(description="Study Version Number", example="2.1")
+        str | None,
+        Query(
+            description="Study Version Number",
+            openapi_examples={"2.1": {"value": "2.1"}},
+        ),
     ] = None,
 ) -> PaginatedResponseWithStudyVersion[models.StudyVisit]:
     """
@@ -162,7 +166,11 @@ def get_study_activities(
         int, PAGE_NUMBER_QUERY
     ] = settings.default_page_number_consumer_api,
     study_version_number: Annotated[
-        str | None, Query(description="Study Version Number", example="2.1")
+        str | None,
+        Query(
+            description="Study Version Number",
+            openapi_examples={"2.1": {"value": "2.1"}},
+        ),
     ] = None,
 ) -> PaginatedResponseWithStudyVersion[models.StudyActivity]:
     """
@@ -224,7 +232,11 @@ def get_study_activity_instances(
         int, PAGE_NUMBER_QUERY
     ] = settings.default_page_number_consumer_api,
     study_version_number: Annotated[
-        str | None, Query(description="Study Version Number", example="2.1")
+        str | None,
+        Query(
+            description="Study Version Number",
+            openapi_examples={"2.1": {"value": "2.1"}},
+        ),
     ] = None,
 ) -> PaginatedResponseWithStudyVersion[models.StudyActivityInstance]:
     """
@@ -286,7 +298,11 @@ def get_study_detailed_soa(
         int, PAGE_NUMBER_QUERY
     ] = settings.default_page_number_consumer_api,
     study_version_number: Annotated[
-        str | None, Query(description="Study Version Number", example="2.1")
+        str | None,
+        Query(
+            description="Study Version Number",
+            openapi_examples={"2.1": {"value": "2.1"}},
+        ),
     ] = None,
 ) -> PaginatedResponseWithStudyVersion[models.StudyDetailedSoA]:
     """
@@ -349,7 +365,11 @@ def get_study_operational_soa(
         int, PAGE_NUMBER_QUERY
     ] = settings.default_page_number_consumer_api,
     study_version_number: Annotated[
-        str | None, Query(description="Study Version Number", example="2.1")
+        str | None,
+        Query(
+            description="Study Version Number",
+            openapi_examples={"2.1": {"value": "2.1"}},
+        ),
     ] = None,
 ) -> PaginatedResponseWithStudyVersion[models.StudyOperationalSoA]:
     """
@@ -645,3 +665,156 @@ def get_studies_audit_trail(
         csv_output += "\n"
 
     return Response(content=csv_output, media_type="text/csv")
+
+
+# GET endpoint to retrieve a list of codelists
+@router.get(
+    "/library/ct/codelists",
+    tags=["[V1] Library"],
+    dependencies=[security, rbac.LIBRARY_READ],
+    status_code=200,
+)
+def get_codelists(
+    request: Request,
+    page_size: Annotated[int, PAGE_SIZE_QUERY] = settings.page_size_100,
+    page_number: Annotated[
+        int, PAGE_NUMBER_QUERY
+    ] = settings.default_page_number_consumer_api,
+    name_status: models.LibraryItemStatus | None = models.LibraryItemStatus.FINAL,
+    attributes_status: models.LibraryItemStatus | None = models.LibraryItemStatus.FINAL,
+) -> PaginatedResponse[models.Codelist]:
+    """
+    Returns a paginated list of CT codelists, sorted by ascending name.
+
+    Codelists can be filtered by `name_status` and `attributes_status` (_Final, Draft, Retired_). Both default to _Final_.
+    """
+    codelists = DB.get_codelists(
+        page_size=page_size,
+        page_number=page_number,
+        name_status=name_status,
+        attributes_status=attributes_status,
+    )
+
+    return PaginatedResponse.from_input(
+        request=request,
+        sort_by=None,
+        sort_order=None,
+        page_size=page_size,
+        page_number=page_number,
+        items=[models.Codelist.from_input(codelist) for codelist in codelists],
+        query_param_names=["name_status", "attributes_status"],
+    )
+
+
+# GET endpoint /library/ct/codelist-terms?codelist_submission_value=XYZ that returns list of codelist terms for the specified codelist submission value
+@router.get(
+    "/library/ct/codelist-terms",
+    tags=["[V1] Library"],
+    dependencies=[security, rbac.LIBRARY_READ],
+    status_code=200,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Item not found",
+        },
+    },
+)
+def get_codelist_terms(
+    request: Request,
+    codelist_submission_value: Annotated[
+        str,
+        Query(
+            description="Codelist submission value to filter by, for example `TIMELB`, `TIMEREF`, `VISCNTMD`, `FLWCRTGRP`, `EPOCHSTP` etc."
+        ),
+    ],
+    page_size: Annotated[int, PAGE_SIZE_QUERY] = settings.page_size_100,
+    page_number: Annotated[
+        int, PAGE_NUMBER_QUERY
+    ] = settings.default_page_number_consumer_api,
+    name_status: models.LibraryItemStatus | None = models.LibraryItemStatus.FINAL,
+    attributes_status: models.LibraryItemStatus | None = models.LibraryItemStatus.FINAL,
+) -> PaginatedResponse[models.CodelistTerm]:
+    """
+    Returns a paginated list of CT codelist terms for the specified codelist submission value,
+    sorted by ascending sponsor preferred name.
+
+    Terms can be filtered by `name_status` and `attributes_status` (_Final, Draft, Retired_). Both default to _Final_.
+    """
+    codelist_terms = DB.get_codelist_terms(
+        codelist_submission_value=codelist_submission_value,
+        page_size=page_size,
+        page_number=page_number,
+        name_status=name_status,
+        attributes_status=attributes_status,
+    )
+
+    return PaginatedResponse.from_input(
+        request=request,
+        sort_by=None,
+        sort_order=None,
+        page_size=page_size,
+        page_number=page_number,
+        items=[
+            models.CodelistTerm.from_input(codelist_term)
+            for codelist_term in codelist_terms
+        ],
+        query_param_names=[
+            "codelist_submission_value",
+            "name_status",
+            "attributes_status",
+        ],
+    )
+
+
+# GET endpoint /library/unit-definitions?subset=XYZ that returns list of unit definitions for the specified subset
+@router.get(
+    "/library/unit-definitions",
+    tags=["[V1] Library"],
+    dependencies=[security, rbac.LIBRARY_READ],
+    status_code=200,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Item not found",
+        },
+    },
+)
+def get_unit_definitions(
+    request: Request,
+    subset: Annotated[
+        str | None,
+        Query(
+            description="Unit definition subset to filter by, for example `Study Time`. If omitted, all unit definitions are returned."
+        ),
+    ] = None,
+    page_size: Annotated[int, PAGE_SIZE_QUERY] = settings.page_size_100,
+    page_number: Annotated[
+        int, PAGE_NUMBER_QUERY
+    ] = settings.default_page_number_consumer_api,
+    status: models.LibraryItemStatus | None = models.LibraryItemStatus.FINAL,
+) -> PaginatedResponse[models.UnitDefinition]:
+    """
+    Returns a paginated list of unit definitions, sorted by ascending name.
+
+    Unit definitions can optionally be filtered by `subset` name (e.g. `Study Time`).
+    Unit definitions can be filtered by `status` (_Final, Draft, Retired_). Defaults to _Final_.
+    """
+    unit_definitions = DB.get_unit_definitions(
+        subset=subset,
+        page_size=page_size,
+        page_number=page_number,
+        status=status,
+    )
+
+    return PaginatedResponse.from_input(
+        request=request,
+        sort_by=None,
+        sort_order=None,
+        page_size=page_size,
+        page_number=page_number,
+        items=[
+            models.UnitDefinition.from_input(unit_definition)
+            for unit_definition in unit_definitions
+        ],
+        query_param_names=["subset", "status"],
+    )

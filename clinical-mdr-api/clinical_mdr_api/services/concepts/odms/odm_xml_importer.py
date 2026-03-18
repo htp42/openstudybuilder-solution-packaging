@@ -172,12 +172,18 @@ class OdmXmlImporterService:
         "CompletionInstructions",
     ]
 
-    def __init__(self, xml_file: UploadFile, mapper_file: UploadFile | None):
+    def __init__(
+        self,
+        xml_file: UploadFile,
+        mapper_file: UploadFile | None,
+        library_name: str = settings.sponsor_library_name,
+    ):
         exceptions.BusinessLogicException.raise_if(
             xml_file.content_type not in ["application/xml", "text/xml"],
             msg="Only XML format is supported.",
         )
 
+        self.library_name = library_name
         self._repos = MetaRepository()
         self.odm_vendor_namespace_service = OdmVendorNamespaceService()
         self.odm_vendor_attribute_service = OdmVendorAttributeService()
@@ -1351,7 +1357,7 @@ class OdmXmlImporterService:
                         sponsor_preferred_name=codelist_name,
                         template_parameter=False,
                         terms=[],
-                        library_name="Sponsor",
+                        library_name=self.library_name,
                     ),
                     approve=True,
                 )
@@ -1397,7 +1403,7 @@ class OdmXmlImporterService:
                                     definition=coded_value_value,
                                     sponsor_preferred_name=decode_value,
                                     sponsor_preferred_name_sentence_case=decode_value.lower(),
-                                    library_name="Sponsor",
+                                    library_name=self.library_name,
                                 ),
                                 approve=True,
                             )

@@ -70,8 +70,7 @@ Feature: Studies - Define Study - Study Criteria - Run-in Criteria
         Given The test study '/selection_criteria/Run-in%20Criteria' page is opened
         When User clicks add study criteria button
         And User selects to create criteria from study
-        And Form continue button is clicked
-        And Study with 'CDISC DEV-0' id is selected to copy criteria from
+        And User selects select study 'CDISC DEV-0'
         And Form continue button is clicked
         And The 'Run-in' criteria from test study is copied
         And Form save button is clicked

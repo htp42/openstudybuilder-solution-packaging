@@ -28,8 +28,8 @@ Then('A table is visible with following headers', (headers) => {
 
 Then('A table is visible with following options', (dataTable) => {
     dataTable.rows().forEach(option => {
-        const locator = option == 'Search' || option == 'Select rows' ? '.v-card-title label' : '.v-card-title .label'
-        cy.contains(locator, option[0]).should('exist')
+        const locator = option[0] == 'History' ? '.mdi-history' : `[data-cy="${option[0]}"]`
+        cy.get(locator).should('be.visible')
     })
 })
 

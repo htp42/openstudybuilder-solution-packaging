@@ -4,7 +4,8 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-requests = "=2.32.4"
+requests = "=2.32.5"
+urllib3 = ">=2.6.0"
 neo4j = "~=4.4"
 
 [dev-packages]

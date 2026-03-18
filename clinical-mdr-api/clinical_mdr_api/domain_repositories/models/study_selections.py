@@ -802,3 +802,33 @@ class StudySourceVariable(StudySelection):
         cardinality=ZeroOrMore,
         model=ClinicalMdrRel,
     )
+
+
+class StudyVersion(StudySelection):
+    other_reason_for_locking = StringProperty()
+    other_reason_for_unlocking = StringProperty()
+
+    has_reason_for_lock = RelationshipTo(
+        CTTermContext,
+        "HAS_REASON_FOR_LOCK",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrOne,
+    )
+    has_reason_for_unlock = RelationshipTo(
+        CTTermContext,
+        "HAS_REASON_FOR_UNLOCK",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrOne,
+    )
+    study_value = RelationshipFrom(
+        STUDY_VALUE_CLASS_NAME, "HAS_STUDY_VERSION", model=ClinicalMdrRel
+    )
+
+
+class StudyDefinitionDocument(StudySelection):
+    protocol_header_major_version = IntegerProperty()
+    protocol_header_minor_version = IntegerProperty()
+
+    study_value = RelationshipFrom(
+        STUDY_VALUE_CLASS_NAME, "HAS_STUDY_DEFINITION_DOCUMENT", model=ClinicalMdrRel
+    )

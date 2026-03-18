@@ -66,7 +66,10 @@ from clinical_mdr_api.services.syntax_templates.footnote_templates import (
     FootnoteTemplateService,
 )
 from clinical_mdr_api.services.utils.table_f import TableWithFootnotes
-from clinical_mdr_api.tests.integration.utils.utils import LIBRARY_NAME, TestUtils
+from clinical_mdr_api.tests.integration.utils.utils import (
+    SPONSOR_LIBRARY_NAME,
+    TestUtils,
+)
 from common import exceptions
 from common.config import settings
 
@@ -404,7 +407,7 @@ class SoATestData:
     NUM_OPERATIONAL_SOA_CHECKMARKS = (
         15  # Visits are no longer grouped in operational SoA
     )
-    NUM_OPERATIONAL_SOA_EXPORT_ROWS = 15  # study-activity-instances ⋈ study-visits (one row per instance per visit the activity is scheduled to)
+    NUM_OPERATIONAL_SOA_EXPORT_ROWS = 17  # study-activity-instances ⋈ study-visits, plus one row per unscheduled instance
 
     FOOTNOTES = {
         "Dilution of hyperreal in ion-exchanged water applied orally": [],
@@ -491,6 +494,8 @@ class SoATestData:
         self.activity_instances = {}
         self.study_activities: dict[str, StudySelectionActivity] = {}
         self.study_activity_schedules: list[StudyActivitySchedule] = []
+        self.reason_for_lock_term_uid: str
+        self.reason_for_unlock_term_uid: str
 
         self.study = TestUtils.create_study(
             number=TestUtils.random_str(4),
@@ -502,13 +507,14 @@ class SoATestData:
         TestUtils.set_study_standard_version(
             study_uid=self.study.uid, catalogue=settings.sdtm_ct_catalogue_name
         )
-
         # Study needs a title to be able to lock
         TestUtils.set_study_title(self.study.uid)
 
         self._unit_definitions = {
             u.name: u
-            for u in UnitDefinitionService().get_all(library_name=LIBRARY_NAME).items
+            for u in UnitDefinitionService()
+            .get_all(library_name=SPONSOR_LIBRARY_NAME)
+            .items
         }
 
         self._epoch_terms = self.create_epoch_terms()

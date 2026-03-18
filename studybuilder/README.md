@@ -66,6 +66,20 @@ See [README.md of the system-tests repository.](https://dev.azure.com/orgremoved
 yarn lint
 ```
 
+### Generate API field translation strings
+To extract field paths and human-readable labels from an OpenAPI specification for use in translation files:
+```
+node scripts/getApiFields.js
+```
+
+This script will:
+1. Prompt you for the path to an OpenAPI JSON file (defaults to `clinical-mdr-api/openapi.json`)
+2. Parse the OpenAPI specification and extract field definitions
+3. Generate human-readable translation strings for API field names
+4. Output the results to `output.txt`
+
+The generated strings can be used to create frontend translations for API field names.
+
 ### Customize configuration
 See [Configuration Reference](https://cli.vuejs.org/config/).
 

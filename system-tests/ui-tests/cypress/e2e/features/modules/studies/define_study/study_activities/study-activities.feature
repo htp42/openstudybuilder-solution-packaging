@@ -50,9 +50,11 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         And The user goes through selection from library form
         And Form save button is clicked
         And The test study '/activities/list' page is opened
+        And User intercepts available studies request
         When Study activity add button is clicked
+        And User waits for available studies request
         And Activity from studies is selected
-        And Study with id value 'CDISC DEV-9881' is selected
+        And User selects select study 'CDISC DEV-9881'
         And Form continue button is clicked
         And User selects first available activity
         And Form save button is clicked
@@ -80,10 +82,11 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         And The user goes through selection from library form
         And Form save button is clicked
         And The test study '/activities/list' page is opened
+        And User intercepts available studies request
         When Study activity add button is clicked
+        And User waits for available studies request
         And Activity from studies is selected
-        And Type study acronym value 'Empty study'
-        And Study with acronym value 'Empty study' is selected
+        And User selects select study 'Empty study'
         And Form continue button is clicked
         And User selects first available activity
         And Form save button is clicked
@@ -121,7 +124,7 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         And Activity placeholder is found
         When The 'Remove Activity' option is clicked from the three dot menu list
         And Action is confirmed by clicking continue
-        Then The Study Activity Placeholder is no longer available
+        Then The Study Activity Placeholder is not available
 
     Scenario: [Actions][Edit][version 0.1][Activity] User must be able to edit a Study Activity
         And [API] Study Activity is created and approved
@@ -218,7 +221,7 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         Then The Activity in Draft status is not found
 
     @unstable_disabled
-    Scenario: [Create][Negative case][Draft Group] User must not be able to add activity that has Draft group until it is approved
+    Scenario: [Create][Negative case][Draft Group] User must not be able to add activity that has Draft group
         Given The test study '/activities/list' page is opened
         And [API] Study Activity is created and group is drafted
         When Study activity add button is clicked
@@ -227,16 +230,9 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         And User search and select activity created via API
         And Form save button is clicked
         Then Warning that 'Draft' 'groups' can not be added to the study is displayed
-        And [API] Activity group is approved
-        When Study activity add button is clicked
-        And Activity from library is selected
-        And Form continue button is clicked
-        And User search and select activity created via API
-        And Form save button is clicked
-        Then The pop up displays 'Study activity added'
-        Then The Study Activity is found
+        And The form is not closed
         
-    Scenario: [Create][Negative case][Retired Group]  User must not be able to add activity that has Retired group until it is approved
+    Scenario: [Create][Negative case][Retired Group]  User must not be able to add activity that has Retired group
         Given The test study '/activities/list' page is opened
         And [API] Study Activity is created and group is inactivated
         When Study activity add button is clicked
@@ -245,19 +241,10 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         And User search and select activity created via API
         And Form save button is clicked
         Then Warning that 'Retired' 'groups' can not be added to the study is displayed
-        And Fullscreen wizard is closed by clicking cancel button
-        And Action is confirmed by clicking continue
-        And [API] Activity group is reactivated
-        When Study activity add button is clicked
-        And Activity from library is selected
-        And Form continue button is clicked
-        And User search and select activity created via API
-        And Form save button is clicked
-        Then The pop up displays 'Study activity added'
-        Then The Study Activity is found
+        And The form is not closed
 
-    @unstable_disabled    
-    Scenario: [Create][Negative case][Draft Subgroup] User must not be able to add activity that has Draft subgroup until it is approved
+    @unstable_disabled
+    Scenario: [Create][Negative case][Draft Subgroup] User must not be able to add activity that has Draft subgroup
         Given The test study '/activities/list' page is opened
         And [API] Study Activity is created and subgroup is drafted
         When Study activity add button is clicked
@@ -266,17 +253,9 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         And User search and select activity created via API
         And Form save button is clicked
         Then Warning that 'Draft' 'subgroups' can not be added to the study is displayed
-        And [API] Activity subgroup is approved
-        And User waits for 1 seconds
-        When Study activity add button is clicked
-        And Activity from library is selected
-        And Form continue button is clicked
-        And User search and select activity created via API
-        And Form save button is clicked
-        Then The pop up displays 'Study activity added'
-        Then The Study Activity is found
+        And The form is not closed
         
-    Scenario: [Create][Negative case][Retired Subgroup] User must not be able to add activity that has Retired subgroup until it is approved
+    Scenario: [Create][Negative case][Retired Subgroup] User must not be able to add activity that has Retired subgroup
         Given The test study '/activities/list' page is opened
         And [API] Study Activity is created and subgroup is inactivated
         When Study activity add button is clicked
@@ -285,17 +264,7 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         And User search and select activity created via API
         And Form save button is clicked
         Then Warning that 'Retired' 'subgroups' can not be added to the study is displayed
-        And Fullscreen wizard is closed by clicking cancel button
-        And Action is confirmed by clicking continue
-        And [API] Activity subgroup is reactivated
-        And User waits for 1 seconds
-        When Study activity add button is clicked
-        And Activity from library is selected
-        And Form continue button is clicked
-        And User search and select activity created via API
-        And Form save button is clicked
-        Then The pop up displays 'Study activity added'
-        Then The Study Activity is found
+        And The form is not closed
 
     Scenario: [Export][CSV] User must be able to export the data in CSV format
         Given The test study '/activities/list' page is opened
@@ -325,55 +294,48 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         And Action is confirmed by clicking continue
         Then The study specific 'StudyActivities' file is downloaded in 'xlsx' format
 
-    Scenario: User must be presented with 'red bell' when activity group has been updated
+    Scenario: [Red bell][Activity update] User must be presented with 'red bell' when activity group has been updated
         And [API] Study Activity is created and approved
         And [API] Get SoA Group 'BIOMARKERS' id
         And [API] Activity is added to the study
         And The test study '/activities/list' page is opened
         And The Study Activity is found
         And The red alert badge is not present
+        And [API] Activity name is fetched and assigned to variable
         And [API] Activity new version is created
-        And Activity name created via API is fetched
-        And Overview page for activity created via API is opened
-        And I click 'Edit' button 
-        When The activity group is updated for that study activity
-        And Form save button is clicked
+        And [API] Activity group in status Draft exists
+        And [API] Activity group is approved
+        And [API] Activity is updated
         And The test study '/activities/list' page is opened
         And The Study Activity is found
         Then The red alert badge is present
 
     @manual_test
-    Scenario: User must be presented with 'red bell' when activity subgroup has been updated
+    Scenario: [Red bell][Activity update] User must be presented with 'red bell' when activity subgroup has been updated
         Given [API] Study Activity is created and approved
         And [API] Get SoA Group 'BIOMARKERS' id
         And [API] Activity with two subgroups available is added to the study
         And The test study '/activities/list' page is opened
         And The Study Activity is found
         And The red alert badge is not present
+        And [API] Activity name is fetched and assigned to variable
         And [API] Activity new version is created
-        And Activity name created via API is fetched
-        And Overview page for activity created via API is opened
-        And I click 'Edit' button 
-        When The activity subgroup is updated for that study activity
-        And Form save button is clicked
+        And [API] Activity subgroup in status Draft exists
+        And [API] Activity subgroup is approved
+        And [API] Activity is updated
         And The test study '/activities/list' page is opened
         And The Study Activity is found
         Then The red alert badge is present
 
-    Scenario: User must be presented with 'red bell' when activity name has been updated
+    Scenario: [Red bell][Activity update] User must be presented with 'red bell' when activity name has been updated
         And [API] Study Activity is created and approved
         And [API] Get SoA Group 'BIOMARKERS' id
         And [API] Activity is added to the study
-        And Activity name created through API is found
         And The test study '/activities/list' page is opened
         And The Study Activity is found
         And The red alert badge is not present
         And [API] Activity new version is created
-        And Activity name created via API is fetched
-        And Overview page for activity created via API is opened
-        And I click 'Edit' button 
-        When The activity name is updated for that study activity
-        And Form save button is clicked
+        And [API] Activity is updated with new name
         And The test study '/activities/list' page is opened
         And The Study Activity is found
         Then The red alert badge is present
@@ -382,35 +344,27 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         And [API] Study Activity is created and approved
         And [API] Get SoA Group 'BIOMARKERS' id
         And [API] Activity is added to the study
-        And Activity name created through API is found
         And [API] Activity new version is created
-        And Activity name created via API is fetched
-        And Overview page for activity created via API is opened
-        And I click 'Edit' button 
-        When The activity name is updated for that study activity
-        And Form save button is clicked
+        And [API] Activity is updated with new name
         And The test study '/activities/list' page is opened
         And The Study Activity is found
+        When The 'Update activity version' option is clicked for flagged item
         And The user accepts the changes
         And The form is no longer available
-        And The Study Activity is found
-        Then The changes are applied in the study activity
-        Then The yellow alert badge is not present
-        Then The red alert badge is not present
+        And [API] Activity name is fetched and assigned to variable
+        Then Activity is searched for and found
+        And The yellow alert badge is not present
+        And The red alert badge is not present
 
     Scenario: User must be able to decline activity updates
         And [API] Study Activity is created and approved
         And [API] Get SoA Group 'BIOMARKERS' id
         And [API] Activity is added to the study
-        And Activity name created through API is found
         And [API] Activity new version is created
-        And Activity name created via API is fetched
-        And Overview page for activity created via API is opened
-        And I click 'Edit' button 
-        When The activity name is updated for that study activity
-        And Form save button is clicked
+        And [API] Activity is updated with new name
         And The test study '/activities/list' page is opened
         And The Study Activity is found
+        When The 'Update activity version' option is clicked for flagged item
         And The user declines the changes
         Then The yellow alert badge is present
 
@@ -418,21 +372,18 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         And [API] Study Activity is created and approved
         And [API] Get SoA Group 'BIOMARKERS' id
         And [API] Activity is added to the study
-        And Activity name created through API is found
         And [API] Activity new version is created
-        And Activity name created via API is fetched
-        And Overview page for activity created via API is opened
-        And I click 'Edit' button 
-        When The activity name is updated for that study activity
-        And Form save button is clicked
+        And [API] Activity is updated with new name
         And The test study '/activities/list' page is opened
         And The Study Activity is found
+        When The 'Update activity version' option is clicked for flagged item
         And The user declines the changes
         Then The yellow alert badge is present
-        When The user accepts the changes
+        When The 'Update activity version' option is clicked for flagged item
+        And The user accepts the changes
         And The form is no longer available
-        And The Study Activity is found
-        Then The changes are applied in the study activity
+        And [API] Activity name is fetched and assigned to variable
+        Then Activity is searched for and found
         Then The yellow alert badge is not present
         Then The red alert badge is not present
 
@@ -440,33 +391,26 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         And [API] Study Activity is created and approved
         And [API] Get SoA Group 'BIOMARKERS' id
         And [API] Activity is added to the study
-        And Activity name created through API is found
         And [API] Activity new version is created
-        And Activity name created via API is fetched
-        And Overview page for activity created via API is opened
-        And I click 'Edit' button 
-        When The activity name is updated for that study activity
-        And Form save button is clicked
+        And [API] Activity is updated with new name
         And The test study '/activities/list' page is opened
         When The user filters the table by red alert status
+        And User waits for the table
         Then The activities with red alert are present 
 
     Scenario: User must be able to filter by yellow alert status
         And [API] Study Activity is created and approved
         And [API] Get SoA Group 'BIOMARKERS' id
         And [API] Activity is added to the study
-        And Activity name created through API is found
         And [API] Activity new version is created
-        And Activity name created via API is fetched
-        And Overview page for activity created via API is opened
-        And I click 'Edit' button 
-        When The activity name is updated for that study activity
-        And Form save button is clicked
+        And [API] Activity is updated with new name
         And The test study '/activities/list' page is opened
         And The Study Activity is found
+        When The 'Update activity version' option is clicked for flagged item
         And The user declines the changes
         And The test study '/activities/list' page is opened
         When The user filters the table by yellow alert status
+        And User waits for the table
         Then The activities with yellow alert are present 
 
     @manual_test       
@@ -474,12 +418,8 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         And [API] Study Activity is created and approved
         And [API] Get SoA Group 'BIOMARKERS' id
         And [API] Activity is added to the study
-        And Activity name created through API is found
         And [API] Activity new version is created
-        And Activity name created via API is fetched
-        And Overview page for activity created via API is opened
-        And I click 'Edit' button 
-        When The activity name is updated for that study activity
+        And [API] Activity is updated with new name
         And Form save button is clicked
         And The test study '/activities/list' page is opened
         And The Study Activity is found
@@ -490,12 +430,11 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         And [API] Study Activity is created and approved
         And [API] Get SoA Group 'BIOMARKERS' id
         And [API] Activity is added to the study
+        And [API] Activity name is fetched and assigned to variable
         And [API] Activity new version is created
-        And Activity name created via API is fetched
-        And Overview page for activity created via API is opened
-        And I click 'Edit' button 
-        When The activity group is updated for that study activity
-        And Form save button is clicked
+        And [API] Activity group in status Draft exists
+        And [API] Activity group is approved
+        And [API] Activity is updated
         And The test study '/activities/list' page is opened
         And The Study Activity is found
         And The user opens bulk review changes window
@@ -506,12 +445,12 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         Given The study activity exists for selected study
         And The test study '/activities/list' page is opened
         When The activity has been updated
-        And The user opens changes review window for that activity
+        When The 'Update activity version' option is clicked for flagged item
         Then The icon indicates which activity subgroup is present in detailed soa
 
     @manual_test
     Scenario: User must be able to select group when previously linked group has been removed (multiple groups assigned)
-        And [API] Study Activity is created and approved
+        Given [API] Study Activity is created and approved
         And [API] Get SoA Group 'BIOMARKERS' id
         And [API] Activity is added to the study
         When The activity group is removed from that activity
@@ -521,11 +460,11 @@ Feature: Studies - Define Study - Study Activities - Study Activities
         Then The the changes are applied to the activity
 
     Scenario: User must be presented with 'Decline' option when activity status has changed to retired
-        And [API] Study Activity is created and approved
+        Given [API] Study Activity is created and approved
         And [API] Get SoA Group 'BIOMARKERS' id
         And [API] Activity is added to the study
-        When The activity has been retired
+        When [API] Activity is inactivated
         And The test study '/activities/list' page is opened
         And The Study Activity is found
-        And The user opens changes review window for that activity
-        And The 'Decline and keep' button is present
+        When The 'Update activity version' option is clicked for flagged item
+        Then The 'Decline and keep' button is present

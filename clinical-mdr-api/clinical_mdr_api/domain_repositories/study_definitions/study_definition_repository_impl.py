@@ -214,6 +214,20 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
         return released
 
     @classmethod
+    def _retrieve_locked_study_metadata_snapshot(
+        cls,
+        locked_study_value: StudyValue | None,
+        locked_relationship: VersionRelationship | None,
+    ) -> StudyDefinitionSnapshot.StudyMetadataSnapshot | None:
+        locked: StudyDefinitionSnapshot.StudyMetadataSnapshot | None = None
+        if locked_study_value and locked_relationship:
+            locked = cls._study_metadata_snapshot_from_study_value(locked_study_value)
+            locked = cls._assign_snapshot_ver_properties_from_ver_relationship(
+                snapshot=locked, ver_relationship=locked_relationship
+            )
+        return locked
+
+    @classmethod
     def _retrieve_locked_study_metadata_snapshots(
         cls, root: StudyRoot
     ) -> MutableSequence[StudyDefinitionSnapshot.StudyMetadataSnapshot]:
@@ -246,14 +260,12 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                 locked_value_node
             ):
                 if has_version_relationship_instance.status == StudyStatus.LOCKED.value:
-                    locked = cls._study_metadata_snapshot_from_study_value(
-                        locked_value_node
+                    locked = cls._retrieve_locked_study_metadata_snapshot(
+                        locked_study_value=locked_value_node,
+                        locked_relationship=has_version_relationship_instance,
                     )
-                    locked = cls._assign_snapshot_ver_properties_from_ver_relationship(
-                        snapshot=locked,
-                        ver_relationship=has_version_relationship_instance,
-                    )
-                    locked_metadata_snapshots.append(locked)
+                    if locked:
+                        locked_metadata_snapshots.append(locked)
 
         # now we have all locked metadata snapshot in locked_metadata_snapshots list. However in indeterminate order
         # and aggregate want them chronological. So we need to sort the list by version_timestamp
@@ -343,15 +355,27 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
 
             assert isinstance(study_value, StudyValue)
             specific_study_value = study_value
-            # To be updated to below if the HAS_VERSION status:draft relationship is removed
-            # specific_study_value_relationship = root.has_version.relationship(
-            #     specific_study_value
-            # )
-            specific_study_value_relationship = [
-                ith
+
+            specific_study_value_relationships = {
+                ith.status: ith
                 for ith in root.has_version.all_relationships(specific_study_value)
-                if ith.status == "RELEASED"
-            ][0]
+                if ith.version == study_value_version
+            }
+            if not set(specific_study_value_relationships.keys()) & {
+                StudyStatus.RELEASED.value,
+                StudyStatus.LOCKED.value,
+            }:
+                raise exceptions.NotFoundException(
+                    f"There is no Locked or Released version with version '{study_value_version}' for study with uid '{root.uid}'"
+                )
+            if StudyStatus.LOCKED.value in specific_study_value_relationships:
+                specific_study_value_relationship = specific_study_value_relationships[
+                    StudyStatus.LOCKED.value
+                ]
+            else:
+                specific_study_value_relationship = specific_study_value_relationships[
+                    StudyStatus.RELEASED.value
+                ]
 
         latest_value: StudyValue = root.latest_value.single()
         latest_value_relationship: VersionRelationship = root.latest_value.relationship(
@@ -387,10 +411,19 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
             latest_released_relationship=latest_released_relationship,
         )
 
-        specific_metadata_snapshot = cls._retrieve_released_study_metadata_snapshot(
-            latest_released_value=specific_study_value,
-            latest_released_relationship=specific_study_value_relationship,
-        )
+        if (
+            specific_study_value_relationship
+            and specific_study_value_relationship.status == StudyStatus.LOCKED.value
+        ):
+            specific_metadata_snapshot = cls._retrieve_locked_study_metadata_snapshot(
+                locked_study_value=specific_study_value,
+                locked_relationship=specific_study_value_relationship,
+            )
+        else:
+            specific_metadata_snapshot = cls._retrieve_released_study_metadata_snapshot(
+                latest_released_value=specific_study_value,
+                latest_released_relationship=specific_study_value_relationship,
+            )
 
         locked_metadata_snapshots = cls._retrieve_locked_study_metadata_snapshots(
             root=root
@@ -1924,6 +1957,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
         snapshot.version_number = (
             Decimal(ver_relationship.version) if ver_relationship.version else None
         )
+        snapshot.version_status = StudyStatus(ver_relationship.status)
         return snapshot
 
     @classmethod
@@ -2553,156 +2587,6 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
             total=total,
         )
 
-    def _retrieve_study_snapshot_history(
-        self,
-        study_uid: str,
-        sort_by: dict[str, bool] | None = None,
-        page_number: int = 1,
-        page_size: int = 0,
-        filter_by: dict[str, dict[str, Any]] | None = None,
-        filter_operator: FilterOperator = FilterOperator.AND,
-        total_count: bool = False,
-    ) -> GenericFilteringReturn[StudyDefinitionSnapshot]:
-        exceptions.ValidationException.raise_if(
-            self.check_if_study_is_deleted(study_uid=study_uid),
-            msg=f"Study with UID '{study_uid}' is deleted.",
-        )
-
-        # Specific filtering
-        filter_query_parameters = {"study_uid": study_uid}
-
-        match_clause = """MATCH (sr:StudyRoot {uid: $study_uid})-[has_version:HAS_VERSION]->(sv:StudyValue)
-        WITH *,
-        head([(sr)-[latest_draft:LATEST_DRAFT]->(sv) | latest_draft]) AS latest_draft
-        WHERE NOT EXISTS((sv)<-[:BEFORE]-(:Delete)) AND 
-        (has_version.status <> 'DRAFT' OR (latest_draft IS NOT NULL AND latest_draft.end_date IS NULL))"""
-        # Aliases clause
-        alias_clause = """
-                    sr, sv, has_version,
-                    head([(sv)<-[:HAS_STUDY_SUBPART]-(:StudyValue)<-[:LATEST]-(parent:StudyRoot) | parent.uid]) AS study_parent_part_uid,
-                    [(sv)-[:HAS_STUDY_SUBPART]->(:StudyValue)<-[:LATEST]-(sub:StudyRoot)
-                     | sub.uid] AS study_subpart_uids
-                    ORDER BY has_version.start_date DESC, has_version.status
-                    WITH
-                        sr.uid as uid,
-                        study_parent_part_uid,
-                        study_subpart_uids,
-                        has_version.status as study_status,
-                        {
-                            study_id: sv.study_id,
-                            study_number: sv.study_number,
-                            subpart_id: sv.subpart_id,
-                            study_acronym: sv.study_acronym,
-                            study_subpart_acronym: sv.study_subpart_acronym,
-                            study_id_prefix: sv.study_id_prefix,
-                            description: sv.description,
-                            project_number: head([(sv)-[:HAS_PROJECT]->(:StudyProjectField)<-[:HAS_FIELD]-(p:Project) | p.project_number]),
-                            study_title: head([(sv)-[:HAS_TEXT_FIELD]->(t:StudyTextField) WHERE t.field_name = "study_title" | t.value]),
-                            study_short_title: head([(sv)-[:HAS_TEXT_FIELD]->(st:StudyTextField) WHERE st.field_name = "study_short_title" | st.value]),
-                            version_timestamp: has_version.start_date,
-                            version_author_id: has_version.author_id,
-                            version_description: has_version.change_description,
-                            version_number: has_version.version
-                            
-                        } AS current_metadata,
-                        CASE WHEN has_version.status="LOCKED" THEN
-                        {
-                            locked_metadata_array: [
-                                locked_version IN collect({
-                                    study_id: sv.study_id,
-                                    study_number: sv.study_number,
-                                    subpart_id: sv.subpart_id,
-                                    study_acronym: sv.study_acronym,
-                                    study_subpart_acronym: sv.study_subpart_acronym,
-                                    study_id_prefix: sv.study_id_prefix,
-                                    description: sv.description,
-                                    project_number: head([(sv)-[:HAS_PROJECT]->(:StudyProjectField)<-[:HAS_FIELD]-(p:Project) | p.project_number]),
-                                    study_title: head([(sv)-[:HAS_TEXT_FIELD]->(t:StudyTextField) WHERE t.field_name = "study_title" | t.value]),
-                                    study_short_title: head([(sv)-[:HAS_TEXT_FIELD]->(st:StudyTextField) WHERE st.field_name = "study_short_title" | st.value]),
-                                    version_timestamp: has_version.start_date,
-                                    version_author_id: has_version.author_id,
-                                    version_description: has_version.change_description,
-                                    version_number: has_version.version
-                                })
-                            ]
-                        }  END AS locked_metadata_versions,
-                        CASE WHEN has_version.status="RELEASED" THEN
-                        {
-                            study_id: sv.study_id,
-                            study_number: sv.study_number,
-                            subpart_id: sv.subpart_id,
-                            study_acronym: sv.study_acronym,
-                            study_subpart_acronym: sv.study_subpart_acronym,
-                            study_id_prefix: sv.study_id_prefix,
-                            description: sv.description,
-                            project_number: head([(sv)-[:HAS_PROJECT]->(:StudyProjectField)<-[:HAS_FIELD]-(p:Project) | p.project_number]),
-                            study_title: head([(sv)-[:HAS_TEXT_FIELD]->(t:StudyTextField) WHERE t.field_name = "study_title" | t.value]),
-                            study_short_title: head([(sv)-[:HAS_TEXT_FIELD]->(st:StudyTextField) WHERE st.field_name = "study_short_title" | st.value]),
-                            version_timestamp: has_version.start_date,
-                            version_author_id: has_version.author_id,
-                            version_description: has_version.change_description,
-                            version_number: has_version.version
-                        }  END AS released_metadata,
-                        CASE WHEN has_version.status="DRAFT" THEN
-                        {
-                            study_id: sv.study_id,
-                            study_number: sv.study_number,
-                            subpart_id: sv.subpart_id,
-                            study_acronym: sv.study_acronym,
-                            study_subpart_acronym: sv.study_subpart_acronym,
-                            study_id_prefix: sv.study_id_prefix,
-                            description: sv.description,
-                            project_number: head([(sv)-[:HAS_PROJECT]->(:StudyProjectField)<-[:HAS_FIELD]-(p:Project) | p.project_number]),
-                            study_title: head([(sv)-[:HAS_TEXT_FIELD]->(t:StudyTextField) WHERE t.field_name = "study_title" | t.value]),
-                            study_short_title: head([(sv)-[:HAS_TEXT_FIELD]->(st:StudyTextField) WHERE st.field_name = "study_short_title" | st.value]),
-                            version_timestamp: has_version.start_date,
-                            version_author_id: has_version.author_id,
-                            version_description: has_version.change_description,
-                            version_number: has_version.version
-                        }  END AS draft_metadata
-                    """
-
-        query = CypherQueryBuilder(
-            match_clause=match_clause,
-            alias_clause=alias_clause,
-            sort_by=sort_by,
-            page_number=page_number,
-            page_size=page_size,
-            filter_by=FilterDict.model_validate({"elements": filter_by}),
-            filter_operator=filter_operator,
-            total_count=total_count,
-            return_model=StudyDefinitionSnapshot,
-        )
-
-        query.parameters.update(filter_query_parameters)
-
-        result_array, attributes_names = query.execute()
-        # the following code formats the output of the neomodel query
-        # it assigns the names for the properties of each Study, as neomodel
-        # returns names of the properties in the separate array
-        studies = []
-        for study in result_array:
-            study_dictionary = {}
-            for study_property, attribute_name in zip(study, attributes_names):
-                study_dictionary[attribute_name] = study_property
-            studies.append(study_dictionary)
-        total = calculate_total_count_from_query_result(
-            len(studies), page_number, page_size, total_count
-        )
-        if total is None:
-            count_result, _ = db.cypher_query(
-                query=query.count_query, params=query.parameters
-            )
-            if len(count_result) > 0:
-                total = count_result[0][0]
-            else:
-                total = 0
-
-        return GenericFilteringReturn(
-            items=self._retrieve_all_snapshots_from_cypher_query_result(studies),
-            total=total,
-        )
-
     def generate_uid(self) -> str:
         return StudyRoot.get_next_free_uid_and_increment_counter()
 
@@ -2905,13 +2789,13 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
         if study_value_version:
             query = """
                 MATCH (r:StudyRoot {uid: $uid})-[hv:HAS_VERSION]->(v:StudyValue)
-                WHERE NOT (v)<-[:BEFORE]-(:Delete) AND hv.version=$version
+                WHERE NOT EXISTS((v)<-[:BEFORE]-(:Delete)) AND hv.version=$version
                 RETURN r
                 """
         else:
             query = """
                 MATCH (r:StudyRoot {uid: $uid})-[:LATEST]->(v:StudyValue)
-                WHERE NOT (v)<-[:BEFORE]-(:Delete)
+                WHERE NOT EXISTS((v)<-[:BEFORE]-(:Delete))
                 RETURN r
                 """
 

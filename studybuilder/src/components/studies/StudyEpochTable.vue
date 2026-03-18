@@ -92,7 +92,9 @@
       <template #actions="">
         <v-btn
           data-cy="create-epoch"
-          class="ml-2 expandHoverBtn"
+          class="ml-2"
+          icon
+          size="small"
           variant="outlined"
           color="nnBaseBlue"
           :disabled="
@@ -101,8 +103,10 @@
           "
           @click="createEpoch()"
         >
-          <v-icon left>mdi-plus</v-icon>
-          <span class="label">{{ $t('StudyEpochForm.add_title') }}</span>
+          <v-icon>mdi-plus</v-icon>
+          <v-tooltip activator="parent" location="top">
+            {{ $t('StudyEpochForm.add_title') }}
+          </v-tooltip>
         </v-btn>
       </template>
     </NNTable>

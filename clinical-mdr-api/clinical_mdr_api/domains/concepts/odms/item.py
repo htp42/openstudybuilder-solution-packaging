@@ -20,7 +20,10 @@ from common.exceptions import AlreadyExistsException, BusinessLogicException
 from common.utils import booltostr
 
 if TYPE_CHECKING:
-    from clinical_mdr_api.models.concepts.odms.odm_item import OdmItemCodelist
+    from clinical_mdr_api.models.concepts.odms.odm_item import (
+        OdmItemCodelist,
+        OdmItemParentGroup,
+    )
 
 
 @dataclass(frozen=True)
@@ -34,6 +37,7 @@ class OdmItemVO(ConceptVO):
     sds_var_name: str | None
     origin: str | None
     comment: str | None
+    odm_item_group: "OdmItemParentGroup | None"
     translated_texts: list[OdmTranslatedTextModel]
     aliases: list[OdmAliasModel]
     unit_definition_uids: list[str]
@@ -57,6 +61,7 @@ class OdmItemVO(ConceptVO):
         sds_var_name: str | None,
         origin: str | None,
         comment: str | None,
+        odm_item_group: "OdmItemParentGroup | None",
         translated_texts: list[OdmTranslatedTextModel],
         aliases: list[OdmAliasModel],
         unit_definition_uids: list[str],
@@ -78,6 +83,7 @@ class OdmItemVO(ConceptVO):
             sds_var_name=sds_var_name,
             origin=origin,
             comment=comment,
+            odm_item_group=odm_item_group,
             translated_texts=translated_texts,
             aliases=aliases,
             unit_definition_uids=unit_definition_uids,
@@ -105,23 +111,9 @@ class OdmItemVO(ConceptVO):
         ],
         find_activity_instance_callback: Callable[[str], Any] = lambda _: None,
         odm_uid: str | None = None,
-        library_name: str | None = None,
     ) -> None:
         data = {
-            "library_name": library_name,
-            "unit_definition_uids": self.unit_definition_uids,
-            "codelist_uid": self.codelist.uid if self.codelist else None,
-            "term_uids": self.term_uids,
-            "name": self.name,
             "oid": self.oid,
-            "datatype": self.datatype,
-            "prompt": self.prompt,
-            "length": self.length,
-            "significant_digits": self.significant_digits,
-            "sas_field_name": self.sas_field_name,
-            "sds_var_name": self.sds_var_name,
-            "origin": self.origin,
-            "comment": self.comment,
         }
         if uids := odm_object_exists_callback(**data):
             if uids[0] != odm_uid:
@@ -242,7 +234,6 @@ class OdmItemAR(OdmARBase):
             unit_definition_exists_by_callback=unit_definition_exists_by_callback,
             find_codelist_attribute_callback=find_codelist_attribute_callback,
             find_all_terms_callback=find_all_terms_callback,
-            library_name=library.name,
         )
 
         return cls(

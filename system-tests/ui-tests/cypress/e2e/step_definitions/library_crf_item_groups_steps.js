@@ -1,4 +1,5 @@
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
+const { getShortUniqueId } = require("../../support/helper_functions");
 
 let itemGroupNameDefault, itemGroupOidDefault
 
@@ -7,8 +8,8 @@ When('Created CRF Item Group is found', () => cy.searchAndCheckPresence(itemGrou
 Then('The CRF Item Group is no longer available', () => cy.searchAndCheckPresence(itemGroupNameDefault, false))
 
 When('The CRF Item Group definition container is filled with data', () => {
-    itemGroupNameDefault = `CrfItemGroup${Date.now()}`
-    itemGroupOidDefault = `Oid${Date.now()}`
+    itemGroupNameDefault = `CrfItemGroup${getShortUniqueId()}`
+    itemGroupOidDefault = `Oid${getShortUniqueId()}`
     cy.fillInput('item-group-oid', itemGroupOidDefault)
     cy.fillInput('item-group-name', itemGroupNameDefault)
 })

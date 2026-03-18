@@ -51,151 +51,159 @@
   </StudyActivitySelectionBaseForm>
 </template>
 
-<script>
-import { computed } from 'vue'
-import study from '@/api/study'
-import StudyActivitySelectionBaseForm from './StudyActivitySelectionBaseForm.vue'
-import terms from '@/api/controlledTerminology/terms'
+<script setup>
+import { computed, inject, onMounted, ref } from 'vue'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
+import { useI18n } from 'vue-i18n'
+import StudyActivitySelectionBaseForm from './StudyActivitySelectionBaseForm.vue'
+import study from '@/api/study'
+import terms from '@/api/controlledTerminology/terms'
+import visitConstants from '@/constants/visits'
 
-export default {
-  components: {
-    StudyActivitySelectionBaseForm,
+const notificationHub = inject('notificationHub')
+const formRules = inject('formRules')
+
+const props = defineProps({
+  selection: {
+    type: Array,
+    default: () => [],
   },
-  inject: ['notificationHub', 'formRules'],
-  props: {
-    selection: {
-      type: Array,
-      default: () => [],
-    },
-    currentSelectionMatrix: {
-      type: Object,
-      default: undefined,
-    },
-    studyVisits: {
-      type: Array,
-      default: null,
-    },
-    open: Boolean,
+  currentSelectionMatrix: {
+    type: Object,
+    default: undefined,
   },
-  emits: ['close', 'updated', 'remove'],
-  setup() {
-    const studiesGeneralStore = useStudiesGeneralStore()
-    return {
-      selectedStudy: computed(() => studiesGeneralStore.selectedStudy),
-    }
+  studyVisits: {
+    type: Array,
+    default: null,
   },
-  data() {
-    return {
-      helpItems: [],
-      selectedVisitsGrouped: [],
-      studyVisitsGrouped: {},
-      flowchartGroups: [],
-      selectedFlowchartGroup: null,
-    }
-  },
-  mounted() {
-    terms.getTermsByCodelist('flowchartGroups').then((resp) => {
-      this.flowchartGroups = resp.data.items
-    })
-    this.studyVisitsGrouped = this.studyVisits
+  open: Boolean,
+})
+
+const emit = defineEmits(['close', 'updated', 'remove'])
+const { t } = useI18n()
+const studiesGeneralStore = useStudiesGeneralStore()
+
+const selectedStudy = computed(() => studiesGeneralStore.selectedStudy)
+
+const helpItems = []
+const selectedVisitsGrouped = ref([])
+const studyVisitsGrouped = ref({})
+const flowchartGroups = ref([])
+const selectedFlowchartGroup = ref(null)
+const baseForm = ref()
+const observer = ref()
+
+onMounted(() => {
+  terms.getTermsByCodelist('flowchartGroups').then((resp) => {
+    flowchartGroups.value = resp.data.items
+  })
+  studyVisitsGrouped.value = props.studyVisits
+    .filter(
       // Filter out non-visit and unscheduled-visits as these shouldn't
       // be able to be assigned to any schedules
-      .filter(
-        (item) =>
-          item.visit_class !== 'NON_VISIT' &&
-          item.visit_class !== 'UNSCHEDULED_VISIT'
-      )
+      (item) =>
+        item.visit_class !== visitConstants.CLASS_NON_VISIT &&
+        item.visit_class !== visitConstants.CLASS_UNSCHEDULED_VISIT
+    )
+    .reduce((acc, item) => {
       // a mapping to arrays of visits with the same consecutive_visit_group if set, else a single visit with the visit uid as key
-      .reduce((acc, item) => {
-        const key = item.consecutive_visit_group ?? item.uid
-        if (!acc[key]) {
-          acc[key] = []
-        }
-        acc[key].push(item)
-        return acc
-      }, {})
-  },
-  methods: {
-    close() {
-      this.$emit('close')
-      this.notificationHub.clearErrors()
-      this.selectedVisitsGrouped = []
-    },
-    unselectItem(item) {
-      this.$emit('remove', item)
-    },
-    async submit() {
-      const { valid } = await this.$refs.observer.validate()
-      if (!valid) {
-        return
+      const key = item.consecutive_visit_group ?? item.uid
+      if (!acc[key]) {
+        acc[key] = []
       }
+      acc[key].push(item)
+      return acc
+    }, {})
+})
 
-      this.notificationHub.clearErrors()
+function close() {
+  emit('close')
+  notificationHub.clearErrors()
+  selectedVisitsGrouped.value = []
+}
+function unselectItem(item) {
+  emit('remove', item)
+}
+async function submit() {
+  const { valid } = await observer.value.validate()
+  if (!valid) {
+    return
+  }
 
-      this.$refs.baseForm.loading = true
-      const data = []
-      for (const item of this.selection) {
-        // First: delete any existing study activity schedule for the given selection
-        for (const cell of Object.values(
-          this.currentSelectionMatrix[item.study_activity_uid]
-        )) {
-          if (cell.uid) {
-            cell.value = false
-            const uids = Array.isArray(cell.uid) ? cell.uid : [cell.uid]
-            for (const uid of uids) {
-              data.push({
-                method: 'DELETE',
-                object: 'StudyActivitySchedule',
-                content: { uid },
-              })
-            }
-          }
+  notificationHub.clearErrors()
+
+  baseForm.value.loading = true
+  const data = []
+  for (const item of props.selection) {
+    // First: delete any existing study activity schedule for the given selection
+    for (const cell of Object.values(
+      props.currentSelectionMatrix[item.study_activity_uid]
+    )) {
+      if (cell.uid) {
+        cell.value = false
+        const uids = Array.isArray(cell.uid) ? cell.uid : [cell.uid]
+        for (const uid of uids) {
+          data.push({
+            method: 'DELETE',
+            object: 'StudyActivitySchedule',
+            content: { uid },
+          })
         }
-        // Second: create new activity schedules
-        for (const visits of this.selectedVisitsGrouped) {
-          for (const visit of visits) {
-            data.push({
-              method: 'POST',
-              object: 'StudyActivitySchedule',
-              content: {
-                study_activity_uid: item.study_activity_uid,
-                study_visit_uid: visit.uid,
-              },
-            })
-          }
-        }
+      }
+    }
+    // Second: create new activity schedules
+    for (const visits of selectedVisitsGrouped.value) {
+      for (const visit of visits) {
         data.push({
-          method: 'PATCH',
-          object: 'StudyActivity',
+          method: 'POST',
+          object: 'StudyActivitySchedule',
           content: {
             study_activity_uid: item.study_activity_uid,
-            content: {
-              soa_group_term_uid: this.selectedFlowchartGroup?.term_uid,
-            },
+            study_visit_uid: visit.uid,
           },
         })
       }
-      study
-        .studyActivitySoaEditsBatchOperations(this.selectedStudy.uid, data)
-        .then(
-          () => {
-            this.notificationHub.add({
-              type: 'success',
-              msg: this.$t('DetailedFlowchart.batch_update_success', {
-                number: this.selection.length,
-              }),
-            })
-            this.$emit('updated')
-            this.close()
-            this.$refs.baseForm.loading = false
-          },
-          () => {
-            this.$refs.baseForm.loading = false
-          }
-        )
-    },
-  },
+    }
+    data.push({
+      method: 'PATCH',
+      object: 'StudyActivity',
+      content: {
+        study_activity_uid: item.study_activity_uid,
+        content: {
+          soa_group_term_uid: selectedFlowchartGroup.value?.term_uid,
+        },
+      },
+    })
+  }
+  try {
+    const resp = await study.studyActivitySoaEditsBatchOperations(
+      selectedStudy.value.uid,
+      data
+    )
+    const errors = []
+    for (const subResp of resp.data) {
+      if (subResp.response_code >= 400) {
+        errors.push(subResp.content.message)
+        notificationHub.add({
+          msg: subResp.content.message,
+          type: 'error',
+          timeout: 0,
+        })
+      }
+    }
+    if (!errors.length) {
+      notificationHub.add({
+        type: 'success',
+        msg: t('DetailedFlowchart.batch_update_success', {
+          number: props.selection.length,
+        }),
+      })
+    }
+    emit('updated')
+    close()
+  } finally {
+    baseForm.value.loading = false
+  }
 }
 </script>
 

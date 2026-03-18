@@ -6,6 +6,14 @@ let groupName, subgroupName, activityName, new_activity_name
 let first_in_order, last_in_order
 let activity_list = []
 
+When('User intercepts reorder activities request', () => cy.intercept('**/order').as('orderRequest'))
+
+When('User waits for reorder activities request', () => cy.wait('@orderRequest'))
+
+When('User clicks Finish reordering button', () => cy.contains('.v-btn', 'Finish reordering').click())
+
+When('Detailed SoA table is loaded', () => cy.get('[aria-label="Loading..."]').should('not.exist'))
+
 When ('{string} view is available in SoA', (viewName) => cy.contains('.layoutSelector button', viewName).should('be.visible'))
 
 When ('{string} view is not available in SoA', (viewName) => cy.contains('.layoutSelector button', viewName).should('not.exist'))
@@ -31,7 +39,7 @@ When('Activity checkbox is checked for {int} activity on the list', (index) => {
 
 When('The user goes through selection from library form', () => {
     cy.get('[data-cy="select-activity"]').not('.v-selection-control--disabled').parentsUntil('tr').siblings().eq(4).invoke('text').then((activity_name) => {
-        new_activity_name = activity_name.substring(0, 40)
+        new_activity_name = activity_name.substring(0, 50)
     })
     cy.get('[data-cy="select-activity"]').not('.v-selection-control--disabled').first().click()
     cy.get('[data-cy="flowchart-group"]').not('.v-input--disabled').first().click()
@@ -44,10 +52,10 @@ Then('The newly selected activity replaces previous activity in study', () => {
 
 Then('The old activity is no longer available', () => cy.contains('table tbody tr.bg-white', new RegExp(`^(${activityName})$`, "g")).should('not.exist'))
 
-Then('The Activity is visible in the SoA', () => cy.contains(activity_activity.substring(0, 40)).should('be.visible'))
+Then('The Activity is visible in the SoA', () => cy.contains(activity_activity.substring(0, 50)).should('be.visible'))
 
 When('The user selects {string} action after clicking Bulk actions', (action) => {
-    cy.contains('.v-window-item .d-flex button[aria-controls^="v-menu"]', 'Bulk actions').click()
+    cy.get('button .mdi-folder-multiple-outline').click()
     cy.contains('.v-list-item', action).click()
 })
 
@@ -81,24 +89,19 @@ When('The user enables the Reorder Activities function for acitivities in the sa
 })
 
 When('The user updates the order of activities', () => {
-    cy.intercept('**/order').as('orderRequest')
-    cy.wait(1500)
-    cy.get('.mdi-sort').first().parentsUntil('td').invoke('text').then((text) => {last_in_order = text})
-    cy.get('.mdi-sort').last().parentsUntil('td').invoke('text').then((text) => {first_in_order = text})
+    cy.get('.mdi-sort').first().parentsUntil('td').invoke('text').then((text) => last_in_order = text)
+    cy.get('.mdi-sort').last().parentsUntil('td').invoke('text').then((text) => first_in_order = text)
 
     cy.get('.mdi-sort').last().parentsUntil('td').drag('tr.bg-white', {
         source: { x: 0, y: -50 }, // applies to the element being dragged
         target: { position: 'left' }, // applies to the drop target
         force: true, // applied to both the source and target element)
     })
-    cy.wait(1000)
-    cy.contains('.v-btn', 'Finish reordering').click()
-    cy.wait('@orderRequest')
 })
 
 Then('The new order of activites is visible', () => {
-    cy.wait(2000)
     cy.get('tr.bg-white').first().should('contain', first_in_order)
+    cy.get('tr.bg-white').eq(1).should('contain', last_in_order)
 })
 
 Then('Text about no added visits and activities is displayed', () => cy.get('.v-empty-state__title').should('have.text', 'No activities & visits added yet'))
@@ -150,9 +153,9 @@ When('User selects visits {string}', (visitList) => {
     visitListArray.forEach(visit => cy.contains('table thead th', visit.trim()).find('input').check())
 })
 
-When('Button for collapsing visits is clicked', () => cy.contains('button', 'Group selected visits together').click())
+When('Button for collapsing visits is clicked', () => cy.get('button .mdi-arrow-expand-horizontal').click())
 
-When('Button for collapsing visits is not available', () => cy.contains('button', 'Group selected visits together').should('not.be.visible'))
+When('Button for collapsing visits is not available', () => cy.get('button .mdi-arrow-expand-horizontal').should('not.be.visible'))
 
 When('Option for collapsing in {string} is selected', (value) => cy.get(`input[value="${value}"]`).check({force: true}))
 
@@ -177,9 +180,9 @@ Then('Error message is displayed for collapsing visits with different epochs', (
 Then('Add footnote button is available in the detailed SoA', () => cy.get(`[title="Add SoA footnotes"]`).should('be.visible'))
 
 Then('SoA table is available with Bulk actions, Export and Show version history', () => {
-    cy.contains('.v-window-item .d-flex button[aria-controls^="v-menu"]', 'Bulk actions').should('exist')
-    cy.contains('.v-window-item .d-flex button[aria-controls^="v-menu"]', 'Export').should('exist')
-    cy.contains('.v-window-item .d-flex button.v-btn--variant-outlined', 'Show version history').should('exist')
+    cy.get('button .mdi-folder-multiple-outline').should('be.visible')
+    cy.get('[data-cy="table-export-button"]').should('be.visible')
+    cy.get('.mb-4 button .mdi-history').should('be.visible')
 })
 
 Then('Search is available in SoA table', () => cy.contains('.v-label', 'Search Activities').parent().within(() => cy.get('input').should('exist')))

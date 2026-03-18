@@ -29,38 +29,8 @@
       </v-radio-group>
       <v-form :ref="`observer_${step}`">
         <v-row v-if="creationMode === 'select'">
-          <v-col cols="3">
-            <v-autocomplete
-              v-model="selectedStudies"
-              :data-cy="$t('StudySelectionTable.select_studies')"
-              :label="$t('StudySelectionTable.study_ids')"
-              :items="studies"
-              :rules="[formRules.required]"
-              item-title="current_metadata.identification_metadata.study_id"
-              clearable
-              multiple
-              return-object
-            />
-          </v-col>
-          <div class="mt-8">
-            {{ $t('_global.and_or') }}
-          </div>
-          <v-col cols="3">
-            <v-autocomplete
-              v-model="selectedStudies"
-              :label="$t('StudySelectionTable.study_acronyms')"
-              :items="
-                studies.filter(
-                  (study) =>
-                    study.current_metadata.identification_metadata.study_acronym
-                )
-              "
-              item-title="current_metadata.identification_metadata.study_acronym"
-              return-object
-              :rules="[formRules.required]"
-              multiple
-              clearable
-            />
+          <v-col>
+            <StudySelectorField v-model="selectedStudies" :data="studies" />
           </v-col>
         </v-row>
       </v-form>
@@ -318,6 +288,7 @@ import statuses from '@/constants/statuses'
 import { QuillEditor } from '@vueup/vue-quill'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 import { sanitizeHTML } from '@/utils/sanitize'
+import StudySelectorField from '@/components/studies/StudySelectorField.vue'
 
 export default {
   components: {
@@ -328,6 +299,7 @@ export default {
     ParameterValueSelector,
     StudySelectionTable,
     QuillEditor,
+    StudySelectorField,
   },
   inject: ['notificationHub', 'formRules'],
   props: {

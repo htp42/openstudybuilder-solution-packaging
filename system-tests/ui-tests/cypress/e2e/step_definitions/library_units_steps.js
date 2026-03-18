@@ -1,8 +1,9 @@
 const { Given, When, Then } = require('@badeball/cypress-cucumber-preprocessor')
+const { getShortUniqueId } = require("../../support/helper_functions");
 
 let unitName
 let library = 'Sponsor', ctUnits = '%', ctUnitsSymbol = '%', unitSubsets = 'Dose Unit'
-let unitDimension = 'Degrees', legacyCode = `LegacyCode${Date.now()}`, conversionFactorToMaster = '1'
+let unitDimension = 'Degrees', legacyCode = `LegacyCode${getShortUniqueId()}`, conversionFactorToMaster = '1'
 let convertableUnit = 'Yes', displayUnit = 'Yes', masterUnit = 'No', usConventionalUnit = 'Yes'
 
 const fillConversionFactor = (value) => cy.fillInput('unit-conversion-factor', value)
@@ -78,9 +79,9 @@ When('[API] Unit is approved', () => cy.approveUnit())
 
 When('[API] Unit is inactivated', () => cy.inactivateUnit())
 
-Given('[API] First unit for search test is created', () => createUnitViaApi(`SearchTest${Date.now()}`))
+Given('[API] First unit for search test is created', () => createUnitViaApi(`SearchTest${getShortUniqueId()}`))
 
-Given('[API] Second unit for search test is created', () => cy.createUnit(`SearchTest${Date.now()}`))
+Given('[API] Second unit for search test is created', () => cy.createUnit(`SearchTest${getShortUniqueId()}`))
 
 Given('Create unit request is intercepted', () => cy.intercept('/api/concepts/unit-definitions').as('getData'))
 
@@ -90,7 +91,7 @@ Given('User waits for unit request to finish', () => cy.intercept('/api/concepts
 
 function fillBasicUnitData(customName = '') {
   cy.wait(1000)
-  unitName = customName ? customName : `Unit${Date.now()}`
+  unitName = customName ? customName : `Unit${getShortUniqueId()}`
   cy.selectVSelect('unit-library', library)
   cy.fillInput('unit-name', unitName)
   cy.selectVSelect('unit-codelist-term', ctUnits)

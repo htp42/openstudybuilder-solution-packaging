@@ -35,9 +35,9 @@ Feature: Studies - Define Study - Study Properties - Study Type
         Given The test study '/study_properties/type' page is opened
         And A table is visible with following options
             | options              |
-            | Copy from study      |
-            | Edit content         |
-            | Show version history |
+            | copy-from-study      |
+            | edit-content         |
+            | History              |
 
     Scenario: [Online help] User must be able to read online help for the page
         Given The test study '/study_properties/type' page is opened

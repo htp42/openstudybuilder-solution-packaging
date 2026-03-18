@@ -11,6 +11,7 @@ Tests for /studies/{study_uid}/study-endpoints endpoints
 
 import logging
 from datetime import datetime, timezone
+from typing import Any
 from unittest import mock
 
 import pytest
@@ -25,6 +26,7 @@ from clinical_mdr_api.domain_repositories.models.syntax import (
     TimeframeRoot,
     TimeframeTemplateRoot,
 )
+from clinical_mdr_api.domains.enums import ValidationMode
 from clinical_mdr_api.main import app
 from clinical_mdr_api.models.controlled_terminologies import ct_term
 from clinical_mdr_api.models.study_selections.study import Study
@@ -57,6 +59,7 @@ study_objective_uid1: str
 initial_ct_term_study_standard_test: ct_term.CTTerm
 objective_level_term: ct_term.CTTerm
 objective_level_term2: ct_term.CTTerm
+test_data_dict: dict[str, Any]
 
 
 @pytest.fixture(scope="module")
@@ -72,8 +75,8 @@ def test_data():
     db_name = "studyendpointapi"
     inject_and_clear_db(db_name)
 
-    global study
-    study, _test_data_dict = inject_base_data()
+    global study, test_data_dict
+    study, test_data_dict = inject_base_data()
 
     db.cypher_query(CREATE_BASE_TEMPLATE_PARAMETER_TREE)
     db.cypher_query(STARTUP_CT_TERM_NAME_CYPHER)
@@ -242,6 +245,19 @@ def test_data():
     yield
 
 
+@pytest.mark.order("last")
+def test_integrity_checks_for_all_studies(api_client):
+    """
+    Test integrity checks for all available studies in the database.
+
+    This test should always be executed at the END to check the health of the remaining database.
+    It validates that all studies in the database pass integrity checks after all other tests have run.
+    """
+    TestUtils.run_integrity_checks_for_all_studies(
+        api_client, mode=ValidationMode.WARNING
+    )  # needs to be warning for now as it's leaving broken data
+
+
 def test_study_endpoint_modify_actions_on_locked_study(api_client):
     global endpoint_uid
     global study_objective_uid1
@@ -297,7 +313,12 @@ def test_study_endpoint_modify_actions_on_locked_study(api_client):
     # Lock
     response = api_client.post(
         f"/studies/{study.uid}/locks",
-        json={"change_description": "Lock 1"},
+        json={
+            "change_description": "Lock 1",
+            "reason_for_change_uid": test_data_dict["reason_for_lock_terms"][
+                0
+            ].term_uid,
+        },
     )
     assert_response_status_code(response, 201)
 
@@ -360,8 +381,16 @@ def test_study_endpoint_with_study_objective_relationship(api_client):
     assert res == ["EndpointLevel_0001"]
 
     # Unlock
-    response = api_client.delete(f"/studies/{study.uid}/locks")
-    assert_response_status_code(response, 200)
+    response = api_client.post(
+        f"/studies/{study.uid}/unlocks",
+        json={
+            "change_description": "Unlock",
+            "reason_for_change_uid": test_data_dict["reason_for_unlock_terms"][
+                0
+            ].term_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
 
     # edit study endpoint
     response = api_client.patch(

@@ -33,9 +33,10 @@ export default {
     const url = `/${resource}`
     return repository.get(url, { params: { page_size: 0 } })
   },
-  getStudy(studyUid, ignoreErrors) {
+  getStudy(studyUid, ignoreErrors, specificStudyVersion) {
     const params = {
       ignoreErrors: ignoreErrors,
+      specificStudyVersion: specificStudyVersion ? specificStudyVersion : null,
     }
     return repository.get(`${resource}/${studyUid}`, { params })
   },
@@ -43,6 +44,9 @@ export default {
     return repository.get(`${resource}/${studyUid}/snapshot-history`, {
       params,
     })
+  },
+  getLatestProtocolVersion(studyUid) {
+    return repository.get(`${resource}/${studyUid}/protocol-header-versions`)
   },
   cloneStudy(studyUid, data) {
     return repository.post(`${resource}/${studyUid}/clone`, data)
@@ -56,8 +60,8 @@ export default {
   lockStudy(studyUid, data) {
     return repository.post(`${resource}/${studyUid}/locks`, data)
   },
-  unlockStudy(studyUid) {
-    return repository.delete(`${resource}/${studyUid}/locks`)
+  unlockStudy(studyUid, data) {
+    return repository.post(`${resource}/${studyUid}/unlocks`, data)
   },
   updateStudy(studyUid, data) {
     return repository.patch(`${resource}/${studyUid}`, data)

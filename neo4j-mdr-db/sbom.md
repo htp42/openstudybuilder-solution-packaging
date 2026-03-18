@@ -3,13 +3,13 @@
 
 | Package            | Version  | License                               |
 |--------------------|----------|---------------------------------------|
-| certifi            | 2025.8.3 | [MPL-2.0](#certifi)                   |
-| charset-normalizer | 3.4.3    | [MIT](#charset-normalizer)            |
-| idna               | 3.10     | [see below](#idna)                    |
+| certifi            | 2026.1.4 | [MPL-2.0](#certifi)                   |
+| charset-normalizer | 3.4.4    | [MIT](#charset-normalizer)            |
+| idna               | 3.11     | [BSD-3-Clause](#idna)                 |
 | neo4j              | 4.4.13   | [Apache License, Version 2.0](#neo4j) |
 | pytz               | 2025.2   | [MIT](#pytz)                          |
 | requests           | 2.32.4   | [Apache-2.0](#requests)               |
-| urllib3            | 2.5.0    | [MIT](#urllib3)                       |
+| urllib3            | 2.6.3    | [MIT](#urllib3)                       |
 
 
 ## Third-party package licenses
@@ -68,7 +68,7 @@
 
     BSD 3-Clause License
 
-    Copyright (c) 2013-2024, Kim Davies and contributors.
+    Copyright (c) 2013-2025, Kim Davies and contributors.
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without

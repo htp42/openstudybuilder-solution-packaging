@@ -202,6 +202,17 @@ def test_data():
     yield
 
 
+@pytest.mark.order("last")
+def test_integrity_checks_for_all_studies(api_client):
+    """
+    Test integrity checks for all available studies in the database.
+
+    This test should always be executed at the END to check the health of the remaining database.
+    It validates that all studies in the database pass integrity checks after all other tests have run.
+    """
+    TestUtils.run_integrity_checks_for_all_studies(api_client)
+
+
 def test_post_and_get_all_study_soa_groups(api_client):
     study_soa_group_into_study_activity_group_mapping: dict[str, list[Any]] = {}
     study_soa_group_into_soa_group_term_group_mapping: dict[str, list[Any]] = {}

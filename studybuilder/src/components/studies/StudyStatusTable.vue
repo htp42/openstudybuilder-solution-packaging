@@ -1,10 +1,12 @@
 <template>
   <NNTable
+    ref="tableRef"
     :headers="headers"
     :items="items"
     column-data-resource="studies"
     hide-default-switches
     hide-export-button
+    hide-search-field
     disable-filtering
     :items-length="total"
     @filter="fetchItems"
@@ -12,12 +14,13 @@
     <template #beforeTable="">
       <v-btn
         v-if="
-          studiesGeneralStore.selectedStudy.current_metadata.version_metadata
-            .study_status === 'DRAFT' &&
+          selectedStudyStatus === 'DRAFT' &&
           !studiesGeneralStore.selectedStudy.study_parent_part &&
           isLatestStudySelected()
         "
-        class="ml-2 expandHoverBtn"
+        class="ml-2"
+        icon
+        size="small"
         variant="outlined"
         color="nnBaseBlue"
         data-cy="release-study"
@@ -25,42 +28,50 @@
         :loading="loading"
         @click.stop="releaseStudy"
       >
-        <v-icon left>mdi-share-variant</v-icon>
-        <span class="label">{{ $t('Study.release') }}</span>
+        <v-icon>mdi-share-variant</v-icon>
+        <v-tooltip activator="parent" location="top">
+          {{ $t('Study.release') }}
+        </v-tooltip>
       </v-btn>
       <v-btn
         v-if="
-          studiesGeneralStore.selectedStudy.current_metadata.version_metadata
-            .study_status === 'DRAFT' &&
+          selectedStudyStatus === 'DRAFT' &&
           !studiesGeneralStore.selectedStudy.study_parent_part &&
           isLatestStudySelected()
         "
-        class="ml-2 expandHoverBtn"
+        class="ml-2"
+        icon
+        size="small"
         color="nnBaseBlue"
         data-cy="lock-study"
         :disabled="!accessGuard.checkPermission($roles.STUDY_WRITE)"
         :loading="loading"
         @click.stop="lockStudy"
       >
-        <v-icon left>mdi-lock-outline</v-icon>
-        <span class="label">{{ $t('Study.lock') }}</span>
+        <v-icon>mdi-lock-outline</v-icon>
+        <v-tooltip activator="parent" location="top">
+          {{ $t('Study.lock') }}
+        </v-tooltip>
       </v-btn>
       <v-btn
         v-if="
-          studiesGeneralStore.selectedStudy.current_metadata.version_metadata
-            .study_status === 'LOCKED' &&
+          selectedStudyStatus === 'LOCKED' &&
           !studiesGeneralStore.selectedStudy.study_parent_part &&
           isLatestStudySelected()
         "
-        class="ml-2 expandHoverBtn"
+        class="ml-2"
+        icon
+        size="small"
         color="nnBaseBlue"
         data-cy="unlock-study"
         :disabled="!accessGuard.checkPermission($roles.STUDY_WRITE)"
         :loading="loading"
         @click.stop="unlockStudy"
       >
-        <v-icon left>mdi-lock-open-outline</v-icon>
-        <span class="label">{{ $t('Study.unlock') }}</span>
+        <v-icon>mdi-lock-open-outline</v-icon>
+        <v-tooltip activator="parent" location="top">
+          {{ $t('Study.unlock') }}
+        </v-tooltip>
       </v-btn>
     </template>
     <template #[`item.actions`]="{ item }">
@@ -69,26 +80,52 @@
         :actions="actions"
         :item="item"
       />
-    </template>
-    <template
-      #[`item.current_metadata.version_metadata.study_status`]="{ item }"
-    >
-      <StatusChip
-        :status="item.current_metadata.version_metadata.study_status"
-        :outlined="false"
+      <v-progress-circular
+        v-if="item.loading"
+        color="primary"
+        indeterminate
+        class="ml-2"
+        :width="3"
+        :size="20"
       />
     </template>
-    <template
-      #[`item.current_metadata.version_metadata.version_timestamp`]="{ item }"
-    >
-      {{
-        $filters.date(item.current_metadata.version_metadata.version_timestamp)
-      }}
+    <template #[`item.study_status`]="{ item }">
+      <div style="display: inline-flex">
+        <StatusChip :status="item.study_status[0]" :outlined="false" />
+        <StatusChip
+          v-if="item.study_status[1]"
+          :status="item.study_status[1]"
+          class="ml-2"
+          :outlined="false"
+        />
+      </div>
+    </template>
+    <template #[`item.modified_date`]="{ item }">
+      {{ $filters.date(item.modified_date) }}
+    </template>
+    <template #[`item.protocol_version`]="{ item }">
+      {{ getProtocolVersion(item) }}
+    </template>
+    <template #[`item.reason_for_lock`]="{ item }">
+      <div>
+        <strong>{{ item.reason_for_lock_name }}</strong>
+        <template
+          v-if="
+            item.reason_for_lock_name === 'Other' &&
+            item.other_reason_for_locking_releasing
+          "
+        >
+          :
+          {{ item.other_reason_for_locking_releasing }}
+        </template>
+      </div>
     </template>
   </NNTable>
   <StudyStatusForm
+    v-if="showStatusForm"
     :action="statusAction"
     :open="showStatusForm"
+    :last-version="lastVersion"
     @close="closeStatusForm"
     @status-changed="refreshData"
   />
@@ -96,7 +133,7 @@
 </template>
 
 <script setup>
-import { inject, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import api from '@/api/study'
 import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
@@ -110,31 +147,49 @@ import { useStudiesGeneralStore } from '@/stores/studies-general'
 import _isEmpty from 'lodash/isEmpty'
 
 const { t } = useI18n()
-const notificationHub = inject('notificationHub')
 const accessGuard = useAccessGuard()
 const studiesGeneralStore = useStudiesGeneralStore()
+
+const selectedStudyStatus = computed(() => studiesGeneralStore.studyStatus)
+const selectedStudyVersion = computed(() => studiesGeneralStore.studyVersion)
 
 const headers = [
   { title: '', key: 'actions', width: '1%' },
   {
     title: t('Study.status'),
-    key: 'current_metadata.version_metadata.study_status',
+    key: 'study_status',
   },
   {
-    title: t('_global.version'),
-    key: 'current_metadata.version_metadata.version_number',
+    title: t('Study.reason_for_unlock'),
+    key: 'reason_for_unlock_name',
   },
   {
-    title: t('Study.release_description'),
-    key: 'current_metadata.version_metadata.version_description',
+    title: t('Study.other_reason_for_unlock'),
+    key: 'other_reason_for_unlocking',
+  },
+  {
+    title: t('Study.reason_for_release_or_lock'),
+    key: 'reason_for_lock',
+  },
+  {
+    title: t('_global.change_description'),
+    key: 'description',
+  },
+  {
+    title: t('Study.protocol_version'),
+    key: 'protocol_version',
+  },
+  {
+    title: t('Study.meta_version'),
+    key: 'metadata_version',
   },
   {
     title: t('_global.modified'),
-    key: 'current_metadata.version_metadata.version_timestamp',
+    key: 'modified_date',
   },
   {
     title: t('_global.modified_by'),
-    key: 'current_metadata.version_metadata.version_author',
+    key: 'modified_by',
   },
 ]
 const loading = ref(false)
@@ -151,18 +206,47 @@ const actions = [
   },
 ]
 const latestStudy = ref({})
+const confirm = ref()
+const tableRef = ref()
+const lastVersion = ref(null)
+const isMajorVersion = ref(false)
+
+async function getLastVersion() {
+  let resp
+  resp = await api.getLatestProtocolVersion(
+    studiesGeneralStore.selectedStudy.uid
+  )
+  if (resp.data) {
+    isMajorVersion.value = true
+    lastVersion.value = resp.data
+  }
+}
+
+function getProtocolVersion(item) {
+  if (
+    !item.protocol_header_major_version &&
+    !item.protocol_header_minor_version
+  )
+    return
+  return `${item.protocol_header_major_version}.${item.protocol_header_minor_version}`
+}
 
 function checkIfSelectable(studyVersion) {
   return (
-    studyVersion.current_metadata.version_metadata.version_number !==
-      studiesGeneralStore.selectedStudyVersion ||
-    studyVersion.current_metadata.version_metadata.study_status !==
-      studiesGeneralStore.selectedStudy.current_metadata.version_metadata
-        .study_status
+    studyVersion.metadata_version !== selectedStudyVersion.value ||
+    studyVersion.study_status[0] !== selectedStudyStatus.value
   )
 }
 async function selectStudyVersion(studyVersion) {
-  await studiesGeneralStore.selectStudy(studyVersion, true)
+  studyVersion.loading = true
+  let resp
+  resp = await api.getStudy(
+    studiesGeneralStore.selectedStudy.uid,
+    true,
+    studyVersion.metadata_version
+  )
+  await studiesGeneralStore.selectStudy(resp.data, true)
+  studyVersion.loading = false
 }
 function closeStatusForm() {
   loading.value = false
@@ -182,14 +266,11 @@ function fetchItems(filters, options, filtersUpdated) {
       if (_isEmpty(params.sort_by) && _isEmpty(params.filters)) {
         latestStudy.value = resp.data.items[0]
       }
+      getLastVersion()
     })
 }
 function isLatestStudySelected() {
-  return (
-    latestStudy.value.current_metadata.version_metadata.version_number ===
-    studiesGeneralStore.selectedStudy.current_metadata.version_metadata
-      .version_number
-  )
+  return latestStudy.value.metadata_version === selectedStudyVersion.value
 }
 function releaseStudy() {
   loading.value = true
@@ -201,18 +282,24 @@ function lockStudy() {
   statusAction.value = 'lock'
   showStatusForm.value = true
 }
-async function refreshData() {
-  fetchItems()
-}
 async function unlockStudy() {
   loading.value = true
-  const resp = await api.unlockStudy(studiesGeneralStore.selectedStudy.uid)
-  await studiesGeneralStore.selectStudy(resp.data)
-  notificationHub.add({
-    msg: t('StudyStatusTable.unlock_success'),
-    type: 'success',
-  })
-  loading.value = false
-  fetchItems()
+  if (isMajorVersion.value) {
+    const options = {
+      cancelLabel: t('Study.keep_locked'),
+      agreeLabel: t('Study.unlock'),
+      type: 'warning',
+      width: 1000,
+    }
+    if (!(await confirm.value.open(t('Study.unlock_warning'), options))) {
+      loading.value = false
+      return
+    }
+  }
+  statusAction.value = 'unlock'
+  showStatusForm.value = true
+}
+async function refreshData() {
+  tableRef.value.filterTable()
 }
 </script>

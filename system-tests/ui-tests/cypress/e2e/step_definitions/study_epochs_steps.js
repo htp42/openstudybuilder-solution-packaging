@@ -1,6 +1,7 @@
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
+const { getShortUniqueId } = require("../../support/helper_functions");
 
-let epochDescription = `Epoch ${Date.now()}`
+let epochDescription = `Epoch ${getShortUniqueId()}`
 
 When('User intercepts epochs data', () => cy.intercept(`**/study-epochs**`).as('epochsRequests'))
 
@@ -32,7 +33,7 @@ Then('The new Study Epoch is available within the table', () => {
 })
 
 When('The Study Epoch is edited', () => {
-    epochDescription = `Edited epoch ${Date.now()}`
+    epochDescription = `Edited epoch ${getShortUniqueId()}`
     cy.wait(1000)
     fillRulesAndDecscription('D22', 'D33')
 })

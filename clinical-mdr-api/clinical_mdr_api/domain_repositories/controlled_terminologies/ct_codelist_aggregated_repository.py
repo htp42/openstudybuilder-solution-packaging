@@ -31,9 +31,11 @@ from clinical_mdr_api.repositories._utils import (
     FilterDict,
     FilterOperator,
     calculate_total_count_from_query_result,
+    escape_lucene_special_chars,
     validate_filter_by_dict,
     validate_filters_and_add_search_string,
 )
+from common.config import settings
 from common.exceptions import BusinessLogicException, ValidationException
 
 
@@ -158,14 +160,6 @@ class CTCodelistAggregatedRepository:
         term_filter: dict[str, str | list[Any]] | None,
     ) -> tuple[str | None, dict[str, Any]]:
 
-        # if library_name is included in the filters, with a single value,
-        # remove it and instead use the library parameter
-        if filter_by and "library_name" in filter_by and not library:
-            library_filter: list[str] = filter_by["library_name"]["v"]
-            if len(library_filter) == 1 and library_filter[0] in ("CDISC", "Sponsor"):
-                library = library_filter[0]
-                del filter_by["library_name"]
-
         filter_by = validate_filter_by_dict(filter_by)
         # if filters are provided, no minimal query can be made
         if filter_by is not None and len(filter_by) > 0:
@@ -196,8 +190,14 @@ class CTCodelistAggregatedRepository:
             params["package"] = package
         if is_sponsor:
             where_clauses.append(
-                "(:Library {name: 'Sponsor'})-[:CONTAINS_CODELIST]->(codelist_root)"
+                """
+                EXISTS {
+                    MATCH (lib:Library)-[:CONTAINS_CODELIST]->(codelist_root)
+                    WHERE lib.name <> $cdisc_library_name
+                }
+                """
             )
+            params["cdisc_library_name"] = settings.cdisc_library_name
         query = "MATCH (codelist_root:CTCodelistRoot)"
         if where_clauses:
             query += " WHERE " + " AND ".join(where_clauses)
@@ -239,6 +239,14 @@ class CTCodelistAggregatedRepository:
         :param total_count:
         :return GenericFilteringReturn[tuple[CTCodelistNameAR, CTCodelistAttributesAR]]:
         """
+        # If library is not explicitly passed but is in filter_by, extract it
+        # so it can be used in the optimized MATCH clause path
+        if not library and filter_by and "library_name" in filter_by:
+            library_filter: list[str] = filter_by["library_name"]["v"]
+            if len(library_filter) == 1:
+                library = library_filter[0]
+                del filter_by["library_name"]
+
         # Build match_clause
         # Build specific filtering for catalogue, package and library
         # This is separate from generic filtering as the list of filters is predefined
@@ -343,6 +351,7 @@ class CTCodelistAggregatedRepository:
         :param page_size: Max number of values to return. Default 10
         :return list[Any]:
         """
+
         # Build match_clause
         # Build specific filtering for catalogue, package and library
         # This is separate from generic filtering as the list of filters is predefined
@@ -429,17 +438,7 @@ class CTCodelistAggregatedRepository:
                 """
 
             if library_name:
-                # We will look only in a specific library
-                if library_name == "Sponsor":
-                    match_clause += f"""
-                        MATCH (:Library {{name:"Sponsor"}})-->(codelist_root{":CTCodelistRoot" if not term_filter else ""})
-                            -[:HAS_ATTRIBUTES_ROOT]->(codelist_attributes_root:CTCodelistAttributesRoot)-[attr_v_rel:HAS_VERSION]->(codelist_attributes_value:CTCodelistAttributesValue)
-                        MATCH (codelist_root)-[:HAS_NAME_ROOT]->(codelist_name_root:CTCodelistNameRoot)-[name_v_rel:HAS_VERSION]->(codelist_name_value:CTCodelistNameValue)
-                        WHERE name_v_rel.start_date<= exact_datetime < name_v_rel.end_date OR (name_v_rel.end_date IS NULL AND name_v_rel.start_date <= exact_datetime)
-                            AND (attr_v_rel.start_date<= exact_datetime < attr_v_rel.end_date OR (attr_v_rel.end_date IS NULL AND attr_v_rel.start_date <= exact_datetime)) 
-                        WITH DISTINCT codelist_root, codelist_name_root, codelist_name_value, codelist_attributes_root, codelist_attributes_value, attr_v_rel, name_v_rel
-                    """
-                else:
+                if library_name == settings.cdisc_library_name:
                     # We must look in the library and the parent package
                     match_clause += f"""
                         MATCH (parent_package:CTPackage)-[:CONTAINS_CODELIST]->(:CTPackageCodelist)-[:CONTAINS_ATTRIBUTES]->
@@ -448,6 +447,16 @@ class CTCodelistAggregatedRepository:
                             -[:HAS_NAME_ROOT]->(codelist_name_root:CTCodelistNameRoot)-[name_v_rel:HAS_VERSION]->(codelist_name_value:CTCodelistNameValue)
                         WHERE name_v_rel.start_date<= exact_datetime < name_v_rel.end_date OR (name_v_rel.end_date IS NULL AND name_v_rel.start_date <= exact_datetime)
                         MATCH (library:Library)-->(codelist_root)
+                        WITH DISTINCT codelist_root, codelist_name_root, codelist_name_value, codelist_attributes_root, codelist_attributes_value, attr_v_rel, name_v_rel
+                    """
+                # We will look only in a specific library (sponsor)
+                else:
+                    match_clause += f"""
+                        MATCH (:Library {{name:"{library_name}"}})-->(codelist_root{":CTCodelistRoot" if not term_filter else ""})
+                            -[:HAS_ATTRIBUTES_ROOT]->(codelist_attributes_root:CTCodelistAttributesRoot)-[attr_v_rel:HAS_VERSION]->(codelist_attributes_value:CTCodelistAttributesValue)
+                        MATCH (codelist_root)-[:HAS_NAME_ROOT]->(codelist_name_root:CTCodelistNameRoot)-[name_v_rel:HAS_VERSION]->(codelist_name_value:CTCodelistNameValue)
+                        WHERE name_v_rel.start_date<= exact_datetime < name_v_rel.end_date OR (name_v_rel.end_date IS NULL AND name_v_rel.start_date <= exact_datetime)
+                            AND (attr_v_rel.start_date<= exact_datetime < attr_v_rel.end_date OR (attr_v_rel.end_date IS NULL AND attr_v_rel.start_date <= exact_datetime)) 
                         WITH DISTINCT codelist_root, codelist_name_root, codelist_name_value, codelist_attributes_root, codelist_attributes_value, attr_v_rel, name_v_rel
                     """
             else:
@@ -464,11 +473,11 @@ class CTCodelistAggregatedRepository:
 
                     UNION
                     WITH exact_datetime
-                    MATCH (:Library {{name:"Sponsor"}})-->(codelist_root{":CTCodelistRoot" if not term_filter else ""})
+                    MATCH (l:Library WHERE NOT l.name=$cdisc_library_name)-->(codelist_root{":CTCodelistRoot" if not term_filter else ""})
                         -[:HAS_ATTRIBUTES_ROOT]->(codelist_attributes_root:CTCodelistAttributesRoot)-[attr_v_rel:HAS_VERSION]->(codelist_attributes_value:CTCodelistAttributesValue)
                     MATCH (codelist_root)-[:HAS_NAME_ROOT]->(codelist_name_root:CTCodelistNameRoot)-[name_v_rel:HAS_VERSION]->(codelist_name_value:CTCodelistNameValue)
                     WHERE (name_v_rel.start_date<= exact_datetime < name_v_rel.end_date OR (name_v_rel.end_date IS NULL AND name_v_rel.start_date <= exact_datetime))
-                        AND (attr_v_rel.start_date<= exact_datetime < attr_v_rel.end_date OR (attr_v_rel.end_date IS NULL AND attr_v_rel.start_date <= exact_datetime)) 
+                        AND (attr_v_rel.start_date<= exact_datetime < attr_v_rel.end_date OR (attr_v_rel.end_date IS NULL AND attr_v_rel.start_date <= exact_datetime))
                     RETURN DISTINCT codelist_root, codelist_name_root, codelist_name_value, codelist_attributes_root, codelist_attributes_value, attr_v_rel, name_v_rel
                 }}
             """
@@ -533,6 +542,159 @@ class CTCodelistAggregatedRepository:
 
         result, _ = db.cypher_query(query)
         return result[0][0] if len(result) > 0 else 0.0
+
+    def search_fulltext(
+        self,
+        search_string: str,
+        only_response_codelists: bool = False,
+        only_ordinal_codelists: bool = False,
+        match_whole_words: bool = False,
+        page_number: int = 1,
+        page_size: int = 20,
+    ) -> tuple[list[dict[str, str]], int]:
+        """
+        Searches codelists using a full-text index on submission_value.
+
+        :param search_string: The search string to use for full-text search
+        :param only_response_codelists: If True, only return codelists that have a HAS_VALID_CODELIST_FOR_ITEMS relationship
+        :param only_ordinal_codelists: If True, only return codelists where is_ordinal is True
+        :param match_whole_words: If True, match whole words only (wraps search string in quotes)
+        :param page_number: Page number for pagination
+        :param page_size: Number of results per page (max 20 from full-text index)
+        :return: Tuple of (list of dicts with uid, name, submission_value, and total count)
+        """
+        # Escape special Lucene characters to prevent query syntax errors
+        escaped_search_string = escape_lucene_special_chars(search_string)
+
+        if match_whole_words:
+            lucene_query = f"{escaped_search_string}~{settings.fuzziness_level}"
+        else:
+            lucene_query = f"*{escaped_search_string}*~{settings.fuzziness_level}"
+
+        where_clauses = []
+        if only_ordinal_codelists:
+            where_clauses.append("attr_value.is_ordinal = true")
+        if only_response_codelists:
+            where_clauses.append(
+                "EXISTS { MATCH (codelist_root)<-[:HAS_VALID_CODELIST_FOR_ITEMS]-() }"
+            )
+
+        where_statement = ""
+        if where_clauses:
+            where_statement = "WHERE " + " AND ".join(where_clauses)
+
+        skip = (page_number - 1) * page_size
+
+        query = f"""
+            CALL db.index.fulltext.queryNodes('codelist_fulltext_index', $search_string, {{limit: 50}})
+            YIELD node, score
+            MATCH (node)<-[:LATEST]-(:CTCodelistNameRoot|CTCodelistAttributesRoot)<-[:HAS_NAME_ROOT|HAS_ATTRIBUTES_ROOT]-(codelist_root:CTCodelistRoot)
+            WITH DISTINCT codelist_root, score
+            MATCH (library:Library)-[:CONTAINS_CODELIST]->(codelist_root)
+            MATCH (attr_value:CTCodelistAttributesValue)<-[:LATEST]-(:CTCodelistAttributesRoot)
+                <--(codelist_root)-->(:CTCodelistNameRoot)-[:LATEST]->(name_value:CTCodelistNameValue)
+            {where_statement}
+            RETURN codelist_root.uid AS uid, name_value.name AS sponsor_preferred_name, attr_value.submission_value AS submission_value, library.name AS library_name
+            ORDER BY score DESC
+            SKIP $skip LIMIT $page_size
+        """
+
+        params = {
+            "search_string": lucene_query,
+            "skip": skip,
+            "page_size": page_size,
+        }
+
+        result, _ = db.cypher_query(query, params)
+
+        items = [
+            {
+                "uid": row[0],
+                "sponsor_preferred_name": row[1],
+                "submission_value": row[2],
+                "library_name": row[3],
+            }
+            for row in result
+        ]
+
+        return items, 0
+
+    def search_fulltext_by_term(
+        self,
+        search_string: str,
+        only_response_codelists: bool = False,
+        only_ordinal_codelists: bool = False,
+        match_whole_words: bool = False,
+        page_number: int = 1,
+        page_size: int = 20,
+    ) -> tuple[list[dict[str, str]], int]:
+        """
+        Searches terms using a full-text index and returns codelists containing those terms.
+
+        :param search_string: The search string to use for full-text search on terms
+        :param only_response_codelists: If True, only return codelists that have a HAS_VALID_CODELIST_FOR_ITEMS relationship
+        :param only_ordinal_codelists: If True, only return codelists where is_ordinal is True
+        :param match_whole_words: If True, match whole words only
+        :param page_number: Page number for pagination
+        :param page_size: Number of results per page
+        :return: Tuple of (list of dicts with uid, sponsor_preferred_name, submission_value, library_name)
+        """
+        # Escape special Lucene characters to prevent query syntax errors
+        escaped_search_string = escape_lucene_special_chars(search_string)
+
+        if match_whole_words:
+            lucene_query = f"{escaped_search_string}~{settings.fuzziness_level}"
+        else:
+            lucene_query = f"*{escaped_search_string}*~{settings.fuzziness_level}"
+
+        where_clauses = []
+        if only_ordinal_codelists:
+            where_clauses.append("attr_value.is_ordinal = true")
+        if only_response_codelists:
+            where_clauses.append(
+                "EXISTS { MATCH (codelist_root)<-[:HAS_VALID_CODELIST_FOR_ITEMS]-() }"
+            )
+
+        where_statement = ""
+        if where_clauses:
+            where_statement = "WHERE " + " AND ".join(where_clauses)
+
+        skip = (page_number - 1) * page_size
+
+        query = f"""
+            CALL db.index.fulltext.queryNodes('term_fulltext_index', $search_string, {{limit: 250}})
+            YIELD node, score
+            MATCH (node)<-[:LATEST]-(:CTTermNameRoot|CTTermAttributesRoot)<-[:HAS_NAME_ROOT|HAS_ATTRIBUTES_ROOT]-(term_root:CTTermRoot)
+            MATCH (codelist_root:CTCodelistRoot)-[:HAS_TERM]->(:CTCodelistTerm)-[:HAS_TERM_ROOT]->(term_root)
+            WITH DISTINCT codelist_root, max(score) AS score
+            MATCH (library:Library)-[:CONTAINS_CODELIST]->(codelist_root)
+            MATCH (attr_value:CTCodelistAttributesValue)<-[:LATEST]-(:CTCodelistAttributesRoot)
+                <--(codelist_root)-->(:CTCodelistNameRoot)-[:LATEST]->(name_value:CTCodelistNameValue)
+            {where_statement}
+            RETURN codelist_root.uid AS uid, name_value.name AS sponsor_preferred_name, attr_value.submission_value AS submission_value, library.name AS library_name
+            ORDER BY score DESC
+            SKIP $skip LIMIT $page_size
+        """
+
+        params = {
+            "search_string": lucene_query,
+            "skip": skip,
+            "page_size": page_size,
+        }
+
+        result, _ = db.cypher_query(query, params)
+
+        items = [
+            {
+                "uid": row[0],
+                "sponsor_preferred_name": row[1],
+                "submission_value": row[2],
+                "library_name": row[3],
+            }
+            for row in result
+        ]
+
+        return items, 0
 
     def close(self) -> None:
         # Our repository guidelines state that repos should have a close method

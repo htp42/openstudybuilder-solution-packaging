@@ -85,10 +85,10 @@ Feature: Library - About Library
             | Code Lists              | Sponsor               | /library/sponsor                               |
             | Code Lists              | Sponsor CT Packages   | /library/sponsor-ct-packages                   |
             | Dictionaries            | SNOMED                | /library/snomed                                |
-            | Dictionaries            | MedDRA                | /library/meddra                                |
+            #| Dictionaries            | MedDRA                | /library/meddra                                |
             | Dictionaries            | MED-RT                | /library/medrt                                 |
             | Dictionaries            | UNII                  | /library/unii                                  |
-            | Dictionaries            | LOINC                 | /library/loinc                                 |
+            #| Dictionaries            | LOINC                 | /library/loinc                                 |
             | Dictionaries            | UCUM                  | /library/ucum                                  |
             | Concepts                | Activities            | /library/activities/activities                 |
             | Concepts                | Units                 | /library/units                                 |

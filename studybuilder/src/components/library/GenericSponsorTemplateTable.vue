@@ -26,15 +26,19 @@
       <template #actions>
         <v-btn
           v-if="!preInstanceMode"
-          class="ml-2 expandHoverBtn"
+          class="ml-2"
+          icon
+          size="small"
           variant="outlined"
           color="nnBaseBlue"
           data-cy="add-template"
           :disabled="!accessGuard.checkPermission($roles.LIBRARY_WRITE)"
           @click="createTemplate()"
         >
-          <v-icon left>mdi-plus</v-icon>
-          <span class="label">{{ $t(`${translationType}.add`) }}</span>
+          <v-icon>mdi-plus</v-icon>
+          <v-tooltip activator="parent" location="top">
+            {{ $t(`${translationType}.add`) }}
+          </v-tooltip>
         </v-btn>
       </template>
       <template v-for="(_, slot) of $slots" #[slot]="scope">

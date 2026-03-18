@@ -2735,8 +2735,12 @@ END
                             }], ['major_version', 'minor_version', 'start_date']))
                     }
                     ] as activity_groupings,
-                    head([(library:Library)--(root)--(activity_value)<-[:HAS_SELECTED_ACTIVITY]-(:StudyActivity)<-[:HAS_STUDY_ACTIVITY]-(study_value:StudyValue) WHERE library.name="Requested" | study_value.study_id_prefix + "-" + study_value.study_number]) AS requester_study_id
-                RETURN activity_groupings, requester_study_id
+                    apoc.coll.toSet(apoc.coll.sort([(library:Library)-[:CONTAINS_CONCEPT]->(root)-[:HAS_VERSION]->(:ActivityValue)
+                        <-[:HAS_SELECTED_ACTIVITY]-(sa:StudyActivity)<-[:HAS_STUDY_ACTIVITY]-(study_value:StudyValue)
+                        WHERE library.name="Requested" AND NOT (sa)-[:BEFORE]-() AND NOT (sa)--(:Delete) |
+                        COALESCE(study_value.study_id_prefix, '') + "-" + COALESCE(study_value.study_number, '') +
+                        CASE WHEN study_value.subpart_id IS NOT NULL AND study_value.subpart_id <> '' THEN "-" + study_value.subpart_id ELSE "" END])) AS used_by_studies
+                RETURN activity_groupings, used_by_studies
             }
         """
 
@@ -2745,7 +2749,7 @@ END
                 activity_groupings: activity_groupings,
                 // activity_instances: activity_instances,
                 replaced_activity_uid: replaced_by_activity.uid,
-                requester_study_id: requester_study_id
+                used_by_studies: used_by_studies
             } as activity_root
         """
 

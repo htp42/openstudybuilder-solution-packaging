@@ -23,10 +23,14 @@ from clinical_mdr_api.domain_repositories.models.standard_data_model import (
     DatasetVariable,
     VariableClass,
 )
+from clinical_mdr_api.domains.controlled_terminologies.ct_codelist_attributes import (
+    DEFAULT_CODELIST_TYPE,
+)
 from clinical_mdr_api.domains.enums import (
     LibraryItemStatus,
     StudyDesignClassEnum,
     StudySourceVariableEnum,
+    ValidationMode,
 )
 from clinical_mdr_api.main import app
 from clinical_mdr_api.models.biomedical_concepts.activity_instance_class import (
@@ -561,6 +565,7 @@ from clinical_mdr_api.tests.utils.checks import (
     assert_response_content_type,
     assert_response_status_code,
 )
+from clinical_mdr_api.utils.db_integrity_checks import execute_all_checks_for_study
 from common.auth.dependencies import dummy_user_test_auth
 from common.auth.user import clear_users_cache
 from common.config import settings
@@ -587,8 +592,8 @@ class CTCodelistConfig:
 AUTHOR = "test"
 STUDY_UID = "study_root"
 PROJECT_NUMBER = "123"
-LIBRARY_NAME = "Sponsor"
-CDISC_LIBRARY_NAME = "CDISC"
+SPONSOR_LIBRARY_NAME = settings.sponsor_library_name
+CDISC_LIBRARY_NAME = settings.cdisc_library_name
 CT_CATALOGUE_NAME = "SDTM CT"
 CT_CODELIST_UIDS: CTCodelistConfig = CTCodelistConfig(
     default="C66737",
@@ -856,7 +861,7 @@ class TestUtils:
     @classmethod
     def create_text_value(
         cls,
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
         name: str | None = None,
         name_sentence_case: str | None = None,
         definition: str | None = None,
@@ -889,7 +894,7 @@ class TestUtils:
         ui_base_url: str | None = None,
         origin_source_uid: str | None = None,
         origin_type_uid: str | None = None,
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
     ) -> DataSupplier:
         service: DataSupplierService = DataSupplierService()
         payload: DataSupplierInput = DataSupplierInput(
@@ -912,7 +917,7 @@ class TestUtils:
         name: str | None = None,
         guidance_text: str | None = None,
         study_uid: str | None = None,
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
         indication_uids: list[str] | None = None,
         is_confirmatory_testing: bool = False,
         category_uids: list[str] | None = None,
@@ -940,7 +945,7 @@ class TestUtils:
         name: str | None = None,
         guidance_text: str | None = None,
         study_uid: str | None = None,
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
         indication_uids: list[str] | None = None,
         category_uids: list[str] | None = None,
         sub_category_uids: list[str] | None = None,
@@ -967,7 +972,7 @@ class TestUtils:
         cls,
         name: str | None = None,
         guidance_text: str | None = None,
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
         indication_uids: list[str] | None = None,
         activity_uids: list[str] | None = None,
         activity_group_uids: list[str] | None = None,
@@ -1002,7 +1007,7 @@ class TestUtils:
         guidance_text: str | None = None,
         study_uid: str | None = None,
         type_uid: str,
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
         indication_uids: list[str] | None = None,
         category_uids: list[str] | None = None,
         sub_category_uids: list[str] | None = None,
@@ -1031,7 +1036,7 @@ class TestUtils:
         *,
         name: str | None = None,
         study_uid: str | None = None,
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
         type_uid: str,
         indication_uids: list[str] | None = None,
         activity_uids: list[str] | None = None,
@@ -1061,7 +1066,7 @@ class TestUtils:
         cls,
         name: str | None = None,
         guidance_text: str | None = None,
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
         approve: bool = True,
     ) -> TimeframeTemplate:
         service: TimeframeTemplateService = TimeframeTemplateService()
@@ -1083,7 +1088,7 @@ class TestUtils:
     def create_activity_instruction(
         cls,
         activity_instruction_template_uid: str | None = None,
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
         parameter_terms: list[TemplateParameterMultiSelectInput] | None = None,
         approve: bool = True,
     ) -> ActivityInstruction:
@@ -1116,7 +1121,7 @@ class TestUtils:
     def create_footnote(
         cls,
         footnote_template_uid: str | None = None,
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
         parameter_terms: list[TemplateParameterMultiSelectInput] = [],
         approve: bool = True,
     ) -> Footnote:
@@ -1159,7 +1164,7 @@ class TestUtils:
     def create_criteria(
         cls,
         criteria_template_uid: str | None = None,
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
         parameter_terms: list[TemplateParameterMultiSelectInput] | None = None,
         approve: bool = True,
     ) -> Criteria:
@@ -1193,7 +1198,7 @@ class TestUtils:
     def create_endpoint(
         cls,
         endpoint_template_uid: str | None = None,
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
         parameter_terms: list[TemplateParameterMultiSelectInput] | None = None,
         approve: bool = True,
     ) -> Endpoint:
@@ -1227,7 +1232,7 @@ class TestUtils:
     def create_objective(
         cls,
         objective_template_uid: str | None = None,
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
         parameter_terms: list[TemplateParameterMultiSelectInput] | None = None,
         approve: bool = True,
     ) -> Objective:
@@ -1257,7 +1262,7 @@ class TestUtils:
     def create_timeframe(
         cls,
         timeframe_template_uid: str | None = None,
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
         parameter_terms: list[TemplateParameterMultiSelectInput] | None = None,
         approve: bool = True,
     ) -> Timeframe:
@@ -1293,7 +1298,7 @@ class TestUtils:
         activity_uids: list[str] | None = None,
         activity_group_uids: list[str] | None = None,
         activity_subgroup_uids: list[str] | None = None,
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
         approve: bool = True,
     ) -> ActivityInstructionPreInstance:
         if not template_uid:
@@ -1339,7 +1344,7 @@ class TestUtils:
         indication_uids: list[str] | None = None,
         category_uids: list[str] | None = None,
         sub_category_uids: list[str] | None = None,
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
         approve: bool = True,
     ) -> EndpointPreInstance:
         if not template_uid:
@@ -1376,7 +1381,7 @@ class TestUtils:
         parameter_terms: list[TemplateParameterMultiSelectInput] | None = None,
         indication_uids: list[str] | None = None,
         category_uids: list[str] | None = None,
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
         approve: bool = True,
     ) -> ObjectivePreInstance:
         if not template_uid:
@@ -1415,7 +1420,7 @@ class TestUtils:
         activity_uids: list[str] | None = None,
         activity_group_uids: list[str] | None = None,
         activity_subgroup_uids: list[str] | None = None,
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
         approve: bool = True,
     ) -> FootnotePreInstance:
         if not template_uid:
@@ -1456,7 +1461,7 @@ class TestUtils:
         indication_uids: list[str] | None = None,
         category_uids: list[str] | None = None,
         sub_category_uids: list[str] | None = None,
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
         approve: bool = True,
     ) -> CriteriaPreInstance:
         if not template_uid:
@@ -1495,7 +1500,7 @@ class TestUtils:
         name_sentence_case=None,
         definition=None,
         abbreviation=None,
-        library_name=LIBRARY_NAME,
+        library_name=SPONSOR_LIBRARY_NAME,
         is_sponsor_compound=True,
         external_id=None,
         approve: bool = False,
@@ -1525,7 +1530,7 @@ class TestUtils:
         name_sentence_case=None,
         definition=None,
         abbreviation=None,
-        library_name=LIBRARY_NAME,
+        library_name=SPONSOR_LIBRARY_NAME,
         is_preferred_synonym=None,
         compound_uid=None,
         approve: bool = False,
@@ -1558,7 +1563,7 @@ class TestUtils:
         short_number=None,
         long_number=None,
         inn=None,
-        library_name=LIBRARY_NAME,
+        library_name=SPONSOR_LIBRARY_NAME,
         unii_term_uid=None,
         approve: bool = False,
     ) -> ActiveSubstance:
@@ -1582,7 +1587,7 @@ class TestUtils:
     def create_pharmaceutical_product(
         cls,
         external_id=None,
-        library_name=LIBRARY_NAME,
+        library_name=SPONSOR_LIBRARY_NAME,
         dosage_form_uids=None,
         route_of_administration_uids=None,
         formulations=None,
@@ -1610,7 +1615,7 @@ class TestUtils:
         external_id=None,
         name=None,
         name_sentence_case=None,
-        library_name=LIBRARY_NAME,
+        library_name=SPONSOR_LIBRARY_NAME,
         dose_value_uids=None,
         dose_frequency_uid=None,
         delivery_device_uid=None,
@@ -1666,7 +1671,7 @@ class TestUtils:
         activity_subgroups: list[Any] | None = None,
         activity_groups: list[Any] | None = None,
         activity_items: list[Any] | None = None,
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
         approve: bool = True,
         retire_after_approve: bool = False,
         preview=False,
@@ -1731,7 +1736,7 @@ class TestUtils:
         is_domain_specific: bool = False,
         level: int | None = None,
         parent_uid: str | None = None,
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
         approve: bool = True,
     ) -> ActivityInstanceClass:
         service: ActivityInstanceClassService = ActivityInstanceClassService()
@@ -1763,7 +1768,7 @@ class TestUtils:
         activity_instance_classes: list[ActivityInstanceClassRelInput],
         definition: str | None = None,
         nci_concept_id: str | None = None,
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
         approve: bool = True,
     ) -> ActivityItemClass:
         service: ActivityItemClassService = ActivityItemClassService()
@@ -1800,7 +1805,7 @@ class TestUtils:
         is_request_final: bool = False,
         is_data_collected: bool = True,
         is_multiple_selection_allowed: bool = True,
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
         approve: bool = True,
     ) -> Activity:
         service: ActivityService = ActivityService()
@@ -1846,7 +1851,7 @@ class TestUtils:
         name_sentence_case: str | None = None,
         definition: str | None = None,
         abbreviation: str | None = None,
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
         approve: bool = True,
     ) -> ActivitySubGroup:
         service: ActivitySubGroupService = ActivitySubGroupService()
@@ -1873,7 +1878,7 @@ class TestUtils:
         name_sentence_case: str | None = None,
         definition: str | None = None,
         abbreviation: str | None = None,
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
         approve: bool = True,
     ) -> ActivityGroup:
         service: ActivityGroupService = ActivityGroupService()
@@ -2092,7 +2097,7 @@ class TestUtils:
         cls,
         study_uid: str,
         objective_template_uid: str,
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
         objective_level_uid: str | None = None,
         parameter_terms: list[TemplateParameterMultiSelectInput] | None = None,
     ) -> StudySelectionObjective:
@@ -2121,7 +2126,7 @@ class TestUtils:
         cls,
         study_uid: str,
         endpoint_template_uid: str,
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
         study_objective_uid: str | None = None,
         endpoint_level_uid: str | None = None,
         endpoint_sublevel_uid: str | None = None,
@@ -2157,7 +2162,7 @@ class TestUtils:
         cls,
         study_uid: str,
         criteria_template_uid: str,
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
         parameter_terms: list[TemplateParameterMultiSelectInput] | None = None,
     ) -> StudySelectionCriteria:
         service: StudyCriteriaSelectionService = StudyCriteriaSelectionService()
@@ -2262,7 +2267,7 @@ class TestUtils:
     def create_unit_definition(
         cls,
         name=None,
-        library_name=LIBRARY_NAME,
+        library_name=SPONSOR_LIBRARY_NAME,
         convertible_unit=False,
         display_unit=True,
         master_unit=False,
@@ -2315,7 +2320,7 @@ class TestUtils:
     def create_odm_study_event(
         cls,
         name=None,
-        library_name=LIBRARY_NAME,
+        library_name=SPONSOR_LIBRARY_NAME,
         oid: str | None = None,
         effective_date: date | None = None,
         retired_date: date | None = None,
@@ -2345,7 +2350,7 @@ class TestUtils:
     def create_odm_form(
         cls,
         name=None,
-        library_name=LIBRARY_NAME,
+        library_name=SPONSOR_LIBRARY_NAME,
         oid=None,
         repeating="Yes",
         sdtm_version=None,
@@ -2379,7 +2384,7 @@ class TestUtils:
     def create_odm_item_group(
         cls,
         name=None,
-        library_name=LIBRARY_NAME,
+        library_name=SPONSOR_LIBRARY_NAME,
         oid=None,
         repeating="Yes",
         is_reference_data=None,
@@ -2425,7 +2430,7 @@ class TestUtils:
     def create_odm_item(
         cls,
         name=None,
-        library_name=LIBRARY_NAME,
+        library_name=SPONSOR_LIBRARY_NAME,
         oid=None,
         datatype=None,
         prompt=None,
@@ -2481,7 +2486,7 @@ class TestUtils:
     def create_odm_condition(
         cls,
         name=None,
-        library_name=LIBRARY_NAME,
+        library_name=SPONSOR_LIBRARY_NAME,
         oid=None,
         formal_expressions: list[OdmFormalExpressionModel] | None = None,
         translated_texts: list[OdmTranslatedTextModel] | None = None,
@@ -2515,7 +2520,7 @@ class TestUtils:
     def create_odm_vendor_namespace(
         cls,
         name=None,
-        library_name=LIBRARY_NAME,
+        library_name=SPONSOR_LIBRARY_NAME,
         prefix=None,
         url=None,
         approve: bool = True,
@@ -2538,7 +2543,7 @@ class TestUtils:
     def create_odm_vendor_element(
         cls,
         name=None,
-        library_name=LIBRARY_NAME,
+        library_name=SPONSOR_LIBRARY_NAME,
         compatible_types=None,
         vendor_namespace_uid=None,
         approve: bool = True,
@@ -2564,7 +2569,7 @@ class TestUtils:
     def create_odm_vendor_attribute(
         cls,
         name=None,
-        library_name=LIBRARY_NAME,
+        library_name=SPONSOR_LIBRARY_NAME,
         compatible_types=None,
         data_type=None,
         value_regex=None,
@@ -2594,7 +2599,7 @@ class TestUtils:
 
     @classmethod
     def create_library(
-        cls, name: str = LIBRARY_NAME, is_editable: bool = True
+        cls, name: str = SPONSOR_LIBRARY_NAME, is_editable: bool = True
     ) -> dict[str, str | bool]:
         libraries = library_service.get_libraries(is_editable)
         existing_library = next((x for x in libraries if x["name"] == name), None)
@@ -2602,6 +2607,20 @@ class TestUtils:
         if not existing_library:
             return library_service.create(name, is_editable)
         return existing_library
+
+    @classmethod
+    def edit_library_editable(cls, name: str, is_editable: bool) -> None:
+        """Toggle the is_editable flag of a Library node.
+
+        This is sometimes needed because certain libraries (e.g. CDISC) are set to
+        is_editable=True in tests for convenience, whereas in production they are
+        is_editable=False. Use this helper to restore the realistic state when a test
+        requires non-editable library behaviour.
+        """
+        db.cypher_query(
+            "MATCH (n:Library {name: $name}) SET n.is_editable=$is_editable",
+            {"name": name, "is_editable": is_editable},
+        )
 
     @classmethod
     def create_project(
@@ -2777,10 +2796,15 @@ class TestUtils:
         cls,
         extends_package: str,
         effective_date: date = date.today(),
+        library_name: str | None = None,
     ) -> CTPackage:
-        package = CTPackageService().create_sponsor_ct_package(
-            extends_package=extends_package, effective_date=effective_date
-        )
+        kwargs: dict[str, Any] = {
+            "extends_package": extends_package,
+            "effective_date": effective_date,
+        }
+        if library_name is not None:
+            kwargs["library_name"] = library_name
+        package = CTPackageService().create_sponsor_ct_package(**kwargs)
         return package
 
     @classmethod
@@ -2896,7 +2920,7 @@ class TestUtils:
                     {
                         "uid": getattr(CT_CODELIST_UIDS, attribute, None),
                         "name": value,
-                        "library": LIBRARY_NAME,
+                        "library": SPONSOR_LIBRARY_NAME,
                         "catalogue": CT_CATALOGUE_NAME,
                         "submission_value": getattr(
                             CT_CODELIST_SUBMVALS, attribute, None
@@ -2918,11 +2942,12 @@ class TestUtils:
         template_parameter: bool = False,
         parent_codelist_uid: str | None = None,
         terms: list[CTCodelistTermInput] | None = None,
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
         approve: bool = False,
         effective_date: datetime | None = None,
         codelist_uid: str | None = None,
         paired_codes_codelist_uid: str | None = None,
+        codelist_type: str = DEFAULT_CODELIST_TYPE,
     ) -> CTCodelist:
         if terms is None:
             terms = []
@@ -2940,6 +2965,7 @@ class TestUtils:
             definition=cls.random_if_none(definition, prefix="definition-"),
             extensible=extensible,
             is_ordinal=is_ordinal,
+            codelist_type=codelist_type,
             sponsor_preferred_name=cls.random_if_none(
                 sponsor_preferred_name, prefix="name-"
             ),
@@ -3045,7 +3071,7 @@ class TestUtils:
         name_sentence_case: str | None = None,
         definition: str | None = None,
         abbreviation: str | None = None,
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
         template_parameter: bool = False,
         value: float,
         unit_definition_uid: str | None = None,
@@ -3107,7 +3133,7 @@ class TestUtils:
         name_sentence_case: str | None = None,
         definition: str | None = None,
         abbreviation: str | None = None,
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
         template_parameter: bool = False,
         value: float,
         unit_definition_uid: str | None = None,
@@ -3217,7 +3243,9 @@ class TestUtils:
 
     @classmethod
     def create_ct_catalogue(
-        cls, library: str = LIBRARY_NAME, catalogue_name: str = CT_CATALOGUE_NAME
+        cls,
+        library: str = SPONSOR_LIBRARY_NAME,
+        catalogue_name: str = CT_CATALOGUE_NAME,
     ):
         create_catalogue_query = """
         MATCH (library:Library {name:$library_name})
@@ -3240,7 +3268,7 @@ class TestUtils:
         # pylint: disable=dangerous-default-value
         ct_data_map: dict[Any, Any] | None = None,
         ct_codelist_map: dict[Any, Any] | None = None,
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
     ):
         if ct_data_map is None:
             ct_data_map = initialize_ct_data_map
@@ -3399,7 +3427,7 @@ class TestUtils:
                         + cls.set_final_props("attributes_hasver"),
                         {
                             "uid": line.get("configured_codelist_uid"),
-                            "library": LIBRARY_NAME,
+                            "library": SPONSOR_LIBRARY_NAME,
                             "catalogue": CT_CATALOGUE_NAME,
                         },
                     )
@@ -3431,7 +3459,7 @@ class TestUtils:
                         {
                             "uid": line.get("configured_term_uid"),
                             "codelist": CT_CODELIST_UIDS.default,
-                            "library": LIBRARY_NAME,
+                            "library": SPONSOR_LIBRARY_NAME,
                             "catalogue": CT_CATALOGUE_NAME,
                         },
                     )
@@ -3444,7 +3472,7 @@ class TestUtils:
         cls,
         name: str = "name",
         data_model_type: str = "data_model_type",
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
     ) -> str:
         """
         Method uses cypher query to create DataModelCatalogue nodes because we don't have POST endpoints to instantiate these entities.
@@ -3476,7 +3504,7 @@ class TestUtils:
         description: str = "description",
         version_number: str = "1",
         implementation_guides=None,
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
     ) -> DataModel:
         """
         Method uses cypher query to create DataModel nodes because we don't have POST endpoints to instantiate these entities.
@@ -3529,7 +3557,7 @@ class TestUtils:
         version_number: str = "1",
         description: str = "description",
         implemented_data_model: str | None = None,
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
     ) -> DataModelIG:
         """
         Method uses cypher query to create DataModelIG nodes because we don't have POST endpoints to instantiate these entities.
@@ -3578,7 +3606,7 @@ class TestUtils:
         label: str = "label",
         description: str = "description",
         title: str = "title",
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
     ) -> DatasetClassAPIModel:
         """
         Method uses cypher query to create DatasetClass nodes because we don't have POST endpoints to instantiate these entities.
@@ -3625,7 +3653,7 @@ class TestUtils:
         label: str = "label",
         description: str = "description",
         title: str = "title",
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
     ) -> DatasetAPIModel:
         """
         Method uses cypher query to create Dataset nodes because we don't have POST endpoints to instantiate these entities.
@@ -3679,7 +3707,7 @@ class TestUtils:
         ig_uid: str,
         ig_version_number: str,
         version_number: str,
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
     ) -> SponsorModelAPIModel:
         service: SponsorModelService = SponsorModelService()
         result: SponsorModelAPIModel = service.create(  # type: ignore[assignment]
@@ -3873,7 +3901,7 @@ class TestUtils:
         question_text: str = "question_text",
         simple_datatype: str = "simple_datatype",
         role: str = "role",
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
     ) -> VariableClassAPIModel:
         """
         Method uses cypher query to create VariableClass nodes because we don't have POST endpoints to instantiate these entities.
@@ -3948,7 +3976,7 @@ class TestUtils:
         role: str = "role",
         core: str = "core",
         references_codelist_uids: list[str] | None = None,
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
     ) -> DatasetVariableAPIModel:
         """
         Method uses cypher query to create DatasetVariable nodes because we don't have POST endpoints to instantiate these entities.
@@ -4021,7 +4049,7 @@ class TestUtils:
         data_model_ig_name: str,
         data_model_ig_version: str,
         label: str = "label",
-        library_name: str = LIBRARY_NAME,
+        library_name: str = SPONSOR_LIBRARY_NAME,
     ) -> DatasetScenarioAPIModel:
         """
         Method uses cypher query to create DatasetScenario nodes because we don't have POST endpoints to instantiate these entities.
@@ -4266,7 +4294,7 @@ class TestUtils:
         return service.create_comment_reply(thread_uid, payload)
 
     @classmethod
-    def lock_study(cls, study_uid) -> str:
+    def lock_study(cls, study_uid, reason_for_lock_term_uid: str) -> str:
         """locks a study version (giving it a study-title first), returns locked study version"""
 
         study_service = StudyService()
@@ -4284,7 +4312,9 @@ class TestUtils:
         )
 
         study = study_service.lock(
-            uid=study_uid, change_description=cls.random_str(prefix="v")
+            uid=study_uid,
+            change_description=cls.random_str(prefix="v"),
+            reason_for_lock_term_uid=reason_for_lock_term_uid,
         )
         latest_study_version = str(
             study.current_metadata.version_metadata.version_number
@@ -4293,16 +4323,24 @@ class TestUtils:
         return latest_study_version
 
     @classmethod
-    def unlock_study(cls, study_uid):
+    def unlock_study(cls, study_uid, reason_for_unlock_term_uid: str):
         """unlocks study"""
-        StudyService().unlock(uid=study_uid)
+        StudyService().unlock(
+            uid=study_uid, reason_for_unlock_term_uid=reason_for_unlock_term_uid
+        )
 
     @classmethod
-    def lock_and_unlock_study(cls, study_uid) -> str:
+    def lock_and_unlock_study(
+        cls, study_uid, reason_for_lock_term_uid: str, reason_for_unlock_term_uid: str
+    ) -> str:
         """locks a study version (giving it a study-title first), then unlocks it, returns locked study version"""
 
-        latest_study_version = cls.lock_study(study_uid)
-        cls.unlock_study(study_uid)
+        latest_study_version = cls.lock_study(
+            study_uid, reason_for_lock_term_uid=reason_for_lock_term_uid
+        )
+        cls.unlock_study(
+            study_uid, reason_for_unlock_term_uid=reason_for_unlock_term_uid
+        )
         return latest_study_version
 
     @classmethod
@@ -4413,3 +4451,102 @@ class TestUtils:
             if v["version"] == version:
                 return v
         return None
+
+    @classmethod
+    def run_integrity_checks_for_all_studies(
+        cls, api_client: TestClient, mode: ValidationMode = ValidationMode.STRICT
+    ) -> None:
+        """
+        Run integrity checks for all available studies in the database.
+
+        Args:
+            api_client: FastAPI test client to use for API calls
+            mode: Validation mode - ValidationMode.STRICT raises exceptions on failure (default),
+                  ValidationMode.WARNING logs failures but doesn't raise exceptions
+
+        Raises:
+            AssertionError: If no studies are found or if mode is strict and checks fail
+        """
+        # Get all studies from the API
+        response = api_client.get("/studies/list")
+        assert_response_status_code(response, 200)
+        studies = response.json()
+
+        assert len(studies) > 0, "No studies found to check"
+
+        # Run integrity checks for each study
+        all_failures = []
+
+        for study_item in studies:
+            study_uid = study_item["uid"]
+            try:
+                # Run checks with the specified mode
+                results = execute_all_checks_for_study(study_uid, mode=mode)
+
+                # Check if any checks failed
+                failed_checks = [r for r in results if not r.passed]
+                if failed_checks:
+                    failure_info = {
+                        "study_uid": study_uid,
+                        "study_number": study_item.get("number", "N/A"),
+                        "study_acronym": study_item.get("acronym", "N/A"),
+                        "failed_checks": [
+                            {
+                                "check_id": check.check_id,
+                                "description": check.description,
+                                "noncompliant_count": check.noncompliant_count,
+                                "error": check.error,
+                            }
+                            for check in failed_checks
+                        ],
+                    }
+                    all_failures.append(failure_info)
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                # Catch any unexpected errors during integrity checks
+                # We catch Exception here because integrity checks can raise various exceptions
+                # (BusinessLogicException, database errors, etc.) and we want to report all of them
+                all_failures.append(
+                    {
+                        "study_uid": study_uid,
+                        "study_number": study_item.get("number", "N/A"),
+                        "study_acronym": study_item.get("acronym", "N/A"),
+                        "error": str(e),
+                    }
+                )
+
+        # Report any failures found
+        if all_failures:
+            failure_messages = []
+            for failure in all_failures:
+                msg = (
+                    f"Study {failure['study_uid']} "
+                    f"({failure.get('study_acronym', 'N/A')}): "
+                )
+                if "failed_checks" in failure:
+                    msg += f"{len(failure['failed_checks'])} integrity check(s) failed"
+                    for check in failure["failed_checks"]:
+                        msg += (
+                            f"\n  - {check['check_id']}: {check['description']} "
+                            f"(found {check['noncompliant_count']} noncompliant entities)"
+                        )
+                else:
+                    msg += f"Error during integrity check: {failure.get('error', 'Unknown error')}"
+                failure_messages.append(msg)
+
+            # Log the failures
+            logger = logging.getLogger(__name__)
+            logger.warning(
+                "Integrity check failures found for %d study(ies):\n%s",
+                len(all_failures),
+                "\n".join(failure_messages),
+            )
+
+            # In strict mode, raise an exception if any checks failed
+            if mode == ValidationMode.STRICT:
+                raise AssertionError(
+                    f"Integrity checks failed for {len(all_failures)} study(ies):\n"
+                    + "\n".join(failure_messages)
+                )
+
+        # Assert that we successfully checked all studies
+        assert len(studies) > 0, "No studies were checked"

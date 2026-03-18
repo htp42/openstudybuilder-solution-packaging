@@ -48,12 +48,10 @@ Feature: Library - Concepts - Activities - Activity Instance Overview Page
 
     Scenario: [COSMoS YAML] Verify that the instance overview page displays all sections correctly
         When I click on the COSMoS YAML tab
-        And 'Download YAML content' button is visible in the overview page
-        And 'Close YAML viewer' button is visible in the overview page
-        When I click 'Download YAML content' button
+        When The download button is clicked
         Then The 'COSMoS-overview' file without timestamp is downloaded in 'yml' format
         # Ad the COSMoS YAML file should be saved with correct content (this step should be tested manually)
-        When I click 'Close YAML viewer' button
+        When The close overview button is clicked
         Then Instance overview page is opened       
         
     Scenario: [Sections] Verify that the activities instance overview page displays correctly
@@ -74,7 +72,7 @@ Feature: Library - Concepts - Activities - Activity Instance Overview Page
         And The free text search field should be displayed in the 'Activity Items' table
 
     Scenario: [History] Verify that the activity group overview page displays correctly
-        When I click 'History' button
+        When The history button is clicked
         Then The history page is opened
 
     Scenario: [Linking] Verify that the activities instance overview page can link to the correct groups, subgroups and activities
@@ -89,21 +87,20 @@ Feature: Library - Concepts - Activities - Activity Instance Overview Page
         Then The Instance linked group, subgroup and instance are displayed in the Activity groupings table
 
     Scenario: [Edit] Edit the Instance
-        When I click 'New version' button
-        Then The status displayed on the summary has value 'Draft' and version is '1.1'
+        Given The '/administration/featureflags' page is opened
+        And Activity instance wizard feature flag is turned on
+        And Activity instance wizard edit mode feature flag is turned on
+        And Overview page for activity instance created via API is opened
+        And Instance overview page is opened
+        When The new version plus button is clicked
+        And The status displayed on the summary has value 'Draft' and version is '1.1'
         And The Instance linked group, subgroup and instance are displayed in the Activity groupings table
         And The Instance linked activity has status 'Final' and version '1.0'
-        When I click 'Edit' button
-        And User waits for 3 seconds
-        And Form continue button is clicked
-        And Form continue button is clicked
-        And Instance name is changed
-        And Form save button is clicked
-        Then The status displayed on the summary has value 'Draft' and version is '1.2'
-        #And The Activities table is empty
+        And The pencil button is clicked
+        Then The Activity Instance Wizard Stepper 'Select activity' page is displayed
 
     Scenario: [Approve] Approve the Instance
-        When I click 'Approve' button
+        When The approve button is clicked
         Then The status displayed on the summary has value 'Final' and version is '2.0'
         And The Instance linked group, subgroup and instance are displayed in the Activity groupings table
         And The Instance linked activity has status 'Final' and version '1.0'

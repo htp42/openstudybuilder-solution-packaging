@@ -11,6 +11,7 @@ Tests for /studies/{study_uid}/study-data-suppliers endpoints
 
 import logging
 from datetime import datetime, timezone
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
@@ -33,6 +34,7 @@ log = logging.getLogger(__name__)
 
 # Global variables shared between fixtures and tests
 study: Study
+test_data_dict: dict[str, Any]
 data_suppliers: list[DataSupplier]
 supplier_type: CTTerm
 supplier_type2: CTTerm
@@ -56,8 +58,8 @@ def test_data(api_client):
     db_name = "studydatasupplier"
     inject_and_clear_db(db_name)
 
-    global study
-    study, _test_data_dict = inject_base_data()
+    global study, test_data_dict
+    study, test_data_dict = inject_base_data()
 
     response = api_client.patch(
         f"studies/{study.uid}",
@@ -202,6 +204,17 @@ def test_data(api_client):
         params=params,
     )
     yield
+
+
+@pytest.mark.order("last")
+def test_integrity_checks_for_all_studies(api_client):
+    """
+    Test integrity checks for all available studies in the database.
+
+    This test should always be executed at the END to check the health of the remaining database.
+    It validates that all studies in the database pass integrity checks after all other tests have run.
+    """
+    TestUtils.run_integrity_checks_for_all_studies(api_client)
 
 
 def test_get_empty_list_of_study_data_suppliers_of_specific_study(api_client):
@@ -621,11 +634,25 @@ def test_get_study_data_suppliers_with_study_value_version_filter(api_client):
     )
 
     response = api_client.post(
-        f"studies/{study.uid}/locks", json={"change_description": "Locked version"}
+        f"studies/{study.uid}/locks",
+        json={
+            "change_description": "Locked version",
+            "reason_for_change_uid": test_data_dict["reason_for_lock_terms"][
+                0
+            ].term_uid,
+        },
     )
     assert_response_status_code(response, 201)
-    response = api_client.delete(f"studies/{study.uid}/locks")
-    assert_response_status_code(response, 200)
+    response = api_client.post(
+        f"studies/{study.uid}/unlocks",
+        json={
+            "change_description": "Unlock",
+            "reason_for_change_uid": test_data_dict["reason_for_unlock_terms"][
+                0
+            ].term_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
 
     response = api_client.get(
         f"studies/{study.uid}/study-data-suppliers?study_value_version=1&total_count=true"

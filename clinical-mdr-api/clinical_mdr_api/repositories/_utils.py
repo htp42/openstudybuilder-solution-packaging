@@ -36,9 +36,27 @@ from common.utils import (
 )
 
 # Re-used regex
-nested_regex = re.compile(r"\.")
+NESTED_REGEX = re.compile(r"\.")
 
 log = logging.getLogger(__name__)
+
+# Lucene special characters that need to be escaped: + - && || ! ( ) { } [ ] ^ " ~ * ? : \ /
+LUCENE_SPECIAL_CHARS = r'+-&|!(){}[]^"~*?:\/'
+LUCENE_ESCAPE_REGEX = re.compile(f"([{re.escape(LUCENE_SPECIAL_CHARS)}])")
+
+
+def escape_lucene_special_chars(search_string: str) -> str:
+    """
+    Escape special characters in Lucene query syntax.
+
+    Lucene special characters: + - && || ! ( ) { } [ ] ^ " ~ * ? : backslash /
+    Lucene special characters are escaped with a backslash to be treated as literals.
+
+    :param search_string: The raw search string from user input
+    :return: Escaped search string safe for Lucene queries
+    """
+    # Use regex to escape all special characters in a single pass
+    return LUCENE_ESCAPE_REGEX.sub(r"\\\1", search_string)
 
 
 class ComparisonOperator(Enum):
@@ -1213,7 +1231,7 @@ class CypherQueryBuilder:
         Escapes alias to prevent Cypher failures.
             * Replaces . for nested properties by _
         """
-        return re.sub(nested_regex, "_", alias)
+        return re.sub(NESTED_REGEX, "_", alias)
 
     def execute(self) -> tuple[Any, Any]:
         try:

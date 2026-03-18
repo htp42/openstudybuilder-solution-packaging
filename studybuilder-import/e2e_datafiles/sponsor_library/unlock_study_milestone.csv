@@ -1,6 +1,0 @@
-CODELIST_SUBMVAL,SPONSOR_NAME,SPONSOR_NAME_SENTENCE_CASE,TERM_SUBMVAL,DEFINITION,ORDER,CONCEPT_ID,CATALOGUES,NCI_PREFERRED_NAME
-RSNFUL,Updates after Protocol Development Milestone,updates after protocol development milestone,UPDATES_AFTER_PROTOCOL_DEVELOPMENT_MILESTONE,Milestone for unlocking study for updates after protocol development milestone,1,,,Updates after Protocol Development Milestone
-RSNFUL,Data Collection Updates,data collection updates,DATA_COLLECTION_UPDATES,Milestone for unlocking study for data collection updates,2,,,Data Collection Updates
-RSNFUL,Study Specification Updates,study specification updates,STUDY_SPECIFICATION_UPDATES,Milestone for unlocking study for study specification updates,3,,,Study Specification Updates
-RSNFUL,Amendment,amendment,AMENDMENT,Milestone for unlocking study for protocol amendment,4,,,Amendment
-RSNFUL,Other,other,OTHER,Other milestone for unlocking study,5,,,Other

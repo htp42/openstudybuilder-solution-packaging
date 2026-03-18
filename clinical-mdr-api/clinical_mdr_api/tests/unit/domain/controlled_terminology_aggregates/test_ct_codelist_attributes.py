@@ -1,6 +1,7 @@
 import unittest
 
 from clinical_mdr_api.domains.controlled_terminologies.ct_codelist_attributes import (
+    DEFAULT_CODELIST_TYPE,
     CTCodelistAttributesAR,
     CTCodelistAttributesVO,
 )
@@ -27,6 +28,7 @@ def create_random_ct_codelist_attributes_vo(
         definition=random_str(),
         extensible=True,
         is_ordinal=False,
+        codelist_type=DEFAULT_CODELIST_TYPE,
     )
     return random_ct_codelist_attributes_vo
 

@@ -24,24 +24,48 @@
         <v-btn
           v-if="!readOnly"
           data-cy="add-study"
-          class="ml-2 expandHoverBtn"
+          class="ml-2"
+          icon
+          size="small"
           variant="outlined"
           color="nnBaseBlue"
           :disabled="!accessGuard.checkPermission($roles.STUDY_WRITE)"
           @click.stop="showCreationForm = true"
         >
-          <v-icon left>mdi-plus</v-icon>
-          <span class="label">{{ $t('StudyForm.add_title') }}</span>
+          <v-icon>mdi-plus</v-icon>
+          <v-tooltip activator="parent" location="top">
+            {{ $t('StudyForm.add_title') }}
+          </v-tooltip>
         </v-btn>
         <v-btn
-          class="ml-2 expandHoverBtn"
+          class="ml-2"
+          icon
+          size="small"
           variant="outlined"
           color="nnBaseBlue"
           @click="emit('enableFiltering')"
         >
-          <v-icon left>mdi-filter-outline</v-icon>
-          <span class="label">{{ $t('NNTableTooltips.filters') }}</span>
+          <v-icon>mdi-filter-outline</v-icon>
+          <v-tooltip activator="parent" location="top">
+            {{ $t('NNTableTooltips.filters') }}
+          </v-tooltip>
         </v-btn>
+      </template>
+      <template #[`item.actions`]="{ item }">
+        <v-icon
+          v-if="item.uid === selectedStudyUid"
+          icon="mdi-check-circle-outline"
+          color="success"
+        />
+        <v-btn
+          v-else
+          icon="mdi-check-circle-outline"
+          :loading="item.loading"
+          size="small"
+          variant="flat"
+          :title="$t('_global.select_study')"
+          @click="selectStudy(item, true)"
+        />
       </template>
       <template #[`item.version_start_date`]="{ item }">
         {{ $filters.date(item.version_start_date) }}
@@ -138,6 +162,8 @@ import NNTable from '@/components/tools/NNTable.vue'
 import StudyForm from '@/components/studies/StudyForm.vue'
 import StudyCreationForm from '@/components/studies/StudyCreationForm.vue'
 import StatusChip from '@/components/tools/StatusChip.vue'
+import api from '@/api/study'
+import { useStudiesGeneralStore } from '@/stores/studies-general'
 import { useI18n } from 'vue-i18n'
 import { useAccessGuard } from '@/composables/accessGuard'
 
@@ -151,8 +177,18 @@ const emit = defineEmits(['refreshStudies', 'enableFiltering', 'sort'])
 
 const { t } = useI18n()
 const accessGuard = useAccessGuard()
+const studiesGeneralStore = useStudiesGeneralStore()
+
+const selectedStudyUid = computed(() => studiesGeneralStore.studyUid)
 
 const headers = [
+  {
+    title: '',
+    key: 'actions',
+    cellProps: {
+      class: 'text-center',
+    },
+  },
   {
     title: t('StudyTable.clinical_programme'),
     key: 'clinical_programme_name',
@@ -227,6 +263,14 @@ const exportDataUrl = computed(() => {
   }
   return result
 })
+
+async function selectStudy(study) {
+  study.loading = true
+  let resp
+  resp = await api.getStudy(study.uid, true)
+  await studiesGeneralStore.selectStudy(resp.data, true)
+  study.loading = false
+}
 
 function sort(data) {
   emit('sort', data)

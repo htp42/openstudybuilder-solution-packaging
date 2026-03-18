@@ -30,38 +30,8 @@
       </v-radio-group>
       <v-form ref="studiesFormRef">
         <v-row v-if="creationMode === 'select'">
-          <v-col cols="3">
-            <v-autocomplete
-              v-model="selectedStudies"
-              :data-cy="$t('StudySelectionTable.select_studies')"
-              :label="$t('StudySelectionTable.study_ids')"
-              :items="studies"
-              :rules="[formRules.required]"
-              item-title="current_metadata.identification_metadata.study_id"
-              clearable
-              multiple
-              return-object
-            />
-          </v-col>
-          <div class="mt-8">
-            {{ $t('_global.and_or') }}
-          </div>
-          <v-col cols="3">
-            <v-autocomplete
-              v-model="selectedStudies"
-              :label="$t('StudySelectionTable.study_acronyms')"
-              :items="
-                studies.filter(
-                  (study) =>
-                    study.current_metadata.identification_metadata.study_acronym
-                )
-              "
-              :rules="[formRules.required]"
-              item-title="current_metadata.identification_metadata.study_acronym"
-              return-object
-              multiple
-              clearable
-            />
+          <v-col>
+            <StudySelectorField v-model="selectedStudies" :data="studies" />
           </v-col>
         </v-row>
       </v-form>
@@ -275,6 +245,7 @@ import filteringParameters from '@/utils/filteringParameters'
 import constants from '@/constants/libraries'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 import { useStudiesObjectivesStore } from '@/stores/studies-objectives'
+import StudySelectorField from '@/components/studies/StudySelectorField.vue'
 
 const { t } = useI18n()
 const notificationHub = inject('notificationHub')

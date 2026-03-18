@@ -341,11 +341,22 @@ def store_odm_xml(
     mapper_file: Annotated[
         UploadFile | None, File(description=MAPPER_DESCRIPTION)
     ] = None,
+    library_name: Annotated[
+        str | None,
+        Query(
+            description="The name of the library to import into. Defaults to the configured sponsor library.",
+        ),
+    ] = None,
 ):
+    kwargs = {"library_name": library_name} if library_name else {}
     if exporter == ExporterType.OSB:
-        odm_xml_importer_service = OdmXmlImporterService(xml_file, mapper_file)
+        odm_xml_importer_service = OdmXmlImporterService(
+            xml_file, mapper_file, **kwargs
+        )
     else:
-        odm_xml_importer_service = OdmClinicalXmlImporterService(xml_file, mapper_file)
+        odm_xml_importer_service = OdmClinicalXmlImporterService(
+            xml_file, mapper_file, **kwargs
+        )
 
     return odm_xml_importer_service.store_odm_xml()
 

@@ -10,6 +10,7 @@ Tests for /studies/{study_uid}/study-cohorts endpoints
 # which pylint interprets as unused arguments
 
 import logging
+from typing import Any
 from unittest import mock
 
 import pytest
@@ -30,13 +31,15 @@ log = logging.getLogger(__name__)
 # Global variables shared between fixtures and tests
 study: Study
 study_arm: StudySelectionArm
+test_data_dict: dict[str, Any]
 
 
 @pytest.fixture(scope="module")
 def api_client(test_data):
     """Create FastAPI test client
     using the database name set in the `test_data` fixture"""
-    yield TestClient(app)
+    client = TestClient(app)
+    yield client
 
 
 @pytest.fixture(scope="module")
@@ -45,8 +48,8 @@ def test_data():
     db_name = "studycohortapi"
     inject_and_clear_db(db_name)
 
-    global study
-    study, _test_data_dict = inject_base_data()
+    global study, test_data_dict
+    study, test_data_dict = inject_base_data()
     global study_arm
     study_arm = TestUtils.create_study_arm(
         study_uid=study.uid,
@@ -55,6 +58,17 @@ def test_data():
     )
 
     yield
+
+
+@pytest.mark.order("last")
+def test_integrity_checks_for_all_studies(api_client):
+    """
+    Test integrity checks for all available studies in the database.
+
+    This test should always be executed at the END to check the health of the remaining database.
+    It validates that all studies in the database pass integrity checks after all other tests have run.
+    """
+    TestUtils.run_integrity_checks_for_all_studies(api_client)
 
 
 def test_cohort_modify_actions_on_locked_study(api_client):
@@ -87,7 +101,12 @@ def test_cohort_modify_actions_on_locked_study(api_client):
     # Lock
     response = api_client.post(
         f"/studies/{study.uid}/locks",
-        json={"change_description": "Lock 1"},
+        json={
+            "change_description": "Lock 1",
+            "reason_for_change_uid": test_data_dict["reason_for_lock_terms"][
+                0
+            ].term_uid,
+        },
     )
     assert_response_status_code(response, 201)
 
@@ -129,8 +148,16 @@ def test_cohort_modify_actions_on_locked_study(api_client):
 
 def test_study_cohort_study_value_version(api_client):
     # Unlock -- Study remain unlocked
-    response = api_client.delete(f"/studies/{study.uid}/locks")
-    assert_response_status_code(response, 200)
+    response = api_client.post(
+        f"/studies/{study.uid}/unlocks",
+        json={
+            "change_description": "Unlock",
+            "reason_for_change_uid": test_data_dict["reason_for_unlock_terms"][
+                0
+            ].term_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
 
     response = api_client.post(
         f"/studies/{study.uid}/study-branch-arms",
@@ -175,12 +202,25 @@ def test_study_cohort_study_value_version(api_client):
     # Lock
     response = api_client.post(
         f"/studies/{study.uid}/locks",
-        json={"change_description": "Lock 1"},
+        json={
+            "change_description": "Lock 1",
+            "reason_for_change_uid": test_data_dict["reason_for_lock_terms"][
+                0
+            ].term_uid,
+        },
     )
     assert_response_status_code(response, 201)
     # Unlock -- Study remain unlocked
-    response = api_client.delete(f"/studies/{study.uid}/locks")
-    assert_response_status_code(response, 200)
+    response = api_client.post(
+        f"/studies/{study.uid}/unlocks",
+        json={
+            "change_description": "Unlock",
+            "reason_for_change_uid": test_data_dict["reason_for_unlock_terms"][
+                0
+            ].term_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
 
     # edit arm
     response = api_client.patch(

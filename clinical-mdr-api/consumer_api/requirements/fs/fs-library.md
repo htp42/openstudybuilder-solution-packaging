@@ -54,4 +54,99 @@ Response must include basic information about each activity instance, together w
 | tests/v1/test_api_library.py | test_get_library_activity_instances_filtering                 |
 | tests/v1/test_api_library.py | test_get_library_activity_instances_invalid_pagination_params |
 
+# Library CT Codelists
+
+## FS-ConsumerApi-Library-Codelists-Get-010 [`URS-ConsumerApi-Library-ControlledTerminology`]
+
+Consumers must be able to retrieve a paginated list of all CT codelists by calling the `GET /library/ct/codelists` endpoint.
+
+### Request
+
+It must be possible to filter items by `name_status` and `attributes_status` (_Final, Draft, Retired_). Both filters default to _Final_.
+
+### Response
+
+Response must include basic information about each codelist: UID, name, submission value, sponsor preferred name, NCI preferred name, definition, is_extensible flag, library name, name status, name version, attributes status, and attributes version.
+
+Items are sorted by ascending codelist name.
+
+### Test coverage
+
+| Test File                       | Test Function                                     |
+| ------------------------------- | ------------------------------------------------- |
+| tests/v1/test_api_library_ct.py | test_get_codelists                                |
+| tests/v1/test_api_library_ct.py | test_get_codelists_pagination                     |
+| tests/v1/test_api_library_ct.py | test_get_codelists_invalid_pagination_params      |
+| tests/v1/test_api_library_ct.py | test_get_codelists_default_status_filter          |
+| tests/v1/test_api_library_ct.py | test_get_codelists_filter_name_status_draft       |
+| tests/v1/test_api_library_ct.py | test_get_codelists_filter_attributes_status_draft |
+| tests/v1/test_api_library_ct.py | test_get_codelists_filter_both_statuses_explicit  |
+
+# Library CT Codelist Terms
+
+## FS-ConsumerApi-Library-CodelistTerms-Get-010 [`URS-ConsumerApi-Library-ControlledTerminology`]
+
+Consumers must be able to retrieve a paginated list of CT codelist terms for a specified codelist by calling the `GET /library/ct/codelist-terms` endpoint with the required `codelist_submission_value` query parameter.
+
+### Request
+
+The `codelist_submission_value` query parameter is required and filters terms by codelist submission value (e.g. `TIMELB`, `TIMEREF`, `VISCNTMD`, `FLWCRTGRP`, `EPOCHSTP`).
+
+It must be possible to filter items by `name_status` and `attributes_status` (_Final, Draft, Retired_). Both filters default to _Final_.
+
+### Response
+
+Response must include basic information about each codelist term: UID, submission value, sponsor preferred name, concept ID, NCI preferred name, and library name.
+
+Items are sorted by ascending sponsor preferred name.
+
+If the specified codelist does not exist, an empty list is returned.
+
+### Test coverage
+
+| Test File                       | Test Function                                          |
+| ------------------------------- | ------------------------------------------------------ |
+| tests/v1/test_api_library_ct.py | test_get_codelist_terms                                |
+| tests/v1/test_api_library_ct.py | test_get_codelist_terms_nonexistent_codelist           |
+| tests/v1/test_api_library_ct.py | test_get_codelist_terms_pagination                     |
+| tests/v1/test_api_library_ct.py | test_get_codelist_terms_missing_required_param         |
+| tests/v1/test_api_library_ct.py | test_get_codelist_terms_invalid_pagination_params      |
+| tests/v1/test_api_library_ct.py | test_get_codelist_terms_default_status_filter          |
+| tests/v1/test_api_library_ct.py | test_get_codelist_terms_filter_name_status_draft       |
+| tests/v1/test_api_library_ct.py | test_get_codelist_terms_filter_attributes_status_draft |
+| tests/v1/test_api_library_ct.py | test_get_codelist_terms_filter_both_statuses_explicit  |
+
+# Library Unit Definitions
+
+## FS-ConsumerApi-Library-UnitDefinitions-Get-010 [`URS-ConsumerApi-Library-UnitDefinitions`]
+
+Consumers must be able to retrieve a paginated list of unit definitions by calling the `GET /library/unit-definitions` endpoint.
+
+### Request
+
+The optional `subset` query parameter filters unit definitions by subset name (e.g. `Study Time`). If omitted, all unit definitions are returned.
+
+It must be possible to filter items by `status` (_Final, Draft, Retired_). The filter defaults to _Final_.
+
+### Response
+
+Response must include basic information about each unit definition: UID, name, library name, status, version, and the list of subsets the unit definition belongs to (each subset includes term UID, term name, term submission value, codelist UID, codelist name, and codelist submission value).
+
+Items are sorted by ascending name.
+
+If the specified subset does not exist, an empty list is returned.
+
+### Test coverage
+
+| Test File                       | Test Function                                          |
+| ------------------------------- | ------------------------------------------------------ |
+| tests/v1/test_api_library_ct.py | test_get_unit_definitions                              |
+| tests/v1/test_api_library_ct.py | test_get_unit_definitions_nonexistent_subset           |
+| tests/v1/test_api_library_ct.py | test_get_unit_definitions_without_subset               |
+| tests/v1/test_api_library_ct.py | test_get_unit_definitions_pagination                   |
+| tests/v1/test_api_library_ct.py | test_get_unit_definitions_invalid_pagination_params    |
+| tests/v1/test_api_library_ct.py | test_get_unit_definitions_default_status_filter        |
+| tests/v1/test_api_library_ct.py | test_get_unit_definitions_filter_status_draft          |
+| tests/v1/test_api_library_ct.py | test_get_unit_definitions_filter_status_explicit_final |
+
 

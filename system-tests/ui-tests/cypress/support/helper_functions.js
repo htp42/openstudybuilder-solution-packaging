@@ -89,3 +89,9 @@ export function findMetadataByVersionAndStatus(
 export function currentDate() {
   return new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
+
+export function getShortUniqueId() {
+  const timePart = String(Date.now()).slice(-4); // last 4 digits
+  const randPart = Math.random().toString(36).slice(-2); // 2 random chars
+  return `${timePart}${randPart}`;
+}

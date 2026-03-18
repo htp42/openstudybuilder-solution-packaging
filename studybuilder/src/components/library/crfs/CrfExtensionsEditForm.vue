@@ -6,6 +6,7 @@
       :open="open"
       max-width="1200px"
       no-saving
+      :cancel-label="$t('_global.close')"
       @close="close"
     >
       <template #body>
@@ -26,7 +27,7 @@
         >
           <template #item="{ item, internalItem, toggleExpand, isExpanded }">
             <tr :class="item.type ? '' : 'elementBackground'">
-              <td width="25%">
+              <td width="20%">
                 <v-row>
                   <v-btn
                     v-if="isExpanded(internalItem)"
@@ -53,13 +54,23 @@
                   </div>
                 </v-row>
               </td>
-              <td width="25%">
+              <td width="20%">
                 {{ item.name }}
               </td>
-              <td width="25%">
+              <td width="20%">
+                <ul>
+                  <li
+                    v-for="compatible_type in item.compatible_types"
+                    :key="compatible_type"
+                  >
+                    {{ compatible_type }}
+                  </li>
+                </ul>
+              </td>
+              <td width="20%">
                 {{ item.version }}
               </td>
-              <td width="25%">
+              <td width="20%">
                 <StatusChip :status="item.status" />
               </td>
             </tr>
@@ -82,7 +93,7 @@
                 <template #bottom />
                 <template #item="{ item }">
                   <tr style="background-color: #d8eaf8">
-                    <td width="25%">
+                    <td width="20%">
                       <v-row>
                         <v-btn icon variant="text" />
                         <ActionsMenu :actions="actions" :item="item" />
@@ -91,13 +102,14 @@
                         </div>
                       </v-row>
                     </td>
-                    <td width="25%">
+                    <td width="20%">
                       {{ item.name }}
                     </td>
-                    <td width="25%">
+                    <td width="20%"></td>
+                    <td width="20%">
                       {{ item.version }}
                     </td>
-                    <td width="25%">
+                    <td width="20%">
                       <StatusChip :status="item.status" />
                     </td>
                   </tr>
@@ -107,8 +119,9 @@
           </template>
           <template #actions="">
             <v-btn
-              class="ml-2 mb-2 expandHoverBtn"
+              class="ml-2 mb-2"
               color="crfGroup"
+              rounded
               :disabled="!accessGuard.checkPermission($roles.LIBRARY_WRITE)"
               @click="addElement"
             >
@@ -116,8 +129,9 @@
               <span class="label">{{ $t('CRFExtensions.element') }}</span>
             </v-btn>
             <v-btn
-              class="ml-2 mb-2 expandHoverBtn"
+              class="ml-2 mb-2"
               color="crfItem"
+              rounded
               :disabled="!accessGuard.checkPermission($roles.LIBRARY_WRITE)"
               @click="addAttribute"
             >
@@ -177,6 +191,7 @@ const total = ref(0)
 const headers = [
   { title: t('_global.type'), key: 'type' },
   { title: t('_global.name'), key: 'name' },
+  { title: t('CRFExtensions.compatible_types'), key: 'compatible_types' },
   { title: t('_global.version'), key: 'version' },
   { title: t('_global.status'), key: 'status' },
 ]

@@ -115,7 +115,6 @@ INDEXES = [
     ("FootnotePreInstanceValue", "name"),
     ("OdmVendorElementValue", "name"),
     ("StudySourceVariable", "uid"),
-    ("DataSupplierRoot", "uid"),
     ("DataSupplierValue", "name"),
 ]
 
@@ -214,7 +213,6 @@ CONSTRAINTS = [
     ("CTPackageTerm", "uid", CONSTRAINT_TYPE_NODE_KEY),
     ("ClinicalProgramme", "uid", CONSTRAINT_TYPE_NODE_KEY),
     ("Project", "uid", CONSTRAINT_TYPE_NODE_KEY),
-    ("CTTermNameRoot", "uid", CONSTRAINT_TYPE_UNIQUE),
     ("Counter", "counterId", CONSTRAINT_TYPE_NODE_KEY),
     ("Brand", "uid", CONSTRAINT_TYPE_NODE_KEY),
     ("OdmVendorAttributeRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
@@ -245,7 +243,9 @@ CONSTRAINTS = [
     ("WeekInStudyRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
     ("FootnotePreInstanceRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
     ("OdmVendorElementRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
+    ("DataSupplierRoot", "uid", CONSTRAINT_TYPE_NODE_KEY),
     ("ComplexityBurden", "burden_id", CONSTRAINT_TYPE_UNIQUE),
+    ("CTTermNameRoot", "uid", CONSTRAINT_TYPE_UNIQUE),
 ]
 
 

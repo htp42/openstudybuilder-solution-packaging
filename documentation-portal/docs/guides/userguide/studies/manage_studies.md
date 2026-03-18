@@ -1,10 +1,10 @@
 # Manage Studies
 
-This user guide explains how to manage study definitions in the OpenStudyBuilder application. This is done on the **Studies** menu selecting **Manage Studies**.
+This user guide explains how to manage study definitions in the OpenStudyBuilder application. This is done on the **Studies** menu selecting **Study List** or **Manage Studies**.
 
 [![Conceptual architecture for the clinical-MDR and the OpenStudyBuilder](~@source/images/user_guides/manage_studies_menu.png)](../../../images/user_guides/manage_studies_menu.png)
- - On the **Study List** sub menu you can search and select studies as well as add new study definitions.
- - On the **Study** sub menu you can maintain the core attributes for a study, study status and versioning, maintain relationship to sub-parts (for protocols holding multiple sub-studies) and maintain relationship between study versions and protocol document versions.
+ - On the **Study List** menu you can search and select studies as well as add new study definitions.
+ - On the **Manage Studies** menu you can maintain the core attributes for a study, study status and versioning, maintain relationship to sub-parts (for protocols holding multiple sub-studies) and maintain relationship between study versions and protocol document versions.
 
 
 ## Search and Select Study
@@ -53,7 +53,41 @@ This is all controlled by several actions, bringing the study into different sta
 | Lock | This will create a versioned stable persistent study instance that can be referred to from downstream usage, as a data snapshot reference in the repository. The study will change status to ‘Locked’ and can no longer be edited. To continue to edit, an un-lock action must be done starting up a new version. <br> Vision is to add a related study milestone (e.g., ‘Final protocol’) and a set of metadata rules and consistency checks must then be fulfilled to lock the study for a specific study milestone. This is however not yet implemented and initially the simple rule we have defined is a study number must be assigned and a study title defined. <br> A concurrent major version number will automatically be assigned (1.0, 2.0, 3.0, …). <br> The locking process will also make a study release instance to ensure the latest release instance never is older than the latest locked instance. <br> Lock and Release is like creating a final approved version in a document management system or a merging a pull request into main in a Git repository.
 | Un-lock | This will bring the study back into the ‘Draft’ status where the study again can be edited. As the study always will implicitly be Released when Locked this will bring the study to the “Draft and Released” state. |
 
-This enables several study definitions instances that can be used for querying study definitions data from OpenStudyBuilder. A study definition instance can have the following status:
+## Release or lock Study
+
+You can release or lock a study definition from the **Manage Studies** --> **Study** menu on the tab **Study Status**.
+
+1. Select the **Release study** or **Lock study** icon in the upper right corner on the Study Status page.
+1. Select 'Specify reason for releasing or locking the study'
+   - If you select 'Other' as the reason then enter a description for the other reason for locking or releasing.
+1. You can optionally define relationship to the 'Protocol header version' by entering the main and minor version number.
+   - If you select 'Final Protocol' as the reason for releasing or locking a study, then you must specify the major version number for the protocol (the minor version number will be set to 0).
+1. You should enter a short summary 'Change description' of the changes in this study definition version compared to the previous version (even this field is optional in the system).
+1. Select the 'Release Study' or 'Lock Study' button.
+   - Note, study number and study title is required to be filled out for a study to be locked. 
+
+
+## Unlock Study
+
+You can unlock a study definition when the study is in locked status from the **Manage Studies** --> **Study** menu on the tab **Study Status**.
+
+1. Select the **Unlock study** icon in the upper right corner on the Study Status page.
+   - You will get a warning notification if you unlock a study that have previously been locked for a final protocol document version.
+1. Select 'Specify reason for unlocking the study'
+   - If you select 'Other' as the reason then enter a description for the other reason for unlocking.
+1. Select the 'Unlock' button.
+
+
+## Protocol Versions
+
+You can see the major protocol document versions and the latest related study definition version from the menu **Manage Studies** --> **Study** on the tab **Protocol Version**.
+
+> NOTE: This is simply a distinct list of the major protocol document versions that a study definition has been linked to. It will not reflect any protocol document versions that may exist that have not been linked to a study definition version.
+
+
+## Study Definition Versions
+
+The different status for study definitions instances and versioned snapshots enables these can be used for querying study definitions data from OpenStudyBuilder. A study definition instance can have the following status:
  - Draft, refer to the current instance that can be edited.
  - Released, refer to a minor version of a stable instance (snapshot) for downstream testing and review.
  - Locked, refer to a major version of a stable instance (snapshot) for downstream usage in final deliverables. As this is a major version several constraint checks must be fulfilled for a study definition instance can be locked. Both a locked version instance and a released instance is made when the study is locked to avoid the latest released is older than the latest locked.

@@ -9,9 +9,6 @@ services:
       dockerfile: Dockerfile
     ports:
       - '5005:5005'
-    depends_on:
-      - 'api'
-      - 'documentation'
     environment:
       API_BASE_URL: '${API_PATH:-}'
       DOC_BASE_URL: '${DOC_PATH:-}'

@@ -12,14 +12,22 @@ Feature: Library - Data Collection Standards - CRF Viewer
     When The 'CRF Viewer' submenu is clicked in the 'Data Collection Standards' section
     Then The current URL is '/library/crf-viewer/odm-viewer'
   
-  @manual_test
   Scenario: Verifying Falcon downloadable option in the Stylesheet dropdown works as expected in the CRF Viewer menu
-    Given The '/library/crfviewer/odm-viewer' page is opened
-    When I select one or more values from the CRF collection dropdown
-    And I select one or more values from the CRF Forms dropdown
-    And I verify that there are two options in the Stylesheet dropdown list: 'CRF with annotations' and 'Downloadable Falcon (Word)'
+    Given The '/library/crf-viewer/odm-viewer' page is opened
+    When I select one value from the CRF collection dropdown
+    And I select one value from the CRF Forms dropdown
+    Then I can see two options: CRF with annotations and Downloadable Falcon in the Stylesheet dropdown list 
+    And I select Downloadable Falcon in the Stylesheet dropdown list
+    And I click the GENERATE button
+    Then The imported CRF view page should be displayed
+   
+@manual_test
+  Scenario: Verifying Falcon downloadable option in the Stylesheet dropdown works as expected in the CRF Viewer menu
+    Given The '/library/crf-viewer/odm-viewer' page is opened
+    When I select more values from the CRF collection dropdown
+    And I select more values from the CRF Forms dropdown
     And I select 'Downloadable Falcon (Word)' in the Stylesheet dropdown list
-    And I click the LOAD button
+    And I click the GENERATE button
     Then The imported CRF view page should be displayed
     When I click the 'Export data in HTML format' option
     Then The file should be downloaded successfully on the local machine

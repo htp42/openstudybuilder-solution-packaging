@@ -1,5 +1,6 @@
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
 const { getCurrStudyUid } = require("../../support/helper_functions");
+const { getShortUniqueId } = require("../../support/helper_functions");
 
 let branchName, branchShortName, randomisationGroup
 let branchDescription  = 'E2E Test Branch'
@@ -15,7 +16,7 @@ Then('The option to create branch arm is not visible', () => cy.get('[data-cy="a
 When('Add branch button is clicked', () => cy.clickButton('add-study-branch-arm'))
 
 When('The form for new study branch arm is filled', () => {
-    branchName =  `Branch${Date.now()}`
+    branchName =  `Branch${getShortUniqueId()}`
     branchShortName = `B${Math.floor(Math.random() * 100)}`
     randomisationGroup = 'B'
     cy.selectFirstVSelect('study-arm')
@@ -53,9 +54,9 @@ When('The Branch name field is not populated', () => cy.clearInput('study-branch
 
 When('The Branch short name field is not populated', () => cy.clearInput('study-branch-arm-short-name'))
 
-When('Another Study Branch Arm is created with the same arm name', () => fillBranchData(branchName, Date.now(), Date.now()))
+When('Another Study Branch Arm is created with the same arm name', () => fillBranchData(branchName, getShortUniqueId(), getShortUniqueId()))
 
-When('Another Study Branch Arm is created with the same branch arm short name', () => fillBranchData(Date.now(), branchShortName, Date.now()))
+When('Another Study Branch Arm is created with the same branch arm short name', () => fillBranchData(getShortUniqueId(), branchShortName, getShortUniqueId()))
 
 When('For the Random. code a text longer than 20 characters is provided in the Study Branch Arms form', () => {
     cy.fillInput('study-branch-arm-randomisation-group', 'valtest')

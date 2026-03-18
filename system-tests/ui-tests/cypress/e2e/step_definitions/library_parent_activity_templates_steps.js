@@ -1,6 +1,7 @@
 import { activity_uid, group_uid, subgroup_uid } from '../../support/api_requests/library_activities';
 import { fillTemplateName, changeIndex } from './library_syntax_templates_common'
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
+const { getShortUniqueId } = require("../../support/helper_functions");
 
 let defaultActivityName
 
@@ -38,11 +39,11 @@ When('All activity instruction indexes are cleared and filled in', () => {
   changeIndex('template-activity-activity', true, true)
 })
 
-When('The activity instruction template form is filled with base data', () => fillBaseData(`ActivityInstruction${Date.now()}`))
+When('The activity instruction template form is filled with base data', () => fillBaseData(`ActivityInstruction${getShortUniqueId()}`))
 
-When('The activity template metadata update is started', () => fillBaseData(`Update${Date.now()}`))
+When('The activity template metadata update is started', () => fillBaseData(`Update${getShortUniqueId()}`))
 
-When('The activity template edition form is filled with data', () => fillBaseData(`CancelEdit${Date.now()}`))
+When('The activity template edition form is filled with data', () => fillBaseData(`CancelEdit${getShortUniqueId()}`))
 
 When('The activity instruction template form is filled with already existing name', () => fillBaseData(defaultActivityName))
 
@@ -57,11 +58,11 @@ Then('[API] Activity Instruction is approved', () => cy.approveActivityInstructi
 Then('[API] Activity Instruction is inactivated', () => cy.inactivateActivityInstruction())
 
 When('[API] Search Test - Create first activity instruction template', () => {
-  defaultActivityName = `SearchTest${Date.now()}`
+  defaultActivityName = `SearchTest${getShortUniqueId()}`
   createActivityInstructionViaApi(defaultActivityName)
 })
 
-When('[API] Search Test - Create second activity instruction template', () => createActivityInstructionViaApi(`SearchTest${Date.now()}`))
+When('[API] Search Test - Create second activity instruction template', () => createActivityInstructionViaApi(`SearchTest${getShortUniqueId()}`))
 
 function createActivityInstructionViaApi(customName = '') {
   cy.getInidicationUid()

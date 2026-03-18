@@ -1,4 +1,5 @@
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
+const { getShortUniqueId } = require("../../support/helper_functions");
 
 let crfTemplateName, crfTemplateOid, effectiveDate = 10, retiredDate = 15
 
@@ -7,13 +8,13 @@ When('Created CRF Collection is found', () => cy.searchAndCheckPresence(crfTempl
 Then('The CRF Collection is no longer available', () => cy.searchAndCheckPresence(crfTemplateName, false))
 
 Given('[API] The CRF Collection in draft status exists', () => {
-    crfTemplateName = `API_CrfItem${Date.now()}`
+    crfTemplateName = `API_CrfItem${getShortUniqueId()}`
     cy.createCrfCollection(crfTemplateName)
 })
 
 When('The CRF Collection definition container is filled with data', () => {
-    crfTemplateName = `CrfItem${Date.now()}`
-    crfTemplateOid = `Oid${Date.now()}`
+    crfTemplateName = `CrfItem${getShortUniqueId()}`
+    crfTemplateOid = `Oid${getShortUniqueId()}`
     fillNameAndOid()
     cy.selectDatePicker('crf-collection-effective-date', effectiveDate)
     cy.selectDatePicker('crf-collection-retired-date', retiredDate)

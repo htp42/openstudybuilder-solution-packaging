@@ -13,7 +13,6 @@
           class="mt-2"
           :class="{ shake: isShaking && !data.target_type }"
           @update:model-value="setElements()"
-          @click:clear="data.target_uid = null"
         />
       </v-col>
       <v-col cols="4" @click="() => activateShake(!data.target_type)">
@@ -369,6 +368,8 @@ function automaticLoad() {
 }
 
 function setElements() {
+  data.value.target_uid = null
+
   if (data.value.target_type) {
     const params = { page_size: 0 }
     switch (data.value.target_type) {
@@ -585,7 +586,8 @@ function copyXML() {
 </script>
 <style>
 .frame {
+  aspect-ratio: 16 / 9;
+  height: 100%;
   width: 100%;
-  min-height: 1000px;
 }
 </style>

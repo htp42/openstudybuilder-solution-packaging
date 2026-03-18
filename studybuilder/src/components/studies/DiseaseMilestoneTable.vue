@@ -46,7 +46,9 @@
       <template #actions="">
         <v-btn
           data-cy="create-disease-milestone"
-          class="ml-2 expandHoverBtn"
+          class="ml-2"
+          icon
+          size="small"
           variant="outlined"
           color="nnBaseBlue"
           :disabled="
@@ -55,8 +57,10 @@
           "
           @click="createDiseaseMilestone()"
         >
-          <v-icon left>mdi-plus</v-icon>
-          <span class="label">{{ $t('DiseaseMilestoneForm.add_title') }}</span>
+          <v-icon>mdi-plus</v-icon>
+          <v-tooltip activator="parent" location="top">
+            {{ $t('DiseaseMilestoneForm.add_title') }}
+          </v-tooltip>
         </v-btn>
       </template>
       <template #[`item.actions`]="{ item }">

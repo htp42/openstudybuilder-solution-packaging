@@ -25,6 +25,7 @@ from clinical_mdr_api.tests.integration.utils.api import inject_and_clear_db
 from clinical_mdr_api.tests.integration.utils.data_library import (
     STARTUP_CT_CATALOGUE_CYPHER,
     STARTUP_STUDY_LIST_CYPHER,
+    create_reason_for_lock_unlock_terms,
     fix_study_preferred_time_unit,
 )
 from clinical_mdr_api.tests.integration.utils.factory_activity import (
@@ -62,7 +63,13 @@ class TestStudyVisitManagement(unittest.TestCase):
         db.cypher_query(STARTUP_CT_CATALOGUE_CYPHER)
 
         create_library_data()
-
+        lock_unlock_data = create_reason_for_lock_unlock_terms()
+        self.reason_for_lock_term_uid = lock_unlock_data["reason_for_lock_terms"][
+            0
+        ].term_uid
+        self.reason_for_unlock_term_uid = lock_unlock_data["reason_for_unlock_terms"][
+            0
+        ].term_uid
         self.study = generate_study_root()
         TestUtils.create_ct_catalogue(catalogue_name=settings.sdtm_ct_catalogue_name)
         TestUtils.set_study_standard_version(
@@ -415,7 +422,11 @@ class TestStudyVisitManagement(unittest.TestCase):
         )
         # locking and unlocking to create multiple study value relationships on the existent StudySelections
         TestUtils.create_study_fields_configuration()
-        TestUtils.lock_and_unlock_study(study_uid=self.study.uid)
+        TestUtils.lock_and_unlock_study(
+            study_uid=self.study.uid,
+            reason_for_lock_term_uid=self.reason_for_lock_term_uid,
+            reason_for_unlock_term_uid=self.reason_for_unlock_term_uid,
+        )
 
         epoch_service.edit(
             study_uid=epoch.study_uid,
@@ -704,7 +715,7 @@ class TestStudyVisitManagement(unittest.TestCase):
         # we add so many subvists as there is a logic of
         # recalculating subvists unique-visit-numbers when we exceed allowed limits
         for i in range(1, 21):
-            vis = create_visit_with_update(
+            create_visit_with_update(
                 study_epoch_uid=self.epoch2.uid,
                 visit_type_uid="VisitType_0003",
                 time_reference_uid="VisitSubType_0005",
@@ -715,7 +726,6 @@ class TestStudyVisitManagement(unittest.TestCase):
                 visit_class="SINGLE_VISIT",
                 visit_subclass="ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV",
             )
-            print(f"created subvisit {i} with uvn {vis.unique_visit_number}")
             # check unique visit numbers before recalculation
             if i == 9:
                 all_visits = visit_service.get_all_visits(
@@ -2178,7 +2188,11 @@ class TestStudyVisitManagement(unittest.TestCase):
 
         # locking and unlocking to create multiple study value relationships on the existent StudySelections
         TestUtils.create_study_fields_configuration()
-        TestUtils.lock_and_unlock_study(study_uid=self.study.uid)
+        TestUtils.lock_and_unlock_study(
+            study_uid=self.study.uid,
+            reason_for_lock_term_uid=self.reason_for_lock_term_uid,
+            reason_for_unlock_term_uid=self.reason_for_unlock_term_uid,
+        )
 
         visit_service.remove_visit_consecutive_group(
             study_uid=self.study.uid,

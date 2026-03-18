@@ -49,6 +49,8 @@ log = logging.getLogger(__name__)
 study: Study
 objective_uid: str
 test_data_dict = {}
+reason_for_lock_term_uid: str
+reason_for_unlock_term_uid: str
 
 
 @pytest.fixture(scope="module")
@@ -63,7 +65,11 @@ def test_data():
     """Initialize test data"""
     db_name = "ADAMMDENDPNTListingTest"
     inject_and_clear_db(db_name)
-    inject_base_data()
+    _, test_data = inject_base_data()
+    global reason_for_lock_term_uid
+    reason_for_lock_term_uid = test_data["reason_for_lock_terms"][0].term_uid
+    global reason_for_unlock_term_uid
+    reason_for_unlock_term_uid = test_data["reason_for_unlock_terms"][0].term_uid
     global study
     study = TestUtils.create_study()
     TestUtils.set_study_standard_version(study_uid=study.uid)
@@ -269,7 +275,10 @@ def test_adam_listing_mdendpnt_versioning(api_client):
     # Lock
     response = api_client.post(
         f"/studies/{study.uid}/locks",
-        json={"change_description": "Lock 1"},
+        json={
+            "change_description": "Lock 1",
+            "reason_for_change_uid": reason_for_lock_term_uid,
+        },
     )
     assert_response_status_code(response, 201)
 
@@ -290,9 +299,14 @@ def test_adam_listing_mdendpnt_versioning(api_client):
     md_endpnt_headers_before_unlock = res
 
     # Unlock -- Study remain unlocked
-    response = api_client.delete(f"/studies/{study.uid}/locks")
-    assert_response_status_code(response, 200)
-
+    response = api_client.post(
+        f"/studies/{study.uid}/unlocks",
+        json={
+            "change_description": "Unlock",
+            "reason_for_change_uid": reason_for_unlock_term_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
     # edit study endpoint
     response = api_client.patch(
         f"/studies/{study.uid}/study-endpoints/StudyEndpoint_000001",

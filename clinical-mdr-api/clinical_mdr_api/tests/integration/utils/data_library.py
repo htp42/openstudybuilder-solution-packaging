@@ -16,7 +16,10 @@ from clinical_mdr_api.services.controlled_terminologies.ct_codelist import (
     CTCodelistService,
 )
 from clinical_mdr_api.services.controlled_terminologies.ct_term import CTTermService
-from clinical_mdr_api.tests.integration.utils.utils import LIBRARY_NAME, TestUtils
+from clinical_mdr_api.tests.integration.utils.utils import (
+    SPONSOR_LIBRARY_NAME,
+    TestUtils,
+)
 from common.config import settings
 
 library_data = {"name": "Test library", "is_editable": True}
@@ -2554,12 +2557,17 @@ WITH {
     status: "Final",
     author_id: "unknown-user",
     version: "1.0"
-} AS final_properties
+} AS final_properties,
+{
+start_date: datetime(),
+status: "DRAFT",
+author_id: "unknown-user"
+} AS draft_properties
 MERGE (sr:StudyRoot {uid: "study_root"})-[:LATEST]->(sv:StudyValue)
 MERGE (sr)-[hv:HAS_VERSION]->(sv)
 MERGE (sr)-[ld:LATEST_DRAFT]->(sv)
-SET hv = final_properties
-SET ld = final_properties
+SET hv = draft_properties
+SET ld = draft_properties
 MERGE (sv)-[:HAS_TEXT_FIELD]->(:StudyField:StudyTextField {field_name: "eudract_id", value: "2019-123456-42"})
 MERGE (sv)-[:HAS_TEXT_FIELD]->(:StudyField:StudyTextField {field_name: "investigational_new_drug_application_number_ind", value: "ind-number-777"})
 MERGE (sv)-[:HAS_TEXT_FIELD]->(:StudyField:StudyTextField {field_name: "study_short_title", value: "Study short title"})
@@ -2627,13 +2635,18 @@ MERGE (p)-[:HAS_FIELD]->(:StudyField:StudyProjectField)<-[:HAS_PROJECT]-(sv)
 """
 
 STARTUP_STUDY_OBJECTIVE_CYPHER = """
+WITH  {
+start_date: datetime(),
+status: "DRAFT",
+author_id: "unknown-user"
+} AS draft_properties
 MERGE (l:Library {name:"CDISC"})
 ON CREATE 
     SET l.is_editable = false
 MERGE (catalogue:CTCatalogue {uid:"CTCatalogue_000001", name:"catalogue_name"})
 MERGE (m:Counter{counterId:"CTCodelistCounter"})
 ON CREATE SET m:CTCodelistCounter, m.count=0
-WITH m
+WITH m, draft_properties
 CALL apoc.atomic.add(m,'count',1,1) yield oldValue, newValue
 MERGE (codelist:CTCodelistRoot {uid:"CTCodelist_000001"})
 MERGE (catalogue)-[:HAS_CODELIST]->(codelist)
@@ -2647,8 +2660,11 @@ SET p.description = "Description ABC",
     p.uid = "project_uid"
 CREATE (c)-[:HOLDS_PROJECT]->(p)
 MERGE (sr:StudyRoot {uid: "study_root"})-[:LATEST]->(sv:StudyValue{study_id_prefix: "some_id", study_number:0})
-MERGE (p)-[:HAS_FIELD]->(:StudyField:StudyProjectField)<-[:HAS_PROJECT]-(sv)
+MERGE (sr)-[lv:HAS_VERSION]->(sv)
+SET lv = draft_properties
 MERGE (sr)-[ld:LATEST_DRAFT]->(sv)
+SET ld = draft_properties
+MERGE (p)-[:HAS_FIELD]->(:StudyField:StudyProjectField)<-[:HAS_PROJECT]-(sv)
 MERGE (ot:ObjectiveTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot {uid:"ObjectiveTemplate_000001", sequence_id: "O1"})-[relt:LATEST_FINAL]->(otv:ObjectiveTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue {name :"objective_1", name_plain : "objective_1"})
 MERGE (ot)-[relthv:HAS_VERSION]->(otv)
 MERGE (ot)-[:LATEST]->(otv)
@@ -3664,10 +3680,62 @@ def _create_paths(app: FastAPI, path_prefix="") -> list[dict[str, Any]]:
     return paths
 
 
+def create_reason_for_lock_unlock_terms() -> dict[str, Any]:
+    """
+    Create reason_for_lock and reason_for_unlock codelists and terms.
+    This is a utility method that can be called independently by tests that don't use inject_base_data().
+
+    Returns:
+        Dictionary containing:
+        - reason_for_lock_cl: The reason for lock codelist
+        - reason_for_lock_terms: List of reason for lock terms
+        - reason_for_unlock_cl: The reason for unlock codelist
+        - reason_for_unlock_terms: List of reason for unlock terms
+    """
+    result: dict[str, Any] = {}
+
+    # 'Reason For Lock' codelist
+    reason_for_lock_cl = TestUtils.create_ct_codelist(
+        name="Reason For Lock",
+        submission_value="RSNFL",
+        extensible=True,
+        approve=True,
+        catalogue_name=settings.sdtm_ct_catalogue_name,
+    )
+    result["reason_for_lock_cl"] = reason_for_lock_cl
+    reason_for_lock_terms = []
+    reason_for_lock_term = TestUtils.create_ct_term(
+        codelist_uid=reason_for_lock_cl.codelist_uid,
+        sponsor_preferred_name="Port Approval",
+    )
+    reason_for_lock_terms.append(reason_for_lock_term)
+    result["reason_for_lock_terms"] = reason_for_lock_terms
+
+    # 'Reason For Unlock' codelist
+    reason_for_unlock_cl = TestUtils.create_ct_codelist(
+        name="Reason For Unlock",
+        submission_value="RSNFUL",
+        extensible=True,
+        approve=True,
+        catalogue_name=settings.sdtm_ct_catalogue_name,
+    )
+    result["reason_for_unlock_cl"] = reason_for_unlock_cl
+    reason_for_unlock_terms = []
+    reason_for_unlock_term = TestUtils.create_ct_term(
+        codelist_uid=reason_for_unlock_cl.codelist_uid,
+        sponsor_preferred_name="Amendment",
+    )
+    reason_for_unlock_terms.append(reason_for_unlock_term)
+    result["reason_for_unlock_terms"] = reason_for_unlock_terms
+
+    return result
+
+
 def inject_base_data(
     inject_unit_subset: bool = True,
     inject_study_selection_basics: bool = False,
     inject_unit_dimension: bool = False,
+    inject_lock_unlock_codelists: bool = True,
 ) -> tuple[Study, dict[str, Any]]:
     """
     The data included as generic base data is the following
@@ -3722,10 +3790,10 @@ def inject_base_data(
         unit_subset_codelist = TestUtils.create_ct_codelist(
             name="Unit Subset",
             sponsor_preferred_name="unit subset",
-            submission_value="UNITSUBS",
+            submission_value=settings.unit_subset_cl_submval,
             extensible=True,
             approve=True,
-            catalogue_name="SDTM CT",
+            catalogue_name=settings.sdtm_ct_catalogue_name,
         )
         test_data["unit_subset_codelist"] = unit_subset_codelist
         unit_subset_term = TestUtils.create_ct_term(
@@ -3740,10 +3808,10 @@ def inject_base_data(
         unit_dimension_codelist = TestUtils.create_ct_codelist(
             name="Unit Dimension",
             sponsor_preferred_name="unit dimension",
-            submission_value="UNITDIM",
+            submission_value=settings.unit_dimension_cl_submval,
             extensible=True,
             approve=True,
-            catalogue_name="SDTM CT",
+            catalogue_name=settings.sdtm_ct_catalogue_name,
         )
         test_data["unit_dimension_codelist"] = unit_dimension_codelist
         unit_dimension_term = TestUtils.create_ct_term(
@@ -3757,10 +3825,10 @@ def inject_base_data(
         arm_type_codelist = TestUtils.create_ct_codelist(
             name="Arm Type",
             sponsor_preferred_name="arm type",
-            submission_value="ARMTTP",
+            submission_value=settings.study_arm_type_cl_submval,
             extensible=True,
             approve=True,
-            catalogue_name="SDTM CT",
+            catalogue_name=settings.sdtm_ct_catalogue_name,
         )
         test_data["arm_type_codelist"] = arm_type_codelist
 
@@ -3772,6 +3840,11 @@ def inject_base_data(
             term_uid="investigational_arm_uid",
         )
         test_data["investigational_arm"] = investigational_arm
+
+    # Create reason for lock/unlock terms using helper method
+    if inject_lock_unlock_codelists:
+        lock_unlock_data = create_reason_for_lock_unlock_terms()
+        test_data.update(lock_unlock_data)
 
     ## Unit Definitions
     day_unit = TestUtils.create_unit_definition(
@@ -3843,7 +3916,9 @@ def fix_study_preferred_time_unit(study_uid):
 
     unit_definitions = {
         u.name: u
-        for u in unit_definition_service.get_all(library_name=LIBRARY_NAME).items
+        for u in unit_definition_service.get_all(
+            library_name=SPONSOR_LIBRARY_NAME
+        ).items
     }
     if unit_definition := unit_definitions.get(settings.day_unit_name):
         if unit_definition.status in {

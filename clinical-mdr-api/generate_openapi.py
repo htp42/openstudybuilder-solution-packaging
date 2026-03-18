@@ -9,6 +9,7 @@ from clinical_mdr_api.utils.api_version import (
     increment_api_version_if_needed,
     increment_version_number,
 )
+
 # from consumer_api.consumer_api import custom_openapi
 
 log = logging.getLogger(__name__)

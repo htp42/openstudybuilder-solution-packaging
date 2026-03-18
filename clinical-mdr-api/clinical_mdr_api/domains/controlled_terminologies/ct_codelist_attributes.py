@@ -15,6 +15,8 @@ from common.exceptions import (
     ValidationException,
 )
 
+DEFAULT_CODELIST_TYPE = "Standard"
+
 
 @dataclass(frozen=True)
 class CTPairedCodelists:
@@ -41,6 +43,7 @@ class CTCodelistAttributesVO:
     definition: str
     extensible: bool
     is_ordinal: bool
+    codelist_type: str
 
     @classmethod
     def from_repository_values(
@@ -54,6 +57,7 @@ class CTCodelistAttributesVO:
         definition: str,
         extensible: bool,
         is_ordinal: bool,
+        codelist_type: str = DEFAULT_CODELIST_TYPE,
     ) -> Self:
         if child_codelist_uids is None:
             child_codelist_uids = []
@@ -67,6 +71,7 @@ class CTCodelistAttributesVO:
             definition=definition,
             extensible=extensible,
             is_ordinal=is_ordinal,
+            codelist_type=codelist_type,
         )
 
         return ct_codelist_attribute_vo
@@ -83,6 +88,7 @@ class CTCodelistAttributesVO:
         extensible: bool,
         is_ordinal: bool,
         catalogue_exists_callback: Callable[[str], bool],
+        codelist_type: str = DEFAULT_CODELIST_TYPE,
         codelist_exists_by_uid_callback: Callable[[str], bool] = lambda _: False,
         codelist_exists_by_name_callback: Callable[[str], bool] = lambda _: False,
         codelist_exists_by_submission_value_callback: Callable[
@@ -126,6 +132,7 @@ class CTCodelistAttributesVO:
             definition=definition,
             extensible=extensible,
             is_ordinal=bool(is_ordinal),
+            codelist_type=codelist_type,
         )
 
         return ct_codelist_attribute_vo

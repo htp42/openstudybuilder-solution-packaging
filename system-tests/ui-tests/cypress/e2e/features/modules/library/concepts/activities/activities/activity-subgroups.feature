@@ -17,14 +17,14 @@ Feature: Library - Concepts - Activities - Activity Subgroups
 
     Scenario: [Table][Options] User must be able to see table with correct options
         Then A table is visible with following options
-            | options                                                         |
-            | Add activity subgroup                                           |
-            | Select filters                                                  |
-            | Select columns                                                  |
-            | Export                                                          |
-            | Show version history                                            |
-            | Select rows                                                     |
-            | Search                                                          |
+            | options                                            |
+            | add-activity                                       |
+            | filters-button                                     |
+            | columns-layout-button                              |
+            | table-export-button                                |
+            | select-rows                                        |
+            | search-field                                       |
+            | History                                            |
 
     @smoke_test
     Scenario: [Table][Columns][Names] User must be able to see the columns list on the main page as below
@@ -106,13 +106,13 @@ Feature: Library - Concepts - Activities - Activity Subgroups
         And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
         And [API] Activity subgroup gets new version
         And Overview page for subgroup created via API is opened
-        When I click 'Edit' button
+        When The pencil button is clicked
         And The current activity subgroup is edited
         And Form save button is clicked
         Then The pop up displays 'Subgroup updated'
         Then The status displayed on the summary has value 'Draft' and version is '1.2'
         And User waits for 1 seconds
-        When I click 'Approve' button
+        When The approve button is clicked
         Then The status displayed on the summary has value 'Final' and version is '2.0'
         Then The activity groups previously linked to that subgroup remain linked
 

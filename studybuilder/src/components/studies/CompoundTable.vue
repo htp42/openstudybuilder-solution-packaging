@@ -14,7 +14,9 @@
     <template #actions="">
       <v-btn
         data-cy="add-study-compound"
-        class="ml-2 expandHoverBtn"
+        class="ml-2"
+        icon
+        size="small"
         variant="outlined"
         color="nnBaseBlue"
         :disabled="
@@ -23,8 +25,10 @@
         "
         @click.stop="showForm = true"
       >
-        <v-icon left>mdi-plus</v-icon>
-        <span class="label">{{ $t('StudyCompoundForm.add_title') }}</span>
+        <v-icon>mdi-plus</v-icon>
+        <v-tooltip activator="parent" location="top">
+          {{ $t('StudyCompoundForm.add_title') }}
+        </v-tooltip>
       </v-btn>
     </template>
     <template #[`item.actions`]="{ item }">

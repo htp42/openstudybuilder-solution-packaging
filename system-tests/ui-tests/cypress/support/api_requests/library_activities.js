@@ -1,6 +1,8 @@
 export let group_uid, subgroup_uid, activity_uid, activityInstance_uid, group_name
+const { getShortUniqueId } = require("../../support/helper_functions");
 let groups_uids = []
 let class_uid, requestedActivity_uid
+let topicCode, adamParamCode
 const activityInstanceClassUrl = '/activity-instance-classes'
 const baseUrl = '/concepts/activities'
 const activityUrl = `${baseUrl}/activities`
@@ -30,13 +32,15 @@ Cypress.Commands.add('createActivity', (customName = '', isDataCollected = true,
     cy.sendPostRequest(activityUrl, createActivityBody(customName, isDataCollected, isMultipleSelectionAllowed)).then(response => activity_uid = response.body.uid)
 })
 
+Cypress.Commands.add('updateActivity', (name) => cy.sendUpdateRequest('PUT', activityInfoUrl(activity_uid), updateActivityBody(name)))
 
 Cypress.Commands.add('createActivityInstance', (customName = '', isDataSharing = false, isRequiredForActivity = false, isDefaultForActivity = false) => {
     cy.sendPostRequest(activityInstanceUrl, createActivityInstanceBody(customName, isDataSharing, isRequiredForActivity, isDefaultForActivity)).then((response) => {
         activityInstance_uid = response.body.uid
-
     })
 })
+
+Cypress.Commands.add('updateActivityInstance', (name) => cy.sendUpdateRequest('PATCH', activityInstanceInfoUrl(activityInstance_uid), updateActivityInstanceBody(name)))
 
 Cypress.Commands.add('createGroup', (customName = '') => {
     cy.sendPostRequest(activityGroupUrl, createGroupBody(customName)).then((response) => {
@@ -124,7 +128,7 @@ Cypress.Commands.add('getFinalGroupUid', () => cy.sendGetRequest(finalActivityGr
 Cypress.Commands.add('getFinalSubGroupUid', () => cy.sendGetRequest(finalActivitySubGroupUrl).then(response => subgroup_uid = response.body.items[0].uid))
 
 const createActivityBody = (customName = '', isDataCollected = true, isMultipleSelectionAllowed = true) => {
-    const name = customName === '' ? `API_Activity${Date.now()}` : customName
+    const name = customName === '' ? `API_Activity${getShortUniqueId()}` : customName
     return {
         abbreviation: "abb",
         activity_groupings: [
@@ -141,12 +145,37 @@ const createActivityBody = (customName = '', isDataCollected = true, isMultipleS
         library_name: "Sponsor",
         name: name,
         name_sentence_case: name.toLowerCase(),
-        synonyms: [`${Date.now()}`],
+        synonyms: [`${getShortUniqueId()}`],
+    }
+}
+
+const updateActivityBody = (name) => {
+    return {
+        abbreviation: "abb",
+        activity_groupings: [
+            {
+                activity_group_uid: group_uid,
+                activity_subgroup_uid: subgroup_uid
+            }
+        ],
+        change_description: "testing",
+        definition: "def",
+        nci_concept_id: "nci id",
+        nci_concept_name: "nci name",
+        is_data_collected: true,
+        is_multiple_selection_allowed: true,
+        library_name: "Sponsor",
+        name: name,
+        name_sentence_case: name.toLowerCase(),
+        synonyms: [`${getShortUniqueId()}`],
     }
 }
 
 const createActivityInstanceBody = (customName = '', isDataSharing = false, isRequiredForActivity = false, isDefaultForActivity = false) => {
-    const name = customName === '' ? `API_ActivityInstance${Date.now()}` : customName
+    const name = customName === '' ? `API_ActivityInstance${getShortUniqueId()}` : customName
+    topicCode = `${getShortUniqueId()}`
+    adamParamCode = `${getShortUniqueId()}`
+
     return {
         activity_groupings: [
             {
@@ -158,8 +187,8 @@ const createActivityInstanceBody = (customName = '', isDataSharing = false, isRe
         activity_instance_class_uid: class_uid,
         name: name,
         name_sentence_case: name.toLowerCase(),
-        topic_code: `${Date.now()}`,
-        adam_param_code: `${Date.now()}`,
+        topic_code: topicCode,
+        adam_param_code: adamParamCode,
         is_data_sharing: isDataSharing,
         is_default_selected_for_activity: isDefaultForActivity,
         is_required_for_activity: isRequiredForActivity,
@@ -169,8 +198,32 @@ const createActivityInstanceBody = (customName = '', isDataSharing = false, isRe
     }
 }
 
+const updateActivityInstanceBody = (name) => {
+    return {
+        activity_groupings: [
+            {
+                activity_uid: activity_uid,
+                activity_group_uid: group_uid,
+                activity_subgroup_uid: subgroup_uid
+            }
+        ],
+        change_description: "testing",
+        activity_instance_class_uid: class_uid,
+        name: name,
+        name_sentence_case: name.toLowerCase(),
+        topic_code: topicCode,
+        adam_param_code: adamParamCode,
+        is_data_sharing: false,
+        is_default_selected_for_activity: false,
+        is_required_for_activity: false,
+        definition: "api",
+        library_name: "Sponsor",
+        activities: [null]
+    }
+}
+
 const createGroupBody = (customName = '') => {
-    const name = customName === '' ? `API_Group${Date.now()}` : customName
+    const name = customName === '' ? `API_Group${getShortUniqueId()}` : customName
     return {
         abbreviation: "abb",
         definition: "def",
@@ -181,7 +234,7 @@ const createGroupBody = (customName = '') => {
 }
 
 const createSubGroupBody = (customName = '') => {
-    const name = customName === '' ? `API_SubGroup${Date.now()}` : customName
+    const name = customName === '' ? `API_SubGroup${getShortUniqueId()}` : customName
     return {
         definition: "def",
         library_name: "Sponsor",
@@ -191,7 +244,7 @@ const createSubGroupBody = (customName = '') => {
 }
 
 const createSubGroupWithGrouBody = () => {
-    const name = `API_SubGroup${Date.now()}`
+    const name = `API_SubGroup${getShortUniqueId()}`
     return {
         definition: "def",
         library_name: "Sponsor",
@@ -202,7 +255,7 @@ const createSubGroupWithGrouBody = () => {
 }
 
 const createRequestedActivityBody = (customName = '') => {
-    const name = customName === '' ? `API_RequestedActivity${Date.now()}` : customName
+    const name = customName === '' ? `API_RequestedActivity${getShortUniqueId()}` : customName
     return {
         activity_groupings: [
             {

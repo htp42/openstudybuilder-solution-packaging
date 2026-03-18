@@ -75,8 +75,8 @@ class PaginatedResponse(BaseModel, Generic[T]):
     def from_input(
         cls,
         request: Request,
-        sort_by: str,
-        sort_order: str,
+        sort_by: str | None,
+        sort_order: str | None,
         page_size: int,
         page_number: int,
         items: list[T],

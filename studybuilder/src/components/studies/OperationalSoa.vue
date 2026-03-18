@@ -22,12 +22,16 @@
         <template #activator="{ props }">
           <v-btn
             color="nnGreen1"
-            class="ml-2 text-white expandHoverBtn"
+            icon
+            size="small"
+            class="ml-2 text-white"
             v-bind="props"
             :loading="soaContentLoadingStore.loading"
           >
-            <v-icon left>mdi-download-outline</v-icon>
-            <span class="label">{{ $t('DataTableExportButton.export') }}</span>
+            <v-icon>mdi-download-outline</v-icon>
+            <v-tooltip activator="parent" location="top">
+              {{ $t('DataTableExportButton.export') }}
+            </v-tooltip>
           </v-btn>
         </template>
         <v-list>

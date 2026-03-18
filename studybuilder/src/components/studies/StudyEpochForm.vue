@@ -61,8 +61,10 @@
             <v-text-field
               :key="typeTrigger"
               v-model="epochDisplay"
+              :rules="[formRules.required]"
               data-cy="select-epoch"
               :label="$t('StudyEpochForm.name')"
+              :loading="epochNameLoading"
               density="compact"
               disabled
               variant="filled"
@@ -186,6 +188,7 @@ const typeTrigger = ref(0)
 const typeGroups = ref([])
 const subtypeGroups = ref([])
 const epochDisplay = ref('')
+const epochNameLoading = ref(false)
 const observer = ref()
 const formRef = ref()
 
@@ -297,7 +300,7 @@ function setEpochGroups() {
     subtypeGroups.value = groups.value.filter(function (value) {
       return value.type === type
     })
-
+    epochNameLoading.value = true
     const data = {
       study_uid: selectedStudy.value.uid,
       epoch_subtype: subtype,
@@ -307,6 +310,7 @@ function setEpochGroups() {
       .then((resp) => {
         form.value.epoch = resp.data.epoch
         epochDisplay.value = resp.data.epoch_name
+        epochNameLoading.value = false
       })
   }
 }

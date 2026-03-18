@@ -2,6 +2,12 @@
 Tests for /concepts/activities/activity-sub-groups/{uid}/overview endpoint
 """
 
+# pylint: disable=unused-argument
+# pylint: disable=redefined-outer-name
+
+# pytest fixture functions have other fixture functions as arguments,
+# which pylint interprets as unused arguments
+
 import logging
 from datetime import datetime, timezone
 
@@ -26,9 +32,9 @@ log = logging.getLogger(__name__)
 ACTIVITY_SUBGROUP_BASE_URL = "/concepts/activities/activity-sub-groups"
 ACTIVITIES_BASE_URL = "/concepts/activities/activities"
 
-activity_groups_all: list[ActivityGroup] = []
-activity_subgroups_all: list[ActivitySubGroup] = []
-activities_all: list[Activity] = []
+activity_groups_all: list[ActivityGroup]
+activity_subgroups_all: list[ActivitySubGroup]
+activities_all: list[Activity]
 
 
 @pytest.fixture(scope="module")
@@ -57,7 +63,7 @@ def test_data():
         definition="Definition not provided",
     )
     log.info("Created Activity Group: %s", group)
-    activity_groups_all.append(group)
+    activity_groups_all = [group]
 
     # Creating subgroup with link to activity group
     subgroup1 = TestUtils.create_activity_subgroup(
@@ -65,27 +71,25 @@ def test_data():
         library_name="Sponsor",
         definition="Laboratory Assessment Definition",
     )
-    activity_subgroups_all.append(subgroup1)
 
     subgroup2 = TestUtils.create_activity_subgroup(
         name="Acute Kidney Injury",
         library_name="Sponsor",
         definition=None,
     )
-    activity_subgroups_all.append(subgroup2)
 
     subgroup3 = TestUtils.create_activity_subgroup(
         name="Pancreatitis",
         library_name="Sponsor",
         definition=None,
     )
-    activity_subgroups_all.append(subgroup3)
+    activity_subgroups_all = [subgroup1, subgroup2, subgroup3]
 
     test_activities = ["Albumin", "Renal Event", "Albumin/Creatinine"]
 
     client = TestClient(app)
     log.info("\n=== Creating Activities ===")
-
+    activities_all = []
     for idx, activity_name in enumerate(test_activities, 1):
         log.info("Creating activity %s...", activity_name)
         activity_data = {
@@ -118,7 +122,7 @@ def test_data():
             "is_request_rejected": False,
             "contact_person": None,
             "reason_for_rejecting": None,
-            "requester_study_id": None,
+            "used_by_studies": [],
             "replaced_by_activity": None,
             "is_data_collected": True,
             "is_multiple_selection_allowed": True,

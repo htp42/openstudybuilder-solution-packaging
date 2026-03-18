@@ -3,15 +3,15 @@ const studiesListUrl = '/studies/list'
 
 Cypress.Commands.add('getStudyUid', (study_number) => {
   cy.sendGetRequest(studiesInfoUrl).then((response) => {
-            return response.body.items
-                .find(study => study.current_metadata.identification_metadata.study_number == study_number)
-                .uid
+    return response.body.items
+      .find(study => study.current_metadata.identification_metadata.study_number == study_number)
+      .uid
   })
 })
 
 Cypress.Commands.add('getStudyUidById', (study_id) => {
   cy.sendGetRequest(studiesListUrl).then((response) => {
-            return response.body.find(study => study.id == study_id).uid
+    return response.body.find(study => study.id == study_id).uid
   })
 })
 
@@ -29,7 +29,7 @@ Cypress.Commands.add('createAndSetMainTestStudy', (study_number) => {
     } else {
       Cypress.env('TEST_STUDY_UID', test_study_id.uid)
     }
-    
+
   })
 })
 
@@ -54,35 +54,71 @@ Cypress.Commands.add('nullRegistryIdentifiersForStudy', (study_uid) => {
       current_metadata: {
         identification_metadata: {
           registry_identifiers: {
-                "ct_gov_id": null,
-                "ct_gov_id_null_value_code": null,
-                "eudract_id": null,
-                "eudract_id_null_value_code": null,
-                "universal_trial_number_utn": null,
-                "universal_trial_number_utn_null_value_code": null,
-                "japanese_trial_registry_id_japic": null,
-                "japanese_trial_registry_id_japic_null_value_code": null,
-                "investigational_new_drug_application_number_ind": null,
-                "investigational_new_drug_application_number_ind_null_value_code": null,
-                "eu_trial_number": null,
-                "eu_trial_number_null_value_code": null,
-                "civ_id_sin_number": null,
-                "civ_id_sin_number_null_value_code": null,
-                "national_clinical_trial_number": null,
-                "national_clinical_trial_number_null_value_code": null,
-                "japanese_trial_registry_number_jrct": null,
-                "japanese_trial_registry_number_jrct_null_value_code": null,
-                "national_medical_products_administration_nmpa_number": null,
-                "national_medical_products_administration_nmpa_number_null_value_code": null,
-                "eudamed_srn_number": null,
-                "eudamed_srn_number_null_value_code": null,
-                "investigational_device_exemption_ide_number": null,
-                "investigational_device_exemption_ide_number_null_value_code": null,
-                "eu_pas_number": null,
-                "eu_pas_number_null_value_code": null
+            "ct_gov_id": null,
+            "ct_gov_id_null_value_code": null,
+            "eudract_id": null,
+            "eudract_id_null_value_code": null,
+            "universal_trial_number_utn": null,
+            "universal_trial_number_utn_null_value_code": null,
+            "japanese_trial_registry_id_japic": null,
+            "japanese_trial_registry_id_japic_null_value_code": null,
+            "investigational_new_drug_application_number_ind": null,
+            "investigational_new_drug_application_number_ind_null_value_code": null,
+            "eu_trial_number": null,
+            "eu_trial_number_null_value_code": null,
+            "civ_id_sin_number": null,
+            "civ_id_sin_number_null_value_code": null,
+            "national_clinical_trial_number": null,
+            "national_clinical_trial_number_null_value_code": null,
+            "japanese_trial_registry_number_jrct": null,
+            "japanese_trial_registry_number_jrct_null_value_code": null,
+            "national_medical_products_administration_nmpa_number": null,
+            "national_medical_products_administration_nmpa_number_null_value_code": null,
+            "eudamed_srn_number": null,
+            "eudamed_srn_number_null_value_code": null,
+            "investigational_device_exemption_ide_number": null,
+            "investigational_device_exemption_ide_number_null_value_code": null,
+            "eu_pas_number": null,
+            "eu_pas_number_null_value_code": null
           },
         },
       },
     },
   })
+})
+
+Cypress.Commands.add('setStudyTitle', (studyUid, studyTitle, studyShortTitle) => {
+  cy.request({
+    method: 'PATCH',
+    url: Cypress.env('API') + `/studies/${studyUid}`,
+    body: {
+      current_metadata: {
+        study_description: {
+          study_title: studyTitle,
+          study_short_title: studyShortTitle,
+        },
+      },
+    },
+  })
+})
+
+Cypress.Commands.add('lockStudy', (studyNumber, lockReason, majorVersion, minorVersion) => {
+  cy.request('/api/ct/codelists/terms?page_size=100&sort_by=%7B%22sponsor_preferred_name%22:true%7D&codelist_submission_value=RSNFL').then((response) => {
+    console.log()
+    let reason = response.body.items.find(term => term.sponsor_preferred_name == lockReason).term_uid
+    cy.getStudyUid(studyNumber).then(studyUid => {
+      cy.request({
+        method: 'POST',
+        url: Cypress.env('API') + `/studies/${studyUid}/locks`,
+        body: {
+          protocol_header_major_version: majorVersion,
+          protocol_header_minor_version: minorVersion,
+          reason_for_change_uid: reason,
+          other_reason_for_locking_releasing: null
+        },
+      })
+    })
+
+  })
+
 })

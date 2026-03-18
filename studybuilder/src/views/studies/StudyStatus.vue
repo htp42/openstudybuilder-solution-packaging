@@ -86,7 +86,7 @@
           <StudySubpartsTable :key="`subparts-${tabKeys.subparts}`" />
         </v-window-item>
         <v-window-item value="protocolversions">
-          <UnderConstruction
+          <ProtocolVersionsTable
             :key="`protocolversions-${tabKeys.protocolversions}`"
           />
         </v-window-item>
@@ -103,7 +103,7 @@ import NavigationTabs from '@/components/tools/NavigationTabs.vue'
 import StudyIdentificationSummary from '@/components/studies/StudyIdentificationSummary.vue'
 import StudyStatusTable from '@/components/studies/StudyStatusTable.vue'
 import StudySubpartsTable from '@/components/studies/StudySubpartsTable.vue'
-import UnderConstruction from '@/components/layout/UnderConstruction.vue'
+import ProtocolVersionsTable from '@/components/studies/ProtocolVersionsTable.vue'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 import { sanitizeHTML } from '@/utils/sanitize'
 

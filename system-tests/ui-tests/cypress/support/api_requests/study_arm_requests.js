@@ -1,4 +1,5 @@
 import { generateShortUniqueName } from "../helper_functions"
+const { getShortUniqueId } = require("../../support/helper_functions");
 
 export let arm_uid
 let arm_type_uid, study_arms_uids
@@ -43,12 +44,12 @@ const createArmBody = (armTypeUid, customName = '') => {
             "method": "POST",
             "content": {
                 arm_type_uid: armTypeUid,
-                code: `Code${Date.now()}`,
+                code: `Code${getShortUniqueId()}`,
                 description: 'TestArm',
                 name: armName,
                 short_name: armName,
                 number_of_subjects: '100',
-                randomization_group: `Random${Date.now()}`
+                randomization_group: `Random${getShortUniqueId()}`
             }
         }
     ]

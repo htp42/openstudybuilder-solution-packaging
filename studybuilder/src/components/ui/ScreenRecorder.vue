@@ -4,7 +4,6 @@
     color="red"
     density="compact"
     icon="mdi-video-outline"
-    class="recordBtn"
     @click="toggleRecording"
   />
 </template>
@@ -65,9 +64,3 @@ function handleBeforeUnload(e) {
   }
 }
 </script>
-<style lang="css" scoped>
-.recordBtn {
-  position: fixed;
-  right: 0;
-}
-</style>

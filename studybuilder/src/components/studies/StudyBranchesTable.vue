@@ -32,7 +32,9 @@
       <template #actions="">
         <v-btn
           v-if="editStepper && designClass === cohortConstants.MANUAL"
-          class="ml-2 expandHoverBtn"
+          class="ml-2"
+          icon
+          size="small"
           variant="outlined"
           color="nnBaseBlue"
           data-cy="add-study-branch-arm"
@@ -42,12 +44,16 @@
           "
           @click.stop="addBranchArm"
         >
-          <v-icon left>mdi-plus</v-icon>
-          <span class="label">{{ $t('StudyBranchArms.add_branch') }}</span>
+          <v-icon>mdi-plus</v-icon>
+          <v-tooltip activator="parent" location="top">
+            {{ $t('StudyBranchArms.add_branch') }}
+          </v-tooltip>
         </v-btn>
         <v-btn
           v-else-if="editStepper"
-          class="ml-2 expandHoverBtn"
+          class="ml-2"
+          icon
+          size="small"
           variant="outlined"
           color="nnBaseBlue"
           :disabled="
@@ -60,7 +66,9 @@
           <v-icon left>{{
             editStepper ? 'mdi-pencil-outline' : 'mdi-plus'
           }}</v-icon>
-          <span class="label">{{ $t('StudyBranchArms.cohorts_stepper') }}</span>
+          <v-tooltip activator="parent" location="top">
+            {{ $t('StudyBranchArms.cohorts_stepper') }}
+          </v-tooltip>
         </v-btn>
       </template>
       <template #[`item.study_cohort_name`]="{ item }">

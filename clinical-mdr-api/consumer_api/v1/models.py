@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 from enum import Enum
-from typing import Annotated, Any, Self
+from typing import TYPE_CHECKING, Annotated, Any
 
 from pydantic import BaseModel, Field
 
@@ -251,13 +251,13 @@ class StudyVisit(BaseModel):
     visit_sublabel_reference: Annotated[
         str | None,
         Field(
-            description="Anchor Visit UID for given StudyVisit",
+            description="Visit Sublabel Reference for given StudyVisit",
             json_schema_extra={"nullable": True},
             exclude=True,
         ),
     ] = None
     anchor_visit: Annotated[
-        Self | None,
+        "StudyVisit | None",
         Field(
             description="Anchor Visit for given StudyVisit",
             json_schema_extra={"nullable": True},
@@ -706,9 +706,29 @@ class StudyOperationalSoA(BaseModel):
         )
 
 
-class Library(Enum):
-    SPONSOR = "Sponsor"
-    REQUESTED = "Requested"
+if TYPE_CHECKING:
+    # Static definition for mypy — mirrors the default config values
+    class Library(str, Enum):
+        SPONSOR = "Sponsor"
+        REQUESTED = "Requested"
+
+else:
+
+    def _build_library_enum() -> type[Enum]:
+        """Build Library enum dynamically from config.
+
+        Includes all editable libraries from settings.editable_library_names
+        plus the Requested library.
+        """
+        from common.config import settings
+
+        members = {}
+        for name in settings.editable_library_names:
+            members[name.upper().replace(" ", "_")] = name
+        members["REQUESTED"] = settings.requested_library_name
+        return Enum("Library", members, type=str)
+
+    Library = _build_library_enum()
 
 
 class LibraryItemStatus(Enum):
@@ -910,4 +930,319 @@ class PapillonsSoA(PapillonsStudyMetaDataBase):
             specified_dt=val["specified_dt"],
             fetch_dt=val["fetch_dt"],
             soa=[PapillonsSoAItem.from_input(n) for n in val["soa"]],
+        )
+
+
+class VisitWindow(BaseModel):
+    before: Annotated[int, Field(description="Window before visit")]
+    after: Annotated[int, Field(description="Window after visit")]
+    unit_uid: Annotated[str, Field(description="Window unit UID")]
+
+
+class VisitTiming(BaseModel):
+    value: Annotated[int, Field(description="Timing value")]
+    unit_uid: Annotated[str, Field(description="Timing unit UID")]
+    timing_reference_uid: Annotated[
+        str,
+        Field(
+            description="Timing reference UID. List of possible values can be retrieved from `GET /codelist-terms?codelist_submission_value=TIMEREF` API endpoint."
+        ),
+    ]
+
+
+class SoACreateInput(BaseModel):
+    class Epoch(BaseModel):
+        reference_id: Annotated[str, Field(description="Epoch reference ID")]
+        subtype: Annotated[str, Field(description="Epoch subtype")]
+        order: Annotated[int, Field(description="Epoch order")]
+
+    class Visit(BaseModel):
+        reference_id: Annotated[str, Field(description="Visit reference ID")]
+        epoch_reference_id: Annotated[str, Field(description="Epoch reference ID")]
+        type: Annotated[str, Field(description="Visit type")]
+        name: Annotated[str, Field(description="Visit name")]
+        short_name: Annotated[str, Field(description="Visit short name")]
+        number: Annotated[int, Field(description="Visit number")]
+        visit_class: VisitClass = Field(alias="class", description="Visit class")
+        subclass: Annotated[VisitSubclass, Field(description="Visit subclass")]
+        contact_mode: Annotated[str, Field(description="Visit contact mode")]
+        is_global_anchor_visit: Annotated[
+            bool, Field(description="Global anchor visit flag")
+        ] = False
+        window: Annotated[
+            VisitWindow | None,
+            Field(description="Visit window", json_schema_extra={"nullable": True}),
+        ] = None
+        timing: Annotated[
+            VisitTiming | None,
+            Field(description="Visit timing", json_schema_extra={"nullable": True}),
+        ] = None
+
+    class Activity(BaseModel):
+        reference_id: Annotated[str, Field(description="Activity reference ID")]
+        visit_reference_ids: Annotated[
+            list[str], Field(description="Visit reference IDs")
+        ]
+        activity_uid: Annotated[str, Field(description="Activity UID")]
+        soa_group_uid: Annotated[str, Field(description="SoA group CT term UID")]
+        activity_group_uid: Annotated[str, Field(description="Activity group UID")]
+        activity_subgroup_uid: Annotated[
+            str, Field(description="Activity subgroup UID")
+        ]
+
+    epochs: Annotated[list[Epoch], Field(description="Study epochs")]
+    visits: Annotated[list[Visit], Field(description="Study visits")]
+    activities: Annotated[list[Activity], Field(description="Study activities")]
+
+
+class SoACreateResponse(BaseModel):
+    epochs: Annotated[
+        dict[str, str],
+        Field(description="Created epochs with `reference ID: UID` mapping"),
+    ]
+    visits: Annotated[
+        dict[str, str],
+        Field(description="Created visits with `reference ID: UID` mapping"),
+    ]
+    activities: Annotated[
+        dict[str, str],
+        Field(description="Created activities with `reference ID: UID` mapping"),
+    ]
+
+
+class CodelistTerm(BaseModel):
+    uid: Annotated[str, Field(description="Codelist Term UID")]
+    submission_value: Annotated[str, Field(description="Submission Value")]
+    sponsor_preferred_name: Annotated[
+        str,
+        Field(
+            description="Sponsor Preferred Name",
+        ),
+    ]
+    concept_id: Annotated[
+        str | None,
+        Field(
+            description="Concept ID in e.g. CDISC Library",
+            json_schema_extra={"nullable": True},
+        ),
+    ] = None
+    nci_preferred_name: Annotated[
+        str | None,
+        Field(description="NCI Preferred Name", json_schema_extra={"nullable": True}),
+    ] = None
+    library_name: Annotated[
+        str, Field(description="Library Name", json_schema_extra={"nullable": True})
+    ]
+    name_status: Annotated[str, Field(description="Name version status")]
+    name_version: Annotated[str, Field(description="Name version number")]
+    attributes_status: Annotated[str, Field(description="Attributes version status")]
+    attributes_version: Annotated[str, Field(description="Attributes version number")]
+
+    @classmethod
+    def from_input(cls, val: dict[str, Any]):
+        return cls(
+            uid=val["uid"],
+            submission_value=val["submission_value"],
+            sponsor_preferred_name=val["sponsor_preferred_name"],
+            concept_id=val.get("concept_id", None),
+            nci_preferred_name=val.get("nci_preferred_name", None),
+            library_name=val["library_name"],
+            name_status=val["name_status"],
+            name_version=val["name_version"],
+            attributes_status=val["attributes_status"],
+            attributes_version=val["attributes_version"],
+        )
+
+
+class Codelist(BaseModel):
+    uid: Annotated[str, Field(description="Codelist UID")]
+    name: Annotated[
+        str,
+        Field(
+            description="Codelist name",
+        ),
+    ]
+    submission_value: Annotated[
+        str,
+        Field(
+            description="Submission Value",
+        ),
+    ]
+    sponsor_preferred_name: Annotated[
+        str,
+        Field(
+            description="Sponsor Preferred Name",
+        ),
+    ]
+    nci_preferred_name: Annotated[
+        str | None,
+        Field(
+            description="NCI Preferred Name",
+            json_schema_extra={"nullable": True},
+        ),
+    ] = None
+    definition: Annotated[
+        str | None,
+        Field(
+            description="Codelist definition",
+            json_schema_extra={"nullable": True},
+        ),
+    ] = None
+    is_extensible: Annotated[
+        bool | None,
+        Field(
+            description="Whether the codelist is extensible",
+            json_schema_extra={"nullable": True},
+        ),
+    ] = None
+    library_name: Annotated[
+        str,
+        Field(description="Library Name"),
+    ]
+    name_status: Annotated[
+        str,
+        Field(description="Status of the codelist name version"),
+    ]
+    name_version: Annotated[
+        str,
+        Field(description="Version of the codelist name"),
+    ]
+    attributes_status: Annotated[
+        str,
+        Field(description="Status of the codelist attributes version"),
+    ]
+    attributes_version: Annotated[
+        str,
+        Field(description="Version of the codelist attributes"),
+    ]
+
+    @classmethod
+    def from_input(cls, val: dict[str, Any]):
+        return cls(
+            uid=val["uid"],
+            name=val["name"],
+            submission_value=val["submission_value"],
+            sponsor_preferred_name=val["sponsor_preferred_name"],
+            nci_preferred_name=val.get("nci_preferred_name"),
+            definition=val.get("definition"),
+            is_extensible=val.get("is_extensible"),
+            library_name=val["library_name"],
+            name_status=val["name_status"],
+            name_version=val["name_version"],
+            attributes_status=val["attributes_status"],
+            attributes_version=val["attributes_version"],
+        )
+
+
+class UnitSubsetInfo(BaseModel):
+    term_uid: Annotated[str, Field(description="Subset term UID")]
+    term_name: Annotated[str, Field(description="Subset term name")]
+    term_submission_value: Annotated[
+        str, Field(description="Subset term submission value")
+    ]
+    codelist_uid: Annotated[str | None, Field(description="Subset codelist UID")]
+    codelist_name: Annotated[str | None, Field(description="Subset codelist name")]
+    codelist_submission_value: Annotated[
+        str | None, Field(description="Subset codelist submission value")
+    ]
+
+
+class UnitDimensionInfo(BaseModel):
+    term_uid: Annotated[str, Field(description="Dimension term UID")]
+    term_name: Annotated[str, Field(description="Dimension term name")]
+    term_submission_value: Annotated[
+        str, Field(description="Dimension term submission value")
+    ]
+    codelist_uid: Annotated[str | None, Field(description="Dimension codelist UID")]
+    codelist_name: Annotated[str | None, Field(description="Dimension codelist name")]
+    codelist_submission_value: Annotated[
+        str | None, Field(description="Dimension codelist submission value")
+    ]
+
+
+class UnitDefinition(BaseModel):
+    uid: Annotated[str, Field(description="Unit Definition UID")]
+    name: Annotated[str, Field(description="Unit Definition Name")]
+    library_name: Annotated[str, Field(description="Unit Definition Library Name")]
+    status: Annotated[str, Field(description="Version status")]
+    version: Annotated[str, Field(description="Version number")]
+    subsets: Annotated[
+        list[UnitSubsetInfo], Field(description="Unit definition subsets")
+    ]
+    is_convertible_unit: Annotated[
+        bool | None, Field(description="Whether the unit is convertible")
+    ]
+    is_master_unit: Annotated[
+        bool | None, Field(description="Whether the unit is a master unit")
+    ]
+    is_si_unit: Annotated[
+        bool | None, Field(description="Whether the unit is an SI unit")
+    ]
+    is_display_unit: Annotated[
+        bool | None, Field(description="Whether the unit is a display unit")
+    ]
+    is_us_conventional_unit: Annotated[
+        bool | None, Field(description="Whether the unit is a US conventional unit")
+    ]
+    use_complex_unit_conversion: Annotated[
+        bool | None,
+        Field(description="Whether the unit uses complex unit conversion"),
+    ]
+    use_molecular_weight: Annotated[
+        bool | None, Field(description="Whether the unit uses molecular weight")
+    ]
+    ucum_unit_name: Annotated[str | None, Field(description="UCUM unit name")]
+    unit_dimension: Annotated[
+        UnitDimensionInfo | None,
+        Field(description="Unit dimension with term and codelist info"),
+    ]
+    legacy_code: Annotated[str | None, Field(description="Legacy unit code")]
+    conversion_factor_to_master: Annotated[
+        float | None, Field(description="Conversion factor to master unit")
+    ]
+
+    @classmethod
+    def from_input(cls, val: dict[str, Any]):
+        raw_dim = val.get("unit_dimension")
+        unit_dimension = (
+            UnitDimensionInfo(
+                term_uid=raw_dim["term_uid"],
+                term_name=raw_dim["term_name"],
+                term_submission_value=raw_dim.get("term_submission_value"),
+                codelist_uid=raw_dim.get("codelist_uid"),
+                codelist_name=raw_dim.get("codelist_name"),
+                codelist_submission_value=raw_dim.get("codelist_submission_value"),
+            )
+            if raw_dim
+            else None
+        )
+        subsets = [
+            UnitSubsetInfo(
+                term_uid=s["term_uid"],
+                term_name=s["term_name"],
+                term_submission_value=s.get("term_submission_value"),
+                codelist_uid=s.get("codelist_uid"),
+                codelist_name=s.get("codelist_name"),
+                codelist_submission_value=s.get("codelist_submission_value"),
+            )
+            for s in val["subsets"]
+        ]
+        return cls(
+            uid=val["uid"],
+            name=val["name"],
+            library_name=val["library_name"],
+            status=val["status"],
+            version=val["version"],
+            subsets=subsets,
+            is_convertible_unit=val.get("is_convertible_unit"),
+            is_master_unit=val.get("is_master_unit"),
+            is_si_unit=val.get("is_si_unit"),
+            is_display_unit=val.get("is_display_unit"),
+            is_us_conventional_unit=val.get("is_us_conventional_unit"),
+            use_complex_unit_conversion=val.get("use_complex_unit_conversion"),
+            use_molecular_weight=val.get("use_molecular_weight"),
+            ucum_unit_name=val.get("ucum_unit_name"),
+            unit_dimension=unit_dimension,
+            legacy_code=val.get("legacy_code"),
+            conversion_factor_to_master=val.get("conversion_factor_to_master"),
         )

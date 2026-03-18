@@ -20,6 +20,8 @@ from clinical_mdr_api.tests.utils.checks import (
 )
 
 log = logging.getLogger(__name__)
+reason_for_lock_term_uid: str
+reason_for_unlock_term_uid: str
 
 
 @pytest.fixture(scope="function")
@@ -35,7 +37,10 @@ def dummy_study(request, base_data, tst_project) -> Study:
 
     # Study standatd version has to be set before locking
     TestUtils.set_study_standard_version(study_uid=study.uid)
-
+    test_data_dict = base_data
+    global reason_for_lock_term_uid, reason_for_unlock_term_uid
+    reason_for_lock_term_uid = test_data_dict["reason_for_lock_terms"][0].term_uid
+    reason_for_unlock_term_uid = test_data_dict["reason_for_unlock_terms"][0].term_uid
     return study
 
 
@@ -452,7 +457,10 @@ def test_soa_preferences_versioning(
     # Lock the study
     response1 = api_client.post(
         f"/studies/{dummy_study.uid}/locks",
-        json={"change_description": "testing"},
+        json={
+            "change_description": "testing",
+            "reason_for_change_uid": reason_for_lock_term_uid,
+        },
     )
     assert response1.status_code == 201
     assert_json_response(response1)
@@ -469,10 +477,11 @@ def test_soa_preferences_versioning(
     assert "is locked" in data["message"]
 
     # Unlock the study
-    unlock_response = api_client.delete(
-        f"/studies/{dummy_study.uid}/locks",
+    unlock_response = api_client.post(
+        f"/studies/{dummy_study.uid}/unlocks",
+        json={"reason_for_change_uid": reason_for_unlock_term_uid},
     )
-    assert unlock_response.status_code == 200
+    assert unlock_response.status_code == 201
     assert_json_response(unlock_response)
 
     # Update SoA preferences

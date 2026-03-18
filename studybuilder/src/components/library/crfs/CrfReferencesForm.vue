@@ -69,7 +69,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, inject, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import SimpleFormDialog from '@/components/tools/SimpleFormDialog.vue'
 import crfs from '@/api/crfs'
@@ -88,6 +88,8 @@ const props = defineProps({
     default: null,
   },
 })
+
+const notificationHub = inject('notificationHub')
 
 const { t } = useI18n()
 const emit = defineEmits(['close'])
@@ -149,10 +151,16 @@ async function submit() {
     cancelLabel: t('_global.cancel'),
     agreeLabel: t('_global.continue'),
   }
-  form.value.vendor.attributes = selectedExtensions.value
+  if (!form.value.uid.includes('OdmForm')) {
+    form.value.vendor.attributes = selectedExtensions.value
+  }
   if (form.value.uid.includes('OdmForm')) {
     crfs.addFormsToCollection([form.value], props.parent.uid, false).then(
       () => {
+        notificationHub.add({
+          type: 'success',
+          msg: t('CRFReferencesForm.success_message'),
+        })
         emit('close')
       },
       () => {
@@ -168,9 +176,9 @@ async function submit() {
     if (
       parentForm.parent_uids.length > 1 &&
       !(await confirm.value.open(
-        t('CRFReferencesForm.warning_1') +
-          (parentForm.parent_uids.length - 1) +
-          t('CRFReferencesForm.warning_templ'),
+        t('CRFReferencesForm.warning_templ', {
+          count: parentForm.parent_uids.length - 1,
+        }),
         options
       ))
     ) {
@@ -179,6 +187,10 @@ async function submit() {
     }
     crfs.addItemGroupsToForm([form.value], props.parent.uid, false).then(
       () => {
+        notificationHub.add({
+          type: 'success',
+          msg: t('CRFReferencesForm.success_message'),
+        })
         emit('close')
       },
       () => {
@@ -211,9 +223,9 @@ async function submit() {
     if (
       group.parent_uids.length > 1 &&
       !(await confirm.value.open(
-        t('CRFReferencesForm.warning_1') +
-          (group.parent_uids.length - 1) +
-          t('CRFReferencesForm.warning_forms'),
+        t('CRFReferencesForm.warning_forms', {
+          count: group.parent_uids.length - 1,
+        }),
         options
       ))
     ) {
@@ -222,6 +234,10 @@ async function submit() {
     }
     crfs.addItemsToItemGroup([form.value], props.parent.uid, false).then(
       () => {
+        notificationHub.add({
+          type: 'success',
+          msg: t('CRFReferencesForm.success_message'),
+        })
         emit('close')
       },
       () => {

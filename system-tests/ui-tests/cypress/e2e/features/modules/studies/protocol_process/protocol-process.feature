@@ -26,7 +26,7 @@ Feature: Studies - Protocol Process
     Scenario: [Navigation][Select Study] User must be able to use the Select Study button
         Given The '/studies/protocol_process' page is opened
         When The 'Select study' button is clicked in Protocol Process page
-        Then The 'Select study ID or acronym' form is opened
+        Then The 'Select a study' form is opened
 
     Scenario: [Navigation][New Study] User must be able to use the New Study Study button
         Given The '/studies/protocol_process' page is opened

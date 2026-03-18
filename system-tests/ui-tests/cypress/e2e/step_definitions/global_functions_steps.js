@@ -3,7 +3,7 @@ import { formatDateToMMMDDYYYY, getCurrentStudyId } from '../../support/helper_f
 
 When('User clicks table export button', () => cy.clickButton('table-export-button'))
 
-When('User clicks export button', () => cy.contains('button', 'Export').click())
+When('User clicks export button', () => cy.get('button .mdi-download-outline').click())
 
 When('User selects {string} format to export the table content', (format) => cy.contains('.v-list-item', format).click())
 

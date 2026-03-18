@@ -1,6 +1,7 @@
 # pylint: disable=unused-argument
 # pylint: disable=redefined-outer-name
 # pylint: disable=too-many-arguments
+# pylint: disable=invalid-name
 
 # pytest fixture functions have other fixture functions as arguments,
 # which pylint interprets as unused arguments
@@ -18,6 +19,7 @@ from clinical_mdr_api.tests.integration.utils.api import drop_db, inject_and_cle
 from clinical_mdr_api.tests.integration.utils.data_library import (
     STARTUP_CT_CATALOGUE_CYPHER,
     STARTUP_STUDY_LIST_CYPHER,
+    create_reason_for_lock_unlock_terms,
     fix_study_preferred_time_unit,
 )
 from clinical_mdr_api.tests.integration.utils.method_library import (
@@ -41,6 +43,8 @@ from clinical_mdr_api.tests.utils.checks import assert_response_status_code
 from common.config import settings
 
 test_data_dict = {}
+reason_for_lock_term_uid = None
+reason_for_unlock_term_uid = None
 
 
 @pytest.fixture(scope="module")
@@ -60,6 +64,11 @@ def test_data():
     TestUtils.set_study_standard_version(
         study_uid=study.uid, create_codelists_and_terms_for_package=False
     )
+    global reason_for_lock_term_uid, reason_for_unlock_term_uid
+    lock_unlock_data = create_reason_for_lock_unlock_terms()
+    reason_for_lock_term_uid = lock_unlock_data["reason_for_lock_terms"][0].term_uid
+    reason_for_unlock_term_uid = lock_unlock_data["reason_for_unlock_terms"][0].term_uid
+
     create_study_epoch_codelists_ret_cat_and_lib()
     _catalogue_name, library_name = get_catalogue_name_library_name()
     catalogue_name = "SDTM CT"
@@ -662,7 +671,10 @@ def test_add_study_title_test_to_have_multiple_study_value_relationships_attache
 def test_lock_study_test_to_have_multiple_study_value_relationships_attached8(
     api_client,
 ):
-    data = {"change_description": "Lock 1"}
+    data = {
+        "change_description": "Lock 1",
+        "reason_for_change_uid": reason_for_lock_term_uid,
+    }
     response = api_client.post("/studies/study_root/locks", json=data)
 
     assert response.status_code == 201
@@ -671,9 +683,15 @@ def test_lock_study_test_to_have_multiple_study_value_relationships_attached8(
 def test_unlock_study_test_to_have_multiple_study_value_relationships_attached8(
     api_client,
 ):
-    response = api_client.delete("/studies/study_root/locks")
+    response = api_client.post(
+        "/studies/study_root/unlocks",
+        json={
+            "change_description": "Unlock",
+            "reason_for_change_uid": reason_for_unlock_term_uid,
+        },
+    )
 
-    assert response.status_code == 200
+    assert response.status_code == 201
 
 
 def test_patch_specific_try_to_patch_the_studyarm_of_a_studybrancharm_that_has_studydesigncell_connected_to_it(
@@ -717,7 +735,10 @@ def test_get_audit_trail_for_all_design_cells_should_expect_to_delete_the_study_
 def test_lock_study_test_to_have_multiple_study_value_relationships_attached9(
     api_client,
 ):
-    data = {"change_description": "Lock 1"}
+    data = {
+        "change_description": "Lock 1",
+        "reason_for_change_uid": reason_for_lock_term_uid,
+    }
     response = api_client.post("/studies/study_root/locks", json=data)
 
     assert_response_status_code(response, 201)
@@ -726,9 +747,15 @@ def test_lock_study_test_to_have_multiple_study_value_relationships_attached9(
 def test_unlock_study_test_to_have_multiple_study_value_relationships_attached9(
     api_client,
 ):
-    response = api_client.delete("/studies/study_root/locks")
+    response = api_client.post(
+        "/studies/study_root/unlocks",
+        json={
+            "change_description": "Unlock",
+            "reason_for_change_uid": reason_for_unlock_term_uid,
+        },
+    )
 
-    assert_response_status_code(response, 200)
+    assert_response_status_code(response, 201)
 
 
 def test_patch_specific_set_name5(api_client):
@@ -990,7 +1017,10 @@ def test_get_audit_trail_for_all_design_cells_should_expect_0005_to_be_switched_
 def test_lock_study_test_to_have_multiple_study_value_relationships_attached10(
     api_client,
 ):
-    data = {"change_description": "Lock 1"}
+    data = {
+        "change_description": "Lock 1",
+        "reason_for_change_uid": reason_for_lock_term_uid,
+    }
     response = api_client.post("/studies/study_root/locks", json=data)
 
     assert_response_status_code(response, 201)
@@ -999,9 +1029,15 @@ def test_lock_study_test_to_have_multiple_study_value_relationships_attached10(
 def test_unlock_study_test_to_have_multiple_study_value_relationships_attached10(
     api_client,
 ):
-    response = api_client.delete("/studies/study_root/locks")
+    response = api_client.post(
+        "/studies/study_root/unlocks",
+        json={
+            "change_description": "Unlock",
+            "reason_for_change_uid": reason_for_unlock_term_uid,
+        },
+    )
 
-    assert_response_status_code(response, 200)
+    assert_response_status_code(response, 201)
 
 
 def test_if_the_cascade_delete_works_with_studyelement(api_client):
@@ -1035,7 +1071,10 @@ def test_adding_designcell_to_have_the_scenario_of_having_many_studybranch(api_c
 def test_lock_study_test_to_have_multiple_study_value_relationships_attached11(
     api_client,
 ):
-    data = {"change_description": "Lock 1"}
+    data = {
+        "change_description": "Lock 1",
+        "reason_for_change_uid": reason_for_lock_term_uid,
+    }
     response = api_client.post("/studies/study_root/locks", json=data)
 
     assert_response_status_code(response, 201)
@@ -1044,9 +1083,15 @@ def test_lock_study_test_to_have_multiple_study_value_relationships_attached11(
 def test_unlock_study_test_to_have_multiple_study_value_relationships_attached11(
     api_client,
 ):
-    response = api_client.delete("/studies/study_root/locks")
+    response = api_client.post(
+        "/studies/study_root/unlocks",
+        json={
+            "change_description": "Unlock",
+            "reason_for_change_uid": reason_for_unlock_term_uid,
+        },
+    )
 
-    assert_response_status_code(response, 200)
+    assert_response_status_code(response, 201)
 
 
 def test_if_the_cascade_delete_on_the_study_epochs_works_deleting_studydesigncells_attached_to_it(
@@ -1124,11 +1169,20 @@ def test_adding_selection_studybrancharm_to_test_that_the_business_exception_has
     branch = response.json()
 
     # lock and unlock study to have multiple study value relationships attached
-    data = {"change_description": "Lock 1"}
+    data = {
+        "change_description": "Lock 1",
+        "reason_for_change_uid": reason_for_lock_term_uid,
+    }
     response = api_client.post("/studies/study_root/locks", json=data)
     assert_response_status_code(response, 201)
-    response = api_client.delete("/studies/study_root/locks")
-    assert_response_status_code(response, 200)
+    response = api_client.post(
+        "/studies/study_root/unlocks",
+        json={
+            "change_description": "Unlock",
+            "reason_for_change_uid": reason_for_unlock_term_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
     # adding designcell to arm that has branch arms connected_to_it_raise_the_business(
     data = {
         "study_arm_uid": arm["arm_uid"],

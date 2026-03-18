@@ -76,6 +76,7 @@ from clinical_mdr_api.tests.integration.utils.api import inject_and_clear_db
 from clinical_mdr_api.tests.integration.utils.data_library import (
     STARTUP_PARAMETERS_CYPHER,
     STARTUP_STUDY_ENDPOINT_CYPHER,
+    create_reason_for_lock_unlock_terms,
     fix_study_preferred_time_unit,
 )
 from clinical_mdr_api.tests.integration.utils.utils import TestUtils
@@ -106,6 +107,13 @@ class TestData:
             study_uid="study_root", create_codelists_and_terms_for_package=False
         )
         fix_study_preferred_time_unit(study_uid="study_root")
+        lock_unlock_data = create_reason_for_lock_unlock_terms()
+        self.reason_for_lock_term_uid = lock_unlock_data["reason_for_lock_terms"][
+            0
+        ].term_uid
+        self.reason_for_unlock_term_uid = lock_unlock_data["reason_for_unlock_terms"][
+            0
+        ].term_uid
 
         self.lib = Library(name="LibraryName", is_editable=True)
         self.lib.save()
@@ -364,7 +372,11 @@ def test__endpoint_accept_version__update(test_data):
 
     # locking and unlocking to create multiple study value relationships on the existent StudySelections
     TestUtils.create_study_fields_configuration()
-    TestUtils.lock_and_unlock_study(study_uid="study_root")
+    TestUtils.lock_and_unlock_study(
+        study_uid="study_root",
+        reason_for_lock_term_uid=test_data.reason_for_lock_term_uid,
+        reason_for_unlock_term_uid=test_data.reason_for_unlock_term_uid,
+    )
 
     # when
 

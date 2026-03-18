@@ -6,6 +6,7 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemMetadataVO,
     LibraryVO,
 )
+from common.config import settings
 from common.exceptions import AlreadyExistsException, BusinessLogicException
 
 
@@ -38,7 +39,7 @@ class ActivityVO(ConceptVO):
     # ActivityRequest related
     request_rationale: str | None
     replaced_by_activity: str | None
-    requester_study_id: str | None
+    used_by_studies: list[str]
     reason_for_rejecting: str | None
     contact_person: str | None
     is_request_final: bool = False
@@ -65,7 +66,7 @@ class ActivityVO(ConceptVO):
         activity_instances: list[dict[Any, Any]],
         is_request_final: bool = False,
         replaced_by_activity: str | None = None,
-        requester_study_id: str | None = None,
+        used_by_studies: list[str] | None = None,
         reason_for_rejecting: str | None = None,
         contact_person: str | None = None,
         is_request_rejected: bool = False,
@@ -74,6 +75,8 @@ class ActivityVO(ConceptVO):
         is_finalized: bool = False,
         is_used_by_legacy_instances: bool = False,
     ) -> Self:
+        if used_by_studies is None:
+            used_by_studies = []
         activity_vo = cls(
             nci_concept_id=nci_concept_id,
             nci_concept_name=nci_concept_name,
@@ -87,7 +90,7 @@ class ActivityVO(ConceptVO):
             request_rationale=request_rationale,
             activity_instances=activity_instances,
             is_request_final=is_request_final,
-            requester_study_id=requester_study_id,
+            used_by_studies=used_by_studies,
             replaced_by_activity=replaced_by_activity,
             reason_for_rejecting=reason_for_rejecting,
             contact_person=contact_person,
@@ -136,7 +139,7 @@ class ActivityVO(ConceptVO):
             msg=f"Following Activities already have the provided synonyms: {existing_synonyms_with_uids}",
         )
 
-        if library_name == "Sponsor":
+        if library_name == settings.sponsor_library_name:
             BusinessLogicException.raise_if_not(
                 self.activity_groupings,
                 msg="Sponsor activities must have at least one grouping.",

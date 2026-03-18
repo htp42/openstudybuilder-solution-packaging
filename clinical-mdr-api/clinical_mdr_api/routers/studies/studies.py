@@ -1,4 +1,4 @@
-from typing import Annotated, Any
+from typing import Annotated, Any, cast
 
 from dict2xml import DataSorter, dict2xml
 from fastapi import APIRouter, Body, Path, Query
@@ -14,11 +14,12 @@ from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import 
 )
 from clinical_mdr_api.models.study_selections.study import (
     CompactStudy,
-    StatusChangeDescription,
+    LockReleaseInput,
     Study,
     StudyCloneInput,
     StudyCreateInput,
     StudyFieldAuditTrailEntry,
+    StudyIntegrityCheckResponse,
     StudyMinimal,
     StudyPatchRequestJsonModel,
     StudyPreferredTimeUnit,
@@ -34,6 +35,8 @@ from clinical_mdr_api.models.study_selections.study import (
     StudySubpartAuditTrail,
     StudySubpartCreateInput,
     StudySubpartReorderingInput,
+    StudyVersionHistory,
+    UnlockInput,
 )
 from clinical_mdr_api.models.study_selections.study_pharma_cm import StudyPharmaCM
 from clinical_mdr_api.models.utils import CustomPage
@@ -422,23 +425,30 @@ def get_distinct_values_for_header(
 def lock(
     study_uid: Annotated[str, StudyUID],
     lock_description: Annotated[
-        StatusChangeDescription,
-        Body(description="The description of the locked version."),
+        LockReleaseInput,
+        Body(
+            description="The data (reason_for_lock and description) needed for locked version."
+        ),
     ],
 ) -> Study:
     study_service = StudyService()
     return study_service.lock(
-        uid=study_uid, change_description=lock_description.change_description
+        uid=study_uid,
+        change_description=lock_description.change_description,
+        other_reason_for_locking=lock_description.other_reason_for_locking_releasing,
+        reason_for_lock_term_uid=lock_description.reason_for_change_uid,
+        protocol_header_major_version=lock_description.protocol_header_major_version,
+        protocol_header_minor_version=lock_description.protocol_header_minor_version,
     )
 
 
-@router.delete(
-    "/{study_uid}/locks",
+@router.post(
+    "/{study_uid}/unlocks",
     dependencies=[security, rbac.STUDY_WRITE],
     summary="Unlocks a Study with specified uid",
     description="The Study is unlocked, which means that the new DRAFT version of a Study is created"
     " and the Study exists in the DRAFT state.",
-    status_code=200,
+    status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
         400: {
@@ -453,9 +463,19 @@ def lock(
 )
 def unlock(
     study_uid: Annotated[str, StudyUID],
+    lock_description: Annotated[
+        UnlockInput,
+        Body(
+            description="The data (reason_for_unlock and description) needed for unlocked version."
+        ),
+    ],
 ) -> Study:
     study_service = StudyService()
-    return study_service.unlock(uid=study_uid)
+    return study_service.unlock(
+        uid=study_uid,
+        reason_for_unlock_term_uid=lock_description.reason_for_change_uid,
+        other_reason_for_unlocking=lock_description.other_reason_for_unlocking,
+    )
 
 
 @router.post(
@@ -481,13 +501,20 @@ def unlock(
 def release(
     study_uid: Annotated[str, StudyUID],
     release_description: Annotated[
-        StatusChangeDescription,
-        Body(description="The description of the release version."),
+        LockReleaseInput,
+        Body(
+            description="The data (reason_for_release and description) needed for released version."
+        ),
     ],
 ) -> Study:
     study_service = StudyService()
     return study_service.release(
-        uid=study_uid, change_description=release_description.change_description
+        uid=study_uid,
+        other_reason_for_releasing=release_description.other_reason_for_locking_releasing,
+        change_description=release_description.change_description,
+        reason_for_release_uid=release_description.reason_for_change_uid,
+        protocol_header_major_version=release_description.protocol_header_major_version,
+        protocol_header_minor_version=release_description.protocol_header_minor_version,
     )
 
 
@@ -526,6 +553,26 @@ Possible errors:
 def delete_activity(study_uid: Annotated[str, StudyUID]):
     study_service = StudyService()
     study_service.soft_delete(uid=study_uid)
+
+
+@router.get(
+    "/{study_uid}/integrity-check",
+    dependencies=[security, rbac.STUDY_READ],
+    summary="Run integrity checks for a specific study",
+    description="Executes database integrity checks for the specified study and returns detailed results including all checks and non-compliant entities.",
+    response_model=StudyIntegrityCheckResponse,
+    status_code=200,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        404: _generic_descriptions.ERROR_404,
+    },
+)
+def run_integrity_check_for_study(
+    study_uid: Annotated[str, StudyUID],
+) -> StudyIntegrityCheckResponse:
+    """Run integrity checks for a specific study and return detailed results."""
+    study_service = StudyService()
+    return study_service.run_integrity_check_for_study(study_uid=study_uid)
 
 
 @router.get(
@@ -661,7 +708,7 @@ def get_pharma_cm_xml_representation(
             study_pharma,
             indent="  ",
             closed_tags_for=[None],
-            data_sorter=DataSorter.never(),
+            data_sorter=cast(DataSorter | None, DataSorter.never()),
         ),
         media_type="text/xml",
         headers={
@@ -749,22 +796,23 @@ def patch(
 )
 def get_snapshot_history(
     study_uid: Annotated[str, StudyUID],  # ,
-    sort_by: _generic_descriptions.SORT_BY_QUERY = None,
     page_number: _generic_descriptions.PAGE_NUMBER_QUERY = settings.default_page_number,
     page_size: _generic_descriptions.PAGE_SIZE_QUERY = settings.default_page_size,
-    filters: _generic_descriptions.FILTERS_QUERY = None,
-    operator: _generic_descriptions.FILTER_OPERATOR_QUERY = settings.default_filter_operator,
     total_count: _generic_descriptions.TOTAL_COUNT_QUERY = False,
-) -> CustomPage[CompactStudy]:
+    only_latest_major_protcol_version: Annotated[
+        bool,
+        Query(
+            description="Indicates whether Study snapshots without protocol header version should be returned",
+        ),
+    ] = False,
+) -> CustomPage[StudyVersionHistory]:
     study_service = StudyService()
     snapshot_history = study_service.get_study_snapshot_history(
         study_uid=study_uid,
         page_number=page_number,
         page_size=page_size,
-        filter_by=filters,
-        filter_operator=FilterOperator.from_str(operator),
-        sort_by=sort_by,
         total_count=total_count,
+        only_latest_major_protcol_version=only_latest_major_protcol_version,
     )
     return CustomPage(
         items=snapshot_history.items,
@@ -772,6 +820,25 @@ def get_snapshot_history(
         page=page_number,
         size=page_size,
     )
+
+
+@router.get(
+    "/{study_uid}/protocol-header-versions",
+    dependencies=[security, rbac.STUDY_READ],
+    summary="Returns the latest available protocol header version or the one associated with specified study value version.",
+    response_model_exclude_unset=True,
+    status_code=200,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - The study with the specified 'study_uid'",
+        },
+    },
+)
+def get_protocol_header_version(
+    study_uid: Annotated[str, StudyUID],
+) -> str | None:
+    return StudyService().get_protocol_header_version(study_uid=study_uid)
 
 
 @router.get(

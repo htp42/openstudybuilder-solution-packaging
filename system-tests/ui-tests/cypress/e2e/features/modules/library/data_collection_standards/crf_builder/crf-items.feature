@@ -28,12 +28,12 @@ Feature: Library - Data Collection Standards - CRF Builder - Items
     Scenario: [Table][Options] User must be able to see table with correct options
         Given The '/library/crf-builder/items' page is opened
         Then A table is visible with following options
-            | options                                                         |
-            | Add CRF Item                                                    |
-            | Select columns                                                  |
-            | Export                                                          |
-            | Select filters                                                  |
-            | Search                                                          |
+            | options                                            |
+            | add-crf-item                                       |
+            | filters-button                                     |
+            | columns-layout-button                              |
+            | table-export-button                                |
+            | search-field                                       |
 
     Scenario: [Table][Columns][Visibility] User must be able to select visibility of columns in the table 
         Given The '/library/crf-builder/items' page is opened

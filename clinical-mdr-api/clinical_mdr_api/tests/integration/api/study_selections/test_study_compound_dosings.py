@@ -10,7 +10,7 @@ Tests for /studies/{study_uid}/study-compound-dosings endpoints
 # which pylint interprets as unused arguments
 
 import logging
-from typing import Sequence
+from typing import Any, Sequence
 from unittest import mock
 
 import pytest
@@ -58,6 +58,7 @@ study_elements: Sequence[StudySelectionElement]
 pharmaceutical_product1: PharmaceuticalProduct
 medicinal_product1: MedicinalProduct
 dose_value: NumericValueWithUnit
+test_data_dict: dict[str, Any]
 
 initialize_ct_data_map = {
     "TypeOfTreatment": [("CTTerm_000001", "CTTerm_000001")],
@@ -105,7 +106,9 @@ def test_data():
     db_name = "studycompounddosings.api"
     inject_and_clear_db(db_name)
     TestUtils.create_library(name="UCUM", is_editable=True)
-    inject_base_data()
+    global test_data_dict
+    _, test_data_dict = inject_base_data()
+
     codelist = TestUtils.create_ct_codelist()
     TestUtils.create_study_ct_data_map(codelist_uid=codelist.codelist_uid)
 
@@ -301,6 +304,17 @@ def test_data():
     yield
 
 
+@pytest.mark.order("last")
+def test_integrity_checks_for_all_studies(api_client):
+    """
+    Test integrity checks for all available studies in the database.
+
+    This test should always be executed at the END to check the health of the remaining database.
+    It validates that all studies in the database pass integrity checks after all other tests have run.
+    """
+    TestUtils.run_integrity_checks_for_all_studies(api_client)
+
+
 def test_create_and_remove_study_compound_dosing_selection(api_client):
     response = api_client.post(
         f"{BASE_URL}",
@@ -367,7 +381,12 @@ def test_compound_dosing_modify_actions_on_locked_study(api_client):
     # Lock
     response = api_client.post(
         f"/studies/{study.uid}/locks",
-        json={"change_description": "Lock 1"},
+        json={
+            "change_description": "Lock 1",
+            "reason_for_change_uid": test_data_dict["reason_for_lock_terms"][
+                0
+            ].term_uid,
+        },
     )
     assert_response_status_code(response, 201)
     res = response.json()
@@ -425,8 +444,16 @@ def test_get_compound_doings_data_for_specific_study_version(api_client):
     res_old = res
 
     # Unlock
-    response = api_client.delete(f"/studies/{study.uid}/locks")
-    assert_response_status_code(response, 200)
+    response = api_client.post(
+        f"/studies/{study.uid}/unlocks",
+        json={
+            "change_description": "Unlock",
+            "reason_for_change_uid": test_data_dict["reason_for_unlock_terms"][
+                0
+            ].term_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
 
     # edit study compound connected
     response = api_client.patch(

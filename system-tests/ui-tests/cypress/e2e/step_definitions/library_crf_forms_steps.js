@@ -1,4 +1,5 @@
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
+const { getShortUniqueId } = require("../../support/helper_functions");
 
 let formNameDefault, formOidDefault
 
@@ -8,7 +9,7 @@ When('Created CRF form is found', () => cy.searchAndCheckPresence(formNameDefaul
 
 Then('The CRF Form is no longer available', () => cy.searchAndCheckPresence(formOidDefault, false))
 
-When('The Form definition container is filled with data', () => changeFormData(`CrfForm${Date.now()}`, `CrfForm${Date.now()}`))
+When('The Form definition container is filled with data', () => changeFormData(`CrfForm${getShortUniqueId()}`, `CrfForm${getShortUniqueId()}`))
 
 When('The Form metadata are updated and saved', () => changeFormData(`Update ${formNameDefault}`, `Update ${formOidDefault}`))
 

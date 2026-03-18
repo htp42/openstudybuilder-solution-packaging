@@ -118,7 +118,7 @@
           padding: 0.4rem 0.8rem;
           margin-top: 0.2em;
           margin-bottom: 0.2rem;
-          border: 1px solid #0000001c;
+          border: 1px solid #000000;
           border-radius: 2.2rem;
           font-style: italic;
           width: fit-content;
@@ -247,7 +247,7 @@
 
         <div class="row"> <!-- Legend -->
           <div class="col-3 text-right">
-            <span class="blackItem">Black label</span> are Mandatory (otherwise <span class="greenItem">Green</span>)
+            <span class="greenItem">Green label</span> are optional (otherwise <span class="blackItem">Black label</span>)
           </div>
           <div class="col-3 text-center">
             <span class="material-symbols-outlined">lock</span> Lock
@@ -286,9 +286,9 @@
 
     <xsl:variable name="labelColor">
       <xsl:choose>
-        <xsl:when test="//ItemGroupDef/ItemRef[@ItemOID = current()/@OID]/@Mandatory = 'Yes'">blackItem</xsl:when>
-        <xsl:when test="//ItemGroupDef/ItemRef[@ItemOID = current()/@OID]/@Mandatory = 'No'">greenItem</xsl:when>
-        <xsl:otherwise>greenItem</xsl:otherwise> <!-- default value -->
+        <xsl:when test="//ItemGroupDef/ItemRef[@ItemOID = current()/@OID]/@osb:optionalQuestion = 'Yes'">greenItem</xsl:when>
+        <xsl:when test="//ItemGroupDef/ItemRef[@ItemOID = current()/@OID]/@osb:optionalQuestion = 'No'">backItem</xsl:when>
+        <xsl:otherwise>blackItem</xsl:otherwise> <!-- default value -->
       </xsl:choose>
     </xsl:variable>
 
@@ -453,7 +453,7 @@
                   </xsl:choose>
                   <xsl:choose>
                     <xsl:when test="./osb:DesignNotes">
-                      <div class="alert alert-danger sponsor collapse" role="alert">
+                      <div class="alert sponsor collapse" role="alert">
                         <span class="material-symbols-outlined">emergency_home</span>
                         <xsl:value-of disable-output-escaping="yes" select="./osb:DesignNotes" />
                       </div>
@@ -633,7 +633,7 @@
                               </xsl:choose>
                               <xsl:choose>
                                 <xsl:when test="./osb:DesignNotes">
-                                  <div class="alert alert-danger sponsor collapse" role="alert">
+                                  <div class="alert sponsor collapse" role="alert">
                                     <span class="material-symbols-outlined">emergency_home</span>
                                     <xsl:value-of disable-output-escaping="yes" select="./osb:DesignNotes" />
                                   </div>
@@ -753,7 +753,7 @@
                   </xsl:choose>
                   <xsl:choose>
                     <xsl:when test="./osb:DesignNotes">
-                      <div class="alert alert-danger sponsor collapse" role="alert">
+                      <div class="alert sponsor collapse" role="alert">
                         <span class="material-symbols-outlined">emergency_home</span>
                         <xsl:value-of disable-output-escaping="yes" select="./osb:DesignNotes" />
                       </div>
@@ -828,7 +828,7 @@
                   </xsl:choose>
                   <xsl:choose>
                     <xsl:when test="./osb:DesignNotes">
-                      <div class="alert alert-danger sponsor collapse" role="alert">
+                      <div class="alert sponsor collapse" role="alert">
                         <span class="material-symbols-outlined">emergency_home</span>
                         <xsl:value-of disable-output-escaping="yes" select="./osb:DesignNotes" />
                       </div>

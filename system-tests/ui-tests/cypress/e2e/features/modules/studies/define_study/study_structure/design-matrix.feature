@@ -44,7 +44,7 @@ Feature: Studies - Define Study - Study Structure - Design Matrix
         And User sets row page to 10 in the settings menu
         Given The test study '/study_structure/design_matrix' page is opened
         And User waits for the table
-        And I click 'Edit' button
+        And The pencil button is clicked
         Then User triggers dropdown for element assignment to epoch 'Run-in'
         And 0 element is selected
         Then User triggers dropdown for element assignment to epoch 'Intervention'
@@ -58,7 +58,7 @@ Feature: Studies - Define Study - Study Structure - Design Matrix
         Given The test study '/study_structure/design_matrix' page is opened
         And User waits for the table
         When Transion rules are enabled
-        And I click 'Edit' button
+        And The pencil button is clicked
         Then User open transition rules edit mode for epoch 'Run-in'
         And Transition rules edit window is opened
         And User sets transition rule
@@ -89,7 +89,7 @@ Feature: Studies - Define Study - Study Structure - Design Matrix
         Given The test study '/study_structure/design_matrix' page is opened
         And User waits for the table
         When Transion rules are enabled
-        And I click 'Edit' button
+        And The pencil button is clicked
         Then User open transition rules edit mode for epoch 'Run-in'
         And The transition rule is changed to have 201 characters
         Then The warning message about transition rule exceeding 200 characters is displayed

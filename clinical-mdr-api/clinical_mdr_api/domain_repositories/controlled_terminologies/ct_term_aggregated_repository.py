@@ -38,6 +38,7 @@ from clinical_mdr_api.repositories._utils import (
     validate_filter_by_dict,
     validate_filters_and_add_search_string,
 )
+from common.config import settings
 from common.exceptions import ValidationException
 
 
@@ -615,17 +616,7 @@ class CTTermAggregatedRepository:
             """
 
             if library_name:
-                # We will look only in a specific library
-                if library_name == "Sponsor":
-                    match_clause += """
-                        MATCH (:Library {name:"Sponsor"})-->(term_root:CTTermRoot)
-                            -[:HAS_ATTRIBUTES_ROOT]->(term_attributes_root:CTTermAttributesRoot)-[attr_v_rel:HAS_VERSION]->(term_attributes_value:CTTermAttributesValue)
-                        MATCH (term_root)-[:HAS_NAME_ROOT]->(term_name_root:CTTermNameRoot)-[name_v_rel:HAS_VERSION]->(term_name_value:CTTermNameValue)
-                        WHERE (name_v_rel.start_date<= exact_datetime < name_v_rel.end_date OR (name_v_rel.end_date IS NULL AND name_v_rel.start_date <= exact_datetime))
-                            AND (attr_v_rel.start_date<= exact_datetime < attr_v_rel.end_date OR (attr_v_rel.end_date IS NULL AND attr_v_rel.start_date <= exact_datetime))
-                        WITH DISTINCT term_root, term_name_root, term_name_value, term_attributes_root, term_attributes_value, attr_v_rel, name_v_rel
-                """
-                else:
+                if library_name == settings.cdisc_library_name:
                     # We must look in the library and the parent package
                     match_clause += """
                         MATCH (parent_package:CTPackage)-[:CONTAINS_CODELIST]->(:CTPackageCodelist)-[:CONTAINS_TERM]->(:CTPackageTerm)-
@@ -635,6 +626,16 @@ class CTTermAggregatedRepository:
                         MATCH (library:Library)-[:CONTAINS_TERM]->(term_root)
                         WITH DISTINCT term_root, term_name_root, term_name_value, term_attributes_root, term_attributes_value, attr_v_rel, name_v_rel
                     """
+                # We will look only in a specific library
+                else:
+                    match_clause += """
+                        MATCH (:Library {name:$library_name})-->(term_root:CTTermRoot)
+                            -[:HAS_ATTRIBUTES_ROOT]->(term_attributes_root:CTTermAttributesRoot)-[attr_v_rel:HAS_VERSION]->(term_attributes_value:CTTermAttributesValue)
+                        MATCH (term_root)-[:HAS_NAME_ROOT]->(term_name_root:CTTermNameRoot)-[name_v_rel:HAS_VERSION]->(term_name_value:CTTermNameValue)
+                        WHERE (name_v_rel.start_date<= exact_datetime < name_v_rel.end_date OR (name_v_rel.end_date IS NULL AND name_v_rel.start_date <= exact_datetime))
+                            AND (attr_v_rel.start_date<= exact_datetime < attr_v_rel.end_date OR (attr_v_rel.end_date IS NULL AND attr_v_rel.start_date <= exact_datetime))
+                        WITH DISTINCT term_root, term_name_root, term_name_value, term_attributes_root, term_attributes_value, attr_v_rel, name_v_rel
+                """
             else:
                 # Otherwise, we need to combine the sponsor terms with the terms in the parent package
                 match_clause += """
@@ -648,7 +649,7 @@ class CTTermAggregatedRepository:
 
                     UNION
                     WITH exact_datetime
-                    MATCH (:Library {name:"Sponsor"})-->(term_root:CTTermRoot)
+                    MATCH (l:Library WHERE NOT l.name=$cdisc_library_name)-->(term_root:CTTermRoot)
                         -[:HAS_ATTRIBUTES_ROOT]->(term_attributes_root:CTTermAttributesRoot)-[attr_v_rel:HAS_VERSION]->(term_attributes_value:CTTermAttributesValue)
                     MATCH (term_root)-[:HAS_NAME_ROOT]->(term_name_root:CTTermNameRoot)-[name_v_rel:HAS_VERSION]->(term_name_value:CTTermNameValue)
                     WHERE (name_v_rel.start_date<= exact_datetime < name_v_rel.end_date OR (name_v_rel.end_date IS NULL AND name_v_rel.start_date <= exact_datetime))
@@ -711,6 +712,13 @@ class CTTermAggregatedRepository:
             match_clause += codelist_filter_statements
             filter_query_parameters.update(codelist_filter_query_parameters)
 
+        if is_sponsor:
+            if library_name:
+                filter_query_parameters["library_name"] = library_name
+            else:
+                filter_query_parameters["cdisc_library_name"] = (
+                    settings.cdisc_library_name
+                )
         return match_clause, filter_query_parameters
 
     def count_all(self) -> list[TermCount]:

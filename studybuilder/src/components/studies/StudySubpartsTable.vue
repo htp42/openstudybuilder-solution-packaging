@@ -14,9 +14,7 @@
     :no-data-text="
       Boolean(studiesGeneralStore.selectedStudy.study_parent_part)
         ? $t('StudySubparts.nested_subparts_warning', {
-            subpartStudyId:
-              studiesGeneralStore.selectedStudy.current_metadata
-                .identification_metadata.study_id,
+            subpartStudyId: studiesGeneralStore.studyId,
             parentStudyId:
               studiesGeneralStore.selectedStudy.study_parent_part.study_id,
           })
@@ -80,7 +78,9 @@
     </template>
     <template #actions="">
       <v-btn
-        class="ml-2 expandHoverBtn"
+        class="ml-2"
+        icon
+        size="small"
         variant="outlined"
         color="nnBaseBlue"
         :disabled="
@@ -90,8 +90,10 @@
         "
         @click.stop="openForm()"
       >
-        <v-icon left>mdi-plus</v-icon>
-        <span class="label">{{ $t('StudySubparts.add_subpart') }}</span>
+        <v-icon>mdi-plus</v-icon>
+        <v-tooltip activator="parent" location="top">
+          {{ $t('StudySubparts.add_subpart') }}
+        </v-tooltip>
       </v-btn>
     </template>
     <template #[`item.actions`]="{ item }">

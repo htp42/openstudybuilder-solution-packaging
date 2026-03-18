@@ -21,7 +21,7 @@
     <v-card
       v-if="notificationHub.queue.value.length > 0"
       class="position-fixed d-flex flex-column rounded-t-0"
-      style="z-index: 9999"
+      style="z-index: 9999; top: 70px"
       location="top right"
       width="550"
       max-height="300"
@@ -120,7 +120,7 @@
               v-bind="tooltipProps"
               size="small"
               density="comfortable"
-              icon="mdi-arrow-up"
+              icon="mdi-chevron-up"
               elevation="0"
               @click="toggleNotificationPanel"
             />

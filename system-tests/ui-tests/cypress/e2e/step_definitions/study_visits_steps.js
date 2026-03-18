@@ -3,6 +3,8 @@ import { getCurrStudyUid } from '../../support/helper_functions'
 
 let studyVisits_uid
 
+When('User intercepts create visit request', () => cy.intercept('**/study-visits').as('visitRequest'))
+
 When('User search for visit with name {string}', (visitName) => cy.searchAndCheckPresence(visitName, true))
 
 When('Epoch {string} is selected for the visit', (epoch) => cy.selectVSelect('study-period', epoch))
@@ -10,6 +12,8 @@ When('Epoch {string} is selected for the visit', (epoch) => cy.selectVSelect('st
 When('First available epoch is selected', () => cy.selectFirstVSelect('study-period'))
 
 When('Time unit {string} is selected for the visit', (timeUnit) => cy.selectVSelect('time-unit', timeUnit))
+
+When('Visit timing {int} is selected for the visit', () => cy.fillInput('visit-timing', 7))
 
 Given('The study visits uid array is cleared', () => cy.cleanStudyVisitsUidArray())
 
@@ -56,13 +60,6 @@ Then('The validation appears for missing contact mode', () => cy.checkIfValidati
 Then('The validation appears for missing time reference', () => cy.checkIfValidationAppears('time-reference'))
 
 Then('The validation appears for missing visit timing', () => cy.checkIfValidationAppears('visit-timing'))
-
-When('Visit data is filled in: visit class {string}, visit type {string}, contact mode {string}, time unit {string}', (visitClass, visitType, contactMode, timeUnit) => {
-    cy.clickButton(visitClass, true)
-    cy.selectVSelect('visit-type', visitType)
-    cy.selectVSelect('contact-mode', contactMode)
-    cy.selectVSelect('time-unit', timeUnit)
-})
 
 Then('It is not possible to edit Time Reference for anchor visit', () => {
     cy.get('[data-cy="time-reference"]').should('have.class', 'v-input--disabled')
@@ -144,39 +141,8 @@ Given('[API] All visit groups are removed', () => cy.deleteAllVisitsGroups(getCu
 
 Given('[API] Visits group with format {string} is created', (groupFormat) => cy.createVisitsGroup(getCurrStudyUid(), groupFormat))
 
-When('The user creates a visit on the same day in the same epoch' , () => {
-    cy.wait(2000)
-    cy.clickButton('add-visit')
-    cy.clickButton('SINGLE_VISIT')
-    cy.clickButton('continue-button')
-    cy.selectVSelect('study-period', 'Run-in')
-    cy.clickButton('continue-button')
-    cy.selectVSelect('visit-type', 'Pre-screening')
-    cy.selectVSelect('contact-mode', 'On Site Visit')
-    cy.selectVSelect('time-reference', 'Global anchor visit')
-    cy.fillInput('visit-timing', 7)
-    cy.intercept('**/study-visits').as('visitRequest')
-})
-
-When('The user creates a visit on the same day in the neighboring epoch' , () => {
-    cy.wait(2000)
-    cy.clickButton('add-visit')
-    cy.clickButton('SINGLE_VISIT')
-    cy.clickButton('continue-button')
-    cy.selectVSelect('study-period', 'Intervention')
-    cy.clickButton('continue-button')
-    cy.selectVSelect('visit-type', 'Pre-screening')
-    cy.selectVSelect('contact-mode', 'On Site Visit')
-    cy.selectVSelect('time-reference', 'Global anchor visit')
-    cy.fillInput('visit-timing', 7)
-    cy.intercept('**/study-visits').as('visitRequest')
-})
-
 Then('The study visit is created', () => {
-    cy.wait('@visitRequest').then((request) => {
-        expect(request.response.statusCode).to.eq(201)
-    })
-
+    cy.wait('@visitRequest').then((request) => expect(request.response.statusCode).to.eq(201))
 })
 
 function createEpochViaAPI(epochType, epochSubType) {

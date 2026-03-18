@@ -32,7 +32,7 @@ def test_data():
     drop_db("old.json.test.ct.codelist.attributes.negative")
 
 
-def test_post_create_codelist_non_enditable_library(api_client):
+def test_post_create_codelist_non_editable_library(api_client):
     data = {
         "catalogue_names": ["SDTM CT"],
         "name": "name",

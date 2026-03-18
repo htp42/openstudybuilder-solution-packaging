@@ -778,34 +778,7 @@ watch(studyEpoch, (value) => {
       }
     })
   })
-  if (
-    form.value.visit_class === visitConstants.CLASS_NON_VISIT ||
-    form.value.visit_class === visitConstants.CLASS_UNSCHEDULED_VISIT
-  ) {
-    setEpochAllocationRule(visitConstants.DATE_CURRENT_VISIT)
-  } else {
-    const studyEpochConst = periods.value.find((item) => item.uid === value)
-    if (
-      studyEpochConst.epoch_name === visitConstants.EPOCH_TREATMENT ||
-      studyEpochConst.epoch_name === visitConstants.EPOCH_TREATMENT_1
-    ) {
-      epochs
-        .getAmountOfVisitsInStudyEpoch(
-          selectedStudy.value.uid,
-          studyEpochConst.uid
-        )
-        .then((resp) => {
-          const amountOfVisitsInTreatment = resp.data
-          if (amountOfVisitsInTreatment === 0) {
-            setEpochAllocationRule(visitConstants.PREVIOUS_VISIT)
-          } else {
-            setEpochAllocationRule(visitConstants.CURRENT_VISIT)
-          }
-        })
-    } else {
-      setEpochAllocationRule(visitConstants.CURRENT_VISIT)
-    }
-  }
+  validateEpochAllocationRule(value)
   if (form.value.visit_class === visitConstants.CLASS_SPECIAL_VISIT) {
     epochs
       .getAnchorVisitsForSpecialVisit(selectedStudy.value.uid, studyEpoch.value)
@@ -864,6 +837,40 @@ onMounted(() => {
   form.value = getInitialFormContent(props.studyVisit)
   callbacks()
 })
+
+function validateEpochAllocationRule(value) {
+  if (form.value.epoch_allocation_uid) {
+    return
+  }
+  if (
+    form.value.visit_class === visitConstants.CLASS_NON_VISIT ||
+    form.value.visit_class === visitConstants.CLASS_UNSCHEDULED_VISIT
+  ) {
+    setEpochAllocationRule(visitConstants.DATE_CURRENT_VISIT)
+  } else {
+    const studyEpochConst = periods.value.find((item) => item.uid === value)
+    if (
+      studyEpochConst.epoch_name === visitConstants.EPOCH_TREATMENT ||
+      studyEpochConst.epoch_name === visitConstants.EPOCH_TREATMENT_1
+    ) {
+      epochs
+        .getAmountOfVisitsInStudyEpoch(
+          selectedStudy.value.uid,
+          studyEpochConst.uid
+        )
+        .then((resp) => {
+          const amountOfVisitsInTreatment = resp.data
+          if (amountOfVisitsInTreatment === 0) {
+            setEpochAllocationRule(visitConstants.PREVIOUS_VISIT)
+          } else {
+            setEpochAllocationRule(visitConstants.CURRENT_VISIT)
+          }
+        })
+    } else {
+      setEpochAllocationRule(visitConstants.CURRENT_VISIT)
+    }
+  }
+}
 
 function extraValidation(step) {
   if (step === 2 && (!studyEpoch.value || studyEpoch.value === '')) {

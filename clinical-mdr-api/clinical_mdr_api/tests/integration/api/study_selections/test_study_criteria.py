@@ -61,6 +61,7 @@ change_description_approve: str
 initial_ct_term_study_standard_test: CTTerm
 incl_criteria_template_for_study_standard_test: CriteriaTemplate
 study_criteria_for_study_standard_input: dict[Any, Any]
+test_data_dict: dict[str, Any]
 
 
 @pytest.fixture(scope="module")
@@ -95,10 +96,11 @@ def test_data():
     global initial_ct_term_study_standard_test
     global incl_criteria_template_for_study_standard_test
     global study_criteria_for_study_standard_input
+    global test_data_dict
 
     # Initialize test data
     inject_and_clear_db("studycriteria.api")
-    study, _test_data_dict = inject_base_data()
+    study, test_data_dict = inject_base_data()
     study_uid = study.uid
     url_prefix = f"/studies/{study_uid}/study-criteria"
     change_description_approve = "Approved version"
@@ -337,6 +339,8 @@ CRITERIA_IGNORED_FIELDS = {
     "root['criteria']['author_username']",
 }
 CRITERIA_TYPE_IGNORED_FIELDS = {
+    "root['criteria_type']['term_uid']",
+    "root['criteria_type']['codelist_uid']",
     "root['criteria_type']['start_date']",
     "root['criteria_type']['end_date']",
     "root['criteria_type']['author_username']",
@@ -353,6 +357,17 @@ CRITERIA_TEMPLATE_IGNORED_FIELDS = {
     "root['template']['version']",
     "root['template']['change_description']",
 }
+
+
+@pytest.mark.order("last")
+def test_integrity_checks_for_all_studies(api_client):
+    """
+    Test integrity checks for all available studies in the database.
+
+    This test should always be executed at the END to check the health of the remaining database.
+    It validates that all studies in the database pass integrity checks after all other tests have run.
+    """
+    TestUtils.run_integrity_checks_for_all_studies(api_client)
 
 
 def test_crud_study_criteria(api_client):
@@ -526,7 +541,13 @@ def test_crud_study_criteria(api_client):
 
     # locking and unlocking to create multiple study value relationships on the existent StudySelections
     TestUtils.create_study_fields_configuration()
-    TestUtils.lock_and_unlock_study(study_uid=study_uid)
+    TestUtils.lock_and_unlock_study(
+        study_uid=study_uid,
+        reason_for_lock_term_uid=test_data_dict["reason_for_lock_terms"][0].term_uid,
+        reason_for_unlock_term_uid=test_data_dict["reason_for_unlock_terms"][
+            0
+        ].term_uid,
+    )
 
     # Test reorder
     response = api_client.patch(
@@ -598,7 +619,13 @@ def test_crud_study_criteria(api_client):
 
     # locking and unlocking to create multiple study value relationships on the existent StudySelections
     TestUtils.create_study_fields_configuration()
-    TestUtils.lock_and_unlock_study(study_uid=study_uid)
+    TestUtils.lock_and_unlock_study(
+        study_uid=study_uid,
+        reason_for_lock_term_uid=test_data_dict["reason_for_lock_terms"][0].term_uid,
+        reason_for_unlock_term_uid=test_data_dict["reason_for_unlock_terms"][
+            0
+        ].term_uid,
+    )
 
     # Test delete
     response = api_client.delete(url=f"{url_prefix}/StudyCriteria_000002")
@@ -887,7 +914,12 @@ def test_study_locking_study_criteria(api_client):
     # Lock
     response = api_client.post(
         f"/studies/{study.uid}/locks",
-        json={"change_description": "Lock 1"},
+        json={
+            "change_description": "Lock 1",
+            "reason_for_change_uid": test_data_dict["reason_for_lock_terms"][
+                0
+            ].term_uid,
+        },
     )
     assert_response_status_code(response, 201)
 
@@ -951,8 +983,16 @@ def test_study_criteria_with_key_criteria(api_client):
     ]
 
     # Unlock
-    response = api_client.delete(f"/studies/{study.uid}/locks")
-    assert_response_status_code(response, 200)
+    response = api_client.post(
+        f"/studies/{study.uid}/unlocks",
+        json={
+            "change_description": "Unlock",
+            "reason_for_change_uid": test_data_dict["reason_for_unlock_terms"][
+                0
+            ].term_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
 
     # edit study criteria
     response = api_client.patch(

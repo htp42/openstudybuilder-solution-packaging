@@ -79,7 +79,10 @@ log = logging.getLogger(__name__)
 def soa_test_data(temp_database_populated: TempDatabasePopulated) -> SoATestData:
     test_data = SoATestData(project=temp_database_populated.project)
     # lock study so efforts trying to modify shared test data would result in error
-    TestUtils.lock_study(test_data.study.uid)
+    TestUtils.lock_study(
+        test_data.study.uid,
+        reason_for_lock_term_uid=temp_database_populated.reason_for_lock_term_uid,
+    )
     return test_data
 
 
@@ -92,7 +95,11 @@ def soa_test_data2(temp_database_populated: TempDatabasePopulated) -> SoATestDat
 
     test_data = SoATestData(project=temp_database_populated.project)
 
-    TestUtils.lock_and_unlock_study(test_data.study.uid)
+    TestUtils.lock_and_unlock_study(
+        test_data.study.uid,
+        reason_for_lock_term_uid=temp_database_populated.reason_for_lock_term_uid,
+        reason_for_unlock_term_uid=temp_database_populated.reason_for_unlock_term_uid,
+    )
 
     add_activity = {
         "name": "C Reactive Protein",
@@ -125,8 +132,18 @@ def soa_test_data2(temp_database_populated: TempDatabasePopulated) -> SoATestDat
         add_activity["name"], add_activity["instances"]
     )
     test_data.assign_instances_of_activity(add_activity["name"])
+    test_data.reason_for_lock_term_uid = (
+        temp_database_populated.reason_for_lock_term_uid
+    )
+    test_data.reason_for_unlock_term_uid = (
+        temp_database_populated.reason_for_unlock_term_uid
+    )
 
-    TestUtils.lock_and_unlock_study(test_data.study.uid)
+    TestUtils.lock_and_unlock_study(
+        test_data.study.uid,
+        reason_for_lock_term_uid=temp_database_populated.reason_for_lock_term_uid,
+        reason_for_unlock_term_uid=temp_database_populated.reason_for_unlock_term_uid,
+    )
 
     return test_data
 
@@ -722,9 +739,6 @@ def test_download_operational_soa_content(
     sched: StudyActivitySchedule
     for i, res in enumerate(results):
         study_activity_schedule_uid = res["study_activity_schedule_uid"]
-        sched = study_activity_schedules_map[study_activity_schedule_uid][0]
-        study_activity = study_activities_map[sched.study_activity_uid]
-        study_visit = study_visits_map[sched.study_visit_uid]
 
         assert len(res.keys()) == 13, f"record #{i} property count mismatch"
         assert res["study_version"].startswith("LATEST on 20")
@@ -732,6 +746,21 @@ def test_download_operational_soa_content(
             res["study_number"]
             == soa_test_data.study.current_metadata.identification_metadata.study_number
         )
+
+        if study_activity_schedule_uid is None:
+            # Unscheduled activity instance - visit and epoch should be empty
+            assert (
+                res["visit"] is None
+            ), f"record #{i} unscheduled instance should have no visit"
+            assert (
+                res["epoch"] is None
+            ), f"record #{i} unscheduled instance should have no epoch"
+            continue
+
+        sched = study_activity_schedules_map[study_activity_schedule_uid][0]
+        study_activity = study_activities_map[sched.study_activity_uid]
+        study_visit = study_visits_map[sched.study_visit_uid]
+
         assert res["epoch"] == study_visit.study_epoch.sponsor_preferred_name
         assert res["visit"] == study_visit.visit_short_name
         assert res["soa_group"] == study_activity.study_soa_group.soa_group_term_name
@@ -789,7 +818,11 @@ class TestSoASnapshot:
 
         # SCENARIO: After locking the Study, the SoA snapshot can be read back from database
         # WHEN: Study is locked
-        study = study_service.lock(uid=study_uid, change_description="v1")
+        study = study_service.lock(
+            uid=study_uid,
+            change_description="v1",
+            reason_for_lock_term_uid=soa_test_data2.reason_for_lock_term_uid,
+        )
         previous_study_version = str(
             study.current_metadata.version_metadata.version_number
         )
@@ -817,7 +850,10 @@ class TestSoASnapshot:
 
         # SCENARIO: After unlocking the Study, the latest draft version has no SoA snapshot
         # WHEN: Study is unlocked
-        study_service.unlock(uid=study_uid)
+        study_service.unlock(
+            uid=study_uid,
+            reason_for_unlock_term_uid=soa_test_data2.reason_for_unlock_term_uid,
+        )
         # THEN StudyValue has no HAS_PROTOCOL_SOA_CELL relationships
         assert (
             len(
@@ -874,7 +910,11 @@ class TestSoASnapshot:
 
         # SCENARIO: After releasing a Study version, the released version has a SoA snapshot
         # GIVEN: A Study version is released
-        study_service.release(uid=study_uid, change_description="r1")
+        study_service.release(
+            uid=study_uid,
+            change_description="r1",
+            reason_for_release_uid=soa_test_data2.reason_for_lock_term_uid,
+        )
         released_study_version = f"{previous_study_version}.1"  # release API call does not return version number
         # GIVEN: SoA snapshot of the latest Study version built
         latest_refs: list[SoACellReference] = (
@@ -894,7 +934,11 @@ class TestSoASnapshot:
 
         # SCENARIO: After locking the Study, the SoA snapshots of the latest draft and previous locked versions differ
         # GIVEN: Study is locked
-        study = study_service.lock(uid=study_uid, change_description="v2")
+        study = study_service.lock(
+            uid=study_uid,
+            change_description="v2",
+            reason_for_lock_term_uid=soa_test_data2.reason_for_lock_term_uid,
+        )
         latest_study_version = str(
             study.current_metadata.version_metadata.version_number
         )
@@ -934,7 +978,10 @@ class TestSoASnapshot:
             expected_refs=latest_refs,
         )
         # WHEN: unlocking Study
-        study = study_service.unlock(uid=study_uid)
+        study = study_service.unlock(
+            uid=study_uid,
+            reason_for_unlock_term_uid=soa_test_data2.reason_for_unlock_term_uid,
+        )
         # THEN Latest StudyValue has no HAS_PROTOCOL_SOA_CELL relationships
         assert (
             len(
@@ -1095,7 +1142,9 @@ class TestSoASnapshot:
         )
         # GIVEN: Study has a locked version
         previous_study_version = TestUtils.lock_and_unlock_study(
-            soa_test_data2.study.uid
+            soa_test_data2.study.uid,
+            reason_for_lock_term_uid=soa_test_data2.reason_for_lock_term_uid,
+            reason_for_unlock_term_uid=soa_test_data2.reason_for_unlock_term_uid,
         )
 
         # GIVEN: Latest draft version has a new activity added
@@ -1152,10 +1201,15 @@ class TestSoASnapshot:
         # create a locked study version
         version_v1 = str(
             study_service.lock(
-                uid=study_uid, change_description="vz1"
+                uid=study_uid,
+                change_description="vz1",
+                reason_for_lock_term_uid=soa_test_data2.reason_for_lock_term_uid,
             ).current_metadata.version_metadata.version_number
         )
-        study_service.unlock(uid=study_uid)
+        study_service.unlock(
+            uid=study_uid,
+            reason_for_unlock_term_uid=soa_test_data2.reason_for_unlock_term_uid,
+        )
 
         # add a new activity
         activity_v2 = soa_test_data2.create_study_activity(
@@ -1178,10 +1232,15 @@ class TestSoASnapshot:
         # create a locked study version
         version_v2 = str(
             study_service.lock(
-                uid=study_uid, change_description="vz2"
+                uid=study_uid,
+                change_description="vz2",
+                reason_for_lock_term_uid=soa_test_data2.reason_for_lock_term_uid,
             ).current_metadata.version_metadata.version_number
         )
-        study_service.unlock(uid=study_uid)
+        study_service.unlock(
+            uid=study_uid,
+            reason_for_unlock_term_uid=soa_test_data2.reason_for_unlock_term_uid,
+        )
 
         # add another activity
         soa_test_data2.create_study_activity(
@@ -1204,10 +1263,15 @@ class TestSoASnapshot:
         # create a locked study version
         version_v3 = str(
             study_service.lock(
-                uid=study_uid, change_description="vz2"
+                uid=study_uid,
+                change_description="vz2",
+                reason_for_lock_term_uid=soa_test_data2.reason_for_lock_term_uid,
             ).current_metadata.version_metadata.version_number
         )
-        study_service.unlock(uid=study_uid)
+        study_service.unlock(
+            uid=study_uid,
+            reason_for_unlock_term_uid=soa_test_data2.reason_for_unlock_term_uid,
+        )
 
         # remove an activity from draft version
         StudyActivitySelectionService().delete_selection(
@@ -1378,7 +1442,11 @@ def test_soa_snapshot_versioning_with_footnote_linking(
     )
 
     # create a locked study version
-    v1_version = TestUtils.lock_and_unlock_study(soa_test_data.study.uid)
+    v1_version = TestUtils.lock_and_unlock_study(
+        soa_test_data.study.uid,
+        reason_for_lock_term_uid=temp_database_populated.reason_for_lock_term_uid,
+        reason_for_unlock_term_uid=temp_database_populated.reason_for_unlock_term_uid,
+    )
 
     # check SoA after locking v1
     soa = service.get_flowchart_table(
@@ -1459,7 +1527,11 @@ def test_soa_snapshot_versioning_with_footnote_linking(
     assert footnote_references == expected_footnote_references_v1
 
     # create a locked study version
-    v2_version = TestUtils.lock_and_unlock_study(soa_test_data.study.uid)
+    v2_version = TestUtils.lock_and_unlock_study(
+        soa_test_data.study.uid,
+        reason_for_lock_term_uid=temp_database_populated.reason_for_lock_term_uid,
+        reason_for_unlock_term_uid=temp_database_populated.reason_for_unlock_term_uid,
+    )
 
     # check SoA after locking v2
     soa = service.get_flowchart_table(
@@ -1703,8 +1775,7 @@ def test_fetch_study_activity_instances(soa_test_data2):
 
 def _get_study_version_numbers(study_uid: str) -> set[str | None]:
     study_versions = {
-        study.current_metadata.version_metadata.version_number
-        and str(study.current_metadata.version_metadata.version_number)
+        study.metadata_version and str(study.metadata_version)
         for study in StudyService()
         .get_study_snapshot_history(study_uid=study_uid)
         .items
@@ -1731,7 +1802,7 @@ def _to_list_of_dicts(items: Sequence[pydantic.BaseModel]) -> list[dict[str, Any
                     "is_request_final",
                     "is_used_by_legacy_instances",
                     "possible_actions",
-                    "requester_study_id",
+                    "used_by_studies",
                     "start_date",
                     "status",
                     "synonyms",

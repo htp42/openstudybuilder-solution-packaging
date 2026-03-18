@@ -17,9 +17,9 @@ Feature: Library - Concepts - Activities - Activity Instance Classes
     Scenario: [Table][Options] User must be able to see table with correct options
         And The '/library/activities/activities' page is opened
         Then A table is visible with following options
-            | options                                                         |
-            | Export                                                          |
-            | Show version history                                            |
+            | options                                            |
+            | table-export-button                                |
+            | History                                            |
 
     @smoke_test
      Scenario: [Table][Columns][Names] User must be able to see the columns list on the main page as below

@@ -1,6 +1,7 @@
 # pylint: disable=unused-argument
 # pylint: disable=redefined-outer-name
 # pylint: disable=too-many-arguments
+# pylint: disable=invalid-name
 
 # pytest fixture functions have other fixture functions as arguments,
 # which pylint interprets as unused arguments
@@ -17,6 +18,7 @@ from clinical_mdr_api.tests.integration.utils.data_library import (
     STARTUP_CT_CATALOGUE_CYPHER,
     STARTUP_CT_TERM_NAME_CYPHER,
     STARTUP_STUDY_LIST_CYPHER,
+    create_reason_for_lock_unlock_terms,
     fix_study_preferred_time_unit,
 )
 from clinical_mdr_api.tests.integration.utils.method_library import (
@@ -38,6 +40,8 @@ from common.config import settings
 
 test_data_dict = {}
 branch_arm_uids = []
+reason_for_lock_term_uid = None
+reason_for_unlock_term_uid = None
 
 
 @pytest.fixture(scope="module")
@@ -56,6 +60,10 @@ def test_data():
     TestUtils.set_study_standard_version(
         study_uid=study.uid, create_codelists_and_terms_for_package=False
     )
+    global reason_for_lock_term_uid, reason_for_unlock_term_uid
+    lock_unlock_data = create_reason_for_lock_unlock_terms()
+    reason_for_lock_term_uid = lock_unlock_data["reason_for_lock_terms"][0].term_uid
+    reason_for_unlock_term_uid = lock_unlock_data["reason_for_unlock_terms"][0].term_uid
     create_study_epoch_codelists_ret_cat_and_lib()
     _catalogue_name, library_name = get_catalogue_name_library_name()
     catalogue_name = "SDTM CT"
@@ -361,7 +369,10 @@ def test_add_study_title_test_to_have_multiple_study_value_relationships_attache
 def test_lock_study_test_to_have_multiple_study_value_relationships_attached4(
     api_client,
 ):
-    data = {"change_description": "Lock 1"}
+    data = {
+        "change_description": "Lock 1",
+        "reason_for_change_uid": reason_for_lock_term_uid,
+    }
     response = api_client.post("/studies/study_root/locks", json=data)
 
     assert_response_status_code(response, 201)
@@ -370,9 +381,15 @@ def test_lock_study_test_to_have_multiple_study_value_relationships_attached4(
 def test_unlock_study_test_to_have_multiple_study_value_relationships_attached4(
     api_client,
 ):
-    response = api_client.delete("/studies/study_root/locks")
+    response = api_client.post(
+        "/studies/study_root/unlocks",
+        json={
+            "change_description": "Unlock",
+            "reason_for_change_uid": reason_for_unlock_term_uid,
+        },
+    )
 
-    assert response.status_code == 200
+    assert response.status_code == 201
 
 
 def test_patch_specific_set_name2(api_client):
@@ -495,7 +512,10 @@ def test_2nd_adding_selection(api_client):
 def test_lock_study_test_to_have_multiple_study_value_relationships_attached5(
     api_client,
 ):
-    data = {"change_description": "Lock 1"}
+    data = {
+        "change_description": "Lock 1",
+        "reason_for_change_uid": reason_for_lock_term_uid,
+    }
     response = api_client.post("/studies/study_root/locks", json=data)
 
     assert_response_status_code(response, 201)
@@ -504,9 +524,15 @@ def test_lock_study_test_to_have_multiple_study_value_relationships_attached5(
 def test_unlock_study_test_to_have_multiple_study_value_relationships_attached5(
     api_client,
 ):
-    response = api_client.delete("/studies/study_root/locks")
+    response = api_client.post(
+        "/studies/study_root/unlocks",
+        json={
+            "change_description": "Unlock",
+            "reason_for_change_uid": reason_for_unlock_term_uid,
+        },
+    )
 
-    assert_response_status_code(response, 200)
+    assert_response_status_code(response, 201)
 
 
 def test_delete_delete_the_1st_to_test_the_reordering_for_the_2nd_to_be_eq_to_1(

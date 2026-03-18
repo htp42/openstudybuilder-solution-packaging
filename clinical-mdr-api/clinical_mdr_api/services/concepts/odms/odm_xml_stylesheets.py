@@ -18,7 +18,9 @@ class OdmXmlStylesheetService:
 
         rs = []
         for file in dir_files:
-            if file.endswith(".xsl"):
+            if path.isfile(
+                path.join(settings.xml_stylesheet_dir_path, file)
+            ) and file.endswith(".xsl"):
                 rs.append(file.removesuffix(".xsl"))
         rs.sort()
         return rs
@@ -43,10 +45,10 @@ class OdmXmlStylesheetService:
             msg="Stylesheet name must only contain letters, numbers and hyphens.",
         )
 
-        filename = settings.xml_stylesheet_dir_path + stylesheet + ".xsl"
+        filename = path.join(settings.xml_stylesheet_dir_path, stylesheet + ".xsl")
 
         NotFoundException.raise_if_not(
-            path.exists(filename),
+            path.isfile(filename),
             msg=f"Stylesheet with Name '{stylesheet}' doesn't exist.",
         )
 

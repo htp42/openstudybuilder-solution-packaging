@@ -11,6 +11,7 @@ Tests for /studies/{study_uid}/study-design-cells endpoints
 
 import copy
 import logging
+from typing import Any
 from unittest import mock
 
 import pytest
@@ -18,6 +19,7 @@ from fastapi.testclient import TestClient
 from neomodel import db
 
 from clinical_mdr_api import main
+from clinical_mdr_api.domains.enums import ValidationMode
 from clinical_mdr_api.models.controlled_terminologies.ct_term import CTTerm
 from clinical_mdr_api.models.study_selections.study import Study
 from clinical_mdr_api.models.study_selections.study_selection import (
@@ -25,8 +27,6 @@ from clinical_mdr_api.models.study_selections.study_selection import (
     StudySelectionArm,
     StudySelectionBranchArm,
 )
-
-# from clinical_mdr_api.routers.studies.study import PROJECT_NUMBER
 from clinical_mdr_api.tests.integration.utils.api import (
     inject_and_clear_db,
     inject_base_data,
@@ -58,6 +58,7 @@ element_type_term: CTTerm
 epoch_uid: str
 study_design_cell_uid: StudyDesignCell
 study_element_uid: str
+test_data_dict: dict[str, Any]
 
 
 @pytest.fixture(scope="module")
@@ -69,12 +70,12 @@ def api_client(test_data):
 
 @pytest.fixture(scope="module")
 def test_data():
-    # reload(study_epoch_domain_module)
-    # reload(study_epoch_service_module)
     """Initialize test data"""
     db_name = "studydesigncellapi"
     inject_and_clear_db(db_name)
-    inject_base_data()
+    global test_data_dict
+    _, test_data_dict = inject_base_data()
+
     global study_arm
     global study_arm2
     global study_branch_arm
@@ -165,6 +166,17 @@ def test_data():
     yield
 
 
+@pytest.mark.order("last")
+def test_integrity_checks_for_all_studies(api_client):
+    """
+    Test integrity checks for all available studies in the database.
+
+    This test should always be executed at the END to check the health of the remaining database.
+    It validates that all studies in the database pass integrity checks after all other tests have run.
+    """
+    TestUtils.run_integrity_checks_for_all_studies(api_client)
+
+
 def test_design_cell_modify_actions_on_locked_study(api_client):
     global study_element_uid
     response = api_client.post(
@@ -222,7 +234,12 @@ def test_design_cell_modify_actions_on_locked_study(api_client):
     # Lock
     response = api_client.post(
         f"/studies/{study.uid}/locks",
-        json={"change_description": "Lock 1"},
+        json={
+            "change_description": "Lock 1",
+            "reason_for_change_uid": test_data_dict["reason_for_lock_terms"][
+                0
+            ].term_uid,
+        },
     )
     assert_response_status_code(response, 201)
 
@@ -324,8 +341,16 @@ def test_study_design_cell_with_study_epoch_relationship(api_client):
     """
 
     # Unlock -- Study remain unlocked
-    response = api_client.delete(f"/studies/{study.uid}/locks")
-    assert_response_status_code(response, 200)
+    response = api_client.post(
+        f"/studies/{study.uid}/unlocks",
+        json={
+            "change_description": "Unlock",
+            "reason_for_change_uid": test_data_dict["reason_for_unlock_terms"][
+                0
+            ].term_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
 
     # preparing all objects before locking
     api_client.post(
@@ -368,12 +393,25 @@ def test_study_design_cell_with_study_epoch_relationship(api_client):
     # Lock
     response = api_client.post(
         f"/studies/{study.uid}/locks",
-        json={"change_description": "Lock 1"},
+        json={
+            "change_description": "Lock 1",
+            "reason_for_change_uid": test_data_dict["reason_for_lock_terms"][
+                0
+            ].term_uid,
+        },
     )
     assert_response_status_code(response, 201)
     # Unlock -- Study remain unlocked
-    response = api_client.delete(f"/studies/{study.uid}/locks")
-    assert_response_status_code(response, 200)
+    response = api_client.post(
+        f"/studies/{study.uid}/unlocks",
+        json={
+            "change_description": "Unlock",
+            "reason_for_change_uid": test_data_dict["reason_for_unlock_terms"][
+                0
+            ].term_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
 
     # edit arm
     response = api_client.patch(
@@ -496,7 +534,7 @@ def test_study_design_cell_with_study_epoch_relationship(api_client):
         ).json()
     )
 
-    study_cloned = api_client.post(
+    response = api_client.post(
         f"/studies/{study.uid}/clone",
         json={
             "study_number": "6675",
@@ -509,10 +547,14 @@ def test_study_design_cell_with_study_epoch_relationship(api_client):
             "copy_study_element": True,
             "copy_study_visit": True,
             "copy_study_epoch": True,
-            "copy_study_footnote": True,
+            "copy_study_visits_study_footnote": True,
+            "copy_study_epochs_study_footnote": True,
             "copy_study_design_matrix": True,
+            "validation_mode": ValidationMode.STRICT.value,
         },
-    ).json()
+    )
+    assert_response_status_code(response, 201)
+    study_cloned = response.json()
     # get all
     cloned_arms = api_client.get(f"/studies/{study_cloned['uid']}/study-arms").json()
     cloned_arms_any = copy.deepcopy(cloned_arms)
@@ -605,11 +647,12 @@ def test_study_design_cell_with_study_epoch_relationship(api_client):
             "copy_study_element": False,
             "copy_study_visit": False,
             "copy_study_epoch": False,
-            "copy_study_footnote": False,
+            "copy_study_visits_study_footnote": False,
+            "copy_study_epochs_study_footnote": False,
             "copy_study_design_matrix": False,
+            "validation_mode": ValidationMode.STRICT.value,
         },
     )
-    response.json()
     assert_response_status_code(response, 400)
     res = response.json()
     assert res["message"] == "At least one item should be selected"
@@ -627,8 +670,10 @@ def test_study_design_cell_with_study_epoch_relationship(api_client):
             "copy_study_element": False,
             "copy_study_visit": False,
             "copy_study_epoch": False,
-            "copy_study_footnote": False,
+            "copy_study_visits_study_footnote": False,
+            "copy_study_epochs_study_footnote": False,
             "copy_study_design_matrix": False,
+            "validation_mode": ValidationMode.STRICT.value,
         },
     )
     assert_response_status_code(response, 400)

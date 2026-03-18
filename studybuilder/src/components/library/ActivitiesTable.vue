@@ -164,6 +164,9 @@
       <template #[`item.start_date`]="{ item }">
         {{ $filters.date(item.start_date) }}
       </template>
+      <template #[`item.used_by_studies`]="{ item }">
+        {{ item.used_by_studies.join(', ') }}
+      </template>
       <template #[`item.activity_groups`]="{ item }">
         <div
           v-if="
@@ -472,15 +475,19 @@
         <slot name="extraActions" />
         <v-btn
           v-if="source !== 'activities-by-grouping' && !requested"
-          class="ml-2 expandHoverBtn"
+          class="ml-2"
           variant="outlined"
           color="nnBaseBlue"
+          icon
+          size="small"
           data-cy="add-activity"
           :disabled="!accessGuard.checkPermission($roles.LIBRARY_WRITE)"
           @click.stop="showForm"
         >
-          <v-icon left>mdi-plus</v-icon>
-          <span class="label">{{ itemCreationTitle }}</span>
+          <v-icon>mdi-plus</v-icon>
+          <v-tooltip activator="parent" location="top">
+            {{ itemCreationTitle }}
+          </v-tooltip>
         </v-btn>
       </template>
     </NNTable>
@@ -854,7 +861,7 @@ const requestedHeaders = [
     title: t('ActivityTable.rationale_for_request'),
     key: 'request_rationale',
   },
-  { title: t('ActivityTable.study_id'), key: 'requester_study_id' },
+  { title: t('ActivityTable.study_id'), key: 'used_by_studies' },
   { title: t('_global.modified'), key: 'start_date' },
   { title: t('_global.modified_by'), key: 'author_username' },
   { title: t('_global.status'), key: 'status', noFilter: true },

@@ -47,7 +47,7 @@ def test_data():
     """Initialize test data"""
     db_name = "sponsor-ct-packages.api"
     inject_and_clear_db(db_name)
-    inject_base_data(inject_unit_subset=False)
+    inject_base_data(inject_unit_subset=False, inject_lock_unlock_codelists=False)
 
     global catalogue
     global cdisc_package_name
@@ -176,6 +176,95 @@ def test_post_sponsor_ct_package(api_client):
     )
 
 
+def test_post_sponsor_ct_package_with_custom_library_name(api_client):
+    """Test creating a sponsor CT package with a custom library name"""
+    db.cypher_query("CREATE CONSTRAINT FOR (p:CTPackage) REQUIRE (p.uid) IS NODE KEY")
+
+    custom_library_name = "CustomSponsor"
+    effective_date_str = (date.today() - timedelta(days=1)).strftime("%Y-%m-%d")
+
+    response = api_client.post(
+        f"{URL}/sponsor",
+        json={
+            "extends_package": cdisc_package_name,
+            "effective_date": effective_date_str,
+            "library_name": custom_library_name,
+        },
+    )
+    res = response.json()
+    assert_response_status_code(response, 201)
+
+    expected_package_name = f"{custom_library_name} {catalogue} {effective_date_str}"
+    assert res["uid"] == expected_package_name
+    assert res["name"] == expected_package_name
+    assert res["description"] == (
+        f"{custom_library_name} package for {cdisc_package_name}, as of {effective_date_str}"
+    )
+
+
+def test_post_sponsor_ct_package_default_library_name(api_client):
+    """Test that omitting library_name uses the default 'Sponsor' prefix"""
+    db.cypher_query("CREATE CONSTRAINT FOR (p:CTPackage) REQUIRE (p.uid) IS NODE KEY")
+
+    effective_date_str = (date.today() - timedelta(days=1)).strftime("%Y-%m-%d")
+
+    response = api_client.post(
+        f"{URL}/sponsor",
+        json={
+            "extends_package": cdisc_package_name,
+            "effective_date": effective_date_str,
+        },
+    )
+    res = response.json()
+    assert_response_status_code(response, 201)
+
+    expected_package_name = f"Sponsor {catalogue} {effective_date_str}"
+    assert res["uid"] == expected_package_name
+    assert res["name"] == expected_package_name
+
+
+def test_post_sponsor_ct_package_different_libraries_same_date(api_client):
+    """Test that two packages with different library names but the same date can coexist"""
+    db.cypher_query("CREATE CONSTRAINT FOR (p:CTPackage) REQUIRE (p.uid) IS NODE KEY")
+
+    effective_date_str = (date.today() - timedelta(days=1)).strftime("%Y-%m-%d")
+
+    # Create package with default library name
+    response1 = api_client.post(
+        f"{URL}/sponsor",
+        json={
+            "extends_package": cdisc_package_name,
+            "effective_date": effective_date_str,
+        },
+    )
+    assert_response_status_code(response1, 201)
+
+    # Create package with a different library name on the same date
+    response2 = api_client.post(
+        f"{URL}/sponsor",
+        json={
+            "extends_package": cdisc_package_name,
+            "effective_date": effective_date_str,
+            "library_name": "AnotherSponsor",
+        },
+    )
+    assert_response_status_code(response2, 201)
+
+    res1 = response1.json()
+    res2 = response2.json()
+    assert res1["uid"] != res2["uid"]
+    assert res1["uid"] == f"Sponsor {catalogue} {effective_date_str}"
+    assert res2["uid"] == f"AnotherSponsor {catalogue} {effective_date_str}"
+
+    # Both appear in sponsor-only listing
+    get_sponsor_only_res = api_client.get(f"{URL}?sponsor_only=true")
+    assert_response_status_code(get_sponsor_only_res, 200)
+    sponsor_packages = get_sponsor_only_res.json()
+    sponsor_uids = [pkg["uid"] for pkg in sponsor_packages]
+    assert res1["uid"] in sponsor_uids
+    assert res2["uid"] in sponsor_uids
+
+
 def test_post_sponsor_ct_package_duplicate_prevention(api_client):
     """Test that creating a duplicate Sponsor CT Package is prevented and returns 409 with clear error message"""
     db.cypher_query("CREATE CONSTRAINT FOR (p:CTPackage) REQUIRE (p.uid) IS NODE KEY")
@@ -274,6 +363,76 @@ def test_query_codelists_with_sponsor_package_robustness(api_client):
     terms_response = response.json()
     assert "items" in terms_response
     assert isinstance(terms_response["items"], list)
+
+
+def test_sponsor_ct_package_codelists_isolated_per_library(api_client):
+    """Test that querying codelists for a sponsor package with a specific library_name
+    only returns codelists from CDISC or that library, not from other editable libraries.
+    """
+    # Create a second editable library
+    custom_library_name = "CustomSponsor"
+    TestUtils.create_library(name=custom_library_name, is_editable=True)
+
+    # Create a codelist in the custom library
+    custom_codelist = TestUtils.create_ct_codelist(
+        name=TestUtils.random_str(length=6, prefix="CustomCL"),
+        library_name=custom_library_name,
+        approve=True,
+        effective_date=datetime.now() - timedelta(days=2),
+    )
+
+    # Create sponsor packages for both libraries
+    effective_date_str = (date.today() - timedelta(days=1)).strftime("%Y-%m-%d")
+    default_package = create_sponsor_package(api_client, effective_date_str)
+    custom_package = create_sponsor_package(
+        api_client, effective_date_str, library_name=custom_library_name
+    )
+
+    # Query codelists for the default Sponsor package, filtered to Sponsor library
+    response = api_client.get(
+        f"ct/codelists?package={urllib.parse.quote_plus(default_package['name'])}"
+        f"&page_size=0&is_sponsor=true&library_name=Sponsor"
+    )
+    assert_response_status_code(response, 200)
+    default_codelists = response.json()["items"]
+    assert len(default_codelists) > 0
+
+    # Verify no codelist from CustomSponsor library is returned
+    default_codelist_libraries = {cl["library_name"] for cl in default_codelists}
+    assert custom_library_name not in default_codelist_libraries
+    assert "Sponsor" in default_codelist_libraries
+    assert custom_codelist.codelist_uid not in [
+        cl["codelist_uid"] for cl in default_codelists
+    ]
+
+    # Query codelists for the custom package, filtered to CustomSponsor library
+    response = api_client.get(
+        f"ct/codelists?package={urllib.parse.quote_plus(custom_package['name'])}"
+        f"&page_size=0&is_sponsor=true&library_name={custom_library_name}"
+    )
+    assert_response_status_code(response, 200)
+    custom_codelists = response.json()["items"]
+    assert len(custom_codelists) > 0
+
+    # Verify only CustomSponsor codelists are returned (not default Sponsor ones)
+    custom_codelist_libraries = {cl["library_name"] for cl in custom_codelists}
+    assert "Sponsor" not in custom_codelist_libraries
+    assert custom_library_name in custom_codelist_libraries
+    assert custom_codelist.codelist_uid in [
+        cl["codelist_uid"] for cl in custom_codelists
+    ]
+
+    # Query codelists for the default package filtered to CDISC
+    # should return only CDISC codelists from the parent package
+    response = api_client.get(
+        f"ct/codelists?package={urllib.parse.quote_plus(default_package['name'])}"
+        f"&page_size=0&is_sponsor=true&library_name=CDISC"
+    )
+    assert_response_status_code(response, 200)
+    cdisc_codelists = response.json()["items"]
+    assert len(cdisc_codelists) > 0
+    cdisc_codelist_libraries = {cl["library_name"] for cl in cdisc_codelists}
+    assert cdisc_codelist_libraries == {"CDISC"}
 
 
 def test_get_codelists_sponsor_ct_package(api_client):
@@ -634,13 +793,16 @@ def initialize_persistence_tests(api_client):
 
 
 # Utility methods
-def create_sponsor_package(api_client, effective_date):
+def create_sponsor_package(api_client, effective_date, library_name=None):
+    body = {
+        "extends_package": cdisc_package_name,
+        "effective_date": effective_date,
+    }
+    if library_name is not None:
+        body["library_name"] = library_name
     response = api_client.post(
         f"{URL}/sponsor",
-        json={
-            "extends_package": cdisc_package_name,
-            "effective_date": effective_date,
-        },
+        json=body,
     )
     res = response.json()
     log.info("Created Sponsor CT Package: %s", res)

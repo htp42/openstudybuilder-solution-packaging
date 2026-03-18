@@ -11,12 +11,12 @@ Feature: Library - Code Lists - Sponsor - Show Terms
         When The 'Show terms' option is clicked from the three dot menu list
         Then The 'Terms listing' page is shown
         Then A table is visible with following options
-            | options                                                         |
-            | Select columns                                                  |
-            | Export                                                          |
-            | Select filters                                                  |
-            | Select rows                                                     |
-            | Search                                                          |
+            | options                                            |
+            | filters-button                                     |
+            | columns-layout-button                              |
+            | table-export-button                                |
+            | select-rows                                        |
+            | search-field                                       |
             
 @pending_development
     Scenario: [Table][Columns][Names] User must be able to see the columns list on the main page as below

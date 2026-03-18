@@ -12,12 +12,14 @@ Tests for /studies/{study_uid}/study-activities endpoints
 import json
 import logging
 from datetime import datetime, timezone
+from typing import Any
 from unittest import mock
 
 import pytest
 from fastapi.testclient import TestClient
 from neomodel import db
 
+from clinical_mdr_api.domains.enums import ValidationMode
 from clinical_mdr_api.main import app
 from clinical_mdr_api.models.biomedical_concepts.activity_instance_class import (
     ActivityInstanceClass,
@@ -103,6 +105,7 @@ term_efficacy_uid: str
 informed_consent_uid: str
 activity_group: ActivityGroup
 activity_subgroup: ActivitySubGroup
+test_data_dict: dict[str, Any]
 
 
 @pytest.fixture(scope="module")
@@ -117,8 +120,8 @@ def test_data():
     """Initialize test data"""
     db_name = "studyactivityapi"
     inject_and_clear_db(db_name)
-    global study
-    study, _test_data_dict = inject_base_data()
+    global study, test_data_dict
+    study, test_data_dict = inject_base_data()
 
     db.cypher_query(STARTUP_ACTIVITY_GROUPS)
     db.cypher_query(STARTUP_ACTIVITY_SUB_GROUPS)
@@ -348,6 +351,19 @@ def test_data():
     yield
 
 
+@pytest.mark.order("last")
+def test_integrity_checks_for_all_studies(api_client):
+    """
+    Test integrity checks for all available studies in the database.
+
+    This test should always be executed at the END to check the health of the remaining database.
+    It validates that all studies in the database pass integrity checks after all other tests have run.
+    """
+    TestUtils.run_integrity_checks_for_all_studies(
+        api_client, mode=ValidationMode.WARNING
+    )  # needs to be warning for now as it's leaving broken data
+
+
 def test_activity_modify_actions_on_locked_study(api_client):
     global study_activity_uid
 
@@ -382,7 +398,12 @@ def test_activity_modify_actions_on_locked_study(api_client):
     # Lock
     response = api_client.post(
         f"/studies/{study.uid}/locks",
-        json={"change_description": "Lock 1"},
+        json={
+            "change_description": "Lock 1",
+            "reason_for_change_uid": test_data_dict["reason_for_lock_terms"][
+                0
+            ].term_uid,
+        },
     )
     assert_response_status_code(response, 201)
 
@@ -435,8 +456,16 @@ def test_study_activity_with_study_soa_group_relationship(api_client):
     assert res == [term_efficacy_uid]
 
     # Unlock -- Study remain unlocked
-    response = api_client.delete(f"/studies/{study.uid}/locks")
-    assert_response_status_code(response, 200)
+    response = api_client.post(
+        f"/studies/{study.uid}/unlocks",
+        json={
+            "change_description": "Unlock",
+            "reason_for_change_uid": test_data_dict["reason_for_unlock_terms"][
+                0
+            ].term_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
 
     # edit study activity
     response = api_client.patch(
@@ -760,12 +789,25 @@ def test_cascade_delete_on_activities_schedules(api_client):
     # Lock
     response = api_client.post(
         f"/studies/{study_for_cascade.uid}/locks",
-        json={"change_description": "Lock 1"},
+        json={
+            "change_description": "Lock 1",
+            "reason_for_change_uid": test_data_dict["reason_for_lock_terms"][
+                0
+            ].term_uid,
+        },
     )
     assert_response_status_code(response, 201)
     # Unlock -- Study remain unlocked
-    response = api_client.delete(f"/studies/{study_for_cascade.uid}/locks")
-    assert_response_status_code(response, 200)
+    response = api_client.post(
+        f"/studies/{study_for_cascade.uid}/unlocks",
+        json={
+            "change_description": "Unlock",
+            "reason_for_change_uid": test_data_dict["reason_for_unlock_terms"][
+                0
+            ].term_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
     # delete activity
     response = api_client.delete(
         f"/studies/{study_for_cascade.uid}/study-activities/{study_activity_uid}",
@@ -1029,7 +1071,12 @@ def test_versioning_on_activity_activity_instruction_activity_schedule_as_group(
     # Lock
     response = api_client.post(
         f"/studies/{study_for_versioning.uid}/locks",
-        json={"change_description": "Lock 1"},
+        json={
+            "change_description": "Lock 1",
+            "reason_for_change_uid": test_data_dict["reason_for_lock_terms"][
+                0
+            ].term_uid,
+        },
     )
     assert_response_status_code(response, 201)
 
@@ -1044,8 +1091,16 @@ def test_versioning_on_activity_activity_instruction_activity_schedule_as_group(
     )
 
     # Unlock -- Study remain unlocked
-    response = api_client.delete(f"/studies/{study_for_versioning.uid}/locks")
-    assert_response_status_code(response, 200)
+    response = api_client.post(
+        f"/studies/{study_for_versioning.uid}/unlocks",
+        json={
+            "change_description": "Unlock",
+            "reason_for_change_uid": test_data_dict["reason_for_unlock_terms"][
+                0
+            ].term_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
 
     # patch visits to be sure that the outbound relationship (Visits-->ActivitySchedule) is maintained
     inputs = {
@@ -1129,7 +1184,6 @@ def test_versioning_on_activity_activity_instruction_activity_schedule_as_group(
 
     # compare study activity schedules of locked study version
     for i, _ in enumerate(expected_activity_schedules):
-        expected_activity_schedules[i]["study_version"] = mock.ANY
         for j in expected_visits["items"][i]:
             if isinstance(expected_visits["items"][i][j], dict):
                 expected_visits["items"][i][j]["queried_effective_date"] = mock.ANY
@@ -1834,12 +1888,25 @@ def test_protocol_soa_html_with_time_units_and_study_versioning(api_client):
     # Lock
     response = api_client.post(
         f"/studies/{study_for_export.uid}/locks",
-        json={"change_description": "Lock 1"},
+        json={
+            "change_description": "Lock 1",
+            "reason_for_change_uid": test_data_dict["reason_for_lock_terms"][
+                0
+            ].term_uid,
+        },
     )
     assert_response_status_code(response, 201)
     # Unlock -- Study remain unlocked
-    response = api_client.delete(f"/studies/{study_for_export.uid}/locks")
-    assert_response_status_code(response, 200)
+    response = api_client.post(
+        f"/studies/{study_for_export.uid}/unlocks",
+        json={
+            "change_description": "Unlock",
+            "reason_for_change_uid": test_data_dict["reason_for_unlock_terms"][
+                0
+            ].term_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
 
     response = api_client.patch(
         f"/studies/{study_for_export.uid}/time-units?for_protocol_soa=true",
@@ -4053,6 +4120,59 @@ def test_study_activity_placeholder_reordering(api_client):
 
 
 def test_create_duplicated_study_activitiy(api_client):
+    # Test only Final Activity can be added to Study
+    draft_or_retired_activity = TestUtils.create_activity(
+        name="Draft/Retired Activity",
+        activity_subgroups=[
+            randomisation_activity_subgroup.uid,
+        ],
+        activity_groups=[general_activity_group.uid],
+        approve=False,
+    )
+    response = api_client.post(
+        f"/studies/{study.uid}/study-activities",
+        json={
+            "activity_uid": draft_or_retired_activity.uid,
+            "activity_subgroup_uid": randomisation_activity_subgroup.uid,
+            "activity_group_uid": general_activity_group.uid,
+            "soa_group_term_uid": term_efficacy_uid,
+        },
+    )
+    assert_response_status_code(response, 400)
+    res = response.json()
+    assert (
+        res["message"]
+        == f"There is no approved Activity with name '{draft_or_retired_activity.name}'."
+    )
+
+    # Approve
+    response = api_client.post(
+        f"/concepts/activities/activities/{draft_or_retired_activity.uid}/approvals"
+    )
+    assert_response_status_code(response, 201)
+    # Retire
+    response = api_client.delete(
+        f"/concepts/activities/activities/{draft_or_retired_activity.uid}/activations"
+    )
+    assert_response_status_code(response, 200)
+
+    response = api_client.post(
+        f"/studies/{study.uid}/study-activities",
+        json={
+            "activity_uid": draft_or_retired_activity.uid,
+            "activity_subgroup_uid": randomisation_activity_subgroup.uid,
+            "activity_group_uid": general_activity_group.uid,
+            "soa_group_term_uid": term_efficacy_uid,
+        },
+    )
+    assert_response_status_code(response, 400)
+    res = response.json()
+    assert (
+        res["message"]
+        == f"There is no approved Activity with name '{draft_or_retired_activity.name}'."
+    )
+
+    # Test the same Activity with same groupings can't be selected twice in the same Study
     custom_activity = TestUtils.create_activity(
         name="custom_activity",
         activity_subgroups=[

@@ -8,11 +8,12 @@
       v-bind="$attrs"
       @refresh="refreshData"
     >
-      <template #htmlContent="{ itemOverview }">
+      <template #htmlContent="{ itemOverview, item }">
         <!-- Activity Summary -->
         <ActivitySummary
           v-if="itemOverview && itemOverview.activity"
           :activity="itemOverview.activity"
+          :used-studies="item.used_by_studies"
           :all-versions="allVersions(itemOverview)"
           :show-author="true"
           class="activity-summary"

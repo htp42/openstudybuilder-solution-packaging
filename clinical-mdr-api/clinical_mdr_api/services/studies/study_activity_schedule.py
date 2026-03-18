@@ -1,5 +1,3 @@
-import datetime
-
 from fastapi import status
 from neomodel import db
 
@@ -64,7 +62,6 @@ class StudyActivityScheduleService(StudySelectionMixin):
         study_activity_schedules_response_model = [
             StudyActivitySchedule.from_vo(
                 i_study_activity_schedule_ogm,
-                study_value_version=study_value_version,
             )
             for i_study_activity_schedule_ogm in study_activity_schedules
         ]
@@ -102,8 +99,6 @@ class StudyActivityScheduleService(StudySelectionMixin):
             study_activity_uid=schedule_input.study_activity_uid,
             study_activity_instance_uid=None,
             study_visit_uid=schedule_input.study_visit_uid,
-            author_id=self.author,
-            start_date=datetime.datetime.now(datetime.timezone.utc),
         )
 
     @ensure_transaction(db)
@@ -161,13 +156,12 @@ class StudyActivityScheduleService(StudySelectionMixin):
             self._repos.close()
 
     def _transform_history_to_response_model(
-        self, study_selection_history: list[SelectionHistory], study_uid: str
+        self, study_selection_history: list[SelectionHistory]
     ) -> list[StudyActivitySchedule]:
         result = []
         for history in study_selection_history:
             result.append(
                 StudyActivityScheduleHistory(
-                    study_uid=study_uid,
                     study_activity_schedule_uid=history.study_selection_uid,
                     study_activity_uid=history.study_activity_uid,
                     study_activity_instance_uid=history.study_activity_instance_uid,
@@ -178,15 +172,12 @@ class StudyActivityScheduleService(StudySelectionMixin):
         return result
 
     def _transform_all_to_response_model(
-        self,
-        study_selection: list[SelectionHistory],
-        study_uid: str,
+        self, study_selection: list[SelectionHistory]
     ) -> list[StudyActivitySchedule]:
         result = []
         for history in study_selection:
             result.append(
                 StudyActivityScheduleHistory(
-                    study_uid=study_uid,
                     study_activity_schedule_uid=history.study_selection_uid,
                     study_activity_uid=history.study_activity_uid,
                     study_visit_uid=history.study_visit_uid,
@@ -208,9 +199,7 @@ class StudyActivityScheduleService(StudySelectionMixin):
             except ValueError as value_error:
                 raise exceptions.NotFoundException(msg=value_error.args[0])
 
-            return self._transform_history_to_response_model(
-                selection_history, study_uid
-            )
+            return self._transform_history_to_response_model(selection_history)
         finally:
             repos.close()
 
@@ -229,9 +218,7 @@ class StudyActivityScheduleService(StudySelectionMixin):
             except ValueError as value_error:
                 raise exceptions.NotFoundException(msg=value_error.args[0])
 
-            return self._transform_history_to_response_model(
-                selection_history, study_uid
-            )
+            return self._transform_history_to_response_model(selection_history)
         finally:
             repos.close()
 

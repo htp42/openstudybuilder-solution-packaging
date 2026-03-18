@@ -16,13 +16,13 @@ Feature: Library - Concepts - Activities - Requested Activities
     Scenario: [Table][Options] User must be able to see table with correct options
         Given The '/library/activities/requested-activities' page is opened
         Then A table is visible with following options
-            | options                                                         |
-            | Select filters                                                  |
-            | Select columns                                                  |
-            | Export                                                          |
-            | Show version history                                            |
-            | Select rows                                                     |
-            | Search                                                          |
+            | options                                            |
+            | filters-button                                     |
+            | columns-layout-button                              |
+            | table-export-button                                |
+            | select-rows                                        |
+            | search-field                                       |
+            | History                                            |
 
     @smoke_test
     Scenario: [Table][Columns][Names] User must be able to see the columns list on the main page as below

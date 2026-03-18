@@ -1,4 +1,5 @@
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
+const { getShortUniqueId } = require("../../support/helper_functions");
 
 let projectName, programmeName
 
@@ -9,7 +10,7 @@ When('Test project with linked study is found', () => cy.searchAndCheckPresence(
 When('Test project is no longer available', () => cy.searchAndCheckPresence(projectName, false))
 
 Given ('A Clinical Programme is created', () => {
-    programmeName = `Test programme ${Date.now()}`
+    programmeName = `Test programme ${getShortUniqueId()}`
     cy.clickButton('add-clinical-programme')
     cy.fillInput('clinical-programme-name', programmeName) 
 })
@@ -29,8 +30,8 @@ When('Update the project name to a new one', () => {
 Then('User tries to update project name', () => cy.fillInput('project-name', 'Update'))
 
 function fillProjectData() {
-    projectName = `Test project ${Date.now()}` 
+    projectName = `Test project ${getShortUniqueId()}` 
     cy.fillInput('project-name', projectName)
-    cy.fillInput('project-number', Date.now())
-    cy.fillInput('project-description', `Test description ${Date.now()}`)
+    cy.fillInput('project-number', getShortUniqueId())
+    cy.fillInput('project-description', `Test description ${getShortUniqueId()}`)
 }

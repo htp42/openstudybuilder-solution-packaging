@@ -15,14 +15,14 @@ Feature: Library - Concepts - Activities - Activities - Basic Scope
     Scenario: [Table][Options] User must be able to see table with correct options
         And The '/library/activities/activities' page is opened
         Then A table is visible with following options
-            | options                                                         |
-            | Select columns                                                  |
-            | Export                                                          |
-            | Select filters                                                  |
-            | Select rows                                                     |
-            | Search                                                          |
-            | Add activity                                                    |
-            | Show version history                                            |
+            | options                                            |
+            | add-activity                                       |
+            | filters-button                                     |
+            | columns-layout-button                              |
+            | table-export-button                                |
+            | select-rows                                        |
+            | search-field                                       |
+            | History                                            |
 
     @smoke_test
      Scenario: [Table][Columns][Names] User must be able to see the columns list on the main page as below

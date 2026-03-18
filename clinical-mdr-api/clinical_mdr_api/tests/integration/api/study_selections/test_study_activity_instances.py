@@ -396,6 +396,17 @@ def test_data():
     yield
 
 
+@pytest.mark.order("last")
+def test_integrity_checks_for_all_studies(api_client):
+    """
+    Test integrity checks for all available studies in the database.
+
+    This test should always be executed at the END to check the health of the remaining database.
+    It validates that all studies in the database pass integrity checks after all other tests have run.
+    """
+    TestUtils.run_integrity_checks_for_all_studies(api_client)
+
+
 def test_create_remove_study_activity_instance_when_study_activity_is_created_removed(
     api_client,
 ):
@@ -927,54 +938,6 @@ def test_edit_study_activity_instance(api_client):
     assert res["is_reviewed"] is True
     assert res["is_important"] is False
     assert len(res["baseline_visits"]) == 1
-    expected_audit_trail_length += 1
-
-    # Try to modify is_important on the reviewed instance - should fail
-    response = api_client.patch(
-        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
-        json={
-            "is_important": True,
-        },
-    )
-    assert_response_status_code(response, 400)
-    assert (
-        "Cannot modify 'is_important' property on a reviewed StudyActivityInstance"
-        in response.json()["message"]
-    )
-
-    # Try to modify baseline_visits on a reviewed instance - should fail
-    response = api_client.patch(
-        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
-        json={
-            "baseline_visit_uids": [study_visit_2.uid],
-        },
-    )
-    assert_response_status_code(response, 400)
-    assert (
-        "Cannot modify baseline visits on a reviewed StudyActivityInstance"
-        in response.json()["message"]
-    )
-
-    # Verify that we can still modify other fields on a reviewed instance
-    response = api_client.patch(
-        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
-        json={
-            "show_activity_instance_in_protocol_flowchart": True,
-        },
-    )
-    assert_response_status_code(response, 200)
-    res = response.json()
-    assert res["show_activity_instance_in_protocol_flowchart"] is True
-    expected_audit_trail_length += 1
-
-    # Set is_reviewed back to False to continue with other tests
-    response = api_client.patch(
-        f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}",
-        json={
-            "is_reviewed": False,
-        },
-    )
-    assert_response_status_code(response, 200)
     expected_audit_trail_length += 1
 
     # Test cascade deletion of baseline rel for Visit / Schedule deletion
@@ -1554,11 +1517,14 @@ def test_sync_to_latest_version_activity_instance(api_client):
         f"/concepts/activities/activity-instances/{new_test_activity_instance.uid}/versions",
     )
     assert_response_status_code(response, 201)
-    # PATCH underling activity-instance
+    # PATCH underling activity-instance - use a modifiable field instead of activity_instance_class_uid
+    # DUE TO THE activity_instance_class_uid is not modifiable after creation
+    updated_name = "Updated activity instance name for sync test"
     response = api_client.patch(
         f"/concepts/activities/activity-instances/{new_test_activity_instance.uid}",
         json={
-            "activity_instance_class_uid": randomized_activity_instance_class.uid,
+            "name": updated_name,
+            "name_sentence_case": updated_name.lower(),
             "change_description": "Sync to latest version test",
         },
     )
@@ -1591,12 +1557,8 @@ def test_sync_to_latest_version_activity_instance(api_client):
         study_activity_instance["latest_activity_instance"]["uid"]
         == new_test_activity_instance.uid
     )
-    assert (
-        study_activity_instance["latest_activity_instance"]["activity_instance_class"][
-            "uid"
-        ]
-        == randomized_activity_instance_class.uid
-    )
+    # Check that the name was updated instead of activity_instance_class
+    assert study_activity_instance["latest_activity_instance"]["name"] == updated_name
 
     # Check the ActivityInstance update, decide to keep old version
     response = api_client.patch(
@@ -1635,10 +1597,8 @@ def test_sync_to_latest_version_activity_instance(api_client):
         study_activity_instance["activity_instance"]["uid"]
         == new_test_activity_instance.uid
     )
-    assert (
-        study_activity_instance["activity_instance"]["activity_instance_class"]["uid"]
-        == randomized_activity_instance_class.uid
-    )
+    # Check that the name was synced
+    assert study_activity_instance["activity_instance"]["name"] == updated_name
     assert study_activity_instance["latest_activity_instance"] is None
     TestUtils.delete_study(test_study.uid)
 
@@ -2071,12 +2031,13 @@ def test_study_activity_instances_review_changes_batch(api_client):
     )
     assert_response_status_code(response, 201)
 
-    randomized_activity_tc_after_update = "Randomized activity TC after update"
+    randomized_activity_name_after_update = "Randomized activity name after update"
     response = api_client.patch(
         f"/concepts/activities/activity-instances/{randomized_activity_instance.uid}",
         json={
-            "topic_code": randomized_activity_tc_after_update,
-            "change_description": "Updated topic code",
+            "name": randomized_activity_name_after_update,
+            "name_sentence_case": randomized_activity_name_after_update.lower(),
+            "change_description": "Updated name",
         },
     )
     assert_response_status_code(response, 200)
@@ -2091,14 +2052,15 @@ def test_study_activity_instances_review_changes_batch(api_client):
     )
     assert_response_status_code(response, 201)
 
-    second_randomized_activity_tc_after_update = (
-        "Second Randomized activity TC after update"
+    second_randomized_activity_name_after_update = (
+        "Second Randomized activity name after update"
     )
     response = api_client.patch(
         f"/concepts/activities/activity-instances/{second_randomized_activity_instance.uid}",
         json={
-            "topic_code": second_randomized_activity_tc_after_update,
-            "change_description": "Updated topic code",
+            "name": second_randomized_activity_name_after_update,
+            "name_sentence_case": second_randomized_activity_name_after_update.lower(),
+            "change_description": "Updated name",
         },
     )
     assert_response_status_code(response, 200)
@@ -2132,8 +2094,8 @@ def test_study_activity_instances_review_changes_batch(api_client):
     assert len(study_activity_instances) == 2
     assert study_activity_instances[0]["latest_activity_instance"] is None
     assert (
-        study_activity_instances[0]["activity_instance"]["topic_code"]
-        == randomized_activity_tc_after_update
+        study_activity_instances[0]["activity_instance"]["name"]
+        == randomized_activity_name_after_update
     )
     assert study_activity_instances[0]["keep_old_version"] is False
     assert study_activity_instances[0]["is_reviewed"] is True
@@ -2142,12 +2104,12 @@ def test_study_activity_instances_review_changes_batch(api_client):
         == StudyActivityInstanceState.REVIEW_NOT_NEEDED.value
     )
     assert (
-        study_activity_instances[1]["latest_activity_instance"]["topic_code"]
-        == second_randomized_activity_tc_after_update
+        study_activity_instances[1]["latest_activity_instance"]["name"]
+        == second_randomized_activity_name_after_update
     )
     assert (
-        study_activity_instances[1]["activity_instance"]["topic_code"]
-        == second_randomized_activity_instance.topic_code
+        study_activity_instances[1]["activity_instance"]["name"]
+        == second_randomized_activity_instance.name
     )
     assert study_activity_instances[1]["keep_old_version"] is True
     assert study_activity_instances[1]["is_reviewed"] is True
@@ -2224,12 +2186,13 @@ def test_study_activity_instances_invalidate_keep_old_version(api_client):
     )
     assert_response_status_code(response, 201)
 
-    updated_tc = randomized_activity_instance.topic_code + " updated"
+    updated_name = randomized_activity_instance.name + " updated"
     response = api_client.patch(
         f"/concepts/activities/activity-instances/{randomized_activity_instance.uid}",
         json={
-            "topic_code": updated_tc,
-            "change_description": "Updated topic code",
+            "name": updated_name,
+            "name_sentence_case": updated_name.lower(),
+            "change_description": "Updated name",
         },
     )
     assert_response_status_code(response, 200)
@@ -2249,7 +2212,7 @@ def test_study_activity_instances_invalidate_keep_old_version(api_client):
     assert res["state"] == StudyActivityInstanceState.REVIEW_NEEDED.value
     assert res["activity_instance"]["status"] == "Final"
     assert res["latest_activity_instance"]["status"] == "Final"
-    assert res["latest_activity_instance"]["topic_code"] == updated_tc
+    assert res["latest_activity_instance"]["name"] == updated_name
 
     response = api_client.post(
         f"/studies/{test_study.uid}/study-activity-instances/{study_activity_instance_uid}/sync-latest-version",
@@ -2265,7 +2228,7 @@ def test_study_activity_instances_invalidate_keep_old_version(api_client):
     assert res["is_reviewed"] is True
     assert res["state"] == StudyActivityInstanceState.REVIEW_NOT_NEEDED.value
     assert res["activity_instance"]["status"] == "Final"
-    assert res["activity_instance"]["topic_code"] == updated_tc
+    assert res["activity_instance"]["name"] == updated_name
     assert res["latest_activity_instance"] is None
 
 

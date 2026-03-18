@@ -719,6 +719,7 @@ const helpItems = ref([
   'CohortsStepper.study_arm_type',
   'CohortsStepper.arm_name',
   'CohortsStepper.arm_short_name',
+  'CohortsStepper.arm_label',
   'CohortsStepper.rand_group',
   'CohortsStepper.arm_code',
   'CohortsStepper.set_cohorts_for_study',

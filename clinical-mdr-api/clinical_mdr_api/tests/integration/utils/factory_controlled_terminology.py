@@ -47,7 +47,7 @@ from clinical_mdr_api.services.controlled_terminologies.ct_term_name import (
 )
 from clinical_mdr_api.tests.integration.utils.utils import (
     CT_CATALOGUE_NAME,
-    LIBRARY_NAME,
+    SPONSOR_LIBRARY_NAME,
 )
 from clinical_mdr_api.tests.unit.domain.controlled_terminology_aggregates.test_ct_codelist_attributes import (
     create_random_ct_codelist_attributes_vo,
@@ -58,7 +58,7 @@ from clinical_mdr_api.tests.unit.domain.utils import AUTHOR_ID
 def get_catalogue_name_library_name(use_test_utils: bool = False):
     if use_test_utils is True:
         catalogue_name = CT_CATALOGUE_NAME
-        library_name = LIBRARY_NAME
+        library_name = SPONSOR_LIBRARY_NAME
     else:
         catalogue_name = "catalogue"
         library_name = "Sponsor"

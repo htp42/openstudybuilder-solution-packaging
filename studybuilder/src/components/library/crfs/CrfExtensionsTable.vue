@@ -12,14 +12,18 @@
   >
     <template #actions="">
       <v-btn
-        class="ml-2 expandHoverBtn"
+        class="ml-2"
+        icon
+        size="small"
         variant="outlined"
         color="nnBaseBlue"
         :disabled="!accessGuard.checkPermission($roles.LIBRARY_WRITE)"
         @click.stop="openCreateForm"
       >
-        <v-icon left>mdi-plus</v-icon>
-        <span class="label">{{ $t('CRFExtensions.new_namespace') }}</span>
+        <v-icon>mdi-plus</v-icon>
+        <v-tooltip activator="parent" location="top">
+          {{ $t('CRFExtensions.new_namespace') }}
+        </v-tooltip>
       </v-btn>
     </template>
     <template #[`item.actions`]="{ item }">

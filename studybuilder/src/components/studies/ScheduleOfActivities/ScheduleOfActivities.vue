@@ -74,7 +74,9 @@
         <template v-if="!props.readOnly">
           <v-btn
             v-show="multipleVisitsSelected()"
-            class="ml-2 expandHoverBtn"
+            class="ml-2"
+            icon
+            size="small"
             variant="outlined"
             color="nnBaseBlue"
             :disabled="
@@ -86,8 +88,10 @@
             :loading="soaContentLoadingStore.loading"
             @click="groupSelectedVisits()"
           >
-            <v-icon left>mdi-arrow-expand-horizontal</v-icon>
-            <span class="label">{{ $t('GroupStudyVisits.title') }}</span>
+            <v-icon>mdi-arrow-expand-horizontal</v-icon>
+            <v-tooltip activator="parent" location="top">
+              {{ $t('GroupStudyVisits.title') }}
+            </v-tooltip>
           </v-btn>
           <v-menu
             :disabled="
@@ -107,16 +111,18 @@
                   studiesGeneralStore.selectedStudyVersion !== null ||
                   sortMode
                 "
-                class="ml-2 expandHoverBtn"
+                class="ml-2"
+                icon
+                size="small"
                 variant="outlined"
                 color="nnBaseBlue"
                 v-bind="props"
                 :loading="soaContentLoadingStore.loading"
               >
-                <v-icon left>mdi-folder-multiple-outline</v-icon>
-                <span class="label">{{
-                  $t('DetailedFlowchart.bulk_actions')
-                }}</span>
+                <v-icon>mdi-folder-multiple-outline</v-icon>
+                <v-tooltip activator="parent" location="top">
+                  {{ $t('DetailedFlowchart.bulk_actions') }}
+                </v-tooltip>
               </v-btn>
             </template>
 
@@ -143,7 +149,9 @@
           <v-menu rounded location="bottom" :disabled="sortMode">
             <template #activator="{ props }">
               <v-btn
-                class="ml-2 expandHoverBtn"
+                class="ml-2"
+                icon
+                size="small"
                 variant="outlined"
                 color="nnBaseBlue"
                 v-bind="props"
@@ -151,10 +159,10 @@
                 :disabled="sortMode"
                 :loading="soaContentLoadingStore.loading"
               >
-                <v-icon left>mdi-download-outline</v-icon>
-                <span class="label">{{
-                  $t('DataTableExportButton.export')
-                }}</span>
+                <v-icon>mdi-download-outline</v-icon>
+                <v-tooltip activator="parent" location="top">
+                  {{ $t('DataTableExportButton.export') }}
+                </v-tooltip>
               </v-btn>
             </template>
             <v-list>
@@ -170,14 +178,18 @@
             </v-list>
           </v-menu>
           <v-btn
-            class="ml-2 expandHoverBtn"
+            class="ml-2"
+            icon
+            size="small"
             variant="outlined"
             color="nnBaseBlue"
             :disabled="sortMode"
             @click="openHistory"
           >
-            <v-icon left>mdi-history</v-icon>
-            <span class="label">{{ $t('NNTableTooltips.history') }}</span>
+            <v-icon>mdi-history</v-icon>
+            <v-tooltip activator="parent" location="top">
+              {{ $t('NNTableTooltips.history') }}
+            </v-tooltip>
           </v-btn>
         </template>
       </div>
@@ -624,8 +636,7 @@
                 >
                   <div
                     v-if="leftIndex <= visitIndex <= rightIndex"
-                    class="mt-3 mb-n1"
-                    style="display: ruby"
+                    class="mb-n1 footnote-cell"
                   >
                     <input
                       v-model="
@@ -730,7 +741,7 @@
                       "
                       size="x-small"
                       icon="mdi-minus-circle"
-                      class="actionButtons mx-0 px-0 ml-n3 mt-2 mb-4 mr-n4"
+                      class="mx-0 px-0 ml-n3 mt-2 mb-4 mr-n4"
                       color="nnBaseBlue"
                       variant="text"
                       :title="$t('DetailedFlowchart.remove_footnote')"
@@ -901,7 +912,7 @@
         :selected-elements="elementsForFootnote"
         class="fullscreen-dialog"
         @close="closeFootnoteForm"
-        @added="table.filterTable()"
+        @added="onFootnoteAdded()"
       />
     </v-dialog>
     <v-dialog
@@ -1370,11 +1381,22 @@ onUpdated(() => {
   secondColWidth.value = secondCol.value.clientWidth
 })
 
+function onFootnoteAdded() {
+  footnoteTable.value.filterTable()
+  loadSoaContent(true)
+}
+
 function initiateReorder(item) {
-  scrollItemId.value = `row-scroll-${item.row.cells[0].refs[0]?.uid}`
+  const selectedUid = item.row.cells[0].refs[0]?.uid
+  scrollItemId.value = `row-scroll-${selectedUid}`
   selectedReorderItem.value = item.row.cells[0]
   selectedReorderItem.value.order = item.row.order
-  selectedReorderItem.value.tableIndex = item.index
+
+  const fullRowIndex = soaRows.value.findIndex(
+    (row) => row?.cells?.[0]?.refs?.[0]?.uid === selectedUid
+  )
+  selectedReorderItem.value.tableIndex =
+    fullRowIndex !== -1 ? fullRowIndex : item.index
   sortMode.value = true
 }
 
@@ -1617,29 +1639,33 @@ function addVisitForFootnote(refs, type, name) {
 }
 
 function addElementForFootnote(uid, type, name, schedule) {
-  if (schedule) {
-    if (!schedule.footnotes) schedule.footnotes = []
-    schedule.footnotes.push(
-      dataFormating.footnoteSymbol(activeFootnote.value.order)
-    )
-  }
-  if (!name) {
-    name = type
-  }
-  if (typeof uid !== 'string') {
-    uid.forEach((u) => {
+  try {
+    if (schedule && activeFootnote.value) {
+      if (!schedule.footnotes) schedule.footnotes = []
+      schedule.footnotes.push(
+        dataFormating.footnoteSymbol(activeFootnote.value.order)
+      )
+    }
+    if (!name) {
+      name = type
+    }
+    if (typeof uid !== 'string') {
+      uid.forEach((u) => {
+        elementsForFootnote.value.referenced_items.push({
+          item_uid: u,
+          item_type: type,
+          item_name: name,
+        })
+      })
+    } else {
       elementsForFootnote.value.referenced_items.push({
-        item_uid: u,
+        item_uid: uid,
         item_type: type,
         item_name: name,
       })
-    })
-  } else {
-    elementsForFootnote.value.referenced_items.push({
-      item_uid: uid,
-      item_type: type,
-      item_name: name,
-    })
+    }
+  } catch (error) {
+    console.error(error)
   }
 }
 
@@ -1653,17 +1679,21 @@ function removeFootnote(uid) {
 }
 
 function removeElementForFootnote(uid, schedule) {
-  if (schedule) {
-    schedule.footnotes = schedule.footnotes.filter(
-      (s) => s !== dataFormating.footnoteSymbol(activeFootnote.value.order)
-    )
-  }
-  if (typeof uid !== 'string') {
-    uid.forEach((u) => {
-      removeFootnote(u)
-    })
-  } else {
-    removeFootnote(uid)
+  try {
+    if (schedule && activeFootnote.value) {
+      schedule.footnotes = schedule.footnotes?.filter(
+        (s) => s !== dataFormating.footnoteSymbol(activeFootnote.value.order)
+      )
+    }
+    if (typeof uid !== 'string') {
+      uid.forEach((u) => {
+        removeFootnote(u)
+      })
+    } else {
+      removeFootnote(uid)
+    }
+  } catch (error) {
+    console.error(error)
   }
 }
 
@@ -2403,5 +2433,10 @@ input[type='checkbox'] {
   margin-left: 0.25em;
   line-height: 1;
   text-transform: lowercase;
+}
+.footnote-cell {
+  display: inline-flex;
+  height: 35px;
+  align-items: center;
 }
 </style>

@@ -10,6 +10,7 @@ Tests for /studies/{study_uid}/study-source-variables endpoints
 # which pylint interprets as unused arguments
 
 import logging
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
@@ -32,6 +33,7 @@ log = logging.getLogger(__name__)
 study: Study
 study_source_variable: StudySourceVariable
 project: Project
+test_data_dict: dict[str, Any]
 
 
 @pytest.fixture(scope="module")
@@ -47,8 +49,9 @@ def test_data():
     db_name = "studysourcevariable"
     inject_and_clear_db(db_name)
 
-    global study
-    study, _test_data_dict = inject_base_data()
+    global study, test_data_dict
+    global test_data_dict
+    study, test_data_dict = inject_base_data()
     global study_source_variable
     study_source_variable = TestUtils.create_study_source_variable(
         study_uid=study.uid,
@@ -65,6 +68,17 @@ def test_data():
         clinical_programme_uid=clinical_programme.uid,
     )
     yield
+
+
+@pytest.mark.order("last")
+def test_integrity_checks_for_all_studies(api_client):
+    """
+    Test integrity checks for all available studies in the database.
+
+    This test should always be executed at the END to check the health of the remaining database.
+    It validates that all studies in the database pass integrity checks after all other tests have run.
+    """
+    TestUtils.run_integrity_checks_for_all_studies(api_client)
 
 
 def test_study_source_variable_get(api_client):
@@ -117,7 +131,12 @@ def test_study_source_variable_create(api_client):
     # Lock
     response = api_client.post(
         f"/studies/{new_study.uid}/locks",
-        json={"change_description": "Lock 1"},
+        json={
+            "change_description": "Lock 1",
+            "reason_for_change_uid": test_data_dict["reason_for_lock_terms"][
+                0
+            ].term_uid,
+        },
     )
     assert_response_status_code(response, 201)
 

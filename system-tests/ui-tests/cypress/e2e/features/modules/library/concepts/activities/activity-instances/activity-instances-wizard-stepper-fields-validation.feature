@@ -35,7 +35,8 @@ Feature: Library - Concepts - Activities - Activity instances - wizard stepper -
         When The 'NumericFindings' is selected from the Activity instance class field
         And The 'LB' is selected from the Activity instance domain field
         And Form continue button is clicked
-        Then Required fields name_submission_value, code_submission_value, unit_dimension are marked as required
+        Then Required fields name_submission_value, code_submission_value are marked as required
+        And Required fields unit_dimension and standardised unit are marked as required
         And The Activity Instance Wizard Stepper 'Required' page is displayed
 
     Scenario: [Create][Mandatory fields] User must be able to see that test_code is automatically populated after selecting test_name

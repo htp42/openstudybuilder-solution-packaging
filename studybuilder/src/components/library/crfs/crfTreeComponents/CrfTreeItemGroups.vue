@@ -130,6 +130,7 @@
         <CrfTreeItems
           :sort-mode="sortMode"
           :parent-item-group="item"
+          :parent-form="parentForm"
           :columns="columns"
           @update-parent-item-group-item="updateItemGroupItem"
         />

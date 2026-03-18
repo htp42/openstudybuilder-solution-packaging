@@ -10,6 +10,7 @@ Tests for /studies/{study_uid}/study-standard-versions endpoints
 # which pylint interprets as unused arguments
 
 import logging
+from typing import Any
 from unittest import mock
 
 import pytest
@@ -35,6 +36,7 @@ standard_version_type_term2: CTTerm
 ct_package_uid: str
 ct_package_uid_2: str
 ct_package_uid_3: str
+test_data_dict: dict[str, Any]
 
 
 @pytest.fixture(scope="module")
@@ -51,7 +53,9 @@ def test_data():
     inject_and_clear_db(db_name)
 
     global study
-    inject_base_data()
+    global test_data_dict
+    _, test_data_dict = inject_base_data()
+
     study = TestUtils.create_study()
     catalogue = "SDTM CT"
     cdisc_package_name = "SDTM CT 2020-03-27"
@@ -73,6 +77,17 @@ def test_data():
         catalogue=catalogue_3, name=cdisc_package_name_3, approve_elements=False
     )
     yield
+
+
+@pytest.mark.order("last")
+def test_integrity_checks_for_all_studies(api_client):
+    """
+    Test integrity checks for all available studies in the database.
+
+    This test should always be executed at the END to check the health of the remaining database.
+    It validates that all studies in the database pass integrity checks after all other tests have run.
+    """
+    TestUtils.run_integrity_checks_for_all_studies(api_client)
 
 
 def test_study_standard_version_crud_operations(api_client):
@@ -220,7 +235,12 @@ def test_standard_version_modify_actions_on_locked_study(api_client):
     # Lock
     response = api_client.post(
         f"/studies/{study.uid}/locks",
-        json={"change_description": "Lock 1"},
+        json={
+            "change_description": "Lock 1",
+            "reason_for_change_uid": test_data_dict["reason_for_lock_terms"][
+                0
+            ].term_uid,
+        },
     )
     assert_response_status_code(response, 201)
 
@@ -262,8 +282,16 @@ def test_standard_version_modify_actions_on_locked_study(api_client):
     assert response.json()["message"] == f"Study with UID '{study.uid}' is locked."
 
     # Unlock
-    response = api_client.delete(f"/studies/{study.uid}/locks")
-    assert_response_status_code(response, 200)
+    response = api_client.post(
+        f"/studies/{study.uid}/unlocks",
+        json={
+            "change_description": "Unlock",
+            "reason_for_change_uid": test_data_dict["reason_for_unlock_terms"][
+                0
+            ].term_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
 
     # test delete
     response = api_client.delete(
@@ -274,7 +302,12 @@ def test_standard_version_modify_actions_on_locked_study(api_client):
     # Lock and check automatically creation
     response = api_client.post(
         f"/studies/{study.uid}/locks",
-        json={"change_description": "Lock 1"},
+        json={
+            "change_description": "Lock 1",
+            "reason_for_change_uid": test_data_dict["reason_for_lock_terms"][
+                0
+            ].term_uid,
+        },
     )
     assert_response_status_code(response, 201)
 
@@ -297,8 +330,16 @@ def test_get_standard_version_data_for_specific_study_version(api_client):
     res_old = response.json()
 
     # Unlock
-    response = api_client.delete(f"/studies/{study.uid}/locks")
-    assert_response_status_code(response, 200)
+    response = api_client.post(
+        f"/studies/{study.uid}/unlocks",
+        json={
+            "change_description": "Unlock",
+            "reason_for_change_uid": test_data_dict["reason_for_unlock_terms"][
+                0
+            ].term_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
 
     response = api_client.patch(
         f"/studies/{study.uid}/study-standard-versions/{res_old[0]['uid']}",

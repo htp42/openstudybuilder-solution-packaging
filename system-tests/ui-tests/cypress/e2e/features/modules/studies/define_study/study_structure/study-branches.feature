@@ -24,12 +24,12 @@ Feature: Studies - Define Study - Study Structure - Manually Defined Study Branc
 
     Scenario: [Table][Options] User must be able to see the Study Branches table with following options
         Then A table is visible with following options
-            | options                                                         |
-            | Select columns                                                  |
-            | Export                                                          |
-            | Select rows                                                     |
-            | Search                                                          |
-            | Show version history                                            |
+            | options                                            |
+            | columns-layout-button                              |
+            | table-export-button                                |
+            | select-rows                                        |
+            | search-field                                       |
+            | History                                            |
 
     @smoke_test
     Scenario: [Table][Columns][Names] User must be able to see the Study Branches table with following columns

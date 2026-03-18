@@ -288,7 +288,6 @@ watch(
 )
 
 onMounted(async () => {
-  await getExtensionData()
   setExtensions()
 })
 

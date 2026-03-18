@@ -1,4 +1,5 @@
 import functools
+import logging
 from copy import copy
 from datetime import date, datetime, timezone
 from string import ascii_lowercase
@@ -22,6 +23,7 @@ from clinical_mdr_api.domains.concepts.unit_definitions.unit_definition import (
 )
 from clinical_mdr_api.domains.controlled_terminologies.ct_term_name import CTTermNameAR
 from clinical_mdr_api.domains.dictionaries.dictionary_term import DictionaryTermAR
+from clinical_mdr_api.domains.enums import ValidationMode
 from clinical_mdr_api.domains.projects.project import ProjectAR
 from clinical_mdr_api.domains.study_definition_aggregates.registry_identifiers import (
     RegistryIdentifiersVO,
@@ -48,6 +50,7 @@ from clinical_mdr_api.domains.study_selections.study_selection_standard_version 
 from clinical_mdr_api.models.study_selections.study import (
     CompactStudy,
     HighLevelStudyDesignJsonModel,
+    IntegrityCheckResult,
     RegistryIdentifiersJsonModel,
     Study,
     StudyCloneInput,
@@ -55,6 +58,7 @@ from clinical_mdr_api.models.study_selections.study import (
     StudyDescriptionJsonModel,
     StudyFieldAuditTrailEntry,
     StudyIdentificationMetadataJsonModel,
+    StudyIntegrityCheckResponse,
     StudyInterventionJsonModel,
     StudyMetadataJsonModel,
     StudyMinimal,
@@ -72,6 +76,7 @@ from clinical_mdr_api.models.study_selections.study import (
     StudySubpartAuditTrail,
     StudySubpartCreateInput,
     StudySubpartReorderingInput,
+    StudyVersionHistory,
 )
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import FilterOperator
@@ -86,6 +91,10 @@ from clinical_mdr_api.services._utils import (  # type: ignore
     get_unit_def_uid_or_none,
     service_level_generic_filtering,
     service_level_generic_header_filtering,
+)
+from clinical_mdr_api.utils.db_integrity_checks import (
+    QUERIES,
+    execute_all_checks_for_study,
 )
 from common.auth.user import user
 from common.config import settings
@@ -462,8 +471,16 @@ class StudyService:
 
         return dt
 
-    @db.transaction
-    def lock(self, uid: str, change_description: str) -> Study:
+    @ensure_transaction(db)
+    def lock(
+        self,
+        uid: str,
+        reason_for_lock_term_uid: str,
+        change_description: str | None = None,
+        other_reason_for_locking: str | None = None,
+        protocol_header_major_version: int | None = None,
+        protocol_header_minor_version: int | None = None,
+    ) -> Study:
         # avoid circular imports
         from clinical_mdr_api.services.studies.study_flowchart import (
             StudyFlowchartService,
@@ -471,8 +488,10 @@ class StudyService:
 
         # lock the study
         try:
-            study_definition = self._repos.study_definition_repository.find_by_uid(
-                uid, for_update=True
+            study_definition: StudyDefinitionAR | None = (
+                self._repos.study_definition_repository.find_by_uid(
+                    uid, for_update=True
+                )
             )
 
             if study_definition is None:
@@ -603,12 +622,65 @@ class StudyService:
                 layout=SoALayout.PROTOCOL,
                 study_status=study_definition.study_status,
             )
-
+            if (
+                protocol_header_major_version is not None
+                and protocol_header_minor_version is None
+            ) or (
+                protocol_header_major_version is None
+                and protocol_header_minor_version is not None
+            ):
+                raise BusinessLogicException(
+                    msg="Both protocol_header_major_version and protocol_header_minor_version must be set together or both must be None"
+                )
+            if (
+                protocol_header_major_version == 0
+                and protocol_header_minor_version == 0
+            ):
+                raise BusinessLogicException(
+                    msg="Protocol header version can't be set to 0.0"
+                )
             study_definition.lock(
                 version_description=change_description,
                 author_id=self.author_id,
             )
             self._repos.study_definition_repository.save(study_definition)
+
+            version_number = str(
+                study_definition.latest_released_or_locked_metadata.ver_metadata.version_number
+            )
+            # Update StudyVersion for locked version
+            self._repos.study_version_repository.create_or_update_study_version(
+                study_uid=uid,
+                version=version_number,
+                other_reason_for_locking=other_reason_for_locking,
+                reason_for_lock_term_uid=reason_for_lock_term_uid,
+            )
+
+            # Update StudyDefinitionDocument
+            if (
+                submission_values := self._repos.ct_term_name_repository.get_submission_values_for_term(
+                    reason_for_lock_term_uid
+                )
+            ) and settings.final_protocol_term_submval in submission_values:
+                # If chosen CTTerm is 'Final Protocol', throw an exception if major version is None or 0 or minor version is other than 0
+                if (
+                    protocol_header_major_version is None
+                    or protocol_header_major_version == 0
+                    or protocol_header_minor_version != 0
+                ):
+                    raise BusinessLogicException(
+                        msg="For 'Final Protocol', major version must be a non-zero value and minor version must be 0"
+                    )
+            if (
+                protocol_header_major_version is not None
+                and protocol_header_minor_version is not None
+            ):
+                self._repos.study_definition_document_repository.create_or_update_study_definition_document(
+                    study_uid=uid,
+                    protocol_header_major_version=protocol_header_major_version,
+                    protocol_header_minor_version=protocol_header_minor_version,
+                    version=version_number,
+                )
 
             if study_definition.study_subpart_uids:
                 for study_subpart_uid in study_definition.study_subpart_uids:
@@ -634,11 +706,18 @@ class StudyService:
         finally:
             self._close_all_repos()
 
-    @db.transaction
-    def unlock(self, uid: str) -> Study:
+    @ensure_transaction(db)
+    def unlock(
+        self,
+        uid: str,
+        reason_for_unlock_term_uid: str,
+        other_reason_for_unlocking: str | None = None,
+    ) -> Study:
         try:
-            study_definition = self._repos.study_definition_repository.find_by_uid(
-                uid, for_update=True
+            study_definition: StudyDefinitionAR | None = (
+                self._repos.study_definition_repository.find_by_uid(
+                    uid, for_update=True
+                )
             )
 
             if study_definition is None:
@@ -650,6 +729,13 @@ class StudyService:
             )
             study_definition.unlock(self.author_id)
             self._repos.study_definition_repository.save(study_definition)
+
+            # Update StudyVersion for unlocked version
+            self._repos.study_version_repository.create_or_update_study_version(
+                study_uid=uid,
+                reason_for_unlock_term_uid=reason_for_unlock_term_uid,
+                other_reason_for_unlocking=other_reason_for_unlocking,
+            )
 
             study_standard_versions: StudyStandardVersionVO
             study_standard_versions = self._repos.study_standard_version_repository.find_standard_versions_in_study(
@@ -697,16 +783,26 @@ class StudyService:
         finally:
             self._close_all_repos()
 
-    @db.transaction
-    def release(self, uid: str, change_description: str | None) -> Study:
+    @ensure_transaction(db)
+    def release(
+        self,
+        uid: str,
+        change_description: str | None,
+        reason_for_release_uid: str,
+        other_reason_for_releasing: str | None = None,
+        protocol_header_major_version: int | None = None,
+        protocol_header_minor_version: int | None = None,
+    ) -> Study:
         # avoid circular imports
         from clinical_mdr_api.services.studies.study_flowchart import (
             StudyFlowchartService,
         )
 
         try:
-            study_definition = self._repos.study_definition_repository.find_by_uid(
-                uid, for_update=True
+            study_definition: StudyDefinitionAR | None = (
+                self._repos.study_definition_repository.find_by_uid(
+                    uid, for_update=True
+                )
             )
 
             if study_definition is None:
@@ -728,6 +824,29 @@ class StudyService:
                 change_description=change_description, author_id=self.author_id
             )
             self._repos.study_definition_repository.save(study_definition)
+
+            version_number = str(
+                study_definition.latest_released_or_locked_metadata.ver_metadata.version_number
+            )
+            # Update StudyVersion for released version
+            self._repos.study_version_repository.create_or_update_study_version(
+                study_uid=uid,
+                version=version_number,
+                other_reason_for_locking=other_reason_for_releasing,
+                reason_for_lock_term_uid=reason_for_release_uid,
+                release=True,
+            )
+            # Update StudyDefinitionDocument
+            if (
+                protocol_header_major_version is not None
+                and protocol_header_minor_version is not None
+            ):
+                self._repos.study_definition_document_repository.create_or_update_study_definition_document(
+                    study_uid=uid,
+                    protocol_header_major_version=protocol_header_major_version,
+                    protocol_header_minor_version=protocol_header_minor_version,
+                    version=version_number,
+                )
 
             if study_definition.study_subpart_uids:
                 for study_subpart_uid in study_definition.study_subpart_uids:
@@ -946,42 +1065,38 @@ class StudyService:
     def get_study_snapshot_history(
         self,
         study_uid: str,
-        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict[str, dict[str, Any]] | None = None,
-        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
-    ) -> GenericFilteringReturn[CompactStudy]:
+        only_latest_major_protcol_version: bool = False,
+    ) -> GenericFilteringReturn[StudyVersionHistory]:
         try:
-            if not sort_by:
-                sort_by = {}
-
-            all_items = (
-                self._repos.study_definition_repository.find_study_snapshot_history(
+            all_items, total = (
+                self._repos.study_version_repository.retrieve_study_snapshot_history(
                     study_uid=study_uid,
-                    sort_by=sort_by,
                     page_number=page_number,
                     page_size=page_size,
-                    filter_by=filter_by,
-                    filter_operator=filter_operator,
                     total_count=total_count,
+                    only_latest_major_protcol_version=only_latest_major_protcol_version,
                 )
             )
 
             parsed_items = [
-                CompactStudy.from_study_definition_ar(
-                    study_definition_ar=item,
-                    find_project_by_project_number=self._repos.project_repository.find_by_project_number,
-                    find_clinical_programme_by_uid=self._repos.clinical_programme_repository.find_by_uid,
-                    find_study_parent_part_by_uid=self._repos.study_definition_repository.find_by_uid,
-                    find_term_by_uids=self._repos.ct_term_name_repository.find_by_uids,
-                )
-                for item in all_items.items
+                StudyVersionHistory.from_repository_output(val=item)
+                for item in all_items
             ]
-            return GenericFilteringReturn(items=parsed_items, total=all_items.total)
+            return GenericFilteringReturn(items=parsed_items, total=total)
         finally:
             self._close_all_repos()
+
+    def get_protocol_header_version(
+        self,
+        study_uid: str,
+        study_value_version: str | None = None,
+    ) -> str | None:
+        return self._repos.study_definition_document_repository.get_latest_protocol_header_version(
+            study_uid=study_uid, study_value_version=study_value_version
+        )
 
     def get_distinct_values_for_header(
         self,
@@ -1051,6 +1166,10 @@ class StudyService:
                 names.append(compound.name)
             if names:
                 result.substance_name = ", ".join(names)
+            protocol_header_version = self._repos.study_definition_document_repository.get_latest_protocol_header_version(
+                study_uid=uid, study_value_version=study_value_version
+            )
+            result.protocol_header_version = protocol_header_version
             return result
         finally:
             self._close_all_repos()
@@ -1169,12 +1288,33 @@ class StudyService:
             msg="At least one item should be selected",
         )
 
+        # Validate source study integrity before cloning
+        validation_mode = study_clone_input.validation_mode
+
+        logging.info(
+            "Running integrity checks for source study %s (mode: %s)",
+            study_src_uid,
+            validation_mode,
+        )
+        execute_all_checks_for_study(study_src_uid, mode=validation_mode)
+        logging.info("Integrity checks passed for source study %s", study_src_uid)
+
         self._repos.study_definition_repository.copy_study_items(
             study_src_uid=study_src_uid,
             study_target_uid=study_created.uid,
             list_of_items_to_copy=list_of_items_to_copy,
             author_id=self.author_id,
         )
+
+        # Validate cloned study integrity after cloning
+        logging.info(
+            "Running integrity checks for cloned study %s (mode: %s)",
+            study_created.uid,
+            validation_mode,
+        )
+        execute_all_checks_for_study(study_created.uid, mode=validation_mode)
+        logging.info("Integrity checks passed for cloned study %s", study_created.uid)
+
         return study_created
 
     @ensure_transaction(db)
@@ -2472,3 +2612,230 @@ class StudyService:
         self._repos.study_definition_repository.remove_soa_splits(
             study_uid=study_uid,
         )
+
+    def _normalize_node_ids(
+        self, items: list[Any], target_list: list[int | str]
+    ) -> None:
+        """
+        Recursively normalize node IDs: flatten nested lists and filter None values.
+
+        Args:
+            items: List of items that may contain nested lists, None values, or mixed types
+            target_list: Target list to append normalized values to
+        """
+        for item in items:
+            if item is None:
+                continue
+            if isinstance(item, list):
+                # Recursively process nested lists
+                self._normalize_node_ids(item, target_list)
+            elif isinstance(item, (int, str)):
+                target_list.append(item)
+            # Ignore other types (dicts, etc.)
+
+    @db.transaction
+    def run_integrity_checks(self, study_uids: list[str] | None = None) -> tuple[
+        list[StudyIntegrityCheckResponse],
+        dict[str, int | list[str] | dict[str, list[str]]],
+    ]:
+        """
+        Run integrity checks for specified studies or all studies.
+
+        Args:
+            study_uids: Optional list of study UIDs to check. If None or empty, checks all studies.
+
+        Returns:
+            tuple: (list of StudyIntegrityCheckResponse objects, aggregated statistics dict)
+        """
+        try:
+            # Get list of study UIDs to check using Cypher query
+            if not study_uids:
+                # Get all study UIDs using Cypher
+                query = """
+                    MATCH (sr:StudyRoot)-[:LATEST]->(sv:StudyValue)
+                    RETURN DISTINCT sr.uid AS uid
+                    ORDER BY sr.uid
+                """
+                result = db.cypher_query(query)
+                rows, _ = result
+                study_uids = [row[0] for row in rows] if rows else []
+
+            # Get study metadata (number, acronym) for requested studies using Cypher
+            if study_uids:
+                query = """
+                    MATCH (sr:StudyRoot)-[:LATEST]->(sv:StudyValue)
+                    WHERE sr.uid IN $study_uids
+                    RETURN sr.uid AS uid, sv.study_number AS number, sv.study_acronym AS acronym
+                """
+                result = db.cypher_query(query, params={"study_uids": study_uids})
+                rows, _ = result
+                study_metadata_map = {
+                    row[0]: {"number": row[1], "acronym": row[2]} for row in rows
+                }
+            else:
+                study_metadata_map = {}
+
+            # Run checks for each study
+            study_results: list[StudyIntegrityCheckResponse] = []
+            total_checks_performed = 0
+            total_checks_passed = 0
+            total_checks_failed = 0
+            failed_study_uids: list[str] = []
+            failed_checks_by_study: dict[str, list[str]] = {}
+
+            for study_uid in study_uids:
+                try:
+                    # Run checks with warning mode to avoid raising exceptions
+                    check_results = execute_all_checks_for_study(
+                        study_uid, mode=ValidationMode.WARNING
+                    )
+
+                    # CheckResult to IntegrityCheckResult
+                    integrity_checks: list[IntegrityCheckResult] = []
+                    all_passed = True
+                    failed_check_ids: list[str] = []
+
+                    for check_result in check_results:
+                        total_checks_performed += 1
+                        if check_result.passed:
+                            total_checks_passed += 1
+                        else:
+                            total_checks_failed += 1
+                            all_passed = False
+                            failed_check_ids.append(check_result.check_id)
+
+                        # Normalize noncompliant_node_ids: flatten nested lists and filter None
+                        # Handle cases where items can be lists, None, or mixed types
+                        normalized_node_ids: list[int | str] = []
+                        try:
+                            if check_result.noncompliant_node_ids:
+                                self._normalize_node_ids(
+                                    check_result.noncompliant_node_ids,
+                                    normalized_node_ids,
+                                )
+                        except (
+                            TypeError,
+                            ValueError,
+                            AttributeError,
+                        ) as normalize_error:
+                            logging.warning(
+                                "Error normalizing noncompliant_node_ids for check %s: %s. Raw data: %s",
+                                check_result.check_id,
+                                normalize_error,
+                                check_result.noncompliant_node_ids,
+                            )
+
+                        try:
+                            integrity_checks.append(
+                                IntegrityCheckResult(
+                                    check_id=check_result.check_id,
+                                    description=check_result.description,
+                                    passed=check_result.passed,
+                                    noncompliant_count=check_result.noncompliant_count,
+                                    noncompliant_labels=check_result.noncompliant_labels,
+                                    noncompliant_node_ids=normalized_node_ids,
+                                    root_uids=check_result.root_uids,
+                                    error=check_result.error,
+                                )
+                            )
+                        except (ValueError, TypeError) as validation_error:
+                            # If validation fails, create a simplified result with error
+                            logging.warning(
+                                "Error creating IntegrityCheckResult for check %s: %s",
+                                check_result.check_id,
+                                validation_error,
+                            )
+                            integrity_checks.append(
+                                IntegrityCheckResult(
+                                    check_id=check_result.check_id,
+                                    description=check_result.description,
+                                    passed=False,
+                                    noncompliant_count=check_result.noncompliant_count,
+                                    noncompliant_labels=[],
+                                    noncompliant_node_ids=[],
+                                    root_uids=None,
+                                    error=f"Validation error: {str(validation_error)}",
+                                )
+                            )
+
+                    if not all_passed:
+                        failed_study_uids.append(study_uid)
+                        failed_checks_by_study[study_uid] = failed_check_ids
+
+                    metadata = study_metadata_map.get(study_uid, {})
+                    study_results.append(
+                        StudyIntegrityCheckResponse(
+                            study_uid=study_uid,
+                            study_number=metadata.get("number"),
+                            study_acronym=metadata.get("acronym"),
+                            all_passed=all_passed,
+                            checks=integrity_checks,
+                            error=None,
+                        )
+                    )
+                except Exception as e:  # pylint: disable=broad-exception-caught
+                    # Handle errors during check execution
+                    # Catching Exception is necessary here as execute_all_checks_for_study
+                    # or IntegrityCheckResult creation may raise various exception types
+                    total_checks_performed += len(QUERIES)
+                    total_checks_failed += len(QUERIES)
+                    failed_study_uids.append(study_uid)
+                    # For errors, we can't determine which specific checks failed
+                    failed_checks_by_study[study_uid] = []
+                    metadata = study_metadata_map.get(study_uid, {})
+                    study_results.append(
+                        StudyIntegrityCheckResponse(
+                            study_uid=study_uid,
+                            study_number=metadata.get("number"),
+                            study_acronym=metadata.get("acronym"),
+                            all_passed=False,
+                            checks=[],
+                            error=str(e),
+                        )
+                    )
+
+            studies_passed = sum(
+                1 for r in study_results if r.all_passed and not r.error
+            )
+            studies_failed = len(study_results) - studies_passed
+
+            aggregated_stats: dict[str, int | list[str] | dict[str, list[str]]] = {
+                "total_studies_checked": len(study_results),
+                "studies_passed": studies_passed,
+                "studies_failed": studies_failed,
+                "total_checks_performed": total_checks_performed,
+                "total_checks_passed": total_checks_passed,
+                "total_checks_failed": total_checks_failed,
+                "failed_study_uids": failed_study_uids,
+                "failed_checks_by_study": failed_checks_by_study,
+            }
+
+            return study_results, aggregated_stats
+        finally:
+            self._close_all_repos()
+
+    def run_integrity_check_for_study(
+        self, study_uid: str
+    ) -> StudyIntegrityCheckResponse:
+        """
+        Run integrity checks for a single study.
+
+        Args:
+            study_uid: UID of the study to check
+
+        Returns:
+            StudyIntegrityCheckResponse with detailed results for the study
+
+        Raises:
+            NotFoundException: If the study doesn't exist
+        """
+        self.check_if_study_uid_and_version_exists(
+            study_uid=study_uid, study_value_version=None
+        )
+
+        study_results, _ = self.run_integrity_checks(study_uids=[study_uid])
+
+        if not study_results:
+            raise NotFoundException(f"Study with uid {study_uid} was not found.")
+
+        return study_results[0]

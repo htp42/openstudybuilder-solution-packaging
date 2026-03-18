@@ -4,9 +4,8 @@
       <p
         class="font-weight-bold text-white"
         :class="{ 'mb-4': props.notification?.error?.correlation_id }"
-      >
-        {{ props.notification.msg }}
-      </p>
+        v-html="props.notification.msg"
+      ></p>
       <p v-if="props.notification?.error?.correlation_id" class="text-body-2">
         <span class="font-weight-bold">{{ $t('_global.correlation_id') }}</span>
         <br />

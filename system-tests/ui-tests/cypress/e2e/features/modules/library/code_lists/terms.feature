@@ -13,12 +13,12 @@ Feature: Library - Code Lists - Sponsor - Show Terms
     Scenario: [Table][Options] User must be able to see table with correct options
         Given The '/library/terms' page is opened
         Then A table is visible with following options
-            | options                                                         |
-            | Select columns                                                  |
-            | Export                                                          |
-            | Select filters                                                  |
-            | Select rows                                                     |
-            | Search                                                          |
+            | options                                            |
+            | filters-button                                     |
+            | columns-layout-button                              |
+            | table-export-button                                |
+            | select-rows                                        |
+            | search-field                                       |
 
     Scenario: [Table][Columns][Names] User must be able to see the columns list on the main page as below
         Given The '/library/terms' page is opened

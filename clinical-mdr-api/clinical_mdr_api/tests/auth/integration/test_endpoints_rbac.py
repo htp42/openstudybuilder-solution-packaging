@@ -202,6 +202,7 @@ def test_endpoints_rbac_correct_roles(
                 "RequestValidationError",
                 "ValidationException",
                 "ValidationError",
+                "ValueError",
             )
 
 

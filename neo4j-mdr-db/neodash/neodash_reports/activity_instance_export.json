@@ -7,12 +7,12 @@
     "fullscreenEnabled": false,
     "parameters": {
       "neodash_activityinstancevalue_name": [
-        "Eosinophils Blood"
+        
       ],
       "neodash_activityinstancevalue_name_display": [
-        "Eosinophils Blood"
+        
       ],
-      "neodash_": "finding_category"
+      "neodash_": ""
     },
     "theme": "light"
   },

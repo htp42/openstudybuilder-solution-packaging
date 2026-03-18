@@ -13,4 +13,7 @@ ALL_ROUTES_METHODS_ROLES = (
     ("/v1/papillons/soa", "GET", {"Study.Read"}),
     ("/v1/library/activities", "GET", {"Library.Read"}),
     ("/v1/library/activity-instances", "GET", {"Library.Read"}),
+    ("/v1/library/ct/codelists", "GET", {"Library.Read"}),
+    ("/v1/library/ct/codelist-terms", "GET", {"Library.Read"}),
+    ("/v1/library/unit-definitions", "GET", {"Library.Read"}),
 )

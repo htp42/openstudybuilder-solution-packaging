@@ -19,7 +19,9 @@
               item-title="project_number"
               return-object
               :rules="[formRules.required]"
+              variant="outlined"
               density="compact"
+              rounded="lg"
               clearable
               data-cy="project-id"
               @update:model-value="updateProject"
@@ -32,7 +34,9 @@
               :label="$t('StudyForm.project_name')"
               :model-value="project.name"
               disabled
-              variant="filled"
+              variant="outlined"
+              density="compact"
+              rounded="lg"
               hide-details
               data-cy="project-name"
             />
@@ -44,7 +48,9 @@
               :label="$t('StudyForm.brand_name')"
               :model-value="project.brand_name"
               disabled
-              variant="filled"
+              variant="outlined"
+              density="compact"
+              rounded="lg"
               hide-details
               data-cy="brand-name"
             />
@@ -67,7 +73,9 @@
                 (value) =>
                   formRules.max(value, appStore.userData.studyNumberLength),
               ]"
+              variant="outlined"
               density="compact"
+              rounded="lg"
               clearable
               data-cy="study-number"
             />
@@ -87,7 +95,9 @@
                     $t('StudyForm.one_of_two_error_message')
                   ),
               ]"
+              variant="outlined"
               density="compact"
+              rounded="lg"
               clearable
               data-cy="study-acronym"
             />
@@ -99,7 +109,9 @@
               :label="$t('StudyForm.study_id')"
               :value="studyId"
               disabled
-              variant="filled"
+              variant="outlined"
+              density="compact"
+              rounded="lg"
               hide-details
               data-cy="study-id"
             />

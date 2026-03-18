@@ -22,7 +22,12 @@ from clinical_mdr_api.tests.integration.utils.api import (
     inject_and_clear_db,
     inject_base_data,
 )
-from clinical_mdr_api.tests.integration.utils.utils import TestUtils
+from clinical_mdr_api.tests.integration.utils.utils import (
+    CDISC_LIBRARY_NAME,
+    CT_CATALOGUE_NAME,
+    SPONSOR_LIBRARY_NAME,
+    TestUtils,
+)
 from clinical_mdr_api.tests.utils.checks import assert_response_status_code
 
 log = logging.getLogger(__name__)
@@ -67,9 +72,9 @@ def test_data():
     inject_and_clear_db(db_name)
     inject_base_data(inject_unit_subset=False)
 
-    catalogue = "SDTM CT"
-    sponsor_library = "Sponsor"
-    cdisc_library = "CDISC"
+    catalogue = CT_CATALOGUE_NAME
+    sponsor_library = SPONSOR_LIBRARY_NAME
+    cdisc_library = CDISC_LIBRARY_NAME
 
     # Legacy test data for existing tests
     global sponsor_codelist_a
@@ -233,6 +238,8 @@ def test_data():
         approve=True,
     )
 
+    TestUtils.edit_library_editable(cdisc_library, is_editable=False)
+
     yield
 
 
@@ -309,7 +316,7 @@ def test_cdisc_terms_submission_value_rules(api_client):
     assert_response_status_code(response, 400)
     response_json = response.json()
     assert (
-        f"Term with UID '{cdisc_term_in_one.term_uid}' is a CDISC term. Cannot add a new submission value '{invalid_submission_value}'. All possible submission values are already defined."
+        f"Term with UID '{cdisc_term_in_one.term_uid}' belongs to a non-editable library. Cannot add a new submission value '{invalid_submission_value}'. All possible submission values are already defined."  # pylint: disable=line-too-long
         in response_json["message"]
     )
 
@@ -337,7 +344,7 @@ def test_cdisc_terms_submission_value_rules(api_client):
     assert_response_status_code(response, 400)
     response_json = response.json()
     assert (
-        f"Term with UID '{cdisc_term_in_both.term_uid}' is a CDISC term. Cannot add a new submission value '{invalid_submission_value}'. All possible submission values are already defined."
+        f"Term with UID '{cdisc_term_in_both.term_uid}' belongs to a non-editable library. Cannot add a new submission value '{invalid_submission_value}'. All possible submission values are already defined."  # pylint: disable=line-too-long
         in response_json["message"]
     )
 

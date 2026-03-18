@@ -18,7 +18,7 @@
           :text="$t('StudyActivityUpdateForms.no_requested_in_batch_info')"
         />
         <v-data-table
-          class="elevation-0"
+          class="elevation-0 table"
           :items="studyActivities"
           :headers="updateHeaders"
           :loading="loading"
@@ -99,7 +99,7 @@
                 <div class="text-nnTrueBlue">{{ statuses.RETIRED }}</div>
               </v-chip>
             </div>
-            <div v-else-if="getGroups(item).length === 1">
+            <div v-else-if="getGroups(item).length === 1" class="flow-row">
               <v-chip
                 color="red"
                 class="crossed-out"
@@ -110,19 +110,21 @@
                   {{ item.study_activity_group.activity_group_name }}
                 </div>
               </v-chip>
+
               <v-tooltip top>
                 <template #activator="{ props }">
-                  <v-icon
+                  <div
                     v-if="item.show_activity_group_in_protocol_flowchart"
                     v-bind="props"
-                    class="ml-2"
                   >
-                    mdi-eye-outline
-                  </v-icon>
+                    <v-icon>mdi-eye-outline</v-icon>
+                  </div>
                 </template>
                 <span>{{ $t('StudyActivityUpdateForms.visible_in_soa') }}</span>
               </v-tooltip>
-              <div class="ml-2 mr-8 mt-1">&#8594;</div>
+
+              <div>→</div>
+
               <v-chip color="green" density="compact" size="small">
                 <div class="text-nnTrueBlue">
                   {{
@@ -182,7 +184,10 @@
             <div
               v-if="
                 item.latest_activity.status === statuses.RETIRED ||
-                checkIfCurrentGroupingExist(item)
+                checkIfCurrentGroupingExist(item) ||
+                (getSubroups(item).length === 1 &&
+                  item.study_activity_subgroup.activity_subgroup_name ===
+                    getSubroups(item)[0].activity_subgroup_name)
               "
             >
               -
@@ -215,7 +220,7 @@
                 <div class="text-nnTrueBlue">{{ statuses.RETIRED }}</div>
               </v-chip>
             </div>
-            <div v-else-if="getSubroups(item).length === 1">
+            <div v-else-if="getSubroups(item).length === 1" class="flow-row">
               <v-chip
                 color="red"
                 class="crossed-out"
@@ -226,19 +231,21 @@
                   {{ item.study_activity_subgroup.activity_subgroup_name }}
                 </div>
               </v-chip>
+
               <v-tooltip top>
                 <template #activator="{ props }">
-                  <v-icon
+                  <div
                     v-if="item.show_activity_subgroup_in_protocol_flowchart"
                     v-bind="props"
-                    class="ml-2"
                   >
-                    mdi-eye-outline
-                  </v-icon>
+                    <v-icon>mdi-eye-outline</v-icon>
+                  </div>
                 </template>
                 <span>{{ $t('StudyActivityUpdateForms.visible_in_soa') }}</span>
               </v-tooltip>
-              <div class="ml-2 mr-8 mt-1">&#8594;</div>
+
+              <div>→</div>
+
               <v-chip color="green" density="compact" size="small">
                 <div class="text-nnTrueBlue">
                   {{ getSubroups(item)[0].activity_subgroup_name }}
@@ -592,15 +599,28 @@ async function submit() {
             type: 'success',
           })
         }
+        resetLoading.value += 1
         close()
       })
+  } else {
+    resetLoading.value += 1
   }
-  resetLoading.value += 1
 }
 </script>
 
 <style scoped lang="scss">
 .crossed-out {
   text-decoration: line-through;
+}
+.table {
+  border: solid gray 1px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+.flow-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
 }
 </style>

@@ -106,7 +106,7 @@ def test_post_create_activity(api_client):
     assert res["is_request_rejected"] is False
     assert res["contact_person"] is None
     assert res["reason_for_rejecting"] is None
-    assert res["requester_study_id"] is None
+    assert res["used_by_studies"] == []
     assert res["replaced_by_activity"] is None
 
 
@@ -151,7 +151,7 @@ def test_get_all_activities(api_client):
     assert res["items"][0]["is_request_rejected"] is False
     assert res["items"][0]["contact_person"] is None
     assert res["items"][0]["reason_for_rejecting"] is None
-    assert res["items"][0]["requester_study_id"] is None
+    assert res["items"][0]["used_by_studies"] == []
     assert res["items"][0]["replaced_by_activity"] is None
     assert res["items"][1]["uid"] == "activity_root2"
     assert res["items"][1]["name"] == "name2"
@@ -187,7 +187,7 @@ def test_get_all_activities(api_client):
     assert res["items"][1]["is_request_rejected"] is False
     assert res["items"][1]["contact_person"] is None
     assert res["items"][1]["reason_for_rejecting"] is None
-    assert res["items"][1]["requester_study_id"] is None
+    assert res["items"][1]["used_by_studies"] == []
     assert res["items"][1]["replaced_by_activity"] is None
     assert res["items"][2]["uid"] == "activity_root3"
     assert res["items"][2]["name"] == "name3"
@@ -223,7 +223,7 @@ def test_get_all_activities(api_client):
     assert res["items"][2]["is_request_rejected"] is False
     assert res["items"][2]["contact_person"] is None
     assert res["items"][2]["reason_for_rejecting"] is None
-    assert res["items"][2]["requester_study_id"] is None
+    assert res["items"][2]["used_by_studies"] == []
     assert res["items"][2]["replaced_by_activity"] is None
     assert res["items"][3]["uid"] == "Activity_000001"
     assert res["items"][3]["name"] == "new_name"
@@ -267,7 +267,7 @@ def test_get_all_activities(api_client):
     assert res["items"][3]["is_request_rejected"] is False
     assert res["items"][3]["contact_person"] is None
     assert res["items"][3]["reason_for_rejecting"] is None
-    assert res["items"][3]["requester_study_id"] is None
+    assert res["items"][3]["used_by_studies"] == []
     assert res["items"][3]["replaced_by_activity"] is None
 
 
@@ -314,7 +314,7 @@ def test_get_all_activities_from_a_given_activity_sub_group(api_client):
     assert res["items"][0]["is_request_rejected"] is False
     assert res["items"][0]["contact_person"] is None
     assert res["items"][0]["reason_for_rejecting"] is None
-    assert res["items"][0]["requester_study_id"] is None
+    assert res["items"][0]["used_by_studies"] == []
     assert res["items"][0]["replaced_by_activity"] is None
 
 
@@ -361,7 +361,7 @@ def test_get_all_activities_with_a_given_name(api_client):
     assert res["items"][0]["is_request_rejected"] is False
     assert res["items"][0]["contact_person"] is None
     assert res["items"][0]["reason_for_rejecting"] is None
-    assert res["items"][0]["requester_study_id"] is None
+    assert res["items"][0]["used_by_studies"] == []
     assert res["items"][0]["replaced_by_activity"] is None
 
 
@@ -408,7 +408,7 @@ def test_get_all_activities_from_a_given_activity_sub_group_using_name(api_clien
     assert res["items"][0]["is_request_rejected"] is False
     assert res["items"][0]["contact_person"] is None
     assert res["items"][0]["reason_for_rejecting"] is None
-    assert res["items"][0]["requester_study_id"] is None
+    assert res["items"][0]["used_by_studies"] == []
     assert res["items"][0]["replaced_by_activity"] is None
 
 
@@ -455,7 +455,7 @@ def test_get_all_activities_from_a_given_activity_group_using_name(api_client):
     assert res["items"][0]["is_request_rejected"] is False
     assert res["items"][0]["contact_person"] is None
     assert res["items"][0]["reason_for_rejecting"] is None
-    assert res["items"][0]["requester_study_id"] is None
+    assert res["items"][0]["used_by_studies"] == []
     assert res["items"][0]["replaced_by_activity"] is None
 
 
@@ -510,7 +510,7 @@ def test_post_approve_activity(api_client):
     assert res["is_request_rejected"] is False
     assert res["contact_person"] is None
     assert res["reason_for_rejecting"] is None
-    assert res["requester_study_id"] is None
+    assert res["used_by_studies"] == []
     assert res["replaced_by_activity"] is None
 
 
@@ -565,7 +565,7 @@ def test_post_versions_activity(api_client):
     assert res["is_request_rejected"] is False
     assert res["contact_person"] is None
     assert res["reason_for_rejecting"] is None
-    assert res["requester_study_id"] is None
+    assert res["used_by_studies"] == []
     assert res["replaced_by_activity"] is None
 
 
@@ -612,7 +612,7 @@ def test_delete_activations_activity(api_client):
     assert res["is_request_rejected"] is False
     assert res["contact_person"] is None
     assert res["reason_for_rejecting"] is None
-    assert res["requester_study_id"] is None
+    assert res["used_by_studies"] == []
     assert res["replaced_by_activity"] is None
 
 
@@ -659,7 +659,7 @@ def test_post_activations_activity(api_client):
     assert res["is_request_rejected"] is False
     assert res["contact_person"] is None
     assert res["reason_for_rejecting"] is None
-    assert res["requester_study_id"] is None
+    assert res["used_by_studies"] == []
     assert res["replaced_by_activity"] is None
 
 

@@ -143,6 +143,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  usedStudies: {
+    type: Array,
+    default: () => [],
+  },
 })
 
 function showTooltip(value) {
@@ -376,6 +380,14 @@ const organizedRows = computed(() => {
       key: 'modified_by',
       label: t('_global.modified_by') || 'Modified by',
       value: props.activity.modified_by || '-',
+    })
+  }
+
+  if (props.usedStudies) {
+    fields.push({
+      key: 'used_studies',
+      label: t('StudyTable.id'),
+      value: props.usedStudies.join(', ') || '-',
     })
   }
 

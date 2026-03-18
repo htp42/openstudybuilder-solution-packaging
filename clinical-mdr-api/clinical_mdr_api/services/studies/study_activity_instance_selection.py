@@ -165,9 +165,10 @@ class StudyActivityInstanceSelectionService(
         current_activity_instance_version: str | None = None,
     ) -> ActivityInstanceAR:
         is_validation_needed: bool = True
+        activity_instance_ar: ActivityInstanceAR
         # If ActivityInstance wasn't changed we should fetch it in the version it was selected by previous StudyActivityInstance
         if activity_instance_uid == current_activity_instance_uid:
-            activity_instance_ar: ActivityInstanceAR = (
+            activity_instance_ar = (
                 self._repos.activity_instance_repository.find_by_uid_2(
                     activity_instance_uid,
                     version=current_activity_instance_version,
@@ -193,7 +194,7 @@ class StudyActivityInstanceSelectionService(
                 LibraryItemStatus.RETIRED,
             ]
             and is_validation_needed,
-            msg=f"There is no approved Activity Instance with UID '{activity_instance_uid}'.",
+            msg=f"There is no approved Activity Instance with name '{activity_instance_ar.name}'.",
         )
 
         if (

@@ -16,7 +16,7 @@ Feature: Studies - Define Study - Study Structure - Study Epochs
         Given The test study '/study_structure/epochs' page is opened
         Then A table is visible with following options
             | options     |
-            | Select rows |
+            | select-rows |
 
     @smoke_test
     Scenario: [Table][Columns][Names] User must be able to see the Study Visit table with following columns

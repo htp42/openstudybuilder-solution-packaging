@@ -1,5 +1,6 @@
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
 const { getCurrStudyUid } = require("../../support/helper_functions");
+const { getShortUniqueId } = require("../../support/helper_functions");
 
 let cohortName, cohortCode, cohortShortName
 let cohortDescription  = 'E2E Test Cohort'
@@ -15,7 +16,7 @@ Then('Add cohort button is clicked', () => cy.clickButton('add-study-cohort'))
 When('First available study arm is selected', () => cy.selectFirstMultipleSelect('study-arm'))
 
 When('The form for new study cohort is filled', () => {
-    cohortName =  `Cohort${Date.now()}`
+    cohortName =  `Cohort${getShortUniqueId()}`
     cohortCode = Math.floor(Math.random() * 100);
     cohortShortName =  `C${cohortCode}`
     fillCohortData(cohortName, cohortShortName, cohortCode)

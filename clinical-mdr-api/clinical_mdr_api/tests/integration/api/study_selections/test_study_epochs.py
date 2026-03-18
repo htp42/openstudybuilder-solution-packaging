@@ -10,6 +10,7 @@ Tests for /studies/{study_uid}/study-epochs endpoints
 # which pylint interprets as unused arguments
 
 from datetime import datetime, timezone
+from typing import Any
 from unittest import mock
 
 import pytest
@@ -45,6 +46,7 @@ epoch_subtype2_uid: str
 
 initial_ct_term_study_standard_test: ct_term.CTTerm
 epoch_epoch: ct_term.CTTerm
+test_data_dict: dict[str, Any]
 
 
 @pytest.fixture(scope="module")
@@ -59,7 +61,9 @@ def test_data():
     """Initialize test data"""
     db_name = "studyepochapi"
     inject_and_clear_db(db_name)
-    inject_base_data()
+    global test_data_dict
+    _, test_data_dict = inject_base_data()
+
     global epoch_subtype_uid
     global epoch_subtype2_uid
     global study
@@ -150,6 +154,17 @@ def test_data():
     yield
 
 
+@pytest.mark.order("last")
+def test_integrity_checks_for_all_studies(api_client):
+    """
+    Test integrity checks for all available studies in the database.
+
+    This test should always be executed at the END to check the health of the remaining database.
+    It validates that all studies in the database pass integrity checks after all other tests have run.
+    """
+    TestUtils.run_integrity_checks_for_all_studies(api_client)
+
+
 def test_epoch_modify_actions_on_locked_study(api_client):
     global study_epoch_uid
     response = api_client.post(
@@ -181,7 +196,12 @@ def test_epoch_modify_actions_on_locked_study(api_client):
     # Lock
     response = api_client.post(
         f"/studies/{study.uid}/locks",
-        json={"change_description": "Lock 1"},
+        json={
+            "change_description": "Lock 1",
+            "reason_for_change_uid": test_data_dict["reason_for_lock_terms"][
+                0
+            ].term_uid,
+        },
     )
     assert_response_status_code(response, 201)
 
@@ -244,8 +264,16 @@ def test_study_epoch_with_study_epoch_subtype_relationship(api_client):
     assert res == [epoch_subtype_uid]
 
     # Unlock -- Study remain unlocked
-    response = api_client.delete(f"/studies/{study.uid}/locks")
-    assert_response_status_code(response, 200)
+    response = api_client.post(
+        f"/studies/{study.uid}/unlocks",
+        json={
+            "change_description": "Unlock",
+            "reason_for_change_uid": test_data_dict["reason_for_unlock_terms"][
+                0
+            ].term_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
 
     # edit study epoch
     response = api_client.patch(

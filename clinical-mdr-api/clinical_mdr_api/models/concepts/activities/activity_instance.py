@@ -440,6 +440,7 @@ class SimpleActivityForActivityInstance(BaseModel):
 
 
 class SimpleActivityItemClassForActivityInstance(BaseModel):
+    uid: Annotated[str, Field()]
     name: Annotated[str, Field()]
     order: Annotated[int, Field()]
     role_name: Annotated[str, Field()]
@@ -509,6 +510,7 @@ class ActivityInstanceOverview(BaseModel):
                     ct_terms=terms,
                     unit_definitions=units,
                     activity_item_class=SimpleActivityItemClassForActivityInstance(
+                        uid=activity_item["activity_item_class_uid"],
                         name=aic_name,
                         order=aic_order,
                         role_name=activity_item.get("activity_item_class_role"),

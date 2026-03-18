@@ -55,9 +55,10 @@ Feature: Studies - Define Study - Study Activities - Schedule of Activities - De
         When Add footnote button is available in the detailed SoA
         Then A table is visible with following options
             | options                    |
-            | Select filters             |
-            | Show version history       |
-            | Search                     |
+            | add-study-footnote         |
+            | filters-button             |
+            | History                    |
+            | search-field               |
             
     @smoke_test
     Scenario: [Table][Columns][Names] User must be able to see the Footnotes table with specified headers
@@ -80,6 +81,7 @@ Feature: Studies - Define Study - Study Activities - Schedule of Activities - De
 
     Scenario: [Table][Structure][Activity][Detailed SoA] User must be able to view the study activities in the detailed SoA table matrix
         When The test study '/activities/soa' page is opened
+        And Detailed SoA table is loaded
         And User expand table
         Then Activity SoA group, group, subgroup and name are visible in the detailed view
 
@@ -105,6 +107,7 @@ Feature: Studies - Define Study - Study Activities - Schedule of Activities - De
 
     Scenario: [Table][Structure][Activity][Protocol SoA] User must be able to view the study activities in the protocol SoA table matrix
         When The test study '/activities/soa' page is opened
+        And Detailed SoA table is loaded
         And User expand table
         And User clicks eye icon on activity level
         And User clicks eye icon on SoA group level for 'INFORMED CONSENT'
@@ -148,6 +151,7 @@ Feature: Studies - Define Study - Study Activities - Schedule of Activities - De
         And User switches to the 'protocol' view
         Then Group is visible in the protocol SoA
         And User switches to the 'detailed' view
+        And Detailed SoA table is loaded
         And User expand table
         And User clicks eye icon on group level
         And User waits for 1 seconds
@@ -165,6 +169,7 @@ Feature: Studies - Define Study - Study Activities - Schedule of Activities - De
         And User switches to the 'protocol' view
         Then Subgroup is visible in the protocol SoA
         And User switches to the 'detailed' view
+        And Detailed SoA table is loaded
         And User expand table
         And User clicks eye icon on subgroup level
         And User waits for 1 seconds
@@ -183,6 +188,7 @@ Feature: Studies - Define Study - Study Activities - Schedule of Activities - De
         And User waits for the protocol SoA table to load
         Then Activity is visible in the protocol SoA
         And User switches to the 'detailed' view
+        And Detailed SoA table is loaded
         And User expand table
         And User clicks eye icon on activity level
         And User waits for 1 seconds
@@ -198,6 +204,7 @@ Feature: Studies - Define Study - Study Activities - Schedule of Activities - De
     @smoke_test
     Scenario: [Actions][Add Activity][From Library] User must be able to add Study Activity from Detailed SoA selecting From Library
         And The test study '/activities/soa' page is opened
+        And Detailed SoA table is loaded
         And User expand table
         When Action 'Add activity' is selected for study activity
         And Activity from library is selected
@@ -205,6 +212,7 @@ Feature: Studies - Define Study - Study Activities - Schedule of Activities - De
         And User selects first available activity and SoA group
         And Form save button is clicked
         Then The pop up displays 'Study activity added'
+        And Detailed SoA table is loaded
         And User expand table
         When User search added activity in detailed SoA
         Then The Activity is visible in the SoA
@@ -221,14 +229,18 @@ Feature: Studies - Define Study - Study Activities - Schedule of Activities - De
         And The user goes through selection from library form
         And Form save button is clicked
         And The page 'activities/soa' is opened for selected study
+        And Detailed SoA table is loaded
         And User expand table
+        And User intercepts available studies request
         And Action 'Add activity' is selected for first study activity
+        And User waits for available studies request
         And Activity from studies is selected
-        And Study with id value 'CDISC DEV-9876' is selected
+        And User selects select study 'CDISC DEV-9876'
         And Form continue button is clicked
         And User selects first available activity
         And Form save button is clicked
         Then The pop up displays 'Study activity added'
+        And Detailed SoA table is loaded
         And User expand table
         When User search added activity in detailed SoA
         Then The Activity is visible in the SoA
@@ -245,21 +257,25 @@ Feature: Studies - Define Study - Study Activities - Schedule of Activities - De
         And The user goes through selection from library form
         And Form save button is clicked
         And The page 'activities/soa' is opened for selected study
+        And Detailed SoA table is loaded
         And User expand table
+        And User intercepts available studies request
         And Action 'Add activity' is selected for first study activity
+        And User waits for available studies request
         And Activity from studies is selected
-        And Type study acronym value 'E2E Main Test Study'
-        And Study with acronym value 'E2E Main Test Study' is selected
+        And User selects select study 'E2E Main Test Study'
         And Form continue button is clicked
         And User selects first available activity
         And Form save button is clicked
         Then The pop up displays 'Study activity added'
+        And Detailed SoA table is loaded
         And User expand table
         When User search added activity in detailed SoA
         Then The Activity is visible in the SoA
 
     Scenario: [Actions][Remove Activity] User must be able to remove Study Activity from Detailed SoA
         And The test study '/activities/soa' page is opened
+        And Detailed SoA table is loaded
         And User expand table
         And User search study activity
         When Action 'Remove Activity' is selected for study activity
@@ -296,6 +312,7 @@ Feature: Studies - Define Study - Study Activities - Schedule of Activities - De
         And [API] Activity is added to the study
         And Activity, Group And Subgroup names are fetch to be used in SoA
         And The test study '/activities/soa' page is opened
+        And Detailed SoA table is loaded
         And User expand table
         And User search study activity
         When Action 'Exchange Activity' is selected for study activity
@@ -303,6 +320,7 @@ Feature: Studies - Define Study - Study Activities - Schedule of Activities - De
         And The user goes through selection from library form
         And Form save button is clicked
         And The page is reloaded
+        And Detailed SoA table is loaded
         And User expand table
         And User search for new study activity
         Then The newly selected activity replaces previous activity in study
@@ -320,6 +338,7 @@ Feature: Studies - Define Study - Study Activities - Schedule of Activities - De
         And Form save button is clicked
         And The form is no longer available
         And The test study '/activities/soa' page is opened
+        And Detailed SoA table is loaded
         And User expand table
         And User search study activity placeholder
         Then Row containing submitted placeholder is highlighted with yellow color
@@ -334,6 +353,7 @@ Feature: Studies - Define Study - Study Activities - Schedule of Activities - De
         And Form save button is clicked
         And The form is no longer available
         And The test study '/activities/soa' page is opened
+        And Detailed SoA table is loaded
         And User expand table
         And User search study activity placeholder
         Then Row containing unsubmitted placeholder is highlighted with orange color
@@ -375,6 +395,7 @@ Feature: Studies - Define Study - Study Activities - Schedule of Activities - De
     Scenario: User must be able to remove selection of activity on the form for bulk edit in Detailed SoA
         Given At least '2' activites are present in the selected study
         And The test study '/activities/soa' page is opened
+        And Detailed SoA table is loaded
         And User expand table
         When User search study activity
         And Activity checkbox is checked for 0 activity on the list
@@ -394,6 +415,7 @@ Feature: Studies - Define Study - Study Activities - Schedule of Activities - De
 
     Scenario: [Bulk][Edit] User must be able to open bulk edit activities form on Detailed SoA
         And The test study '/activities/soa' page is opened
+        And Detailed SoA table is loaded
         And User expand table
         When User search for 0 activity on the list
         And Activity checkbox is checked for 0 activity on the list
@@ -402,6 +424,7 @@ Feature: Studies - Define Study - Study Activities - Schedule of Activities - De
 
     Scenario: [Bulk][Mandory fields] User must not be able to bulk edit without selecting Activity Group and Visit
         And The test study '/activities/soa' page is opened
+        And Detailed SoA table is loaded
         And User expand table
         When User search for 0 activity on the list
         And Activity checkbox is checked for 0 activity on the list
@@ -411,6 +434,7 @@ Feature: Studies - Define Study - Study Activities - Schedule of Activities - De
 
     Scenario: [Bulk][Delete] User must be able to bulk delete activities on Detailed SoA
         And The test study '/activities/soa' page is opened
+        And Detailed SoA table is loaded
         And User expand table
         When User search for 0 activity on the list
         And Activity checkbox is checked for 0 activity on the list
@@ -434,9 +458,16 @@ Feature: Studies - Define Study - Study Activities - Schedule of Activities - De
         And [API] Activity is added to the study
         And Activity name is added to the list
         And The test study '/activities/soa' page is opened
+        And Detailed SoA table is loaded
         And User expand table
         When The user enables the Reorder Activities function for acitivities in the same flowchart group
+        And User waits for 2 seconds
+        And User intercepts reorder activities request
         And The user updates the order of activities
+        And User waits for 1 seconds
+        And User clicks Finish reordering button
+        And User waits for reorder activities request
+        And Detailed SoA table is loaded
         Then The new order of activites is visible
 
     Scenario: [New study] User must be able to see buttons for adding new activity or visit when Study is empty
@@ -462,36 +493,42 @@ Feature: Studies - Define Study - Study Activities - Schedule of Activities - De
         And [API] Activity is added to the study
         And Activity, Group And Subgroup names are fetch to be used in SoA
         And The test study '/activities/soa' page is opened
+        And Detailed SoA table is loaded
         And User expand table
         When User search study activity
         Then Activity is found in table
 
     Scenario: [Table][Search][Case sensitivity] User must be able to search study activity ingnoring case sensitivity
         And The test study '/activities/soa' page is opened
+        And Detailed SoA table is loaded
         And User expand table
         When User search study activity in lowercase
         Then Activity is found in table
 
     Scenario: [Table][Search][Partial text] User must be able to search activity by only inputing 3 characters
         And The test study '/activities/soa' page is opened
+        And Detailed SoA table is loaded
         And User expand table
         When User search study activity by partial name
         Then Activity is found in table
 
     Scenario: [Table][Search][Negative] User must be able to search non-existing study activity
         Given The test study '/activities/soa' page is opened
+        And Detailed SoA table is loaded
         And User expand table
         When User search for non-existing activity
         Then No activities are found
 
     Scenario: [Table][Search][Negative] User must not be able to search activity by activity subgroup
         Given The test study '/activities/soa' page is opened
+        And Detailed SoA table is loaded
         And User expand table
         When User search study activity by subgroup
         Then No activities are found
 
     Scenario: [Table][Search][Negative] User must not be able to search activity by activity group
         Given The test study '/activities/soa' page is opened
+        And Detailed SoA table is loaded
         And User expand table
         When User search study activity by group
         Then No activities are found

@@ -804,8 +804,10 @@ class StudyVisitService(StudySelectionMixin):
             msg=f"There's already and exists an Unscheduled Visit in Study {visit_vo.study_uid}",
         )
 
-    def _get_sponsor_library_vo(self):
-        lib = self._repos.library_repository.find_by_name(name="Sponsor")
+    def _get_sponsor_library_vo(
+        self, library_name: str = settings.sponsor_library_name
+    ):
+        lib = self._repos.library_repository.find_by_name(name=library_name)
         return LibraryVO.from_input_values_2(
             library_name=lib.library_name,
             is_library_editable_callback=lambda _: lib.is_editable,

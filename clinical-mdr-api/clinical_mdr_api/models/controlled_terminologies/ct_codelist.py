@@ -4,6 +4,7 @@ from typing import Annotated, Any, Self
 from pydantic import Field
 
 from clinical_mdr_api.domains.controlled_terminologies.ct_codelist_attributes import (
+    DEFAULT_CODELIST_TYPE,
     CTCodelistAttributesAR,
 )
 from clinical_mdr_api.domains.controlled_terminologies.ct_codelist_name import (
@@ -49,6 +50,7 @@ class CTCodelist(BaseModel):
             definition=ct_codelist_attributes_ar.ct_codelist_vo.definition,
             extensible=ct_codelist_attributes_ar.ct_codelist_vo.extensible,
             is_ordinal=ct_codelist_attributes_ar.ct_codelist_vo.is_ordinal,
+            codelist_type=ct_codelist_attributes_ar.ct_codelist_vo.codelist_type,
             library_name=Library.from_library_vo(
                 ct_codelist_attributes_ar.library
             ).name,
@@ -93,6 +95,8 @@ class CTCodelist(BaseModel):
 
     is_ordinal: Annotated[bool, Field()]
 
+    codelist_type: Annotated[str, Field()] = DEFAULT_CODELIST_TYPE
+
     sponsor_preferred_name: Annotated[str, Field()]
 
     template_parameter: Annotated[bool, Field()]
@@ -125,6 +129,7 @@ class CTCodelistCreateInput(PostInputModel):
     definition: Annotated[str, Field(min_length=1)]
     extensible: Annotated[bool, Field()]
     is_ordinal: Annotated[bool, Field()]
+    codelist_type: Annotated[str, Field()] = DEFAULT_CODELIST_TYPE
     sponsor_preferred_name: Annotated[str, Field(min_length=1)]
     template_parameter: Annotated[bool, Field()]
     parent_codelist_uid: Annotated[str | None, Field(min_length=1)] = None
@@ -257,6 +262,13 @@ class CTCodelistPaired(BaseModel):
 class CTCodelistPairedInput(PostInputModel):
     paired_codes_codelist_uid: Annotated[str | None, Field(min_length=1)] = None
     paired_names_codelist_uid: Annotated[str | None, Field(min_length=1)] = None
+
+
+class CTCodelistCompact(BaseModel):
+    uid: Annotated[str, Field()]
+    sponsor_preferred_name: Annotated[str, Field()]
+    submission_value: Annotated[str, Field()]
+    library_name: Annotated[str, Field()]
 
 
 class CTCodelistTerm(BaseModel):

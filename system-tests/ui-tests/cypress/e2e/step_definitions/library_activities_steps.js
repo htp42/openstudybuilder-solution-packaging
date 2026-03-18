@@ -3,6 +3,7 @@ import { group_uid, subgroup_uid } from '../../support/api_requests/library_acti
 import { generateShortUniqueName } from "../../support/helper_functions";
 
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
+const { getShortUniqueId } = require("../../support/helper_functions");
 
 export let activityName, synonym, currentSubgroupName, currentGroupName
 const nciconceptid = "NCIID", nciconceptname = "NCINAME", abbreviation = "ABB", definition = "DEF"
@@ -79,7 +80,7 @@ Then('The default value for Data collection must be checked', () => {
 
 When('The user enters a value for Activity name', () => cy.fillInput('activityform-activity-name-field', "TEST"))
 
-When('The user enters unique value for Activity name', () => cy.fillInput('activityform-activity-name-field', Date.now()))
+When('The user enters unique value for Activity name', () => cy.fillInput('activityform-activity-name-field', getShortUniqueId()))
 
 Then('The field for Sentence case name will be defaulted to the lower case value of the Activity name', () => {
     cy.get('[data-cy$="activity-name-field"] input').then(($input) => {
@@ -97,6 +98,12 @@ When('The activity edition form is filled with data', () => editActivity())
 Then('Message confiriming activity creation is displayed', () => cy.checkSnackbarMessage('Activity created'))
 
 Then('User waits for activity filter request to finish', () => cy.wait('@getData', { timeout: 20000 }))
+
+Then('[API] Activity name is fetched and assigned to variable', () => cy.getActivityNameByUid().then(name => activityName = name))
+
+Then('[API] Activity is updated', () => cy.updateActivity(activityName))
+
+Then('[API] Activity is updated with new name', () => cy.updateActivity(`New Activity name ${getShortUniqueId()}`))
 
 Then('[API] Group and subgroup are created and approved to be used for activity creation', () => createAndApproveGroupAndSubgroup())
 
@@ -145,9 +152,9 @@ When('[API] Activity is reactivated', () => cy.reactivateActivity())
 
 When('[API] Activity new version is created', () => cy.activityNewVersion())
 
-Given('[API] First activity for search test is created', () => createActivityViaApiSimplified(`SearchTest${Date.now()}`))
+Given('[API] First activity for search test is created', () => createActivityViaApiSimplified(`SearchTest${getShortUniqueId()}`))
 
-Given('[API] Second activity for search test is created', () => cy.createActivity(`SearchTest${Date.now()}`))
+Given('[API] Second activity for search test is created', () => cy.createActivity(`SearchTest${getShortUniqueId()}`))
 
 When('[API] Activity is created', () => cy.createActivity())
 
@@ -181,23 +188,16 @@ Then('The Multiple instance allowed field is set to {string}', (expected) => {
 });
 
 When('The current activity group is edited', () => {
-    cy.groupNewVersion(group_uid)
-    cy.intercept('**/subgroups?**').as('subgroups')
-    cy.visit(`/library/activities/activity-groups/${group_uid}/overview`)
-    cy.wait('@subgroups').then((request) => {
-        currentSubgroupName = request.response.body.items[0].name
-        cy.contains('.v-card-title button', 'Edit').click()
-        cy.fillInput('groupform-activity-group-field', `NewName ${Date.now()}`)
-        cy.fillInput('groupform-change-description-field', 'DefChange Desc')
-    })
+    cy.fillInput('groupform-activity-group-field', `NewName ${getShortUniqueId()}`)
+    cy.fillInput('groupform-change-description-field', 'DefChange Desc')
 })
 
 Then('The activity subgroups previously linked to that group remain linked', () => {
-    cy.tableContains(currentSubgroupName)
+    cy.tableContains(apiSubgroupName)
 })
 
 When('The current activity subgroup is edited', () => {
-    cy.fillInput('groupform-activity-group-field', `NewName ${Date.now()}`)
+    cy.fillInput('groupform-activity-group-field', `NewName ${getShortUniqueId()}`)
     cy.fillInput('groupform-change-description-field', 'DefChange Desc')
     cy.fillInput('groupform-definition-field', 'Def')
 })
@@ -206,13 +206,13 @@ Then('The activity groups previously linked to that subgroup remain linked', () 
 
 function fillNewActivityData(fillOptionalData = false, customGroup = '') {
     cy.intercept('POST', '/api/concepts/activities/activities').as('getData')
-    activityName = `Activity${Date.now()}`
+    activityName = `Activity${getShortUniqueId()}`
     if (customGroup) cy.get('[data-cy="activityform-activity-group-dropdown"] input').type(customGroup)
     cy.selectFirstVSelect('activityform-activity-group-dropdown')
     cy.selectFirstVSelect('activityform-activity-subgroup-dropdown')
     cy.fillInput('activityform-activity-name-field', activityName)
     if (fillOptionalData) {
-        synonym = `Synonym${Date.now()}`
+        synonym = `Synonym${getShortUniqueId()}`
         cy.fillInputNew('activityform-synonyms-field', synonym)
         cy.fillInput('activityform-nci-concept-id-field', nciconceptid)
         cy.fillInput('activityform-nci-concept-name-field', nciconceptname)

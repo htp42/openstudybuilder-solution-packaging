@@ -1,4 +1,5 @@
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
+const { getShortUniqueId } = require("../../support/helper_functions");
 
 let formName, itemName, itemGroupName
 
@@ -31,20 +32,20 @@ Then('The system is not showing Translations section for the CRF Items', () => {
 })
 
 When('The new CRF Form is created with description providied', () => {
-    formName = `CRFFNAME ${Date.now()}`
+    formName = `CRFFNAME ${getShortUniqueId()}`
     cy.clickButton('add-crf-form')
     cy.fillInput('form-oid', 'CRFNOID')
     cy.fillInput('form-oid-name', formName)
 })
 
 When('The new CRF Item Group is created with description providied', () => {
-    itemGroupName = `CRFITGNAME ${Date.now()}`
+    itemGroupName = `CRFITGNAME ${getShortUniqueId()}`
     cy.clickButton('add-crf-item-group')
     cy.fillInput('item-group-name', itemGroupName)
 })
 
 When('The new CRF Item is created with description providied', () => {
-    itemName = `CRFINAME ${Date.now()}`
+    itemName = `CRFINAME ${getShortUniqueId()}`
     cy.clickButton('add-crf-item')
     cy.fillInput('item-name', itemName)
     cy.selectVSelect('item-data-type', 'INTEGER')

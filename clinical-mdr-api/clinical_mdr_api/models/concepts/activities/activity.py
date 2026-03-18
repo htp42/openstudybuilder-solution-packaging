@@ -206,13 +206,11 @@ class Activity(ActivityBase):
             json_schema_extra={"nullable": True, "remove_from_wildcard": True},
         ),
     ] = None
-    requester_study_id: Annotated[
-        str | None,
-        Field(
-            description="The study_id of the Study which requested an Activity request",
-            json_schema_extra={"nullable": True, "remove_from_wildcard": True},
-        ),
-    ] = None
+    used_by_studies: list[str] = Field(
+        description="The list of study ids which currently uses given Activity Request",
+        json_schema_extra={"remove_from_wildcard": True},
+        default_factory=list,
+    )
     replaced_by_activity: Annotated[
         str | None,
         Field(
@@ -300,7 +298,7 @@ class Activity(ActivityBase):
             is_request_rejected=activity_ar.concept_vo.is_request_rejected,
             reason_for_rejecting=activity_ar.concept_vo.reason_for_rejecting,
             contact_person=activity_ar.concept_vo.contact_person,
-            requester_study_id=activity_ar.concept_vo.requester_study_id,
+            used_by_studies=activity_ar.concept_vo.used_by_studies,
             replaced_by_activity=activity_ar.concept_vo.replaced_by_activity,
             is_data_collected=(
                 activity_ar.concept_vo.is_data_collected
@@ -368,7 +366,7 @@ class Activity(ActivityBase):
             is_request_rejected=activity_ar.concept_vo.is_request_rejected,
             reason_for_rejecting=activity_ar.concept_vo.reason_for_rejecting,
             contact_person=activity_ar.concept_vo.contact_person,
-            requester_study_id=activity_ar.concept_vo.requester_study_id,
+            used_by_studies=activity_ar.concept_vo.used_by_studies,
             replaced_by_activity=activity_ar.concept_vo.replaced_by_activity,
             is_data_collected=(
                 activity_ar.concept_vo.is_data_collected

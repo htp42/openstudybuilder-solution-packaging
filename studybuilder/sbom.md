@@ -5,9 +5,9 @@
 |--------------------------------------------------|----------|----------------------------------------------------------|
 | @babel/helper-string-parser                      | 7.27.1   | [MIT](#@babel/helper-string-parser)                      |
 | @babel/helper-validator-identifier               | 7.28.5   | [MIT](#@babel/helper-validator-identifier)               |
-| @babel/parser                                    | 7.28.5   | [MIT](#@babel/parser)                                    |
+| @babel/parser                                    | 7.29.0   | [MIT](#@babel/parser)                                    |
 | @babel/runtime                                   | 7.28.6   | [MIT](#@babel/runtime)                                   |
-| @babel/types                                     | 7.28.5   | [MIT](#@babel/types)                                     |
+| @babel/types                                     | 7.29.0   | [MIT](#@babel/types)                                     |
 | @fast-csv/format                                 | 4.3.5    | [MIT](#@fast-csv/format)                                 |
 | @fast-csv/parse                                  | 4.3.6    | [MIT](#@fast-csv/parse)                                  |
 | @formkit/drag-and-drop                           | 0.5.3    | [MIT](#@formkit/drag-and-drop)                           |
@@ -19,35 +19,35 @@
 | @jaames/iro                                      | 5.5.2    | [MPL-2.0](#@jaames/iro)                                  |
 | @jridgewell/sourcemap-codec                      | 1.5.5    | [MIT](#@jridgewell/sourcemap-codec)                      |
 | @kurkle/color                                    | 0.3.4    | [MIT](#@kurkle/color)                                    |
-| @microsoft/applicationinsights-analytics-js      | 3.3.10   | [MIT](#@microsoft/applicationinsights-analytics-js)      |
-| @microsoft/applicationinsights-cfgsync-js        | 3.3.10   | [MIT](#@microsoft/applicationinsights-cfgsync-js)        |
-| @microsoft/applicationinsights-channel-js        | 3.3.10   | [MIT](#@microsoft/applicationinsights-channel-js)        |
-| @microsoft/applicationinsights-clickanalytics-js | 3.3.10   | [MIT](#@microsoft/applicationinsights-clickanalytics-js) |
-| @microsoft/applicationinsights-common            | 3.3.10   | [MIT](#@microsoft/applicationinsights-common)            |
-| @microsoft/applicationinsights-core-js           | 3.3.10   | [MIT](#@microsoft/applicationinsights-core-js)           |
-| @microsoft/applicationinsights-dependencies-js   | 3.3.10   | [MIT](#@microsoft/applicationinsights-dependencies-js)   |
-| @microsoft/applicationinsights-properties-js     | 3.3.10   | [MIT](#@microsoft/applicationinsights-properties-js)     |
+| @microsoft/applicationinsights-analytics-js      | 3.3.11   | [MIT](#@microsoft/applicationinsights-analytics-js)      |
+| @microsoft/applicationinsights-cfgsync-js        | 3.3.11   | [MIT](#@microsoft/applicationinsights-cfgsync-js)        |
+| @microsoft/applicationinsights-channel-js        | 3.3.11   | [MIT](#@microsoft/applicationinsights-channel-js)        |
+| @microsoft/applicationinsights-clickanalytics-js | 3.3.11   | [MIT](#@microsoft/applicationinsights-clickanalytics-js) |
+| @microsoft/applicationinsights-common            | 3.3.11   | [MIT](#@microsoft/applicationinsights-common)            |
+| @microsoft/applicationinsights-core-js           | 3.3.11   | [MIT](#@microsoft/applicationinsights-core-js)           |
+| @microsoft/applicationinsights-dependencies-js   | 3.3.11   | [MIT](#@microsoft/applicationinsights-dependencies-js)   |
+| @microsoft/applicationinsights-properties-js     | 3.3.11   | [MIT](#@microsoft/applicationinsights-properties-js)     |
 | @microsoft/applicationinsights-shims             | 3.0.1    | [MIT](#@microsoft/applicationinsights-shims)             |
-| @microsoft/applicationinsights-web               | 3.3.10   | [MIT](#@microsoft/applicationinsights-web)               |
+| @microsoft/applicationinsights-web               | 3.3.11   | [MIT](#@microsoft/applicationinsights-web)               |
 | @microsoft/dynamicproto-js                       | 2.0.3    | [MIT](#@microsoft/dynamicproto-js)                       |
-| @nevware21/ts-async                              | 0.5.4    | [MIT](#@nevware21/ts-async)                              |
-| @nevware21/ts-utils                              | 0.12.5   | [MIT](#@nevware21/ts-utils)                              |
+| @nevware21/ts-async                              | 0.5.5    | [MIT](#@nevware21/ts-async)                              |
+| @nevware21/ts-utils                              | 0.12.6   | [MIT](#@nevware21/ts-utils)                              |
 | @pkgjs/parseargs                                 | 0.11.0   | [MIT](#@pkgjs/parseargs)                                 |
 | @types/lodash.merge                              | 4.6.9    | [MIT](#@types/lodashmerge)                               |
-| @types/lodash                                    | 4.17.23  | [MIT](#@types/lodash)                                    |
+| @types/lodash                                    | 4.17.24  | [MIT](#@types/lodash)                                    |
 | @types/node                                      | 14.18.63 | [MIT](#@types/node)                                      |
 | @types/trusted-types                             | 2.0.7    | [MIT](#@types/trusted-types)                             |
-| @vue/compiler-core                               | 3.5.24   | [MIT](#@vue/compiler-core)                               |
-| @vue/compiler-dom                                | 3.5.24   | [MIT](#@vue/compiler-dom)                                |
-| @vue/compiler-sfc                                | 3.5.24   | [MIT](#@vue/compiler-sfc)                                |
-| @vue/compiler-ssr                                | 3.5.24   | [MIT](#@vue/compiler-ssr)                                |
+| @vue/compiler-core                               | 3.5.29   | [MIT](#@vue/compiler-core)                               |
+| @vue/compiler-dom                                | 3.5.29   | [MIT](#@vue/compiler-dom)                                |
+| @vue/compiler-sfc                                | 3.5.29   | [MIT](#@vue/compiler-sfc)                                |
+| @vue/compiler-ssr                                | 3.5.29   | [MIT](#@vue/compiler-ssr)                                |
 | @vue/devtools-api                                | 6.6.4    | [MIT](#@vue/devtools-api)                                |
-| @vue/reactivity                                  | 3.5.24   | [MIT](#@vue/reactivity)                                  |
-| @vue/runtime-core                                | 3.5.24   | [MIT](#@vue/runtime-core)                                |
-| @vue/runtime-dom                                 | 3.5.24   | [MIT](#@vue/runtime-dom)                                 |
-| @vue/server-renderer                             | 3.5.24   | [MIT](#@vue/server-renderer)                             |
-| @vue/shared                                      | 3.5.24   | [MIT](#@vue/shared)                                      |
-| @vuetify/loader-shared                           | 2.1.1    | [MIT](#@vuetify/loader-shared)                           |
+| @vue/reactivity                                  | 3.5.29   | [MIT](#@vue/reactivity)                                  |
+| @vue/runtime-core                                | 3.5.29   | [MIT](#@vue/runtime-core)                                |
+| @vue/runtime-dom                                 | 3.5.29   | [MIT](#@vue/runtime-dom)                                 |
+| @vue/server-renderer                             | 3.5.29   | [MIT](#@vue/server-renderer)                             |
+| @vue/shared                                      | 3.5.29   | [MIT](#@vue/shared)                                      |
+| @vuetify/loader-shared                           | 2.1.2    | [MIT](#@vuetify/loader-shared)                           |
 | @vueup/vue-quill                                 | 1.2.0    | [MIT](#@vueup/vue-quill)                                 |
 | abort-controller                                 | 3.0.0    | [MIT](#abort-controller)                                 |
 | ansi-regex                                       | 5.0.1    | [MIT](#ansi-regex)                                       |
@@ -56,14 +56,13 @@
 | archiver                                         | 7.0.1    | [MIT](#archiver)                                         |
 | async                                            | 3.2.6    | [MIT](#async)                                            |
 | asynckit                                         | 0.4.0    | [MIT](#asynckit)                                         |
-| axios                                            | 1.13.2   | [MIT](#axios)                                            |
-| b4a                                              | 1.7.3    | [Apache-2.0](#b4a)                                       |
+| axios                                            | 1.13.5   | [MIT](#axios)                                            |
+| b4a                                              | 1.8.0    | [Apache-2.0](#b4a)                                       |
 | balanced-match                                   | 1.0.2    | [MIT](#balanced-match)                                   |
 | bare-events                                      | 2.8.2    | [Apache-2.0](#bare-events)                               |
 | base64-arraybuffer                               | 1.0.2    | [MIT](#base64-arraybuffer)                               |
 | base64-js                                        | 1.5.1    | [MIT](#base64-js)                                        |
 | bluebird                                         | 3.7.2    | [MIT](#bluebird)                                         |
-| brace-expansion                                  | 2.0.2    | [MIT](#brace-expansion)                                  |
 | buffer-crc32                                     | 1.0.0    | [MIT](#buffer-crc32)                                     |
 | buffer                                           | 6.0.3    | [MIT](#buffer)                                           |
 | call-bind-apply-helpers                          | 1.0.2    | [MIT](#call-bind-apply-helpers)                          |
@@ -78,23 +77,23 @@
 | crc32-stream                                     | 6.0.0    | [MIT](#crc32-stream)                                     |
 | cross-spawn                                      | 7.0.6    | [MIT](#cross-spawn)                                      |
 | css-line-break                                   | 2.1.0    | [MIT](#css-line-break)                                   |
-| csstype                                          | 3.1.3    | [MIT](#csstype)                                          |
-| dayjs                                            | 1.11.13  | [MIT](#dayjs)                                            |
+| csstype                                          | 3.2.3    | [MIT](#csstype)                                          |
+| dayjs                                            | 1.11.19  | [MIT](#dayjs)                                            |
 | debug                                            | 4.4.3    | [MIT](#debug)                                            |
 | delayed-stream                                   | 1.0.0    | [MIT](#delayed-stream)                                   |
-| dompurify                                        | 3.3.0    | [(MPL-2.0 OR Apache-2.0)](#dompurify)                    |
+| dompurify                                        | 3.3.1    | [(MPL-2.0 OR Apache-2.0)](#dompurify)                    |
 | dunder-proto                                     | 1.0.1    | [MIT](#dunder-proto)                                     |
 | duplexer2                                        | 0.1.4    | [BSD-3-Clause](#duplexer2)                               |
 | eastasianwidth                                   | 0.2.0    | [MIT](#eastasianwidth)                                   |
 | emoji-regex                                      | 8.0.0    | [MIT](#emoji-regex)                                      |
-| entities                                         | 4.5.0    | [BSD-2-Clause](#entities)                                |
+| entities                                         | 7.0.1    | [BSD-2-Clause](#entities)                                |
 | es-define-property                               | 1.0.1    | [MIT](#es-define-property)                               |
 | es-errors                                        | 1.3.0    | [MIT](#es-errors)                                        |
 | es-object-atoms                                  | 1.1.1    | [MIT](#es-object-atoms)                                  |
 | es-set-tostringtag                               | 2.1.0    | [MIT](#es-set-tostringtag)                               |
 | estree-walker                                    | 2.0.2    | [MIT](#estree-walker)                                    |
 | event-target-shim                                | 5.0.1    | [MIT](#event-target-shim)                                |
-| eventemitter3                                    | 5.0.1    | [MIT](#eventemitter3)                                    |
+| eventemitter3                                    | 5.0.4    | [MIT](#eventemitter3)                                    |
 | events-universal                                 | 1.0.1    | [Apache-2.0](#events-universal)                          |
 | events                                           | 3.3.0    | [MIT](#events)                                           |
 | exceljs                                          | 4.4.0    | [MIT](#exceljs)                                          |
@@ -102,10 +101,10 @@
 | fast-diff                                        | 1.2.0    | [Apache-2.0](#fast-diff)                                 |
 | fast-fifo                                        | 1.3.2    | [MIT](#fast-fifo)                                        |
 | flat                                             | 5.0.2    | [BSD-3-Clause](#flat)                                    |
-| follow-redirects                                 | 1.15.9   | [MIT](#follow-redirects)                                 |
+| follow-redirects                                 | 1.15.11  | [MIT](#follow-redirects)                                 |
 | foreground-child                                 | 3.3.1    | [ISC](#foreground-child)                                 |
-| form-data                                        | 4.0.4    | [MIT](#form-data)                                        |
-| fs-extra                                         | 11.3.2   | [MIT](#fs-extra)                                         |
+| form-data                                        | 4.0.5    | [MIT](#form-data)                                        |
+| fs-extra                                         | 11.3.3   | [MIT](#fs-extra)                                         |
 | function-bind                                    | 1.1.2    | [MIT](#function-bind)                                    |
 | get-intrinsic                                    | 1.3.0    | [MIT](#get-intrinsic)                                    |
 | get-proto                                        | 1.0.1    | [MIT](#get-proto)                                        |
@@ -131,7 +130,7 @@
 | kind-of                                          | 6.0.3    | [MIT](#kind-of)                                          |
 | lazystream                                       | 1.0.1    | [MIT](#lazystream)                                       |
 | lie                                              | 3.3.0    | [MIT](#lie)                                              |
-| lodash-es                                        | 4.17.21  | [MIT](#lodash-es)                                        |
+| lodash-es                                        | 4.17.23  | [MIT](#lodash-es)                                        |
 | lodash.clonedeep                                 | 4.5.0    | [MIT](#lodashclonedeep)                                  |
 | lodash.escaperegexp                              | 4.1.2    | [MIT](#lodashescaperegexp)                               |
 | lodash.groupby                                   | 4.6.0    | [MIT](#lodashgroupby)                                    |
@@ -142,7 +141,7 @@
 | lodash.isundefined                               | 3.0.1    | [MIT](#lodashisundefined)                                |
 | lodash.merge                                     | 4.6.2    | [MIT](#lodashmerge)                                      |
 | lodash.uniq                                      | 4.5.0    | [MIT](#lodashuniq)                                       |
-| lodash                                           | 4.17.21  | [MIT](#lodash)                                           |
+| lodash                                           | 4.17.23  | [MIT](#lodash)                                           |
 | lru-cache                                        | 10.4.3   | [ISC](#lru-cache)                                        |
 | luxon                                            | 3.7.2    | [MIT](#luxon)                                            |
 | magic-string                                     | 0.30.21  | [MIT](#magic-string)                                     |
@@ -150,12 +149,12 @@
 | math-intrinsics                                  | 1.1.0    | [MIT](#math-intrinsics)                                  |
 | mime-db                                          | 1.52.0   | [MIT](#mime-db)                                          |
 | mime-types                                       | 2.1.35   | [MIT](#mime-types)                                       |
-| minipass                                         | 7.1.2    | [ISC](#minipass)                                         |
+| minipass                                         | 7.1.3    | [BlueOak-1.0.0](#minipass)                               |
 | ms                                               | 2.1.3    | [MIT](#ms)                                               |
 | nanoid                                           | 3.3.11   | [MIT](#nanoid)                                           |
 | node-int64                                       | 0.4.0    | [MIT](#node-int64)                                       |
 | normalize-path                                   | 3.0.0    | [MIT](#normalize-path)                                   |
-| oidc-client-ts                                   | 3.4.0    | [Apache-2.0](#oidc-client-ts)                            |
+| oidc-client-ts                                   | 3.4.1    | [Apache-2.0](#oidc-client-ts)                            |
 | package-json-from-dist                           | 1.0.1    | [BlueOak-1.0.0](#package-json-from-dist)                 |
 | pako                                             | 1.0.11   | [(MIT AND Zlib)](#pako)                                  |
 | parchment                                        | 3.0.0    | [BSD-3-Clause](#parchment)                               |
@@ -164,7 +163,7 @@
 | picocolors                                       | 1.1.1    | [ISC](#picocolors)                                       |
 | pinia                                            | 2.3.1    | [MIT](#pinia)                                            |
 | postcss                                          | 8.5.6    | [MIT](#postcss)                                          |
-| preact                                           | 10.28.2  | [MIT](#preact)                                           |
+| preact                                           | 10.28.4  | [MIT](#preact)                                           |
 | process-nextick-args                             | 2.0.1    | [MIT](#process-nextick-args)                             |
 | process                                          | 0.11.10  | [MIT](#process)                                          |
 | proxy-from-env                                   | 1.1.0    | [MIT](#proxy-from-env)                                   |
@@ -188,7 +187,7 @@
 | strip-ansi-cjs                                   | 6.0.1    | [MIT](#strip-ansi-cjs)                                   |
 | strip-ansi                                       | 6.0.1    | [MIT](#strip-ansi)                                       |
 | tar-stream                                       | 3.1.7    | [MIT](#tar-stream)                                       |
-| text-decoder                                     | 1.2.3    | [Apache-2.0](#text-decoder)                              |
+| text-decoder                                     | 1.2.7    | [Apache-2.0](#text-decoder)                              |
 | text-segmentation                                | 1.0.3    | [MIT](#text-segmentation)                                |
 | tmp                                              | 0.2.5    | [MIT](#tmp)                                              |
 | tslib                                            | 2.8.1    | [0BSD](#tslib)                                           |
@@ -198,12 +197,12 @@
 | util-deprecate                                   | 1.0.2    | [MIT](#util-deprecate)                                   |
 | utrie                                            | 1.0.2    | [MIT](#utrie)                                            |
 | uuid                                             | 8.3.2    | [MIT](#uuid)                                             |
-| vite-plugin-vuetify                              | 2.1.2    | [MIT](#vite-plugin-vuetify)                              |
-| vue-chartjs                                      | 5.3.2    | [MIT](#vue-chartjs)                                      |
+| vite-plugin-vuetify                              | 2.1.3    | [MIT](#vite-plugin-vuetify)                              |
+| vue-chartjs                                      | 5.3.3    | [MIT](#vue-chartjs)                                      |
 | vue-demi                                         | 0.14.10  | [MIT](#vue-demi)                                         |
 | vue-i18n                                         | 11.1.10  | [MIT](#vue-i18n)                                         |
-| vue-router                                       | 4.6.3    | [MIT](#vue-router)                                       |
-| vue                                              | 3.5.24   | [MIT](#vue)                                              |
+| vue-router                                       | 4.6.4    | [MIT](#vue-router)                                       |
+| vue                                              | 3.5.29   | [MIT](#vue)                                              |
 | vuetify                                          | 3.8.8    | [MIT](#vuetify)                                          |
 | webpack-merge                                    | 5.10.0   | [MIT](#webpack-merge)                                    |
 | which                                            | 2.0.2    | [ISC](#which)                                            |
@@ -211,7 +210,7 @@
 | wrap-ansi-cjs                                    | 7.0.0    | [MIT](#wrap-ansi-cjs)                                    |
 | wrap-ansi                                        | 8.1.0    | [MIT](#wrap-ansi)                                        |
 | xmlchars                                         | 2.2.0    | [MIT](#xmlchars)                                         |
-| yaml                                             | 2.8.1    | [ISC](#yaml)                                             |
+| yaml                                             | 2.8.2    | [ISC](#yaml)                                             |
 | zip-stream                                       | 6.0.1    | [MIT](#zip-stream)                                       |
 
 
@@ -2889,31 +2888,6 @@
     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
     THE SOFTWARE.
-
----
-### brace-expansion
-
-    MIT License
-
-    Copyright (c) 2013 Julian Gruber <julian@juliangruber.com>
-
-    Permission is hereby granted, free of charge, to any person obtaining a copy
-    of this software and associated documentation files (the "Software"), to deal
-    in the Software without restriction, including without limitation the rights
-    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-    copies of the Software, and to permit persons to whom the Software is
-    furnished to do so, subject to the following conditions:
-
-    The above copyright notice and this permission notice shall be included in all
-    copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-    SOFTWARE.
 
 ---
 ### buffer-crc32
@@ -6894,21 +6868,61 @@
 ---
 ### minipass
 
-    The ISC License
+    # Blue Oak Model License
 
-    Copyright (c) 2017-2023 npm, Inc., Isaac Z. Schlueter, and Contributors
+    Version 1.0.0
 
-    Permission to use, copy, modify, and/or distribute this software for any
-    purpose with or without fee is hereby granted, provided that the above
-    copyright notice and this permission notice appear in all copies.
+    ## Purpose
 
-    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-    WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-    MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-    ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
-    IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+    This license gives everyone as much permission to work with
+    this software as possible, while protecting contributors
+    from liability.
+
+    ## Acceptance
+
+    In order to receive this license, you must agree to its
+    rules.  The rules of this license are both obligations
+    under that agreement and conditions to your license.
+    You must not do anything with this software that triggers
+    a rule that you cannot or will not follow.
+
+    ## Copyright
+
+    Each contributor licenses you to do everything with this
+    software that would otherwise infringe that contributor's
+    copyright in it.
+
+    ## Notices
+
+    You must ensure that everyone who gets a copy of
+    any part of this software from you, with or without
+    changes, also gets the text of this license or a link to
+    <https://blueoakcouncil.org/license/1.0.0>.
+
+    ## Excuse
+
+    If anyone notifies you in writing that you have not
+    complied with [Notices](#notices), you can keep your
+    license by taking all practical steps to comply within 30
+    days after the notice.  If you do not do so, your license
+    ends immediately.
+
+    ## Patent
+
+    Each contributor licenses you to do everything with this
+    software that would otherwise infringe any patent claims
+    they can license or become able to license.
+
+    ## Reliability
+
+    No contributor can revoke this license.
+
+    ## No Liability
+
+    ***As far as the law allows, this software comes as is,
+    without any warranty or condition, and no contributor
+    will be liable to anyone for any damages related to this
+    software or this license, under any kind of legal claim.***
 
 ---
 ### ms

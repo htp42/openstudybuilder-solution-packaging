@@ -1569,16 +1569,24 @@ class MockdataJson(BaseImporter):
                 )
                 continue
 
-            # Update epoch from preview result
-            data["epoch"] = preview["epoch"]
+            # Update data with ALL auto-generated fields from preview
+            # Preview endpoint calculates: epoch, order, epoch_name, etc. based on existing epochs
+            # Use preview's calculated order instead of imported order to avoid "Order is too big" error
+            if "epoch" in preview:
+                data["epoch"] = preview["epoch"]
+            if "order" in preview:
+                data["order"] = preview[
+                    "order"
+                ]  # Use preview's calculated order, not imported order
 
             path = f"/studies/{study_uid}/study-epochs"
             self.log.info(
-                f"Add study epoch '{epoch_name}' as '{preview['epoch_name']}' for study '{study_name}' with id '{study_uid}'"
+                f"Add study epoch '{epoch_name}' as '{preview.get('epoch_name', epoch_name)}' for study '{study_name}' with id '{study_uid}'"
             )
-            if epoch_name != preview["epoch_name"]:
+            preview_epoch_name = preview.get("epoch_name", "")
+            if epoch_name != preview_epoch_name:
                 self.log.warning(
-                    f"Study epoch '{epoch_name}' changed name to '{preview['epoch_name']}'"
+                    f"Study epoch '{epoch_name}' changed name to '{preview_epoch_name}'"
                 )
             self.api.simple_post_to_api(path, data, "/study-epochs")
 
@@ -2344,9 +2352,14 @@ class MockdataJson(BaseImporter):
                 data["indication_uids"] = []
                 if imported_template.get("indications") is not None:
                     for indication in imported_template["indications"]:
+                        # Indications are dictionary terms (typically SNOMED)
+                        # The API returns indication objects with "name" and "term_uid"
+                        # but not library/dictionary information.
+                        # We need to look up by name. Indications are typically from SNOMED dictionary.
                         name = indication["name"]
-                        library = indication["library_name"]
-                        uid = self.lookup_dictionary_term_uid(library, name)
+                        # Look up by name in SNOMED dictionary (most common for indications)
+                        # Note: term_uid from export may not match import system, so we look up by name
+                        uid = self.lookup_dictionary_term_uid("SNOMED", name)
                         if uid:
                             data["indication_uids"].append(uid)
             if "category_uids" in post_data:
@@ -2364,7 +2377,7 @@ class MockdataJson(BaseImporter):
                         name = category["name"]["sponsor_preferred_name"]
                         uid = self.lookup_codelist_term_uid(subcategory_codelist, name)
                         if uid:
-                            data["category_uids"].append(uid)
+                            data["sub_category_uids"].append(uid)
             if "activity_uids" in post_data:
                 data["activity_uids"] = []
                 if imported_template.get("activities") is not None:
@@ -2574,31 +2587,78 @@ class MockdataJson(BaseImporter):
             if "library_name" in post_data[data_key_import]:
                 data[data_key_import]["library_name"] = instance["library"]["name"]
             if "objective_level_uid" in post_data:
-                data["objective_level_uid"] = self.lookup_codelist_term_uid(
-                    CODELIST_OBJECTIVE_LEVEL,
-                    imported_template["objective_level"]["sponsor_preferred_name"],
-                )
-            if "study_objective_uid" in post_data:
-                name = imported_template["study_objective"]["objective"]["name"]
-                data["study_objective_uid"] = self.lookup_study_template_instance_uid(
-                    name, study_uid, "objective"
-                )
-            if "endpoint_level_uid" in post_data:
-                if imported_template["endpoint_level"] is not None:
-                    data["endpoint_level_uid"] = self.lookup_codelist_term_uid(
-                        CODELIST_ENDPOINT_LEVEL,
-                        imported_template["endpoint_level"]["sponsor_preferred_name"],
+                # API returns objective_level with term_name, not sponsor_preferred_name
+                objective_level = imported_template.get("objective_level")
+                if objective_level is not None:
+                    level_name = objective_level.get(
+                        "term_name"
+                    ) or objective_level.get("sponsor_preferred_name")
+                    if level_name:
+                        data["objective_level_uid"] = self.lookup_codelist_term_uid(
+                            CODELIST_OBJECTIVE_LEVEL,
+                            level_name,
+                        )
+                    else:
+                        self.log.warning(
+                            f"Missing objective_level name in template instance '{instance_name}'"
+                        )
+                else:
+                    self.log.debug(
+                        f"No objective_level in template instance '{instance_name}'"
                     )
+            if "study_objective_uid" in post_data:
+                # study_objective might not exist in all template instances
+                study_objective = imported_template.get("study_objective")
+                if study_objective and study_objective.get("objective"):
+                    name = study_objective["objective"].get("name")
+                    if name:
+                        data["study_objective_uid"] = (
+                            self.lookup_study_template_instance_uid(
+                                name, study_uid, "objective"
+                            )
+                        )
+                    else:
+                        self.log.warning(
+                            f"Missing study_objective name in template instance '{instance_name}'"
+                        )
+                else:
+                    self.log.debug(
+                        f"No study_objective reference in template instance '{instance_name}'"
+                    )
+            if "endpoint_level_uid" in post_data:
+                endpoint_level = imported_template.get("endpoint_level")
+                if endpoint_level is not None:
+                    # API returns endpoint_level with term_name, not sponsor_preferred_name
+                    level_name = endpoint_level.get("term_name") or endpoint_level.get(
+                        "sponsor_preferred_name"
+                    )
+                    if level_name:
+                        data["endpoint_level_uid"] = self.lookup_codelist_term_uid(
+                            CODELIST_ENDPOINT_LEVEL,
+                            level_name,
+                        )
+                    else:
+                        self.log.warning(
+                            f"Missing endpoint_level name in template instance '{instance_name}'"
+                        )
                 else:
                     data["endpoint_level_uid"] = None
             if "endpoint_sublevel_uid" in post_data:
-                if imported_template["endpoint_sublevel"] is not None:
-                    data["endpoint_sublevel_uid"] = self.lookup_codelist_term_uid(
-                        CODELIST_ENDPOINT_SUBLEVEL,
-                        imported_template["endpoint_sublevel"][
-                            "sponsor_preferred_name"
-                        ],
-                    )
+                endpoint_sublevel = imported_template.get("endpoint_sublevel")
+                if endpoint_sublevel is not None:
+                    # API returns endpoint_sublevel with term_name, not sponsor_preferred_name
+                    sublevel_name = endpoint_sublevel.get(
+                        "term_name"
+                    ) or endpoint_sublevel.get("sponsor_preferred_name")
+                    if sublevel_name:
+                        data["endpoint_sublevel_uid"] = self.lookup_codelist_term_uid(
+                            CODELIST_ENDPOINT_SUBLEVEL,
+                            sublevel_name,
+                        )
+                    else:
+                        self.log.warning(
+                            f"Missing endpoint_sublevel name in template instance '{instance_name}'"
+                        )
                 else:
                     data["endpoint_sublevel_uid"] = None
             if "endpoint_units" in post_data:
@@ -2656,31 +2716,43 @@ class MockdataJson(BaseImporter):
                         value = comp.get(key, None)
                         if not isinstance(value, (dict, list, tuple)):
                             data[key] = value
-            for device in comp["delivery_devices"]:
+
+            # Use .get() with default empty list for optional fields
+            for device in comp.get("delivery_devices", []):
                 name = device["name"]
                 uid = self.lookup_codelist_term_uid(CODELIST_DELIVERY_DEVICE, name)
                 self.append_if_not_none(data["delivery_devices_uids"], uid)
-            for disp in comp["dispensers"]:
+
+            for disp in comp.get("dispensers", []):
                 name = disp["name"]
                 uid = self.lookup_codelist_term_uid(
                     CODELIST_COMPOUND_DISPENSED_IN, name
                 )
                 self.append_if_not_none(data["dispensers_uids"], uid)
-            for val in comp["dose_values"]:
+
+            for val in comp.get("dose_values", []):
                 uid = self.create_or_get_numeric_value(val, UNIT_SUBSET_DOSE)
                 self.append_if_not_none(data["dose_values_uids"], uid)
-            for val in comp["strength_values"]:
+
+            for val in comp.get("strength_values", []):
                 uid = self.create_or_get_numeric_value(val, UNIT_SUBSET_DOSE)
                 self.append_if_not_none(data["strength_values_uids"], uid)
-            for val in comp["lag_times"]:
+
+            for val in comp.get("lag_times", []):
                 uid = self.create_or_get_lag_time(val)
                 self.append_if_not_none(data["lag_times_uids"], uid)
-            for val in comp["dose_frequencies"]:
+
+            for val in comp.get("dose_frequencies", []):
                 # TODO get some data that uses this
                 uid = self.create_or_get_numeric_value(val, "TODO")
                 self.append_if_not_none(data["dose_frequency_uids"], uid)
-            uid = self.create_or_get_numeric_value(comp["half_life"], UNIT_SUBSET_AGE)
-            data["half_life_uid"] = uid
+
+            # Handle half_life which might be None or missing
+            half_life = comp.get("half_life")
+            if half_life is not None:
+                uid = self.create_or_get_numeric_value(half_life, UNIT_SUBSET_AGE)
+                data["half_life_uid"] = uid
+
             # print(json.dumps(data, indent=2))
             path = "/concepts/compounds"
             res = self.api.simple_post_to_api(path, data, "/concepts/compounds")

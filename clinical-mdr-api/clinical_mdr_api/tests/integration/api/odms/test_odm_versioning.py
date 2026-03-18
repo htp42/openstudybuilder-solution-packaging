@@ -299,35 +299,22 @@ def test_add_odm_item_groups_odm_forms(api_client):
 
 
 def test_add_odm_items_to_odm_item_group(api_client):
-    data = [
-        {
-            "uid": items[0].uid,
-            "order_number": 1,
-            "mandatory": "Yes",
-            "key_sequence": "None",
-            "method_oid": "None",
-            "imputation_method_oid": "None",
-            "role": "None",
-            "role_codelist_oid": "None",
-            "collection_exception_condition_oid": "None",
-            "vendor": {"attributes": []},
-        },
-        {
-            "uid": items[1].uid,
-            "order_number": 2,
-            "mandatory": "No",
-            "key_sequence": "None",
-            "method_oid": "None",
-            "imputation_method_oid": "None",
-            "role": "None",
-            "role_codelist_oid": "None",
-            "collection_exception_condition_oid": "None",
-            "vendor": {"attributes": []},
-        },
-    ]
-
     response = api_client.post(
-        f"concepts/odms/item-groups/{item_groups[0].uid}/items", json=data
+        f"concepts/odms/item-groups/{item_groups[0].uid}/items",
+        json=[
+            {
+                "uid": items[0].uid,
+                "order_number": 1,
+                "mandatory": "Yes",
+                "key_sequence": "None",
+                "method_oid": "None",
+                "imputation_method_oid": "None",
+                "role": "None",
+                "role_codelist_oid": "None",
+                "collection_exception_condition_oid": "None",
+                "vendor": {"attributes": []},
+            },
+        ],
     )
     assert_response_status_code(response, 201)
     res = response.json()
@@ -350,25 +337,24 @@ def test_add_odm_items_to_odm_item_group(api_client):
             "collection_exception_condition_oid": "None",
             "vendor": {"attributes": []},
         },
-        {
-            "uid": "OdmItem_000002",
-            "oid": "I2",
-            "name": "Item 2",
-            "version": "0.1",
-            "order_number": 2,
-            "mandatory": "No",
-            "key_sequence": "None",
-            "method_oid": "None",
-            "imputation_method_oid": "None",
-            "role": "None",
-            "role_codelist_oid": "None",
-            "collection_exception_condition_oid": "None",
-            "vendor": {"attributes": []},
-        },
     ]
 
     response = api_client.post(
-        f"concepts/odms/item-groups/{item_groups[1].uid}/items", json=data
+        f"concepts/odms/item-groups/{item_groups[1].uid}/items",
+        json=[
+            {
+                "uid": items[1].uid,
+                "order_number": 2,
+                "mandatory": "No",
+                "key_sequence": "None",
+                "method_oid": "None",
+                "imputation_method_oid": "None",
+                "role": "None",
+                "role_codelist_oid": "None",
+                "collection_exception_condition_oid": "None",
+                "vendor": {"attributes": []},
+            },
+        ],
     )
     assert_response_status_code(response, 201)
     res = response.json()
@@ -376,21 +362,6 @@ def test_add_odm_items_to_odm_item_group(api_client):
     assert res["status"] == "Draft"
     assert res["version"] == "0.1"
     assert res["items"] == [
-        {
-            "uid": "OdmItem_000001",
-            "oid": "I1",
-            "name": "Item 1",
-            "version": "0.1",
-            "order_number": 1,
-            "mandatory": "Yes",
-            "key_sequence": "None",
-            "method_oid": "None",
-            "imputation_method_oid": "None",
-            "role": "None",
-            "role_codelist_oid": "None",
-            "collection_exception_condition_oid": "None",
-            "vendor": {"attributes": []},
-        },
         {
             "uid": "OdmItem_000002",
             "oid": "I2",
@@ -550,21 +521,6 @@ def test_approve_study_event_with_cascade_effect(api_client):
             "collection_exception_condition_oid": "None",
             "vendor": {"attributes": []},
         },
-        {
-            "uid": "OdmItem_000002",
-            "oid": "I2",
-            "name": "Item 2",
-            "version": "1.0",
-            "order_number": 2,
-            "mandatory": "No",
-            "key_sequence": "None",
-            "method_oid": "None",
-            "imputation_method_oid": "None",
-            "role": "None",
-            "role_codelist_oid": "None",
-            "collection_exception_condition_oid": "None",
-            "vendor": {"attributes": []},
-        },
     ]
 
     response = api_client.get(f"concepts/odms/item-groups/{item_groups[1].uid}")
@@ -574,21 +530,6 @@ def test_approve_study_event_with_cascade_effect(api_client):
     assert res["status"] == "Final"
     assert res["version"] == "1.0"
     assert res["items"] == [
-        {
-            "uid": "OdmItem_000001",
-            "oid": "I1",
-            "name": "Item 1",
-            "version": "1.0",
-            "order_number": 1,
-            "mandatory": "Yes",
-            "key_sequence": "None",
-            "method_oid": "None",
-            "imputation_method_oid": "None",
-            "role": "None",
-            "role_codelist_oid": "None",
-            "collection_exception_condition_oid": "None",
-            "vendor": {"attributes": []},
-        },
         {
             "uid": "OdmItem_000002",
             "oid": "I2",
@@ -639,21 +580,6 @@ def test_perseverance_of_final_versions_relationship_between_item_group_and_item
             "collection_exception_condition_oid": "None",
             "vendor": {"attributes": []},
         },
-        {
-            "uid": "OdmItem_000002",
-            "oid": "I2",
-            "name": "Item 2",
-            "version": "1.0",
-            "order_number": 2,
-            "mandatory": "No",
-            "key_sequence": "None",
-            "method_oid": "None",
-            "imputation_method_oid": "None",
-            "role": "None",
-            "role_codelist_oid": "None",
-            "collection_exception_condition_oid": "None",
-            "vendor": {"attributes": []},
-        },
     ]
 
 
@@ -676,21 +602,6 @@ def test_perseverance_of_final_versions_relationship_between_form_and_item_group
             "version": "1.1",
             "order_number": 1,
             "mandatory": "Yes",
-            "key_sequence": "None",
-            "method_oid": "None",
-            "imputation_method_oid": "None",
-            "role": "None",
-            "role_codelist_oid": "None",
-            "collection_exception_condition_oid": "None",
-            "vendor": {"attributes": []},
-        },
-        {
-            "uid": "OdmItem_000002",
-            "oid": "I2",
-            "name": "Item 2",
-            "version": "1.0",
-            "order_number": 2,
-            "mandatory": "No",
             "key_sequence": "None",
             "method_oid": "None",
             "imputation_method_oid": "None",
@@ -874,21 +785,6 @@ def test_latest_perseverance_of_relationship_based_on_latest_versions(api_client
             "collection_exception_condition_oid": "None",
             "vendor": {"attributes": []},
         },
-        {
-            "uid": "OdmItem_000002",
-            "oid": "I2",
-            "name": "Item 2",
-            "version": "1.0",
-            "order_number": 2,
-            "mandatory": "No",
-            "key_sequence": "None",
-            "method_oid": "None",
-            "imputation_method_oid": "None",
-            "role": "None",
-            "role_codelist_oid": "None",
-            "collection_exception_condition_oid": "None",
-            "vendor": {"attributes": []},
-        },
     ]
 
 
@@ -967,21 +863,6 @@ def test_latest_perseverance_of_relationship_based_on_specific_versions(api_clie
             "version": "1.0",
             "order_number": 1,
             "mandatory": "Yes",
-            "key_sequence": "None",
-            "method_oid": "None",
-            "imputation_method_oid": "None",
-            "role": "None",
-            "role_codelist_oid": "None",
-            "collection_exception_condition_oid": "None",
-            "vendor": {"attributes": []},
-        },
-        {
-            "uid": "OdmItem_000002",
-            "oid": "I2",
-            "name": "Item 2",
-            "version": "1.0",
-            "order_number": 2,
-            "mandatory": "No",
             "key_sequence": "None",
             "method_oid": "None",
             "imputation_method_oid": "None",

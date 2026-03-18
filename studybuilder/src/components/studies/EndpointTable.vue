@@ -82,7 +82,9 @@
     <template #actions="">
       <slot name="extraActions" />
       <v-btn
-        class="ml-2 expandHoverBtn"
+        class="ml-2"
+        icon
+        size="small"
         variant="outlined"
         color="nnBaseBlue"
         :disabled="
@@ -91,8 +93,10 @@
         "
         @click.stop="showForm = true"
       >
-        <v-icon left>mdi-plus</v-icon>
-        <span class="label">{{ $t('StudyEndpointsTable.add_endpoint') }}</span>
+        <v-icon>mdi-plus</v-icon>
+        <v-tooltip activator="parent" location="top">
+          {{ $t('StudyEndpointsTable.add_endpoint') }}
+        </v-tooltip>
       </v-btn>
     </template>
     <template #[`item.endpoint_level.term_name`]="{ item }">

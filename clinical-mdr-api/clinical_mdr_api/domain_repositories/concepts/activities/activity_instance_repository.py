@@ -967,6 +967,7 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
             apoc.coll.toSet([(activity_instance_value)-[:CONTAINS_ACTIVITY_ITEM]->(activity_item)
             <-[HAS_ACTIVITY_ITEM]-(activity_item_class_root)-[:LATEST]->(activity_item_class_value) | 
             {
+                activity_item_class_uid: activity_item_class_root.uid,
                 activity_item_class: activity_item_class_value,
                 activity_item_class_role: head([(activity_item_class_value)-[:HAS_ROLE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(role_value) | role_value.name]),
                 activity_item_class_data_type: head([(activity_item_class_value)-[:HAS_DATA_TYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(data_type_value) | data_type_value.name]),

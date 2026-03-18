@@ -1,12 +1,16 @@
 import { activityName } from "./library_activities_steps";
 import { activity_uid, subgroup_uid, group_uid, group_name } from "../../support/api_requests/library_activities";
 import { getCurrentStudyId, getCurrStudyUid } from "./../../support/helper_functions";
-import { apiActivityName } from "./api_library_steps";
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
+const { getShortUniqueId } = require("../../support/helper_functions");
 
 export let activity_activity, current_activity_uid, study_activity_uid, activity_placeholder_name
 export let exchangedActivities = []
 let activity_library, activity_soa_group, activity_group, activity_sub_group, edit_placeholder_name, current_study, new_activity_name
+
+When('User intercepts available studies request', () => cy.intercept('/api/studies?include_sections=study_description&has_study_activity=true&page_size=0').as('availableStudies'))
+
+When('User waits for available studies request', () => cy.wait('@availableStudies'))
 
 When('Name of Activity from Library for exchaning placeholder is saved', () => cy.getActivityNameByUid().then(name => exchangedActivities.push(name)))
 
@@ -16,9 +20,13 @@ Then('The Study Activity is found', () => cy.searchAndCheckPresence(activity_act
 
 When('Activity placeholder is found', () => cy.searchAndCheckPresence(activity_placeholder_name, true))
 
+Then('The Study Activity Placeholder is not available', () => cy.searchAndCheckPresence(activity_placeholder_name, false))
+
 When('{int} Activity that exchanged the placeholder is found in Study Activities table', (index) => cy.searchAndCheckPresence(exchangedActivities[index -1], true))
 
-Then('The Study Activity Placeholder is no longer available', () => cy.searchAndCheckPresence(activity_placeholder_name, false))
+Then('The activity request changes are applied', () => cy.searchAndCheckPresence(edit_placeholder_name, true))
+
+Then('The activity request is removed from the study', () => cy.searchAndCheckPresence(edit_placeholder_name, false))
 
 When('Activity placeholder is searched for', () => cy.searchForInPopUp(activity_placeholder_name))
 
@@ -52,12 +60,6 @@ When('User search and select activity created via API', () => addLibraryActivity
 When('User selects first available activity', () => selectActivityAndGetItsData())
 
 When('User selects first available activity and SoA group', () => selectActivityAndGetItsData('INFORMED CONSENT'))
-
-When('Study with id value {string} is selected', (value) => cy.selectVSelect('select-study-for-activity-by-id', value))
-
-When('Type study acronym value {string}', (value) => cy.get('[data-cy="select-study-for-activity-by-acronym"] input').type(value))
-
-When('Study with acronym value {string} is selected', (value) => cy.selectVSelect('select-study-for-activity-by-acronym', value))
 
 Then('The Study Activity is visible in table', () => checkIfTableContainsActivity())
 
@@ -94,11 +96,8 @@ When('Activity from library is selected', () => cy.get('[data-cy="select-from-li
 
 When('Activity from placeholder is selected', () => cy.get('[data-cy="create-placeholder"] input').check())
 
-When('Study by id is selected', () => cy.selectVSelect('select-study-for-activity-by-id', current_study))
-
 Then('The validation appears and Create Activity form stays on Study Selection', () => {
-    cy.checkIfValidationAppears('select-study-for-activity-by-acronym')
-    cy.checkIfValidationAppears('select-study-for-activity-by-id')
+    cy.contains('.v-overlay .v-window-item .v-input', 'Study ID / Acronym').should('contain.text', 'This field is required')
 })
 
 When('The user tries to go further without SoA group chosen', () => {
@@ -107,7 +106,7 @@ When('The user tries to go further without SoA group chosen', () => {
 
 When('The user tries to go further in activity placeholder creation without SoA group chosen', () => {
     cy.contains('.choice .text', 'Create a placeholder activity without submitting for approval').click()
-    cy.fillInput('instance-name', `Placeholder Instance Name ${Date.now()}`)
+    cy.fillInput('instance-name', `Placeholder Instance Name ${getShortUniqueId()}`)
     cy.fillInput('activity-rationale', 'Placeholder Test Rationale')
 })
 
@@ -136,7 +135,7 @@ Then('Warning that {string} {string} can not be added to the study is displayed'
 When('The existing activity request is selected', () => cy.get('[data-cy="select-activity"] input').check())
 
 When('The study activity request is edited', () => {
-    edit_placeholder_name = `Edit name ${Date.now()}`
+    edit_placeholder_name = `Edit name ${getShortUniqueId()}`
     cy.fillInput('instance-name', edit_placeholder_name)
 })
 
@@ -161,20 +160,6 @@ When('The user is presented with the changes to request', () => {
     cy.get('[data-cy="form-body"]').should('contain', edit_placeholder_name)
 })
 
-Then('The activity request changes are applied', () => {
-    cy.searchAndCheckPresence(edit_placeholder_name, true)
-    cy.searchAndCheckPresence(activity_placeholder_name, false)
-})
-
-Then('The activity request changes not applied', () => {
-    cy.searchAndCheckPresence(activity_placeholder_name, true)
-})
-
-Then('The activity request is removed from the study', () => {
-    cy.searchAndCheckPresence(edit_placeholder_name, false)
-    cy.searchAndCheckPresence(activity_placeholder_name, false)
-})
-
 Then('[API] Activity is assigned to the visit {int}', (visitIndex) => cy.assignActivityToVisit(Cypress.env('TEST_STUDY_UID'), study_activity_uid, visitIndex))
 
 Then('[API] All Activities are deleted from study', () => {
@@ -186,10 +171,6 @@ Then('[API] Get SoA Group {string} id', (name) => cy.getSoaGroupUid(name))
 Then('[API] Activity is added to the study', () => addActivityToStudyAndGetValues(Cypress.env('TEST_STUDY_UID')))
 
 Then('[API] Activity is added to the selected study', () => addActivityToStudyAndGetValues(getCurrStudyUid()))
-
-When('The activity has been retired', () => {
-    cy.inactivateActivity(current_activity_uid)
-})
 
 Then('[API] Activity with two subgroups available is added to the study', () => {
     cy.createGroup()
@@ -208,114 +189,42 @@ Then('[API] Activity with two subgroups available is added to the study', () => 
     cy.approveSubGroup()
 })
 
-When('The activity group is updated for that study activity', () => cy.selectFirstVSelect('activityform-activity-group-dropdown'))
+When('The user accepts the changes', () => cy.contains('button', 'Accept').click())
 
-When('The activity subgroup is updated for that study activity', () => cy.selectLastVSelect('activityform-activity-subgroup-dropdown'))
+When('The user declines the changes', () => cy.contains('button', 'Decline').click())
 
-When('The activity name is updated for that study activity', () => {
-    cy.get('[data-cy="activityform-activity-name-field"] input').should('have.value', apiActivityName)
-    cy.fillInput('activityform-activity-name-field', new_activity_name = `NewName${Date.now()}`)
-})
+When('The user opens bulk review changes window', () => cy.contains('Review activity updates').click())
 
-When('The user accepts the changes', () => {
-    cy.get('[data-cy="data-table"]').within(() => {
-        cy.get('.mdi-dots-vertical').filter(':visible').click()
-    })
-    cy.clickButton('Update activity version')
-    cy.contains('button', 'Accept').click()
-    activity_activity = new_activity_name
-})
+When('The user filters the table by red alert status', () => cy.get('[value="updated"]').click())
 
-When('The user declines the changes', () => {
-    cy.get('[data-cy="data-table"]').within(() => {
-        cy.get('.mdi-dots-vertical').filter(':visible').click()
-    })
-    cy.clickButton('Update activity version')
-    cy.contains('button', 'Decline').click()
-})
-
-When('The user opens bulk review changes window', () => {
-    cy.contains('Review activity updates').click()
-})
-
-Then('The changes are applied in the study activity', () => {
-    cy.tableContains(activity_activity)
-})
-
-When('The user filters the table by red alert status', () => {
-    cy.get('[value="updated"]').click()
-})
-
-When('The user filters the table by yellow alert status', () => {
-    cy.get('[value="reviewed"]').click()
-})
+When('The user filters the table by yellow alert status', () => cy.get('[value="reviewed"]').click())
 
 Then('The activities with red alert are present', () => {
-    cy.waitForTable()
-    cy.get('tbody').within(() => {
-        cy.get('tr').each($row => {
-            cy.wrap($row).within(() => {
-                cy.get('.mdi-alert-circle-outline').should('exist')
-            })
-        })
-    })
+    cy.get('tbody tr').each(row => cy.wrap(row).find('.mdi-alert-circle-outline').should('exist'))
 })
 
 Then('The activities with yellow alert are present', () => {
-    cy.waitForTable()
-    cy.get('tbody').within(() => {
-        cy.get('tr').each($row => {
-            cy.wrap($row).within(() => {
-                cy.get('.mdi-alert-outline').should('exist')
-            })
-        })
-    })
+    cy.get('tbody tr').each(row => cy.wrap(row).find('.mdi-alert-outline').should('exist'))
 })
 
 Then('The icon indicates which activity group is present in detailed soa', () => {
-    cy.get('[data-cy="form-body"]').within(() => {
-        cy.contains('.v-data-table__td', group_name).within(() => {
-            cy.get('.mdi-eye-outline').should('exist')
-        })
-    })
+    cy.contains('[data-cy="form-body"] td', group_name).find('.mdi-eye-outline').should('exist')
 })
 
 Then('The icon indicates which activity name is present in detailed soa', () => {
-    cy.get('[data-cy="form-body"]').within(() => {
-        cy.contains('.v-data-table__td', new_activity_name).within(() => {
-            cy.get('.mdi-eye-outline').should('exist')
-        })
-    })
-})
-
-When('The user opens changes review window for that activity', () => {
-    cy.get('[data-cy="data-table"]').within(() => {
-        cy.get('.mdi-dots-vertical').filter(':visible').click()
-    })
-    cy.clickButton('Update activity version')
-})
-
-When('The activity group is removed from that activity', () => {
-    cy.visit(`library/activities/activities/${current_activity_uid}/overview`)
-
-})
-
-When('The user selects new activity group and accepts', () => {
-    cy.get('[data-cy="data-table"]').within(() => {
-        cy.get('.mdi-dots-vertical').filter(':visible').click()
-    })
-    cy.clickButton('Update activity version')
-
-})
-
-When('The activity group has been retired and has no replacement', () => {
-    cy.inactivateGroup(group_uid)
-    cy.wait(3000)
+    cy.contains('[data-cy="form-body"] td', new_activity_name).find('.mdi-eye-outline').should('exist')
 })
 
 When('User selects {int} activity from Library to exchange placeholder with', (index) => cy.get('.v-data-table__td--select-row input').eq(index - 1).check())
 
 When('Sets SoA Group as {string} for {int} Activity', (soaGroup, index) => selectSoAGroup(index -1, soaGroup))
+
+When('User selects select study {string}', (value) => {
+    cy.contains('.v-overlay .v-window-item .v-input', 'Study ID / Acronym').click()
+    cy.get('.v-overlay .v-list-item').should('not.contain', 'No data available')
+    cy.contains('.v-overlay .v-window-item .v-input', 'Study ID / Acronym').type(value)
+    cy.contains('.v-overlay .v-list-item', value).click()
+})
 
 function getActivityData(rowIndex, getSoAGroupValue) {
     cy.getCellValueInPopUp(rowIndex, 'Library').then((text) => activity_library = text)
@@ -356,7 +265,7 @@ function selectActivityAndGetItsData(activity_soa_group = null) {
 }
 
 function fillPlaceholderData() {
-    activity_placeholder_name = `Placeholder ${Date.now()}`
+    activity_placeholder_name = `Placeholder ${getShortUniqueId()}`
     cy.selectVSelect('flowchart-group', 'INFORMED CONSENT')
     cy.get('[data-cy="activity-group"] input').clear().type('AE Requiring Additional Data')
     cy.selectFirstVSelect('activity-group')
@@ -377,19 +286,3 @@ function addActivityToStudyAndGetValues(studyUid) {
         study_activity_uid = response.body[0].content.study_activity_uid
     })
 }
-
-Then('Activity placeholder is not found', () => {
-    cy.searchAndCheckPresence(activity_placeholder_name, false)
-})
-
-When('the request continue button is clicked', () => {
-    cy.clickButton('step.request-continue-button')
-})
-
-When('the sponsor continue button is clicked', () => {
-    cy.clickButton('step.sponsor-continue-button')
-})
-
-When('the confirm continue button is clicked', () => {
-    cy.clickButton('step.confirm-continue-button')
-})

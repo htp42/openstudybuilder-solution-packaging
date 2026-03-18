@@ -14,7 +14,8 @@
     <template #actions="">
       <v-btn
         data-cy="add-study-compound-dosing"
-        class="expandHoverBtn"
+        icon
+        size="small"
         color="primary"
         :disabled="
           !accessGuard.checkPermission($roles.STUDY_WRITE) ||
@@ -22,8 +23,10 @@
         "
         @click.stop="showForm = true"
       >
-        <v-icon left>mdi-plus</v-icon>
-        <span class="label">{{ $t('StudyCompoundForm.add_title') }}</span>
+        <v-icon>mdi-plus</v-icon>
+        <v-tooltip activator="parent" location="top">
+          {{ $t('StudyCompoundForm.add_title') }}
+        </v-tooltip>
       </v-btn>
     </template>
     <template #[`item.actions`]="{ item }">

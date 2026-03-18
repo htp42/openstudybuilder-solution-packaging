@@ -48,16 +48,18 @@ class TestData:
 
 
 @pytest.fixture(scope="module")
-def test_database() -> TestData:
+def test_database() -> dict[str, Any]:
     db_name = "study-soa-split"
     set_db(db_name)
-    inject_base_data()
+    _, test_data_dict = inject_base_data()
     create_study_visit_codelists(create_unit_definitions=False, use_test_utils=True)
-    return db_name
+    return test_data_dict
 
 
 def test_study_soa_splits(api_client: TestClient, test_database):
     test_data = TestData()
+    reason_for_lock_term_uid = test_database["reason_for_lock_terms"][0].term_uid
+    reason_for_unlock_term_uid = test_database["reason_for_unlock_terms"][0].term_uid
 
     # Returns 404 if study does not exist
     response = api_client.get("/studies/Study_000000/soa-splits")
@@ -162,7 +164,9 @@ def test_study_soa_splits(api_client: TestClient, test_database):
     assert returned == expected
 
     # Lock the study
-    v1_version = TestUtils.lock_study(test_data.study.uid)
+    v1_version = TestUtils.lock_study(
+        test_data.study.uid, reason_for_lock_term_uid=reason_for_lock_term_uid
+    )
     v1_expected = expected
 
     # Get SoA splits for specific version
@@ -194,7 +198,9 @@ def test_study_soa_splits(api_client: TestClient, test_database):
     assert_response_status_code(response, 400)
 
     # Unlock the study
-    TestUtils.unlock_study(test_data.study.uid)
+    TestUtils.unlock_study(
+        test_data.study.uid, reason_for_unlock_term_uid=reason_for_unlock_term_uid
+    )
 
     # Get SoA splits for specific version
     response = api_client.get(
@@ -228,7 +234,11 @@ def test_study_soa_splits(api_client: TestClient, test_database):
     assert returned == v1_expected
 
     # Lock and unlock the study again
-    v2_version = TestUtils.lock_and_unlock_study(test_data.study.uid)
+    v2_version = TestUtils.lock_and_unlock_study(
+        test_data.study.uid,
+        reason_for_lock_term_uid=reason_for_lock_term_uid,
+        reason_for_unlock_term_uid=reason_for_unlock_term_uid,
+    )
     v2_expected = expected
 
     # Get SoA splits for v1 version
@@ -327,6 +337,8 @@ def test_study_soa_splits(api_client: TestClient, test_database):
 
 def test_study_locked_with_no_soa_splits(api_client: TestClient, test_database):
     test_data = TestData()
+    reason_for_lock_term_uid = test_database["reason_for_lock_terms"][0].term_uid
+    reason_for_unlock_term_uid = test_database["reason_for_unlock_terms"][0].term_uid
 
     # Initially no SOA splits
     response = api_client.get(f"/studies/{test_data.study.uid}/soa-splits")
@@ -340,7 +352,11 @@ def test_study_locked_with_no_soa_splits(api_client: TestClient, test_database):
     assert_response_status_code(response, 404)
 
     # Lock & unlock a Study version
-    v1_version = TestUtils.lock_and_unlock_study(test_data.study.uid)
+    v1_version = TestUtils.lock_and_unlock_study(
+        test_data.study.uid,
+        reason_for_lock_term_uid=reason_for_lock_term_uid,
+        reason_for_unlock_term_uid=reason_for_unlock_term_uid,
+    )
 
     # Add a uid to SoA splits
     response = api_client.put(

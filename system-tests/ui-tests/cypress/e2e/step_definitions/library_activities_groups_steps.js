@@ -1,4 +1,5 @@
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
+const { getShortUniqueId } = require("../../support/helper_functions");
 
 let activityGroupName, abbreviation = "ABB", definition = "DEF"
 
@@ -63,12 +64,12 @@ When('[API] Activity group is reactivated', () => cy.reactivateGroup())
 
 When('[API] Activity group gets new version', () => cy.groupNewVersion())
 
-Given('[API] First activity group for search test is created', () => createGroupViaApi(`SearchTest${Date.now()}`))
+Given('[API] First activity group for search test is created', () => createGroupViaApi(`SearchTest${getShortUniqueId()}`))
 
-Given('[API] Second activity group for search test is created', () => cy.createGroup(`SearchTest${Date.now()}`))
+Given('[API] Second activity group for search test is created', () => cy.createGroup(`SearchTest${getShortUniqueId()}`))
 
 function fillGroupData() {
-    cy.get('[data-cy="groupform-activity-group-field"] input').click().type(activityGroupName = `Group${Date.now()}`)
+    cy.get('[data-cy="groupform-activity-group-field"] input').click().type(activityGroupName = `Group${getShortUniqueId()}`)
     cy.fillInput('groupform-abbreviation-field', abbreviation)
     cy.fillInput('groupform-definition-field', definition)
 }

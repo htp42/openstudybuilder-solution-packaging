@@ -146,6 +146,7 @@ def test_creating_a_new_odm_item(api_client):
     assert res["version"] == "0.1"
     assert res["change_description"] == "Initial version"
     assert res["author_username"] == "unknown-user@example.com"
+    assert res["odm_item_group"] is None
     assert res["translated_texts"] == [
         {
             "text_type": "Description",
@@ -410,6 +411,7 @@ def test_getting_a_specific_odm_item(api_client):
     assert res["version"] == "0.1"
     assert res["change_description"] == "Initial version"
     assert res["author_username"] == "unknown-user@example.com"
+    assert res["odm_item_group"] is None
     assert res["translated_texts"] == [
         {
             "text_type": "Description",
@@ -743,6 +745,7 @@ def test_updating_an_existing_odm_item(api_client):
     assert res["version"] == "0.2"
     assert res["change_description"] == "comment added"
     assert res["author_username"] == "unknown-user@example.com"
+    assert res["odm_item_group"] is None
     assert res["translated_texts"] == [
         {
             "text_type": "Description",
@@ -870,6 +873,7 @@ def test_getting_a_specific_odm_item_in_specific_version(api_client):
     assert res["version"] == "0.1"
     assert res["change_description"] == "Initial version"
     assert res["author_username"] == "unknown-user@example.com"
+    assert res["odm_item_group"] is None
     assert res["translated_texts"] == [
         {
             "text_type": "Description",
@@ -977,6 +981,7 @@ def test_approving_an_odm_item(api_client):
     assert res["version"] == "1.0"
     assert res["change_description"] == "Approved version"
     assert res["author_username"] == "unknown-user@example.com"
+    assert res["odm_item_group"] is None
     assert res["translated_texts"] == [
         {
             "text_type": "Description",
@@ -1104,6 +1109,7 @@ def test_inactivating_a_specific_odm_item(api_client):
     assert res["version"] == "2.0"
     assert res["change_description"] == "Inactivated version"
     assert res["author_username"] == "unknown-user@example.com"
+    assert res["odm_item_group"] is None
     assert res["translated_texts"] == [
         {
             "text_type": "Description",
@@ -1231,6 +1237,7 @@ def test_reactivating_a_specific_odm_item(api_client):
     assert res["version"] == "3.0"
     assert res["change_description"] == "Reactivated version"
     assert res["author_username"] == "unknown-user@example.com"
+    assert res["odm_item_group"] is None
     assert res["translated_texts"] == [
         {
             "text_type": "Description",
@@ -1358,6 +1365,7 @@ def test_creating_a_new_odm_item_version(api_client):
     assert res["version"] == "3.1"
     assert res["change_description"] == "New draft created"
     assert res["author_username"] == "unknown-user@example.com"
+    assert res["odm_item_group"] is None
     assert res["translated_texts"] == [
         {
             "text_type": "Description",
@@ -1706,6 +1714,7 @@ def test_updating_an_existing_odm_item_with_relations(api_client):
     assert res["version"] == "3.2"
     assert res["change_description"] == "comment added"
     assert res["author_username"] == "unknown-user@example.com"
+    assert res["odm_item_group"] is None
     assert res["translated_texts"] == [
         {"text_type": "Description", "language": "eng", "text": "string2"},
         {"text_type": "Description", "language": "ara", "text": "string3"},

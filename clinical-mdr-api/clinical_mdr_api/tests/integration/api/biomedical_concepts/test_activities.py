@@ -436,7 +436,7 @@ ACTIVITY_FIELDS_ALL = [
     "is_request_rejected",
     "contact_person",
     "reason_for_rejecting",
-    "requester_study_id",
+    "used_by_studies",
     "replaced_by_activity",
     "is_data_collected",
     "is_multiple_selection_allowed",
@@ -906,17 +906,20 @@ def test_activity_cosmos_overview(api_client):
 def test_create_activity_unique_name_validation(api_client):
     activity_name = TestUtils.random_str(20, "ActivityName-")
     activity_name2 = TestUtils.random_str(20, "ActivityName-")
+    archived_library = TestUtils.create_library(name="Archived")
     TestUtils.create_activity(
         name=activity_name,
         activity_subgroups=[activity_subgroup.uid],
         activity_groups=[activity_group.uid],
         approve=False,
+        library_name=archived_library["name"],
     )
     TestUtils.create_activity(
         name=activity_name2,
         activity_subgroups=[activity_subgroup.uid],
         activity_groups=[activity_group.uid],
         approve=True,
+        library_name=archived_library["name"],
     )
 
     # Create activity with the same name as the first one
@@ -931,7 +934,7 @@ def test_create_activity_unique_name_validation(api_client):
                     "activity_group_uid": activity_group.uid,
                 }
             ],
-            "library_name": "Sponsor",
+            "library_name": archived_library["name"],
         },
     )
     assert_response_status_code(response, 409)
@@ -939,6 +942,26 @@ def test_create_activity_unique_name_validation(api_client):
         response.json()["message"]
         == f"Activity with Name '{activity_name}' already exists."
     )
+
+    # Create activity with the same name as the first one but in different Library
+    response = api_client.post(
+        "/concepts/activities/activities",
+        json={
+            "name": activity_name,
+            "name_sentence_case": activity_name,
+            "activity_groupings": [
+                {
+                    "activity_subgroup_uid": activity_subgroup.uid,
+                    "activity_group_uid": activity_group.uid,
+                }
+            ],
+            "library_name": "Sponsor",
+        },
+    )
+    assert_response_status_code(response, 201)
+    res = response.json()
+    assert res["name"] == activity_name
+    assert res["library_name"] == "Sponsor"
 
     # Create activity with the same name as the second one
     response = api_client.post(
@@ -952,7 +975,7 @@ def test_create_activity_unique_name_validation(api_client):
                     "activity_group_uid": activity_group.uid,
                 }
             ],
-            "library_name": "Sponsor",
+            "library_name": archived_library["name"],
         },
     )
     assert_response_status_code(response, 409)

@@ -43,6 +43,7 @@ from clinical_mdr_api.models.controlled_terminologies.ct_term_name import (
 )
 from clinical_mdr_api.models.utils import BaseModel
 from clinical_mdr_api.services.user_info import UserInfoService
+from common.config import settings
 from common.exceptions import ValidationException
 from common.utils import convert_to_datetime, filter_sort_valid_keys_re, get_field_type
 
@@ -409,6 +410,8 @@ def create_codelist_filter_statement(
             head([(library:Library)-[:CONTAINS_CODELIST]->(codelist_root) | library.name])=$library_name"""
             filter_parameters.append(filter_by_library_name)
         filter_query_parameters["library_name"] = library_name
+    if is_sponsor and not library_name:
+        filter_query_parameters["cdisc_library_name"] = settings.cdisc_library_name
     filter_statements = " AND ".join(filter_parameters)
     filter_statements = (
         "WHERE " + filter_statements if len(filter_statements) > 0 else ""

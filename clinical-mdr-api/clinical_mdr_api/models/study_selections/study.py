@@ -18,6 +18,7 @@ from clinical_mdr_api.domains.concepts.unit_definitions.unit_definition import (
 )
 from clinical_mdr_api.domains.controlled_terminologies.ct_term_name import CTTermNameAR
 from clinical_mdr_api.domains.dictionaries.dictionary_term import DictionaryTermAR
+from clinical_mdr_api.domains.enums import ValidationMode
 from clinical_mdr_api.domains.projects.project import ProjectAR
 from clinical_mdr_api.domains.study_definition_aggregates.registry_identifiers import (
     RegistryIdentifiersVO,
@@ -46,6 +47,7 @@ from common.exceptions import (
     NotFoundException,
     ValidationException,
 )
+from common.utils import convert_to_datetime
 
 
 def update_study_subpart_properties(study: "Study | CompactStudy"):
@@ -1614,6 +1616,99 @@ class CompactStudy(BaseModel):
         return study
 
 
+class StudyVersionHistory(BaseModel):
+    study_status: Annotated[
+        list[StudyStatus],
+        Field(description="List of StudyStatuses for specific study version"),
+    ]
+    reason_for_lock_name: Annotated[
+        str | None,
+        Field(
+            description="Name of the selected Reason For Lock Sponsor CTTerm",
+            json_schema_extra={"nullable": True},
+        ),
+    ] = None
+    reason_for_unlock_name: Annotated[
+        str | None,
+        Field(
+            description="Name of the selected Reason For Unlock Sponsor CTTerm",
+            json_schema_extra={"nullable": True},
+        ),
+    ] = None
+    metadata_version: Annotated[
+        str | None,
+        Field(
+            description="Metadata version associated with a given Study version",
+            json_schema_extra={"nullable": True},
+        ),
+    ] = None
+    protocol_header_major_version: Annotated[
+        int | None,
+        Field(
+            description="Major protocol header version associated with a given Study version",
+            json_schema_extra={"nullable": True},
+            ge=0,
+            lt=settings.max_int_neo4j,
+        ),
+    ] = None
+    protocol_header_minor_version: Annotated[
+        int | None,
+        Field(
+            description="Minor protocol header version associated with a given Study version",
+            json_schema_extra={"nullable": True},
+            ge=0,
+            lt=settings.max_int_neo4j,
+        ),
+    ] = None
+    description: Annotated[
+        str | None,
+        Field(
+            description="Description of the released/locked version",
+            json_schema_extra={"nullable": True},
+        ),
+    ] = None
+    other_reason_for_unlocking: Annotated[
+        str | None,
+        Field(
+            description="Other description for unlocking",
+            json_schema_extra={"nullable": True},
+        ),
+    ] = None
+    other_reason_for_locking_releasing: Annotated[
+        str | None,
+        Field(
+            description="Other description for locking&releasing",
+            json_schema_extra={"nullable": True},
+        ),
+    ] = None
+    modified_date: Annotated[
+        datetime, Field(description="Datetime when the Study version was modified")
+    ]
+    modified_by: Annotated[
+        str,
+        Field(description="Initials of the person who made given Study version change"),
+    ]
+
+    @classmethod
+    def from_repository_output(
+        cls,
+        val: dict[str, Any],
+    ) -> Self:
+        return cls(
+            study_status=[StudyStatus(status) for status in val["statuses"]],
+            reason_for_lock_name=val.get("reason_for_lock"),
+            reason_for_unlock_name=val.get("reason_for_unlock"),
+            metadata_version=val.get("metadata_version"),
+            protocol_header_major_version=val.get("protocol_header_major_version"),
+            protocol_header_minor_version=val.get("protocol_header_minor_version"),
+            description=val.get("description"),
+            other_reason_for_unlocking=val.get("other_reason_for_unlocking"),
+            other_reason_for_locking_releasing=val.get("other_reason_for_lock_release"),
+            modified_date=convert_to_datetime(value=val["date"]),
+            modified_by=val["modified_by"],
+        )
+
+
 class StudyMinimal(BaseModel):
     uid: Annotated[str, Field(description="UID of the study, e.g. 'Study_000001'")]
     id: Annotated[
@@ -1829,6 +1924,7 @@ class StudyCloneInput(StudyCreateInput):
     copy_study_epoch: Annotated[bool, Field()] = False
     copy_study_epochs_study_footnote: Annotated[bool, Field()] = False
     copy_study_design_matrix: Annotated[bool, Field()] = False
+    validation_mode: Annotated[ValidationMode, Field()] = ValidationMode.STRICT
 
 
 class StudySubpartCreateInput(PostInputModel):
@@ -1839,10 +1935,23 @@ class StudySubpartCreateInput(PostInputModel):
     study_parent_part_uid: Annotated[str, Field(min_length=1)]
 
 
-class StatusChangeDescription(BaseModel):
+class LockReleaseInput(BaseModel):
+    reason_for_change_uid: Annotated[str, Field(min_length=1)]
     change_description: Annotated[
-        str, Field(description="The description of the Study status change.")
-    ]
+        str | None, Field(description="The description of the Study status change.")
+    ] = None
+    other_reason_for_locking_releasing: Annotated[str | None, Field()] = None
+    protocol_header_major_version: Annotated[
+        int | None, Field(description="The major version of protocol header.")
+    ] = None
+    protocol_header_minor_version: Annotated[
+        int | None, Field(description="The minor version of protocol header.")
+    ] = None
+
+
+class UnlockInput(BaseModel):
+    reason_for_change_uid: Annotated[str, Field(min_length=1)]
+    other_reason_for_unlocking: Annotated[str | None, Field()] = None
 
 
 class StudyFieldAuditTrailAction(BaseModel):
@@ -1964,6 +2073,9 @@ class StudyProtocolTitle(BaseModel):
     development_stage_code: Annotated[
         SimpleTermModel | None, Field(json_schema_extra={"nullable": True})
     ] = None
+    protocol_header_version: Annotated[
+        str | None, Field(json_schema_extra={"nullable": True})
+    ] = None
 
     @classmethod
     def from_study_definition_ar(
@@ -2030,3 +2142,28 @@ class StudySubpartAuditTrail(BaseModel):
     ] = None
     change_type: Annotated[str, Field()]
     changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)
+
+
+# Integrity Check Response Models
+class IntegrityCheckResult(BaseModel):
+    """Result of a single integrity check for a study."""
+
+    check_id: str
+    description: str
+    passed: bool
+    noncompliant_count: int
+    noncompliant_labels: list[list[str]]
+    noncompliant_node_ids: list[int | str]
+    root_uids: list[str] | None = None
+    error: str | None = None
+
+
+class StudyIntegrityCheckResponse(BaseModel):
+    """Integrity check results for a single study."""
+
+    study_uid: str
+    study_number: str | None = None
+    study_acronym: str | None = None
+    all_passed: bool
+    checks: list[IntegrityCheckResult]
+    error: str | None = None

@@ -85,6 +85,7 @@ class StudyDefinitionSnapshot:
         version_author: str | None = None
         version_description: str | None = None
         version_number: Decimal | None = None
+        version_status: StudyStatus | None = None
         study_type_code: str | None = None
         study_type_null_value_code: str | None = None
         trial_intent_types_codes: tuple[str, ...] = ()
@@ -665,7 +666,7 @@ class StudyDefinitionAR:
             study_description=current_metadata.study_description,
         )
 
-    def lock(self, version_description: str, author_id: str) -> None:
+    def lock(self, author_id: str, version_description: str | None = None) -> None:
         current_metadata = self.current_metadata
         ValidationException.raise_if(
             current_metadata.ver_metadata.study_status != StudyStatus.DRAFT,
@@ -823,6 +824,9 @@ class StudyDefinitionAR:
                     )
                 value = getattr(value_object, config_item.study_field_name)
                 snapshot_dict[config_item.study_field_name] = value
+            # Manually adding version_status here to avoid adding new CTConfig node,
+            # in the end we want remove CTConfig nodes
+            snapshot_dict["version_status"] = study_metadata.ver_metadata.study_status
             result = StudyDefinitionSnapshot.StudyMetadataSnapshot(**snapshot_dict)
             return result
 
@@ -1009,7 +1013,8 @@ class StudyDefinitionAR:
 
         if study_snapshot.specific_metadata is not None:
             specific_metadata = study_metadata_values_from_snapshot(
-                study_snapshot.specific_metadata, StudyStatus.RELEASED
+                study_snapshot.specific_metadata,
+                study_snapshot.specific_metadata.version_status,  # type: ignore[arg-type]
             )
 
         locked_metadata_versions = [

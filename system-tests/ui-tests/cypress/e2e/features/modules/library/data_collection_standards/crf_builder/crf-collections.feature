@@ -26,12 +26,12 @@ Feature: Library - Data Collection Standards - CRF Builder - CRF Collections
     Scenario: [Table][Options] User must be able to see table with correct options
         Given The '/library/crf-builder/collections' page is opened
         Then A table is visible with following options
-            | options                                                         |
-            | Add Collection                                                  |
-            | Select columns                                                  |
-            | Export                                                          |
-            | Select filters                                                  |
-            | Search                                                          |
+            | options                                            |
+            | add-crf-collection                                 |
+            | filters-button                                     |
+            | columns-layout-button                              |
+            | table-export-button                                |
+            | search-field                                       |
 
     Scenario: [Table][Columns][Visibility] User must be able to select visibility of columns in the table 
         Given The '/library/crf-builder/collections' page is opened

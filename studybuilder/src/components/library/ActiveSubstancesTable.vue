@@ -15,14 +15,17 @@
   >
     <template #actions="">
       <v-btn
-        class="expandHoverBtn"
         color="nnBaseBlue"
         :disabled="!checkPermission($roles.LIBRARY_WRITE)"
         variant="outlined"
+        icon
+        size="small"
         @click.stop="showForm = true"
       >
-        <v-icon left>mdi-plus</v-icon>
-        <span class="label">{{ $t('ActiveSubstanceForm.add_title') }}</span>
+        <v-icon>mdi-plus</v-icon>
+        <v-tooltip activator="parent" location="top">
+          {{ $t('ActiveSubstanceForm.add_title') }}
+        </v-tooltip>
       </v-btn>
     </template>
     <template #[`item.actions`]="{ item }">

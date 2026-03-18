@@ -3,7 +3,7 @@
   "info": {
     "title": "OpenStudyBuilder API",
     "description": "\n## NOTICE\n\nThis license information is applicable to the swagger documentation of the clinical-mdr-api, that is the openapi.json.\n\n## License Terms (MIT)\n\nCopyright (C) 2025 Novo Nordisk A/S, Danish company registration no. 24256790\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n\n## Licenses and Acknowledgements for Incorporated Software\n\nThis component contains software licensed under different licenses when compiled, please refer to the third-party-licenses.md file for further information and full license texts.\n\n## Authentication\n\nSupports OAuth2 [Authorization Code Flow](https://datatracker.ietf.org/doc/html/rfc6749#section-4.1),\nat paths described in the OpenID Connect Discovery metadata document (whose URL is defined by the `OAUTH_METADATA_URL` environment variable).\n\nMicrosoft Identity Platform documentation can be read \n([here](https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-auth-code-flow)).\n\nAuthentication can be turned off with `OAUTH_ENABLED=false` environment variable. \n\nWhen authentication is turned on, all requests to protected API endpoints must provide a valid bearer (JWT) token inside the `Authorization` http header. \n",
-    "version": "3.0.595"
+    "version": "3.0.610"
   },
   "paths": {
     "/": {
@@ -12148,6 +12148,24 @@
               "default": "osb"
             },
             "description": "The system that exported this ODM XML file."
+          },
+          {
+            "name": "library_name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The name of the library to import into. Defaults to the configured sponsor library.",
+              "title": "Library Name"
+            },
+            "description": "The name of the library to import into. Defaults to the configured sponsor library."
           }
         ],
         "requestBody": {
@@ -37290,6 +37308,282 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CustomPage_CTCodelistNameAndAttributes_"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Entity not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ct/codelists/full-text-search": {
+      "get": {
+        "tags": [
+          "CT Codelists"
+        ],
+        "summary": "Searches codelists using full-text search on submission value.",
+        "description": "Returns a compact list of codelists matching the search string, with optional filtering for response codelists and ordinal codelists.",
+        "operationId": "search_codelists_fulltext_ct_codelists_full_text_search_get",
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          },
+          {
+            "BearerJwtAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "search_string",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The search string to use for full-text search on submission value.",
+              "title": "Search String"
+            },
+            "description": "The search string to use for full-text search on submission value."
+          },
+          {
+            "name": "only_response_codelists",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "If True, only return codelists that are valid for items (response codelists).",
+              "default": false,
+              "title": "Only Response Codelists"
+            },
+            "description": "If True, only return codelists that are valid for items (response codelists)."
+          },
+          {
+            "name": "only_ordinal_codelists",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "If True, only return ordinal codelists.",
+              "default": false,
+              "title": "Only Ordinal Codelists"
+            },
+            "description": "If True, only return ordinal codelists."
+          },
+          {
+            "name": "match_whole_words",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "If True, match whole words only in the search.",
+              "default": false,
+              "title": "Match Whole Words"
+            },
+            "description": "If True, match whole words only in the search."
+          },
+          {
+            "name": "page_number",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000000000,
+              "minimum": 1,
+              "description": "\nPage number of the returned list of entities.\n\nFunctionality : provided together with `page_size`, selects a page to retrieve for paginated results.\n\nErrors: `page_size` not provided, `page_number` must be equal or greater than 1.\n",
+              "default": 1,
+              "title": "Page Number"
+            },
+            "description": "\nPage number of the returned list of entities.\n\nFunctionality : provided together with `page_size`, selects a page to retrieve for paginated results.\n\nErrors: `page_size` not provided, `page_number` must be equal or greater than 1.\n"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 0,
+              "description": "\nNumber of items to be returned per page.\n\nDefault: 10\n\nFunctionality: Provided together with `page_number`, selects the number of results per page.\n\nIn case the value is set to `0`, all rows will be returned.\n\nErrors: `page_number` not provided.\n",
+              "default": 10,
+              "title": "Page Size"
+            },
+            "description": "\nNumber of items to be returned per page.\n\nDefault: 10\n\nFunctionality: Provided together with `page_number`, selects the number of results per page.\n\nIn case the value is set to `0`, all rows will be returned.\n\nErrors: `page_number` not provided.\n"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomPage_CTCodelistCompact_"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Entity not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ct/codelists/full-text-search-by-term": {
+      "get": {
+        "tags": [
+          "CT Codelists"
+        ],
+        "summary": "Searches codelists by term using full-text search.",
+        "description": "Searches terms using full-text search and returns codelists containing those terms, with optional filtering for response codelists and ordinal codelists.",
+        "operationId": "search_codelists_fulltext_by_term_ct_codelists_full_text_search_by_term_get",
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          },
+          {
+            "BearerJwtAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "search_string",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The search string to use for full-text search on term name and attributes.",
+              "title": "Search String"
+            },
+            "description": "The search string to use for full-text search on term name and attributes."
+          },
+          {
+            "name": "only_response_codelists",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "If True, only return codelists that are valid for items (response codelists).",
+              "default": false,
+              "title": "Only Response Codelists"
+            },
+            "description": "If True, only return codelists that are valid for items (response codelists)."
+          },
+          {
+            "name": "only_ordinal_codelists",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "If True, only return ordinal codelists.",
+              "default": false,
+              "title": "Only Ordinal Codelists"
+            },
+            "description": "If True, only return ordinal codelists."
+          },
+          {
+            "name": "match_whole_words",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "If True, match whole words only in the search.",
+              "default": false,
+              "title": "Match Whole Words"
+            },
+            "description": "If True, match whole words only in the search."
+          },
+          {
+            "name": "page_number",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000000000,
+              "minimum": 1,
+              "description": "\nPage number of the returned list of entities.\n\nFunctionality : provided together with `page_size`, selects a page to retrieve for paginated results.\n\nErrors: `page_size` not provided, `page_number` must be equal or greater than 1.\n",
+              "default": 1,
+              "title": "Page Number"
+            },
+            "description": "\nPage number of the returned list of entities.\n\nFunctionality : provided together with `page_size`, selects a page to retrieve for paginated results.\n\nErrors: `page_size` not provided, `page_number` must be equal or greater than 1.\n"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 0,
+              "description": "\nNumber of items to be returned per page.\n\nDefault: 10\n\nFunctionality: Provided together with `page_number`, selects the number of results per page.\n\nIn case the value is set to `0`, all rows will be returned.\n\nErrors: `page_number` not provided.\n",
+              "default": 10,
+              "title": "Page Size"
+            },
+            "description": "\nNumber of items to be returned per page.\n\nDefault: 10\n\nFunctionality: Provided together with `page_number`, selects the number of results per page.\n\nIn case the value is set to `0`, all rows will be returned.\n\nErrors: `page_number` not provided.\n"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomPage_CTCodelistCompact_"
                 }
               }
             }
@@ -71176,8 +71470,8 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/StatusChangeDescription",
-                "description": "The description of the locked version."
+                "$ref": "#/components/schemas/LockReleaseInput",
+                "description": "The data (reason_for_lock and description) needed for locked version."
               }
             }
           }
@@ -71224,14 +71518,16 @@
             }
           }
         }
-      },
-      "delete": {
+      }
+    },
+    "/studies/{study_uid}/unlocks": {
+      "post": {
         "tags": [
           "Studies"
         ],
         "summary": "Unlocks a Study with specified uid",
         "description": "The Study is unlocked, which means that the new DRAFT version of a Study is created and the Study exists in the DRAFT state.",
-        "operationId": "unlock_studies__study_uid__locks_delete",
+        "operationId": "unlock_studies__study_uid__unlocks_post",
         "security": [
           {
             "OAuth2AuthorizationCodeBearer": []
@@ -71253,8 +71549,19 @@
             "description": "The unique id of the study."
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnlockInput",
+                "description": "The data (reason_for_unlock and description) needed for unlocked version."
+              }
+            }
+          }
+        },
         "responses": {
-          "200": {
+          "201": {
             "description": "Successful Response",
             "content": {
               "application/json": {
@@ -71331,8 +71638,8 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/StatusChangeDescription",
-                "description": "The description of the release version."
+                "$ref": "#/components/schemas/LockReleaseInput",
+                "description": "The data (reason_for_release and description) needed for released version."
               }
             }
           }
@@ -71691,6 +71998,79 @@
         }
       }
     },
+    "/studies/{study_uid}/integrity-check": {
+      "get": {
+        "tags": [
+          "Studies"
+        ],
+        "summary": "Run integrity checks for a specific study",
+        "description": "Executes database integrity checks for the specified study and returns detailed results including all checks and non-compliant entities.",
+        "operationId": "run_integrity_check_for_study_studies__study_uid__integrity_check_get",
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          },
+          {
+            "BearerJwtAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "study_uid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "The unique id of the study.",
+              "title": "Study Uid"
+            },
+            "description": "The unique id of the study."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudyIntegrityCheckResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Entity not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/studies/{study_uid}/structure-statistics": {
       "get": {
         "tags": [
@@ -71973,16 +72353,6 @@
             "description": "The unique id of the study."
           },
           {
-            "name": "sort_by",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "description": "\nJSON dictionary of field names and boolean flags specifying the sort order. Supported values for sort order are:\n- `true` - ascending order\n\n- `false` - descending order\n\n\nDefault: `{}` (no sorting).\n\nFormat: `{\"field_1\": true, \"field_2\": false, ...}`.\n\nFunctionality: Sorts the results by `field_1` with sort order indicated by its boolean value, then by `field_2` etc.\n\nExample: `{\"topic_code\": true, \"name\": false}` sorts the returned list by `topic_code ascending`, then by `name descending`.\n",
-              "title": "Sort By"
-            },
-            "description": "\nJSON dictionary of field names and boolean flags specifying the sort order. Supported values for sort order are:\n- `true` - ascending order\n\n- `false` - descending order\n\n\nDefault: `{}` (no sorting).\n\nFormat: `{\"field_1\": true, \"field_2\": false, ...}`.\n\nFunctionality: Sorts the results by `field_1` with sort order indicated by its boolean value, then by `field_2` etc.\n\nExample: `{\"topic_code\": true, \"name\": false}` sorts the returned list by `topic_code ascending`, then by `name descending`.\n"
-          },
-          {
             "name": "page_number",
             "in": "query",
             "required": false,
@@ -72011,60 +72381,6 @@
             "description": "\nNumber of items to be returned per page.\n\nDefault: 10\n\nFunctionality: Provided together with `page_number`, selects the number of results per page.\n\nIn case the value is set to `0`, all rows will be returned.\n\nErrors: `page_number` not provided.\n"
           },
           {
-            "name": "filters",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "description": "\nJSON dictionary of field names and search strings, with a choice of operators for building complex filtering queries.\n\nDefault: `{}` (no filtering).\n\nFunctionality: filters the queried entities based on the provided search strings and operators.\n\nFormat:\n`{\"field_name\":{\"v\":[\"search_str_1\", \"search_str_1\"], \"op\":\"comparison_operator\"}, \"other_field_name\":{...}}`\n\n- `v` specifies the list of values to match against the specified `field_name` field\n\n    - If multiple values are provided in the `v` list, a logical OR filtering operation will be performed using these values.\n\n- `op` specifies the type of string match/comparison operation to perform on the specified `field_name` field. Supported values are:\n\n    - `eq` (default, equals)\n\n    - `ne` (not equals)\n\n    - `co` (string contains)\n\n    - `ge` (greater or equal to)\n\n    - `gt` (greater than)\n\n    - `le` (less or equal to)\n\n    - `lt` (less than)\n\n    - `bw` (between - exactly two values are required)\n\n    - `in` (value in list).\n\n\nNote that filtering can also be performed on non-string field types. \nFor example, this works as filter on a boolean field: `{\"is_global_standard\": {\"v\": [false]}}`.\n\n\nWildcard filtering is also supported. To do this, provide `*` value for `field_name`, for example: `{\"*\":{\"v\":[\"search_string\"]}}`.\n\nWildcard only supports string search (with implicit `contains` operator) on fields of type string.\n\n\nFinally, you can filter on items that have an empty value for a field. To achieve this, set the value of `v` list to an empty array - `[]`.\n\n\nComplex filtering example:\n\n`{\"name\":{\"v\": [\"Jimbo\", \"Jumbo\"], \"op\": \"co\"}, \"start_date\": {\"v\": [\"2021-04-01T12:00:00+00.000\"], \"op\": \"ge\"}, \"*\":{\"v\": [\"wildcard_search\"], \"op\": \"co\"}}`\n\n",
-              "title": "Filters"
-            },
-            "description": "\nJSON dictionary of field names and search strings, with a choice of operators for building complex filtering queries.\n\nDefault: `{}` (no filtering).\n\nFunctionality: filters the queried entities based on the provided search strings and operators.\n\nFormat:\n`{\"field_name\":{\"v\":[\"search_str_1\", \"search_str_1\"], \"op\":\"comparison_operator\"}, \"other_field_name\":{...}}`\n\n- `v` specifies the list of values to match against the specified `field_name` field\n\n    - If multiple values are provided in the `v` list, a logical OR filtering operation will be performed using these values.\n\n- `op` specifies the type of string match/comparison operation to perform on the specified `field_name` field. Supported values are:\n\n    - `eq` (default, equals)\n\n    - `ne` (not equals)\n\n    - `co` (string contains)\n\n    - `ge` (greater or equal to)\n\n    - `gt` (greater than)\n\n    - `le` (less or equal to)\n\n    - `lt` (less than)\n\n    - `bw` (between - exactly two values are required)\n\n    - `in` (value in list).\n\n\nNote that filtering can also be performed on non-string field types. \nFor example, this works as filter on a boolean field: `{\"is_global_standard\": {\"v\": [false]}}`.\n\n\nWildcard filtering is also supported. To do this, provide `*` value for `field_name`, for example: `{\"*\":{\"v\":[\"search_string\"]}}`.\n\nWildcard only supports string search (with implicit `contains` operator) on fields of type string.\n\n\nFinally, you can filter on items that have an empty value for a field. To achieve this, set the value of `v` list to an empty array - `[]`.\n\n\nComplex filtering example:\n\n`{\"name\":{\"v\": [\"Jimbo\", \"Jumbo\"], \"op\": \"co\"}, \"start_date\": {\"v\": [\"2021-04-01T12:00:00+00.000\"], \"op\": \"ge\"}, \"*\":{\"v\": [\"wildcard_search\"], \"op\": \"co\"}}`\n\n",
-            "examples": {
-              "none": {
-                "summary": "No Filters",
-                "description": "No filters are applied.",
-                "value": "{}"
-              },
-              "wildcard": {
-                "summary": "Wildcard Filter",
-                "description": "Apply a wildcard filter.",
-                "value": "{\"*\":{ \"v\": [\"\"], \"op\": \"co\"}}"
-              },
-              "uid__contains": {
-                "summary": "Partial Match on UID",
-                "description": "Apply a filter to display records **containing** specified UIDs.",
-                "value": "{\"uid\":{ \"v\": [\"\"], \"op\": \"co\"}}"
-              },
-              "uid": {
-                "summary": "Exact Match on UID",
-                "description": "Apply a filter to display only those records with **exact** matching UIDs.",
-                "value": "{\"uid\":{ \"v\": [\"\"], \"op\": \"eq\"}}"
-              },
-              "name__contains": {
-                "summary": "Partial Match on Name",
-                "description": "Apply a filter to display records **containing** specified names.",
-                "value": "{\"name\":{ \"v\": [\"\"], \"op\": \"co\"}}"
-              },
-              "name": {
-                "summary": "Exact Match on Name",
-                "description": "Apply a filter to display only those records with **exact** matching names.",
-                "value": "{\"name\":{ \"v\": [\"\"], \"op\": \"eq\"}}"
-              }
-            }
-          },
-          {
-            "name": "operator",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "Specifies which logical operation - `and` or `or` - should be used in case filtering is done on several fields.\n\nDefault: `and` (all fields have to match their filter).\n\nFunctionality: `and` will return entities having all filters matching, `or` will return entities with any matches.\n\n",
-              "default": "and",
-              "title": "Operator"
-            },
-            "description": "Specifies which logical operation - `and` or `or` - should be used in case filtering is done on several fields.\n\nDefault: `and` (all fields have to match their filter).\n\nFunctionality: `and` will return entities having all filters matching, `or` will return entities with any matches.\n\n"
-          },
-          {
             "name": "total_count",
             "in": "query",
             "required": false,
@@ -72075,6 +72391,18 @@
               "title": "Total Count"
             },
             "description": "Boolean flag to include the total count of entities in the response.\n\nDefault: `false`\n\nFunctionality: When set to `true`, returns the total number of entities that match the query.\n\nWhen combined with filters, the count reflects only the entities matching those filters.\n\nNote: This operation can be expensive for large datasets.\n\nSpecial case: A value of `-1` indicates that the exact count is unavailable due to performance constraints, but confirms that at least one more entity exists beyond the current page."
+          },
+          {
+            "name": "only_latest_major_protcol_version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Indicates whether Study snapshots without protocol header version should be returned",
+              "default": false,
+              "title": "Only Latest Major Protcol Version"
+            },
+            "description": "Indicates whether Study snapshots without protocol header version should be returned"
           }
         ],
         "responses": {
@@ -72083,7 +72411,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CustomPage_CompactStudy_"
+                  "$ref": "#/components/schemas/CustomPage_StudyVersionHistory_"
                 }
               }
             }
@@ -72100,6 +72428,76 @@
           },
           "404": {
             "description": "Not Found - The study with the specified 'study_uid' (and the specified date/time and/or status) wasn't found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studies/{study_uid}/protocol-header-versions": {
+      "get": {
+        "tags": [
+          "Studies"
+        ],
+        "summary": "Returns the latest available protocol header version or the one associated with specified study value version.",
+        "operationId": "get_protocol_header_version_studies__study_uid__protocol_header_versions_get",
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          },
+          {
+            "BearerJwtAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "study_uid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "The unique id of the study.",
+              "title": "Study Uid"
+            },
+            "description": "The unique id of the study."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Get Protocol Header Version Studies  Study Uid  Protocol Header Versions Get"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found - The study with the specified 'study_uid'",
             "content": {
               "application/json": {
                 "schema": {
@@ -85011,16 +85409,6 @@
               }
             }
           },
-          "400": {
-            "description": "Cannot modify 'is_important' property on a reviewed StudyActivityInstance",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
           "403": {
             "description": "Forbidden",
             "content": {
@@ -85033,6 +85421,16 @@
           },
           "404": {
             "description": "Not Found - There exist no selection between the study and activity instance.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
             "content": {
               "application/json": {
                 "schema": {
@@ -114309,18 +114707,13 @@
             "description": "The reason why request was rejected",
             "nullable": true
           },
-          "requester_study_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Requester Study Id",
-            "description": "The study_id of the Study which requested an Activity request",
-            "nullable": true
+          "used_by_studies": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Used By Studies",
+            "description": "The list of study ids which currently uses given Activity Request"
           },
           "replaced_by_activity": {
             "anyOf": [
@@ -114948,18 +115341,13 @@
             "description": "The reason why request was rejected",
             "nullable": true
           },
-          "requester_study_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Requester Study Id",
-            "description": "The study_id of the Study which requested an Activity request",
-            "nullable": true
+          "used_by_studies": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Used By Studies",
+            "description": "The list of study ids which currently uses given Activity Request"
           },
           "replaced_by_activity": {
             "anyOf": [
@@ -117514,25 +117902,8 @@
             "minLength": 1,
             "title": "Activity Item Class Uid"
           },
-          "odm_form_uid": {
-            "type": "string",
-            "minLength": 1,
-            "title": "Odm Form Uid"
-          },
-          "odm_item_group_uid": {
-            "type": "string",
-            "minLength": 1,
-            "title": "Odm Item Group Uid"
-          },
           "order": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "integer",
             "title": "Order"
           },
           "primary": {
@@ -117541,37 +117912,19 @@
             "default": false
           },
           "preset_response_value": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Preset Response Value"
+            "type": "string",
+            "title": "Preset Response Value",
+            "default": ""
           },
           "value_condition": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Value Condition"
+            "type": "string",
+            "title": "Value Condition",
+            "default": ""
           },
           "value_dependent_map": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Value Dependent Map"
+            "type": "string",
+            "title": "Value Dependent Map",
+            "default": ""
           },
           "activity_instance_name": {
             "anyOf": [
@@ -117611,8 +117964,7 @@
         "required": [
           "activity_instance_uid",
           "activity_item_class_uid",
-          "odm_form_uid",
-          "odm_item_group_uid",
+          "order",
           "activity_instance_name",
           "activity_instance_adam_param_code",
           "activity_instance_topic_code"
@@ -117631,25 +117983,8 @@
             "minLength": 1,
             "title": "Activity Item Class Uid"
           },
-          "odm_form_uid": {
-            "type": "string",
-            "minLength": 1,
-            "title": "Odm Form Uid"
-          },
-          "odm_item_group_uid": {
-            "type": "string",
-            "minLength": 1,
-            "title": "Odm Item Group Uid"
-          },
           "order": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "integer",
             "title": "Order"
           },
           "primary": {
@@ -117658,45 +117993,26 @@
             "default": false
           },
           "preset_response_value": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Preset Response Value"
+            "type": "string",
+            "title": "Preset Response Value",
+            "default": ""
           },
           "value_condition": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Value Condition"
+            "type": "string",
+            "title": "Value Condition",
+            "default": ""
           },
           "value_dependent_map": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Value Dependent Map"
+            "type": "string",
+            "title": "Value Dependent Map",
+            "default": ""
           }
         },
         "type": "object",
         "required": [
           "activity_instance_uid",
           "activity_item_class_uid",
-          "odm_form_uid",
-          "odm_item_group_uid"
+          "order"
         ],
         "title": "ActivityInstanceRelInput"
       },
@@ -120978,6 +121294,18 @@
             "format": "date",
             "title": "Effective Date",
             "description": "The effective date of the package, for instance '2020-09-27'"
+          },
+          "library_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Library Name",
+            "description": "The name of the library for this package. Defaults to the configured sponsor library."
           }
         },
         "type": "object",
@@ -120993,7 +121321,7 @@
             "anyOf": [
               {
                 "type": "string",
-                "format": "binary"
+                "contentMediaType": "application/octet-stream"
               },
               {
                 "type": "null"
@@ -121010,7 +121338,7 @@
         "properties": {
           "xml_file": {
             "type": "string",
-            "format": "binary",
+            "contentMediaType": "application/octet-stream",
             "title": "Xml File",
             "description": "The ODM XML file to upload. Supports ODM V1."
           },
@@ -121018,7 +121346,7 @@
             "anyOf": [
               {
                 "type": "string",
-                "format": "binary"
+                "contentMediaType": "application/octet-stream"
               },
               {
                 "type": "null"
@@ -121678,6 +122006,11 @@
             "type": "boolean",
             "title": "Is Ordinal"
           },
+          "codelist_type": {
+            "type": "string",
+            "title": "Codelist Type",
+            "default": "Standard"
+          },
           "sponsor_preferred_name": {
             "type": "string",
             "title": "Sponsor Preferred Name"
@@ -121785,6 +122118,11 @@
           "is_ordinal": {
             "type": "boolean",
             "title": "Is Ordinal"
+          },
+          "codelist_type": {
+            "type": "string",
+            "title": "Codelist Type",
+            "default": "Standard"
           },
           "library_name": {
             "anyOf": [
@@ -121963,6 +122301,18 @@
             ],
             "title": "Is Ordinal"
           },
+          "codelist_type": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codelist Type"
+          },
           "change_description": {
             "type": "string",
             "minLength": 1,
@@ -122109,6 +122459,11 @@
             "type": "boolean",
             "title": "Is Ordinal"
           },
+          "codelist_type": {
+            "type": "string",
+            "title": "Codelist Type",
+            "default": "Standard"
+          },
           "library_name": {
             "anyOf": [
               {
@@ -122223,6 +122578,34 @@
         "title": "CTCodelistAttributesVersion",
         "description": "Class for storing CTCodelistAttributes and calculation of differences"
       },
+      "CTCodelistCompact": {
+        "properties": {
+          "uid": {
+            "type": "string",
+            "title": "Uid"
+          },
+          "sponsor_preferred_name": {
+            "type": "string",
+            "title": "Sponsor Preferred Name"
+          },
+          "submission_value": {
+            "type": "string",
+            "title": "Submission Value"
+          },
+          "library_name": {
+            "type": "string",
+            "title": "Library Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "uid",
+          "sponsor_preferred_name",
+          "submission_value",
+          "library_name"
+        ],
+        "title": "CTCodelistCompact"
+      },
       "CTCodelistCreateInput": {
         "properties": {
           "catalogue_names": {
@@ -122266,6 +122649,11 @@
           "is_ordinal": {
             "type": "boolean",
             "title": "Is Ordinal"
+          },
+          "codelist_type": {
+            "type": "string",
+            "title": "Codelist Type",
+            "default": "Standard"
           },
           "sponsor_preferred_name": {
             "type": "string",
@@ -130160,6 +130548,40 @@
         ],
         "title": "CustomPage[CTCodelistAttributes]"
       },
+      "CustomPage_CTCodelistCompact_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CTCodelistCompact"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "minimum": -1.0,
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Page"
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Size"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "size"
+        ],
+        "title": "CustomPage[CTCodelistCompact]"
+      },
       "CustomPage_CTCodelistNameAndAttributes_": {
         "properties": {
           "items": {
@@ -132913,6 +133335,40 @@
           "size"
         ],
         "title": "CustomPage[StudySummaryListing]"
+      },
+      "CustomPage_StudyVersionHistory_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/StudyVersionHistory"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "minimum": -1.0,
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Page"
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Size"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "size"
+        ],
+        "title": "CustomPage[StudyVersionHistory]"
       },
       "CustomPage_StudyVisitListing_": {
         "properties": {
@@ -140731,6 +141187,86 @@
         "type": "object",
         "title": "IngredientEditInput"
       },
+      "IntegrityCheckResult": {
+        "properties": {
+          "check_id": {
+            "type": "string",
+            "title": "Check Id"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "passed": {
+            "type": "boolean",
+            "title": "Passed"
+          },
+          "noncompliant_count": {
+            "type": "integer",
+            "title": "Noncompliant Count"
+          },
+          "noncompliant_labels": {
+            "items": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Noncompliant Labels"
+          },
+          "noncompliant_node_ids": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Noncompliant Node Ids"
+          },
+          "root_uids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Root Uids"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "check_id",
+          "description",
+          "passed",
+          "noncompliant_count",
+          "noncompliant_labels",
+          "noncompliant_node_ids"
+        ],
+        "title": "IntegrityCheckResult",
+        "description": "Result of a single integrity check for a study."
+      },
       "ItemCounts": {
         "properties": {
           "total": {
@@ -141036,6 +141572,67 @@
         ],
         "title": "LibraryItemStatus",
         "description": "Enumerator for library item statuses"
+      },
+      "LockReleaseInput": {
+        "properties": {
+          "reason_for_change_uid": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Reason For Change Uid"
+          },
+          "change_description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change Description",
+            "description": "The description of the Study status change."
+          },
+          "other_reason_for_locking_releasing": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Other Reason For Locking Releasing"
+          },
+          "protocol_header_major_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Protocol Header Major Version",
+            "description": "The major version of protocol header."
+          },
+          "protocol_header_minor_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Protocol Header Minor Version",
+            "description": "The minor version of protocol header."
+          }
+        },
+        "type": "object",
+        "required": [
+          "reason_for_change_uid"
+        ],
+        "title": "LockReleaseInput"
       },
       "MedicinalProduct": {
         "properties": {
@@ -145046,6 +145643,16 @@
             "title": "Comment",
             "nullable": true
           },
+          "odm_item_group": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OdmItemParentGroup"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "translated_texts": {
             "items": {
               "$ref": "#/components/schemas/OdmTranslatedTextModel"
@@ -145846,6 +146453,43 @@
           "vendor"
         ],
         "title": "OdmItemGroupRefModel"
+      },
+      "OdmItemParentGroup": {
+        "properties": {
+          "uid": {
+            "type": "string",
+            "title": "Uid"
+          },
+          "oid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Oid"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "uid",
+          "oid",
+          "name"
+        ],
+        "title": "OdmItemParentGroup"
       },
       "OdmItemPatchInput": {
         "properties": {
@@ -150217,6 +150861,10 @@
       },
       "SimpleActivityItemClassForActivityInstance": {
         "properties": {
+          "uid": {
+            "type": "string",
+            "title": "Uid"
+          },
           "name": {
             "type": "string",
             "title": "Name"
@@ -150236,6 +150884,7 @@
         },
         "type": "object",
         "required": [
+          "uid",
           "name",
           "order",
           "role_name",
@@ -153045,20 +153694,6 @@
         ],
         "title": "SponsorModelDatasetVariableInput"
       },
-      "StatusChangeDescription": {
-        "properties": {
-          "change_description": {
-            "type": "string",
-            "title": "Change Description",
-            "description": "The description of the Study status change."
-          }
-        },
-        "type": "object",
-        "required": [
-          "change_description"
-        ],
-        "title": "StatusChangeDescription"
-      },
       "Study": {
         "properties": {
           "uid": {
@@ -153525,24 +154160,6 @@
       },
       "StudyActivitySchedule": {
         "properties": {
-          "study_uid": {
-            "type": "string",
-            "title": "Study Uid",
-            "description": "The uid of the study"
-          },
-          "study_version": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Study Version",
-            "description": "Study version number, if specified, otherwise None",
-            "nullable": true
-          },
           "study_activity_schedule_uid": {
             "type": "string",
             "title": "Study Activity Schedule Uid",
@@ -153570,56 +154187,13 @@
             "type": "string",
             "title": "Study Visit Uid",
             "description": "The related study visit UID"
-          },
-          "start_date": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Start Date",
-            "description": "The most recent point in time when the study selection was edited. The format is ISO 8601 in UTC\u00b10, e.g.: '2020-10-31T16:00:00+00:00' for October 31, 2020 at 6pm in UTC+2 timezone.",
-            "nullable": true
-          },
-          "author_username": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Author Username",
-            "description": "Version author",
-            "nullable": true
-          },
-          "end_date": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "End Date",
-            "description": "End date for the version",
-            "nullable": true
           }
         },
         "type": "object",
         "required": [
-          "study_uid",
           "study_activity_schedule_uid",
           "study_activity_uid",
-          "study_visit_uid",
-          "start_date"
+          "study_visit_uid"
         ],
         "title": "StudyActivitySchedule"
       },
@@ -153714,11 +154288,6 @@
       },
       "StudyActivityScheduleHistory": {
         "properties": {
-          "study_uid": {
-            "type": "string",
-            "title": "Study Uid",
-            "description": "The uid of the study"
-          },
           "study_activity_schedule_uid": {
             "type": "string",
             "title": "Study Activity Schedule Uid",
@@ -153764,7 +154333,6 @@
         },
         "type": "object",
         "required": [
-          "study_uid",
           "study_activity_schedule_uid",
           "study_activity_uid",
           "study_visit_uid"
@@ -154331,6 +154899,10 @@
             "type": "boolean",
             "title": "Copy Study Design Matrix",
             "default": false
+          },
+          "validation_mode": {
+            "$ref": "#/components/schemas/ValidationMode",
+            "default": "strict"
           }
         },
         "type": "object",
@@ -157567,6 +158139,66 @@
         "type": "object",
         "title": "StudyIdentificationMetadataJsonModel"
       },
+      "StudyIntegrityCheckResponse": {
+        "properties": {
+          "study_uid": {
+            "type": "string",
+            "title": "Study Uid"
+          },
+          "study_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Study Number"
+          },
+          "study_acronym": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Study Acronym"
+          },
+          "all_passed": {
+            "type": "boolean",
+            "title": "All Passed"
+          },
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/IntegrityCheckResult"
+            },
+            "type": "array",
+            "title": "Checks"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "study_uid",
+          "all_passed",
+          "checks"
+        ],
+        "title": "StudyIntegrityCheckResponse",
+        "description": "Integrity check results for a single study."
+      },
       "StudyInterventionJsonModel": {
         "properties": {
           "intervention_type_code": {
@@ -159138,6 +159770,18 @@
                 "type": "null"
               }
             ],
+            "nullable": true
+          },
+          "protocol_header_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Protocol Header Version",
             "nullable": true
           }
         },
@@ -168843,6 +169487,144 @@
         ],
         "title": "Study type model for listing supplying SDTM generation framework"
       },
+      "StudyVersionHistory": {
+        "properties": {
+          "study_status": {
+            "items": {
+              "$ref": "#/components/schemas/StudyStatus"
+            },
+            "type": "array",
+            "title": "Study Status",
+            "description": "List of StudyStatuses for specific study version"
+          },
+          "reason_for_lock_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason For Lock Name",
+            "description": "Name of the selected Reason For Lock Sponsor CTTerm",
+            "nullable": true
+          },
+          "reason_for_unlock_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason For Unlock Name",
+            "description": "Name of the selected Reason For Unlock Sponsor CTTerm",
+            "nullable": true
+          },
+          "metadata_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata Version",
+            "description": "Metadata version associated with a given Study version",
+            "nullable": true
+          },
+          "protocol_header_major_version": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMaximum": 9.223372036854776e+18,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Protocol Header Major Version",
+            "description": "Major protocol header version associated with a given Study version",
+            "nullable": true
+          },
+          "protocol_header_minor_version": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMaximum": 9.223372036854776e+18,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Protocol Header Minor Version",
+            "description": "Minor protocol header version associated with a given Study version",
+            "nullable": true
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "Description of the released/locked version",
+            "nullable": true
+          },
+          "other_reason_for_unlocking": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Other Reason For Unlocking",
+            "description": "Other description for unlocking",
+            "nullable": true
+          },
+          "other_reason_for_locking_releasing": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Other Reason For Locking Releasing",
+            "description": "Other description for locking&releasing",
+            "nullable": true
+          },
+          "modified_date": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Modified Date",
+            "description": "Datetime when the Study version was modified"
+          },
+          "modified_by": {
+            "type": "string",
+            "title": "Modified By",
+            "description": "Initials of the person who made given Study version change"
+          }
+        },
+        "type": "object",
+        "required": [
+          "study_status",
+          "modified_date",
+          "modified_by"
+        ],
+        "title": "StudyVersionHistory"
+      },
       "StudyVersionMetadataJsonModel": {
         "properties": {
           "study_status": {
@@ -173626,6 +174408,31 @@
         ],
         "title": "UnitDefinitionSimpleModel"
       },
+      "UnlockInput": {
+        "properties": {
+          "reason_for_change_uid": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Reason For Change Uid"
+          },
+          "other_reason_for_unlocking": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Other Reason For Unlocking"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reason_for_change_uid"
+        ],
+        "title": "UnlockInput"
+      },
       "UserInfo": {
         "properties": {
           "user_id": {
@@ -173855,6 +174662,13 @@
           "type": {
             "type": "string",
             "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
           }
         },
         "type": "object",
@@ -173864,6 +174678,15 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "ValidationMode": {
+        "type": "string",
+        "enum": [
+          "strict",
+          "warning"
+        ],
+        "title": "ValidationMode",
+        "description": "Enumerator for validation modes used in database integrity checks"
       },
       "VariableClass": {
         "properties": {

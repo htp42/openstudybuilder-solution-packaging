@@ -1,48 +1,33 @@
 <template>
-  <div class="d-flex align-center">
-    <v-autocomplete
-      v-model="studyById"
-      :label="$t('StudyQuickSelectForm.study_id')"
-      :items="studiesWithId"
-      item-title="id"
-      return-object
-      :rules="[(value) => formRules.atleastone(value, studyByAcronym)]"
-      variant="outlined"
-      rounded="lg"
-      density="compact"
-      autocomplete="off"
-      clearable
-      :loading="loading"
-      @update:model-value="autoPopulateAcronym"
-    />
-    <span class="mx-4">{{ $t('StudyQuickSelectForm.and_or') }}</span>
-    <v-autocomplete
-      v-model="studyByAcronym"
-      :label="$t('StudyQuickSelectForm.study_acronym')"
-      :items="studiesWithAcronym"
-      item-title="acronym"
-      return-object
-      :rules="[(value) => formRules.atleastone(value, studyById)]"
-      variant="outlined"
-      rounded="lg"
-      density="compact"
-      autocomplete="off"
-      clearable
-      :loading="loading"
-      @update:model-value="autoPopulateId"
-    />
-  </div>
+  <v-autocomplete
+    v-model="selectedStudy"
+    :label="$t('StudyQuickSelectForm.study_id_or_acronym')"
+    :items="sortedStudies"
+    :item-title="getStudyDisplayName"
+    return-object
+    :rules="[formRules.required]"
+    variant="outlined"
+    rounded="lg"
+    density="compact"
+    autocomplete="off"
+    clearable
+    :loading="loading"
+    @update:model-value="emit('update:modelValue', $event)"
+  />
 </template>
 
 <script setup>
-import { computed, inject, onMounted, ref } from 'vue'
+import { computed, inject, onMounted, ref, watch } from 'vue'
 import studyApi from '@/api/study'
 
-// eslint-disable-next-line no-unused-vars
 const props = defineProps({
   modelValue: {
     type: Object,
     default: null,
+  },
+  data: {
+    type: Array,
+    default: undefined,
   },
 })
 const emit = defineEmits(['update:modelValue'])
@@ -50,45 +35,54 @@ const emit = defineEmits(['update:modelValue'])
 const formRules = inject('formRules')
 
 const studies = ref([])
-const studyById = ref(null)
-const studyByAcronym = ref(null)
+const selectedStudy = ref(props.modelValue)
 const loading = ref(false)
 
-const studiesWithId = computed(() => {
-  let list = studies.value.filter((study) => study.id !== null)
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    selectedStudy.value = newValue
+  }
+)
 
-  return list.sort((a, b) => {
-    return a.id.localeCompare(b.id)
+const sortedStudies = computed(() => {
+  return studies.value.slice().sort((a, b) => {
+    const nameA = getStudyDisplayName(a) || ''
+    const nameB = getStudyDisplayName(b) || ''
+    return nameA.localeCompare(nameB)
   })
 })
-const studiesWithAcronym = computed(() => {
-  let list = studies.value.filter((study) => study.acronym !== null)
 
-  return list.sort((a, b) => {
-    return a.acronym.localeCompare(b.acronym)
-  })
-})
+function getStudyDisplayName(study) {
+  const id =
+    study?.id || study?.current_metadata?.identification_metadata?.study_id
+  const acronym =
+    study?.acronym ||
+    study?.current_metadata?.identification_metadata?.study_acronym
+  if (id && acronym) {
+    return `${id} (${acronym})`
+  } else if (id) {
+    return id
+  } else if (acronym) {
+    return acronym
+  }
+}
 
 onMounted(() => {
-  loading.value = true
-  studyApi.getIds().then((resp) => {
-    studies.value = resp.data
-    loading.value = false
-  })
-})
+  console.log('StudySelectorField mounted, loading studies...', props.data)
+  if (props.data !== undefined) {
+    studies.value = props.data
+    return
+  }
 
-function autoPopulateAcronym(study) {
-  if (study && study.acronym) {
-    studyByAcronym.value = study
-  } else {
-    studyByAcronym.value = null
-  }
-  emit('update:modelValue', study)
-}
-function autoPopulateId(study) {
-  if (study && study.id) {
-    studyById.value = study
-  }
-  emit('update:modelValue', study)
-}
+  loading.value = true
+  studyApi
+    .getIds()
+    .then((resp) => {
+      studies.value = resp.data
+    })
+    .finally(() => {
+      loading.value = false
+    })
+})
 </script>

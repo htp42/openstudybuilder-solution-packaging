@@ -1,4 +1,5 @@
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
+const { getShortUniqueId } = require("../../support/helper_functions");
 
 let timeframeName, timeframeNameWithParameter
 
@@ -18,11 +19,11 @@ Then("The validation appears for timeframe change description field", () => cy.c
 
 Then("The validation appears for timeframe name field", () => cy.get('.v-overlay .v-input').should('contain', 'This field is required'))
 
-When('The timeframe template form is filled with base data', () => fillBaseData(`Timeframe${Date.now()}`))
+When('The timeframe template form is filled with base data', () => fillBaseData(`Timeframe${getShortUniqueId()}`))
 
-When('The timeframe template metadata update is started', () => fillBaseData(`Update${Date.now()}`))
+When('The timeframe template metadata update is started', () => fillBaseData(`Update${getShortUniqueId()}`))
 
-When('The timeframe template edition form is filled with data', () => fillBaseData(`CancelEdit${Date.now()}`))
+When('The timeframe template edition form is filled with data', () => fillBaseData(`CancelEdit${getShortUniqueId()}`))
 
 When('The second timeframe is added with the same template text', () => fillBaseData(timeframeName))
 
@@ -35,11 +36,11 @@ Then('[API] Timeframe template is inactivated', () => cy.inactivateTimeframe())
 Then('[API] Timeframe template gets new version', () => cy.newVersionOfTimeframe(timeframeName))
 
 When('[API] Search Test - Create first timeframe template', () => {
-  timeframeName = `SearchTest${Date.now()}`
+  timeframeName = `SearchTest${getShortUniqueId()}`
   createTimeframeTemplateViaApi(timeframeName)
 })
 
-When('[API] Search Test - Create second timeframe template', () => createTimeframeTemplateViaApi(`SearchTest${Date.now()}`))
+When('[API] Search Test - Create second timeframe template', () => createTimeframeTemplateViaApi(`SearchTest${getShortUniqueId()}`))
 
 Then('Timeframe template created via API is searched for', () => {
   cy.intercept('/api/timeframe-templates?page_number=1&*').as('getTemplate')

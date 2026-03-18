@@ -38,6 +38,7 @@ from clinical_mdr_api.domain_repositories.models.study_selections import (
     StudyCompoundDosing,
     StudyCriteria,
     StudyDataSupplier,
+    StudyDefinitionDocument,
     StudyDesignCell,
     StudyElement,
     StudyEndpoint,
@@ -45,6 +46,7 @@ from clinical_mdr_api.domain_repositories.models.study_selections import (
     StudySelection,
     StudySoAFootnote,
     StudySoAGroup,
+    StudyVersion,
 )
 
 
@@ -165,6 +167,18 @@ class StudyValue(ClinicalMdrNode, AuditTrailMixin):
         ".study_standard_version.StudyStandardVersion",
         "HAS_STUDY_STANDARD_VERSION",
         model=ClinicalMdrRel,
+    )
+    has_study_version = RelationshipTo(
+        StudyVersion,
+        "HAS_STUDY_VERSION",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrOne,
+    )
+    has_study_definition_document = RelationshipTo(
+        StudyDefinitionDocument,
+        "HAS_STUDY_DEFINITION_DOCUMENT",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrOne,
     )
     has_study_footnote = RelationshipTo(
         StudySoAFootnote,

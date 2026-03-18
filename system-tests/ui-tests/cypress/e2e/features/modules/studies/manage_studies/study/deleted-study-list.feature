@@ -29,7 +29,7 @@ Feature: Studies - Study List - Deleted Studies
     Scenario: [Table][Columns][Visibility] User must be able to use column selection option
         Given The '/studies/select_or_add_study/deleted' page is opened
         When The first column is selected from Select Columns option for table with actions
-        Then The table contain only selected column
+        Then The table contain only selected column and actions column
 
     Scenario: [Export][CSV] User must be able to export the data in CSV format
         Given The '/studies/select_or_add_study/deleted' page is opened

@@ -9,6 +9,7 @@ from starlette.requests import Request
 
 from clinical_mdr_api.models.controlled_terminologies.ct_codelist import (
     CTCodelist,
+    CTCodelistCompact,
     CTCodelistCreateInput,
     CTCodelistNameAndAttributes,
     CTCodelistPaired,
@@ -173,6 +174,118 @@ def get_codelists(
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
         term_filter=term_filter,
+    )
+    return CustomPage(
+        items=results.items, total=results.total, page=page_number, size=page_size
+    )
+
+
+@router.get(
+    "/codelists/full-text-search",
+    dependencies=[security, rbac.LIBRARY_READ],
+    summary="Searches codelists using full-text search on submission value.",
+    description="Returns a compact list of codelists matching the search string, "
+    "with optional filtering for response codelists and ordinal codelists.",
+    response_model_exclude_unset=True,
+    status_code=200,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        404: _generic_descriptions.ERROR_404,
+    },
+)
+def search_codelists_fulltext(
+    search_string: Annotated[
+        str,
+        Query(
+            description="The search string to use for full-text search on submission value.",
+            min_length=1,
+        ),
+    ],
+    only_response_codelists: Annotated[
+        bool,
+        Query(
+            description="If True, only return codelists that are valid for items (response codelists).",
+        ),
+    ] = False,
+    only_ordinal_codelists: Annotated[
+        bool,
+        Query(
+            description="If True, only return ordinal codelists.",
+        ),
+    ] = False,
+    match_whole_words: Annotated[
+        bool,
+        Query(
+            description="If True, match whole words only in the search.",
+        ),
+    ] = False,
+    page_number: _generic_descriptions.PAGE_NUMBER_QUERY = settings.default_page_number,
+    page_size: _generic_descriptions.PAGE_SIZE_QUERY = settings.default_page_size,
+) -> CustomPage[CTCodelistCompact]:
+    ct_codelist_service = CTCodelistService()
+    results = ct_codelist_service.search_codelists_fulltext(
+        search_string=search_string,
+        only_response_codelists=only_response_codelists,
+        only_ordinal_codelists=only_ordinal_codelists,
+        match_whole_words=match_whole_words,
+        page_number=page_number,
+        page_size=page_size,
+    )
+    return CustomPage(
+        items=results.items, total=results.total, page=page_number, size=page_size
+    )
+
+
+@router.get(
+    "/codelists/full-text-search-by-term",
+    dependencies=[security, rbac.LIBRARY_READ],
+    summary="Searches codelists by term using full-text search.",
+    description="Searches terms using full-text search and returns codelists containing those terms, "
+    "with optional filtering for response codelists and ordinal codelists.",
+    response_model_exclude_unset=True,
+    status_code=200,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        404: _generic_descriptions.ERROR_404,
+    },
+)
+def search_codelists_fulltext_by_term(
+    search_string: Annotated[
+        str,
+        Query(
+            description="The search string to use for full-text search on term name and attributes.",
+            min_length=1,
+        ),
+    ],
+    only_response_codelists: Annotated[
+        bool,
+        Query(
+            description="If True, only return codelists that are valid for items (response codelists).",
+        ),
+    ] = False,
+    only_ordinal_codelists: Annotated[
+        bool,
+        Query(
+            description="If True, only return ordinal codelists.",
+        ),
+    ] = False,
+    match_whole_words: Annotated[
+        bool,
+        Query(
+            description="If True, match whole words only in the search.",
+        ),
+    ] = False,
+    page_number: _generic_descriptions.PAGE_NUMBER_QUERY = settings.default_page_number,
+    page_size: _generic_descriptions.PAGE_SIZE_QUERY = settings.default_page_size,
+) -> CustomPage[CTCodelistCompact]:
+    ct_codelist_service = CTCodelistService()
+    results = ct_codelist_service.search_codelists_fulltext_by_term(
+        search_string=search_string,
+        only_response_codelists=only_response_codelists,
+        only_ordinal_codelists=only_ordinal_codelists,
+        match_whole_words=match_whole_words,
+        page_number=page_number,
+        page_size=page_size,
     )
     return CustomPage(
         items=results.items, total=results.total, page=page_number, size=page_size

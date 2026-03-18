@@ -1,5 +1,6 @@
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
 const { activity_placeholder_name } = require("./study_activities_steps");
+const { getShortUniqueId } = require("../../support/helper_functions");
 
 let topicCode, instanceName, activityName
 let existingInstanceName, existingTopicCode, selectedActivityName, selectedCodeSubmissionValue
@@ -128,12 +129,12 @@ When("The instance name is changed to the already used one", () => {
 })
 
 When("The instance name is changed to custom one", () => {
-    instanceName = `Instance${Date.now()}`
+    instanceName = `Instance${getShortUniqueId()}`
     fillField('Activity instance name', instanceName)
     fillField('Sentence case name', instanceName.toLowerCase())
 })
 
-When("The sentance case name is set to different value than instance name", () => fillField('Sentence case name', `${Date.now()}`))
+When("The sentance case name is set to different value than instance name", () => fillField('Sentence case name', `${getShortUniqueId()}`))
 
 When("The topic code is changed to the already used one", () => fillField('Topic code', existingTopicCode))
 
@@ -163,10 +164,19 @@ Then("ADaM parameter code have X added to it", () => {
     cy.contains('.v-stepper-window-item .v-input', 'ADaM parameter code').find('input').should('contain.value', `${selectedCodeSubmissionValue.substring(0, 4)}X`)
 })
 
-Then('Required fields name_submission_value, code_submission_value, unit_dimension are marked as required', () => {
+Then('Item classes unit_dimension and standardised unit are not displayed', () => {
+    cy.contains('.d-flex .v-input', 'Unit dimension').should('not.exist')
+    cy.contains('.d-flex .v-input', 'Standardised unit').should('not.exist')
+})
+
+Then('Required fields unit_dimension and standardised unit are marked as required', () => {
+    cy.contains('.d-flex .v-input', 'Unit dimension').next().should('contain.text', 'This field is required')
+    cy.contains('.d-flex .v-input', 'Standardised unit').next().should('contain.text', 'This field is required')
+})
+
+Then('Required fields name_submission_value, code_submission_value are marked as required', () => {
     cy.contains('.d-flex .v-input', 'Test Name').next().should('contain.text', 'This field is required')
     cy.contains('.d-flex .v-input', 'Test Code').next().should('contain.text', 'This field is required')
-    cy.contains('.d-flex .v-input', 'Unit dimension').next().should('contain.text', 'This field is required')
 })
 
 Then('Only values for Numeric Findings and MK as data domain are displayed for Activity Item Class selection in the Step 3', () => {
@@ -193,7 +203,8 @@ Then('Only values for Numeric Findings and MK as data domain are displayed for A
 
 function selectActivityItemClass(type) {
     cy.contains('.d-flex .v-input', type).next().click()
-    cy.get('.v-overlay .v-list-item').should('not.have.text', 'No data available').eq(0).click()
+    cy.get('.v-overlay .v-list-item').eq(0).should('not.have.text', 'No data available')
+    cy.get('.v-overlay .v-list-item').eq(0).click()
 }
 
 function selectSpecificActivityItemClass(type, value, search = true) {

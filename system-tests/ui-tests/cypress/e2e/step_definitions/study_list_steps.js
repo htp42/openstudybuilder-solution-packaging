@@ -1,4 +1,5 @@
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
+const { getShortUniqueId } = require("../../support/helper_functions");
 
 let study_uid, studyNumber, studyAcronym
 
@@ -63,7 +64,7 @@ Then('The {string} option is visible under {string} category showing appropiate 
 Then('The Design matrix category is presented for selection', () => cy.contains('label', 'Design matrix').should('exist'))
 
 When('New study project id, study number and study acronym are filled in', () => {
-    studyAcronym = `AutomationTestStudy${Date.now()}`
+    studyAcronym = `AutomationTestStudy${getShortUniqueId()}`
     studyNumber = `${Math.floor(1000 + Math.random() * 9000)}`
     cy.selectAutoComplete('project-id', 'CDISC DEV')
     cy.fillInput('study-number', studyNumber)

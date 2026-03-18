@@ -18,14 +18,18 @@
       <template #actions="">
         <slot name="extraActions" />
         <v-btn
-          class="ml-2 expandHoverBtn"
+          class="ml-2"
+          icon
+          size="small"
           variant="outlined"
           color="nnBaseBlue"
           data-cy="add-project"
           @click.stop="showForm"
         >
-          <v-icon left>mdi-plus</v-icon>
-          <span class="label">{{ $t('ProjectForm.add_title') }}</span>
+          <v-icon>mdi-plus</v-icon>
+          <v-tooltip activator="parent" location="top">
+            {{ $t('ProjectForm.add_title') }}
+          </v-tooltip>
         </v-btn>
       </template>
       <template #[`item.actions`]="{ item }">

@@ -45,7 +45,7 @@ Feature: Studies - Define Study - Study Activities - Exchange Activity
         And Sets SoA Group as 'INFORMED CONSENT' for 2 Activity
         And Form save button is clicked
         And The form is no longer available
-        Then The Study Activity Placeholder is no longer available
+        Then The Study Activity Placeholder is not available
         And 1 Activity that exchanged the placeholder is found in Study Activities table
         And 2 Activity that exchanged the placeholder is found in Study Activities table
         
@@ -82,7 +82,7 @@ Feature: Studies - Define Study - Study Activities - Exchange Activity
         And Sets SoA Group as 'INFORMED CONSENT' for 2 Activity
         And Form save button is clicked
         And The form is no longer available
-        Then The Study Activity Placeholder is no longer available
+        Then The Study Activity Placeholder is not available
         And 1 Activity that exchanged the placeholder is found in Study Activities table
         And 2 Activity that exchanged the placeholder is found in Study Activities table
 
@@ -107,9 +107,11 @@ Feature: Studies - Define Study - Study Activities - Exchange Activity
         And Form save button is clicked
         And The form is no longer available
         And Activity placeholder is found
+        And User intercepts available studies request
         When The 'Exchange Activity' option is clicked from the three dot menu list
+        And User waits for available studies request
         And Activity from studies is selected
-        And Study with id value 'CDISC DEV-9881' is selected
+        And User selects select study 'CDISC DEV-9881'
         And Form continue button is clicked
         And User waits for the table
         And Users enables filters in the form window
@@ -123,7 +125,7 @@ Feature: Studies - Define Study - Study Activities - Exchange Activity
         When User selects 2 activity from Library to exchange placeholder with
         And Form save button is clicked
         And The form is no longer available
-        Then The Study Activity Placeholder is no longer available
+        Then The Study Activity Placeholder is not available
         And 1 Activity that exchanged the placeholder is found in Study Activities table
         And 2 Activity that exchanged the placeholder is found in Study Activities table
 
@@ -148,9 +150,11 @@ Feature: Studies - Define Study - Study Activities - Exchange Activity
         And Form save button is clicked
         And The form is no longer available
         And Activity placeholder is found
+        And User intercepts available studies request
         When The 'Exchange Activity' option is clicked from the three dot menu list
+        And User waits for available studies request
         And Activity from studies is selected
-        And Study with id value 'CDISC DEV-9881' is selected
+        And User selects select study 'CDISC DEV-9881'
         And Form continue button is clicked
         And User waits for the table
         And Users enables filters in the form window
@@ -164,7 +168,7 @@ Feature: Studies - Define Study - Study Activities - Exchange Activity
         When User selects 2 activity from Library to exchange placeholder with
         And Form save button is clicked
         And The form is no longer available
-        Then The Study Activity Placeholder is no longer available
+        Then The Study Activity Placeholder is not available
         And 1 Activity that exchanged the placeholder is found in Study Activities table
         And 2 Activity that exchanged the placeholder is found in Study Activities table
 
@@ -211,9 +215,11 @@ Feature: Studies - Define Study - Study Activities - Exchange Activity
         And [API] Activity is added to the study
         Given The test study '/activities/list' page is opened
         When The Study Activity is found
+        And User intercepts available studies request
         When The 'Exchange Activity' option is clicked from the three dot menu list
+        And User waits for available studies request
         And Activity from studies is selected
-        And Study with id value 'CDISC DEV-9881' is selected
+        And User selects select study 'CDISC DEV-9881'
         And Form continue button is clicked
         And User waits for the table
         And Users enables filters in the form window
@@ -243,8 +249,8 @@ Feature: Studies - Define Study - Study Activities - Exchange Activity
         And Form save button is clicked
         And The form is no longer available
         And The test study '/activities/soa' page is opened
+        And Detailed SoA table is loaded
         And User expand table
-        And User search study activity placeholder
         When Action 'Exchange Activity' is selected for study activity placeholder
         And Form continue button is clicked
         And User waits for the table
@@ -261,13 +267,7 @@ Feature: Studies - Define Study - Study Activities - Exchange Activity
         And Sets SoA Group as 'INFORMED CONSENT' for 2 Activity
         And Form save button is clicked
         And The form is no longer available
-        And User expand table
-        And User clears study activity search
-        Then User search study activity placeholder
+        And Detailed SoA table is loaded
         And Placeholder is no longer available
-        And User clears study activity search
-        Then User search 1 activity that exchanged the placeholder
         And 1 Activity that exchanged the placeholder is found in table
-        And User clears study activity search
-        Then User search 2 activity that exchanged the placeholder
         And 2 Activity that exchanged the placeholder is found in table

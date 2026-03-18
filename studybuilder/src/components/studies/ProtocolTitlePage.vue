@@ -8,72 +8,75 @@
     class="mt-2"
     :headers="headers"
     :items="items"
+    :loading="loading"
     hide-default-footer
   />
 </template>
 
-<script>
-import { computed } from 'vue'
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import study from '@/api/study'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 
-export default {
-  setup() {
-    const studiesGeneralStore = useStudiesGeneralStore()
-    return {
-      selectedStudy: computed(() => studiesGeneralStore.selectedStudy),
-    }
+const { t } = useI18n()
+const studiesGeneralStore = useStudiesGeneralStore()
+
+const headers = [
+  {
+    title: t('ProtocolTitlePage.title_page_elements'),
+    key: 'label',
+    width: '30%',
   },
-  data() {
-    return {
-      headers: [
+  { title: t('ProtocolTitlePage.values'), key: 'value' },
+]
+const items = ref([])
+const loading = ref(false)
+
+onMounted(() => {
+  loading.value = true
+  study
+    .getStudyProtocolTitle(studiesGeneralStore.selectedStudy.uid)
+    .then((resp) => {
+      items.value = [
         {
-          title: this.$t('ProtocolTitlePage.title_page_elements'),
-          key: 'label',
-          width: '30%',
-        },
-        { title: this.$t('ProtocolTitlePage.values'), key: 'value' },
-      ],
-      items: [],
-    }
-  },
-  mounted() {
-    study.getStudyProtocolTitle(this.selectedStudy.uid).then((resp) => {
-      this.items = [
-        {
-          label: this.$t('ProtocolTitlePage.protocol_title'),
+          label: t('ProtocolTitlePage.protocol_title'),
           value: resp.data.study_title,
         },
         {
-          label: this.$t('ProtocolTitlePage.protocol_short_title'),
+          label: t('ProtocolTitlePage.protocol_short_title'),
           value: resp.data.study_short_title,
         },
         {
-          label: this.$t('ProtocolTitlePage.substance_name'),
+          label: t('ProtocolTitlePage.substance_name'),
           value: resp.data.substance_name,
         },
         {
-          label: this.$t('ProtocolTitlePage.utn'),
+          label: t('ProtocolTitlePage.utn'),
           value: resp.data.universal_trial_number_utn,
         },
         {
-          label: this.$t('ProtocolTitlePage.eudract_number'),
+          label: t('ProtocolTitlePage.eudract_number'),
           value: resp.data.eudract_id,
         },
         {
-          label: this.$t('ProtocolTitlePage.ind_number'),
+          label: t('ProtocolTitlePage.ind_number'),
           value: resp.data.ind_number,
         },
         {
-          label: this.$t('ProtocolTitlePage.study_phase'),
+          label: t('ProtocolTitlePage.study_phase'),
           value: resp.data.trial_phase_code?.name,
         },
         {
-          label: this.$t('ProtocolTitlePage.development_stage'),
+          label: t('ProtocolTitlePage.development_stage'),
           value: resp.data.development_stage_code?.name,
         },
+        {
+          label: t('ProtocolTitlePage.protocol_version'),
+          value: resp.data.protocol_header_version,
+        },
       ]
+      loading.value = false
     })
-  },
-}
+})
 </script>

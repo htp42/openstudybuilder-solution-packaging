@@ -20,14 +20,18 @@
       <v-btn
         v-if="!readOnly"
         data-cy="add-sponsor-codelist"
-        class="ml-2 expandHoverBtn"
+        class="ml-2"
+        icon
+        size="small"
         variant="outlined"
         color="nnBaseBlue"
         :disabled="!accessGuard.checkPermission($roles.LIBRARY_WRITE)"
         @click.stop="showCreationForm = true"
       >
-        <v-icon left>mdi-plus</v-icon>
-        <span class="label">{{ $t('CodelistCreationForm.title') }}</span>
+        <v-icon>mdi-plus</v-icon>
+        <v-tooltip activator="parent" location="top">
+          {{ $t('CodelistCreationForm.title') }}
+        </v-tooltip>
       </v-btn>
     </template>
     <template #beforeSwitches="">

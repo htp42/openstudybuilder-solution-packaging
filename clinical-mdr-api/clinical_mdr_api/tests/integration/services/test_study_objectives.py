@@ -1,5 +1,6 @@
 import logging
 from io import BytesIO
+from typing import Any
 
 import pytest
 from bs4 import BeautifulSoup
@@ -19,6 +20,7 @@ from common.config import settings
 
 TEST_DB_NAME = get_db_name(__name__)
 log = logging.getLogger(__name__)
+test_data_dict: dict[str, Any]
 
 
 @pytest.fixture(scope="module")
@@ -30,7 +32,8 @@ def test_database():
     log.info(
         "test_database fixture: injecting base data into database: %s", TEST_DB_NAME
     )
-    study, _test_data_dict = inject_base_data()
+    global test_data_dict
+    study, test_data_dict = inject_base_data()
     return study
 
 
@@ -58,12 +61,24 @@ def test_docx_response(api_client, test_database):
     # Lock
     response = api_client.post(
         f"/studies/{study.uid}/locks",
-        json={"change_description": "Lock 1"},
+        json={
+            "change_description": "Lock 1",
+            "reason_for_change_uid": test_data_dict["reason_for_lock_terms"][
+                0
+            ].term_uid,
+        },
     )
     assert_response_status_code(response, 201)
     # Unlock
-    response = api_client.delete(f"/studies/{study.uid}/locks")
-    assert_response_status_code(response, 200)
+    response = api_client.post(
+        f"/studies/{study.uid}/unlocks",
+        json={
+            "reason_for_change_uid": test_data_dict["reason_for_unlock_terms"][
+                0
+            ].term_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
 
     study_objective = TestUtils.create_study_objective(
         study.uid,

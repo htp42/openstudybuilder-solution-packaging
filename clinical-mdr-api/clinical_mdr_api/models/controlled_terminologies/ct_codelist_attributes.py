@@ -5,6 +5,7 @@ from pydantic import ConfigDict, Field
 
 from clinical_mdr_api.descriptions.general import CHANGES_FIELD_DESC
 from clinical_mdr_api.domains.controlled_terminologies.ct_codelist_attributes import (
+    DEFAULT_CODELIST_TYPE,
     CTCodelistAttributesAR,
 )
 from clinical_mdr_api.models.libraries.library import Library
@@ -25,6 +26,7 @@ class CTCodelistAttributes(BaseModel):
             definition=ct_codelist_ar.ct_codelist_vo.definition,
             extensible=ct_codelist_ar.ct_codelist_vo.extensible,
             is_ordinal=ct_codelist_ar.ct_codelist_vo.is_ordinal,
+            codelist_type=ct_codelist_ar.ct_codelist_vo.codelist_type,
             library_name=Library.from_library_vo(ct_codelist_ar.library).name,
             start_date=ct_codelist_ar.item_metadata.start_date,
             end_date=ct_codelist_ar.item_metadata.end_date,
@@ -48,6 +50,7 @@ class CTCodelistAttributes(BaseModel):
             definition=ct_codelist_ar.ct_codelist_vo.definition,
             extensible=ct_codelist_ar.ct_codelist_vo.extensible,
             is_ordinal=ct_codelist_ar.ct_codelist_vo.is_ordinal,
+            codelist_type=ct_codelist_ar.ct_codelist_vo.codelist_type,
             start_date=ct_codelist_ar.item_metadata.start_date,
             end_date=ct_codelist_ar.item_metadata.end_date,
             status=ct_codelist_ar.item_metadata.status.value,
@@ -89,6 +92,10 @@ class CTCodelistAttributes(BaseModel):
     extensible: Annotated[bool, Field()]
 
     is_ordinal: Annotated[bool, Field()]
+
+    codelist_type: Annotated[
+        str, Field(json_schema_extra={"remove_from_wildcard": True})
+    ] = DEFAULT_CODELIST_TYPE
 
     library_name: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
@@ -198,4 +205,5 @@ class CTCodelistAttributesEditInput(PatchInputModel):
     definition: Annotated[str | None, Field(min_length=1)] = None
     extensible: Annotated[bool | None, Field()] = None
     is_ordinal: Annotated[bool | None, Field()] = None
+    codelist_type: Annotated[str | None, Field(min_length=1)] = None
     change_description: Annotated[str, Field(min_length=1)]

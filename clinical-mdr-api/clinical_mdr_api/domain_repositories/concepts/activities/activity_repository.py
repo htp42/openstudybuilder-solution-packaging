@@ -102,7 +102,7 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
                 activity_instances=input_dict["activity_instances"],
                 request_rationale=input_dict.get("request_rationale"),
                 is_request_final=input_dict["is_request_final"],
-                requester_study_id=input_dict.get("requester_study_id"),
+                used_by_studies=input_dict["used_by_studies"],
                 replaced_by_activity=input_dict.get("replaced_by_activity"),
                 reason_for_rejecting=input_dict.get("reason_for_rejecting"),
                 contact_person=input_dict.get("contact_person"),
@@ -187,7 +187,7 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
                 is_request_final=(
                     value.is_request_final if value.is_request_final else False
                 ),
-                requester_study_id=activity_root["requester_study_id"],
+                used_by_studies=activity_root["used_by_studies"],
                 replaced_by_activity=activity_root["replaced_activity_uid"],
                 reason_for_rejecting=value.reason_for_rejecting,
                 contact_person=value.contact_person,
@@ -291,14 +291,22 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
                     activity_subgroup_version=latest_subgroup.version,
                 )
             )
-        requester_study_id = None
+        used_by_studies: list[str] = []
         # We are only interested in the StudyId of the Activity Requests
         if library.name == settings.requested_library_name:
-            if study_activity := value.has_selected_activity.single():
-                if activity := study_activity.has_study_activity.single():
-                    requester_study_id = (
-                        f"{activity.study_id_prefix}-{activity.study_number}"
-                    )
+            query = """
+                MATCH (ar:ActivityRoot {uid:$uid})-[:HAS_VERSION]->(:ActivityValue)<-[:HAS_SELECTED_ACTIVITY]-(sa:StudyActivity)<-[:HAS_STUDY_ACTIVITY]-(sv:StudyValue)
+                WHERE NOT (sa)-[:BEFORE]-() AND NOT (sa)--(:Delete)
+                WITH CASE sv.subpart_id
+                    WHEN IS NULL THEN COALESCE(sv.study_id_prefix, '') + '-' + COALESCE(sv.study_number, '')
+                    ELSE COALESCE(sv.study_id_prefix, '') + '-' + COALESCE(sv.study_number, '') + '-' + sv.subpart_id
+                END AS study_id
+                RETURN apoc.coll.toSet(apoc.coll.sort(collect(distinct study_id))) AS used_by_studies
+            """
+            result, _ = db.cypher_query(query, {"uid": root.uid})
+            if result and len(result) > 0 and len(result[0]) > 0:
+                used_by_studies = result[0][0] or []
+
         return ActivityAR.from_repository_values(
             uid=root.uid,
             concept_vo=ActivityVO.from_repository_values(
@@ -315,7 +323,7 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
                 is_request_final=(
                     value.is_request_final if value.is_request_final else False
                 ),
-                requester_study_id=requester_study_id,
+                used_by_studies=used_by_studies,
                 replaced_by_activity=(
                     replaced_activity.uid if replaced_activity else None
                 ),
@@ -656,10 +664,12 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
             concept_value.reason_for_rejecting AS reason_for_rejecting,
             CASE
                 WHEN library_name='Requested'
-                THEN head([(concept_root)-[:HAS_VERSION]->(:{self.value_class.__label__})<-[:HAS_SELECTED_ACTIVITY]->(:StudyActivity)<-[:HAS_STUDY_ACTIVITY]-(study_value:StudyValue)
-                   | coalesce(study_value.study_id_prefix, "") + "-" + toString(study_value.study_number)])
-                ELSE NULL
-            END AS requester_study_id,
+                THEN apoc.coll.toSet(apoc.coll.sort(
+                [(concept_root)-[:HAS_VERSION]->(:{self.value_class.__label__})<-[:HAS_SELECTED_ACTIVITY]->(sa:StudyActivity)<-[:HAS_STUDY_ACTIVITY]-(study_value:StudyValue)
+                       WHERE NOT (sa)-[:BEFORE]-() AND NOT (sa)--(:Delete) | COALESCE(study_value.study_id_prefix, '') + "-" + COALESCE(study_value.study_number, '') +
+                        CASE WHEN study_value.subpart_id IS NOT NULL AND study_value.subpart_id <> '' THEN "-" + study_value.subpart_id ELSE "" END]))
+                ELSE []
+            END AS used_by_studies,
             coalesce(concept_value.is_data_collected, False) AS is_data_collected,
             coalesce(concept_value.is_multiple_selection_allowed, True) AS is_multiple_selection_allowed,
             COLLECT {{
@@ -1541,12 +1551,13 @@ RETURN
                         ELSE false
                     END as is_used_by_legacy_instances
             """
-        # activities/activities/headers?field_name=requester_study_id
-        elif field_name == "requester_study_id":
+        # activities/activities/headers?field_name=used_by_studies
+        elif field_name == "used_by_studies":
             header_query = """WITH CASE
                 WHEN exists((concept_root)<-[:CONTAINS_CONCEPT]-(:Library {name:'Requested'}))
-                THEN head([(concept_root)-[:HAS_VERSION]->(:ActivityValue)<-[:HAS_SELECTED_ACTIVITY]->(:StudyActivity)<-[:HAS_STUDY_ACTIVITY]-(study_value:StudyValue)
-                   | coalesce(study_value.study_id_prefix, "") + "-" + toString(study_value.study_number)])
-                ELSE NULL
-            END AS requester_study_id"""
+                THEN apoc.coll.toSet(apoc.coll.sort([(concept_root)-[:HAS_VERSION]->(:ActivityValue)<-[:HAS_SELECTED_ACTIVITY]->(sa:StudyActivity)<-[:HAS_STUDY_ACTIVITY]-(study_value:StudyValue)
+                WHERE NOT (sa)-[:BEFORE]-() AND NOT (sa)--(:Delete) | COALESCE(study_value.study_id_prefix, '') + "-" + COALESCE(study_value.study_number, '') +
+                        CASE WHEN study_value.subpart_id IS NOT NULL AND study_value.subpart_id <> '' THEN "-" + study_value.subpart_id ELSE "" END]))
+                ELSE []
+            END AS used_by_studies"""
         return header_query

@@ -1,3 +1,4 @@
+const { getShortUniqueId } = require("../../support/helper_functions");
 let indication_uid, activity_instruction_uid, timeframe_uid, objective_uid, objective_category_uid
 let endpoint_uid, endpoint_category_uid, endpoint_sub_category_uid
 let criteria_uid, type_uid, criteria_category_uid, criteria_sub_category_uid
@@ -117,7 +118,7 @@ Cypress.Commands.add('getCriteriaTypeUid', (typeName) => {
 })
 
 const createActivityInstructionBody = (group_uid, subgroup_uid, activity_uid, customName = '') => {
-  const name = customName === '' ? `API_ActivityInstructionTemplate${Date.now()}` : customName
+  const name = customName === '' ? `API_ActivityInstructionTemplate${getShortUniqueId()}` : customName
   return {
     "name": `<p>${name}</p>`,
     "indication_uids": [
@@ -136,7 +137,7 @@ const createActivityInstructionBody = (group_uid, subgroup_uid, activity_uid, cu
 }
 
 const createCriteriaBody = (customName = '') => {
-  const name = customName === '' ? `API_CriteriaTemplate${Date.now()}` : customName
+  const name = customName === '' ? `API_CriteriaTemplate${getShortUniqueId()}` : customName
   return {
     "name": `<p>${name}</p>`,
     "type_uid": `${type_uid}`,
@@ -153,7 +154,7 @@ const createCriteriaBody = (customName = '') => {
 }
 
 const createObjectiveBody = (customName = '') => {
-  const name = customName === '' ? `API_ObjectiveTemplate${Date.now()}` : customName
+  const name = customName === '' ? `API_ObjectiveTemplate${getShortUniqueId()}` : customName
   return {
       "name": `<p>${name}</p>`,
       "indication_uids": [
@@ -164,7 +165,7 @@ const createObjectiveBody = (customName = '') => {
 }
 
 const createEndpointBody = (customName = '') => {
-  const name = customName === '' ? `API_EndpointTemplate${Date.now()}` : customName
+  const name = customName === '' ? `API_EndpointTemplate${getShortUniqueId()}` : customName
   return {
       "name": `<p>${name}</p>`,
       "indication_uids": [
@@ -180,7 +181,7 @@ const createEndpointBody = (customName = '') => {
 }
 
 const createTimeframeBody = (customName = '') => {
-  const name = customName === '' ? `API_TimeframeTemplate${Date.now()}` : customName
+  const name = customName === '' ? `API_TimeframeTemplate${getShortUniqueId()}` : customName
   return {
     "library": {
       "name": "Sponsor"

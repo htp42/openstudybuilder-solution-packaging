@@ -30,9 +30,9 @@ python_version = "3.13"
 
 [scripts]
 build-sbom = "pipenv run python3 assbom.py --pipfile --fallback-dir doc/licenses --level 2 --output sbom.md"
-test = "python -m pytest -s --cov-report html:test_coverage --cov-report xml:reports/coverage.xml --cov-append --cov --junitxml=reports/test_report.xml tests/test_migration_019.py"
-verify = "python -m pytest -s --cov-report html:test_coverage --cov-report xml:reports/coverage.xml --cov-append --cov --junitxml=reports/test_report.xml verifications/verification_019.py"
-migrate = "python -m migrations.migration_019"
+test = "python -m pytest -s --cov-report html:test_coverage --cov-report xml:reports/coverage.xml --cov-append --cov --junitxml=reports/test_report.xml tests/test_migration_020.py"
+verify = "python -m pytest -s --cov-report html:test_coverage --cov-report xml:reports/coverage.xml --cov-append --cov --junitxml=reports/test_report.xml verifications/verification_020.py"
+migrate = "python -m migrations.migration_020"
 test_corrections = "python -m pytest -s --cov-report html:test_coverage --cov-report xml:reports/coverage.xml --cov-append --cov --junitxml=reports/test_report.xml tests/test_correction_017.py"
 verify_corrections = "python -m pytest -s --cov-report html:test_coverage --cov-report xml:reports/coverage.xml --cov-append --cov --junitxml=reports/test_report.xml verifications/correction_verification_017.py"
 apply_corrections = "python -m data_corrections.correction_017"

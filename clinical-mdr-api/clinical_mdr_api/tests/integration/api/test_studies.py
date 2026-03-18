@@ -16,7 +16,7 @@ import logging
 import random
 import threading
 from string import ascii_lowercase
-from typing import Sequence
+from typing import Any, Sequence
 from unittest import mock
 
 import pytest
@@ -68,6 +68,7 @@ week_unit_definition: UnitDefinitionModel
 ct_term_study_standard_test: ct_term.CTTerm
 study_with_subparts: Study
 subpart_studies: Sequence[Study]
+test_data_dict: dict[str, Any]
 
 
 @pytest.fixture(scope="module")
@@ -82,7 +83,8 @@ def test_data():
     """Initialize test data"""
     db_name = "studies.api"
     inject_and_clear_db(db_name)
-    inject_base_data()
+    global test_data_dict
+    _, test_data_dict = inject_base_data()
     global day_unit_definition
     day_unit_definition = TestUtils.get_unit_by_uid(
         unit_uid=TestUtils.get_unit_uid_by_name(unit_name="day")
@@ -288,6 +290,27 @@ def test_get_study_fields_audit_trail(api_client):
     assert res[0]["actions"][0]["after_value"]
 
 
+def test_patch_study(api_client):
+    response = api_client.patch(
+        f"/studies/{study.uid}",
+        json={
+            "current_metadata": {
+                "identification_metadata": {"study_acronym": "new acronym"}
+            }
+        },
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert (
+        res["current_metadata"]["identification_metadata"]["study_acronym"]
+        == "new acronym"
+    )
+    assert (
+        res["current_metadata"]["identification_metadata"]["study_subpart_acronym"]
+        is None
+    )
+
+
 def test_study_delete_successful(api_client):
     study_to_delete = TestUtils.create_study()
     response = api_client.delete(f"/studies/{study_to_delete.uid}")
@@ -344,221 +367,13 @@ def test_study_listing(api_client):
         # Check that each study occurs only once in the list
         assert uids.count(study.uid) == 1
 
-    # Clean up
-    for study in studies:
-        response = api_client.delete(f"/studies/{study.uid}")
-        assert_response_status_code(response, 204)
-
-
-def test_get_snapshot_history(api_client):
-    study_with_history = TestUtils.create_study()
-    # update study title to be able to lock it
-    response = api_client.patch(
-        f"/studies/{study_with_history.uid}",
-        json={"current_metadata": {"study_description": {"study_title": "new title"}}},
-    )
-    assert_response_status_code(response, 200)
-
-    # snapshot history before lock
-    response = api_client.get(f"/studies/{study_with_history.uid}/snapshot-history")
-    res = response.json()
-    assert_response_status_code(response, 200)
-    res = res["items"]
-    assert len(res) == 1
-    assert res[0]["possible_actions"] == ["delete", "lock", "release"]
-    assert res[0]["current_metadata"]["version_metadata"]["study_status"] == "DRAFT"
-    assert res[0]["current_metadata"]["version_metadata"]["version_number"] is None
-
-    # Lock
-    response = api_client.post(
-        f"/studies/{study_with_history.uid}/locks",
-        json={"change_description": "Lock 1"},
-    )
-    assert_response_status_code(response, 201)
-
-    # get all standard versions
-    response = api_client.get(
-        f"/studies/{study_with_history.uid}/study-standard-versions/",
-    )
-    res = response.json()
-    assert_response_status_code(response, 200)
-    assert res[0]["automatically_created"] is True
-
-    # snapshot history after lock
-    response = api_client.get(f"/studies/{study_with_history.uid}/snapshot-history")
-    res = response.json()
-    assert_response_status_code(response, 200)
-    res = res["items"]
-    assert len(res) == 2
-    assert res[0]["current_metadata"]["version_metadata"]["study_status"] == "LOCKED"
-    assert res[0]["current_metadata"]["version_metadata"]["version_number"] == "1"
-    assert (
-        res[0]["current_metadata"]["version_metadata"]["version_description"]
-        == "Lock 1"
-    )
-    assert res[1]["current_metadata"]["version_metadata"]["study_status"] == "RELEASED"
-    assert res[1]["current_metadata"]["version_metadata"]["version_number"] == "1"
-    assert (
-        res[1]["current_metadata"]["version_metadata"]["version_description"]
-        == "Lock 1"
-    )
-
-    # Test filtering studies by study_id and study_acronym with OR operator
-    filters = json.dumps(
-        {
-            "current_metadata.identification_metadata.study_id": {
-                "v": ["123-3"],
-                "op": "co",
-            },
-            "current_metadata.identification_metadata.study_acronym": {
-                "v": ["st-9349574170"],
-                "op": "co",
-            },
-        }
-    )
-    response = api_client.get(
-        "/studies", params={"page_size": 0, "filters": filters, "operator": "or"}
-    )
-    assert_response_status_code(response, 200)
-    res = response.json()
-    assert "items" in res
-    assert "total" in res
-    assert "page" in res
-    assert "size" in res
-
-    # Unlock
-    response = api_client.delete(f"/studies/{study_with_history.uid}/locks")
-    assert_response_status_code(response, 200)
-
-    # get all standard versions
-    response = api_client.get(
-        f"/studies/{study_with_history.uid}/study-standard-versions/",
-    )
-    res = response.json()
-    assert_response_status_code(response, 200)
-    assert len(res) == 0
-
-    # get all history when was locked
-    response = api_client.get(
-        f"/studies/{study_with_history.uid}/study-standard-versions/audit-trail/",
-    )
-    res = response.json()
-    assert_response_status_code(response, 200)
-    assert res[0]["automatically_created"] is True
-
-    # snapshot history after unlock
-    response = api_client.get(f"/studies/{study_with_history.uid}/snapshot-history")
-    assert_response_status_code(response, 200)
-    res = response.json()
-    res = res["items"]
-    assert len(res) == 3
-    assert res[0]["current_metadata"]["version_metadata"]["study_status"] == "DRAFT"
-    assert res[1]["current_metadata"]["version_metadata"]["version_number"] == "1"
-    assert res[2]["current_metadata"]["version_metadata"]["version_number"] == "1"
-
-    # Release
-    response = api_client.post(
-        f"/studies/{study_with_history.uid}/release",
-        json={"change_description": "Explicit release"},
-    )
-    assert_response_status_code(response, 201)
-    # snapshot history after release
-    response = api_client.get(f"/studies/{study_with_history.uid}/snapshot-history")
-    assert_response_status_code(response, 200)
-    res = response.json()
-    res = res["items"]
-
-    assert len(res) == 4
-    assert res[0]["current_metadata"]["version_metadata"]["study_status"] == "DRAFT"
-    assert res[1]["current_metadata"]["version_metadata"]["study_status"] == "RELEASED"
-    assert (
-        res[1]["current_metadata"]["version_metadata"]["version_description"]
-        == "Explicit release"
-    )
-    assert res[1]["current_metadata"]["version_metadata"]["version_number"] == "1.1"
-    assert res[2]["current_metadata"]["version_metadata"]["version_number"] == "1"
-    assert (
-        res[2]["current_metadata"]["version_metadata"]["version_description"]
-        == "Lock 1"
-    )
-
-    # 2nd Release
-    response = api_client.post(
-        f"/studies/{study_with_history.uid}/release",
-        json={"change_description": "Explicit second release"},
-    )
-    assert_response_status_code(response, 201)
-    # snapshot history after second release
-    response = api_client.get(f"/studies/{study_with_history.uid}/snapshot-history")
-    assert_response_status_code(response, 200)
-    res = response.json()
-    res = res["items"]
-    assert len(res) == 5
-    assert res[0]["current_metadata"]["version_metadata"]["study_status"] == "DRAFT"
-    assert res[1]["current_metadata"]["version_metadata"]["study_status"] == "RELEASED"
-    assert (
-        res[1]["current_metadata"]["version_metadata"]["version_description"]
-        == "Explicit second release"
-    )
-    assert res[1]["current_metadata"]["version_metadata"]["version_number"] == "1.2"
-    assert res[2]["current_metadata"]["version_metadata"]["study_status"] == "RELEASED"
-    assert res[2]["current_metadata"]["version_metadata"]["version_number"] == "1.1"
-    assert (
-        res[2]["current_metadata"]["version_metadata"]["version_description"]
-        == "Explicit release"
-    )
-
-    # Lock
-    response = api_client.post(
-        f"/studies/{study_with_history.uid}/locks",
-        json={"change_description": "Lock 2"},
-    )
-    assert_response_status_code(response, 201)
-
-    # snapshot history after lock
-    response = api_client.get(f"/studies/{study_with_history.uid}/snapshot-history")
-    assert_response_status_code(response, 200)
-    res = response.json()
-    res = res["items"]
-    assert len(res) == 6
-    assert res[0]["current_metadata"]["version_metadata"]["study_status"] == "LOCKED"
-    assert res[0]["current_metadata"]["version_metadata"]["version_number"] == "2"
-    assert (
-        res[0]["current_metadata"]["version_metadata"]["version_description"]
-        == "Lock 2"
-    )
-    assert res[1]["current_metadata"]["version_metadata"]["study_status"] == "RELEASED"
-    assert res[1]["current_metadata"]["version_metadata"]["version_number"] == "2"
-    assert (
-        res[1]["current_metadata"]["version_metadata"]["version_description"]
-        == "Lock 2"
-    )
-
 
 def test_get_default_time_unit(api_client):
-    response = api_client.patch(
-        f"/studies/{study.uid}",
-        json={
-            "current_metadata": {
-                "identification_metadata": {"study_acronym": "new acronym"}
-            }
-        },
-    )
+    test_study = TestUtils.create_study()
+    response = api_client.get(f"/studies/{test_study.uid}/time-units")
     assert_response_status_code(response, 200)
     res = response.json()
-    assert (
-        res["current_metadata"]["identification_metadata"]["study_acronym"]
-        == "new acronym"
-    )
-    assert (
-        res["current_metadata"]["identification_metadata"]["study_subpart_acronym"]
-        is None
-    )
-
-    response = api_client.get(f"/studies/{study.uid}/time-units")
-    assert_response_status_code(response, 200)
-    res = response.json()
-    assert res["study_uid"] == study.uid
+    assert res["study_uid"] == test_study.uid
     assert res["time_unit_uid"] == day_unit_definition.uid
     assert res["time_unit_name"] == day_unit_definition.name
 
@@ -620,13 +435,27 @@ def test_get_specific_version(api_client):
 
     # Lock
     response = api_client.post(
-        f"/studies/{study.uid}/locks", json={"change_description": "Lock 1"}
+        f"/studies/{study.uid}/locks",
+        json={
+            "change_description": "Lock 1",
+            "reason_for_change_uid": test_data_dict["reason_for_lock_terms"][
+                0
+            ].term_uid,
+        },
     )
     assert_response_status_code(response, 201)
 
     # Unlock
-    response = api_client.delete(f"/studies/{study.uid}/locks")
-    assert_response_status_code(response, 200)
+    response = api_client.post(
+        f"/studies/{study.uid}/unlocks",
+        json={
+            "change_description": "Unlock",
+            "reason_for_change_uid": test_data_dict["reason_for_unlock_terms"][
+                0
+            ].term_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
 
     # update study title
     response = api_client.patch(
@@ -638,7 +467,12 @@ def test_get_specific_version(api_client):
     # Release
     response = api_client.post(
         f"/studies/{study.uid}/release",
-        json={"change_description": "Explicit release"},
+        json={
+            "change_description": "Explicit release",
+            "reason_for_change_uid": test_data_dict["reason_for_lock_terms"][
+                0
+            ].term_uid,
+        },
     )
     assert_response_status_code(response, 201)
 
@@ -652,7 +486,12 @@ def test_get_specific_version(api_client):
     # 2nd Release
     response = api_client.post(
         f"/studies/{study.uid}/release",
-        json={"change_description": "Explicit second release"},
+        json={
+            "change_description": "Explicit second release",
+            "reason_for_change_uid": test_data_dict["reason_for_lock_terms"][
+                0
+            ].term_uid,
+        },
     )
     assert_response_status_code(response, 201)
 
@@ -665,13 +504,27 @@ def test_get_specific_version(api_client):
 
     # Lock
     response = api_client.post(
-        f"/studies/{study.uid}/locks", json={"change_description": "Lock 2"}
+        f"/studies/{study.uid}/locks",
+        json={
+            "change_description": "Lock 2",
+            "reason_for_change_uid": test_data_dict["reason_for_lock_terms"][
+                0
+            ].term_uid,
+        },
     )
     assert_response_status_code(response, 201)
 
     # Unlock
-    response = api_client.delete(f"/studies/{study.uid}/locks")
-    assert_response_status_code(response, 200)
+    response = api_client.post(
+        f"/studies/{study.uid}/unlocks",
+        json={
+            "change_description": "Unlock",
+            "reason_for_change_uid": test_data_dict["reason_for_unlock_terms"][
+                0
+            ].term_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
 
     # update study title
     response = api_client.patch(
@@ -685,8 +538,11 @@ def test_get_specific_version(api_client):
         f"/studies/{study.uid}",
         params={"include_sections": ["study_description"], "study_value_version": "1"},
     )
-    res_title = response.json()["current_metadata"]["study_description"]["study_title"]
+    res = response.json()
+    res_title = res["current_metadata"]["study_description"]["study_title"]
     assert res_title == title_1
+    assert res["current_metadata"]["version_metadata"]["study_status"] == "LOCKED"
+
     response = api_client.get(
         f"/studies/{study.uid}",
         params={
@@ -694,8 +550,11 @@ def test_get_specific_version(api_client):
             "study_value_version": "1.1",
         },
     )
-    res_title = response.json()["current_metadata"]["study_description"]["study_title"]
+    res = response.json()
+    res_title = res["current_metadata"]["study_description"]["study_title"]
     assert res_title == title_11
+    assert res["current_metadata"]["version_metadata"]["study_status"] == "RELEASED"
+
     response = api_client.get(
         f"/studies/{study.uid}",
         params={
@@ -703,20 +562,28 @@ def test_get_specific_version(api_client):
             "study_value_version": "1.2",
         },
     )
-    res_title = response.json()["current_metadata"]["study_description"]["study_title"]
+    res = response.json()
+    res_title = res["current_metadata"]["study_description"]["study_title"]
     assert res_title == title_12
+    assert res["current_metadata"]["version_metadata"]["study_status"] == "RELEASED"
+
     response = api_client.get(
         f"/studies/{study.uid}",
         params={"include_sections": ["study_description"], "study_value_version": "2"},
     )
-    res_title = response.json()["current_metadata"]["study_description"]["study_title"]
+    res = response.json()
+    res_title = res["current_metadata"]["study_description"]["study_title"]
     assert res_title == title_2
+    assert res["current_metadata"]["version_metadata"]["study_status"] == "LOCKED"
+
     response = api_client.get(
         f"/studies/{study.uid}",
         params={"include_sections": ["study_description"]},
     )
-    res_title = response.json()["current_metadata"]["study_description"]["study_title"]
+    res = response.json()
+    res_title = res["current_metadata"]["study_description"]["study_title"]
     assert res_title == title_draft
+    assert res["current_metadata"]["version_metadata"]["study_status"] == "DRAFT"
 
 
 def test_get_protocol_title_for_specific_version(api_client):
@@ -867,24 +734,40 @@ def test_get_protocol_title_for_specific_version(api_client):
     study_compound_uid = res["study_compound_uid"]
     assert_response_status_code(response, 201)
 
-    # response before locking
+    TestUtils.set_study_standard_version(study_uid=study.uid)
+
+    # Lock
+    response = api_client.post(
+        f"/studies/{study.uid}/locks",
+        json={
+            "change_description": "Lock 1",
+            "reason_for_change_uid": test_data_dict["reason_for_lock_terms"][
+                0
+            ].term_uid,
+            "protocol_header_major_version": 1,
+            "protocol_header_minor_version": 0,
+        },
+    )
+    assert_response_status_code(response, 201)
+
+    # Get protocol-title just after locking to save protocol header verstion
     response = api_client.get(
         f"/studies/{study.uid}/protocol-title",
     )
     assert_response_status_code(response, 200)
     res_old = response.json()
 
-    TestUtils.set_study_standard_version(study_uid=study.uid)
-
-    # Lock
+    # Unlock
     response = api_client.post(
-        f"/studies/{study.uid}/locks", json={"change_description": "Lock 1"}
+        f"/studies/{study.uid}/unlocks",
+        json={
+            "change_description": "Unlock",
+            "reason_for_change_uid": test_data_dict["reason_for_unlock_terms"][
+                0
+            ].term_uid,
+        },
     )
     assert_response_status_code(response, 201)
-
-    # Unlock
-    response = api_client.delete(f"/studies/{study.uid}/locks")
-    assert_response_status_code(response, 200)
 
     # Update
     response = api_client.patch(
@@ -923,6 +806,9 @@ def test_get_protocol_title_for_specific_version(api_client):
     ).json()
     assert res_v1 == res_old
     assert res_v1 != res_new
+    assert res_new["protocol_header_version"] == "1.0"
+    assert res_v1["protocol_header_version"] == "1.0"
+    assert res_old["protocol_header_version"] == "1.0"
 
 
 def test_create_study_subpart(api_client):
@@ -1458,22 +1344,40 @@ def test_cascade_of_study_parent_part(api_client):
 
     response = api_client.post(
         f"/studies/{parent_study.uid}/locks",
-        json={"change_description": "Locked"},
+        json={
+            "change_description": "Locked",
+            "reason_for_change_uid": test_data_dict["reason_for_lock_terms"][
+                0
+            ].term_uid,
+        },
     )
     assert_response_status_code(response, 201)
     res = response.json()
     assert res["current_metadata"]["version_metadata"]["study_status"] == "LOCKED"
     _check_study_subparts_status("LOCKED")
 
-    response = api_client.delete(f"/studies/{parent_study.uid}/locks")
-    assert_response_status_code(response, 200)
+    response = api_client.post(
+        f"/studies/{parent_study.uid}/unlocks",
+        json={
+            "change_description": "Unlock",
+            "reason_for_change_uid": test_data_dict["reason_for_unlock_terms"][
+                0
+            ].term_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
     res = response.json()
     assert res["current_metadata"]["version_metadata"]["study_status"] == "DRAFT"
     _check_study_subparts_status("DRAFT")
 
     response = api_client.post(
         f"/studies/{parent_study.uid}/release",
-        json={"change_description": "Released"},
+        json={
+            "change_description": "Released",
+            "reason_for_change_uid": test_data_dict["reason_for_lock_terms"][
+                0
+            ].term_uid,
+        },
     )
     assert_response_status_code(response, 201)
     res = response.json()
@@ -1939,13 +1843,26 @@ def test_get_audit_trail_of_all_study_subparts_of_study(api_client):
     # Lock
     response = api_client.post(
         f"/studies/{study_with_subparts.uid}/locks",
-        json={"change_description": "version Lock"},
+        json={
+            "change_description": "version Lock",
+            "reason_for_change_uid": test_data_dict["reason_for_lock_terms"][
+                0
+            ].term_uid,
+        },
     )
     assert_response_status_code(response, 201)
 
     # Unlock
-    response = api_client.delete(f"/studies/{study_with_subparts.uid}/locks")
-    assert_response_status_code(response, 200)
+    response = api_client.post(
+        f"/studies/{study_with_subparts.uid}/unlocks",
+        json={
+            "change_description": "Unlock",
+            "reason_for_change_uid": test_data_dict["reason_for_unlock_terms"][
+                0
+            ].term_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
 
     response = api_client.patch(
         "/studies/Study_000026",
@@ -1963,13 +1880,26 @@ def test_get_audit_trail_of_all_study_subparts_of_study(api_client):
     # Lock
     response = api_client.post(
         f"/studies/{study_with_subparts.uid}/locks",
-        json={"change_description": "version Lock"},
+        json={
+            "change_description": "version Lock",
+            "reason_for_change_uid": test_data_dict["reason_for_lock_terms"][
+                0
+            ].term_uid,
+        },
     )
     assert_response_status_code(response, 201)
 
     # Unlock
-    response = api_client.delete(f"/studies/{study_with_subparts.uid}/locks")
-    assert_response_status_code(response, 200)
+    response = api_client.post(
+        f"/studies/{study_with_subparts.uid}/unlocks",
+        json={
+            "change_description": "Unlock",
+            "reason_for_change_uid": test_data_dict["reason_for_unlock_terms"][
+                0
+            ].term_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
 
     response = api_client.get(
         f"/studies/{study_with_subparts.uid}/audit-trail?study_value_version=1"
@@ -2219,7 +2149,13 @@ def test_cannot_lock_study_subpart(api_client):
     TestUtils.set_study_standard_version(study_uid="Study_000011")
 
     response = api_client.post(
-        "/studies/Study_000011/locks", json={"change_description": "Lock"}
+        "/studies/Study_000011/locks",
+        json={
+            "change_description": "Lock",
+            "reason_for_change_uid": test_data_dict["reason_for_lock_terms"][
+                0
+            ].term_uid,
+        },
     )
     assert_response_status_code(response, 400)
     res = response.json()
@@ -2232,7 +2168,15 @@ def test_cannot_lock_study_subpart(api_client):
 
 
 def test_cannot_unlock_study_subpart(api_client):
-    response = api_client.delete("/studies/Study_000011/locks")
+    response = api_client.post(
+        "/studies/Study_000011/unlocks",
+        json={
+            "change_description": "Unlock",
+            "reason_for_change_uid": test_data_dict["reason_for_unlock_terms"][
+                0
+            ].term_uid,
+        },
+    )
     assert_response_status_code(response, 400)
     res = response.json()
 
@@ -2245,7 +2189,13 @@ def test_cannot_unlock_study_subpart(api_client):
 
 def test_cannot_release_study_subpart(api_client):
     response = api_client.post(
-        "/studies/Study_000011/release", json={"change_description": "Lock"}
+        "/studies/Study_000011/release",
+        json={
+            "change_description": "Lock",
+            "reason_for_change_uid": test_data_dict["reason_for_lock_terms"][
+                0
+            ].term_uid,
+        },
     )
     assert_response_status_code(response, 400)
     res = response.json()
@@ -2270,7 +2220,13 @@ def test_cannot_add_study_subpart_to_a_locked_study_parent_part(api_client):
     TestUtils.set_study_standard_version(study_uid=_study.uid)
 
     response = api_client.post(
-        f"/studies/{_study.uid}/locks", json={"change_description": "Lock"}
+        f"/studies/{_study.uid}/locks",
+        json={
+            "change_description": "Lock",
+            "reason_for_change_uid": test_data_dict["reason_for_lock_terms"][
+                0
+            ].term_uid,
+        },
     )
     assert_response_status_code(response, 201)
 
@@ -3121,6 +3077,38 @@ def test_get_study_complexity_score(api_client):
     assert res_version_1 >= 0
 
 
+def test_get_integrity_check_for_study(api_client):
+    """Test integrity check endpoint for a specific study"""
+    study_int = TestUtils.create_study()
+    response = api_client.get(f"/studies/{study_int.uid}/integrity-check")
+    assert_response_status_code(response, 200)
+    res = response.json()
+
+    assert "study_uid" in res
+    assert res["study_uid"] == study_int.uid
+    assert "all_passed" in res
+    assert "checks" in res
+    assert isinstance(res["checks"], list)
+
+    # Verify each check has required fields
+    for check in res["checks"]:
+        assert "check_id" in check
+        assert "description" in check
+        assert "passed" in check
+        assert "noncompliant_count" in check
+        assert "noncompliant_node_ids" in check
+        assert isinstance(check["noncompliant_node_ids"], list)
+
+
+def test_get_integrity_check_invalid_study_uid(api_client):
+    """Test integrity check endpoint handles invalid study UIDs"""
+    invalid_uid = "invalid-uid-12345"
+    response = api_client.get(f"/studies/{invalid_uid}/integrity-check")
+    assert_response_status_code(
+        response, 404
+    )  # Should return 404 for non-existent study
+
+
 def test_concurrent_study_locking_does_not_create_duplicate_sponsor_ct_packages(
     api_client,
 ):
@@ -3164,7 +3152,12 @@ def test_concurrent_study_locking_does_not_create_duplicate_sponsor_ct_packages(
         try:
             response = api_client.post(
                 f"/studies/{study_uid}/locks",
-                json={"change_description": f"Concurrent lock test for {study_uid}"},
+                json={
+                    "change_description": f"Concurrent lock test for {study_uid}",
+                    "reason_for_change_uid": test_data_dict["reason_for_lock_terms"][
+                        0
+                    ].term_uid,
+                },
             )
             lock_results.append((study_uid, response.status_code, response.json()))
         except (ValueError, KeyError, TypeError) as e:

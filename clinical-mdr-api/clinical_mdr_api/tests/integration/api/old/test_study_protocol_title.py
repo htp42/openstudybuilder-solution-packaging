@@ -50,3 +50,4 @@ def test_get_study_protocol_title_information(api_client):
     assert res["development_stage_code"] is None
     assert res["ind_number"] == "ind-number-777"
     assert res["substance_name"] == "name"
+    assert res["protocol_header_version"] is None

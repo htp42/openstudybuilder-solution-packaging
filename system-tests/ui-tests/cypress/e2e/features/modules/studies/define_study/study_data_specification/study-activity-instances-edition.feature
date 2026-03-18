@@ -41,6 +41,12 @@ Feature: Studies - Define Study - Study Data Specifications - Study Activity Ins
         And [API] Activity with data collection set to 0 and 'NoDataCollection' included in the name is created and approved
         And [API] Activity is added to the study
         And [API] Activity is assigned to the visit 0
+        And [API] Activity with data collection set to 1 and 'RequiredForActivity' included in the name is created and approved
+        And [API] The activity instance with isRequriedForActivity set to true is created and approved
+        And [API] Activity is added to the study
+        And [API] Activity with data collection set to 1 and 'DefaultForActivity' included in the name is created and approved
+        And [API] The activity instance with isDefaultForActivity set to true is created and approved
+        And [API] Activity is added to the study
         When User intercepts data supplier request
         And The test study '/data-suppliers' page is opened
         And The 'Overview' tab is selected
@@ -51,6 +57,24 @@ Feature: Studies - Define Study - Study Data Specifications - Study Activity Ins
         And The + button is clicked
         And I select the value with index 0 from the Data supplier dropdown menu
         Then The Save button is clicked
+
+    Scenario: [Edit Instance Relationship][Data collection - yes][Required Instance] User must be presented with Library Instance Status set to Required in the Edit Instance Relationship form if linked Instance is Mandatory for Activity
+        Given The test study '/data_specifications/instances' page is opened
+        And User searches for 'RequiredForActivity'
+        When The 'Edit Activity - Instance relationship' option is clicked from the three dot menu list
+        Then Library Instance Status is set to 'Required' in the edition form
+
+    Scenario: [Edit Instance Relationship][Data collection - yes][Defaulted Instance] User must be presented with Library Instance Status set to Defaulted in the Edit Instance Relationship form if linked Instance is Default for Activity
+        Given The test study '/data_specifications/instances' page is opened
+        And User searches for 'DefaultForActivity'
+        When The 'Edit Activity - Instance relationship' option is clicked from the three dot menu list
+        Then Library Instance Status is set to 'Defaulted' in the edition form
+
+    Scenario: [Edit Instance Relationship][Data collection - yes][NotRequired and NotDefaulted Instance]  User must be presented with empty Library Instance Status in the Edit Instance Relationship form if linked Instance is neither Default nor Mandatory for Activity
+        Given The test study '/data_specifications/instances' page is opened
+        And User searches for 'FirstActivity'
+        When The 'Edit Activity - Instance relationship' option is clicked from the three dot menu list
+        Then Library Instance Status is set to '' in the edition form
 
     Scenario: [Edit Instance Relationship][Data collection - no][Instance not applicable] User must not be able to edit Instance Relationship if Study Activity has data collection set to No
         Given The test study '/data_specifications/instances' page is opened
@@ -134,21 +158,21 @@ Feature: Studies - Define Study - Study Data Specifications - Study Activity Ins
     Scenario: [Edit Mode][Data collection - no][Instance not applicable] User must not be able to edit Instance Relationship if Study Activity has data collection set to No
         Given The test study '/data_specifications/instances' page is opened
         And User waits for the table
-        When I click 'Edit' button
+        When The pencil button is clicked
         And User waits for 1 seconds
         Then User searches for 'NoDataCollection' and confirms no results returned
 
     Scenario: [Edit Mode][Data collection - yes][Missing Instance] User must not be able to edit Instance Relationship if Study Activity has data collection set to Yes, but no Activity Instance is linked to it
         Given The test study '/data_specifications/instances' page is opened
         And User waits for the table
-        When I click 'Edit' button
+        When The pencil button is clicked
         And User waits for 1 seconds
         Then User searches for 'MissingInstance' and confirms no results returned
 
     Scenario: [Edit Mode][Important Flag][Data collection - yes] User must be able to mark Study Activity Instance as Important if linked Study Activity data collection is set to Yes
         Given The test study '/data_specifications/instances' page is opened
         And User waits for the table
-        When I click 'Edit' button
+        When The pencil button is clicked
         And User waits for 1 seconds
         And User searches for 'FirstActivity'
         And User waits for the table
@@ -162,7 +186,7 @@ Feature: Studies - Define Study - Study Data Specifications - Study Activity Ins
     Scenario: [Edit Mode][Baseline flags][Data collection - yes] User must able to assign Baseline flag is Study Activity has data collection set to Yes and Activity Instance is linked to it
         Given The test study '/data_specifications/instances' page is opened
         And User waits for the table
-        When I click 'Edit' button
+        When The pencil button is clicked
         And User waits for 1 seconds
         And User searches for 'SecondActivity'
         And User waits for the table
@@ -177,7 +201,7 @@ Feature: Studies - Define Study - Study Data Specifications - Study Activity Ins
     Scenario: [Edit Mode][Data Supplier][Data collection - yes] User must be able to add Data Supplier to if linked Study Activity data collection is set to Yes
         Given The test study '/data_specifications/instances' page is opened
         And User waits for the table
-        When I click 'Edit' button
+        When The pencil button is clicked
         And User waits for 1 seconds
         And User searches for 'SecondActivity'
         And User waits for the table
@@ -195,7 +219,7 @@ Feature: Studies - Define Study - Study Data Specifications - Study Activity Ins
     Scenario: [Edit Mode][Cancel] User must be able to cancel edit mode and made changes will not be applied to Study Activity Instance
         Given The test study '/data_specifications/instances' page is opened
         And User waits for the table
-        When I click 'Edit' button
+        When The pencil button is clicked
         And User waits for 1 seconds
         And User searches for 'FirstActivity'
         And User waits for the table

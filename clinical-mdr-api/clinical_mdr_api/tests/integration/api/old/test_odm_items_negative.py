@@ -770,72 +770,21 @@ def test_add_odm_vendor_element_to_an_odm_item(api_client):
 def test_cannot_create_a_new_odm_item_with_same_properties(api_client):
     data = {
         "library_name": "Sponsor",
-        "name": "name1",
+        "name": "new1",
         "oid": "oid1",
-        "prompt": "prompt1",
+        "prompt": "new1",
         "datatype": "string",
-        "length": 11,
-        "significant_digits": 11,
-        "sas_field_name": "sas_field_name1",
-        "sds_var_name": "sds_var_name1",
-        "origin": "origin1",
-        "comment": "comment1",
-        "translated_texts": [
-            {
-                "text_type": "Description",
-                "language": "eng",
-                "text": "description2",
-            },
-            {
-                "text_type": "Description",
-                "language": "dan",
-                "text": "description3",
-            },
-            {
-                "text_type": "osb:CompletionInstructions",
-                "language": "eng",
-                "text": "instruction2",
-            },
-            {
-                "text_type": "osb:CompletionInstructions",
-                "language": "dan",
-                "text": "instruction3",
-            },
-            {
-                "text_type": "osb:DesignNotes",
-                "language": "eng",
-                "text": "sponsor_instruction2",
-            },
-            {
-                "text_type": "osb:DesignNotes",
-                "language": "dan",
-                "text": "sponsor_instruction3",
-            },
-            {
-                "text_type": "osb:DisplayText",
-                "language": "eng",
-                "text": "name2",
-            },
-            {
-                "text_type": "osb:DisplayText",
-                "language": "dan",
-                "text": "name3",
-            },
-        ],
-        "aliases": [{"context": "context1", "name": "name1"}],
-        "unit_definitions": [
-            {"uid": "unit_definition_root1", "mandatory": False, "order": 1}
-        ],
-        "codelist": {"uid": "editable_cr", "allows_multi_choice": True},
-        "terms": [
-            {
-                "uid": "term_root_final",
-                "mandatory": True,
-                "order": 1,
-                "display_text": None,
-                "version": "1.0",
-            }
-        ],
+        "length": 1,
+        "significant_digits": 1,
+        "sas_field_name": "new1",
+        "sds_var_name": "new1",
+        "origin": "new1",
+        "comment": "new1",
+        "translated_texts": [],
+        "aliases": [],
+        "unit_definitions": [],
+        "codelist": None,
+        "terms": [],
     }
     response = api_client.post("concepts/odms/items", json=data)
 
@@ -846,7 +795,7 @@ def test_cannot_create_a_new_odm_item_with_same_properties(api_client):
     assert res["type"] == "AlreadyExistsException"
     assert (
         res["message"]
-        == "ODM Item already exists with UID (OdmItem_000001) and data {'library_name': 'Sponsor', 'unit_definition_uids': ['unit_definition_root1'], 'codelist_uid': 'editable_cr', 'term_uids': ['term_root_final'], 'name': 'name1', 'oid': 'oid1', 'datatype': 'string', 'prompt': 'prompt1', 'length': 11, 'significant_digits': 11, 'sas_field_name': 'sas_field_name1', 'sds_var_name': 'sds_var_name1', 'origin': 'origin1', 'comment': 'comment1'}"
+        == "ODM Item already exists with UID (OdmItem_000001) and data {'oid': 'oid1'}"
     )
 
 

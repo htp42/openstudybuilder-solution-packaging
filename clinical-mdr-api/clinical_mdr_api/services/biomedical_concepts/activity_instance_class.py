@@ -30,6 +30,7 @@ from clinical_mdr_api.models.biomedical_concepts.activity_instance_class import 
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.services._utils import ensure_transaction
 from clinical_mdr_api.services.neomodel_ext_generic import NeomodelExtGenericService
+from common.config import settings
 from common.exceptions import BusinessLogicException, NotFoundException
 from common.utils import version_string_to_tuple
 
@@ -409,7 +410,8 @@ class ActivityInstanceClassService(NeomodelExtGenericService[ActivityInstanceCla
                         if child.get("is_domain_specific") is not None
                         else False
                     ),
-                    library_name=child.get("library_name") or "Sponsor",
+                    library_name=child.get("library_name")
+                    or settings.sponsor_library_name,
                     modified_date=(
                         child["modified_date"].isoformat()
                         if child.get("modified_date")
@@ -487,7 +489,8 @@ class ActivityInstanceClassService(NeomodelExtGenericService[ActivityInstanceCla
                         if child.get("is_domain_specific") is not None
                         else False
                     ),
-                    library_name=child.get("library_name") or "Sponsor",
+                    library_name=child.get("library_name")
+                    or settings.sponsor_library_name,
                     modified_date=(
                         child["modified_date"].isoformat()
                         if child.get("modified_date")

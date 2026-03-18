@@ -43,3 +43,12 @@ class OdmTranslatedTextTypeEnum(Enum):
     OSB_DISPLAY_TEXT = "osb:DisplayText"
     OSB_DESIGN_NOTES = "osb:DesignNotes"
     OSB_COMPLETION_INSTRUCTIONS = "osb:CompletionInstructions"
+
+
+class ValidationMode(Enum):
+    """
+    Enumerator for validation modes used in database integrity checks
+    """
+
+    STRICT = "strict"
+    WARNING = "warning"

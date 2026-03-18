@@ -41,7 +41,7 @@
               v-model="form.label"
               :label="$t('StudyArmsForm.arm_label')"
               data-cy="arm-label"
-              :rules="[formRules.required, formRules.max(form.label, 40)]"
+              :rules="[formRules.max(form.label, 40)]"
               clearable
               density="compact"
             />
@@ -166,6 +166,7 @@ const helpItems = [
   'StudyArmsForm.arm_type',
   'StudyArmsForm.arm_name',
   'StudyArmsForm.arm_short_name',
+  'StudyArmsForm.arm_label',
   'StudyArmsForm.randomisation_group',
   'StudyArmsForm.arm_code',
   'StudyArmsForm.planned_number',

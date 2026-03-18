@@ -22,12 +22,10 @@ Feature: Library - Concepts - Activities - Activity Group Overview Page
 
     Scenario: [COSMoS YAML] Verify that the group overview page displays all sections correctly
         When I click on the COSMoS YAML tab
-        And 'Download YAML content' button is visible in the overview page
-        And 'Close YAML viewer' button is visible in the overview page
-        When I click 'Download YAML content' button
+        When The download button is clicked
         Then The 'COSMoS-overview' file without timestamp is downloaded in 'yml' format
         # And the COSMoS YAML file should be saved with correct content (this step should be tested manually)
-        When I click 'Close YAML viewer' button
+        When The close overview button is clicked
         Then Group overview page is opened   
 
     Scenario: [Sections] Verify that the activity group overview page displays correctly
@@ -41,7 +39,7 @@ Feature: Library - Concepts - Activities - Activity Group Overview Page
         And The free text search field should be displayed in the 'Activity subgroups' table
 
     Scenario: [History] Verify that the activity group overview page displays correctly
-        When I click 'History' button
+        When The history button is clicked
         Then The history page is opened
     
     Scenario: [Linking] Verify that the activities group overview page can link to the correct subgroup
@@ -55,28 +53,28 @@ Feature: Library - Concepts - Activities - Activity Group Overview Page
         Then The linked subgroup is found in the Groups table with status 'Final' and version '1.0'
 
     Scenario: [Edit][1.1] Edit the Group
-        When I click 'New version' button
+        When The new version plus button is clicked
         Then The status displayed on the summary has value 'Draft' and version is '1.1'
         And The linked subgroup is found in the Groups table with status 'Final' and version '1.0'
-        When I click 'Edit' button 
+        When The pencil button is clicked
         And Group name is changed
         And Form save button is clicked
         Then The status displayed on the summary has value 'Draft' and version is '1.2'
         And The Activity subgroups table is empty
 
     Scenario: [Approve] Approve the Group
-        When I click 'Approve' button
+        When The approve button is clicked
         Then The status displayed on the summary has value 'Final' and version is '2.0'
         And The linked subgroup is found in the Groups table with status 'Final' and version '1.0'
 
     Scenario: [Edit][2.1] Edit the Group
-        When I click 'New version' button
+        When The new version plus button is clicked
         And The status displayed on the summary has value 'Draft' and version is '2.1'
-        When I click 'Edit' button 
+        When The pencil button is clicked
         And Group name is changed
         And Form save button is clicked
         And The status displayed on the summary has value 'Draft' and version is '2.2'
-        When I click 'Approve' button
+        When The approve button is clicked
         And The status displayed on the summary has value 'Final' and version is '3.0'
         And The linked subgroup is found in the Groups table with status 'Final' and version '1.0'
   
@@ -93,8 +91,7 @@ Feature: Library - Concepts - Activities - Activity Group Overview Page
         Then The linked subgroup is found in the Groups table with status 'Final' and version '1.0'
         When Version '3.0' is selected from the Version dropdown list
         And The status displayed on the summary has value 'Final' and version is '3.0'
-        Then The new linked subgroup is found in the Groups table with status 'Final' and version '1.0'
-        And The linked subgroup is found in the Groups table with status 'Final' and version '1.0'
+        Then Both subgroups are visible in the Activity subgroup table with status 'Final' and version '1.0'
 
     Scenario: [Table][Search][Negative case] User must be able to search not existing subgroup and table will be correctly filtered
         When User searches for non-existing item in 'Activity subgroups' table

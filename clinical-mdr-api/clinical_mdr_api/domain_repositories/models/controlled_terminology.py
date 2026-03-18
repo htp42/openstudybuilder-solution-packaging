@@ -21,6 +21,9 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     VersionRelationship,
     ZonedDateTimeProperty,
 )
+from clinical_mdr_api.domains.controlled_terminologies.ct_codelist_attributes import (
+    DEFAULT_CODELIST_TYPE,
+)
 
 
 class CTPackage(ClinicalMdrNodeWithUID):
@@ -59,6 +62,7 @@ class CTCodelistAttributesValue(ControlledTerminology):
     extensible = BooleanProperty()
     synonyms = ArrayProperty()
     is_ordinal = BooleanProperty(default=False)
+    codelist_type = StringProperty(default=DEFAULT_CODELIST_TYPE)
 
 
 class CTCodelistAttributesRoot(ControlledTerminology):

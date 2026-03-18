@@ -154,7 +154,6 @@
         "accept": "Accept",
         "reports": "Reports",
         "download": "Download",
-        "and_or": "And/Or",
         "submission_value": "Submission value",
         "none": "(none/blank)",
         "select": "Select",
@@ -176,7 +175,10 @@
         "save_question": "Are you sure you want to save your changes?",
         "go_to": "Go to ↓",
         "optional": " (Optional)",
-        "edit_in_table": "Edit in table"
+        "edit_in_table": "Edit in table",
+        "view_source": "View Source",
+        "rich_text": "Rich Text",
+        "required": " (Required)"
     },
     "_errors": {
         "general": "Something went wrong. Please try again later.",
@@ -586,6 +588,7 @@
         "StudyArmsForm": {
             "arm_name": "Long-label of the arm, e.g. Placebo",
             "arm_short_name": "Abbreviated name of the arm, e.g. PBO",
+            "arm_label": "Shorter version of arm name",
             "arm_type": "Investigational - Intervention being investigated, Comparator - Intervention the investigational intervention is being compared against, Placebo - if comparator is Placebo select this option, Observational - No intervention is made",
             "arm_code": "An abbreviated code of the interventions in the arm, e.g. AB for a cross-over study with Drug A followed by drug B, or  PBO for a Placebo arm",
             "randomisation_group": "The group assigned in the randomisation list, e.g. A=AB and B=BA from the randomisation list.",
@@ -989,6 +992,7 @@
             "study_arm_type": "There are four options available for study arm type: Comparator arm, Investigational arm, Observational arm and Placebo arm.",
             "arm_name": "Arm name can be filled in with free text but is most commonly the name of the investigation, e.g. “Semaglutide” or “Placebo”.",
             "arm_short_name": "Arm short name can be filled in with free text but is most commonly the same as the arm name.",
+            "arm_label": "Shorter version of arm name",
             "rand_group": "Randomisation group should be filled out when known. Randomisation group must be filled out with capital letters (e.g. A). If multiple groups apply for one arm, they must be separated using pipes (e.g. AIBID).",
             "arm_code": "Arm code is generated automatically within Novo Nordisk but may be applicable for open-source users.",
             "set_cohorts_for_study": "You can add as many cohorts/subpop as required in your study using the “Add Co-horts/subpop.” button.",
@@ -2416,11 +2420,19 @@
     "StudyStatusForm": {
         "release_title": "Release study",
         "lock_title": "Lock study",
+        "unlock_title": "Unlock study",
         "release_description": "Release description",
         "lock_description": "Lock description",
         "lock_success": "Study has been locked",
+        "unlock_success": "Study has been unlocked",
         "release_success": "Study has been released",
-        "description_placeholder": "Write a description of the version"
+        "description_placeholder": "Write a change description of the new version",
+        "release_reason": "Specify reason for releasing or locking a study",
+        "lock_reason": "Specify reason for locking study",
+        "unlock_reason": "Specify reason for unlocking study",
+        "other_reason": "Other reason for unlocking",
+        "other_reason_desc": "Write a description for other reason of unlocking",
+        "other_reason_lock_desc": "Write a description for other reason of locking or releasing"
     },
     "StudyProtocolElementsView": {
         "title": "Protocol Elements",
@@ -3061,7 +3073,8 @@
         "pin_headers": "Pin header row",
         "unpin_headers": "Unpin header row",
         "copy_from_study": "Copy from study",
-        "clear_filters_content": "Clear all"
+        "clear_filters_content": "Clear all",
+        "select_columns": "Select columns"
     },
     "EligibilityCriteriaTable": {
         "criteria_text": "Criteria text",
@@ -3309,11 +3322,11 @@
         "visit_count": "Number of visits"
     },
     "StudyQuickSelectForm": {
-        "title": "Select study ID or acronym",
+        "title": "Select a study",
         "study_id": "Study ID",
         "study_acronym": "Study acronym",
-        "help_message": "Select study ID (or acronym if ID is not available)",
-        "and_or": "And/Or"
+        "study_id_or_acronym": "Study ID / Acronym",
+        "help_message": "Select study ID (or acronym if ID is not available)"
     },
     "DictionaryTermTable": {
         "lower_case_name": "Lower case name",
@@ -3503,7 +3516,7 @@
     "Study": {
         "brand_name": "Brand name",
         "project_name": "Project name",
-        "project_number": "Project ID",
+        "project_number": "Project number",
         "study_number": "Study number",
         "study_id": "Study ID",
         "study_acronym": "Study acronym",
@@ -3515,7 +3528,17 @@
         "release_description": "Release description",
         "release": "Release study",
         "lock": "Lock study",
-        "unlock": "Unlock study"
+        "unlock": "Unlock study",
+        "reason_for_unlock": "Reason for unlocking study",
+        "reason_for_release_or_lock": "Reason for locking or releasing study",
+        "other_reason_for_unlock": "Other reason for unlocking",
+        "other_reason_for_locking_releasing": "Other reason for locking or releasing",
+        "protocol_version": "Protocol Version",
+        "meta_version": "Metadata version",
+        "keep_locked": "Keep Study locked",
+        "protocol_header_version": "Protocol Header Version",
+        "major_version_warning": "Major version is required",
+        "unlock_warning": "Note, that this study has been locked to a protocol version. If the study has passed FPFV, you accept that you carry the risk of modifying the study metadata related to the protocol and downstream processing by proceeding. How do you want to proceed?"
     },
     "CTDashboardView": {
         "title": "Code Lists and Terms Dashboard",
@@ -3560,7 +3583,8 @@
         "eudract_number": "EudraCT number",
         "ind_number": "IND number",
         "study_phase": "Study phase",
-        "development_stage": "Development stage"
+        "development_stage": "Development stage",
+        "protocol_version": "Protocol header version"
     },
     "ActivitiesView": {
         "title": "Study Activities",
@@ -3883,7 +3907,8 @@
         "global_history_title": "Study arms history",
         "study_arm_history_title": "History for study arm [{armUid}]",
         "number_of_participants": "No. of participants",
-        "cohorts_stepper": "Cohorts Stepper"
+        "cohorts_stepper": "Cohorts Stepper",
+        "create_arm": "Create/edit arm"
     },
     "StudyArmsForm": {
         "study_arm": "Study Arm",
@@ -4179,12 +4204,20 @@
         "no_activity_instance_links": "No Activity Instance Links",
         "activity_instance_already_defined": "Activity Instance with same Activity Item Class already defined for this CRF Item",
         "activity_instance": "Activity Instance",
+        "activity_instance_item": "Activity Instance Item",
         "activity_item_class": "Activity Item Class",
         "preset_response_value": "Preset Response Value",
         "primary": "Primary",
         "value_condition": "Value Condition",
         "value_dependent_map": "Value Dependent Map",
         "add_unit": "Add Unit"
+    },
+    "CRFActivityInstanceManagement": {
+        "select_activity_instance": "Select an Activity Instance",
+        "no_activity_instance_selected": "Select an Activity Instance to display available Activity Items",
+        "no_items_available": "No activity items available",
+        "table_view": "Table View",
+        "form_view": "Form View"
     },
     "CRFAliases": {
         "add": "Add Alias",
@@ -4285,6 +4318,7 @@
         "link_item_groups": "Link Item Groups",
         "link_items": "Link Items",
         "items_for_linking": "Collections / Forms / ItemGroups / Items",
+        "manage_activity_instances": "Manage Activity Instances",
         "repeating": "Repeating",
         "mandatory": "Mandatory",
         "set_condition": "Set Condition",
@@ -4314,12 +4348,10 @@
         "create_new_version_all": "New version of all child elements",
         "new_version_affecting_children_warning": "Creating a new version of this colleciton will create new versions of all child elements.\n\r This can affect other collections that are using the same child elements.",
         "vendor_extension_applied": "Vendor Extension Applied",
-        "ref_vendor_extension_applied": "Reference Vendor Extension Applied"
-    },
-    "CRFLinkingForm": {
-        "link_activities": "Link Activities",
-        "link_activity_groups": "Link Activity Groups",
-        "link_activity_sub_groups": "Link Activity Sub Groups"
+        "ref_vendor_extension_applied": "Reference Vendor Extension Applied",
+        "success_forms": "Updated Forms linked to Collection: {name}<br/>Total Forms linked: {count}",
+        "success_item_groups": "Updated Item Groups linked to Form: {name}<br/>Total Item Groups linked: {count}",
+        "success_items": "Updated Items linked to Item Group: {name}<br/>Total Items linked: {count}"
     },
     "OdmViewer": {
         "html": "HTML",
@@ -4367,10 +4399,10 @@
         "sdv": "SDV",
         "data_entry": "Data Entry Required",
         "title": "Reference attributes of ",
-        "warning_1": "You are about to change a property that will affect ",
-        "warning_forms": " other forms. Are you sure you want to continue?",
-        "warning_templ": " other collections. Are you sure you want to continue?",
-        "collection_warning": "You are about to change a property that will affect other collections. Are you sure you want to continue?"
+        "warning_forms": "You are about to change a property that will affect {count} other form(s). Are you sure you want to continue?",
+        "warning_templ": "You are about to change a property that will affect {count} other collection(s). Are you sure you want to continue?",
+        "collection_warning": "You are about to change a property that will affect other collections. Are you sure you want to continue?",
+        "success_message": "Reference attributes updated"
     },
     "CRFExtensions": {
         "title": "ODM Vendor Extensions",
@@ -4578,7 +4610,8 @@
         "activity_instance_classes": "Activity Instance Classes",
         "nci_code": "NCI Code",
         "adam_param_specific": "ADAM Param Specific",
-        "mandatory": "Mandatory"
+        "mandatory": "Mandatory",
+        "applicable_codelists": "Applicable codelists"
     },
     "ActivityOverview": {
         "cosmos_yaml": "COSMoS YAML",

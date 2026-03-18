@@ -3572,10 +3572,6 @@ State after:
     response_model_exclude_unset=True,
     status_code=200,
     responses={
-        400: {
-            "model": ErrorResponse,
-            "description": "Cannot modify 'is_important' property on a reviewed StudyActivityInstance",
-        },
         403: _generic_descriptions.ERROR_403,
         404: {
             "model": ErrorResponse,

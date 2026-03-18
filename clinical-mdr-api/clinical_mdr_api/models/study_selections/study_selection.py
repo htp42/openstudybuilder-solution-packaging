@@ -3208,16 +3208,6 @@ class StudySelectionActivityInstanceReviewBatchInput(BatchInputModel):
 class StudyActivitySchedule(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    study_uid: Annotated[str, STUDY_UID_FIELD]
-
-    study_version: Annotated[
-        str | None,
-        Field(
-            description="Study version number, if specified, otherwise None",
-            json_schema_extra={"nullable": True},
-        ),
-    ] = None
-
     study_activity_schedule_uid: Annotated[
         str,
         Field(
@@ -3250,29 +3240,11 @@ class StudyActivitySchedule(BaseModel):
             json_schema_extra={"source": "study_visit.uid"},
         ),
     ]
-    start_date: Annotated[
-        datetime | None,
-        Field(
-            description=START_DATE_DESC,
-            json_schema_extra={"source": AFTER_DATE_QUALIFIER, "nullable": True},
-        ),
-    ]
-
-    author_username: Annotated[
-        str | None,
-        Field(
-            description=AUTHOR_FIELD_DESC,
-            json_schema_extra={"source": AFTER_USER_QUALIFIER, "nullable": True},
-        ),
-    ] = None
-
-    end_date: Annotated[datetime | None, END_DATE_FIELD] = None
 
     @classmethod
     def from_vo(
         cls,
         schedule_vo: StudyActivityScheduleVO,
-        study_value_version: str | None = None,
     ) -> Self:
         if not schedule_vo.uid:
             raise BusinessLogicException(
@@ -3286,23 +3258,13 @@ class StudyActivitySchedule(BaseModel):
 
         return cls(
             study_activity_schedule_uid=schedule_vo.uid,
-            study_uid=schedule_vo.study_uid,
-            study_version=(
-                study_value_version
-                if study_value_version
-                else get_latest_on_datetime_str()
-            ),
             study_activity_uid=schedule_vo.study_activity_uid,
             study_activity_instance_uid=schedule_vo.study_activity_instance_uid,
             study_visit_uid=schedule_vo.study_visit_uid,
-            start_date=schedule_vo.start_date,
-            author_username=schedule_vo.author_username,
         )
 
 
 class StudyActivityScheduleHistory(BaseModel):
-    study_uid: Annotated[str, Field(description=STUDY_UID_DESC)]
-
     study_activity_schedule_uid: Annotated[
         str, Field(description="uid for the study activity schedule")
     ]

@@ -32,37 +32,7 @@
       <v-form :ref="`observer_${step}`">
         <v-row v-if="creationMode === 'select'">
           <v-col cols="3">
-            <v-autocomplete
-              v-model="selectedStudies"
-              :data-cy="$t('StudySelectionTable.study_ids')"
-              :label="$t('StudySelectionTable.studies')"
-              :items="studies"
-              :rules="[formRules.required]"
-              item-title="current_metadata.identification_metadata.study_id"
-              clearable
-              multiple
-              return-object
-            />
-          </v-col>
-          <div class="mt-8">
-            {{ $t('_global.and_or') }}
-          </div>
-          <v-col cols="3">
-            <v-autocomplete
-              v-model="selectedStudies"
-              :label="$t('StudySelectionTable.study_acronyms')"
-              :items="
-                studies.filter(
-                  (study) =>
-                    study.current_metadata.identification_metadata.study_acronym
-                )
-              "
-              :rules="[formRules.required]"
-              item-title="current_metadata.identification_metadata.study_acronym"
-              clearable
-              multiple
-              return-object
-            />
+            <StudySelectorField v-model="selectedStudies" :data="studies" />
           </v-col>
         </v-row>
       </v-form>
@@ -278,6 +248,7 @@ import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter.vu
 import NNTable from '@/components/tools/NNTable.vue'
 import NNTemplateInputField from '@/components/tools/NNTemplateInputField.vue'
 import ParameterValueSelector from '@/components/tools/ParameterValueSelector.vue'
+import StudySelectorField from '@/components/studies/StudySelectorField.vue'
 import study from '@/api/study'
 import StudySelectionTable from './StudySelectionTable.vue'
 import terms from '@/api/controlledTerminology/terms'
@@ -294,6 +265,7 @@ export default {
     NNTemplateInputField,
     ParameterValueSelector,
     StudySelectionTable,
+    StudySelectorField,
   },
   inject: ['notificationHub', 'formRules'],
   props: {

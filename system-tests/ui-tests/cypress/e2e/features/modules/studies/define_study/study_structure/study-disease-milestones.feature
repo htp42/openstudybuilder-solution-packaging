@@ -19,10 +19,13 @@ Feature: Studies - Define Study - Study Structure - Disease Milestones
     Scenario: [Table][Options] User must be able to see the Study Disease Milestones table with following options
         Given The test study '/study_structure/disease_milestones' page is opened
         Then A table is visible with following options
-            | options                                                         |
-            | Add disease milestone                                           |
-            | Select columns                                                  |
-            | Select rows                                                     |
+            | options                                            |
+            | create-disease-milestone                           |
+            | columns-layout-button                              |
+            | table-export-button                                |
+            | select-rows                                        |
+            | search-field                                       |
+            | History                                            |
 
     @smoke_test
     Scenario: [Table][Columns][Names] User must be able to see the Study Disease Milestones table with following columns

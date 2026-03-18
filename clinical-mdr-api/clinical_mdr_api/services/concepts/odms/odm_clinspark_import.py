@@ -41,6 +41,7 @@ from clinical_mdr_api.services.controlled_terminologies.ct_term_name import (
     CTTermNameService,
 )
 from common import exceptions
+from common.config import settings
 
 
 class OdmClinicalXmlImporterService(OdmXmlImporterService):
@@ -52,7 +53,12 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
 
     db_ct_codelist_attributes: list[CTCodelistAttributes]
 
-    def __init__(self, xml_file: UploadFile, mapper_file: UploadFile | None):
+    def __init__(
+        self,
+        xml_file: UploadFile,
+        mapper_file: UploadFile | None,
+        library_name: str = settings.sponsor_library_name,
+    ):
         self.ct_term_name_service = CTTermNameService()
         self.ct_codelist_attributes_service = CTCodelistAttributesService()
         self.ct_codelist_name_service = CTCodelistNameService()
@@ -63,7 +69,7 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
         self.unit_definition_uids_by: dict[str, str] = {}
         self.measurement_unit_names_by_oid = {}
 
-        super().__init__(xml_file, mapper_file)
+        super().__init__(xml_file, mapper_file, library_name=library_name)
 
     def store_odm_xml(self):
         self._set_unit_definitions()
@@ -170,7 +176,7 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
                         is_ordinal=False,
                         template_parameter=True,
                         parent_codelist_uid=None,
-                        library_name="Sponsor",
+                        library_name=self.library_name,
                         terms=[],
                     )
                 )
@@ -212,7 +218,7 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
                         definition=translated_txt,
                         sponsor_preferred_name=translated_txt,
                         sponsor_preferred_name_sentence_case=translated_txt.lower(),
-                        library_name="Sponsor",
+                        library_name=self.library_name,
                     )
                 )
                 self.ct_term_name_service.approve(ct_term.term_uid)

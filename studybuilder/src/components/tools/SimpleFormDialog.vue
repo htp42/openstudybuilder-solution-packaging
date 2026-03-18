@@ -54,7 +54,7 @@
             width="120px"
             @click="cancel"
           >
-            {{ $t('_global.cancel') }}
+            {{ cancelLabel ?? $t('_global.cancel') }}
           </v-btn>
           <v-btn
             v-if="!noSaving"
@@ -127,6 +127,10 @@ export default {
     topRightCancel: {
       type: Boolean,
       default: false,
+    },
+    cancelLabel: {
+      type: String,
+      default: null,
     },
   },
   emits: ['close', 'submit'],

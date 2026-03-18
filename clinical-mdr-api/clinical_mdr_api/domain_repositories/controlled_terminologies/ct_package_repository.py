@@ -13,6 +13,7 @@ from clinical_mdr_api.models.controlled_terminologies.ct_package import (
     CTPackage as CTPackageModel,
 )
 from clinical_mdr_api.services.user_info import UserInfoService
+from common.config import settings
 from common.exceptions import AlreadyExistsException, NotFoundException
 from common.telemetry import trace_calls
 
@@ -182,7 +183,11 @@ class CTPackageRepository:
 
     @trace_calls
     def create_sponsor_package(
-        self, extends_package: str, effective_date: date, author_id: str
+        self,
+        extends_package: str,
+        effective_date: date,
+        author_id: str,
+        library_name: str = settings.sponsor_library_name,
     ) -> CTPackageAR:
         # First, get parent_package node
         extends_package_node: CTPackage = CTPackage.nodes.get_or_none(
@@ -196,22 +201,20 @@ class CTPackageRepository:
         catalogue_node: CTCatalogue = extends_package_node.contains_package.single()
 
         # Create the new package
-        sponsor_package_uid = (
-            f"Sponsor {catalogue_node.name} {effective_date.strftime('%Y-%m-%d')}"
-        )
+        sponsor_package_uid = f"{library_name} {catalogue_node.name} {effective_date.strftime('%Y-%m-%d')}"
 
         # Pre-creation validation: check if a package with the same name already exists
         # This provides an additional safety layer beyond the database constraint
         existing_package = CTPackage.nodes.get_or_none(name=sponsor_package_uid)
         if existing_package is not None:
             raise AlreadyExistsException(
-                msg="A sponsor CTPackage already exists for this date"
+                msg=f"A {library_name} CTPackage already exists for this date"
             )
 
         sponsor_package = CTPackage(
             uid=sponsor_package_uid,
             name=sponsor_package_uid,
-            description=f"Sponsor package for {extends_package}, as of {effective_date.strftime('%Y-%m-%d')}",
+            description=f"{library_name} package for {extends_package}, as of {effective_date.strftime('%Y-%m-%d')}",
             import_date=datetime.now(),
             effective_date=effective_date,
             author_id=author_id,
@@ -220,7 +223,7 @@ class CTPackageRepository:
             sponsor_package.save()
         except UniqueProperty as exc:
             raise AlreadyExistsException(
-                msg="A sponsor CTPackage already exists for this date"
+                msg=f"A {library_name} CTPackage already exists for this date"
             ) from exc
         # Connect the new package to its parent and the catalogue node
         sponsor_package.extends_package.connect(extends_package_node)

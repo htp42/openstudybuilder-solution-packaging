@@ -1,11 +1,11 @@
 <template>
   <v-app full-height>
     <div
-      class="position-absolute d-flex flex-column ga-md-2"
+      class="position-absolute d-flex flex-column ga-2"
       style="z-index: 9999; top: 5px; right: 5px"
     >
-      <NotificationPanel />
       <ScreenRecorder v-if="ENABLE_SCREEN_RECORDER === true" />
+      <NotificationPanel />
     </div>
 
     <TopBar

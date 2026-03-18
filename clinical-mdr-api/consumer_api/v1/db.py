@@ -942,3 +942,310 @@ def get_studies_audit_trail(
         ]
     )
     return query(full_query, params)
+
+
+def get_codelists(
+    page_size: int = 10,
+    page_number: int = 1,
+    name_status: models.LibraryItemStatus | None = None,
+    attributes_status: models.LibraryItemStatus | None = None,
+) -> list[dict[Any, Any]]:
+    validate_page_number_and_page_size(page_number, page_size)
+
+    attributes_status_filter = (
+        "last_version_rel_attributes.status = $status_attributes "
+        if attributes_status
+        else ""
+    )
+
+    name_status_filter = (
+        "last_version_rel_name.status = $status_name " if name_status else ""
+    )
+
+    status_filter = ""
+
+    if attributes_status_filter and name_status_filter:
+        status_filter = f"WHERE {attributes_status_filter} AND {name_status_filter}"
+    elif attributes_status_filter:
+        status_filter = f"WHERE {attributes_status_filter}"
+    elif name_status_filter:
+        status_filter = f"WHERE {name_status_filter}"
+
+    params = {
+        "status_attributes": attributes_status.value if attributes_status else None,
+        "status_name": name_status.value if name_status else None,
+    }
+
+    base_query = f"""
+        MATCH (codelist_root:CTCodelistRoot)-[:HAS_ATTRIBUTES_ROOT]->
+        (codelist_attributes_root:CTCodelistAttributesRoot)-[:LATEST]->(codelist_attributes_value:CTCodelistAttributesValue)
+
+        MATCH (codelist_root)-[:HAS_NAME_ROOT]->(codelist_name_root:CTCodelistNameRoot)-[:LATEST]->(codelist_name_value:CTCodelistNameValue)
+
+        WITH
+        DISTINCT codelist_root, codelist_attributes_root, codelist_attributes_value, codelist_name_root, codelist_name_value,
+        head([(library:Library)-[:CONTAINS_CODELIST]->(codelist_root) | library]) AS library
+
+        CALL {{
+                WITH codelist_attributes_root, codelist_attributes_value
+                MATCH (codelist_attributes_root)-[hv:HAS_VERSION]-(codelist_attributes_value)
+                WITH hv
+                ORDER BY
+                    toInteger(split(hv.version, '.')[0]) ASC,
+                    toInteger(split(hv.version, '.')[1]) ASC,
+                    hv.start_date ASC
+                WITH collect(hv) as hvs
+                RETURN last(hvs) AS last_version_rel_attributes
+            }}
+        CALL {{
+                WITH codelist_name_root, codelist_name_value
+                MATCH (codelist_name_root)-[hv:HAS_VERSION]-(codelist_name_value)
+                WITH hv
+                ORDER BY
+                    toInteger(split(hv.version, '.')[0]) ASC,
+                    toInteger(split(hv.version, '.')[1]) ASC,
+                    hv.start_date ASC
+                WITH collect(hv) as hvs
+                RETURN last(hvs) AS last_version_rel_name
+            }}
+
+        WITH codelist_root, codelist_attributes_value, codelist_name_value, library,
+             last_version_rel_attributes, last_version_rel_name
+
+        {status_filter}
+
+        WITH
+        codelist_root.uid AS uid,
+        codelist_attributes_value.name AS name,
+        codelist_attributes_value.submission_value AS submission_value,
+        codelist_attributes_value.preferred_term AS nci_preferred_name,
+        codelist_attributes_value.definition AS definition,
+        codelist_attributes_value.extensible AS is_extensible,
+        codelist_name_value.name AS sponsor_preferred_name,
+        library.name AS library_name,
+        last_version_rel_attributes.version AS attributes_version,
+        last_version_rel_attributes.status AS attributes_status,
+        last_version_rel_name.version AS name_version,
+        last_version_rel_name.status AS name_status
+
+        RETURN *
+        """
+
+    full_query = " ".join(
+        [
+            base_query,
+            db_sort_clause("name", "ASC"),
+            db_pagination_clause(page_size, page_number),
+        ]
+    )
+    return query(full_query, params=params)
+
+
+def get_codelist_terms(
+    codelist_submission_value: str,
+    page_size: int = 10,
+    page_number: int = 1,
+    name_status: models.LibraryItemStatus | None = None,
+    attributes_status: models.LibraryItemStatus | None = None,
+) -> list[dict[Any, Any]]:
+    validate_page_number_and_page_size(page_number, page_size)
+
+    attributes_status_filter = (
+        "last_version_rel_attributes.status = $status_attributes "
+        if attributes_status
+        else ""
+    )
+
+    name_status_filter = (
+        "last_version_rel_name.status = $status_name " if name_status else ""
+    )
+
+    status_filter = ""
+
+    if attributes_status_filter and name_status_filter:
+        status_filter = f"WHERE {attributes_status_filter} AND {name_status_filter}"
+    elif attributes_status_filter:
+        status_filter = f"WHERE {attributes_status_filter}"
+    elif name_status_filter:
+        status_filter = f"WHERE {name_status_filter}"
+
+    params = {
+        "codelist_submission_value": codelist_submission_value,
+        "status_attributes": attributes_status.value if attributes_status else None,
+        "status_name": name_status.value if name_status else None,
+    }
+
+    base_query = f"""
+        MATCH (codelist_root:CTCodelistRoot)-[:HAS_ATTRIBUTES_ROOT]->
+        (:CTCodelistAttributesRoot)-[:LATEST]->(:CTCodelistAttributesValue {{submission_value: $codelist_submission_value}})
+                            
+        MATCH (codelist_root)-[ht:HAS_TERM]->(ct_cl_term:CTCodelistTerm)-[:HAS_TERM_ROOT]->(ct_term_root:CTTermRoot)<-[:CONTAINS_TERM]-(library:Library)
+        WHERE ht.end_date IS NULL
+        MATCH (ct_term_root)-[:HAS_NAME_ROOT]->(tnr:CTTermNameRoot)-[:LATEST]->(tnv:CTTermNameValue)
+        MATCH (ct_term_root)-[:HAS_ATTRIBUTES_ROOT]->(tar:CTTermAttributesRoot)-[:LATEST]->(tav:CTTermAttributesValue)
+        
+        WITH 
+        DISTINCT codelist_root, ht, ct_cl_term, ct_term_root, tnr, tnv, tar, tav, library
+
+        CALL {{
+                WITH tar, tav
+                MATCH (tar)-[hv:HAS_VERSION]-(tav)
+                WITH hv
+                ORDER BY
+                    toInteger(split(hv.version, '.')[0]) ASC,
+                    toInteger(split(hv.version, '.')[1]) ASC,
+                    hv.start_date ASC
+                WITH collect(hv) as hvs
+                RETURN last(hvs) AS last_version_rel_attributes
+            }}
+        CALL {{
+                WITH tnr, tnv
+                MATCH (tnr)-[hv:HAS_VERSION]-(tnv)
+                WITH hv
+                ORDER BY
+                    toInteger(split(hv.version, '.')[0]) ASC,
+                    toInteger(split(hv.version, '.')[1]) ASC,
+                    hv.start_date ASC
+                WITH collect(hv) as hvs
+                RETURN last(hvs) AS last_version_rel_name
+            }}
+
+        WITH ct_term_root, ct_cl_term, tnv, tav, library,
+             last_version_rel_attributes, last_version_rel_name
+
+        {status_filter}
+
+        WITH
+        ct_term_root.uid AS uid,
+        ct_cl_term.submission_value AS submission_value,
+        tav.concept_id AS concept_id,
+        tav.preferred_term AS nci_preferred_name,
+        tnv.name AS sponsor_preferred_name,
+        library.name AS library_name,
+        last_version_rel_attributes.version AS attributes_version,
+        last_version_rel_attributes.status AS attributes_status,
+        last_version_rel_name.version AS name_version,
+        last_version_rel_name.status AS name_status
+
+        RETURN *
+        """
+
+    full_query = " ".join(
+        [
+            base_query,
+            db_sort_clause("sponsor_preferred_name", "ASC"),
+            db_pagination_clause(page_size, page_number),
+        ]
+    )
+    return query(full_query, params=params)
+
+
+def get_unit_definitions(
+    page_size: int = 10,
+    page_number: int = 1,
+    subset: str | None = None,
+    status: models.LibraryItemStatus | None = None,
+) -> list[dict[Any, Any]]:
+    validate_page_number_and_page_size(page_number, page_size)
+
+    params: dict[str, Any] = {
+        "status": status.value if status else None,
+        "unit_dimension_cl_submval": settings.unit_dimension_cl_submval,
+        "unit_subset_cl_submval": settings.unit_subset_cl_submval,
+    }
+
+    subset_filter = ""
+    if subset:
+        params["subset"] = subset
+        subset_filter = """WHERE $subset IN [(concept_value)-[:HAS_UNIT_SUBSET]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)-[:HAS_NAME_ROOT]->
+        (:CTTermNameRoot)-[:LATEST]->(term_name_value) | term_name_value.name]"""
+
+    status_filter = "WHERE last_version_rel.status = $status " if status else ""
+
+    base_query = f"""
+        MATCH (concept_root:UnitDefinitionRoot)-[:LATEST]->(concept_value:UnitDefinitionValue)
+        {subset_filter}
+
+        WITH 
+            DISTINCT concept_root, concept_value,
+            head([(library)-[:CONTAINS_CONCEPT]->(concept_root) | library]) AS library
+
+        CALL {{
+                WITH concept_root, concept_value
+                MATCH (concept_root)-[hv:HAS_VERSION]-(concept_value)
+                WITH hv
+                ORDER BY
+                    toInteger(split(hv.version, '.')[0]) ASC,
+                    toInteger(split(hv.version, '.')[1]) ASC,
+                    hv.start_date ASC
+                WITH collect(hv) as hvs
+                RETURN last(hvs) AS last_version_rel
+            }}
+
+        WITH concept_root, concept_value, library, last_version_rel
+
+        {status_filter}
+
+        CALL {{
+            WITH concept_value
+            OPTIONAL MATCH (concept_value)-[:HAS_UNIT_SUBSET]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(sub_tr:CTTermRoot)
+            OPTIONAL MATCH (sub_tr)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(sub_tnv:CTTermNameValue)
+            OPTIONAL MATCH (sub_tr)<-[:HAS_TERM_ROOT]-(sub_cl_term:CTCodelistTerm)<-[:HAS_TERM]-(sub_cl_root:CTCodelistRoot)
+                -[:HAS_ATTRIBUTES_ROOT]->(:CTCodelistAttributesRoot)-[:LATEST]->(sub_cl_attrs:CTCodelistAttributesValue {{submission_value: $unit_subset_cl_submval}})
+            WITH sub_tr, sub_tnv, sub_cl_term, sub_cl_root, sub_cl_attrs
+            WHERE sub_tr IS NOT NULL
+            RETURN COLLECT({{
+                term_uid: sub_tr.uid,
+                term_name: sub_tnv.name,
+                term_submission_value: sub_cl_term.submission_value,
+                codelist_uid: sub_cl_root.uid,
+                codelist_name: sub_cl_attrs.name,
+                codelist_submission_value: sub_cl_attrs.submission_value
+            }}) AS subsets
+        }}
+
+        OPTIONAL MATCH (concept_value)-[:HAS_CT_DIMENSION]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(dim_tr:CTTermRoot)
+        OPTIONAL MATCH (dim_tr)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(dim_tnv:CTTermNameValue)
+        OPTIONAL MATCH (dim_tr)<-[:HAS_TERM_ROOT]-(dim_cl_term:CTCodelistTerm)<-[:HAS_TERM]-(dim_cl_root:CTCodelistRoot)
+            -[:HAS_ATTRIBUTES_ROOT]->(:CTCodelistAttributesRoot)-[:LATEST]->(dim_cl_attrs:CTCodelistAttributesValue {{submission_value: $unit_dimension_cl_submval}})
+        OPTIONAL MATCH (concept_value)-[:HAS_UCUM_TERM]->(ucum_root)-[:LATEST]->(ucum_val)
+
+        WITH
+            concept_root.uid AS uid,
+            concept_value.nci_concept_id AS nci_concept_id,
+            concept_value.nci_concept_name AS nci_concept_name,
+            concept_value.name AS name,
+            library.name AS library_name,
+            last_version_rel.status AS status,
+            last_version_rel.version AS version,
+            subsets,
+            concept_value.convertible_unit AS is_convertible_unit,
+            concept_value.master_unit AS is_master_unit,
+            concept_value.si_unit AS is_si_unit,
+            concept_value.display_unit AS is_display_unit,
+            concept_value.us_conventional_unit AS is_us_conventional_unit,
+            concept_value.use_complex_unit_conversion AS use_complex_unit_conversion,
+            concept_value.use_molecular_weight AS use_molecular_weight,
+            ucum_val.name AS ucum_unit_name,
+            CASE WHEN dim_tr IS NOT NULL THEN {{
+                term_uid: dim_tr.uid,
+                term_name: dim_tnv.name,
+                term_submission_value: dim_cl_term.submission_value,
+                codelist_uid: dim_cl_root.uid,
+                codelist_name: dim_cl_attrs.name,
+                codelist_submission_value: dim_cl_attrs.submission_value
+            }} ELSE null END AS unit_dimension,
+            concept_value.legacy_code AS legacy_code,
+            concept_value.conversion_factor_to_master AS conversion_factor_to_master
+
+        RETURN *
+        """
+
+    full_query = " ".join(
+        [
+            base_query,
+            db_sort_clause("name", "ASC"),
+            db_pagination_clause(page_size, page_number),
+        ]
+    )
+    return query(full_query, params)

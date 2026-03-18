@@ -11,13 +11,16 @@
     <template #topActions>
       <v-btn
         v-if="canDeleteSelectedStudy()"
-        class="expandHoverBtn"
+        icon
+        size="small"
         color="red"
         :disabled="!accessGuard.checkPermission($roles.STUDY_WRITE)"
         @click.stop="deleteStudy"
       >
-        <v-icon left>mdi-delete-outline</v-icon>
-        <span class="label">{{ $t('_global.delete') }}</span>
+        <v-icon>mdi-delete-outline</v-icon>
+        <v-tooltip activator="parent" location="top">
+          {{ $t('_global.delete') }}
+        </v-tooltip>
       </v-btn>
     </template>
     <template #form="{ closeHandler, openHandler, formKey }">

@@ -1,4 +1,5 @@
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
+const { getShortUniqueId } = require("../../support/helper_functions");
 
 let codelistName, termId, termSponsorName, termSentanceName, termName, termSubmissionValue, termNciValue, termDefinition, conceptId
 
@@ -121,12 +122,12 @@ Then('The term data is visible in the table', () => {
 })
 
 When('The new term is added', () => {
-    termSponsorName = `SponsorTerm ${Date.now()}`
-    termSentanceName = `sponsorterm ${Date.now()}`
-    termName = `TermName${Date.now()}`
-    termNciValue = `NCITerm${Date.now()}`
-    termDefinition = `Def${Date.now()}`
-    conceptId = `Concept${Date.now()}`
+    termSponsorName = `SponsorTerm ${getShortUniqueId()}`
+    termSentanceName = termSponsorName.toLowerCase()
+    termName = `TermName${getShortUniqueId()}`
+    termNciValue = `NCITerm${getShortUniqueId()}`
+    termDefinition = `Def${getShortUniqueId()}`
+    conceptId = `Concept${getShortUniqueId()}`
     cy.clickButton('add-term-button')
     cy.get('[data-cy="create-new-term"] input').check( {force: true} )
     cy.clickButton('step.creation_mode-continue-button')
@@ -151,11 +152,11 @@ When('The term sponsor values are edited', () => {
 })
 
 When('The new Codelist is added', () => {
-    termSponsorName = `SponsorTerm ${Date.now()}`
-    codelistName = `Name ${Date.now()}`
-    termSubmissionValue = `E2ETerm ${Date.now()}`
-    termNciValue = `NCITerm${Date.now()}`
-    termDefinition = `Definition ${Date.now()}`
+    termSponsorName = `SponsorTerm ${getShortUniqueId()}`
+    codelistName = `Name ${getShortUniqueId()}`
+    termSubmissionValue = `E2ETerm ${getShortUniqueId()}`
+    termNciValue = `NCITerm${getShortUniqueId()}`
+    termDefinition = `Definition ${getShortUniqueId()}`
     cy.clickButton('add-sponsor-codelist')
     cy.selectAutoComplete('catalogue-dropdown', 'ADAM CT')
     cy.clickButton('step.catalogue-continue-button')

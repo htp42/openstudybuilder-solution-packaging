@@ -70,8 +70,7 @@ Feature: Studies - Define Study - Study Criteria - Randomisation Criteria
         Given The test study '/selection_criteria/Randomisation%20Criteria' page is opened
         When User clicks add study criteria button
         And User selects to create criteria from study
-        And Form continue button is clicked
-        And Study with 'CDISC DEV-0' id is selected to copy criteria from
+        And User selects select study 'CDISC DEV-0'
         And Form continue button is clicked
         And The 'Randomisation' criteria from test study is copied
         And Form save button is clicked

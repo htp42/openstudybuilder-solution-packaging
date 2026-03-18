@@ -19,6 +19,7 @@ from clinical_mdr_api.models.utils import (
     PatchInputModel,
     PostInputModel,
 )
+from common.config import settings
 
 
 class ActivityInstructionTemplateName(BaseModel):
@@ -258,7 +259,7 @@ class ActivityInstructionTemplateCreateInput(PostInputModel):
             "* The library needs to allow the creation: The 'is_editable' property of the library needs to be true.",
             min_length=1,
         ),
-    ] = "Sponsor"
+    ] = settings.sponsor_library_name
     indication_uids: Annotated[
         list[str] | None,
         Field(

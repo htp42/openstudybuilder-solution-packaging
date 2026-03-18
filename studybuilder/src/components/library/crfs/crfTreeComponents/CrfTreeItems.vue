@@ -79,6 +79,8 @@
   <v-dialog v-model="showItemForm" persistent content-class="fullscreen-dialog">
     <CrfItemForm
       :selected-item="selectedItem"
+      :start-step="startStep"
+      :form-view="false"
       :read-only-prop="selectedItem && selectedItem.status === statuses.FINAL"
       class="fullscreen-dialog"
       @close="closeDefinition"
@@ -126,6 +128,10 @@ const props = defineProps({
     type: Object,
     default: null,
   },
+  parentForm: {
+    type: Object,
+    default: null,
+  },
   columns: {
     type: Array,
     default: null,
@@ -150,6 +156,7 @@ const { t } = useI18n()
 const items = ref([])
 const loading = ref(false)
 const selectedItem = ref({})
+const startStep = ref(null)
 const showItemForm = ref(false)
 const showExportForm = ref(false)
 const showAttributesForm = ref(false)
@@ -168,6 +175,13 @@ const actions = computed(() => [
     click: editAttributes,
     condition: (item) => item.status === statuses.DRAFT,
     accessRole: roles.LIBRARY_WRITE,
+  },
+  {
+    label: t('CRFTree.manage_activity_instances'),
+    icon: 'mdi-link',
+    click: openActivityInstanceTable,
+    condition: (item) => item.status === statuses.DRAFT,
+    accessRole: roles.LIBRARY_READ,
   },
   {
     label: t('CRFTree.preview_odm'),
@@ -279,6 +293,7 @@ function openDefinition(item) {
 
 function closeDefinition() {
   selectedItem.value = {}
+  startStep.value = null
   showItemForm.value = false
   fetchItems()
 }
@@ -296,6 +311,12 @@ function closeExportForm() {
 function editAttributes(item) {
   selectedItem.value = item
   showAttributesForm.value = true
+}
+
+function openActivityInstanceTable(item) {
+  selectedItem.value = item
+  startStep.value = 'activity_instance_links'
+  showItemForm.value = true
 }
 
 function closeAttributesForm() {

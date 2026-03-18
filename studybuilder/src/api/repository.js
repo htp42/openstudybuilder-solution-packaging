@@ -12,13 +12,14 @@ const requestInterceptors = {
   onFulfilled: async function (config) {
     const studiesGeneralStore = useStudiesGeneralStore()
     if (config.method === 'get' && config.url.indexOf('studies/') !== -1) {
-      if (config.params) {
+      config.params = config.params || {}
+
+      if (config.params.specificStudyVersion !== undefined) {
+        config.params.study_value_version = config.params.specificStudyVersion
+        delete config.params.specificStudyVersion
+      } else {
         config.params.study_value_version =
           studiesGeneralStore.selectedStudyVersion
-      } else {
-        config.params = {
-          study_value_version: studiesGeneralStore.selectedStudyVersion,
-        }
       }
     }
     const globalConfig = useGlobalConfig()

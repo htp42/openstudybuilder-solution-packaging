@@ -1,7 +1,7 @@
 """CTPackage router."""
 
 from datetime import date
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Body, Path, Query
 
@@ -183,6 +183,18 @@ def create(
             description="The effective date of the package, for instance '2020-09-27'"
         ),
     ],
+    library_name: Annotated[
+        str | None,
+        Body(
+            description="The name of the library for this package. Defaults to the configured sponsor library."
+        ),
+    ] = None,
 ) -> CTPackage:
     ct_package_service = CTPackageService()
-    return ct_package_service.create_sponsor_ct_package(extends_package, effective_date)
+    kwargs: dict[str, Any] = {
+        "extends_package": extends_package,
+        "effective_date": effective_date,
+    }
+    if library_name is not None:
+        kwargs["library_name"] = library_name
+    return ct_package_service.create_sponsor_ct_package(**kwargs)

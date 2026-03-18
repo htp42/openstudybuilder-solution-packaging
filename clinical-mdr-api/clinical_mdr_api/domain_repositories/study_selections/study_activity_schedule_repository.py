@@ -35,7 +35,6 @@ class StudyActivityScheduleRepository(base.StudySelectionRepository):
     def _from_repository_values(
         self, study_uid: str, selection: StudyActivitySchedule
     ) -> StudyActivityScheduleVO:
-        study_action = selection.has_after.all()[0]
         study_activity = selection.study_activity.single()
 
         study_visit = selection.study_visit.single()
@@ -50,8 +49,6 @@ class StudyActivityScheduleRepository(base.StudySelectionRepository):
                 study_activity_instance.uid if study_activity_instance else None
             ),
             study_visit_uid=study_visit.uid,
-            start_date=study_action.date,
-            author_id=study_action.author_id,
         )
 
     def exclude_relationships(
@@ -229,7 +226,6 @@ class StudyActivityScheduleRepository(base.StudySelectionRepository):
         """
         returns study activity schedules for a study_uid
         """
-        query = ""
         query_parameters: dict[str, Any] = {}
         query_parameters["study_visit_uid"] = study_visit_uid
         query_parameters["library_name"] = settings.requested_library_name
@@ -244,7 +240,6 @@ class StudyActivityScheduleRepository(base.StudySelectionRepository):
         query += """
             WITH sr, sv
             MATCH (sv)-[:HAS_STUDY_ACTIVITY_SCHEDULE]->(sas:StudyActivitySchedule)
-            MATCH (sas)<-[:AFTER]-(asa:StudyAction)
         """
         operational_match = ""
         operational_return = ""
@@ -256,7 +251,7 @@ class StudyActivityScheduleRepository(base.StudySelectionRepository):
                 WHERE lib.name <> $library_name
             """
             operational_return = """
-                sa_instance.uid AS study_activity_instance_uid,
+                , sa_instance.uid AS study_activity_instance_uid
             """
         if study_visit_uid:
             visit_filter_query = "WHERE svi.uid=$study_visit_uid"
@@ -268,14 +263,12 @@ class StudyActivityScheduleRepository(base.StudySelectionRepository):
             {visit_filter_query}
             {operational_match}
             WITH *
-            ORDER BY sas.uid, asa.date DESC
+            ORDER BY sas.uid
             RETURN DISTINCT
                 sas.uid AS uid,
                 svi.uid AS study_visit_uid,
-                sa.uid AS study_activity_uid,
+                sa.uid AS study_activity_uid
                 {operational_return}
-                asa.date AS start_date,
-                asa.author_id AS author_id
         """
 
         specific_schedules_audit_trail = db.cypher_query(
@@ -293,8 +286,6 @@ class StudyActivityScheduleRepository(base.StudySelectionRepository):
                         res["study_activity_instance_uid"] if operational else None
                     ),
                     study_visit_uid=res["study_visit_uid"],
-                    author_id=res["author_id"],
-                    start_date=convert_to_datetime(value=res["start_date"]),
                 )
             )
         return result

@@ -84,6 +84,16 @@
             padding-bottom: 0.5rem;
         }
 
+        .py-3 {
+            padding-top: 0.75rem;
+            padding-bottom: 0.75rem;
+        }
+
+        .py-6 {
+            padding-top: 1.5rem;
+            padding-bottom: 1.5rem;
+        }
+
         .pr-2 {
             padding-right: 0.5rem;
         }
@@ -115,6 +125,10 @@
 
         .me-0 {
             margin-right: 0;
+        }
+
+        .me-2 {
+            margin-right: 0.5rem;
         }
 
         .my-2 {
@@ -185,9 +199,26 @@
             justify-content: space-between;
         }
 
+        .justify-end {
+            justify-content: flex-end;
+        }
+
         .items-center {
             align-items: center;
         }
+
+        .flex-wrap {
+            flex-wrap: wrap;
+        }
+
+        .gap-2 {
+            gap: 0.5rem;
+        }
+
+        .flex-row-reverse {
+            flex-direction: row-reverse;
+        }
+
 
         /* Positioning */
         .align-top {
@@ -221,6 +252,11 @@
 
         .w-50 {
             width: 50%;
+        }
+
+        /* Height */
+        .h-40 {
+            height: 10rem;
         }
 
         /* Typography - Size */
@@ -258,6 +294,14 @@
             font-style: italic;
         }
 
+        .tracking-wider {
+            letter-spacing: 0.05em;
+        }
+
+        .leading-normal {
+            line-height: 1.5;
+        }
+
         /* Typography - Alignment */
         .text-left {
             text-align: left;
@@ -292,8 +336,16 @@
             background-color: #67E8F9;
         }
 
+        .bg-green-50 {
+            background-color: #ECFDF5;
+        }
+
         .bg-green-600 {
             background-color: #16A34A;
+        }
+
+        .bg-green-900 {
+            background-color: #14532D;
         }
 
         .bg-blue-500 {
@@ -308,9 +360,22 @@
             background-color: #DC2626;
         }
 
+        .bg-navy {
+            background-color: #1E3A5F;
+        }
+
+        .bg-blue-50 {
+            background-color: #EFF6FF;
+        }
+
+
         /* Colors - Text */
         .text-white {
             color: #FFFFFF;
+        }
+
+        .text-blue-900 {
+            color: #1E3A8A;
         }
 
         .text-red-600 {
@@ -325,6 +390,14 @@
             color: #15803D;
         }
 
+        .text-green-900 {
+            color: #14532D;
+        }
+
+        .text-gray-300 {
+            color: #D1D5DB;
+        }
+
         /* Border */
         .border {
             border-width: 1px;
@@ -337,6 +410,14 @@
 
         .border-black {
             border-color: #000000;
+        }
+
+        .border-blue-900 {
+            border-color: #1E3A8A;
+        }
+
+        .border-green-900 {
+            border-color: #14532D;
         }
 
         .border-gray-300 {
@@ -403,10 +484,123 @@
 </head>
 
 <body class="bg-gray-50 p-2">
+    {% set item_languages = data.odm_items | map(attribute='translated_texts') | sum(start=[]) |
+    map(attribute='language') | list %}
+    {% set item_group_languages = data.odm_item_groups | map(attribute='translated_texts') | sum(start=[]) |
+    map(attribute='language') | list %}
+    {% set form_languages = data.odm_forms | map(attribute='translated_texts') | sum(start=[]) |
+    map(attribute='language') | list %}
+    {% set available_languages = (item_languages + item_group_languages + form_languages) | unique | sort | list %}
+
+    {% macro get_input_type(type) %}
+    {% if type == 'integer' %}
+    number
+    {% elif type == 'date' %}
+    date
+    {% elif type == 'time' %}
+    time
+    {% elif type == 'datetime' %}
+    datetime-local
+    {% else %}
+    text
+    {% endif %}
+    {% endmacro %}
+
+    {% macro domain_color(index) %}
+    {% set colors = ["#BFFFFF", "#FFFF96", "#96FF96", "#FFBF9C", "#3DB7E9", "#E69F00", "#F748A5"] %}
+    {{ colors[index % colors|length] }}
+    {% endmacro %}
+
+    {% macro render_completion_instructions(translated_texts) %}
+    {% set completion_instructions = translated_texts | selectattr('text_type.value', '==',
+    'osb:CompletionInstructions') | list %}
+    {% if completion_instructions %}
+    <div class="completion-instructions-container hidden mb-2">
+        <div class="bg-blue-50 border-0 border-l-4 border-blue-900 rounded mt-2 p-2">
+            <div class="mb-2">
+                <span class="me-2 text-blue-900 text-xs font-bold tracking-wider">
+                    COMPLETION INSTRUCTION
+                </span>
+            </div>
+            {% for completion_instruction in completion_instructions %}
+            <div class="flex items-center lang-entry" data-lang="{{ completion_instruction.language }}">
+                <span class="px-1 me-2 bg-blue-900 text-white text-xs font-medium border-black border rounded">
+                    {{ completion_instruction.language }}
+                </span>
+                <span class="mx-2 italic text-blue-900 leading-normal font-medium text-sm">
+                    {{ completion_instruction.text|safe }}
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    {% endmacro %}
+
+    {% macro render_design_notes(translated_texts) %}
+    {% set design_notes = translated_texts | selectattr('text_type.value', '==',
+    'osb:DesignNotes') | list %}
+    {% if design_notes %}
+    <div class="design-notes-container hidden mb-2">
+        <div class="bg-green-50 border-0 border-l-4 border-green-900 rounded mt-2 p-2">
+            <div class="mb-2">
+                <span class="me-2 text-green-900 text-xs font-bold tracking-wider">
+                    DESIGN NOTE
+                </span>
+            </div>
+            {% for design_note in design_notes %}
+            <div class="flex items-center lang-entry" data-lang="{{ design_note.language }}">
+                <span class="px-1 me-2 bg-green-900 text-white text-xs font-medium border-black border rounded">
+                    {{ design_note.language }}
+                </span>
+                <span class="mx-2 italic text-green-900 leading-normal font-medium text-sm">
+                    {{ design_note.text|safe }}
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    {% endmacro %}
+
+    {% macro render_units(units, item_uid, item_group_uid, form_uid) %}
+    {% if units and units|length > 0 %}
+    <table class="mt-2">
+        <tr>
+            <td class="align-center pr-2">Units:</td>
+            <td>
+                {% for unit in units %}
+                <div>
+                    <input type="radio" name="{{ item_uid }}-{{ item_group_uid }}-{{ form_uid }}-units"
+                        id="{{ item_uid }}-{{ item_group_uid }}-{{ form_uid }}-unit-{{ loop.index0 }}" />
+                    <label for="{{ item_uid }}-{{ item_group_uid }}-{{ form_uid }}-unit-{{ loop.index0 }}">{{
+                        unit.name }}</label>
+                </div>
+                <div class="text-red-600 text-xs font-medium keys-container hidden">
+                    [Version={{ unit.version }}]
+                </div>
+                {% endfor %}
+            </td>
+        </tr>
+    </table>
+    {% endif %}
+    {% endmacro %}
+
     <div class="mx-auto rounded-lg shadow-md bg-white p-6">
         <div class="flex justify-between items-center mb-6">
             <h1 class="text-2xl font-bold">Case Report Form (CRF)</h1>
-            <div>
+            <div class="flex items-center gap-2 flex-wrap flex-row-reverse">
+                <select id="language-selector" onchange="filterByLanguage(this.value)"
+                    class="noprint text-md border-0 cursor-pointer px-4 py-2 bg-blue-900 text-white font-medium rounded-md">
+                    <option value="all">All</option>
+                    {% for language in available_languages %}
+                    <option value="{{ language }}" {{ '' if language !='en' else 'selected' }}>{{ language }}</option>
+                    {% endfor %}
+                </select>
+                <button onclick="showContainer('keys', event)"
+                    class="noprint text-md border-0 cursor-pointer px-4 py-2 bg-blue-900 text-white font-medium rounded-md transition-colors">Keys</button>
+                <button onclick="showContainer('sdtm', event)"
+                    class="noprint text-md border-0 cursor-pointer px-4 py-2 bg-blue-900 text-white font-medium rounded-md transition-colors">SDTM</button>
                 <button onclick="showContainer('completion-instructions', event)"
                     class="noprint text-md border-0 cursor-pointer px-4 py-2 bg-blue-900 text-white font-medium rounded-md transition-colors">Completion
                     Instructions</button>
@@ -414,14 +608,11 @@
                     class="noprint text-md border-0 cursor-pointer px-4 py-2 bg-blue-900 text-white font-medium rounded-md transition-colors">Design
                     Notes</button>
                 <button onclick="showContainer('activity-instance', event)"
-                    class="noprint text-md border-0 cursor-pointer px-4 py-2 bg-blue-900 text-white font-medium rounded-md transition-colors">ActivityInstance</button>
+                    class="noprint text-md border-0 cursor-pointer px-4 py-2 bg-blue-900 text-white font-medium rounded-md transition-colors">Activity
+                    Instance</button>
                 <button onclick="showContainer('source-value', event)"
                     class="noprint text-md border-0 cursor-pointer px-4 py-2 bg-blue-900 text-white font-medium rounded-md transition-colors">Source
                     Value</button>
-                <button onclick="showContainer('sdtm', event)"
-                    class="noprint text-md border-0 cursor-pointer px-4 py-2 bg-blue-900 text-white font-medium rounded-md transition-colors">SDTM</button>
-                <button onclick="showContainer('keys', event)"
-                    class="noprint text-md border-0 cursor-pointer px-4 py-2 bg-blue-900 text-white font-medium rounded-md transition-colors">Keys</button>
             </div>
         </div>
 
@@ -431,10 +622,18 @@
         {% set indent_attr = item_in.vendor.attributes | selectattr('name', '==', 'indentLevel') | first | default('')
         %}
         {% set indent_level = ((indent_attr.value)|int * 2)|string if indent_attr else '' %}
+
+        {% set optional_question = item_in.vendor.attributes | selectattr('name', '==', 'optionalQuestion') | first |
+        default('') %}
         {% else %}
         {% set indent_level = '' %}
+        {% set optional_question = '' %}
         {% endif %}
         <tr class="bg-gray-50">
+            {% set display_text = item.translated_texts | selectattr('text_type.value', '==', 'osb:DisplayText') | first
+            | default('') %}
+            {% set question = item.translated_texts | selectattr('text_type.value', '==', 'Question') | first |
+            default('') %}
             {% if item.datatype|lower == 'comment' %}
             <td class="border border-gray-600 p-4 text-center text-2xl" colspan="3">
                 <h4 class="inline-block font-medium my-2">
@@ -443,7 +642,7 @@
                         <path fill="#63A8A5"
                             d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M14,7H10V9H11V15H10V17H14V15H13V9H14V7Z" />
                     </svg>
-                    {{ item.name }}
+                    {{ display_text.text|safe or question.text|safe or item.name }}
                 </h4>
             </td>
             {% else %}
@@ -453,22 +652,23 @@
             <td class="border border-gray-600 p-2 w-30">
                 <div class="{{ 'indent-' + indent_level if indent_level != '' else '' }}">
                     <h4
-                        class="inline-block font-medium my-2 text-md {{ '' if item_in.mandatory|lower == 'yes' else 'text-green-700' }}">
+                        class="inline-block font-medium my-2 text-md {{ 'text-green-700' if optional_question.value|lower == 'yes' else '' }}">
                         <svg xmlns="http://www.w3.org/2000/svg" style="display: inline-block;" class="me-0"
                             viewBox="0 0 24 24" width="20" height="20">
                             <path fill="#63A8A5"
                                 d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M14,7H10V9H11V15H10V17H14V15H13V9H14V7Z" />
                         </svg>
-                        {{ item.name }}
+                        {{ display_text.text|safe or question.text|safe or item.name }}
                     </h4>
 
                     <div class="text-red-600 text-xs keys-container hidden">
                         [OID={{ item_in.oid }}, Version={{ item_in.version }}]
                     </div>
-                    {% if item_group_uid and form_uid %}
-                    {% set item_activity_instance = item.activity_instances | selectattr('odm_item_group_uid',
-                    '==', item_group_uid) | selectattr('odm_form_uid', '==', form_uid) | first | default('') %}
-                    {% if item_activity_instance %}
+
+                    {% set seen = [] %}
+                    {% for item_activity_instance in item.activity_instances %}
+                    {% if item_activity_instance.activity_instance_uid not in seen %}
+                    {% set _ = seen.append(item_activity_instance.activity_instance_uid) %}
                     <div class="bg-green-600 activity-instance-container py-2 px-2 mt-2 w-fit rounded hidden">
                         <div class="text-white font-bold mb-2">Activity Instance: {{
                             item_activity_instance.activity_instance_name }}
@@ -487,7 +687,7 @@
                         </div>
                     </div>
                     {% endif %}
-                    {% endif %}
+                    {% endfor %}
 
                     {% set item_activity_instances = item.vendor_elements | selectattr('name', '==', 'ActivityInstance')
                     %}
@@ -515,15 +715,7 @@
                     </div>
                     {% endfor %}
 
-                    <div class="completion-instructions-container hidden">
-                        {% set completion_instructions = item.translated_texts | selectattr('text_type.value', '==',
-                        'osb:CompletionInstructions')
-                        | first | default('') %}
-                        {% if completion_instructions %}
-                        <div class="bg-gray-200 p-2 text-sm italic mt-4 rounded-lg">{{ completion_instructions.text|safe
-                            }}</div>
-                        {% endif %}
-                    </div>
+                    {{ render_completion_instructions(item.translated_texts) }}
                 </div>
             </td>
             <td class="border border-gray-600 p-2 w-40">
@@ -558,20 +750,12 @@
                     {% endif %}
 
                     {% if item.length is not none and not item.terms %}
-                    <span class="{{ '' if item_in.mandatory|lower == 'yes' else 'text-green-700' }}">
+                    <span class="{{ 'text-green-700' if optional_question.value|lower == 'yes' else '' }}">
                         {{ item.length }} char(s)
                     </span>
                     {% endif %}
 
-                    <div class="text-red-700 design-notes-container hidden">
-                        {% set design_note = item.translated_texts | selectattr('text_type.value', '==',
-                        'osb:DesignNotes')
-                        | first | default('') %}
-                        {% if design_note %}
-                        <div class="bg-red-100 p-2 text-sm italic mt-4 rounded-lg">{{ design_note.text|safe }}
-                        </div>
-                        {% endif %}
-                    </div>
+                    {{ render_design_notes(item.translated_texts) }}
 
                     {{ render_units(item.unit_definitions, item.uid, item_group_uid, form_uid) }}
                 </div>
@@ -583,7 +767,7 @@
                 {% for domain in item.sds_var_name.split('|') %}
                 <div class="sdtm-container mb-2 hidden">
                     {% if ':' in domain%}
-                    {% set sub_val, name = domain.split(':') %}
+                    {% set sub_val, name = domain.rsplit(':', maxsplit=1) %}
                     {% set group_domain = group_domains.get(sub_val, none) %}
                     {% set color = group_domain[1] %}
                     <span class="inline-block text-xs p-1 rounded border-black border"
@@ -619,13 +803,13 @@
                     {% set border_style = 'border-dashed' if 'note:' in alias.name|lower or 'not submitted' in
                     alias.name|lower else '' %}
                     {% if ':' in alias.name %}
-                    {% set sub_val, _ = alias.name.split(':') %}
+                    {% set sub_val, _ = alias.name.rsplit(':', maxsplit=1) %}
                     {% set group_domain = group_domains.get(sub_val, none) %}
                     {% set name = group_domain[0] %}
                     {% set color = group_domain[1] %}
                     <span class="inline-block text-xs p-1 rounded border-black border {{ border_style }}"
                         style="background-color: {{color}};">
-                        {{ alias.name.split(':') | last }}
+                        {{ alias.name.rsplit(':', maxsplit=1) | last }}
                     </span>
                     {% else %}
                     <span class="inline-block text-xs p-1 rounded border-black border {{ border_style }}">
@@ -637,6 +821,181 @@
                 {% endfor %}
             </td>
         </tr>
+        {% endmacro %}
+
+        {% macro render_item_table(item_ins, item_group_uid, form_uid, group_domains) %}
+        <table class="w-full border-collapse border font-medium">
+            <tr class="bg-gray-50">
+                {% for item_in in item_ins %}
+                {% set item = data.odm_items | selectattr('uid', '==', item_in.uid) | first | default('') %}
+                {% if item_in.vendor %}
+                {% set optional_question = item_in.vendor.attributes | selectattr('name', '==', 'optionalQuestion') |
+                first | default('') %}
+                {% else %}
+                {% set optional_question = '' %}
+                {% endif %}
+
+                {% set display_text = item.translated_texts | selectattr('text_type.value', '==', 'osb:DisplayText') |
+                first
+                | default('') %}
+                {% set question = item.translated_texts | selectattr('text_type.value', '==', 'Question') | first |
+                default('') %}
+                <th
+                    class="border border-gray-600 p-2 font-medium {{ 'text-green-700' if optional_question.value|lower == 'yes' else '' }}">
+                    {{ display_text.text|safe or question.text|safe or item.name }}
+                    <span class="text-red-600 font-bold">{{ '*' if item_in.mandatory|lower == 'yes' else '' }}</span>
+
+                    {{ render_completion_instructions(item.translated_texts) }}
+
+                    {{ render_design_notes(item.translated_texts) }}
+                </th>
+                {% endfor %}
+            </tr>
+
+            <tr>
+                {% for item_in in item_ins %}
+                {% set item = data.odm_items | selectattr('uid', '==', item_in.uid) | first | default('') %}
+                {% set optional_question = item_in.vendor.attributes | selectattr('name', '==', 'optionalQuestion') |
+                first | default('') %}
+                <td
+                    class="border border-gray-600 h-40 {{ 'text-green-700' if optional_question.value|lower == 'yes' else '' }}">
+                    {% if item.codelist is not none %}
+                    {% for term in item.terms %}
+                    <div class="mb-1">
+                        <input type="{{ 'checkbox' if item.codelist.allows_multi_choice else 'radio' }}"
+                            name="{{ item.uid }}-{{ item_group_uid }}-{{ form_uid }}-terms"
+                            id="{{ item.uid }}-{{ item_group_uid }}-{{ form_uid }}-term-{{ loop.index0 }}" />
+                        <label for="{{ item.uid }}-{{ item_group_uid }}-{{ form_uid }}-term-{{ loop.index0 }}">{{
+                            term.display_text or term.name
+                            }}</label>
+                        <span class="text-xs p-1 rounded border-black border source-value-container hidden"
+                            style="background-color: {{ group_domains.values() | first | last }};">
+                            {{ term.submission_value }}
+                        </span>
+                    </div>
+                    <div class="text-red-600 text-xs font-medium keys-container hidden">
+                        [{% if 'CTTerm_' not in term.term_uid %}OID={{ term.term_uid }}, {% endif %}Version={{
+                        term.version }}]
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+
+                    {{ render_units(item.unit_definitions, item.uid, item_group_uid, form_uid) }}
+
+                    {% for item_activity_instance in item.activity_instances %}
+                    <div class="bg-green-600 activity-instance-container py-2 px-2 mt-2 w-fit rounded hidden">
+                        <div class="text-white font-bold mb-2">Activity Instance: {{
+                            item_activity_instance.activity_instance_name }}
+                        </div>
+                        <div class="mb-2">
+                            <span class="text-white">Topic Code:</span> <span
+                                class="bg-cyan-300 p-1 text-xs border-black border rounded">
+                                {{ item_activity_instance.activity_instance_topic_code }}
+                            </span>
+                        </div>
+                        <div>
+                            <span class="text-white">ADaM Param Code:</span> <span
+                                class="bg-cyan-300 p-1 text-xs border-black border rounded">
+                                {{ item_activity_instance.activity_instance_adam_param_code }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+
+
+                    {% set item_activity_instances = item.vendor_elements | selectattr('name', '==', 'ActivityInstance')
+                    %}
+                    {% for item_activity_instance in item_activity_instances %}
+                    {% set topic_code = item.vendor_element_attributes | selectattr('vendor_element_uid', '==',
+                    item_activity_instance.uid) | selectattr('name', '==', 'topicCode') | first | default('') %}
+                    {% set adam_param_code = item.vendor_element_attributes | selectattr('vendor_element_uid', '==',
+                    item_activity_instance.uid) | selectattr('name', '==', 'adamCode') | first | default('') %}
+                    <div class="bg-red-600 activity-instance-container py-2 px-2 mt-2 w-fit rounded hidden">
+                        <div class="text-white font-bold mb-2">Activity Instance: {{
+                            item_activity_instance.value | default('') }}
+                        </div>
+                        <div class="mb-2">
+                            <span class="text-white">Topic Code:</span> <span
+                                class="bg-cyan-300 p-1 text-xs border-black border rounded">
+                                {{ topic_code.value }}
+                            </span>
+                        </div>
+                        <div>
+                            <span class="text-white">ADaM Param Code:</span> <span
+                                class="bg-cyan-300 p-1 text-xs border-black border rounded">
+                                {{ adam_param_code.value }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+
+                    <div>
+                        {% if item.sds_var_name and ':' in item.sds_var_name %}
+                        {% for domain in item.sds_var_name.split('|') %}
+                        <div class="sdtm-container mb-2 mt-2 hidden">
+                            {% if ':' in domain%}
+                            {% set sub_val, name = domain.rsplit(':', maxsplit=1) %}
+                            {% set group_domain = group_domains.get(sub_val, none) %}
+                            {% set color = group_domain[1] %}
+                            <span class="inline-block text-xs p-1 rounded border-black border"
+                                style="background-color: {{ color }};">
+                                {{ name }}
+                            </span>
+                            {% else %}
+                            <span class="inline-block text-xs p-1 rounded border-black border">
+                                {{ domain }}
+                            </span>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                        {% elif item.sds_var_name and ',' in item.sds_var_name %}
+                        {% for domain in item.sds_var_name.split(',') %}
+                        <div class="sdtm-container mb-2 mt-2 hidden">
+                            <span class="inline-block text-xs p-1 rounded border-black border">
+                                {{ domain }}
+                            </span>
+                        </div>
+                        {% endfor %}
+                        {% elif item.sds_var_name %}
+                        <div class="sdtm-container mb-2 mt-2 hidden">
+                            <span class="inline-block text-xs p-1 rounded border-black border">
+                                {{ item.sds_var_name }}
+                            </span>
+                        </div>
+                        {% endif %}
+
+                        {% for alias in item.aliases %}
+                        <div class="sdtm-container mb-2 mt-2 hidden">
+                            {% if alias.context|lower == 'sdtm' %}
+                            {% set border_style = 'border-dashed' if 'note:' in alias.name|lower or 'not submitted' in
+                            alias.name|lower else '' %}
+                            {% if ':' in alias.name %}
+                            {% set sub_val, _ = alias.name.rsplit(':', maxsplit=1) %}
+                            {% set group_domain = group_domains.get(sub_val, none) %}
+                            {% set name = group_domain[0] %}
+                            {% set color = group_domain[1] %}
+                            <span class="inline-block text-xs p-1 rounded border-black border {{ border_style }}"
+                                style="background-color: {{color}};">
+                                {{ alias.name.rsplit(':', maxsplit=1) | last }}
+                            </span>
+                            {% else %}
+                            <span class="inline-block text-xs p-1 rounded border-black border {{ border_style }}">
+                                {{ alias.name }}
+                            </span>
+                            {% endif %}
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+
+
+                    <div class="text-red-600 text-xs font-medium keys-container hidden">
+                        [OID={{ item_in.oid }}, Version={{ item_in.version }}]
+                    </div>
+                </td>
+                {% endfor %}
+            </tr>
+        </table>
         {% endmacro %}
 
         {% macro render_item_group(item_group_in, form_uid) %}
@@ -665,7 +1024,12 @@
                         <div class="text-red-600 text-xs font-medium keys-container hidden">
                             [OID={{ item_group_in.oid }}, Version={{ item_group_in.version }}]
                         </div>
+
+                        {{ render_completion_instructions(item_group.translated_texts) }}
+
+                        {{ render_design_notes(item_group.translated_texts) }}
                     </th>
+
                     <th class="border border-gray-600 p-2 text-left">
                         {% for sub_val, (name, color) in domains.items() %}
                         <div class="sdtm-container hidden my-2">
@@ -675,22 +1039,24 @@
                             </span>
                         </div>
                         {% endfor %}
-                        <div class="text-red-700 design-notes-container rounded hidden">
-                            {% set design_note = item_group.translated_texts | selectattr('text_type.value', '==',
-                            'osb:DesignNotes')
-                            | first | default('') %}
-                            {% if design_note %}
-                            <div class="bg-red-100 p-2 text-sm font-medium italic mt-4 rounded-lg">{{
-                                design_note.text|safe }}</div>
-                            {% endif %}
-                        </div>
                     </th>
                 </tr>
             </thead>
+
             <tbody>
+                {% set display_as_table = item_group_in.vendor.attributes | selectattr('name', '==', 'displayAsTable') |
+                first | default(none) if item_group_in.vendor else none %}
+                {% if display_as_table.value != "Yes" %}
                 {% for item_ref in item_group.items %}
                 {{ render_item(item_ref, item_group.uid, form_uid, domains) }}
                 {% endfor %}
+                {% else %}
+                <tr>
+                    <td class="border border-gray-600 font-bold" colspan="4">
+                        {{ render_item_table(item_group.items, item_group.uid, form_uid, domains) }}
+                    </td>
+                </tr>
+                {% endif %}
             </tbody>
         </table>
         {% endmacro %}
@@ -711,42 +1077,17 @@
                     [OID={{ form_in.oid }}, Version={{ form_in.version }}]
                 </div>
             </div>
-            <div class="text-red-700 design-notes-container hidden">
-                {% set design_note = form_in.translated_texts | selectattr('text_type.value', '==', 'osb:DesignNotes')
-                | first | default('') %}
-                {% if design_note %}
-                <div class="bg-red-100 p-2 text-sm italic mt-2 mb-4 rounded-lg">{{ design_note.text|safe }}</div>
-                {% endif %}
-            </div>
+
+            {{ render_completion_instructions(form_in.translated_texts) }}
+
+            {{ render_design_notes(form_in.translated_texts) }}
+
             {% for item_group_ref in form_in.item_groups %}
             {{ render_item_group(item_group_ref, form_in.uid) }}
             {% endfor %}
         </div>
         {% endmacro %}
 
-
-        {% macro render_units(units, item_uid, item_group_uid, form_uid) %}
-        {% if units and units|length > 0 %}
-        <table class="mt-2">
-            <tr>
-                <td class="align-center pr-2">Units:</td>
-                <td>
-                    {% for unit in units %}
-                    <div>
-                        <input type="radio" name="{{ item_uid }}-{{ item_group_uid }}-{{ form_uid }}-units"
-                            id="{{ item_uid }}-{{ item_group_uid }}-{{ form_uid }}-unit-{{ loop.index0 }}" />
-                        <label for="{{ item_uid }}-{{ item_group_uid }}-{{ form_uid }}-unit-{{ loop.index0 }}">{{
-                            unit.name }}</label>
-                    </div>
-                    <div class="text-red-600 text-xs font-medium keys-container hidden">
-                        [Version={{ unit.version }}]
-                    </div>
-                    {% endfor %}
-                </td>
-            </tr>
-        </table>
-        {% endif %}
-        {% endmacro %}
 
         {% macro render_all_forms(forms) %}
         {% for form in forms %}
@@ -766,42 +1107,94 @@
         {% endfor %}
         {% endmacro %}
 
-        {% macro get_input_type(type) %}
-        {% if type == 'integer' %}
-        number
-        {% elif type == 'date' %}
-        date
-        {% elif type == 'time' %}
-        time
-        {% elif type == 'datetime' %}
-        datetime-local
-        {% else %}
-        text
-        {% endif %}
-        {% endmacro %}
-
-        {% macro domain_color(index) %}
-        {% set colors = ["#BFFFFF", "#FFFF96", "#96FF96", "#FFBF9C", "#3DB7E9", "#E69F00", "#F748A5"] %}
-        {{ colors[index % colors|length] }}
-        {% endmacro %}
-
         {% if data.odm_forms and data.odm_forms|length > 0 %}
         {{ render_all_forms(data.odm_forms) }}
         {% elif data.odm_item_groups and data.odm_item_groups|length > 0 %}
         {{ render_all_item_groups(data.odm_item_groups) }}
         {% elif data.odm_items and data.odm_items|length > 0 %}
-        {{ render_all_items(data.odm_items) }}
+        <table>
+            {{ render_all_items(data.odm_items) }}
+        </table>
         {% endif %}
     </div>
 
     <script>
-        function showContainer(type, event) {
-            event.target.classList.toggle('bg-blue-500');
-            event.target.classList.toggle('bg-blue-900');
+        const activeContainers = new Set();
 
+        document.addEventListener('DOMContentLoaded', function () {
+            const selector = document.getElementById('language-selector');
+            if (selector) {
+                filterByLanguage(selector.value);
+            }
+        });
+
+        function filterByLanguage(selectedLang) {
+            const containers = document.querySelectorAll('.completion-instructions-container, .design-notes-container');
+            for (const container of containers) {
+                const entries = container.querySelectorAll('.lang-entry');
+                const lang = resolveLanguage(selectedLang, entries);
+
+                applyLanguageFilter(entries, lang);
+                updateContainerVisibility(container, lang);
+            }
+        }
+
+        function resolveLanguage(selectedLang, entries) {
+            if (selectedLang === 'all') return 'all';
+            const hasSelected = Array.from(entries).some(e => e.dataset.lang === selectedLang);
+            return hasSelected ? selectedLang : 'en';
+        }
+
+        function applyLanguageFilter(entries, lang) {
+            for (const entry of entries) {
+                entry.style.display = (lang === 'all' || entry.dataset.lang === lang) ? '' : 'none';
+            }
+        }
+
+        function updateContainerVisibility(container, lang) {
+            const entries = container.querySelectorAll('.lang-entry');
+            const hasMatch = lang === 'all' || Array.from(entries).some(e => e.dataset.lang === lang);
+            container.dataset.hasContent = hasMatch ? 'true' : 'false';
+
+            if (!hasMatch) {
+                container.classList.add('hidden');
+            } else if (isContainerTypeActive(container)) {
+                container.classList.remove('hidden');
+            }
+        }
+
+        function isContainerTypeActive(container) {
+            let type
+
+            if (container.classList.contains('completion-instructions-container')) {
+                type = 'completion-instructions';
+            }
+            else if (container.classList.contains('design-notes-container')) {
+                type = 'design-notes';
+            }
+
+            return activeContainers.has(type);
+        }
+
+        function showContainer(type, event) {
+            if (activeContainers.has(type)) {
+                activeContainers.delete(type);
+                event.target.classList.remove('bg-blue-500');
+                event.target.classList.add('bg-blue-900');
+            } else {
+                activeContainers.add(type);
+                event.target.classList.add('bg-blue-500');
+                event.target.classList.remove('bg-blue-900');
+            }
+
+            const isActive = activeContainers.has(type);
             const elements = document.getElementsByClassName(`${type}-container`);
             for (const element of elements) {
-                element.classList.toggle('hidden');
+                if (isActive && element.dataset.hasContent !== 'false') {
+                    element.classList.remove('hidden');
+                } else {
+                    element.classList.add('hidden');
+                }
             }
         }
     </script>

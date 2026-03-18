@@ -57,6 +57,9 @@ class CTCodelistAttributesService(CTCodelistGenericService[CTCodelistAttributesA
                 is_ordinal=self.get_input_or_previous_property(
                     codelist_input.is_ordinal, item.ct_codelist_vo.is_ordinal
                 ),
+                codelist_type=self.get_input_or_previous_property(
+                    codelist_input.codelist_type, item.ct_codelist_vo.codelist_type
+                ),
                 # passing always True callbacks, as we can't change catalogue
                 # in scope of CodelistName or CodelistAttributes, it can be only changed via CTCodelistRoot
                 catalogue_exists_callback=lambda _: True,

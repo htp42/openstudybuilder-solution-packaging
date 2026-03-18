@@ -247,6 +247,23 @@ const subgroups = computed(() => {
       activity_subgroup_name: grouping.activity_subgroup_name,
       activity_subgroup_uid: grouping.activity_subgroup_uid,
     }))
+  } else if (
+    groups.value.some(
+      (group) =>
+        group &&
+        group.activity_group_name ===
+          props.activity.study_activity_group.activity_group_name
+    )
+  ) {
+    const groupings = props.activity.latest_activity.activity_groupings.filter(
+      (grouping) =>
+        grouping.activity_group_uid ===
+        props.activity.study_activity_group.activity_group_uid
+    )
+    return groupings.map((grouping) => ({
+      activity_subgroup_name: grouping.activity_subgroup_name,
+      activity_subgroup_uid: grouping.activity_subgroup_uid,
+    }))
   }
   return props.activity.latest_activity.activity_groupings.map((grouping) => ({
     activity_subgroup_name: grouping.activity_subgroup_name,
@@ -263,20 +280,36 @@ async function submit() {
   notificationHub.clearErrors()
 
   loading.value = true
-  study
-    .updateToLatestActivityVersion(
-      studiesGeneralStore.selectedStudy.uid,
-      props.activity.study_activity_uid,
-      selectedGroupings.value
-    )
-    .then(() => {
-      loading.value = false
-      notificationHub.add({
-        type: 'success',
-        msg: t('StudyActivityUpdateForms.update_success'),
+  try {
+    selectedGroupings.value.activity_group_uid = selectedGroupings.value
+      ?.activity_group_uid
+      ? selectedGroupings.value?.activity_group_uid
+      : props.activity.study_activity_group.activity_group_uid
+    selectedGroupings.value.activity_subgroup_uid = selectedGroupings.value
+      ?.activity_subgroup_uid
+      ? selectedGroupings.value?.activity_subgroup_uid
+      : props.activity.study_activity_subgroup.activity_subgroup_uid
+    study
+      .updateToLatestActivityVersion(
+        studiesGeneralStore.selectedStudy.uid,
+        props.activity.study_activity_uid,
+        selectedGroupings.value
+      )
+      .then(() => {
+        loading.value = false
+        notificationHub.add({
+          type: 'success',
+          msg: t('StudyActivityUpdateForms.update_success'),
+        })
+        close()
       })
-      close()
-    })
+      .finally(() => {
+        loading.value = false
+      })
+  } catch (error) {
+    loading.value = false
+    console.error(error)
+  }
 }
 
 function close() {

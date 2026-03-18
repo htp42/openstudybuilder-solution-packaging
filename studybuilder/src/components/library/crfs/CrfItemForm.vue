@@ -305,14 +305,18 @@
         >
           <template #actions="">
             <v-btn
-              class="ml-2 expandHoverBtn"
+              class="ml-2"
+              icon
+              size="small"
               variant="outlined"
               color="nnBaseBlue"
               :readonly="isReadOnly"
               @click.stop="addUnit"
             >
-              <v-icon left>mdi-plus</v-icon>
-              <span class="label">{{ $t('CRFItems.add_unit') }}</span>
+              <v-icon>mdi-plus</v-icon>
+              <v-tooltip activator="parent" location="top">
+                {{ $t('CRFItems.add_unit') }}
+              </v-tooltip>
             </v-btn>
           </template>
           <template #[`item.name`]="{ index }">
@@ -347,314 +351,11 @@
     </template>
     <template #[`step.activity_instance_links`]="{ step }">
       <v-form :ref="`observer${step}`">
-        <v-card
-          v-for="(activityInstance, idx) in form.activity_instances"
-          :key="idx"
-          elevation="2"
-          class="mb-8"
-          :border="
-            isAlreadyDefined(activityInstance) ? 'error xl' : 'vTransparent xl'
-          "
-        >
-          <v-card-title class="d-flex">
-            <v-skeleton-loader :loading="loading" type="heading" width="300">
-              {{ $t('CRFItems.activity_instance') }} {{ idx + 1 }}
-            </v-skeleton-loader>
-
-            <v-spacer />
-            <span
-              v-if="isAlreadyDefined(activityInstance)"
-              style="color: #f44336; font-weight: bold"
-            >
-              {{ $t('CRFItems.activity_instance_already_defined') }}
-            </span>
-            <v-spacer />
-
-            <v-skeleton-loader :loading="loading" type="avatar">
-              <v-btn
-                icon="mdi-delete-outline"
-                size="small"
-                variant="outlined"
-                color="red"
-                :readonly="isReadOnly"
-                @click.stop="removeActivityInstance(idx)"
-              />
-            </v-skeleton-loader>
-          </v-card-title>
-
-          <v-card-text>
-            <v-row>
-              <v-col>
-                <v-skeleton-loader
-                  height="54px"
-                  :loading="loading"
-                  type="heading"
-                >
-                  <v-select
-                    v-model="activityInstance.odm_item_group_uid"
-                    :label="$t('CRFItemGroups.item_group')"
-                    :items="availableParentItemGroups"
-                    item-title="name"
-                    item-value="uid"
-                    density="compact"
-                    :clearable="!isReadOnly"
-                    :readonly="isReadOnly"
-                    :rules="[formRules.required]"
-                    :class="{
-                      shake: isShaking && !activityInstance.odm_item_group_uid,
-                    }"
-                    @update:model-value="onItemGroupChange($event, idx)"
-                  />
-                </v-skeleton-loader>
-              </v-col>
-              <v-col
-                @click="
-                  () => activateShake(!activityInstance.odm_item_group_uid)
-                "
-              >
-                <v-skeleton-loader
-                  height="54px"
-                  :loading="loading"
-                  type="heading"
-                >
-                  <v-select
-                    v-model="activityInstance.odm_form_uid"
-                    :label="$t('CRFForms.crf_form')"
-                    :items="activityInstance.availableParentForms"
-                    item-title="name"
-                    item-value="uid"
-                    density="compact"
-                    :clearable="!isReadOnly"
-                    :readonly="
-                      isReadOnly || !activityInstance.odm_item_group_uid
-                    "
-                    :rules="[formRules.required]"
-                    :class="{
-                      shake:
-                        isShaking &&
-                        activityInstance.odm_item_group_uid &&
-                        !activityInstance.odm_form_uid,
-                    }"
-                  />
-                </v-skeleton-loader>
-              </v-col>
-            </v-row>
-            <v-row>
-              <v-col
-                @click="() => activateShake(!activityInstance.odm_form_uid)"
-              >
-                <v-skeleton-loader
-                  height="54px"
-                  :loading="loading"
-                  type="heading"
-                >
-                  <v-autocomplete
-                    v-model="activityInstance.activity_instance_uid"
-                    :label="$t('CRFItems.activity_instance')"
-                    :items="availableActivityInstances"
-                    item-title="name"
-                    item-value="uid"
-                    density="compact"
-                    :clearable="!isReadOnly"
-                    :readonly="isReadOnly || !activityInstance.odm_form_uid"
-                    :rules="[formRules.required]"
-                    :class="{
-                      shake:
-                        isShaking &&
-                        activityInstance.odm_item_group_uid &&
-                        activityInstance.odm_form_uid &&
-                        !activityInstance.activity_instance_uid,
-                    }"
-                    @update:model-value="onActivityInstanceChange(idx)"
-                  />
-                </v-skeleton-loader>
-              </v-col>
-              <v-col
-                @click="
-                  () =>
-                    activateShake(
-                      !activityInstance.odm_form_uid ||
-                        !activityInstance.activity_instance_uid
-                    )
-                "
-              >
-                <v-skeleton-loader
-                  height="54px"
-                  :loading="loading"
-                  type="heading"
-                >
-                  <v-select
-                    v-model="activityInstance.activity_item_class_uid"
-                    :label="$t('CRFItems.activity_item_class')"
-                    :items="activityInstance.availableActivityItemClasses"
-                    item-title="name"
-                    item-value="uid"
-                    density="compact"
-                    :clearable="!isReadOnly"
-                    :readonly="
-                      isReadOnly ||
-                      !activityInstance.activity_instance_uid ||
-                      !activityInstance.odm_form_uid
-                    "
-                    :rules="[formRules.required]"
-                    :class="{
-                      shake:
-                        isShaking &&
-                        activityInstance.odm_item_group_uid &&
-                        activityInstance.odm_form_uid &&
-                        activityInstance.activity_instance_uid &&
-                        !activityInstance.activity_item_class_uid,
-                    }"
-                  />
-                </v-skeleton-loader>
-              </v-col>
-            </v-row>
-            <v-row
-              @click="
-                () =>
-                  activateShake(
-                    !activityInstance.activity_item_class_uid ||
-                      !activityInstance.odm_form_uid
-                  )
-              "
-            >
-              <v-col>
-                <v-skeleton-loader
-                  height="54px"
-                  :loading="loading"
-                  type="heading"
-                >
-                  <v-text-field
-                    v-model="activityInstance.preset_response_value"
-                    :label="$t('CRFItems.preset_response_value')"
-                    density="compact"
-                    :clearable="!isReadOnly"
-                    :readonly="
-                      isReadOnly ||
-                      !activityInstance.activity_item_class_uid ||
-                      !activityInstance.odm_form_uid
-                    "
-                  />
-                </v-skeleton-loader>
-              </v-col>
-              <v-col>
-                <v-skeleton-loader
-                  height="54px"
-                  :loading="loading"
-                  type="heading"
-                >
-                  <v-text-field
-                    v-model="activityInstance.value_condition"
-                    :label="$t('CRFItems.value_condition')"
-                    density="compact"
-                    :clearable="!isReadOnly"
-                    :readonly="
-                      isReadOnly ||
-                      !activityInstance.activity_item_class_uid ||
-                      !activityInstance.odm_form_uid
-                    "
-                  />
-                </v-skeleton-loader>
-              </v-col>
-              <v-col>
-                <v-skeleton-loader
-                  height="54px"
-                  :loading="loading"
-                  type="heading"
-                >
-                  <v-text-field
-                    v-model="activityInstance.value_dependent_map"
-                    :label="$t('CRFItems.value_dependent_map')"
-                    density="compact"
-                    :clearable="!isReadOnly"
-                    :readonly="
-                      isReadOnly ||
-                      !activityInstance.activity_item_class_uid ||
-                      !activityInstance.odm_form_uid
-                    "
-                  />
-                </v-skeleton-loader>
-              </v-col>
-              <v-col>
-                <v-skeleton-loader
-                  height="54px"
-                  :loading="loading"
-                  type="heading"
-                >
-                  <v-number-input
-                    v-model="activityInstance.order"
-                    :label="$t('_global.order')"
-                    density="compact"
-                    :clearable="!isReadOnly"
-                    :readonly="
-                      isReadOnly ||
-                      !activityInstance.activity_item_class_uid ||
-                      !activityInstance.odm_form_uid
-                    "
-                  />
-                </v-skeleton-loader>
-              </v-col>
-              <v-col>
-                <v-skeleton-loader
-                  height="20px"
-                  :loading="loading"
-                  type="heading"
-                >
-                  <v-checkbox
-                    v-model="activityInstance.primary"
-                    :label="$t('CRFItems.primary')"
-                    density="compact"
-                    :readonly="
-                      isReadOnly ||
-                      !activityInstance.activity_item_class_uid ||
-                      !activityInstance.odm_form_uid
-                    "
-                  />
-                </v-skeleton-loader>
-              </v-col>
-            </v-row>
-          </v-card-text>
-        </v-card>
-
-        <v-row v-if="form.activity_instances.length === 0">
-          <v-col class="d-flex justify-center align-center mb-4">
-            {{ $t('CRFItems.no_activity_instance_links') }}
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col class="d-flex justify-center align-center">
-            <v-skeleton-loader
-              :loading="loading && form.activity_instances.length > 0"
-              type="button"
-              height="48"
-              width="148"
-            >
-              <v-btn-group
-                color="nnBaseBlue"
-                rounded="xl"
-                variant="tonal"
-                divided
-              >
-                <v-btn
-                  :text="$t('_global.reset')"
-                  :disabled="isReadOnly || !hasActivityInstanceLinksChanged"
-                  @click.stop="resetActivityInstances"
-                />
-                <v-btn
-                  icon="mdi-plus"
-                  :disabled="
-                    isReadOnly ||
-                    (form.activity_instances.length > 0 &&
-                      !form.activity_instances[
-                        form.activity_instances.length - 1
-                      ].activity_item_class_uid)
-                  "
-                  @click.stop="addActivityInstance"
-                />
-              </v-btn-group>
-            </v-skeleton-loader>
-          </v-col>
-        </v-row>
+        <CrfActivityInstanceManagement
+          v-model="form.activity_instances"
+          :form-view="formView"
+          :read-only="isReadOnly"
+        />
       </v-form>
     </template>
     <template #[`step.change_description`]="{ step }">
@@ -693,7 +394,6 @@ import { useI18n } from 'vue-i18n'
 import crfs from '@/api/crfs'
 import codelistApi from '@/api/controlledTerminology/codelists'
 import NNTable from '@/components/tools/NNTable.vue'
-import { useShake } from '@/composables/shake'
 import terms from '@/api/controlledTerminology/terms'
 import HorizontalStepperForm from '@/components/tools/HorizontalStepperForm.vue'
 import controlledTerminology from '@/api/controlledTerminology'
@@ -704,13 +404,13 @@ import '@vueup/vue-quill/dist/vue-quill.snow.css'
 import ActionsMenu from '@/components/tools/ActionsMenu.vue'
 import actionTypes from '@/constants/actions'
 import CrfExtensionsManagementTable from '@/components/library/crfs/CrfExtensionsManagementTable.vue'
+import CrfNewVersionSummaryConfirmDialog from '@/components/library/crfs/CrfNewVersionSummaryConfirmDialog.vue'
+import CrfApprovalSummaryConfirmDialog from '@/components/library/crfs/CrfApprovalSummaryConfirmDialog.vue'
+import CrfActivityInstanceManagement from '@/components/library/crfs/CrfActivityInstanceManagement.vue'
 import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
 import { useUnitsStore } from '@/stores/units'
 import filteringParameters from '@/utils/filteringParameters'
-import CrfNewVersionSummaryConfirmDialog from '@/components/library/crfs/CrfNewVersionSummaryConfirmDialog.vue'
-import CrfApprovalSummaryConfirmDialog from '@/components/library/crfs/CrfApprovalSummaryConfirmDialog.vue'
 import _isEmpty from 'lodash/isEmpty'
-import activities from '@/api/activities'
 import { useAccessGuard } from '@/composables/accessGuard'
 import { useDragAndDrop } from '@formkit/drag-and-drop/vue'
 
@@ -731,6 +431,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  formView: {
+    type: Boolean,
+    default: true,
+  },
 })
 
 const emit = defineEmits(['updateItem', 'close', 'linkItem'])
@@ -740,7 +444,6 @@ const { checkPermission } = useAccessGuard()
 
 const unitsStore = useUnitsStore()
 const { units } = storeToRefs(unitsStore)
-const { isShaking, activateShake } = useShake()
 
 const stepper = ref(null)
 const confirm = ref(null)
@@ -783,31 +486,23 @@ const helpItems = [
   'CRFItems.context',
 ]
 
-function createDefaultActivityInstance() {
-  return {
-    activity_instance_uid: '',
-    activity_item_class_uid: '',
-    odm_form_uid: '',
-    odm_item_group_uid: '',
-    order: 999999,
-    preset_response_value: '',
-    primary: false,
-    value_condition: '',
-    value_dependent_map: '',
-    availableActivityItemClasses: [],
-    availableParentForms: [],
-    vendor_elements: [],
-    vendor_element_attributes: [],
-    vendor_attributes: [],
-  }
-}
-
 function createEmptyForm() {
   return {
     oid: 'I.',
     aliases: [],
     translated_texts: [],
-    activity_instances: [createDefaultActivityInstance()],
+    activity_instances: [
+      {
+        activity_instance_uid: '',
+        activity_item_class_uid: '',
+        order: 1,
+        preset_response_value: '',
+        primary: false,
+        value_condition: '',
+        value_dependent_map: '',
+        availableActivityItemClasses: [],
+      },
+    ],
   }
 }
 
@@ -845,9 +540,6 @@ const filteringTerms = ref([])
 const selectedFilteringTerms = ref([])
 const search = ref('')
 const termsFilterOperator = ref('or')
-
-const availableActivityInstances = ref([])
-const availableParentItemGroups = ref([])
 
 const selectedCodelistHeaders = ref([
   { title: t('CtCatalogueTable.concept_id'), key: 'codelist_uid' },
@@ -1048,12 +740,6 @@ const formUrl = computed(() => {
   return `${window.location.href.replace('crf-tree', 'items')}/item/${props.selectedItem.uid}`
 })
 
-const hasActivityInstanceLinksChanged = computed(() => {
-  const current = JSON.stringify(form.value.activity_instances)
-  const original = JSON.stringify(originalForm.value.activity_instances)
-  return current !== original
-})
-
 const actions = computed(() => [
   {
     label: t('_global.approve'),
@@ -1099,92 +785,7 @@ onMounted(async () => {
   })
 
   unitsStore.fetchUnits({ page_size: 0 })
-
-  if (props.selectedItem?.uid) {
-    crfs
-      .getRelationships(props.selectedItem.uid, 'items')
-      .then(async (resp) => {
-        const itemGroupUids = resp.data['OdmItemGroup'] || []
-
-        if (_isEmpty(itemGroupUids)) {
-          availableParentItemGroups.value = []
-          return
-        }
-
-        const params = {
-          filters: { uid: { v: itemGroupUids } },
-          page_size: 0,
-        }
-        const res = await crfs.get('item-groups', { params })
-        availableParentItemGroups.value = res.data.items
-      })
-  }
 })
-
-function isAlreadyDefined(activityInstance) {
-  const key = `${activityInstance.odm_item_group_uid}|${activityInstance.odm_form_uid}|${activityInstance.activity_instance_uid}|${activityInstance.activity_item_class_uid}`
-  const count = form.value.activity_instances.filter(
-    (ai) =>
-      `${ai.odm_item_group_uid}|${ai.odm_form_uid}|${ai.activity_instance_uid}|${ai.activity_item_class_uid}` ===
-      key
-  ).length
-  return count > 1
-}
-
-function addActivityInstance() {
-  form.value.activity_instances.push(createDefaultActivityInstance())
-}
-
-function removeActivityInstance(idx) {
-  form.value.activity_instances.splice(idx, 1)
-}
-
-function onItemGroupChange(value, idx) {
-  form.value.activity_instances[idx].odm_form_uid = null
-  if (!value) {
-    return
-  }
-  loadItemGroupForms(value).then((forms) => {
-    form.value.activity_instances[idx].availableParentForms = forms
-  })
-}
-
-async function loadItemGroupForms(itemGroupUid) {
-  return crfs.getRelationships(itemGroupUid, 'item-groups').then((resp) => {
-    const formUids = resp.data['OdmForm'] || []
-
-    if (_isEmpty(formUids)) {
-      return []
-    }
-
-    const params = {
-      filters: { uid: { v: formUids } },
-      page_size: 0,
-    }
-
-    return crfs.get('forms', { params }).then((res) => {
-      return res.data.items
-    })
-  })
-}
-
-function resetActivityInstances() {
-  form.value.activity_instances = [...originalForm.value.activity_instances]
-}
-
-function onActivityInstanceChange(idx) {
-  form.value.activity_instances[idx].activity_item_class_uid = null
-  form.value.activity_instances[idx].availableActivityItemClasses =
-    loadActivityInstanceItemClasses(idx)
-}
-
-function loadActivityInstanceItemClasses(idx) {
-  const ai = availableActivityInstances.value.find(
-    (inst) =>
-      inst.uid === form.value.activity_instances[idx].activity_instance_uid
-  )
-  return ai?.activity_items?.map((item) => item.activity_item_class) || []
-}
 
 function lengthRequired(value) {
   if (
@@ -1607,28 +1208,6 @@ async function initForm(item) {
     ...item.vendor_attributes,
     ...item.vendor_elements,
   ]
-
-  const activityInstancesResp = await activities.get(
-    { page_size: 0 },
-    'activity-instances'
-  )
-  availableActivityInstances.value = activityInstancesResp.data.items
-
-  for (const [idx, ai] of form.value.activity_instances.entries()) {
-    if (ai.odm_item_group_uid) {
-      const forms = await loadItemGroupForms(ai.odm_item_group_uid)
-      form.value.activity_instances[idx].availableParentForms = forms
-      originalForm.value.activity_instances[idx].availableParentForms = forms
-    }
-
-    if (ai.activity_instance_uid) {
-      const activityItemClasses = loadActivityInstanceItemClasses(idx)
-      form.value.activity_instances[idx].availableActivityItemClasses =
-        activityItemClasses
-      originalForm.value.activity_instances[idx].availableActivityItemClasses =
-        activityItemClasses
-    }
-  }
 
   loading.value = false
 }

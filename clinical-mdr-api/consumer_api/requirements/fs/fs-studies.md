@@ -217,8 +217,8 @@ User identifiers must be anonymized by applying MD5 hashing to the author's user
 
 ### Test coverage
 
-| Test File                         | Test Function                  |
-| --------------------------------- | ------------------------------ |
-| tests/v1/test_api_audit_trail.py  | test_get_study_audit_trail     |
+| Test File                        | Test Function              |
+| -------------------------------- | -------------------------- |
+| tests/v1/test_api_audit_trail.py | test_get_study_audit_trail |
 
 

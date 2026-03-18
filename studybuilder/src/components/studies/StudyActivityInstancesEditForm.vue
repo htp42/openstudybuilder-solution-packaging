@@ -431,10 +431,11 @@ function setMultipleActivityInstances(is_reviewed = false) {
   const data = []
 
   if (_isEmpty(selected.value) && !_isEmpty(selectedHolder.value)) {
+    // No selection anymore
     data.push({
       method: 'PATCH',
       content: {
-        is_reviewed: is_reviewed,
+        is_reviewed: false,
         activity_instance_uid: null,
         study_activity_uid: props.editedActivity.study_activity_uid,
         study_activity_instance_uid:
@@ -447,10 +448,11 @@ function setMultipleActivityInstances(is_reviewed = false) {
       },
     })
   } else if (selected.value.includes(selectedHolder.value[0])) {
+    // Update existing selection
     data.push({
       method: 'PATCH',
       content: {
-        is_reviewed: is_reviewed,
+        is_reviewed: is_reviewed || props.editedActivity.is_reviewed,
         activity_instance_uid: selectedHolder.value[0],
         study_activity_uid: props.editedActivity.study_activity_uid,
         study_activity_instance_uid:
@@ -466,6 +468,7 @@ function setMultipleActivityInstances(is_reviewed = false) {
       },
     })
     selected.value.splice(selected.value.indexOf(selectedHolder.value[0]), 1)
+    // create new one(s) if needed
     selected.value.forEach((value) => {
       data.push({
         method: 'POST',
@@ -482,6 +485,7 @@ function setMultipleActivityInstances(is_reviewed = false) {
       })
     })
   } else {
+    // Original selection was replaced
     for (let index = 0; index < selected.value.length; index++) {
       let placeholder = {
         method: index === 0 ? 'PATCH' : 'POST',

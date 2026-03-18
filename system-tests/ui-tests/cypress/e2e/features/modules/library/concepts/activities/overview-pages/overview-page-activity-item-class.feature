@@ -43,22 +43,22 @@ Feature: Library - Concepts - Activities - Activity Item Class Overview Page
     Scenario: [Actions][Availablity][Edit] Edition action is not available
         When User goes to activity instance class 'domain' overview page by clicking its name
         Then 'domain' overview page is opened
-        Then 'Edit' button is not available
-
+        Then The pencil button is not available
+        
     Scenario: [Actions][Availablity][Approve] Approval action is not available
         When User goes to activity instance class 'domain' overview page by clicking its name
         Then 'domain' overview page is opened
-        Then 'Approve' button is not available
+        Then The approve button is not available
 
     Scenario: [Actions][Availablity][Inactivate] Inactivate action is not available
         When User goes to activity instance class 'domain' overview page by clicking its name
         Then 'domain' overview page is opened
-        Then 'Inactivate' button is not available
+        Then The inactivate button is not available
 
     Scenario: [Actions][Availablity][New version] New version action is not available
         When User goes to activity instance class 'domain' overview page by clicking its name
         Then 'domain' overview page is opened
-        Then 'New version' button is not available
+        Then The new version plus button is not available
 
     Scenario: [Table][Search][Negative case] User must be able to search not existing activity item class and table will be correctly filtered
         When User goes to activity instance class 'domain' overview page by clicking its name

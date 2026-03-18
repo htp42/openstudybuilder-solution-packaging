@@ -14,17 +14,19 @@
     >
       <template #actions="">
         <v-btn
-          class="ml-2 expandHoverBtn"
+          class="ml-2"
+          icon
+          size="small"
           variant="outlined"
           color="nnBaseBlue"
           data-cy="add-data-supplier"
           :disabled="!accessGuard.checkPermission($roles.LIBRARY_WRITE)"
           @click.stop="openForm()"
         >
-          <v-icon left>mdi-plus</v-icon>
-          <span class="label">{{
-            $t('DataSupplierView.DataSupplierTable.add_data_supplier')
-          }}</span>
+          <v-icon>mdi-plus</v-icon>
+          <v-tooltip activator="parent" location="top">
+            {{ $t('DataSupplierView.DataSupplierTable.add_data_supplier') }}
+          </v-tooltip>
         </v-btn>
       </template>
       <template #[`item.actions`]="{ item }">

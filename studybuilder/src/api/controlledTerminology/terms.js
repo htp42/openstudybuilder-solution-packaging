@@ -110,6 +110,14 @@ const knownCodelists = {
     attribute: 'codelist_submission_value',
     value: 'DEVELOPMENT_STAGE',
   },
+  reasonForLock: {
+    attribute: 'codelist_submission_value',
+    value: 'RSNFL',
+  },
+  reasonForUnlock: {
+    attribute: 'codelist_submission_value',
+    value: 'RSNFUL',
+  },
 }
 
 export default {

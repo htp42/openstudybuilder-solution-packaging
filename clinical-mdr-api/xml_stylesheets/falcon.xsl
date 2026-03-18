@@ -146,11 +146,11 @@
 
       <xsl:variable name="trBckg">
         <xsl:choose>
-          <xsl:when test="//ItemGroupDef/ItemRef[@ItemOID = current()/@OID]/@Mandatory = 'Yes'">
-            <xsl:value-of select="'background-color:#E7E6E6; color:#000000;'" />
+          <xsl:when test="//ItemGroupDef/ItemRef[@ItemOID = current()/@OID]/@osb:optionalQuestion = 'Yes'">
+            <xsl:value-of select="'background-color:#AEAAAA; color:#008000;'" />
           </xsl:when>
           <xsl:otherwise>
-            <xsl:value-of select="'background-color:#AEAAAA; color:#008000;'" />
+            <xsl:value-of select="'background-color:#E7E6E6; color:#000000;'" />
           </xsl:otherwise>
         </xsl:choose>
       </xsl:variable>
@@ -498,7 +498,7 @@
             <xsl:value-of select="'#339966'" />
           </xsl:when>
           <xsl:otherwise>
-            <xsl:value-of select="'#b30000'" />
+            <xsl:value-of select="'#b300008f'" />
           </xsl:otherwise>
         </xsl:choose>
       </xsl:variable>
@@ -514,7 +514,7 @@
          <!-- Container for the two sub-cartridges -->
          <div style="display: flex; gap: 8px;">
           <!-- Topic Code -->
-          <div class="sub-badge" style="background-color: #b3b3b3 !important; border: 1px solid #000; color: white; padding: 4px 8px; font-size: 0.85em; border-radius: 5px;">
+          <div class="sub-badge" style="background-color: #b300008f !important; border: 1px solid #000; color: white; padding: 4px 8px; font-size: 0.85em; border-radius: 5px;">
             Topic Code: <xsl:value-of select="./@osb:topicCode" />
           </div>
 

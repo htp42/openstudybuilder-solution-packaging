@@ -58,7 +58,8 @@
     <template #actions="">
       <v-btn
         v-if="!editMode"
-        class="mr-2 expandHoverBtn"
+        class="mr-2"
+        rounded
         variant="outlined"
         color="nnBaseBlue"
         :disabled="
@@ -67,14 +68,15 @@
         "
         @click="openBatchUpdateForm()"
       >
-        <v-icon left>mdi-exclamation</v-icon>
+        <v-icon>mdi-exclamation</v-icon>
         <span class="label">{{
           $t('StudyActivityTable.review_instances')
         }}</span>
       </v-btn>
       <v-btn
         v-if="!editMode"
-        class="expandHoverBtn"
+        icon
+        size="small"
         variant="outlined"
         color="nnBaseBlue"
         :disabled="
@@ -83,8 +85,10 @@
         "
         @click="openEditMode()"
       >
-        <v-icon left>mdi-pencil-outline</v-icon>
-        <span class="label">{{ $t('_global.edit_in_table') }}</span>
+        <v-icon>mdi-pencil-outline</v-icon>
+        <v-tooltip activator="parent" location="top">
+          {{ $t('_global.edit_in_table') }}
+        </v-tooltip>
       </v-btn>
     </template>
     <template #[`item.actions`]="{ item }">

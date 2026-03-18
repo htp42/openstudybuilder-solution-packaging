@@ -6,6 +6,7 @@ const activateUnitUrl = (unit_uid) => `${unitsUrl}/${unit_uid}/activations`
 const approveUnitUrl = (unit_uid) => `${unitsUrl}/${unit_uid}/approvals`
 const codelistUrl = (name) => `/ct/terms?page_size=100&sort_by={"name.sponsor_preferred_name":true}&codelist_name=${name}`
 const ctUnitUrl = '/ct/terms?page_size=0&sort_by={"name.sponsor_preferred_name":true}&codelist_uid=C71620'
+const { getShortUniqueId } = require("../../support/helper_functions");
 
 Cypress.Commands.add('createUnit', (customName = '') => {
   cy.sendPostRequest(unitsUrl, createUnitBody(customName)).then(response => unit_uid = response.body.uid)
@@ -26,7 +27,7 @@ Cypress.Commands.add('getTemplateData', (url) => {
 })
 
 const createUnitBody = (customName = '') => {
-  const name = customName === '' ? `API_Unit${Date.now()}` : customName
+  const name = customName === '' ? `API_Unit${getShortUniqueId()}` : customName
   return {
     convertible_unit: false,
     display_unit: false,

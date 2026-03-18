@@ -1,7 +1,7 @@
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
 import { getCurrStudyUid, stringToBoolean } from '../../support/helper_functions'
 
-let studyType = 'Expanded Access', trialType = 'Adhesion Performance Study', phaseClassification = 'Phase 0 Trial'
+let studyType = 'Expanded Access', trialType = 'Adhesion Performance Study', phaseClassification = 'Phase 1'
 let extensionStudy = 'Yes', adaptiveDesign = 'Yes', postAuthSafetyIndicator = 'Yes'
 let confirmedResponseMinValue = '50', confirmedResponseUnit = 'days', stopRules = 'Test stop rule'
 
@@ -24,7 +24,7 @@ When('The study type is fully defined', () => {
 Then('The study type data is reflected in the table', () => {
     cy.tableContains(studyType)
     cy.tableContains(trialType)
-    cy.tableContains('Phase 0 Trial')
+    cy.tableContains(phaseClassification)
     cy.tableContains(stopRules)
     cy.tableContains(postAuthSafetyIndicator)
 })

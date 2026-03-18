@@ -24,12 +24,16 @@
                 "
                 :key="pos"
                 variant="outlined"
-                class="ml-2 expandHoverBtn"
+                class="ml-2"
                 :color="action.iconColor"
+                icon
+                size="small"
                 @click="action.click"
               >
                 <v-icon left>{{ action.icon }}</v-icon>
-                <span class="label">{{ action.label }}</span>
+                <v-tooltip activator="parent" location="top">
+                  {{ action.label }}
+                </v-tooltip>
               </v-btn>
             </template>
           </v-card-title>
@@ -48,15 +52,21 @@
             <v-spacer />
             <v-btn
               color="nnGreen1"
-              class="text-white expandHoverBtn"
+              class="text-white"
+              icon
+              size="small"
               @click="downloadYamlContent"
             >
-              <v-icon left>mdi-download-outline</v-icon>
-              <span class="label">{{ $t('YamlViewer.download') }}</span>
+              <v-icon>mdi-download-outline</v-icon>
+              <v-tooltip activator="parent" location="top">
+                {{ $t('YamlViewer.download') }}
+              </v-tooltip>
             </v-btn>
-            <v-btn class="ml-2 expandHoverBtn" @click="closeYamlTab">
-              <v-icon left>mdi-close</v-icon>
-              <span class="label">{{ $t('YamlViewer.close_tab') }}</span>
+            <v-btn class="ml-2" icon size="small" @click="closeYamlTab">
+              <v-icon>mdi-close</v-icon>
+              <v-tooltip activator="parent" location="top">
+                {{ $t('YamlViewer.close_tab') }}
+              </v-tooltip>
             </v-btn>
           </v-card-title>
           <v-card-text>
@@ -69,16 +79,22 @@
           <v-card-title class="d-flex">
             <v-spacer />
             <v-btn
-              color="nnGreen1 expandHoverBtn"
+              color="nnGreen1"
               class="text-white"
+              icon
+              size="small"
               @click="downloadCosmosContent"
             >
-              <v-icon left>mdi-download-outline</v-icon>
-              <span class="label">{{ $t('YamlViewer.download') }}</span>
+              <v-icon>mdi-download-outline</v-icon>
+              <v-tooltip activator="parent" location="top">
+                {{ $t('YamlViewer.download') }}
+              </v-tooltip>
             </v-btn>
-            <v-btn class="ml-2 expandHoverBtn" @click="closeYamlTab">
-              <v-icon left>mdi-close</v-icon>
-              <span class="label">{{ $t('YamlViewer.close_tab') }}</span>
+            <v-btn class="ml-2" icon size="small" @click="closeYamlTab">
+              <v-icon>mdi-close</v-icon>
+              <v-tooltip activator="parent" location="top">
+                {{ $t('YamlViewer.close_tab') }}
+              </v-tooltip>
             </v-btn>
           </v-card-title>
           <v-card-text>

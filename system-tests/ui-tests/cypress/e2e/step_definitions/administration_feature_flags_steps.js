@@ -14,6 +14,10 @@ When('Activity instance wizard feature flag is turned off', () => toggleOnOff('c
 
 When('Activity instance wizard feature flag is turned on', () => toggleOnOff('create/edit Activity Instances', true))
 
+When('Activity instance wizard textual findings feature flag is turned on', () => toggleOnOff('Textual Findings use case in the new wizard stepper', true))
+
+When('Activity instance wizard edit mode feature flag is turned on', () => toggleOnOff('edit mode of the new wizard', true))
+
 function toggleAllOnOff(on) {
   cy.wait(1000)
   on ? cy.get('table .v-switch input').check() : cy.get('table .v-switch input').uncheck()

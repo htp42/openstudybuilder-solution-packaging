@@ -3,7 +3,7 @@
   "info": {
     "title": "OpenStudyBuilder Consumer API",
     "description": "\n## NOTICE\n\nThis license information is applicable to the swagger documentation of the clinical-mdr-api, that is the openapi.json.\n\n## License Terms (MIT)\n\nCopyright (C) 2025 Novo Nordisk A/S, Danish company registration no. 24256790\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n\n## Licenses and Acknowledgements for Incorporated Software\n\nThis component contains software licensed under different licenses when compiled, please refer to the third-party-licenses.md file for further information and full license texts.\n\n## Authentication\n\nSupports OAuth2 [Authorization Code Flow](https://datatracker.ietf.org/doc/html/rfc6749#section-4.1),\nat paths described in the OpenID Connect Discovery metadata document (whose URL is defined by the `OAUTH_METADATA_URL` environment variable).\n\nMicrosoft Identity Platform documentation can be read \n([here](https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-auth-code-flow)).\n",
-    "version": "0.1.113"
+    "version": "0.1.119"
   },
   "paths": {
     "/": {
@@ -377,7 +377,11 @@
               "title": "Study Version Number"
             },
             "description": "Study Version Number",
-            "example": "2.1"
+            "examples": {
+              "2.1": {
+                "value": "2.1"
+              }
+            }
           }
         ],
         "responses": {
@@ -505,7 +509,11 @@
               "title": "Study Version Number"
             },
             "description": "Study Version Number",
-            "example": "2.1"
+            "examples": {
+              "2.1": {
+                "value": "2.1"
+              }
+            }
           }
         ],
         "responses": {
@@ -633,7 +641,11 @@
               "title": "Study Version Number"
             },
             "description": "Study Version Number",
-            "example": "2.1"
+            "examples": {
+              "2.1": {
+                "value": "2.1"
+              }
+            }
           }
         ],
         "responses": {
@@ -761,7 +773,11 @@
               "title": "Study Version Number"
             },
             "description": "Study Version Number",
-            "example": "2.1"
+            "examples": {
+              "2.1": {
+                "value": "2.1"
+              }
+            }
           }
         ],
         "responses": {
@@ -889,7 +905,11 @@
               "title": "Study Version Number"
             },
             "description": "Study Version Number",
-            "example": "2.1"
+            "examples": {
+              "2.1": {
+                "value": "2.1"
+              }
+            }
           }
         ],
         "responses": {
@@ -1471,6 +1491,350 @@
           }
         }
       }
+    },
+    "/v1/library/ct/codelists": {
+      "get": {
+        "tags": [
+          "[V1] Library"
+        ],
+        "summary": "Get Codelists",
+        "description": "Returns a paginated list of CT codelists, sorted by ascending name.\n\nCodelists can be filtered by `name_status` and `attributes_status` (_Final, Draft, Retired_). Both default to _Final_.",
+        "operationId": "get_codelists_v1_library_ct_codelists_get",
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          },
+          {
+            "BearerJwtAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 1,
+              "description": "Number of items to be returned per page. Must be between 1 and the maximum allowed page size.",
+              "default": 100,
+              "title": "Page Size"
+            },
+            "description": "Number of items to be returned per page. Must be between 1 and the maximum allowed page size."
+          },
+          {
+            "name": "page_number",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000000000,
+              "minimum": 1,
+              "description": "Page number of the returned list of entities. Must be between 1 and the maximum allowed page number.",
+              "default": 1,
+              "title": "Page Number"
+            },
+            "description": "Page number of the returned list of entities. Must be between 1 and the maximum allowed page number."
+          },
+          {
+            "name": "name_status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/LibraryItemStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "Final",
+              "title": "Name Status"
+            }
+          },
+          {
+            "name": "attributes_status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/LibraryItemStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "Final",
+              "title": "Attributes Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponse_Codelist_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/library/ct/codelist-terms": {
+      "get": {
+        "tags": [
+          "[V1] Library"
+        ],
+        "summary": "Get Codelist Terms",
+        "description": "Returns a paginated list of CT codelist terms for the specified codelist submission value,\nsorted by ascending sponsor preferred name.\n\nTerms can be filtered by `name_status` and `attributes_status` (_Final, Draft, Retired_). Both default to _Final_.",
+        "operationId": "get_codelist_terms_v1_library_ct_codelist_terms_get",
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          },
+          {
+            "BearerJwtAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "codelist_submission_value",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Codelist submission value to filter by, for example `TIMELB`, `TIMEREF`, `VISCNTMD`, `FLWCRTGRP`, `EPOCHSTP` etc.",
+              "title": "Codelist Submission Value"
+            },
+            "description": "Codelist submission value to filter by, for example `TIMELB`, `TIMEREF`, `VISCNTMD`, `FLWCRTGRP`, `EPOCHSTP` etc."
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 1,
+              "description": "Number of items to be returned per page. Must be between 1 and the maximum allowed page size.",
+              "default": 100,
+              "title": "Page Size"
+            },
+            "description": "Number of items to be returned per page. Must be between 1 and the maximum allowed page size."
+          },
+          {
+            "name": "page_number",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000000000,
+              "minimum": 1,
+              "description": "Page number of the returned list of entities. Must be between 1 and the maximum allowed page number.",
+              "default": 1,
+              "title": "Page Number"
+            },
+            "description": "Page number of the returned list of entities. Must be between 1 and the maximum allowed page number."
+          },
+          {
+            "name": "name_status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/LibraryItemStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "Final",
+              "title": "Name Status"
+            }
+          },
+          {
+            "name": "attributes_status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/LibraryItemStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "Final",
+              "title": "Attributes Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponse_CodelistTerm_"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Item not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/library/unit-definitions": {
+      "get": {
+        "tags": [
+          "[V1] Library"
+        ],
+        "summary": "Get Unit Definitions",
+        "description": "Returns a paginated list of unit definitions, sorted by ascending name.\n\nUnit definitions can optionally be filtered by `subset` name (e.g. `Study Time`).\nUnit definitions can be filtered by `status` (_Final, Draft, Retired_). Defaults to _Final_.",
+        "operationId": "get_unit_definitions_v1_library_unit_definitions_get",
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          },
+          {
+            "BearerJwtAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "subset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Unit definition subset to filter by, for example `Study Time`. If omitted, all unit definitions are returned.",
+              "title": "Subset"
+            },
+            "description": "Unit definition subset to filter by, for example `Study Time`. If omitted, all unit definitions are returned."
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 1,
+              "description": "Number of items to be returned per page. Must be between 1 and the maximum allowed page size.",
+              "default": 100,
+              "title": "Page Size"
+            },
+            "description": "Number of items to be returned per page. Must be between 1 and the maximum allowed page size."
+          },
+          {
+            "name": "page_number",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000000000,
+              "minimum": 1,
+              "description": "Page number of the returned list of entities. Must be between 1 and the maximum allowed page number.",
+              "default": 1,
+              "title": "Page Number"
+            },
+            "description": "Page number of the returned list of entities. Must be between 1 and the maximum allowed page number."
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/LibraryItemStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "Final",
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponse_UnitDefinition_"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Item not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1618,6 +1982,190 @@
           "version"
         ],
         "title": "ActivityInstance"
+      },
+      "Codelist": {
+        "properties": {
+          "uid": {
+            "type": "string",
+            "title": "Uid",
+            "description": "Codelist UID"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Codelist name"
+          },
+          "submission_value": {
+            "type": "string",
+            "title": "Submission Value",
+            "description": "Submission Value"
+          },
+          "sponsor_preferred_name": {
+            "type": "string",
+            "title": "Sponsor Preferred Name",
+            "description": "Sponsor Preferred Name"
+          },
+          "nci_preferred_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nci Preferred Name",
+            "description": "NCI Preferred Name",
+            "nullable": true
+          },
+          "definition": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Definition",
+            "description": "Codelist definition",
+            "nullable": true
+          },
+          "is_extensible": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Extensible",
+            "description": "Whether the codelist is extensible",
+            "nullable": true
+          },
+          "library_name": {
+            "type": "string",
+            "title": "Library Name",
+            "description": "Library Name"
+          },
+          "name_status": {
+            "type": "string",
+            "title": "Name Status",
+            "description": "Status of the codelist name version"
+          },
+          "name_version": {
+            "type": "string",
+            "title": "Name Version",
+            "description": "Version of the codelist name"
+          },
+          "attributes_status": {
+            "type": "string",
+            "title": "Attributes Status",
+            "description": "Status of the codelist attributes version"
+          },
+          "attributes_version": {
+            "type": "string",
+            "title": "Attributes Version",
+            "description": "Version of the codelist attributes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "uid",
+          "name",
+          "submission_value",
+          "sponsor_preferred_name",
+          "library_name",
+          "name_status",
+          "name_version",
+          "attributes_status",
+          "attributes_version"
+        ],
+        "title": "Codelist"
+      },
+      "CodelistTerm": {
+        "properties": {
+          "uid": {
+            "type": "string",
+            "title": "Uid",
+            "description": "Codelist Term UID"
+          },
+          "submission_value": {
+            "type": "string",
+            "title": "Submission Value",
+            "description": "Submission Value"
+          },
+          "sponsor_preferred_name": {
+            "type": "string",
+            "title": "Sponsor Preferred Name",
+            "description": "Sponsor Preferred Name"
+          },
+          "concept_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Concept Id",
+            "description": "Concept ID in e.g. CDISC Library",
+            "nullable": true
+          },
+          "nci_preferred_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nci Preferred Name",
+            "description": "NCI Preferred Name",
+            "nullable": true
+          },
+          "library_name": {
+            "type": "string",
+            "title": "Library Name",
+            "description": "Library Name",
+            "nullable": true
+          },
+          "name_status": {
+            "type": "string",
+            "title": "Name Status",
+            "description": "Name version status"
+          },
+          "name_version": {
+            "type": "string",
+            "title": "Name Version",
+            "description": "Name version number"
+          },
+          "attributes_status": {
+            "type": "string",
+            "title": "Attributes Status",
+            "description": "Attributes version status"
+          },
+          "attributes_version": {
+            "type": "string",
+            "title": "Attributes Version",
+            "description": "Attributes version number"
+          }
+        },
+        "type": "object",
+        "required": [
+          "uid",
+          "submission_value",
+          "sponsor_preferred_name",
+          "library_name",
+          "name_status",
+          "name_version",
+          "attributes_status",
+          "attributes_version"
+        ],
+        "title": "CodelistTerm"
       },
       "ErrorResponse": {
         "properties": {
@@ -2200,6 +2748,76 @@
         ],
         "title": "PaginatedResponseWithStudyVersion[StudyVisit]"
       },
+      "PaginatedResponse_CodelistTerm_": {
+        "properties": {
+          "self": {
+            "type": "string",
+            "title": "Self",
+            "description": "Pagination link pointing to the current page"
+          },
+          "prev": {
+            "type": "string",
+            "title": "Prev",
+            "description": "Pagination link pointing to the previous page"
+          },
+          "next": {
+            "type": "string",
+            "title": "Next",
+            "description": "Pagination link pointing to the next page"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CodelistTerm"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "List of items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "self",
+          "prev",
+          "next",
+          "items"
+        ],
+        "title": "PaginatedResponse[CodelistTerm]"
+      },
+      "PaginatedResponse_Codelist_": {
+        "properties": {
+          "self": {
+            "type": "string",
+            "title": "Self",
+            "description": "Pagination link pointing to the current page"
+          },
+          "prev": {
+            "type": "string",
+            "title": "Prev",
+            "description": "Pagination link pointing to the previous page"
+          },
+          "next": {
+            "type": "string",
+            "title": "Next",
+            "description": "Pagination link pointing to the next page"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Codelist"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "List of items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "self",
+          "prev",
+          "next",
+          "items"
+        ],
+        "title": "PaginatedResponse[Codelist]"
+      },
       "PaginatedResponse_LibraryActivityInstance_": {
         "properties": {
           "self": {
@@ -2304,6 +2922,41 @@
           "items"
         ],
         "title": "PaginatedResponse[Study]"
+      },
+      "PaginatedResponse_UnitDefinition_": {
+        "properties": {
+          "self": {
+            "type": "string",
+            "title": "Self",
+            "description": "Pagination link pointing to the current page"
+          },
+          "prev": {
+            "type": "string",
+            "title": "Prev",
+            "description": "Pagination link pointing to the previous page"
+          },
+          "next": {
+            "type": "string",
+            "title": "Next",
+            "description": "Pagination link pointing to the next page"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/UnitDefinition"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "List of items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "self",
+          "prev",
+          "next",
+          "items"
+        ],
+        "title": "PaginatedResponse[UnitDefinition]"
       },
       "PapillonsSoA": {
         "properties": {
@@ -3743,6 +4396,325 @@
         ],
         "title": "SystemInformation"
       },
+      "UnitDefinition": {
+        "properties": {
+          "uid": {
+            "type": "string",
+            "title": "Uid",
+            "description": "Unit Definition UID"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Unit Definition Name"
+          },
+          "library_name": {
+            "type": "string",
+            "title": "Library Name",
+            "description": "Unit Definition Library Name"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Version status"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "description": "Version number"
+          },
+          "subsets": {
+            "items": {
+              "$ref": "#/components/schemas/UnitSubsetInfo"
+            },
+            "type": "array",
+            "title": "Subsets",
+            "description": "Unit definition subsets"
+          },
+          "is_convertible_unit": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Convertible Unit",
+            "description": "Whether the unit is convertible"
+          },
+          "is_master_unit": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Master Unit",
+            "description": "Whether the unit is a master unit"
+          },
+          "is_si_unit": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Si Unit",
+            "description": "Whether the unit is an SI unit"
+          },
+          "is_display_unit": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Display Unit",
+            "description": "Whether the unit is a display unit"
+          },
+          "is_us_conventional_unit": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Us Conventional Unit",
+            "description": "Whether the unit is a US conventional unit"
+          },
+          "use_complex_unit_conversion": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Use Complex Unit Conversion",
+            "description": "Whether the unit uses complex unit conversion"
+          },
+          "use_molecular_weight": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Use Molecular Weight",
+            "description": "Whether the unit uses molecular weight"
+          },
+          "ucum_unit_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ucum Unit Name",
+            "description": "UCUM unit name"
+          },
+          "unit_dimension": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UnitDimensionInfo"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Unit dimension with term and codelist info"
+          },
+          "legacy_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Legacy Code",
+            "description": "Legacy unit code"
+          },
+          "conversion_factor_to_master": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conversion Factor To Master",
+            "description": "Conversion factor to master unit"
+          }
+        },
+        "type": "object",
+        "required": [
+          "uid",
+          "name",
+          "library_name",
+          "status",
+          "version",
+          "subsets",
+          "is_convertible_unit",
+          "is_master_unit",
+          "is_si_unit",
+          "is_display_unit",
+          "is_us_conventional_unit",
+          "use_complex_unit_conversion",
+          "use_molecular_weight",
+          "ucum_unit_name",
+          "unit_dimension",
+          "legacy_code",
+          "conversion_factor_to_master"
+        ],
+        "title": "UnitDefinition"
+      },
+      "UnitDimensionInfo": {
+        "properties": {
+          "term_uid": {
+            "type": "string",
+            "title": "Term Uid",
+            "description": "Dimension term UID"
+          },
+          "term_name": {
+            "type": "string",
+            "title": "Term Name",
+            "description": "Dimension term name"
+          },
+          "term_submission_value": {
+            "type": "string",
+            "title": "Term Submission Value",
+            "description": "Dimension term submission value"
+          },
+          "codelist_uid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codelist Uid",
+            "description": "Dimension codelist UID"
+          },
+          "codelist_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codelist Name",
+            "description": "Dimension codelist name"
+          },
+          "codelist_submission_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codelist Submission Value",
+            "description": "Dimension codelist submission value"
+          }
+        },
+        "type": "object",
+        "required": [
+          "term_uid",
+          "term_name",
+          "term_submission_value",
+          "codelist_uid",
+          "codelist_name",
+          "codelist_submission_value"
+        ],
+        "title": "UnitDimensionInfo"
+      },
+      "UnitSubsetInfo": {
+        "properties": {
+          "term_uid": {
+            "type": "string",
+            "title": "Term Uid",
+            "description": "Subset term UID"
+          },
+          "term_name": {
+            "type": "string",
+            "title": "Term Name",
+            "description": "Subset term name"
+          },
+          "term_submission_value": {
+            "type": "string",
+            "title": "Term Submission Value",
+            "description": "Subset term submission value"
+          },
+          "codelist_uid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codelist Uid",
+            "description": "Subset codelist UID"
+          },
+          "codelist_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codelist Name",
+            "description": "Subset codelist name"
+          },
+          "codelist_submission_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codelist Submission Value",
+            "description": "Subset codelist submission value"
+          }
+        },
+        "type": "object",
+        "required": [
+          "term_uid",
+          "term_name",
+          "term_submission_value",
+          "codelist_uid",
+          "codelist_name",
+          "codelist_submission_value"
+        ],
+        "title": "UnitSubsetInfo"
+      },
       "ValidationDetail": {
         "properties": {
           "error_code": {
@@ -3803,6 +4775,13 @@
           "type": {
             "type": "string",
             "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
           }
         },
         "type": "object",

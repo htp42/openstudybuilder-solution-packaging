@@ -4,6 +4,8 @@
 # pytest fixture functions have other fixture functions as arguments,
 # which pylint interprets as unused arguments
 
+from typing import Any
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -34,6 +36,7 @@ study_uid: str
 study_number: str
 project_id: str
 study: Study
+test_data_dict: dict[str, Any]
 
 
 @pytest.fixture(scope="module")
@@ -47,8 +50,8 @@ def api_client(test_data):
 def test_data():
     inject_and_clear_db("StudyListingTestAPI")
     TestUtils.create_library(name="UCUM", is_editable=True)
-    global study
-    study, _ = inject_base_data()
+    global study, test_data_dict
+    study, test_data_dict = inject_base_data()
     TestUtils.create_ct_codelist()
     TestUtils.create_study_ct_data_map(codelist_uid=None)
 
@@ -344,8 +347,17 @@ def test_data():
 
     # lock study
     study_service = StudyService()
-    study_service.lock(uid=study_uid, change_description="locking it")
-    study_service.unlock(uid=study_uid)
+    study_service.lock(
+        uid=study_uid,
+        change_description="locking it",
+        reason_for_lock_term_uid=test_data_dict["reason_for_lock_terms"][0].term_uid,
+    )
+    study_service.unlock(
+        uid=study_uid,
+        reason_for_unlock_term_uid=test_data_dict["reason_for_unlock_terms"][
+            0
+        ].term_uid,
+    )
 
 
 def test_study_metadata_listing_api(api_client):
@@ -779,7 +791,12 @@ def test_study_metadata_listing_with_subpart(api_client):
     # Lock
     response = api_client.post(
         f"/studies/{parent_study.uid}/locks",
-        json={"change_description": "Lock 1"},
+        json={
+            "change_description": "Lock 1",
+            "reason_for_change_uid": test_data_dict["reason_for_lock_terms"][
+                0
+            ].term_uid,
+        },
     )
     assert_response_status_code(response, 201)
 

@@ -20,6 +20,7 @@ from clinical_mdr_api.domains.controlled_terminologies.ct_term_name import CTTer
 from clinical_mdr_api.models import _generic_descriptions
 from clinical_mdr_api.models.libraries.library import Library
 from clinical_mdr_api.models.utils import BaseModel, PatchInputModel, PostInputModel
+from common.config import settings
 
 
 class NoLibraryConceptModelNoName(BaseModel, ABC):
@@ -62,7 +63,7 @@ class ConceptModel(NoLibraryConceptModel):
 
 
 class ConceptPostInput(NoLibraryConceptPostInput):
-    library_name: Annotated[str, Field(min_length=1)] = "Sponsor"
+    library_name: Annotated[str, Field(min_length=1)] = settings.sponsor_library_name
 
 
 class ConceptPatchInput(PatchInputModel, ABC):
@@ -189,7 +190,7 @@ class ExtendedConceptPostInput(PostInputModel):
     name_sentence_case: Annotated[str | None, Field(min_length=1)] = None
     definition: Annotated[str | None, Field(min_length=1)] = None
     abbreviation: Annotated[str | None, Field(min_length=1)] = None
-    library_name: Annotated[str, Field(min_length=1)] = "Sponsor"
+    library_name: Annotated[str, Field(min_length=1)] = settings.sponsor_library_name
 
 
 class ExtendedConceptPatchInput(PatchInputModel):

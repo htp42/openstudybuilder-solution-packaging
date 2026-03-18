@@ -19,8 +19,9 @@ from starlette.testclient import TestClient
 from clinical_mdr_api.domain_repositories.study_selections.study_soa_repository import (
     SoALayout,
 )
+from clinical_mdr_api.domains.enums import ValidationMode
 from clinical_mdr_api.models.study_selections.study import (
-    StatusChangeDescription,
+    LockReleaseInput,
     StudyDescriptionJsonModel,
     StudyMetadataJsonModel,
     StudyPatchRequestJsonModel,
@@ -166,8 +167,24 @@ class SoATestDataForUpdating(SoATestData):
 def soa_test_data(temp_database_populated: TempDatabasePopulated) -> SoATestData:
     test_data = SoATestData(project=temp_database_populated.project)
     # lock study so efforts trying to modify shared test data would result in error
-    TestUtils.lock_study(test_data.study.uid)
+    TestUtils.lock_study(
+        test_data.study.uid,
+        reason_for_lock_term_uid=temp_database_populated.reason_for_lock_term_uid,
+    )
     return test_data
+
+
+@pytest.mark.order("last")
+def test_integrity_checks_for_all_studies(api_client):
+    """
+    Test integrity checks for all available studies in the database.
+
+    This test should always be executed at the END to check the health of the remaining database.
+    It validates that all studies in the database pass integrity checks after all other tests have run.
+    """
+    TestUtils.run_integrity_checks_for_all_studies(
+        api_client, mode=ValidationMode.WARNING
+    )  # needs to be warning for now as it's leaving broken data
 
 
 @pytest.mark.parametrize(
@@ -211,10 +228,17 @@ def test_flowchart_study_versioning(temp_database_populated, api_client):
     soa_test_data = SoATestDataMinimal(project=temp_database_populated.project)
     locked_study_version = str(
         StudyService()
-        .lock(uid=soa_test_data.study.uid, change_description="v1")
-        .current_metadata.version_metadata.version_number
+        .lock(
+            uid=soa_test_data.study.uid,
+            change_description="v1",
+            reason_for_lock_term_uid=temp_database_populated.reason_for_lock_term_uid,
+        )
+        .current_metadata.version_metadata.version_number,
     )
-    StudyService().unlock(uid=soa_test_data.study.uid)
+    StudyService().unlock(
+        uid=soa_test_data.study.uid,
+        reason_for_unlock_term_uid=temp_database_populated.reason_for_unlock_term_uid,
+    )
 
     TestUtils.create_study_visit(
         study_uid=soa_test_data.study.uid,
@@ -847,6 +871,10 @@ def test_get_study_flowchart_versioned(api_client, temp_database_populated):
 
     soa_test_data = SoATestDataMinimal(project=temp_database_populated.project)
 
+    # Get reason for lock terms
+    reason_for_lock_term_uid = temp_database_populated.reason_for_lock_term_uid
+    reason_for_unlock_term_uid = temp_database_populated.reason_for_unlock_term_uid
+
     # GIVEN: a study with protocol SoA
     response = api_client.get(
         f"/studies/{soa_test_data.study.uid}/flowchart",
@@ -872,7 +900,10 @@ def test_get_study_flowchart_versioned(api_client, temp_database_populated):
 
     response = api_client.post(
         f"/studies/{soa_test_data.study.uid}/locks",
-        json=StatusChangeDescription(change_description="Locking good").model_dump(),
+        json=LockReleaseInput(
+            change_description="Locking good",
+            reason_for_change_uid=reason_for_lock_term_uid,
+        ).model_dump(),
     )
     assert_response_status_code(response, 201)
 
@@ -880,8 +911,14 @@ def test_get_study_flowchart_versioned(api_client, temp_database_populated):
         "version_number"
     ]
 
-    response = api_client.delete(f"/studies/{soa_test_data.study.uid}/locks")
-    assert_response_status_code(response, 200)
+    response = api_client.post(
+        f"/studies/{soa_test_data.study.uid}/unlocks",
+        json={
+            "change_description": "Unlock",
+            "reason_for_change_uid": reason_for_unlock_term_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
 
     # WHEN: SoA snapshot of the locked study version is retrieved
     response = api_client.get(
@@ -954,7 +991,9 @@ def test_get_study_flowchart_versioned(api_client, temp_database_populated):
     # GIVEN: study has a released version
     response = api_client.post(
         f"/studies/{soa_test_data.study.uid}/release",
-        json=StatusChangeDescription(change_description="r1.1").model_dump(),
+        json=LockReleaseInput(
+            change_description="r1.1", reason_for_change_uid=reason_for_lock_term_uid
+        ).model_dump(),
     )
     assert_response_status_code(response, status=201)
     released_study_version = (
@@ -1095,6 +1134,21 @@ def test_operational_soa_csv(
     assert (
         len(rows) == soa_test_data.NUM_OPERATIONAL_SOA_EXPORT_ROWS + 1
     ), "Number of rows mismatch"
+
+    # check that all topic codes from all activity instances are present (including unscheduled)
+    topic_code_col = rows[0].index("topic_code")
+    exported_topic_codes = {
+        row[topic_code_col] for row in rows[1:] if row[topic_code_col]
+    }
+    expected_topic_codes = {
+        inst["topic_code"]
+        for act in soa_test_data.ACTIVITIES.values()
+        for inst in act.get("instances", [])
+        if inst.get("topic_code")
+    }
+    assert (
+        expected_topic_codes <= exported_topic_codes
+    ), f"Missing topic codes in CSV: {expected_topic_codes - exported_topic_codes}"
 
 
 def test_operational_soa_xlsx(

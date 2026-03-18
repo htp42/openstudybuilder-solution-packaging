@@ -18,7 +18,9 @@
     <div class="d-flex">
       <v-spacer />
       <v-btn
-        class="ml-2 expandHoverBtn"
+        class="ml-2"
+        icon
+        size="small"
         variant="outlined"
         color="nnBaseBlue"
         :data-cy="$t('StudyTitleView.edit_title')"
@@ -29,8 +31,10 @@
         "
         @click.stop="openForm"
       >
-        <v-icon left>mdi-pencil-outline</v-icon>
-        <span class="label">{{ $t('StudyTitleView.edit_title') }}</span>
+        <v-icon>mdi-pencil-outline</v-icon>
+        <v-tooltip activator="parent" location="top">
+          {{ $t('StudyTitleView.edit_title') }}
+        </v-tooltip>
       </v-btn>
     </div>
     <v-sheet elevation="0" class="pa-4 title" rounded>

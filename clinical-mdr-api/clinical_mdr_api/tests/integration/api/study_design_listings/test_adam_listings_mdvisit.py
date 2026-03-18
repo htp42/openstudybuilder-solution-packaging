@@ -20,6 +20,7 @@ from clinical_mdr_api.tests.integration.utils.api import inject_and_clear_db
 from clinical_mdr_api.tests.integration.utils.data_library import (
     STARTUP_CT_CATALOGUE_CYPHER,
     STARTUP_STUDY_LIST_CYPHER,
+    create_reason_for_lock_unlock_terms,
     fix_study_preferred_time_unit,
 )
 from clinical_mdr_api.tests.integration.utils.factory_controlled_terminology import (
@@ -39,6 +40,8 @@ from clinical_mdr_api.tests.utils.checks import assert_response_status_code
 from common.config import settings
 
 study_uid: str
+reason_for_lock_term_uid: str
+reason_for_unlock_term_uid: str
 
 log = logging.getLogger(__name__)
 
@@ -46,7 +49,7 @@ log = logging.getLogger(__name__)
 @pytest.fixture(scope="module")
 def test_data():
     """Initialize test data"""
-    global study_uid
+    global study_uid, reason_for_lock_term_uid, reason_for_unlock_term_uid
     study_uid = "study_root"
     inject_and_clear_db("ADAMMDVISITListingTest")
     db.cypher_query(STARTUP_STUDY_LIST_CYPHER)
@@ -64,6 +67,9 @@ def test_data():
     TestUtils.create_ct_codelists_using_cypher()
     TestUtils.set_study_standard_version(study_uid=study_uid)
     fix_study_preferred_time_unit(study_uid)
+    lock_unlock_data = create_reason_for_lock_unlock_terms()
+    reason_for_lock_term_uid = lock_unlock_data["reason_for_lock_terms"][0].term_uid
+    reason_for_unlock_term_uid = lock_unlock_data["reason_for_unlock_terms"][0].term_uid
 
 
 def test_adam_listing_mdvisit(api_client, test_data):
@@ -121,7 +127,10 @@ def test_adam_listing_mdvisit_versioning(api_client, test_data):
     # Lock
     response = api_client.post(
         f"/studies/{study_uid}/locks",
-        json={"change_description": "Lock 1"},
+        json={
+            "change_description": "Lock 1",
+            "reason_for_change_uid": reason_for_lock_term_uid,
+        },
     )
     assert_response_status_code(response, 201)
 
@@ -142,8 +151,14 @@ def test_adam_listing_mdvisit_versioning(api_client, test_data):
     md_visit_headers_before_unlock = res
 
     # Unlock -- Study remain unlocked
-    response = api_client.delete(f"/studies/{study_uid}/locks")
-    assert_response_status_code(response, 200)
+    response = api_client.post(
+        f"/studies/{study_uid}/unlocks",
+        json={
+            "change_description": "Unlock",
+            "reason_for_change_uid": reason_for_unlock_term_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
 
     # get all visits
     response = api_client.get(

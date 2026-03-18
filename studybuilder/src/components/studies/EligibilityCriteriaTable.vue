@@ -65,7 +65,9 @@
     <template #actions>
       <v-btn
         data-cy="add-study-criteria"
-        class="ml-2 expandHoverBtn"
+        class="ml-2"
+        icon
+        size="small"
         variant="outlined"
         color="nnBaseBlue"
         :disabled="
@@ -74,10 +76,10 @@
         "
         @click.stop="addCriteria"
       >
-        <v-icon left>mdi-plus</v-icon>
-        <span class="label">{{
-          $t('EligibilityCriteriaTable.add_criteria')
-        }}</span>
+        <v-icon>mdi-plus</v-icon>
+        <v-tooltip activator="parent" location="top">
+          {{ $t('EligibilityCriteriaTable.add_criteria') }}
+        </v-tooltip>
       </v-btn>
     </template>
     <template #[`item.order`]="{ item }">

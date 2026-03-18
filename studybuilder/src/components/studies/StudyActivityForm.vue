@@ -30,45 +30,8 @@
       </v-radio-group>
       <v-form ref="selectStudiesForm">
         <v-row v-if="creationMode === 'selectFromStudies'">
-          <v-col cols="3">
-            <v-autocomplete
-              v-model="selectedStudy"
-              :label="$t('StudySelectionTable.study_ids')"
-              :items="studies"
-              item-title="current_metadata.identification_metadata.study_id"
-              data-cy="select-study-for-activity-by-id"
-              return-object
-              :rules="[formRules.required]"
-              clearable
-              rounded="lg"
-              variant="outlined"
-              color="nnBaseBlue"
-              density="compact"
-            />
-          </v-col>
-          <div class="mt-5">
-            {{ $t('_global.and_or') }}
-          </div>
-          <v-col cols="3">
-            <v-autocomplete
-              v-model="selectedStudy"
-              :label="$t('StudySelectionTable.study_acronyms')"
-              :items="
-                studies.filter(
-                  (study) =>
-                    study.current_metadata.identification_metadata.study_acronym
-                )
-              "
-              item-title="current_metadata.identification_metadata.study_acronym"
-              data-cy="select-study-for-activity-by-acronym"
-              return-object
-              :rules="[formRules.required]"
-              clearable
-              rounded="lg"
-              variant="outlined"
-              color="nnBaseBlue"
-              density="compact"
-            />
+          <v-col>
+            <StudySelectorField v-model="selectedStudy" :data="studies" />
           </v-col>
         </v-row>
       </v-form>
@@ -742,6 +705,7 @@ import _isEqual from 'lodash/isEqual'
 import libConstants from '@/constants/libraries'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 import ChoiceField from '@/components/ui/ChoiceField.vue'
+import StudySelectorField from '@/components/studies/StudySelectorField.vue'
 
 const notificationHub = inject('notificationHub')
 const formRules = inject('formRules')

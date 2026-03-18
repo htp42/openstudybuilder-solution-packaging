@@ -1,8 +1,9 @@
 import { activityInstance_uid } from "../../support/api_requests/library_activities";
 import { apiActivityName } from "./api_library_steps";
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
+const { getShortUniqueId } = require("../../support/helper_functions");
 
-let activityInstance, topicCode = `Topic${Date.now()}`
+let activityInstance, topicCode = `Topic${getShortUniqueId()}`
 let nciconceptid = "NCI-ID", nciname = 'NCI-name', adamcode = "Adam-code"
 
 When('User intercepts create instance request', () => cy.intercept('/api/concepts/activities/activity-instances').as('createInstance'))
@@ -100,12 +101,14 @@ When('[API] Activity Instance is inactivated', () => cy.inactivateActivityInstan
 
 When('[API] Activity Instance new version is created', () => cy.activityInstanceNewVersion())
 
-Given('[API] First activity instance for search test is created', () => createActivityInstanceViaApi(`SearchTest${Date.now()}`))
+Given('[API] First activity instance for search test is created', () => createActivityInstanceViaApi(`SearchTest${getShortUniqueId()}`))
 
-Given('[API] Second activity instance for search test is created', () => cy.createActivityInstance(`SearchTest${Date.now()}`))
+Given('[API] Second activity instance for search test is created', () => cy.createActivityInstance(`SearchTest${getShortUniqueId()}`))
+
+Then('[API] Activity instance is updated with new name', () => cy.updateActivityInstance(`New Activity Instance name ${getShortUniqueId()}`))
 
 function fillInstanceMandatoryData(code = topicCode) {
-    activityInstance = `Instance${Date.now()}`
+    activityInstance = `Instance${getShortUniqueId()}`
     cy.fillInput('instanceform-instancename-field', activityInstance)
     cy.fillInput('instanceform-definition-field', 'DEF')
     cy.fillInput('instanceform-topiccode-field', code) 

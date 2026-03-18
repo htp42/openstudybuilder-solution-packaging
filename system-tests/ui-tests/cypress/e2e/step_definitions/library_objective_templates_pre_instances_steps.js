@@ -1,8 +1,9 @@
 
 import { fillTemplateName } from './library_syntax_templates_common'
 const { Given, When, Then } = require('@badeball/cypress-cucumber-preprocessor')
+const { getShortUniqueId } = require("../../support/helper_functions");
 
-let nameSufix = `template ${Date.now()}`
+let nameSufix = `template ${getShortUniqueId()}`
 let objectivePreInstanceName
 let preInstanceName
 let parameterSelected
@@ -10,7 +11,7 @@ let secondParameterSelected
 
 When('The objective pre-instatiation name is set', () => fillBaseData(`Test [Activity] and [ActivityGroup] ${nameSufix}`))
 
-When('The objective pre-instatiation name is updated', () => fillBaseData(`Update${Date.now()}`))
+When('The objective pre-instatiation name is updated', () => fillBaseData(`Update${getShortUniqueId()}`))
 
 When('The Radiobutton with value Yes is selected', () => cy.clickButton('radio-Yes'))
 

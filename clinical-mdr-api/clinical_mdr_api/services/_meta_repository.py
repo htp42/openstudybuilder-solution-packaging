@@ -210,6 +210,9 @@ from clinical_mdr_api.domain_repositories.study_selections.study_criteria_reposi
 from clinical_mdr_api.domain_repositories.study_selections.study_data_supplier_repository import (
     StudyDataSupplierRepository,
 )
+from clinical_mdr_api.domain_repositories.study_selections.study_definition_document_repository import (
+    StudyDefinitionDocumentRepository,
+)
 from clinical_mdr_api.domain_repositories.study_selections.study_design_cell_repository import (
     StudyDesignCellRepository,
 )
@@ -242,6 +245,9 @@ from clinical_mdr_api.domain_repositories.study_selections.study_source_variable
 )
 from clinical_mdr_api.domain_repositories.study_selections.study_standard_version_repository import (
     StudyStandardVersionRepository,
+)
+from clinical_mdr_api.domain_repositories.study_selections.study_version_repository import (
+    StudyVersionRepository,
 )
 from clinical_mdr_api.domain_repositories.study_selections.study_visit_repository import (
     StudyVisitRepository,
@@ -633,6 +639,14 @@ class MetaRepository:
     @property
     def study_definition_repository(self) -> StudyDefinitionRepository:
         return self.get_repository_instance(StudyDefinitionRepository)
+
+    @property
+    def study_definition_document_repository(self) -> StudyDefinitionDocumentRepository:
+        return StudyDefinitionDocumentRepository()
+
+    @property
+    def study_version_repository(self) -> StudyVersionRepository:
+        return StudyVersionRepository()
 
     @property
     def project_repository(self) -> ProjectRepository:

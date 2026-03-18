@@ -89,7 +89,9 @@
         <v-progress-circular v-show="loading" indeterminate color="primary" />
         <v-btn
           v-show="!loading"
-          class="ml-2 expandHoverBtn"
+          class="ml-2"
+          icon
+          size="small"
           variant="outlined"
           color="nnBaseBlue"
           :disabled="
@@ -99,12 +101,16 @@
           data-cy="add-visit"
           @click.stop="openForm"
         >
-          <v-icon left>mdi-plus</v-icon>
-          <span class="label">{{ $t('StudyVisitTable.add_visit') }}</span>
+          <v-icon>mdi-plus</v-icon>
+          <v-tooltip activator="parent" location="top">
+            {{ $t('StudyVisitTable.add_visit') }}
+          </v-tooltip>
         </v-btn>
         <v-btn
           v-if="!editMode && !loading"
-          class="ml-2 expandHoverBtn"
+          class="ml-2"
+          icon
+          size="small"
           variant="outlined"
           color="nnBaseBlue"
           data-cy="edit-study-visits"
@@ -114,8 +120,10 @@
           "
           @click.stop="openEditMode"
         >
-          <v-icon left>mdi-pencil-outline</v-icon>
-          <span class="label">{{ $t('_global.edit_in_table') }}</span>
+          <v-icon>mdi-pencil-outline</v-icon>
+          <v-tooltip activator="parent" location="top">
+            {{ $t('_global.edit_in_table') }}
+          </v-tooltip>
         </v-btn>
         <v-progress-circular
           v-show="loading"
@@ -284,6 +292,23 @@
         </div>
         <div v-else>
           {{ $filters.yesno(item.show_visit) }}
+        </div>
+      </template>
+      <template #[`item.epoch_allocation.sponsor_preferred_name`]="{ item }">
+        <div v-if="editMode">
+          <v-select
+            v-model="item.epoch_allocation_uid"
+            data-cy="epoch-allocation-rule"
+            :items="epochAllocations"
+            item-title="sponsor_preferred_name"
+            item-value="term_uid"
+            class="cellWidth"
+            density="compact"
+            @update:model-value="disableOthers(item)"
+          />
+        </div>
+        <div v-else>
+          {{ item.epoch_allocation.sponsor_preferred_name }}
         </div>
       </template>
       <template #[`item.is_global_anchor_visit`]="{ item }">
@@ -652,7 +677,10 @@ const headers = ref([
   },
   { title: t('StudyVisitForm.show_wisit'), key: 'show_visit' },
   { title: t('StudyVisitForm.visit_description'), key: 'description' },
-  { title: t('StudyVisitForm.epoch_allocation'), key: 'epoch_allocation_name' },
+  {
+    title: t('StudyVisitForm.epoch_allocation'),
+    key: 'epoch_allocation.sponsor_preferred_name',
+  },
   { title: t('StudyVisitForm.visit_start_rule'), key: 'start_rule' },
   { title: t('StudyVisitForm.visit_stop_rule'), key: 'end_rule' },
   { title: t('StudyVisitForm.study_day_label'), key: 'study_day_label' },
@@ -715,7 +743,10 @@ const defaultColumns = ref([
   },
   { title: t('StudyVisitForm.show_wisit'), key: 'show_visit' },
   { title: t('StudyVisitForm.visit_description'), key: 'description' },
-  { title: t('StudyVisitForm.epoch_allocation'), key: 'epoch_allocation_name' },
+  {
+    title: t('StudyVisitForm.epoch_allocation'),
+    key: 'epoch_allocation.sponsor_preferred_name',
+  },
   { title: t('StudyVisitForm.visit_start_rule'), key: 'start_rule' },
   { title: t('StudyVisitForm.visit_stop_rule'), key: 'end_rule' },
   { title: t('StudyVisitForm.study_day_label'), key: 'study_day_label' },
@@ -752,6 +783,10 @@ const editHeaders = ref([
   { title: t('StudyVisitForm.visit_window'), key: 'visit_window' },
   { title: t('StudyVisitForm.show_wisit'), key: 'show_visit' },
   { title: t('StudyVisitForm.visit_description'), key: 'description' },
+  {
+    title: t('StudyVisitForm.epoch_allocation'),
+    key: 'epoch_allocation.sponsor_preferred_name',
+  },
   { title: t('StudyVisitForm.visit_start_rule'), key: 'start_rule' },
   { title: t('StudyVisitForm.visit_stop_rule'), key: 'end_rule' },
 ])
@@ -859,6 +894,7 @@ const visitHistoryItems = ref([])
 const fetchedStudyEpochs = ref([])
 const timeLineVisits = ref([])
 const frequencies = ref([])
+const epochAllocations = ref([])
 const tableLoading = ref(false)
 const visitClasses = [
   {
@@ -984,6 +1020,9 @@ onMounted(() => {
   })
   codelists.getTermsByCodelist('repeatingVisitFrequency').then((resp) => {
     frequencies.value = resp.data.items
+  })
+  codelists.getTermsByCodelist('epochAllocations').then((resp) => {
+    epochAllocations.value = resp.data.items
   })
   if (studiesGeneralStore.studyPreferredTimeUnit) {
     preferredTimeUnit.value =
@@ -1320,6 +1359,7 @@ function updatePreferredTimeUnit(value) {
 
 <style scoped>
 .cellWidth {
+  min-width: 150px;
   width: max-content;
 }
 .wideCellWidth {

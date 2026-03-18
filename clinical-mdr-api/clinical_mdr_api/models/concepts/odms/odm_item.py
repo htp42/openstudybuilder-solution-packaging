@@ -236,6 +236,12 @@ class OdmItemUnitDefinitionWithRelationship(BaseModel):
     ct_units: list[SimpleTermModel] = Field(default_factory=list)
 
 
+class OdmItemParentGroup(BaseModel):
+    uid: str
+    oid: str | None
+    name: str | None
+
+
 class OdmItem(ConceptModel):
     oid: Annotated[str | None, Field()]
     prompt: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
@@ -252,6 +258,7 @@ class OdmItem(ConceptModel):
     )
     origin: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
     comment: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
+    odm_item_group: Annotated[OdmItemParentGroup | None, Field()] = None
     translated_texts: Annotated[list[OdmTranslatedTextModel], Field()]
     aliases: Annotated[list[OdmAliasModel], Field()]
     unit_definitions: Annotated[list[OdmItemUnitDefinitionWithRelationship], Field()]
@@ -311,6 +318,15 @@ class OdmItem(ConceptModel):
             version=odm_item_ar.item_metadata.version,
             change_description=odm_item_ar.item_metadata.change_description,
             author_username=odm_item_ar.item_metadata.author_username,
+            odm_item_group=(
+                OdmItemParentGroup(
+                    uid=odm_item_ar.concept_vo.odm_item_group.uid,
+                    oid=odm_item_ar.concept_vo.odm_item_group.oid,
+                    name=odm_item_ar.concept_vo.odm_item_group.name,
+                )
+                if odm_item_ar.concept_vo.odm_item_group
+                else None
+            ),
             translated_texts=sorted(
                 odm_item_ar.concept_vo.translated_texts,
                 key=lambda item: (item.text_type.value, item.text),
@@ -348,31 +364,36 @@ class OdmItem(ConceptModel):
                 ],
                 key=lambda item: (item.order is not None, item.order),
             ),
-            activity_instances=[
-                ActivityInstanceRel(
-                    activity_instance_uid=activity_instance["activity_instance_uid"],
-                    activity_instance_name=activity_instance.get(
-                        "activity_instance_name", None
-                    ),
-                    activity_instance_adam_param_code=activity_instance.get(
-                        "activity_instance_adam_param_code", None
-                    ),
-                    activity_instance_topic_code=activity_instance.get(
-                        "activity_instance_topic_code", None
-                    ),
-                    activity_item_class_uid=activity_instance[
-                        "activity_item_class_uid"
-                    ],
-                    odm_form_uid=activity_instance["odm_form_uid"],
-                    odm_item_group_uid=activity_instance["odm_item_group_uid"],
-                    order=activity_instance["order"],
-                    primary=activity_instance.get("primary", False),
-                    preset_response_value=activity_instance["preset_response_value"],
-                    value_condition=activity_instance["value_condition"],
-                    value_dependent_map=activity_instance["value_dependent_map"],
-                )
-                for activity_instance in odm_item_ar.concept_vo.activity_instances
-            ],
+            activity_instances=sorted(
+                [
+                    ActivityInstanceRel(
+                        activity_instance_uid=activity_instance[
+                            "activity_instance_uid"
+                        ],
+                        activity_instance_name=activity_instance.get(
+                            "activity_instance_name", None
+                        ),
+                        activity_instance_adam_param_code=activity_instance.get(
+                            "activity_instance_adam_param_code", None
+                        ),
+                        activity_instance_topic_code=activity_instance.get(
+                            "activity_instance_topic_code", None
+                        ),
+                        activity_item_class_uid=activity_instance[
+                            "activity_item_class_uid"
+                        ],
+                        order=activity_instance["order"],
+                        primary=activity_instance.get("primary", False),
+                        preset_response_value=activity_instance[
+                            "preset_response_value"
+                        ],
+                        value_condition=activity_instance["value_condition"],
+                        value_dependent_map=activity_instance["value_dependent_map"],
+                    )
+                    for activity_instance in odm_item_ar.concept_vo.activity_instances
+                ],
+                key=lambda item: item.order,
+            ),
             vendor_elements=sorted(
                 [
                     OdmVendorElementRelationModel.from_uid(
@@ -619,13 +640,11 @@ class OdmItemPostInput(ConceptPostInput):
 class ActivityInstanceRelInput(InputModel):
     activity_instance_uid: Annotated[str, Field(min_length=1)]
     activity_item_class_uid: Annotated[str, Field(min_length=1)]
-    odm_form_uid: Annotated[str, Field(min_length=1)]
-    odm_item_group_uid: Annotated[str, Field(min_length=1)]
-    order: Annotated[int | None, Field()] = None
+    order: Annotated[int, Field()]
     primary: Annotated[bool, Field()] = False
-    preset_response_value: Annotated[str | None, Field()] = None
-    value_condition: Annotated[str | None, Field()] = None
-    value_dependent_map: Annotated[str | None, Field()] = None
+    preset_response_value: Annotated[str, Field()] = ""
+    value_condition: Annotated[str, Field()] = ""
+    value_dependent_map: Annotated[str, Field()] = ""
 
 
 class ActivityInstanceRel(ActivityInstanceRelInput):
@@ -671,13 +690,7 @@ class OdmItemPatchInput(ConceptPatchInput):
         cls, v: list[ActivityInstanceRel]
     ) -> list[ActivityInstanceRel]:
         activity_instance = [
-            (
-                elm.activity_instance_uid,
-                elm.activity_item_class_uid,
-                elm.odm_form_uid,
-                elm.odm_item_group_uid,
-            )
-            for elm in v
+            (elm.activity_instance_uid, elm.activity_item_class_uid) for elm in v
         ]
 
         duplicates = {

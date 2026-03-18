@@ -38,6 +38,13 @@ export function useErrorHandler(error) {
   const resolveFieldLabel = (field) => {
     if (!Array.isArray(field) || field.length === 0) return undefined
 
+    field = field.map((item) => {
+      if (Number.isInteger(item)) {
+        return item
+      }
+      return item.replaceAll('[]', '')
+    })
+
     if (te(`api.fields.${field.join(',')}`, i18n.global.fallbackLocale.value)) {
       return t(
         `api.fields.${field.join(',')}`,

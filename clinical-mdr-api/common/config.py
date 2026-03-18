@@ -2,7 +2,7 @@
 
 import os
 import string
-from typing import Any
+from typing import Any, Final, Literal
 
 from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -101,6 +101,9 @@ class Settings(BaseSettings):
 
     # Performance
     slow_query_duration: int = 1
+
+    # Fuzzy / full text search configuration
+    fuzziness_level: float = 0.8
 
     # Tracing & Monitoring
     uvicorn_log_config: str = ""
@@ -202,8 +205,12 @@ class Settings(BaseSettings):
 
     sdtm_ct_catalogue_name: str = "SDTM CT"
     adam_ct_catalogue_name: str = "ADAM CT"
+    sponsor_library_name: str = "Sponsor"
     requested_library_name: str = "Requested"
     cdisc_library_name: str = "CDISC"
+    # All editable library names available in the database and for the consumer API Library filter
+    # Add additional sponsor library names here to make them selectable
+    editable_library_names: list[str] = [sponsor_library_name]
     ct_uid_boolean_yes: str = "C49488"
     ct_uid_boolean_no: str = "C49487"
     ct_uid_boolean_codelist: str = "C66742"
@@ -315,8 +322,16 @@ class Settings(BaseSettings):
     data_supplier_type_cl_submval: str = "DATA_SUPPLIER_TYPE"
     origin_source_cl_submval: str = "ORIGINS"
     origin_type_cl_submval: str = "ORIGINT"
+    reason_for_lock_cl_submval: str = "RSNFL"
+    reason_for_unlock_cl_submval: str = "RSNFUL"
+    final_protocol_term_submval: str = "FINAL_PROTOCOL"
 
     # endregion
 
 
 settings = Settings()  # type: ignore[call-arg]
+
+# Validation mode constants for database integrity checks
+VALIDATION_MODE_STRICT: Final[Literal["strict"]] = "strict"
+VALIDATION_MODE_WARNING: Final[Literal["warning"]] = "warning"
+VALIDATION_MODE = Literal["strict", "warning"]  # pylint: disable=invalid-name

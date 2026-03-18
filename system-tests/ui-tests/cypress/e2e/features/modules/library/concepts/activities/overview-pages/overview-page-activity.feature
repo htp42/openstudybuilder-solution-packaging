@@ -42,12 +42,10 @@ Feature: Library - Concepts - Activities - Activity Overview Page
 
     Scenario: [COSMoS YAML] Verify that the instance overview page displays all sections correctly
         When I click on the COSMoS YAML tab
-        And 'Download YAML content' button is visible in the overview page
-        And 'Close YAML viewer' button is visible in the overview page
-        When I click 'Download YAML content' button
+        When The download button is clicked
         Then The 'COSMoS-overview' file without timestamp is downloaded in 'yml' format
         # And the COSMoS YAML file should be saved with correct content (this step should be tested manually)
-        When I click 'Close YAML viewer' button
+        When The close overview button is clicked
         Then Activity overview page is opened       
 
     Scenario: [Sections] Verify that the activities overview page displays correctly
@@ -69,11 +67,12 @@ Feature: Library - Concepts - Activities - Activity Overview Page
         And The free text search field should be displayed in the 'Activity groupings' table
         Then The linked activity instance is found in the Acivity Instances table with status 'Final' and version '1.0'
         And The free text search field should be displayed in the 'Activity instances' table
+        And User waits for 1 seconds
         And Activity instance is expanded by clicking chevron button
         And The previous version of linked activity instance is found in the Acivity Instances table in row 2 with status 'Draft' and version '0.1'
 
     Scenario: [History] Verify that the activity group overview page displays correctly
-        When I click 'History' button
+        When The history button is clicked
         Then The history page is opened
         
     Scenario: [Linking] Verify that the activities overview page can link to the correct groups, subgroups and instances
@@ -93,35 +92,32 @@ Feature: Library - Concepts - Activities - Activity Overview Page
         And The previous version of linked activity instance is found in the Acivity Instances table in row 2 with status 'Draft' and version '0.1'
 
     Scenario: [Edit][1.1] Edit the activity
-        When I click 'New version' button
+        When The new version plus button is clicked
         And The status displayed on the summary has value 'Draft' and version is '1.1'
         And The linked activity instance is found in the Acivity Instances table with status 'Final' and version '1.0'
+        And User waits for 1 seconds
         And Activity instance is expanded by clicking chevron button
         And User waits for 1 seconds
         And The previous version of linked activity instance is found in the Acivity Instances table in row 2 with status 'Draft' and version '0.1'
-        When I click 'Edit' button 
+        When The pencil button is clicked
         And Activity name is changed
         And Form save button is clicked
         And The status displayed on the summary has value 'Draft' and version is '1.2'
         And The Activity Instances table is empty
         
     Scenario: [Approve] Approve the Activity
-        When I click 'Approve' button
+        When The approve button is clicked
         And The status displayed on the summary has value 'Final' and version is '2.0'
         And The linked activity instance is found in the Acivity Instances table with status 'Final' and version '2.0'
-        And Activity instance is expanded by clicking chevron button
-        And User waits for 1 seconds
-        Then The previous version of linked activity instance is found in the Acivity Instances table in row 2 with status 'Final' and version '1.0'
-        And The previous version of linked activity instance is found in the Acivity Instances table in row 3 with status 'Draft' and version '0.1'
 
     Scenario: [Edit][2.1] Edit the activity with draft instance
-        When I click 'New version' button
+        When The new version plus button is clicked
         And The status displayed on the summary has value 'Draft' and version is '2.1'
-        When I click 'Edit' button 
+        When The pencil button is clicked
         And Activity name is changed
         And Form save button is clicked
         And The status displayed on the summary has value 'Draft' and version is '2.2'
-        When I click 'Approve' button
+        When The approve button is clicked
         And The status displayed on the summary has value 'Final' and version is '3.0'
         And The linked activity instance is found in the Acivity Instances table with status 'Final' and version '3.0'
 

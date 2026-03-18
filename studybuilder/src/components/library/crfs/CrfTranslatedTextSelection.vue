@@ -41,6 +41,8 @@
       <v-col>
         <div>
           <QuillEditor
+            v-if="!showSource"
+            ref="quillEditor"
             v-model:content="inputTranslatedText.text"
             content-type="html"
             :options="editorOptions"
@@ -49,6 +51,23 @@
               inputTranslatedText.text ? '' : t('CRFTranslatedTexts.text')
             "
           />
+          <v-textarea
+            v-else
+            v-model="sourceText"
+            variant="outlined"
+            :readonly="props.readOnly"
+            auto-grow
+            hide-details
+          />
+          <v-btn
+            size="small"
+            variant="text"
+            class="mt-1"
+            :prepend-icon="showSource ? 'mdi-eye' : 'mdi-code-tags'"
+            @click="toggleSource"
+          >
+            {{ showSource ? t('_global.rich_text') : t('_global.view_source') }}
+          </v-btn>
         </div>
       </v-col>
     </v-row>
@@ -86,7 +105,6 @@
           :show-select="!readOnly"
           :hide-default-footer="props.readOnly"
           :hide-search-field="props.readOnly"
-          table-height="400px"
           :items-length="total"
           disable-filtering
           column-data-resource="concepts/odm-metadata/translated-texts"
@@ -211,6 +229,32 @@ const inputTranslatedText = ref({
 
 const table = ref(false)
 const operator = ref(false)
+const showSource = ref(false)
+const quillEditor = ref(null)
+const sourceText = ref('')
+const savedSourceText = ref('')
+
+const stripParagraphWrap = (html) =>
+  html?.replaceAll(/<\/?p>/g, '').trim() || ''
+
+const toggleSource = () => {
+  if (showSource.value) {
+    inputTranslatedText.value.text = sourceText.value
+    savedSourceText.value = sourceText.value
+  } else {
+    const quillOutput = inputTranslatedText.value.text || ''
+    // Only update sourceText from Quill if the user made real edits (not just Quill's auto <p> wrapping)
+    if (
+      stripParagraphWrap(quillOutput) ===
+      stripParagraphWrap(savedSourceText.value)
+    ) {
+      sourceText.value = savedSourceText.value
+    } else {
+      sourceText.value = quillOutput
+    }
+  }
+  showSource.value = !showSource.value
+}
 
 watch(operator, () => {
   table.value.filterTable()
@@ -258,6 +302,10 @@ const getTranslatedTexts = (filters, options, filtersUpdated) => {
 }
 
 const add = () => {
+  if (showSource.value) {
+    inputTranslatedText.value.text = sourceText.value
+  }
+
   const lowerCaseLanguage = inputTranslatedText.value.language.toLowerCase()
   const parsedText = regex.clearEmptyHtml(inputTranslatedText.value.text)
 
@@ -300,6 +348,7 @@ const add = () => {
       language: parameters.EN,
       text: '<p></p>',
     }
+    sourceText.value = ''
   } else {
     notificationHub.add({
       msg: t('CRFTranslatedTexts.missing_fields'),

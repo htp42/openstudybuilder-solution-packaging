@@ -12,8 +12,6 @@ When('User selects to create criteria from study', () => cy.get('[data-cy="crite
 
 When('User clicks add study criteria button', () => cy.clickButton('add-study-criteria'))
 
-When('Study with {string} id is selected to copy criteria from', (studyId) => cy.selectVSelect('Select studies', studyId))
-
 When('The {string} criteria from test study is copied', () => {
     cy.get('[data-cy="form-body"]').within(() => {
         cy.wait(3000)

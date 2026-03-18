@@ -735,8 +735,7 @@ IMPORT_INPUT1 = """<?xml version="1.0" encoding="utf-8"?>
                         <ItemRef ItemOID="I.ETHNIC" Mandatory="Yes" OrderNumber="6" osb:sdv="Yes" />
                         <ItemRef ItemOID="I.RACE" Mandatory="Yes" OrderNumber="7" osb:sdv="Yes" />
                         <ItemRef ItemOID="I.RACEOTH" Mandatory="Yes" OrderNumber="8" osb:sdv="Yes" />
-                        <ItemRef ItemOID="I.SUBJID" Mandatory="Yes" OrderNumber="9" osb:sdv="Yes" />
-                        <ItemRef ItemOID="I.PREVSUBJ" Mandatory="Yes" OrderNumber="10" osb:sdv="Yes" />
+                        <ItemRef ItemOID="I.PREVSUBJ" Mandatory="Yes" OrderNumber="9" osb:sdv="Yes" />
                         <Alias Name="name2" Context="context2" />
                     </ItemGroupDef>
                     <ItemGroupDef OID="G.DM.IC" Name="Informed Consent" Repeating="No" Purpose="Tabulation" SASDatasetName="DEMOG" Domain="submission_value_1" osb:version="1.0" osb:gr="ig3">
@@ -783,9 +782,8 @@ IMPORT_INPUT1 = """<?xml version="1.0" encoding="utf-8"?>
                             <TranslatedText xml:lang="en">Vital signs</TranslatedText>
                             <TranslatedText xml:lang="da">Vital signsDA</TranslatedText>
                         </osb:DisplayText>
-                        <ItemRef ItemOID="I.STUDYID" Mandatory="Yes" OrderNumber="1" osb:sdv="Yes" />
-                        <ItemRef ItemOID="I.SUBJID" Mandatory="Yes" OrderNumber="2" osb:sdv="Yes" />
-                        <ItemRef ItemOID="I.VSDAT" Mandatory="Yes" OrderNumber="3" osb:sdv="Yes" />
+                        <ItemRef ItemOID="I.SUBJID" Mandatory="Yes" OrderNumber="1" osb:sdv="Yes" />
+                        <ItemRef ItemOID="I.VSDAT" Mandatory="Yes" OrderNumber="2" osb:sdv="Yes" />
                     </ItemGroupDef>
                     <ItemDef OID="I.AGE" Name="Age" Origin="Collected Value" DataType="integer" Length="3" SASFieldName="AGE" SDSVarName="AGE" osb:version="1.0">
                         <Question>
@@ -2566,37 +2564,11 @@ IMPORT_OUTPUT1 = {
                     },
                 },
                 {
-                    "uid": "OdmItem_000022",
-                    "oid": "I.SUBJID",
-                    "name": "Subject No. [read-only]",
-                    "version": "1.0",
-                    "order_number": 9,
-                    "mandatory": "Yes",
-                    "key_sequence": "None",
-                    "method_oid": None,
-                    "imputation_method_oid": "None",
-                    "role": "None",
-                    "role_codelist_oid": "None",
-                    "collection_exception_condition_oid": "",
-                    "vendor": {
-                        "attributes": [
-                            {
-                                "uid": "OdmVendorAttribute_000003",
-                                "name": "sdv",
-                                "data_type": "string",
-                                "value_regex": None,
-                                "value": "Yes",
-                                "vendor_namespace_uid": "odm_vendor_namespace2",
-                            },
-                        ]
-                    },
-                },
-                {
                     "uid": "OdmItem_000015",
                     "oid": "I.PREVSUBJ",
                     "name": "Previous Subject No.",
                     "version": "1.0",
-                    "order_number": 10,
+                    "order_number": 9,
                     "mandatory": "Yes",
                     "key_sequence": "None",
                     "method_oid": None,
@@ -2967,37 +2939,11 @@ IMPORT_OUTPUT1 = {
             "sdtm_domains": [],
             "items": [
                 {
-                    "uid": "OdmItem_000021",
-                    "oid": "I.STUDYID",
-                    "name": "Study ID",
-                    "version": "1.0",
-                    "order_number": 1,
-                    "mandatory": "Yes",
-                    "key_sequence": "None",
-                    "method_oid": None,
-                    "imputation_method_oid": "None",
-                    "role": "None",
-                    "role_codelist_oid": "None",
-                    "collection_exception_condition_oid": "",
-                    "vendor": {
-                        "attributes": [
-                            {
-                                "uid": "OdmVendorAttribute_000003",
-                                "name": "sdv",
-                                "data_type": "string",
-                                "value_regex": None,
-                                "value": "Yes",
-                                "vendor_namespace_uid": "odm_vendor_namespace2",
-                            },
-                        ]
-                    },
-                },
-                {
                     "uid": "OdmItem_000022",
                     "oid": "I.SUBJID",
                     "name": "Subject No. [read-only]",
                     "version": "1.0",
-                    "order_number": 2,
+                    "order_number": 1,
                     "mandatory": "Yes",
                     "key_sequence": "None",
                     "method_oid": None,
@@ -3023,7 +2969,7 @@ IMPORT_OUTPUT1 = {
                     "oid": "I.VSDAT",
                     "name": "Date of examination",
                     "version": "1.0",
-                    "order_number": 3,
+                    "order_number": 2,
                     "mandatory": "Yes",
                     "key_sequence": "None",
                     "method_oid": None,
@@ -3080,6 +3026,11 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "AGE",
             "origin": "Collected Value",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000002",
+                "name": "General Demography",
+                "oid": "G.DM.DM",
+            },
             "translated_texts": [
                 {
                     "text_type": "Description",
@@ -3207,6 +3158,11 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "VSLOC where VSTESTCD=SYSBP | VSLOC where VSTESTCD=DIABP",
             "origin": "Collected Value",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000001",
+                "oid": "G.VS.BPP",
+                "name": "Blood pressure and pulse",
+            },
             "translated_texts": [
                 {
                     "text_type": "Description",
@@ -3303,6 +3259,11 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "RFICDTC, DSSTDTC",
             "origin": "Collected Value",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000003",
+                "oid": "G.DM.IC",
+                "name": "Informed Consent",
+            },
             "translated_texts": [
                 {
                     "text_type": "Description",
@@ -3384,6 +3345,11 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "RFICDTC, DSSTDTC",
             "origin": "Collected Value",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000003",
+                "oid": "G.DM.IC",
+                "name": "Informed Consent",
+            },
             "translated_texts": [
                 {
                     "text_type": "Description",
@@ -3465,6 +3431,11 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "RFICDTC, DSSTDTC",
             "origin": "Collected Value",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000003",
+                "oid": "G.DM.IC",
+                "name": "Informed Consent",
+            },
             "translated_texts": [
                 {
                     "text_type": "Description",
@@ -3546,6 +3517,11 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "BRTHDTC",
             "origin": "Collected Value",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000002",
+                "oid": "G.DM.DM",
+                "name": "General Demography",
+            },
             "translated_texts": [
                 {
                     "text_type": "Description",
@@ -3627,6 +3603,11 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "BRTHDTC",
             "origin": "Collected Value",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000002",
+                "name": "General Demography",
+                "oid": "G.DM.DM",
+            },
             "translated_texts": [
                 {
                     "text_type": "Description",
@@ -3725,6 +3706,11 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "VSDTC",
             "origin": "Collected Value",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000004",
+                "name": "Vital Signs",
+                "oid": "G.VS.VS",
+            },
             "translated_texts": [
                 {
                     "text_type": "Description",
@@ -3806,6 +3792,11 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "VSORRES where VSTESTCD=DIABP, VSORRESU where VSTESTCD=DIABP",
             "origin": "Collected Value",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000001",
+                "oid": "G.VS.BPP",
+                "name": "Blood pressure and pulse",
+            },
             "translated_texts": [
                 {
                     "text_type": "Description",
@@ -3901,6 +3892,11 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "ETHNIC",
             "origin": "Collected Value",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000002",
+                "oid": "G.DM.DM",
+                "name": "General Demography",
+            },
             "translated_texts": [
                 {
                     "text_type": "Description",
@@ -3982,6 +3978,11 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "RFICDTC, DSSTDTC",
             "origin": "Collected Value",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000003",
+                "oid": "G.DM.IC",
+                "name": "Informed Consent",
+            },
             "translated_texts": [
                 {
                     "text_type": "Description",
@@ -4063,6 +4064,11 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "RFICDTC, DSSTDTC",
             "origin": "Collected Value",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000003",
+                "oid": "G.DM.IC",
+                "name": "Informed Consent",
+            },
             "translated_texts": [
                 {
                     "text_type": "Description",
@@ -4144,6 +4150,11 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "VSLAT where VSTESTCD=SYSBP | VSLAT where VSTESTCD=DIABP",
             "origin": "Collected Value",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000001",
+                "oid": "G.VS.BPP",
+                "name": "Blood pressure and pulse",
+            },
             "translated_texts": [
                 {
                     "text_type": "Description",
@@ -4225,6 +4236,11 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "VSPOS where VSTESTCD=SYSBP | VSPOS where VSTESTCD=DIABP",
             "origin": "Collected Value",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000001",
+                "oid": "G.VS.BPP",
+                "name": "Blood pressure and pulse",
+            },
             "translated_texts": [
                 {
                     "text_type": "Description",
@@ -4306,6 +4322,11 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "PREVSUBJ",
             "origin": "Collected Value",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000002",
+                "oid": "G.DM.DM",
+                "name": "General Demography",
+            },
             "translated_texts": [
                 {
                     "text_type": "Description",
@@ -4387,6 +4408,11 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "VSORRES/VSORRESU when VSTESTCD=PULSE",
             "origin": "Collected Value",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000001",
+                "oid": "G.VS.BPP",
+                "name": "Blood pressure and pulse",
+            },
             "translated_texts": [
                 {
                     "text_type": "Description",
@@ -4482,6 +4508,11 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "RACE",
             "origin": "Collected Value",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000002",
+                "oid": "G.DM.DM",
+                "name": "General Demography",
+            },
             "translated_texts": [
                 {
                     "text_type": "Description",
@@ -4563,6 +4594,11 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "RACEOTH in SUPPDM",
             "origin": "Collected Value",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000002",
+                "oid": "G.DM.DM",
+                "name": "General Demography",
+            },
             "translated_texts": [
                 {
                     "text_type": "Description",
@@ -4644,6 +4680,11 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "SEX",
             "origin": "Protocol Value",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000002",
+                "oid": "G.DM.DM",
+                "name": "General Demography",
+            },
             "translated_texts": [
                 {
                     "text_type": "Description",
@@ -4725,6 +4766,11 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "SEX",
             "origin": "Collected Value",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000002",
+                "oid": "G.DM.DM",
+                "name": "General Demography",
+            },
             "translated_texts": [
                 {
                     "text_type": "Description",
@@ -4806,6 +4852,11 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "STUDYID",
             "origin": "Protocol Value",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000003",
+                "oid": "G.DM.IC",
+                "name": "Informed Consent",
+            },
             "translated_texts": [
                 {
                     "text_type": "Description",
@@ -4904,6 +4955,11 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "SUBJID",
             "origin": "Collected Value",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000004",
+                "name": "Vital Signs",
+                "oid": "G.VS.VS",
+            },
             "translated_texts": [
                 {
                     "text_type": "Description",
@@ -4985,6 +5041,11 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "VSORRES where VSTESTCD=SYSBP, VSORRESU where VSTESTCD=SYSBP",
             "origin": "Collected Value",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000001",
+                "oid": "G.VS.BPP",
+                "name": "Blood pressure and pulse",
+            },
             "translated_texts": [
                 {
                     "text_type": "Description",
@@ -5080,6 +5141,11 @@ IMPORT_OUTPUT1 = {
             "sds_var_name": "RFICDTC, DSSTDTC",
             "origin": "Collected Value",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000003",
+                "oid": "G.DM.IC",
+                "name": "Informed Consent",
+            },
             "translated_texts": [
                 {
                     "text_type": "Description",
@@ -5281,6 +5347,7 @@ IMPORT_OUTPUT1 = {
             "codelist_uid": "CTCodelist_000001",
             "parent_codelist_uid": None,
             "child_codelist_uids": [],
+            "codelist_type": "Standard",
             "name": "cnew codelist created by odm xml import",
             "submission_value": "cnew codelist created by odm xml import",
             "nci_preferred_name": "new codelist created by odm xml import",
@@ -5790,23 +5857,17 @@ CLINSPARK_INPUT = """<?xml version="1.0" encoding="UTF-8"?>
             <Description>
                <TranslatedText xml:lang="en">Exposure as Collected</TranslatedText>
             </Description>
-            <ItemRef ItemOID="I.754" OrderNumber="1" Mandatory="Yes" MethodOID="M.34" />
-            <ItemRef ItemOID="I.471" OrderNumber="2" Mandatory="Yes" />
-            <ItemRef ItemOID="I.473" OrderNumber="3" Mandatory="Yes" />
-            <ItemRef ItemOID="I.475" OrderNumber="4" Mandatory="Yes" />
-            <ItemRef ItemOID="I.474" OrderNumber="5" Mandatory="Yes" />
-            <ItemRef ItemOID="I.565" OrderNumber="6" Mandatory="Yes" />
-            <ItemRef ItemOID="I.578" OrderNumber="7" Mandatory="Yes" />
-            <ItemRef ItemOID="I.576" OrderNumber="8" Mandatory="Yes" />
-            <ItemRef ItemOID="I.580" OrderNumber="9" Mandatory="Yes" />
-            <ItemRef ItemOID="I.581" OrderNumber="10" Mandatory="Yes" />
-            <ItemRef ItemOID="I.582" OrderNumber="11" Mandatory="Yes" />
-            <ItemRef ItemOID="I.583" OrderNumber="12" Mandatory="Yes" />
-            <ItemRef ItemOID="I.560" OrderNumber="13" Mandatory="Yes" />
-            <ItemRef ItemOID="I.561" OrderNumber="14" Mandatory="Yes" />
-            <ItemRef ItemOID="I.562" OrderNumber="15" Mandatory="Yes" />
-            <ItemRef ItemOID="I.563" OrderNumber="16" Mandatory="Yes" />
-            <ItemRef ItemOID="I.564" OrderNumber="17" Mandatory="Yes" />
+            <ItemRef ItemOID="I.565" OrderNumber="1" Mandatory="Yes" />
+            <ItemRef ItemOID="I.578" OrderNumber="2" Mandatory="Yes" />
+            <ItemRef ItemOID="I.576" OrderNumber="3" Mandatory="Yes" />
+            <ItemRef ItemOID="I.580" OrderNumber="4" Mandatory="Yes" />
+            <ItemRef ItemOID="I.581" OrderNumber="5" Mandatory="Yes" />
+            <ItemRef ItemOID="I.582" OrderNumber="6" Mandatory="Yes" />
+            <ItemRef ItemOID="I.583" OrderNumber="7" Mandatory="Yes" />
+            <ItemRef ItemOID="I.560" OrderNumber="8" Mandatory="Yes" />
+            <ItemRef ItemOID="I.562" OrderNumber="9" Mandatory="Yes" />
+            <ItemRef ItemOID="I.563" OrderNumber="10" Mandatory="Yes" />
+            <ItemRef ItemOID="I.564" OrderNumber="11" Mandatory="Yes" />
          </ItemGroupDef>
          <ItemGroupDef OID="IG.267" Name="Post dose" Repeating="No" Purpose="Tabulation">
             <ItemRef ItemOID="I.589" OrderNumber="1" Mandatory="Yes" />
@@ -7230,86 +7291,11 @@ CLINSPARK_OUTPUT = {
             "sdtm_domains": [],
             "items": [
                 {
-                    "uid": "OdmItem_000026",
-                    "oid": "I.754",
-                    "name": "EC_seq_no_ECREFID 1",
-                    "version": "1.0",
-                    "order_number": 1,
-                    "mandatory": "Yes",
-                    "key_sequence": "None",
-                    "method_oid": "M.34",
-                    "imputation_method_oid": "None",
-                    "role": "None",
-                    "role_codelist_oid": "None",
-                    "collection_exception_condition_oid": "",
-                    "vendor": {"attributes": []},
-                },
-                {
-                    "uid": "OdmItem_000027",
-                    "oid": "I.471",
-                    "name": "EC_ECCAT 1",
-                    "version": "1.0",
-                    "order_number": 2,
-                    "mandatory": "Yes",
-                    "key_sequence": "None",
-                    "method_oid": None,
-                    "imputation_method_oid": "None",
-                    "role": "None",
-                    "role_codelist_oid": "None",
-                    "collection_exception_condition_oid": "",
-                    "vendor": {"attributes": []},
-                },
-                {
-                    "uid": "OdmItem_000028",
-                    "oid": "I.473",
-                    "name": "EC_ECMOOD 1",
-                    "version": "1.0",
-                    "order_number": 3,
-                    "mandatory": "Yes",
-                    "key_sequence": "None",
-                    "method_oid": None,
-                    "imputation_method_oid": "None",
-                    "role": "None",
-                    "role_codelist_oid": "None",
-                    "collection_exception_condition_oid": "",
-                    "vendor": {"attributes": []},
-                },
-                {
-                    "uid": "OdmItem_000029",
-                    "oid": "I.475",
-                    "name": "EC_ECPRESP 1",
-                    "version": "1.0",
-                    "order_number": 4,
-                    "mandatory": "Yes",
-                    "key_sequence": "None",
-                    "method_oid": None,
-                    "imputation_method_oid": "None",
-                    "role": "None",
-                    "role_codelist_oid": "None",
-                    "collection_exception_condition_oid": "",
-                    "vendor": {"attributes": []},
-                },
-                {
-                    "uid": "OdmItem_000030",
-                    "oid": "I.474",
-                    "name": "EC_<IMP>_ECTRT 1",
-                    "version": "1.0",
-                    "order_number": 5,
-                    "mandatory": "Yes",
-                    "key_sequence": "None",
-                    "method_oid": None,
-                    "imputation_method_oid": "None",
-                    "role": "None",
-                    "role_codelist_oid": "None",
-                    "collection_exception_condition_oid": "",
-                    "vendor": {"attributes": []},
-                },
-                {
                     "uid": "OdmItem_000039",
                     "oid": "I.565",
                     "name": "EC_adm_imp_ECOCCUR 1",
                     "version": "1.0",
-                    "order_number": 6,
+                    "order_number": 1,
                     "mandatory": "Yes",
                     "key_sequence": "None",
                     "method_oid": None,
@@ -7324,7 +7310,7 @@ CLINSPARK_OUTPUT = {
                     "oid": "I.578",
                     "name": "EC_specify_reason_ECREASOC 1",
                     "version": "1.0",
-                    "order_number": 7,
+                    "order_number": 2,
                     "mandatory": "Yes",
                     "key_sequence": "None",
                     "method_oid": None,
@@ -7339,7 +7325,7 @@ CLINSPARK_OUTPUT = {
                     "oid": "I.576",
                     "name": "EC_type_of_treatment_ECSCAT 1",
                     "version": "1.0",
-                    "order_number": 8,
+                    "order_number": 3,
                     "mandatory": "Yes",
                     "key_sequence": "None",
                     "method_oid": None,
@@ -7353,7 +7339,7 @@ CLINSPARK_OUTPUT = {
                     "uid": "OdmItem_000042",
                     "oid": "I.580",
                     "name": "EC_bleed_no_ECXB 1",
-                    "order_number": 9,
+                    "order_number": 4,
                     "version": "1.0",
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -7368,7 +7354,7 @@ CLINSPARK_OUTPUT = {
                     "uid": "OdmItem_000043",
                     "oid": "I.581",
                     "name": "EC_surgery_no_ECPR 1",
-                    "order_number": 10,
+                    "order_number": 5,
                     "version": "1.0",
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -7383,7 +7369,7 @@ CLINSPARK_OUTPUT = {
                     "uid": "OdmItem_000044",
                     "oid": "I.582",
                     "name": "EC_start_datetime_ECSTDTC 1",
-                    "order_number": 11,
+                    "order_number": 6,
                     "version": "1.0",
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -7398,7 +7384,7 @@ CLINSPARK_OUTPUT = {
                     "uid": "OdmItem_000045",
                     "oid": "I.583",
                     "name": "EC_end_datetime_ECENDTC 1",
-                    "order_number": 12,
+                    "order_number": 7,
                     "version": "1.0",
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -7413,22 +7399,7 @@ CLINSPARK_OUTPUT = {
                     "uid": "OdmItem_000046",
                     "oid": "I.560",
                     "name": "EC_dose_ECDOSE 1",
-                    "order_number": 13,
-                    "version": "1.0",
-                    "mandatory": "Yes",
-                    "key_sequence": "None",
-                    "method_oid": None,
-                    "imputation_method_oid": "None",
-                    "role": "None",
-                    "role_codelist_oid": "None",
-                    "collection_exception_condition_oid": "",
-                    "vendor": {"attributes": []},
-                },
-                {
-                    "uid": "OdmItem_000033",
-                    "oid": "I.561",
-                    "name": "EC_dose_form_ECDOSFRM 1",
-                    "order_number": 14,
+                    "order_number": 8,
                     "version": "1.0",
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -7443,7 +7414,7 @@ CLINSPARK_OUTPUT = {
                     "uid": "OdmItem_000047",
                     "oid": "I.562",
                     "name": "EC_route_ECROUTE 1",
-                    "order_number": 15,
+                    "order_number": 9,
                     "version": "1.0",
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -7458,7 +7429,7 @@ CLINSPARK_OUTPUT = {
                     "uid": "OdmItem_000048",
                     "oid": "I.563",
                     "name": "EC_laterality_ECLAT 1",
-                    "order_number": 16,
+                    "order_number": 10,
                     "version": "1.0",
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -7473,7 +7444,7 @@ CLINSPARK_OUTPUT = {
                     "uid": "OdmItem_000049",
                     "oid": "I.564",
                     "name": "EC_inj_site_ECLOC 1",
-                    "order_number": 17,
+                    "order_number": 11,
                     "version": "1.0",
                     "mandatory": "Yes",
                     "key_sequence": "None",
@@ -8348,6 +8319,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "DM:ETHNIC",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000002",
+                "oid": "IG.262",
+                "name": "Demography 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Description",
@@ -8389,6 +8365,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "DM:RACE",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000002",
+                "oid": "IG.262",
+                "name": "Demography 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Description",
@@ -8430,6 +8411,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "DM:RACE",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000002",
+                "oid": "IG.262",
+                "name": "Demography 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Description",
@@ -8471,6 +8457,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "DM:RACE",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000002",
+                "oid": "IG.262",
+                "name": "Demography 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Description",
@@ -8512,6 +8503,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "DM:RACE",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000002",
+                "oid": "IG.262",
+                "name": "Demography 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Description",
@@ -8553,6 +8549,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "DM:RACE",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000002",
+                "oid": "IG.262",
+                "name": "Demography 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Description",
@@ -8594,6 +8595,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "DM:SEX",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000002",
+                "oid": "IG.262",
+                "name": "Demography 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Description",
@@ -8661,6 +8667,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "DM:AGE",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000002",
+                "oid": "IG.262",
+                "name": "Demography 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Description",
@@ -8716,6 +8727,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "DM:PREVUBJ",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000002",
+                "oid": "IG.262",
+                "name": "Demography 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -8752,6 +8768,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "DS:DSCAT",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000001",
+                "oid": "IG.124",
+                "name": "Informed Consent 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -8823,6 +8844,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "DS:DSDECOD",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000001",
+                "oid": "IG.124",
+                "name": "Informed Consent 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -8948,6 +8974,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "DS:DSSTDTC",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000001",
+                "oid": "IG.124",
+                "name": "Informed Consent 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -8984,6 +9015,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000005",
+                "oid": "IG.97",
+                "name": "Prescribed dose of <Investigational medicinal product> 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -9055,6 +9091,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000005",
+                "oid": "IG.97",
+                "name": "Prescribed dose of <Investigational medicinal product> 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -9108,6 +9149,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000005",
+                "oid": "IG.97",
+                "name": "Prescribed dose of <Investigational medicinal product> 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -9170,6 +9216,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000005",
+                "oid": "IG.97",
+                "name": "Prescribed dose of <Investigational medicinal product> 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -9223,6 +9274,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000007",
+                "oid": "IG.99",
+                "name": "Administration of <Investigational medicinal product> 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -9285,6 +9341,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "Protocol",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000008",
+                "oid": "IG.267",
+                "name": "Post dose 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -9321,6 +9382,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000007",
+                "oid": "IG.99",
+                "name": "Administration of <Investigational medicinal product> 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -9357,6 +9423,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "Protocol",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000008",
+                "oid": "IG.267",
+                "name": "Post dose 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -9393,6 +9464,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "Protocol",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000008",
+                "oid": "IG.267",
+                "name": "Post dose 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -9429,6 +9505,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000005",
+                "oid": "IG.97",
+                "name": "Prescribed dose of <Investigational medicinal product> 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -9465,6 +9546,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000007",
+                "oid": "IG.99",
+                "name": "Administration of <Investigational medicinal product> 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -9501,6 +9587,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000005",
+                "oid": "IG.97",
+                "name": "Prescribed dose of <Investigational medicinal product> 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -9563,6 +9654,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "Protocol",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000006",
+                "oid": "IG.98",
+                "name": "Preparation for dosing 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -9599,6 +9695,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000007",
+                "oid": "IG.99",
+                "name": "Administration of <Investigational medicinal product> 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -9635,6 +9736,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000007",
+                "oid": "IG.99",
+                "name": "Administration of <Investigational medicinal product> 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -9706,6 +9812,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000007",
+                "oid": "IG.99",
+                "name": "Administration of <Investigational medicinal product> 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -9768,6 +9879,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "Protocol",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000006",
+                "oid": "IG.98",
+                "name": "Preparation for dosing 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -9804,6 +9920,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "Protocol",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000006",
+                "oid": "IG.98",
+                "name": "Preparation for dosing 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -9840,6 +9961,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000005",
+                "oid": "IG.97",
+                "name": "Prescribed dose of <Investigational medicinal product> 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -9876,6 +10002,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "Protocol",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000006",
+                "oid": "IG.98",
+                "name": "Preparation for dosing 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -9938,6 +10069,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000007",
+                "oid": "IG.99",
+                "name": "Administration of <Investigational medicinal product> 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -10000,6 +10136,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000005",
+                "oid": "IG.97",
+                "name": "Prescribed dose of <Investigational medicinal product> 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -10036,6 +10177,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000007",
+                "oid": "IG.99",
+                "name": "Administration of <Investigational medicinal product> 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -10072,6 +10218,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000007",
+                "oid": "IG.99",
+                "name": "Administration of <Investigational medicinal product> 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -10108,6 +10259,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000007",
+                "oid": "IG.99",
+                "name": "Administration of <Investigational medicinal product> 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -10144,6 +10300,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000007",
+                "oid": "IG.99",
+                "name": "Administration of <Investigational medicinal product> 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -10242,6 +10403,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "Protocol",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000006",
+                "oid": "IG.98",
+                "name": "Preparation for dosing 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -10292,6 +10458,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "Protocol",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000001",
+                "oid": "IG.124",
+                "name": "Informed Consent 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -10328,6 +10499,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "DS:ICFVER",
             "origin": "Protocol",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000001",
+                "oid": "IG.124",
+                "name": "Informed Consent 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -10364,6 +10540,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "BMI",
             "origin": "Protocol",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000003",
+                "oid": "IG.153",
+                "name": "Body Measurements 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -10414,6 +10595,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "VS:VSCAT",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000003",
+                "oid": "IG.153",
+                "name": "Body Measurements 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -10476,6 +10662,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000004",
+                "oid": "IG.72",
+                "name": "Vital Signs 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -10538,6 +10729,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "VS:VSDTC",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000003",
+                "oid": "IG.153",
+                "name": "Body Measurements 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -10574,6 +10770,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000004",
+                "oid": "IG.72",
+                "name": "Vital Signs 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -10610,6 +10811,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "DIABP",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000004",
+                "oid": "IG.72",
+                "name": "Vital Signs 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -10660,6 +10866,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "VS:FASTING",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000003",
+                "oid": "IG.153",
+                "name": "Body Measurements 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -10722,6 +10933,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "HEIGHT",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000003",
+                "oid": "IG.153",
+                "name": "Body Measurements 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -10772,6 +10988,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "PULSE",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000004",
+                "oid": "IG.72",
+                "name": "Vital Signs 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -10808,6 +11029,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "SYSBP",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000004",
+                "oid": "IG.72",
+                "name": "Vital Signs 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",
@@ -10858,6 +11084,11 @@ CLINSPARK_OUTPUT = {
             "sds_var_name": "WEIGHT",
             "origin": "CRF",
             "comment": None,
+            "odm_item_group": {
+                "uid": "OdmItemGroup_000003",
+                "oid": "IG.153",
+                "name": "Body Measurements 1",
+            },
             "translated_texts": [
                 {
                     "text_type": "Question",

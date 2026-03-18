@@ -18,6 +18,7 @@ import pytest
 from fastapi.testclient import TestClient
 from neomodel import db
 
+from clinical_mdr_api.domains.enums import ValidationMode
 from clinical_mdr_api.main import app
 from clinical_mdr_api.models.clinical_programmes.clinical_programme import (
     ClinicalProgramme,
@@ -45,6 +46,7 @@ from clinical_mdr_api.tests.utils.checks import assert_response_status_code
 log = logging.getLogger(__name__)
 
 study: Study
+test_data_dict: dict[str, Any]
 general_activity_group: ActivityGroup
 second_general_activity_group: ActivityGroup
 randomisation_activity_subgroup: ActivitySubGroup
@@ -71,8 +73,8 @@ def test_data():
     """Initialize test data"""
     db_name = "study-activity-group.api"
     inject_and_clear_db(db_name)
-    global study
-    study, _test_data_dict = inject_base_data()
+    global study, test_data_dict
+    study, test_data_dict = inject_base_data()
 
     TestUtils.set_study_title(study.uid)
 
@@ -207,6 +209,19 @@ def test_data():
     yield
 
 
+@pytest.mark.order("last")
+def test_integrity_checks_for_all_studies(api_client):
+    """
+    Test integrity checks for all available studies in the database.
+
+    This test should always be executed at the END to check the health of the remaining database.
+    It validates that all studies in the database pass integrity checks after all other tests have run.
+    """
+    TestUtils.run_integrity_checks_for_all_studies(
+        api_client, mode=ValidationMode.WARNING
+    )  # needs to be warning for now as it's leaving broken data
+
+
 def test_post_and_get_all_study_activity_groups(api_client):
     study_activity_group_into_study_soa_group_mapping: dict[str, str] = {}
     study_activity_group_into_study_study_activity_subgroup_mapping: dict[
@@ -328,14 +343,27 @@ def test_modify_visibility_flag_in_protocol_flowchart(
     # lock and unlock study to create a version
     response = api_client.post(
         f"/studies/{study.uid}/locks",
-        json={"change_description": "v1"},
+        json={
+            "change_description": "v1",
+            "reason_for_change_uid": test_data_dict["reason_for_lock_terms"][
+                0
+            ].term_uid,
+        },
     )
     assert_response_status_code(response, 201)
     locked_version = response.json()["current_metadata"]["version_metadata"][
         "version_number"
     ]
-    response = api_client.delete(f"/studies/{study.uid}/locks")
-    assert_response_status_code(response, 200)
+    response = api_client.post(
+        f"/studies/{study.uid}/unlocks",
+        json={
+            "change_description": "Unlock",
+            "reason_for_change_uid": test_data_dict["reason_for_unlock_terms"][
+                0
+            ].term_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
     locked_results = res
     locked_results["study_version"] = ANY
 
@@ -441,14 +469,27 @@ def test_study_activity_group_reordering(api_client):
     # lock and unlock study to create a version
     response = api_client.post(
         f"/studies/{test_study.uid}/locks",
-        json={"change_description": "v1"},
+        json={
+            "change_description": "v1",
+            "reason_for_change_uid": test_data_dict["reason_for_lock_terms"][
+                0
+            ].term_uid,
+        },
     )
     assert_response_status_code(response, 201)
     locked_version = response.json()["current_metadata"]["version_metadata"][
         "version_number"
     ]
-    response = api_client.delete(f"/studies/{test_study.uid}/locks")
-    assert_response_status_code(response, 200)
+    response = api_client.post(
+        f"/studies/{test_study.uid}/unlocks",
+        json={
+            "change_description": "Unlock",
+            "reason_for_change_uid": test_data_dict["reason_for_unlock_terms"][
+                0
+            ].term_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
     locked_data = study_activities
     for item in locked_data:
         item["study_version"] = ANY
@@ -523,7 +564,12 @@ def test_study_activity_group_reordering(api_client):
     # create a study release
     response = api_client.post(
         f"/studies/{test_study.uid}/release",
-        json={"change_description": "r1"},
+        json={
+            "change_description": "r1",
+            "reason_for_change_uid": test_data_dict["reason_for_lock_terms"][
+                0
+            ].term_uid,
+        },
     )
     assert_response_status_code(response, 201)
     released_version = f"{locked_version}.1"

@@ -78,9 +78,6 @@ from clinical_mdr_api.services._utils import (
 from clinical_mdr_api.services.concepts.activities.activity_group_service import (
     ActivityGroupService,
 )
-from clinical_mdr_api.services.concepts.activities.activity_service import (
-    ActivityService,
-)
 from clinical_mdr_api.services.concepts.activities.activity_sub_group_service import (
     ActivitySubGroupService,
 )
@@ -496,8 +493,7 @@ class StudyActivitySelectionService(
         # Process remaining items: Create new StudyActivities
         for replacement in replacements[1:]:
             # Validate activity groupings using the same validation as patch_selection
-            activity_service = ActivityService()
-            activity_ar = activity_service.repository.find_by_uid_2(
+            activity_ar = self._repos.activity_repository.find_by_uid_2(
                 replacement.activity_uid, for_update=True
             )
             NotFoundException.raise_if_not(
@@ -578,12 +574,31 @@ class StudyActivitySelectionService(
 
         return results
 
+    def _validate_activity(self, activity_uid: str) -> ActivityAR:
+        activity_ar: ActivityAR = self._repos.activity_repository.find_by_uid_2(
+            activity_uid, for_update=True
+        )
+
+        NotFoundException.raise_if_not(activity_ar, "Activity", activity_uid)
+
+        BusinessLogicException.raise_if(
+            activity_ar.item_metadata.status
+            in [
+                LibraryItemStatus.DRAFT,
+                LibraryItemStatus.RETIRED,
+            ],
+            msg=f"There is no approved Activity with name '{activity_ar.name}'.",
+        )
+        return activity_ar
+
     def _create_value_object(
         self,
         study_uid: str,
         selection_create_input: StudySelectionActivityCreateInput,
+        activity_ar: ActivityAR,
         **kwargs,
     ):
+        # activity_ar: ActivityAR = kwargs.get("activity_ar")
         study_soa_group_selection_uid = kwargs["study_soa_group_selection_uid"]
         study_activity_subgroup_selection_uid = kwargs.get(
             "study_activity_subgroup_selection_uid"
@@ -592,14 +607,6 @@ class StudyActivitySelectionService(
             "study_activity_group_selection_uid"
         )
 
-        activity_service = ActivityService()
-        activity_uid = selection_create_input.activity_uid
-        activity_ar = activity_service.repository.find_by_uid_2(
-            activity_uid, for_update=True
-        )
-
-        NotFoundException.raise_if_not(activity_ar, "Activity", activity_uid)
-
         BusinessLogicException.raise_if(
             activity_ar.library.name != settings.requested_library_name
             and (
@@ -607,14 +614,6 @@ class StudyActivitySelectionService(
                 or selection_create_input.activity_group_uid is None
             ),
             msg="Only StudyActivity placeholder can link to None ActivitySubGroup or None ActivityGroup",
-        )
-        BusinessLogicException.raise_if(
-            activity_ar.item_metadata.status
-            in [
-                LibraryItemStatus.DRAFT,
-                LibraryItemStatus.RETIRED,
-            ],
-            msg=f"There is no approved Activity with UID '{activity_uid}'.",
         )
         BusinessLogicException.raise_if(
             selection_create_input.activity_subgroup_uid
@@ -638,7 +637,7 @@ class StudyActivitySelectionService(
         new_selection = StudySelectionActivityVO.from_input_values(
             study_uid=study_uid,
             author_id=self.author,
-            activity_uid=activity_uid,
+            activity_uid=activity_ar.uid,
             activity_name=activity_ar.name,
             activity_version=activity_ar.item_metadata.version,
             activity_library_name=activity_ar.library.name,
@@ -888,8 +887,7 @@ class StudyActivitySelectionService(
         current_object: StudySelectionActivityVO,
         request_object: StudySelectionActivityRequestEditInput,
     ) -> ActivityAR:
-        activity_service = ActivityService()
-        activity_ar = activity_service.repository.find_by_uid_2(
+        activity_ar = self._repos.activity_repository.find_by_uid_2(
             current_object.activity_uid, for_update=True
         )
 
@@ -1327,12 +1325,7 @@ class StudyActivitySelectionService(
                 soa_group_term_uid=selection_create_input.soa_group_term_uid,
             ).study_selection_uid
 
-            activity_service = ActivityService()
-            activity_uid = selection_create_input.activity_uid
-            activity_ar: ActivityAR = activity_service.repository.find_by_uid_2(
-                activity_uid, for_update=True
-            )
-            NotFoundException.raise_if_not(activity_ar, "Activity", activity_uid)
+            activity_ar = self._validate_activity(selection_create_input.activity_uid)
 
             activity_group_version, activity_subgroup_version = (
                 self._get_activity_group_subgroup_version_from_activity_ar(
@@ -1377,6 +1370,7 @@ class StudyActivitySelectionService(
             study_activity_selection = self._create_value_object(
                 study_uid=study_uid,
                 selection_create_input=selection_create_input,
+                activity_ar=activity_ar,
                 study_soa_group_selection_uid=study_soa_group_selection_uid,
                 study_activity_subgroup_selection_uid=study_activity_subgroup_selection_uid,
                 study_activity_group_selection_uid=study_activity_group_selection_uid,
@@ -1564,6 +1558,8 @@ class StudyActivitySelectionService(
 
             # sync with DB and save the update
             repos.study_activity_repository.save(selection_aggregate, self.author)
+            # Invalidate Activity cache so GET /concepts/activities/... will recalculate used_by_studies
+            repos.activity_repository.cache_store_item_by_uid.clear()
         finally:
             repos.close()
 
@@ -1578,8 +1574,6 @@ class StudyActivitySelectionService(
         ),
     ):
         # update underlying Activity
-        activity_service = ActivityService()
-
         if isinstance(request_object, StudySelectionActivityRequestEditInput):
             activity_ar = self._patch_selected_activity(
                 current_object=current_object,
@@ -1595,7 +1589,7 @@ class StudyActivitySelectionService(
             )
             and request_object.activity_uid
         ):
-            activity_ar = activity_service.repository.find_by_uid_2(
+            activity_ar = self._repos.activity_repository.find_by_uid_2(
                 request_object.activity_uid
             )
             ValidationException.raise_if_not(
@@ -1603,7 +1597,7 @@ class StudyActivitySelectionService(
                 msg=f"The Activity with UID '{current_object.activity_uid}' doesn't exist.",
             )
         else:
-            activity_ar = activity_service.repository.find_by_uid_2(
+            activity_ar = self._repos.activity_repository.find_by_uid_2(
                 current_object.activity_uid,
                 version=current_object.activity_version,
             )
@@ -1632,9 +1626,23 @@ class StudyActivitySelectionService(
             and activity_ar.library.name != "Requested",
             msg="An activity subgroup is required for the selection",
         )
+        self.validate_activity_groupings(
+            activity_group_uid=request_object.activity_group_uid,
+            activity_subgroup_uid=request_object.activity_subgroup_uid,
+            activity_ar=activity_ar,
+            current_object=current_object,
+        )
+
+    def validate_activity_groupings(
+        self,
+        activity_subgroup_uid: str | None,
+        activity_group_uid: str | None,
+        activity_ar: ActivityAR,
+        current_object: StudySelectionActivityVO,
+    ) -> None:
         ValidationException.raise_if(
-            request_object.activity_group_uid
-            and request_object.activity_group_uid
+            activity_group_uid
+            and activity_group_uid
             not in [
                 activity_grouping.activity_group_uid
                 for activity_grouping in activity_ar.concept_vo.activity_groupings
@@ -1642,15 +1650,13 @@ class StudyActivitySelectionService(
             msg=f"Provided Activity Group is not included in '{current_object.activity_uid}' Activity Groupings.",
         )
         ValidationException.raise_if(
-            request_object.activity_subgroup_uid
+            activity_subgroup_uid
             and not any(
-                activity_grouping.activity_subgroup_uid
-                == request_object.activity_subgroup_uid
-                and activity_grouping.activity_group_uid
-                == request_object.activity_group_uid
+                activity_grouping.activity_subgroup_uid == activity_subgroup_uid
+                and activity_grouping.activity_group_uid == activity_group_uid
                 for activity_grouping in activity_ar.concept_vo.activity_groupings
             ),
-            msg=f"Provided Activity Subgroup is not part of a Grouping with UID '{request_object.activity_group_uid}' Group in the '{current_object.activity_uid}' Activity Groupings.",
+            msg=f"Provided Activity Subgroup is not part of a Grouping with UID '{activity_group_uid}' Group in the '{current_object.activity_uid}' Activity Groupings.",
         )
 
     def _patch_or_get_study_activity_group(
@@ -1747,7 +1753,8 @@ class StudyActivitySelectionService(
             study_activity_subgroup = self._get_or_create_study_activity_subgroup(
                 study_uid=current_object.study_uid,
                 activity_subgroup_uid=request_object.activity_subgroup_uid,
-                activity_group_uid=request_object.activity_group_uid,
+                activity_group_uid=request_object.activity_group_uid
+                or current_object.activity_group_uid,
                 soa_group_term_uid=soa_group_term_uid,
                 study_activity_group_uid=study_activity_group_uid,
                 sync_latest_version=sync_latest_version,
@@ -2136,6 +2143,29 @@ class StudyActivitySelectionService(
             )
         selection: StudySelectionActivityVO = current_selection.update_version(
             activity_version=activity_ar.item_metadata.version
+        )
+        activity_group_uid_to_validate: str | None = None
+        if sync_latest_version_input and sync_latest_version_input.activity_group_uid:
+            activity_group_uid_to_validate = (
+                sync_latest_version_input.activity_group_uid
+            )
+        else:
+            activity_group_uid_to_validate = current_selection.activity_group_uid
+        activity_subgroup_uid_to_validate: str | None = None
+        if (
+            sync_latest_version_input
+            and sync_latest_version_input.activity_subgroup_uid
+        ):
+            activity_subgroup_uid_to_validate = (
+                sync_latest_version_input.activity_subgroup_uid
+            )
+        else:
+            activity_subgroup_uid_to_validate = current_selection.activity_subgroup_uid
+        self.validate_activity_groupings(
+            activity_group_uid=activity_group_uid_to_validate,
+            activity_subgroup_uid=activity_subgroup_uid_to_validate,
+            activity_ar=activity_ar,
+            current_object=current_selection,
         )
         # When we sync to latest version it means we clear keep_old_version flag as user
         # decided to update to latest version

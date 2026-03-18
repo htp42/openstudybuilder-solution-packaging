@@ -1,5 +1,65 @@
 # OpenStudyBuilder (OSB) Commits changelog
 
+## V 2.6
+
+New Features and Enhancements
+============
+
+### Fixes and Enhancements
+
+- It is now possible to define a reason for releasing, locking or unlocking a study definition on 'Studies > Manage Study > Study' menu. If Other reason is selected, a description can be provided. Additionally, it is possible to link the released or locked version of the study definition to a protocol document version. The distinct list of related major document versions can be viewed on the Protocol Versions tab.
+- The layout for SoA file downloads have been improved on 'Studies > Define Study > Study Activities' menu, Schedule of Activities tab.
+- The issue "Study ID" for "requested" activities not displaying on the overview page is fixed now.
+- The CRF Viewer tab now support a new stylesheet named "HTML" on 'Library > Data Collection Standards > CRF Viewer and CRF Builder' menu. The stylesheets are now showing the connection between a CRF Item and an Activity Instance by displaying the Topic Code and the Adam Param Code.
+- The Item detail stepper and the CRF Tree view tabs are updated to improve the Activity Instance link stepper with a form or a table display on the 'Library > Data Collection Standards > CRF Builder' menu.
+- The user interface now supports editing of editable fields for activity instance attributes and related activity items on 'Library > Concepts > Activities' menu, 'Activity Instances' tab.
+- The user interface now supports creation and editing of activity instance of the Categoric Finding class on 'Library > Concepts > Activities' menu, 'Activity Instances' tab.
+
+### New Feature
+
+- Added GET endpoints for retrieving CT Codelists, Terms and Unit Definitions
+
+### End-to-End Automated test enhancements
+
+- Various code improvements to ensure easier maintenance and overall tests stability.
+- Library: Introduced new folder structure to improve readibility and split feature files into smaller test batches
+- Library > Concepts > Activities > Activity Instances: Defined and implemented tests for Textual Findings
+- Library > Data Collection Standards > CRF Viewer: Defined and implemented tests for generting file for Downloadable Falcon (word) and HTML format 
+- Library > Data Collection Standards > CRF Builder > CRF Viwer: Defined and implemented tests for generting file for Downloadable Falcon (word) and HTML format 
+- Studies: Switched the study activity update and study activity instance update to be done via API to improve tests performance
+- Studies > Define Study > Data Specification > Study Activity Instances: Defined and implemented tests for checking Library Instance Status in the Edit Instance Relationship form
+- Studies > Manage Study > Study > Study Status: Defined and implemented tests for locking/unlocking study
+
+Solved Bugs
+============
+
+### Library
+
+ **Data Collection Standards > CRF Builder > CRF Tree** 
+
+- Expansion of collection error message
+
+### Reports
+
+ **Activity Library Dashboard > ReadMe** 
+
+- Fix laboratory_data_specification issues found in VAL
+
+### Studies
+
+ **Define Study > Study Activities** 
+
+- Review activity updates - subgroup shown as updated even if only group has been changes
+
+ **Define Study > Study Activities > Detailed SoA** 
+
+- Unable to reorder activities in 'patient reported outcome' sub-group
+
+  **Define Study > Study Structure > Study Visits** 
+
+- "Epoch Allocation Rule" column missing when entering edit mode
+
+
 ## V 2.5
 
 New Features and Enhancements

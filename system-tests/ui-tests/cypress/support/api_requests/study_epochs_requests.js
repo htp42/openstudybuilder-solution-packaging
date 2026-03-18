@@ -1,3 +1,5 @@
+import { getShortUniqueId } from "../helper_functions"
+
 const availableEpochsUrl = '/epochs/allowed-configs'
 const studyEpochsUrl = (study_uid) =>  `/studies/${study_uid}/study-epochs`
 const studyEpochsPreviewUrl = (study_uid) =>  `/studies/${study_uid}/study-epochs/preview`
@@ -36,7 +38,7 @@ const createEpochBody = (study_uid) => {
     "epoch_subtype": epochSubType,
     "start_rule": "C1",
     "end_rule": "C5",
-    "description": `DESC${Date.now()}`,
+    "description": `DESC${getShortUniqueId()}`,
     "color_hash": "#1B5E20",
     "study_uid": study_uid
   }

@@ -71,7 +71,7 @@ medicinal_product1: MedicinalProduct
 medicinal_product2: MedicinalProduct
 medicinal_products_all: list[MedicinalProduct]
 study_compounds_all: list[StudySelectionCompound]
-
+test_data_dict: dict[str, Any]
 
 initialize_ct_data_map = {
     "TypeOfTreatment": [("CTTerm_000001", "CTTerm_000001")],
@@ -96,7 +96,8 @@ def test_data():
     """Initialize test data"""
     db_name = "studycompounds.api"
     inject_and_clear_db(db_name)
-    inject_base_data()
+    global test_data_dict
+    _, test_data_dict = inject_base_data()
 
     global BASE_URL
     global rand
@@ -298,6 +299,17 @@ def test_data():
     }
 
     yield
+
+
+@pytest.mark.order("last")
+def test_integrity_checks_for_all_studies(api_client):
+    """
+    Test integrity checks for all available studies in the database.
+
+    This test should always be executed at the END to check the health of the remaining database.
+    It validates that all studies in the database pass integrity checks after all other tests have run.
+    """
+    TestUtils.run_integrity_checks_for_all_studies(api_client)
 
 
 STUDY_COMPOUND_FIELDS_ALL = [
@@ -838,7 +850,12 @@ def test_compound_modify_actions_on_locked_study(api_client):
     # Lock
     response = api_client.post(
         f"/studies/{study.uid}/locks",
-        json={"change_description": "Lock 1"},
+        json={
+            "change_description": "Lock 1",
+            "reason_for_change_uid": test_data_dict["reason_for_lock_terms"][
+                0
+            ].term_uid,
+        },
     )
     assert_response_status_code(response, 201)
 
@@ -884,8 +901,16 @@ def test_get_compounds_data_for_specific_study_version(api_client):
     res_old = res
 
     # Unlock
-    response = api_client.delete(f"/studies/{study.uid}/locks")
-    assert_response_status_code(response, 200)
+    response = api_client.post(
+        f"/studies/{study.uid}/unlocks",
+        json={
+            "change_description": "Unlock",
+            "reason_for_change_uid": test_data_dict["reason_for_unlock_terms"][
+                0
+            ].term_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
 
     response = api_client.post(
         f"{BASE_URL}",

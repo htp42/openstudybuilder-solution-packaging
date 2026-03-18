@@ -9,6 +9,12 @@ from clinical_mdr_api.tests.fixtures.study import *
 from clinical_mdr_api.tests.fixtures.tracing import *
 
 
+def pytest_configure(config):
+    """Register custom pytest markers"""
+    # Register the order marker so pytest can recognize it
+    config.addinivalue_line("markers", "order: mark test to run in a specific order")
+
+
 def pytest_addoption(parser):
     """add custom command-line options to Pytest"""
 

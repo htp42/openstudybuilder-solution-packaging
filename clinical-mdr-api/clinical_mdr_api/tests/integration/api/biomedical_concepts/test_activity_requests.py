@@ -20,6 +20,7 @@ from clinical_mdr_api.models.concepts.activities.activity_sub_group import (
     ActivitySubGroup,
 )
 from clinical_mdr_api.models.controlled_terminologies.ct_term import CTTerm
+from clinical_mdr_api.models.projects.project import Project
 from clinical_mdr_api.tests.integration.utils.api import (
     inject_and_clear_db,
     inject_base_data,
@@ -47,6 +48,7 @@ activity_subgroup: ActivitySubGroup
 activity_group: ActivityGroup
 study_uid: str
 biomarkers_flowchart: CTTerm
+project_for_test: Project
 
 
 @pytest.fixture(scope="module")
@@ -65,6 +67,14 @@ def test_data():
     study, _test_data_dict = inject_base_data()
     study_uid = study.uid
 
+    clinical_programme = TestUtils.create_clinical_programme(name="SoA CP")
+    global project_for_test
+    project_for_test = TestUtils.create_project(
+        name="Project for SoA",
+        project_number="1234",
+        description="Base project",
+        clinical_programme_uid=clinical_programme.uid,
+    )
     catalogue_name = CT_CATALOGUE_NAME
     flowchart_codelist = TestUtils.create_ct_codelist(
         sponsor_preferred_name="Flowchart Group",
@@ -169,7 +179,7 @@ ACTIVITY_REQUEST_FIELDS_ALL = [
     "is_request_rejected",
     "contact_person",
     "reason_for_rejecting",
-    "requester_study_id",
+    "used_by_studies",
     "replaced_by_activity",
     "is_data_collected",
     "is_multiple_selection_allowed",
@@ -619,13 +629,7 @@ def test_update_activity_request_to_sponsor_in_study_activity(api_client):
 
 
 def test_edit_study_activity_request(api_client):
-    clinical_programme = TestUtils.create_clinical_programme(name="SoA CP")
-    project_for_test = TestUtils.create_project(
-        name="Project for SoA",
-        project_number="1234",
-        description="Base project",
-        clinical_programme_uid=clinical_programme.uid,
-    )
+
     study_for_test = TestUtils.create_study(
         project_number=project_for_test.project_number
     )
@@ -704,6 +708,79 @@ def test_edit_study_activity_request(api_client):
     assert res["activity"]["name"] == "New request name"
     assert res["activity"]["is_request_final"] is True
     assert res["activity"]["is_data_collected"] is False
+
+
+def test_activity_request_used_by_studies_field(api_client):
+    shared_activity_request = TestUtils.create_activity(
+        name="Activity request shared among Studies",
+        request_rationale="Some rationale",
+        library_name=settings.requested_library_name,
+    )
+
+    study_for_test_1 = TestUtils.create_study(
+        project_number=project_for_test.project_number
+    )
+    create_study_activity(
+        study_uid=study_for_test_1.uid,
+        activity_uid=shared_activity_request.uid,
+        activity_subgroup_uid=None,
+        activity_group_uid=None,
+        soa_group_term_uid=biomarkers_flowchart.term_uid,
+    )
+    study_for_test_2 = TestUtils.create_study(
+        project_number=project_for_test.project_number
+    )
+    sa2 = create_study_activity(
+        study_uid=study_for_test_2.uid,
+        activity_uid=shared_activity_request.uid,
+        activity_subgroup_uid=None,
+        activity_group_uid=None,
+        soa_group_term_uid=biomarkers_flowchart.term_uid,
+    )
+    response = api_client.get(
+        f"/concepts/activities/activities/{shared_activity_request.uid}"
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    used_by_studies = sorted(
+        [
+            study_for_test_1.current_metadata.identification_metadata.study_id,
+            study_for_test_2.current_metadata.identification_metadata.study_id,
+        ]
+    )
+    assert res["uid"] == shared_activity_request.uid
+    assert res["used_by_studies"] == used_by_studies
+
+    response = api_client.get("/concepts/activities/activities")
+    assert_response_status_code(response, 200)
+    res = response.json()["items"]
+    for activity in res:
+        if activity["uid"] == shared_activity_request.uid:
+            assert activity["used_by_studies"] == used_by_studies
+
+    response = api_client.delete(
+        f"/studies/{study_for_test_2.uid}/study-activities/{sa2.study_activity_uid}"
+    )
+    assert_response_status_code(response, 204)
+
+    # Get the used_by_studies field after Study Activity in some Study is removed
+    response = api_client.get(
+        f"/concepts/activities/activities/{shared_activity_request.uid}"
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    used_by_studies = [
+        study_for_test_1.current_metadata.identification_metadata.study_id,
+    ]
+    assert res["uid"] == shared_activity_request.uid
+    assert res["used_by_studies"] == used_by_studies
+
+    response = api_client.get("/concepts/activities/activities")
+    assert_response_status_code(response, 200)
+    res = response.json()["items"]
+    for activity in res:
+        if activity["uid"] == shared_activity_request.uid:
+            assert activity["used_by_studies"] == used_by_studies
 
 
 def test_reject_activity_request(api_client):

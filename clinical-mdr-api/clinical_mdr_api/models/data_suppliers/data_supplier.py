@@ -12,6 +12,7 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
 from clinical_mdr_api.models.concepts.concept import VersionProperties
 from clinical_mdr_api.models.libraries.library import Library
 from clinical_mdr_api.models.utils import BaseModel, InputModel
+from common.config import settings
 
 
 class DataSupplierTypeTerm(BaseModel):
@@ -223,7 +224,7 @@ class DataSupplierInput(InputModel):
     ui_base_url: Annotated[str | None, Field(min_length=1)]
     origin_source_uid: Annotated[str | None, Field(min_length=1)]
     origin_type_uid: Annotated[str | None, Field(min_length=1)]
-    library_name: Annotated[str, Field(min_length=1)] = "Sponsor"
+    library_name: Annotated[str, Field(min_length=1)] = settings.sponsor_library_name
 
 
 class DataSupplierEditInput(InputModel):

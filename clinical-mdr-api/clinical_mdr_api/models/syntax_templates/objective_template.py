@@ -16,6 +16,7 @@ from clinical_mdr_api.models.syntax_templates.template_parameter import (
     TemplateParameter,
 )
 from clinical_mdr_api.models.utils import BaseModel, PatchInputModel, PostInputModel
+from common.config import settings
 
 IS_CONFIRMATORY_TESTING_DESC = (
     "Indicates if template is related to confirmatory testing. Defaults to False."
@@ -261,7 +262,7 @@ class ObjectiveTemplateCreateInput(PostInputModel):
             "* The library needs to allow the creation: The 'is_editable' property of the library needs to be true.",
             min_length=1,
         ),
-    ] = "Sponsor"
+    ] = settings.sponsor_library_name
     indication_uids: Annotated[
         list[str] | None,
         Field(

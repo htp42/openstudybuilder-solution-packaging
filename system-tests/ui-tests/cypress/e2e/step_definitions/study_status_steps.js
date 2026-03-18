@@ -1,4 +1,4 @@
-const { When, Then } = require('@badeball/cypress-cucumber-preprocessor')
+const { Given, When, Then } = require('@badeball/cypress-cucumber-preprocessor')
 import { getCurrentDateFormatted } from '../../support/helper_functions'
 
 
@@ -7,6 +7,8 @@ const lock_description = 'Test lock description'
 let new_version
 let locked_date
 let released_date
+
+let currentStudyNumber
 
 When('The study is released with description provided', () => {
   released_date = getCurrentDateFormatted()
@@ -57,4 +59,65 @@ Then('A row for the Released Study Status is displayed with a current time stamp
   cy.checkRowByIndex(1, 'Version', Math.ceil(new_version))
   cy.checkRowByIndex(1, 'Release description', lock_description)
   cy.checkRowByIndex(1, 'Modified', locked_date)
+})
+
+Given('A test study {string} in draft status with defined title exists', (study_number) => {
+  currentStudyNumber = study_number
+  cy.createTestStudy(study_number, 'lock/release testing')
+  cy.getStudyUid(study_number).then(uid => {
+    cy.setStudyTitle(uid, 'test title', 'test short title')
+    cy.visit(`studies/${uid}/study_status/study_status`)
+  })
+})
+
+Given('A test study {string} locked for {string} in major version {string} and minor version {string} exists', (study_number, reason, major_version, minor_version) => {
+  currentStudyNumber = study_number
+  cy.createTestStudy(study_number, 'unlock testing')
+  cy.getStudyUid(study_number).then(uid => {
+    cy.setStudyTitle(uid, 'test title', 'test short title')
+    cy.lockStudy(study_number, reason, major_version, minor_version)
+    cy.visit(`studies/${uid}/study_status/study_status`)
+  })
+})
+
+When('The user locks the study for {string} reason', (reason) => {
+  cy.intercept('**/locks').as('lockRequest')
+  cy.clickButton('lock-study')
+  cy.selectVSelect('change-reason', reason)
+})
+
+When('The user unlocks the study for {string} reason', (reason) => {
+  cy.intercept('**/unlocks').as('unlockRequest')
+  cy.clickButton('unlock-study')
+  cy.selectVSelect('change-reason', reason)
+})
+
+When("The user provides protocol major version {string}", (major_version) => {
+    cy.get('[data-cy="major-version"]').clear().type(major_version)
+
+})
+
+When("The user provides protocol minor version {string}", (minor_version) => {
+    cy.get('[data-cy="minor-version"]').clear().type(minor_version)
+
+})
+
+When("The user provides explanation for other reason", () => {
+    cy.fillTextBox('lock-release-other-reason', 'Test reason')
+})
+
+Then('The study is locked with {string} as a reason with major protocol version {string} and minor version {string}', (reason, major_version, minor_version) => {
+  cy.wait('@lockRequest').then(() => {
+    cy.checkRowByIndex(0, 'Reason for locking or releasing study', reason)
+    cy.checkRowByIndex(0, 'Protocol Version', `${major_version}.${minor_version}`)
+  })
+})
+
+Then('The study is unlocked with {string} as a reason with major protocol version {string} and minor version {string}', (reason, major_version, minor_version) => {
+  cy.wait('@unlockRequest').then(() => {
+    cy.checkRowByIndex(0, 'Reason for unlocking study', reason)
+    if (major_version > 0 ||  minor_version > 0) {
+      cy.checkRowByIndex(0, 'Protocol Version', `${major_version}.${minor_version}`)
+    }
+  })
 })

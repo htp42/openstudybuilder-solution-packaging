@@ -1,6 +1,6 @@
 <template>
   <SimpleFormDialog
-    ref="form"
+    ref="formRef"
     :title="$t('CRFTree.link') + ' ' + itemsTypeName"
     :help-items="helpItems"
     :open="open"
@@ -54,7 +54,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, inject, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import SimpleFormDialog from '@/components/tools/SimpleFormDialog.vue'
 import crfs from '@/api/crfs'
@@ -75,9 +75,12 @@ const props = defineProps({
   open: Boolean,
 })
 
+const notificationHub = inject('notificationHub')
+
 const emit = defineEmits(['close'])
 
 const { t } = useI18n()
+const formRef = ref()
 
 const helpItems = ref([])
 const items = ref([])
@@ -111,10 +114,6 @@ watch(
     initForm()
   }
 )
-
-onMounted(() => {
-  initForm()
-})
 
 const sanitizeHTMLHandler = (html) => {
   return sanitizeHTML(html)
@@ -157,16 +156,38 @@ const submit = () => {
   })
   switch (props.itemsType) {
     case 'forms':
-      crfs
-        .addFormsToCollection(payload, props.itemToLink.uid, true)
-        .then(() => {
+      crfs.addFormsToCollection(payload, props.itemToLink.uid, true).then(
+        () => {
+          notificationHub.add({
+            type: 'success',
+            msg: t('CRFTree.success_forms', {
+              count: payload.length,
+              name: props.itemToLink.name,
+            }),
+          })
           emit('close')
-        })
+        },
+        () => {
+          formRef.value.working = false
+        }
+      )
       return
     case 'item-groups':
-      crfs.addItemGroupsToForm(payload, props.itemToLink.uid, true).then(() => {
-        emit('close')
-      })
+      crfs.addItemGroupsToForm(payload, props.itemToLink.uid, true).then(
+        () => {
+          notificationHub.add({
+            type: 'success',
+            msg: t('CRFTree.success_item_groups', {
+              count: payload.length,
+              name: props.itemToLink.name,
+            }),
+          })
+          emit('close')
+        },
+        () => {
+          formRef.value.working = false
+        }
+      )
       return
     case 'items':
       payload.forEach((el) => {
@@ -180,9 +201,21 @@ const submit = () => {
           ? el.role_codelist_oid
           : constants.NULL
       })
-      crfs.addItemsToItemGroup(payload, props.itemToLink.uid, true).then(() => {
-        emit('close')
-      })
+      crfs.addItemsToItemGroup(payload, props.itemToLink.uid, true).then(
+        () => {
+          notificationHub.add({
+            type: 'success',
+            msg: t('CRFTree.success_items', {
+              count: payload.length,
+              name: props.itemToLink.name,
+            }),
+          })
+          emit('close')
+        },
+        () => {
+          formRef.value.working = false
+        }
+      )
   }
 }
 
@@ -222,17 +255,27 @@ const initForm = () => {
 
 const getItems = (filters, options, filtersUpdated) => {
   if (props.itemsType) {
+    const localFilters = filters ? JSON.parse(filters) : {}
+
+    if (props.itemsType === 'items') {
+      localFilters['odm_item_group'] = { v: [], op: 'eq' }
+      if (props.itemToLink?.uid) {
+        localFilters['odm_item_group.uid'] = {
+          v: [props.itemToLink.uid],
+          op: 'eq',
+        }
+      }
+    }
+
     const parameters = filteringParameters.prepareParameters(
       options,
-      filters,
+      localFilters,
       filtersUpdated
     )
-    if (filters) {
-      parameters.filters = JSON.parse(filters)
-    }
-    const params = {}
-    params.params = parameters
-    crfs.get(props.itemsType, params).then((resp) => {
+
+    parameters['operator'] = 'or'
+
+    crfs.get(props.itemsType, { params: parameters }).then((resp) => {
       items.value = resp.data.items
       total.value = resp.data.total
     })

@@ -22,7 +22,7 @@
     "@microsoft/applicationinsights-clickanalytics-js": "^3.2.0",
     "@microsoft/applicationinsights-web": "^3.2.0",
     "@vueup/vue-quill": "^1.2.0",
-    "axios": "^1.11.0",
+    "axios": "^1.13.5",
     "buffer": "^6.0.3",
     "chart.js": "^4.4.0",
     "dompurify": "^3.2.5",
@@ -60,7 +60,9 @@
     "rollup": "3.29.4",
     "exceljs/**/archiver": "^7.0.1",
     "exceljs/**/unzipper": "^0.12.3",
-    "exceljs/**/tmp": "^0.2.5"
+    "exceljs/**/tmp": "^0.2.5",
+    "**/archiver-utils/glob": "^10.5.0",
+    "exceljs/**/minimatch": "^9.0.6"
   },
   "packageManager": "yarn@1.22.22"
 }

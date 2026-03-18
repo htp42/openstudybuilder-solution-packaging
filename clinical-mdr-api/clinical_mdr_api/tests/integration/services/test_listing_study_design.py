@@ -1,5 +1,6 @@
 import unittest
 from datetime import datetime, timezone
+from typing import Any
 
 from clinical_mdr_api.models import study_selections
 from clinical_mdr_api.models.listings.listings_study import (
@@ -49,6 +50,7 @@ from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 from common.config import settings
 
 study: Study
+test_data_dict: dict[str, Any]
 
 
 class TestStudyListing(unittest.TestCase):
@@ -56,8 +58,8 @@ class TestStudyListing(unittest.TestCase):
     def setUpClass(cls) -> None:
         inject_and_clear_db("StudyListingTest")
         TestUtils.create_library(name="UCUM", is_editable=True)
-        global study
-        study, _ = inject_base_data()
+        global study, test_data_dict
+        study, test_data_dict = inject_base_data()
         codelist = TestUtils.create_ct_codelist()
         TestUtils.create_study_ct_data_map(codelist_uid=None)
         study_service = StudyService()
@@ -335,8 +337,19 @@ class TestStudyListing(unittest.TestCase):
 
         # lock study
         study_service = StudyService()
-        study_service.lock(uid=cls.study_uid, change_description="locking it")
-        study_service.unlock(uid=cls.study_uid)
+        study_service.lock(
+            uid=cls.study_uid,
+            change_description="locking it",
+            reason_for_lock_term_uid=test_data_dict["reason_for_lock_terms"][
+                0
+            ].term_uid,
+        )
+        study_service.unlock(
+            uid=cls.study_uid,
+            reason_for_unlock_term_uid=test_data_dict["reason_for_unlock_terms"][
+                0
+            ].term_uid,
+        )
 
     def test_study_metadata_listing(self):
         self.maxDiff = None  # pylint: disable=invalid-name

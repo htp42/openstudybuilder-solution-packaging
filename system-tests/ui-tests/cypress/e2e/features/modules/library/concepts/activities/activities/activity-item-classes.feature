@@ -16,13 +16,13 @@ Feature: Library - Concepts - Activities - Activity Item Classes
 
     Scenario: [Table][Options] User must be able to see table with correct options
         Then A table is visible with following options
-            | options                                                         |
-            | Select columns                                                  |
-            | Export                                                          |
-            | Select filters                                                  |
-            | Select rows                                                     |
-            | Search                                                          |
-            | Show version history                                            |
+            | options                                            |
+            | filters-button                                     |
+            | columns-layout-button                              |
+            | table-export-button                                |
+            | select-rows                                        |
+            | search-field                                       |
+            | History                                            |
 
     @smoke_test
      Scenario: [Table][Columns][Names] User must be able to see the columns list on the main page as below

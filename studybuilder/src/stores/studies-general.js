@@ -43,6 +43,12 @@ export const useStudiesGeneralStore = defineStore('studiesGeneral', {
       })
     },
     studyId: (state) => {
+      if (!state.selectedStudy.current_metadata) {
+        const studyNumber = state.selectedStudy.number
+        return studyNumber !== undefined && studyNumber !== null
+          ? state.selectedStudy.id
+          : state.selectedStudy.acronym
+      }
       const studyNumber =
         state.selectedStudy.current_metadata.identification_metadata
           .study_number
@@ -51,10 +57,56 @@ export const useStudiesGeneralStore = defineStore('studiesGeneral', {
         : state.selectedStudy.current_metadata.identification_metadata
             .study_acronym
     },
+    studyAcronym: (state) => {
+      if (!state.selectedStudy) {
+        return null
+      }
+      return state.selectedStudy.current_metadata
+        ? state.selectedStudy.current_metadata.identification_metadata
+            .study_acronym
+        : state.selectedStudy.acronym
+    },
+    studyStatus: (state) => {
+      if (!state.selectedStudy) {
+        return null
+      }
+      return state.selectedStudy.current_metadata
+        ? state.selectedStudy.current_metadata.version_metadata.study_status
+        : state.selectedStudy.version_status
+    },
+    studyVersion: (state) => {
+      if (!state.selectedStudy) {
+        return null
+      }
+      return state.selectedStudy.current_metadata
+        ? state.selectedStudy.current_metadata.version_metadata.version_number
+        : state.selectedStudy.version_number
+    },
     studyUid: (state) => {
+      if (!state.selectedStudy) {
+        return null
+      }
       return state.selectedStudy.study_parent_part
         ? state.selectedStudy.study_parent_part.uid
         : state.selectedStudy.uid
+    },
+    projectName: (state) => {
+      if (!state.selectedStudy) {
+        return null
+      }
+      return state.selectedStudy.current_metadata
+        ? state.selectedStudy.current_metadata.identification_metadata
+            .project_name
+        : state.selectedStudy.project_name
+    },
+    projectNumber: (state) => {
+      if (!state.selectedStudy) {
+        return null
+      }
+      return state.selectedStudy.current_metadata
+        ? state.selectedStudy.current_metadata.identification_metadata
+            .project_number
+        : state.selectedStudy.project_number
     },
   },
 
@@ -78,8 +130,12 @@ export const useStudiesGeneralStore = defineStore('studiesGeneral', {
     },
     async selectStudy(studyObj, forceReload) {
       this.selectedStudy = studyObj
-      this.selectedStudyVersion =
-        studyObj.current_metadata.version_metadata.version_number
+      if (!studyObj.current_metadata) {
+        this.selectedStudyVersion = studyObj.version_number
+      } else {
+        this.selectedStudyVersion =
+          studyObj.current_metadata.version_metadata.version_number
+      }
       localStorage.setItem('selectedStudy', JSON.stringify(studyObj))
       let resp
       resp = await study.getStudyPreferredTimeUnit(studyObj.uid)

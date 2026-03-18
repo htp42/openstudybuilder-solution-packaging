@@ -40,16 +40,18 @@
         <v-menu rounded location="bottom">
           <template #activator="{ props }">
             <v-btn
-              class="ml-2 expandHoverBtn"
+              class="ml-2"
+              icon
+              size="small"
               variant="outlined"
               color="nnBaseBlue"
               v-bind="props"
               :loading="soaContentLoadingStore.loading"
             >
-              <v-icon left>mdi-download-outline</v-icon>
-              <span class="label">{{
-                $t('DataTableExportButton.export')
-              }}</span>
+              <v-icon>mdi-download-outline</v-icon>
+              <v-tooltip activator="parent" location="top">
+                {{ $t('DataTableExportButton.export') }}
+              </v-tooltip>
             </v-btn>
           </template>
           <v-list>

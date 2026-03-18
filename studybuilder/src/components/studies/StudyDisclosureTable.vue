@@ -72,6 +72,8 @@ import exportLoader from '@/utils/exportLoader'
 
 const studiesGeneralStore = useStudiesGeneralStore()
 
+const currentStudyId = computed(() => studiesGeneralStore.studyId)
+
 const { t } = useI18n()
 const items = ref([
   { title: t('StudyDisclosure.table_1'), value: 'identification', index: 0 },
@@ -229,10 +231,7 @@ function getPharmaCmXml() {
     exportLoader.downloadFile(
       resp.data,
       'text/xml',
-      t('StudyDisclosure.study_disclosure') +
-        ' ' +
-        studiesGeneralStore.selectedStudy.current_metadata
-          .identification_metadata.study_id
+      t('StudyDisclosure.study_disclosure') + ' ' + currentStudyId.value
     )
     downloadLoading.value = false
   })

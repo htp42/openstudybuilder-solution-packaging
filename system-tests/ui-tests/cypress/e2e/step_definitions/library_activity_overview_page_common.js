@@ -15,12 +15,6 @@ When('Group, subgroup, activity and instance names created through API are found
     cy.getActivityInstanceNameByUid().then(text => instanceName = text)
 })
 
-When('{string} button is not available', (title) => cy.contains('.v-card-title button', title).should('not.exist'))
-
-When('{string} button is visible in the overview page', (title) => cy.contains('.v-card-title button', title).should('be.visible'))
-
-When('I click {string} button', (title) => cy.contains('.v-card-title button', title).click())
-
 Then('{string} overview page can be opened by clicking the link in overview page', (name) => cy.get('.v-table__wrapper').contains('a', name).click())
 
 Then('The group overview page can be opened by clicking the group link in overview page', () => clickOnLinkedItem(groupName))
@@ -77,8 +71,11 @@ Given('The linked subgroup is found in the Groups table with status {string} and
     verifyLinkedItem('Activity subgroups', subgroupName, status, version)
 })
 
-Given('The new linked subgroup is found in the Groups table with status {string} and version {string}', (status, version) => {
-    verifyLinkedItem('Activity subgroups', apiSubgroupName, status, version, 1)
+Given('Both subgroups are visible in the Activity subgroup table with status {string} and version {string}', (status, version) => {
+    cy.contains('.section-header', 'Activity subgroups').parent().within(() => {
+        cy.contains('tr', apiSubgroupName).should('contain.text', status).should('contain.text', version)
+        cy.contains('tr', subgroupName).should('contain.text', status).should('contain.text', version)
+  })
 })
 
 Given('The linked activity is found in the Acivities table with status {string} and version {string}', (status, version) => {

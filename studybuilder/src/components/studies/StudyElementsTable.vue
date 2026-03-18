@@ -104,7 +104,9 @@
       </template>
       <template #actions="">
         <v-btn
-          class="ml-2 expandHoverBtn"
+          class="ml-2"
+          icon
+          size="small"
           variant="outlined"
           color="nnBaseBlue"
           :disabled="
@@ -113,8 +115,10 @@
           "
           @click.stop="showForm = true"
         >
-          <v-icon left>mdi-plus</v-icon>
-          <span class="label">{{ $t('StudyElements.add_element') }}</span>
+          <v-icon>mdi-plus</v-icon>
+          <v-tooltip activator="parent" location="top">
+            {{ $t('StudyElements.add_element') }}
+          </v-tooltip>
         </v-btn>
       </template>
     </NNTable>

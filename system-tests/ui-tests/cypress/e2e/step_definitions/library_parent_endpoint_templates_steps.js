@@ -1,5 +1,6 @@
 import { fillTemplateName } from './library_syntax_templates_common'
 const { Given, When, Then } = require('@badeball/cypress-cucumber-preprocessor')
+const { getShortUniqueId } = require("../../support/helper_functions");
 
 let defaultEndpointName
 
@@ -13,11 +14,11 @@ Then('The endpoint template name is displayed in the table', () => cy.checkRowBy
 
 Then('The endpoint template name is checked', () => cy.get('[data-cy="template-text-field"] [id="editor"]').invoke('text').should('equal', defaultEndpointName))
 
-When('The endpoint template form is filled with base data', () => fillBaseData(`Endpoint${Date.now()}`))
+When('The endpoint template form is filled with base data', () => fillBaseData(`Endpoint${getShortUniqueId()}`))
 
-When('The endpoint metadata update is started', () => fillBaseData(`Update${Date.now()}`))
+When('The endpoint metadata update is started', () => fillBaseData(`Update${getShortUniqueId()}`))
 
-When('The endpoint template edition form is filled with data', () => fillBaseData(`CancelEdit${Date.now()}`))
+When('The endpoint template edition form is filled with data', () => fillBaseData(`CancelEdit${getShortUniqueId()}`))
 
 When('The endpoint template form is filled with already existing name', () => fillBaseData(defaultEndpointName))
 
@@ -31,11 +32,11 @@ When('[API] Create endpoint template', () => {
 })
 
 When('[API] Search Test - Create first endpoint template', () => {
-  defaultEndpointName = `SearchTest${Date.now()}`
+  defaultEndpointName = `SearchTest${getShortUniqueId()}`
   createEndpointViaApi(defaultEndpointName)
 })
 
-When('[API] Search Test - Create second endpoint template', () => createEndpointViaApi(`SearchTest${Date.now()}`))
+When('[API] Search Test - Create second endpoint template', () => createEndpointViaApi(`SearchTest${getShortUniqueId()}`))
 
 function createEndpointViaApi(customName = '') {
   cy.getInidicationUid()

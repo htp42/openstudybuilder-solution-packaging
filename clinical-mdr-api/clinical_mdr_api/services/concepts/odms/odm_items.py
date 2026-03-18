@@ -29,7 +29,7 @@ from clinical_mdr_api.services._utils import ensure_transaction, get_input_or_ne
 from clinical_mdr_api.services.concepts.odms.odm_generic_service import (
     OdmGenericService,
 )
-from common.exceptions import BusinessLogicException, NotFoundException
+from common.exceptions import NotFoundException
 
 
 class OdmItemService(OdmGenericService[OdmItemAR]):
@@ -72,6 +72,7 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
                 sds_var_name=concept_input.sds_var_name,
                 origin=concept_input.origin,
                 comment=concept_input.comment,
+                odm_item_group=None,
                 translated_texts=concept_input.translated_texts,
                 aliases=concept_input.aliases,
                 unit_definition_uids=[
@@ -96,31 +97,6 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
     def _edit_aggregate(
         self, item: OdmItemAR, concept_edit_input: OdmItemPatchInput
     ) -> OdmItemAR:
-        if concept_edit_input.activity_instances:
-            parent_item_groups = self.get_active_relationships(item.uid).get(
-                "OdmItemGroup", []
-            )
-
-            for activity_instance in concept_edit_input.activity_instances:
-                if activity_instance.odm_item_group_uid not in parent_item_groups:
-                    raise BusinessLogicException(
-                        msg=f"Cannot assign Activity Instance ({activity_instance.activity_instance_uid}, {activity_instance.activity_item_class_uid}) "
-                        f"to ODM Item with UID '{item.uid}' because it isn't part of ODM Item Group with UID '{activity_instance.odm_item_group_uid}'"
-                    )
-
-                parent_forms = (
-                    self._repos.odm_item_group_repository.get_active_relationships(
-                        activity_instance.odm_item_group_uid, ["item_group_ref"]
-                    ).get("OdmForm", [])
-                )
-
-                if activity_instance.odm_form_uid not in parent_forms:
-                    raise BusinessLogicException(
-                        msg=f"Cannot assign Activity Instance ({activity_instance.activity_instance_uid}, {activity_instance.activity_item_class_uid}) "
-                        f"to ODM Item with UID '{item.uid}' because its Item Group with UID '{activity_instance.odm_item_group_uid}' "
-                        f"isn't part of ODM Form with UID '{activity_instance.odm_form_uid}'"
-                    )
-
         item.edit_draft(
             author_id=self.author_id,
             change_description=concept_edit_input.change_description,
@@ -134,6 +110,7 @@ class OdmItemService(OdmGenericService[OdmItemAR]):
                 sas_field_name=concept_edit_input.sas_field_name,
                 sds_var_name=concept_edit_input.sds_var_name,
                 origin=concept_edit_input.origin,
+                odm_item_group=None,
                 comment=concept_edit_input.comment,
                 translated_texts=concept_edit_input.translated_texts,
                 aliases=concept_edit_input.aliases,

@@ -52,51 +52,44 @@
     <v-spacer />
     <div v-if="isAuthenticated">
       <v-btn
-        class="text-capitalize"
-        data-cy="topbar-select-study"
-        variant="text"
-        @click="openSelectStudyDialog"
-      >
-        {{ $t('Topbar.select_study') }}
-      </v-btn>
-      <v-chip
-        v-if="selectedStudy"
-        data-cy="topbar-selected-study"
-        class="ma-2"
+        variant="flat"
+        rounded
         :color="
           currentStudyStatus === 'DRAFT'
             ? 'green'
             : currentStudyStatus === 'LOCKED'
               ? 'red'
-              : 'blue'
+              : 'info'
         "
-        variant="flat"
+        @click="openSelectStudyDialog"
+        @mouseenter="isHovered = true"
+        @mouseleave="isHovered = false"
       >
-        {{
-          selectedStudy.current_metadata.identification_metadata.study_id ||
-          selectedStudy.current_metadata.identification_metadata.study_acronym
-        }}
+        <span v-if="isHovered || !selectedStudy">{{
+          $t('Topbar.select_study')
+        }}</span>
+        <span v-else>
+          {{ selectedStudyId }}
+          {{ selectedStudyVersion ? 'v' + selectedStudyVersion : '' }}
+        </span>
         <v-icon
-          v-if="currentStudyStatus === 'DRAFT'"
+          v-if="isHovered || !selectedStudy"
+          size="large"
+          location="right"
+          icon="mdi-menu-down"
+        />
+        <v-icon
+          v-else
           location="right"
           size="small"
-          icon="mdi-lock-open-outline"
+          class="ml-1 mr-1"
+          :icon="
+            currentStudyStatus === 'DRAFT'
+              ? 'mdi-lock-open-outline'
+              : 'mdi-lock-outline'
+          "
         />
-        <v-icon v-else location="right" size="small" icon="mdi-lock-outline" />
-      </v-chip>
-      <v-chip
-        v-if="selectedStudy && selectedStudyVersion"
-        :color="
-          currentStudyStatus === 'DRAFT'
-            ? 'green'
-            : currentStudyStatus === 'LOCKED'
-              ? 'red'
-              : 'blue'
-        "
-        variant="flat"
-      >
-        v{{ selectedStudy && selectedStudyVersion }}
-      </v-chip>
+      </v-btn>
     </div>
     <v-btn
       data-cy="topbar-admin-icon"
@@ -283,6 +276,7 @@ const router = useRouter()
 const emit = defineEmits(['backToRoot'])
 const roles = inject('roles')
 const $config = inject('$config')
+const isHovered = ref(false)
 
 const appStore = useAppStore()
 const authStore = useAuthStore()
@@ -300,9 +294,9 @@ const nnLogoUrl = new URL(
 const appEnv = getAppEnv()
 
 const selectedStudy = computed(() => studiesGeneralStore.selectedStudy)
-const selectedStudyVersion = computed(
-  () => studiesGeneralStore.selectedStudyVersion
-)
+const selectedStudyId = computed(() => studiesGeneralStore.studyId)
+const selectedStudyVersion = computed(() => studiesGeneralStore.studyVersion)
+const currentStudyStatus = computed(() => studiesGeneralStore.studyStatus)
 
 const apps = [
   {
@@ -344,12 +338,6 @@ const availableApps = computed(() => {
       (isAuthenticated.value &&
         (!app.requiredRole || checkPermission(app.requiredRole)))
   )
-})
-const currentStudyStatus = computed(() => {
-  if (!selectedStudy.value) {
-    return null
-  }
-  return selectedStudy.value.current_metadata.version_metadata.study_status
 })
 
 function navigateToRoot() {

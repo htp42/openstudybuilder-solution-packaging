@@ -28,7 +28,9 @@
       <template #actions>
         <v-btn
           v-if="!editMode"
-          class="ml-2 expandHoverBtn"
+          class="ml-2"
+          icon
+          size="small"
           variant="outlined"
           color="nnBaseBlue"
           :disabled="
@@ -37,8 +39,10 @@
           "
           @click.stop="edit"
         >
-          <v-icon left>mdi-pencil-outline</v-icon>
-          <span class="label">{{ $t('_global.edit') }}</span>
+          <v-icon>mdi-pencil-outline</v-icon>
+          <v-tooltip activator="parent" location="top">
+            {{ $t('_global.edit') }}
+          </v-tooltip>
         </v-btn>
         <v-btn
           v-if="editMode"
@@ -232,8 +236,9 @@ async function matrixPushCalls(matrixPushStack, params) {
 }
 function setPaginatedMatrix(params) {
   paginatedMatrix.value = matrix.value.slice(
-    (params.page_number - 1) * params.page_size,
-    params.page_number * params.page_size
+    (params.page_number - 1) *
+      (params.page_size < 0 ? 99999999 : params.page_size),
+    params.page_number * (params.page_size < 0 ? 99999999 : params.page_size)
   )
 }
 async function fetchStudyArms(filters, options, filtersUpdated) {

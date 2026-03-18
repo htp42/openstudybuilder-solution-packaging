@@ -466,7 +466,7 @@ def test_remove_activity_instance_relationship_from_odm_item(api_client):
     assert len(res["activity_instances"]) == 0
 
 
-def test_cannot_add_more_than_two_same_activity_instance_to_odm_item(api_client):
+def test_cannot_add_more_than_one_same_activity_instance_to_odm_item(api_client):
     response = api_client.patch(
         f"concepts/odms/items/{items[0].uid}",
         json={
@@ -489,8 +489,6 @@ def test_cannot_add_more_than_two_same_activity_instance_to_odm_item(api_client)
                 {
                     "activity_instance_uid": activity_instances[0].uid,
                     "activity_item_class_uid": activity_item_classes[0].uid,
-                    "odm_form_uid": forms[0].uid,
-                    "odm_item_group_uid": item_groups[0].uid,
                     "order": 1,
                     "primary": True,
                     "preset_response_value": "preset_response_value1",
@@ -500,8 +498,6 @@ def test_cannot_add_more_than_two_same_activity_instance_to_odm_item(api_client)
                 {
                     "activity_instance_uid": activity_instances[0].uid,
                     "activity_item_class_uid": activity_item_classes[0].uid,
-                    "odm_form_uid": forms[0].uid,
-                    "odm_item_group_uid": item_groups[0].uid,
                     "order": 2,
                     "primary": False,
                     "preset_response_value": "preset_response_value2",
@@ -519,5 +515,5 @@ def test_cannot_add_more_than_two_same_activity_instance_to_odm_item(api_client)
     res = response.json()
     assert res["message"] == "The request failed due to validation errors"
     assert res["details"][0]["msg"] == (
-        "Value error, Activity Instances must be unique. Following duplicates were found: ('ActivityInstance_000001', 'ActivityItemClass_000001', 'OdmForm_000001', 'OdmItemGroup_000001')"
+        "Value error, Activity Instances must be unique. Following duplicates were found: ('ActivityInstance_000001', 'ActivityItemClass_000001')"
     )

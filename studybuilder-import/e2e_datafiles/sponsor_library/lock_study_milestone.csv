@@ -1,7 +1,0 @@
-CODELIST_SUBMVAL,SPONSOR_NAME,SPONSOR_NAME_SENTENCE_CASE,TERM_SUBMVAL,DEFINITION,ORDER,CONCEPT_ID,CATALOGUES,NCI_PREFERRED_NAME
-RSNFL,PORT Approval,port approval,PORT_APPROVAL,Milestone for locking study after PORT approval,1,,,PORT Approval
-RSNFL,PORT Submission,port submission,PORT_SUBMISSION,Milestone for locking study after PORT submission,2,,,PORT Submission
-RSNFL,Protocol QC,protocol qc,PROTOCOL_QC,Milestone for locking study after protocol quality control,3,,,Protocol QC
-RSNFL,Final Protocol,final protocol,FINAL_PROTOCOL,Milestone for locking study after final protocol completion,4,,,Final Protocol
-RSNFL,Data Specification Updates,data specification updates,DATA_SPECIFICATION_UPDATES,Milestone for locking study after data specification updates,5,,,Data Specification Updates
-RSNFL,Other,other,OTHER,Other milestone for locking study,6,,,Other

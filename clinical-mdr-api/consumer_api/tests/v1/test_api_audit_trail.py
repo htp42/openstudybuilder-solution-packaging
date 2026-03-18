@@ -53,6 +53,7 @@ study_detailed_soas_version_1: list[dict[Any, Any]]
 study_detailed_soas_version_latest: list[dict[Any, Any]]
 study_operational_soas_version_1: list[dict[Any, Any]]
 study_operational_soas_version_latest: list[dict[Any, Any]]
+_test_data_dict: dict[str, Any]
 
 
 @pytest.fixture(scope="module")
@@ -68,6 +69,7 @@ def test_data(api_client):
     db_name = "consumer-api-v1-studies-audit-trail"
     global db
     db = set_db(db_name)
+    global _test_data_dict
     study, _test_data_dict = inject_base_data()
     create_study_visit_codelists(create_unit_definitions=False, use_test_utils=True)
     global rand
@@ -177,8 +179,17 @@ def test_data(api_client):
     input_metadata_in_study(studies[0].uid)
     # lock study
     study_service = StudyService()
-    study_service.lock(uid=studies[0].uid, change_description="locking it")
-    study_service.unlock(uid=studies[0].uid)
+    study_service.lock(
+        uid=studies[0].uid,
+        change_description="locking it",
+        reason_for_lock_term_uid=_test_data_dict["reason_for_lock_terms"][0].term_uid,
+    )
+    study_service.unlock(
+        uid=studies[0].uid,
+        reason_for_unlock_term_uid=_test_data_dict["reason_for_unlock_terms"][
+            0
+        ].term_uid,
+    )
 
     # Add one more visit and activity to the latest draft version of the study
     visit_to_create.update({"time_value": total_study_visits_version_1})

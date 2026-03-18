@@ -1,5 +1,6 @@
 import { fillTemplateName } from './library_syntax_templates_common'
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
+const { getShortUniqueId } = require("../../support/helper_functions");
 
 let defaultCriteriaName
 
@@ -9,11 +10,11 @@ Then('The criteria is found', () => cy.searchAndCheckPresence(defaultCriteriaNam
 
 Then('The criteria is not found', () => cy.searchAndCheckPresence(defaultCriteriaName, false))
 
-When('The criteria template form is filled with base data', () => fillBaseDataAndContinue(`Criteria${Date.now()}`))
+When('The criteria template form is filled with base data', () => fillBaseDataAndContinue(`Criteria${getShortUniqueId()}`))
 
-When('The criteria metadata update is initiated', () => fillBaseDataAndContinue(`Updated${Date.now()}`))
+When('The criteria metadata update is initiated', () => fillBaseDataAndContinue(`Updated${getShortUniqueId()}`))
 
-When('The criteria template edition form is filled with data', () => fillBaseDataAndContinue(`Cancel${Date.now()}`))
+When('The criteria template edition form is filled with data', () => fillBaseDataAndContinue(`Cancel${getShortUniqueId()}`))
 
 When('User awaits for the getCriteria request to finish', () => cy.wait('@getCriteria', {timeout: 20000}))
 
@@ -26,11 +27,11 @@ Then('[API] Criteria is approved', () => cy.approveCriteria())
 Then('[API] Criteria is inactivated', () => cy.inactivateCriteria())
 
 When('[API] Search Test - Create first {string} criteria template', (type) => {
-  defaultCriteriaName = `SearchTest${Date.now()}`
+  defaultCriteriaName = `SearchTest${getShortUniqueId()}`
   createCriteriaViaApi(type, defaultCriteriaName)
 })
 
-When('[API] Search Test - Create second {string} criteria template', (type) => createCriteriaViaApi(type, `SearchTest${Date.now()}`))
+When('[API] Search Test - Create second {string} criteria template', (type) => createCriteriaViaApi(type, `SearchTest${getShortUniqueId()}`))
 
 function fillBaseDataAndContinue(name) {
     defaultCriteriaName = name

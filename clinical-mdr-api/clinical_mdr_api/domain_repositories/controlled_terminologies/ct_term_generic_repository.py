@@ -694,23 +694,22 @@ class CTTermGenericRepository(
             return items[0][0]
         return None
 
-    def get_submission_values_for_term(self, term_uid: str) -> list[str]:
+    @classmethod
+    def get_submission_values_for_term(cls, term_uid: str) -> list[str]:
         """
         Returns all existing submission values for a given term.
         Returns empty list if term is not found.
         :param term_uid: The UID of the term
         :return: List of submission values
         """
-        term_root = CTTermRoot.nodes.get_or_none(uid=term_uid)
-        if not term_root:
-            return []
-
-        submission_values = []
-        for codelist_term in term_root.has_term_root.all():
-            submission_values.append(codelist_term.submission_value)
-            # break
-
-        return list(set(submission_values))  # Remove duplicates
+        cypher_query = """
+            MATCH (term_root:CTTermRoot{uid: $term_uid})<-[:HAS_TERM_ROOT]-(codelist_term:CTCodelistTerm)
+            RETURN collect(distinct codelist_term.submission_value) as submission_values
+        """
+        items, _ = db.cypher_query(cypher_query, {"term_uid": term_uid})
+        if len(items) > 0 and len(items[0]) > 0:
+            return items[0][0]
+        return []
 
     def get_library_name_for_term(self, term_uid: str) -> str | None:
         """
@@ -725,6 +724,21 @@ class CTTermGenericRepository(
         library = term_root.has_library.get_or_none()
         if library:
             return library.name
+        return None
+
+    def is_library_editable_for_term(self, term_uid: str) -> bool | None:
+        """
+        Returns whether the library for a given term is editable.
+        :param term_uid: The UID of the term
+        :return: True if editable, False if not, None if term not found
+        """
+        term_root = CTTermRoot.nodes.get_or_none(uid=term_uid)
+        if not term_root:
+            return None
+
+        library = term_root.has_library.get_or_none()
+        if library:
+            return library.is_editable
         return None
 
     def _generate_generic_match_clause(

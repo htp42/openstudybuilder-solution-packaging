@@ -154,7 +154,7 @@ def test_adding_selection(api_client):
     assert res["activity"]["is_request_rejected"] is False
     assert res["activity"]["contact_person"] is None
     assert res["activity"]["reason_for_rejecting"] is None
-    assert res["activity"]["requester_study_id"] is None
+    assert res["activity"]["used_by_studies"] == []
     assert res["activity"]["is_data_collected"] is False
     assert res["activity"]["is_multiple_selection_allowed"] is True
     assert res["activity"]["is_finalized"] is False
@@ -239,7 +239,7 @@ def test_get_all_list_non_empty(api_client):
     assert res["items"][0]["activity"]["is_request_rejected"] is False
     assert res["items"][0]["activity"]["contact_person"] is None
     assert res["items"][0]["activity"]["reason_for_rejecting"] is None
-    assert res["items"][0]["activity"]["requester_study_id"] is None
+    assert res["items"][0]["activity"]["used_by_studies"] == []
     assert res["items"][0]["activity"]["is_data_collected"] is False
     assert res["items"][0]["activity"]["is_multiple_selection_allowed"] is True
     assert res["items"][0]["activity"]["is_finalized"] is False
@@ -325,7 +325,7 @@ def test_get_all_for_all_studies(api_client):
     assert res["items"][0]["activity"]["is_request_rejected"] is False
     assert res["items"][0]["activity"]["contact_person"] is None
     assert res["items"][0]["activity"]["reason_for_rejecting"] is None
-    assert res["items"][0]["activity"]["requester_study_id"] is None
+    assert res["items"][0]["activity"]["used_by_studies"] == []
     assert res["items"][0]["activity"]["is_data_collected"] is False
     assert res["items"][0]["activity"]["is_multiple_selection_allowed"] is True
     assert res["items"][0]["activity"]["is_finalized"] is False
@@ -410,7 +410,7 @@ def test_get_all_for_all_studies_with_filter_on_activity_name(api_client):
     assert res["items"][0]["activity"]["is_request_rejected"] is False
     assert res["items"][0]["activity"]["contact_person"] is None
     assert res["items"][0]["activity"]["reason_for_rejecting"] is None
-    assert res["items"][0]["activity"]["requester_study_id"] is None
+    assert res["items"][0]["activity"]["used_by_studies"] == []
     assert res["items"][0]["activity"]["is_data_collected"] is False
     assert res["items"][0]["activity"]["is_multiple_selection_allowed"] is True
     assert res["items"][0]["activity"]["is_finalized"] is False
@@ -495,7 +495,7 @@ def test_get_all_for_all_studies_with_filter_on_activity_sub_group_name(api_clie
     assert res["items"][0]["activity"]["is_request_rejected"] is False
     assert res["items"][0]["activity"]["contact_person"] is None
     assert res["items"][0]["activity"]["reason_for_rejecting"] is None
-    assert res["items"][0]["activity"]["requester_study_id"] is None
+    assert res["items"][0]["activity"]["used_by_studies"] == []
     assert res["items"][0]["activity"]["is_data_collected"] is False
     assert res["items"][0]["activity"]["is_multiple_selection_allowed"] is True
     assert res["items"][0]["activity"]["is_finalized"] is False
@@ -580,7 +580,7 @@ def test_get_all_for_all_studies_with_filter_on_activity_group_name(api_client):
     assert res["items"][0]["activity"]["is_request_rejected"] is False
     assert res["items"][0]["activity"]["contact_person"] is None
     assert res["items"][0]["activity"]["reason_for_rejecting"] is None
-    assert res["items"][0]["activity"]["requester_study_id"] is None
+    assert res["items"][0]["activity"]["used_by_studies"] == []
     assert res["items"][0]["activity"]["is_data_collected"] is False
     assert res["items"][0]["activity"]["is_multiple_selection_allowed"] is True
     assert res["items"][0]["activity"]["is_finalized"] is False
@@ -659,7 +659,7 @@ def test_patch_specific(api_client):
     assert res["activity"]["is_request_rejected"] is False
     assert res["activity"]["contact_person"] is None
     assert res["activity"]["reason_for_rejecting"] is None
-    assert res["activity"]["requester_study_id"] is None
+    assert res["activity"]["used_by_studies"] == []
     assert res["activity"]["is_data_collected"] is False
     assert res["activity"]["is_multiple_selection_allowed"] is True
     assert res["activity"]["is_finalized"] is False
@@ -734,7 +734,7 @@ def test_all_history_of_specific_selection(api_client):
     assert res[0]["activity"]["is_request_rejected"] is False
     assert res[0]["activity"]["contact_person"] is None
     assert res[0]["activity"]["reason_for_rejecting"] is None
-    assert res[0]["activity"]["requester_study_id"] is None
+    assert res[0]["activity"]["used_by_studies"] == []
     assert res[0]["activity"]["is_data_collected"] is False
     assert res[0]["activity"]["is_multiple_selection_allowed"] is True
     assert res[0]["activity"]["is_finalized"] is False
@@ -802,7 +802,7 @@ def test_all_history_of_specific_selection(api_client):
     assert res[1]["activity"]["is_request_rejected"] is False
     assert res[1]["activity"]["contact_person"] is None
     assert res[1]["activity"]["reason_for_rejecting"] is None
-    assert res[1]["activity"]["requester_study_id"] is None
+    assert res[1]["activity"]["used_by_studies"] == []
     assert res[1]["activity"]["is_data_collected"] is False
     assert res[1]["activity"]["is_multiple_selection_allowed"] is True
     assert res[1]["activity"]["is_finalized"] is False
@@ -888,7 +888,7 @@ def test_adding_selection_2(api_client):
     assert res["activity"]["is_request_rejected"] is False
     assert res["activity"]["contact_person"] is None
     assert res["activity"]["reason_for_rejecting"] is None
-    assert res["activity"]["requester_study_id"] is None
+    assert res["activity"]["used_by_studies"] == []
     assert res["activity"]["is_data_collected"] is False
     assert res["activity"]["is_multiple_selection_allowed"] is True
     assert res["activity"]["is_finalized"] is False
@@ -966,7 +966,7 @@ def test_get_specific(api_client):
     assert res["activity"]["is_request_rejected"] is False
     assert res["activity"]["contact_person"] is None
     assert res["activity"]["reason_for_rejecting"] is None
-    assert res["activity"]["requester_study_id"] is None
+    assert res["activity"]["used_by_studies"] == []
     assert res["activity"]["is_data_collected"] is False
     assert res["activity"]["is_multiple_selection_allowed"] is True
     assert res["activity"]["is_finalized"] is False

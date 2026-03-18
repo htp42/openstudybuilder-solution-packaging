@@ -441,7 +441,65 @@ def test_cannot_add_a_non_compatible_odm_vendor_element_to_an_odm_item_group(
     )
 
 
-def test_cannot_add_odm_items_with_non_compatible_odm_vendor_attribute_to_a_specific_odm_item_group(
+def test_cannot_add_odm_item_that_is_already_connected_to_an_odm_item_group(
+    api_client,
+):
+    response = api_client.post(
+        "concepts/odms/item-groups",
+        json={
+            "library_name": "Sponsor",
+            "name": "name2",
+            "oid": "oid2",
+            "repeating": "No",
+            "is_reference_data": "No",
+            "sas_dataset_name": "",
+            "origin": "",
+            "purpose": "",
+            "comment": "",
+            "translated_texts": [],
+            "aliases": [],
+            "sdtm_domain_uids": [],
+        },
+    )
+
+    assert_response_status_code(response, 201)
+
+    data = [
+        {
+            "uid": "odm_item1",
+            "order_number": 1,
+            "mandatory": "Yes",
+            "key_sequence": "key_sequence1",
+            "method_oid": "method_oid1",
+            "imputation_method_oid": "imputation_method_oid1",
+            "role": "role1",
+            "role_codelist_oid": "role_codelist_oid1",
+            "collection_exception_condition_oid": "collection_exception_condition_oid1",
+            "vendor": {"attributes": []},
+        }
+    ]
+    response = api_client.post(
+        "concepts/odms/item-groups/OdmItemGroup_000002/items", json=data
+    )
+
+    assert_response_status_code(response, 201)
+
+    response = api_client.post(
+        "concepts/odms/item-groups/OdmItemGroup_000001/items", json=data
+    )
+
+    assert_response_status_code(response, 400)
+
+    res = response.json()
+
+    assert res["type"] == "BusinessLogicException"
+    assert (
+        res["message"]
+        == "OdmItem with UID 'odm_item1' is already connected to another OdmItemGroup."
+    )
+
+
+def test_cannot_add_odm_item_with_non_compatible_odm_vendor_attribute_to_a_specific_odm_item_group(
     api_client,
 ):
     data = [
@@ -848,7 +906,7 @@ def test_cannot_create_a_new_odm_item_group_without_an_english_description(api_c
 
 
 def test_getting_error_for_retrieving_non_existent_odm_item_group(api_client):
-    response = api_client.get("concepts/odms/item-groups/OdmItemGroup_000002")
+    response = api_client.get("concepts/odms/item-groups/OdmItemGroup_000003")
 
     assert_response_status_code(response, 404)
 
@@ -857,7 +915,7 @@ def test_getting_error_for_retrieving_non_existent_odm_item_group(api_client):
     assert res["type"] == "NotFoundException"
     assert (
         res["message"]
-        == "OdmItemGroupAR with UID 'OdmItemGroup_000002' doesn't exist or there's no version with requested status or version number."
+        == "OdmItemGroupAR with UID 'OdmItemGroup_000003' doesn't exist or there's no version with requested status or version number."
     )
 
 
@@ -1122,7 +1180,7 @@ def test_cannot_add_odm_vendor_attribute_to_an_odm_item_group_as_an_odm_vendor_e
     )
 
 
-def test_cannot_add_odm_items_with_an_invalid_value_to_to_an_odm_item_group(api_client):
+def test_cannot_add_odm_item_with_an_invalid_value_to_to_an_odm_item_group(api_client):
     data = [
         {
             "uid": "odm_item1",
@@ -1357,7 +1415,7 @@ def test_inactivate_odm_item_group(api_client):
     assert res["possible_actions"] == ["delete", "reactivate"]
 
 
-def test_cannot_add_odm_items_to_an_odm_item_group_that_is_in_retired_status(
+def test_cannot_add_odm_item_to_an_odm_item_group_that_is_in_retired_status(
     api_client,
 ):
     data = [

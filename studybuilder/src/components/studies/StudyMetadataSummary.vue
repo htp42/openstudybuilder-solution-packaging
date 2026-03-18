@@ -9,7 +9,9 @@
       <v-btn
         v-if="copyFromStudy"
         data-cy="copy-from-study"
-        class="ml-2 expandHoverBtn"
+        class="ml-2"
+        icon
+        size="small"
         variant="outlined"
         color="nnBaseBlue"
         :disabled="
@@ -18,11 +20,15 @@
         "
         @click.stop="openCopyForm"
       >
-        <v-icon left>mdi-content-copy</v-icon>
-        <span class="label">{{ $t('NNTableTooltips.copy_from_study') }}</span>
+        <v-icon>mdi-content-copy</v-icon>
+        <v-tooltip activator="parent" location="top">
+          {{ $t('NNTableTooltips.copy_from_study') }}
+        </v-tooltip>
       </v-btn>
       <v-btn
-        class="ml-2 expandHoverBtn"
+        class="ml-2"
+        icon
+        size="small"
         variant="outlined"
         color="nnBaseBlue"
         :disabled="
@@ -33,17 +39,23 @@
         data-cy="edit-content"
         @click.stop="openForm"
       >
-        <v-icon left>mdi-pencil-outline</v-icon>
-        <span class="label">{{ $t('NNTableTooltips.edit_content') }}</span>
+        <v-icon>mdi-pencil-outline</v-icon>
+        <v-tooltip activator="parent" location="top">
+          {{ $t('NNTableTooltips.edit_content') }}
+        </v-tooltip>
       </v-btn>
       <v-btn
-        class="ml-2 expandHoverBtn"
+        class="ml-2"
+        icon
+        size="small"
         variant="outlined"
         color="nnBaseBlue"
         @click="openHistory"
       >
-        <v-icon left>mdi-history</v-icon>
-        <span class="label">{{ $t('NNTableTooltips.history') }}</span>
+        <v-icon>mdi-history</v-icon>
+        <v-tooltip activator="parent" location="top">
+          {{ $t('NNTableTooltips.history') }}
+        </v-tooltip>
       </v-btn>
     </v-card-title>
     <v-card-text>

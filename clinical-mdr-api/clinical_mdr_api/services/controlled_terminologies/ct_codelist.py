@@ -17,6 +17,7 @@ from clinical_mdr_api.domains.controlled_terminologies.ct_codelist_name import (
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryVO
 from clinical_mdr_api.models.controlled_terminologies.ct_codelist import (
     CTCodelist,
+    CTCodelistCompact,
     CTCodelistCreateInput,
     CTCodelistNameAndAttributes,
     CTCodelistPaired,
@@ -99,6 +100,7 @@ class CTCodelistService:
                 definition=codelist_input.definition,
                 extensible=codelist_input.extensible,
                 is_ordinal=codelist_input.is_ordinal,
+                codelist_type=codelist_input.codelist_type,
                 catalogue_exists_callback=self._repos.ct_catalogue_repository.catalogue_exists,
                 codelist_exists_by_uid_callback=self._repos.ct_codelist_attribute_repository.codelist_specific_exists_by_uid,
                 codelist_exists_by_name_callback=self._repos.ct_codelist_attribute_repository.codelist_specific_exists_by_name,
@@ -262,6 +264,66 @@ class CTCodelistService:
 
         return GenericFilteringReturn(items=items, total=total)
 
+    def search_codelists_fulltext(
+        self,
+        search_string: str,
+        only_response_codelists: bool = False,
+        only_ordinal_codelists: bool = False,
+        match_whole_words: bool = False,
+        page_number: int = 1,
+        page_size: int = 20,
+    ) -> GenericFilteringReturn[CTCodelistCompact]:
+        items_dicts, total = (
+            self._repos.ct_codelist_aggregated_repository.search_fulltext(
+                search_string=search_string,
+                only_response_codelists=only_response_codelists,
+                only_ordinal_codelists=only_ordinal_codelists,
+                match_whole_words=match_whole_words,
+                page_number=page_number,
+                page_size=page_size,
+            )
+        )
+        items = [
+            CTCodelistCompact(
+                uid=item["uid"],
+                sponsor_preferred_name=item["sponsor_preferred_name"],
+                submission_value=item["submission_value"],
+                library_name=item["library_name"],
+            )
+            for item in items_dicts
+        ]
+        return GenericFilteringReturn(items=items, total=total)
+
+    def search_codelists_fulltext_by_term(
+        self,
+        search_string: str,
+        only_response_codelists: bool = False,
+        only_ordinal_codelists: bool = False,
+        match_whole_words: bool = False,
+        page_number: int = 1,
+        page_size: int = 20,
+    ) -> GenericFilteringReturn[CTCodelistCompact]:
+        items_dicts, total = (
+            self._repos.ct_codelist_aggregated_repository.search_fulltext_by_term(
+                search_string=search_string,
+                only_response_codelists=only_response_codelists,
+                only_ordinal_codelists=only_ordinal_codelists,
+                match_whole_words=match_whole_words,
+                page_number=page_number,
+                page_size=page_size,
+            )
+        )
+        items = [
+            CTCodelistCompact(
+                uid=item["uid"],
+                sponsor_preferred_name=item["sponsor_preferred_name"],
+                submission_value=item["submission_value"],
+                library_name=item["library_name"],
+            )
+            for item in items_dicts
+        ]
+        return GenericFilteringReturn(items=items, total=total)
+
     def get_sub_codelists_that_have_given_terms(
         self,
         codelist_uid: str,
@@ -420,9 +482,9 @@ class CTCodelistService:
         )
 
         # Validation logic for adding terms to codelists
-        # Get library name for the term to check if it's CDISC or Sponsor
-        term_library_name = (
-            self._repos.ct_term_name_repository.get_library_name_for_term(term_uid)
+        # Check if the term's library is editable (single DB call instead of fetching name)
+        is_term_library_editable = (
+            self._repos.ct_term_name_repository.is_library_editable_for_term(term_uid)
         )
 
         # Get all existing submission values for this term
@@ -430,12 +492,12 @@ class CTCodelistService:
             self._repos.ct_term_name_repository.get_submission_values_for_term(term_uid)
         )
 
-        # Validation for CDISC terms (library = "CDISC")
-        if term_library_name == "CDISC":
-            # CDISC terms: all possible submission values are already defined, no new submission values can be added
+        # Validation for non-editable library terms (e.g. CDISC)
+        if not is_term_library_editable:
+            # Non-editable library terms: all possible submission values are already defined, no new submission values can be added
             BusinessLogicException.raise_if(
                 submission_value not in existing_submission_values,
-                msg=f"Term with UID '{term_uid}' is a CDISC term. Cannot add a new submission value '{submission_value}'. All possible submission values are already defined.",
+                msg=f"Term with UID '{term_uid}' belongs to a non-editable library. Cannot add a new submission value '{submission_value}'. All possible submission values are already defined.",
             )
         else:
             # Sponsor terms validation

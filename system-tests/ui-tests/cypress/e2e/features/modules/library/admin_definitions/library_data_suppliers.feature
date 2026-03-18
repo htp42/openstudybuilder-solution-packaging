@@ -14,12 +14,13 @@ Feature: Library - Admin Definitions - Data Suppliers
 
     Scenario: [Table][Options] User must be able to see table with correct options
         Then A table is visible with following options
-            | options                                                         |
-            | Add Data Supplier                                               |
-            | Select filters                                                  |
-            | Select columns                                                  |
-            | Export                                                          |
-            | Search                                                          |
+            | options                                            |
+            | add-data-supplier                                  |
+            | filters-button                                     |
+            | columns-layout-button                              |
+            | table-export-button                                |
+            | select-rows                                        |
+            | search-field                                       |
 
     Scenario: [Table][Columns][Names] User must be able to see the columns list on the main page as below
         Then A table is visible with following headers

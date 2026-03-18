@@ -44,8 +44,9 @@
     </template>
     <template #actions="slot">
       <v-btn
-        class="expandHoverBtn"
         variant="outlined"
+        rounded="xl"
+        prepend-icon="mdi-exclamation"
         color="nnBaseBlue"
         :disabled="
           !accessGuard.checkPermission($roles.STUDY_WRITE) ||
@@ -53,28 +54,29 @@
         "
         @click="openBatchUpdateForm()"
       >
-        <v-icon left>mdi-exclamation</v-icon>
-        <span class="label">{{
-          $t('StudyActivityTable.review_activities')
-        }}</span>
+        {{ $t('StudyActivityTable.review_activities') }}
       </v-btn>
       <v-btn
         v-if="slot.showSelectBoxes"
         color="primary"
-        class="ml-2 expandHoverBtn"
+        class="ml-2"
+        icon
+        size="small"
         :disabled="
           !accessGuard.checkPermission($roles.STUDY_WRITE) ||
           studiesGeneralStore.selectedStudyVersion !== null
         "
         @click="openBatchEditForm(slot.selected)"
       >
-        <v-icon left>mdi-pencil-box-multiple-outline</v-icon>
-        <span class="label">{{
-          $t('StudyActivityTable.edit_activity_selection')
-        }}</span>
+        <v-icon>mdi-pencil-box-multiple-outline</v-icon>
+        <v-tooltip activator="parent" location="top">
+          {{ $t('StudyActivityTable.edit_activity_selection') }}
+        </v-tooltip>
       </v-btn>
       <v-btn
-        class="ml-2 expandHoverBtn"
+        class="ml-2"
+        icon
+        size="small"
         variant="outlined"
         color="nnBaseBlue"
         data-cy="add-study-activity"
@@ -84,8 +86,10 @@
         "
         @click.stop="showActivityForm = true"
       >
-        <v-icon left>mdi-plus</v-icon>
-        <span class="label">{{ $t('StudyActivityForm.add_title') }}</span>
+        <v-icon>mdi-plus</v-icon>
+        <v-tooltip activator="parent" location="top">
+          {{ $t('StudyActivityForm.add_title') }}
+        </v-tooltip>
       </v-btn>
     </template>
     <template #[`item.actions`]="{ item }">
@@ -174,7 +178,11 @@
     :open="showUpdateForm"
     @close="closeUpdateForm"
   />
-  <v-dialog v-model="showBatchUpdateForm">
+  <v-dialog
+    v-model="showBatchUpdateForm"
+    fullscreen
+    content-class="fullscreen-dialog"
+  >
     <BatchUpdateActivityForm @close="closeBatchUpdateForm" />
   </v-dialog>
 </template>

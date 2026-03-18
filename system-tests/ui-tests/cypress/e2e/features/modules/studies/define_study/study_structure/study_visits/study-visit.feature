@@ -21,14 +21,15 @@ Feature: Studies - Define Study - Study Structure - Study Visits
     Scenario: [Table][Options] User must be able to see the Study Visit table with following options
         Given The test study '/study_structure/visits' page is opened
         Then A table is visible with following options
-            | options                                                         |
-            | Add visit                                                       |
-            | Edit in table                                                   |
-            | Select filters                                                  |
-            | Select columns                                                  |
-            | Export                                                          |
-            | Search                                                          |
-            | Show version history                                            |
+            | options                                            |
+            | add-visit                                          |
+            | edit-study-visits                                  |
+            | filters-button                                     |
+            | columns-layout-button                              |
+            | table-export-button                                |
+            | select-rows                                        |
+            | search-field                                       |
+            | History                                            |
 
     @smoke_test
     Scenario: [Table][Columns][Names] User must be able to see the Study Visit table with following columns
@@ -169,7 +170,9 @@ Feature: Studies - Define Study - Study Structure - Study Visits
         And Form continue button is clicked
         And Epoch 'Run-in' is selected for the visit
         And Form continue button is clicked
-        And Visit data is filled in: visit class 'single-visit', visit type 'Randomisation', contact mode 'On Site Visit', time unit 'day'
+        And Visit Type is selected as 'Randomisation'
+        And Contact mode is selected as 'On Site Visit'
+        And Time unit 'day' is selected for the visit
         And Anchor visit checkbox is checked
         When Form save button is clicked
         Then The new Anchor Visit is visible within the Study Visits table
@@ -307,8 +310,18 @@ Feature: Studies - Define Study - Study Structure - Study Visits
         And [API] The visit with following attributes is created: isGlobalAnchor 1, visitWeek 0
         And [API] The visit with following attributes is created: isGlobalAnchor 0, visitWeek 1, minVisitWindow -1, maxVisitWindow 1
         And The test study '/study_structure/visits' page is opened
-        And The user creates a visit on the same day in the same epoch
-        And Form save button is clicked
+        And User waits for epochs to load
+        And User waits for 2 seconds
+        And Add visit button is clicked
+        And Form continue button is clicked
+        And Epoch 'Run-in' is selected for the visit
+        And Form continue button is clicked
+        And Visit Type is selected as 'Pre-screening'
+        And Contact mode is selected as 'On Site Visit'
+        And Time reference is selected as 'Global anchor visit'
+        And Visit timing 7 is selected for the visit
+        And User intercepts create visit request
+        When Form save button is clicked
         Then The study visit is created
 
     Scenario: [Create][Study Vists][Same Day Visits] User must be able to define two visits with same visit day in the neighboring epoch
@@ -322,8 +335,18 @@ Feature: Studies - Define Study - Study Structure - Study Visits
         And [API] The visit with following attributes is created: isGlobalAnchor 1, visitWeek 0
         And [API] The visit with following attributes is created: isGlobalAnchor 0, visitWeek 1, minVisitWindow -1, maxVisitWindow 1
         And The test study '/study_structure/visits' page is opened
-        And The user creates a visit on the same day in the neighboring epoch
-        And Form save button is clicked
+        And User waits for epochs to load
+        And User waits for 2 seconds
+        And Add visit button is clicked
+        And Form continue button is clicked
+        And Epoch 'Intervention' is selected for the visit
+        And Form continue button is clicked
+        And Visit Type is selected as 'Pre-screening'
+        And Contact mode is selected as 'On Site Visit'
+        And Time reference is selected as 'Global anchor visit'
+        And Visit timing 7 is selected for the visit
+        And User intercepts create visit request
+        When Form save button is clicked
         Then The study visit is created
 
     Scenario: [Create][Study Vists][Same Day Visits] User must not be able to define more than two visits with same visit day in the same epoch
@@ -338,8 +361,17 @@ Feature: Studies - Define Study - Study Structure - Study Visits
         And [API] The visit with following attributes is created: isGlobalAnchor 0, visitWeek 1, minVisitWindow -1, maxVisitWindow 1
         And [API] The visit with following attributes is created: isGlobalAnchor 0, visitWeek 1, minVisitWindow -1, maxVisitWindow 1
         And The test study '/study_structure/visits' page is opened
-        And The user creates a visit on the same day in the same epoch
-        And Form save button is clicked
+        And User waits for epochs to load
+        And User waits for 2 seconds
+        And Add visit button is clicked
+        And Form continue button is clicked
+        And Epoch 'Run-in' is selected for the visit
+        And Form continue button is clicked
+        And Visit Type is selected as 'Pre-screening'
+        And Contact mode is selected as 'On Site Visit'
+        And Time reference is selected as 'Global anchor visit'
+        And Visit timing 7 is selected for the visit
+        When Form save button is clicked
         Then The pop up displays 'There already exists a visit with timing set to 7'
 
     Scenario: [Create][Study Vists][Same Day Visits] User must not be able to define more than two visits with same visit day in the neighboring epoch
@@ -354,6 +386,15 @@ Feature: Studies - Define Study - Study Structure - Study Visits
         And [API] The visit with following attributes is created: isGlobalAnchor 0, visitWeek 1, minVisitWindow -1, maxVisitWindow 1
         And [API] The visit with following attributes is created: isGlobalAnchor 0, visitWeek 1, minVisitWindow -1, maxVisitWindow 1
         And The test study '/study_structure/visits' page is opened
-        And The user creates a visit on the same day in the neighboring epoch
-        And Form save button is clicked
+        And User waits for epochs to load
+        And User waits for 2 seconds
+        And Add visit button is clicked
+        And Form continue button is clicked
+        And Epoch 'Intervention' is selected for the visit
+        And Form continue button is clicked
+        And Visit Type is selected as 'Pre-screening'
+        And Contact mode is selected as 'On Site Visit'
+        And Time reference is selected as 'Global anchor visit'
+        And Visit timing 7 is selected for the visit
+        When Form save button is clicked
         Then The pop up displays 'There already exists a visit with timing set to 7'

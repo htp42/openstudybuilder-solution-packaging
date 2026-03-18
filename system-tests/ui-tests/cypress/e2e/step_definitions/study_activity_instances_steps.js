@@ -2,9 +2,18 @@ import { activity_placeholder_name } from "./study_activities_steps";
 import { selectedSupplierValue } from "./study_data_suppliers_steps";
 
 const { When, Then } = require("@badeball/cypress-cucumber-preprocessor");
+const { getShortUniqueId } = require("../../support/helper_functions");
 
 export let activity_activity, current_activity_uid
 let originType, originSource
+
+When('Library Instance Status is set to {string} in the edition form', (status) => {
+    cy.get('.v-overlay table thead th').each((header, index) => {
+        if (header.text() == 'Library Instance Status') {
+            cy.get('.v-overlay table tbody tr td').eq(index).should('not.be.empty').invoke('text').then(text => status = text)
+        }
+    })
+})
 
 When('Origin Type and Origin Source are automatically populated in the edition form', () => {
     cy.get('.v-overlay table thead th').each((header, index) => {
@@ -107,10 +116,12 @@ When('Automatically populated Origin Type is visible in the table', () => cy.che
 When('Automatically populated Origin Source is visible in the table', () => cy.checkRowByIndex(0, 'Origin Source', originSource))
 
 When('The activity instance with data-sharing set to {string}, required for activity set to {string} and default for activity set to {string} exists', (isDataSharing, isRequiredForActivity, isDefaultForActivity) => {
-    cy.getClassUid()
-    cy.createActivityInstance('', isDataSharing, isRequiredForActivity, isDefaultForActivity)
-    cy.approveActivityInstance()
+    createAndApproveParametrizedInstance(isDataSharing, isRequiredForActivity, isDefaultForActivity)
 })
+
+When('[API] The activity instance with isRequriedForActivity set to true is created and approved', () => createAndApproveParametrizedInstance(false, true, false))
+
+When('[API] The activity instance with isDefaultForActivity set to true is created and approved', () => createAndApproveParametrizedInstance(false, false, true))
 
 When('The user selects activity instance', () => {
     cy.get('[data-cy="form-body"]').within(() => {
@@ -197,11 +208,9 @@ Then('The button {string} is not present', (button) => {
 
 Then('The button {string} is disabled', (button) => cy.contains(button).should('be.disabled'))
 
-When('The activity instace name is updated', () => cy.fillInput('instanceform-instancename-field', `NewName ${Date.now()}`))
-
 When('The activity instace class is updated', () => cy.selectVSelect('instanceform-instanceclass-dropdown', 'Event'))
 
-When('The activity instace topic code is updated', () => cy.fillInput('instanceform-topiccode-field', Date.now()))
+When('The activity instace topic code is updated', () => cy.fillInput('instanceform-topiccode-field', getShortUniqueId()))
 
 When('The user declines the activity instance changes', () => {
     cy.get('[data-cy="data-table"]').within(() => {
@@ -224,3 +233,9 @@ Then('Correct placeholder data is visible in the study activity instances table'
     cy.checkRowByIndex(0, 'Activity', activity_placeholder_name)
     cy.checkRowByIndex(0, 'Activity instance', '')
 })
+
+function createAndApproveParametrizedInstance(isDataSharing, isRequiredForActivity, isDefaultForActivity) {
+    cy.getClassUid()
+    cy.createActivityInstance('', isDataSharing, isRequiredForActivity, isDefaultForActivity)
+    cy.approveActivityInstance()
+}

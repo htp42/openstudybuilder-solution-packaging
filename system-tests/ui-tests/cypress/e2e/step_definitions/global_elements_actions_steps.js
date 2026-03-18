@@ -66,7 +66,27 @@ Then('The pencil button is clicked', () => {
     cy.wait(1000)
 })
 
+Then('The pencil button is not available', () => cy.get('button .mdi-pencil-outline').should('not.exist'))
+
 Then('The plus button is clicked', () => cy.get('button .mdi-plus').click())
+
+Then('The new version plus button is clicked', () => cy.get('button .mdi-plus-circle-outline').click())
+
+Then('The new version plus button is not available', () => cy.get('button .mdi-plus-circle-outline').should('not.exist'))
+
+Then('The approve button is clicked', () => cy.get('button .mdi-check-decagram').click())
+
+Then('The approve button is not available', () => cy.get('button .mdi-check-decagram').should('not.exist'))
+
+Then('The inactivate button is clicked', () => cy.get('button .mdi-close-octagon-outline').click())
+
+Then('The inactivate button is not available', () => cy.get('button .mdi-close-octagon-outline').should('not.exist'))
+
+Then('The download button is clicked', () => cy.get('button .mdi-download-outline').filter(':visible').click())
+
+Then('The close overview button is clicked', () => cy.get('button .mdi-close').filter(':visible').click())
+
+Then('The history button is clicked', () => cy.get('button .mdi-history').click())
 
 function expandPagesDropdown(tileName) {
     cy.wait(500)

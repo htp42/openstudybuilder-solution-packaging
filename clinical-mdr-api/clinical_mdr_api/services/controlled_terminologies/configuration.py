@@ -20,6 +20,7 @@ from clinical_mdr_api.models.controlled_terminologies.configuration import (
 from clinical_mdr_api.models.utils import BaseModel
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from common.auth.user import user
+from common.config import settings
 from common.exceptions import NotFoundException
 
 
@@ -146,12 +147,14 @@ class CTConfigService:
         return CTConfigModel.from_ct_config_ar(ct_config_ar)
 
     def _post_input_to_codelist_config_value_vo(
-        self, post_input: CTConfigPostInput
+        self,
+        post_input: CTConfigPostInput,
+        library_name: str = settings.sponsor_library_name,
     ) -> CTConfigValueVO:
         if post_input.configured_codelist_name is not None:
             all_codelists: list[CTCodelistNameAR] = (
                 self._repos.ct_codelist_name_repository.find_all(
-                    library_name="Sponsor"
+                    library_name=library_name
                 ).items
             )
             for codelist in all_codelists:

@@ -13,7 +13,12 @@
           {{ $t('FeatureFlagsView.help') }}
         </v-alert>
 
-        <v-data-table :headers="headers" :items="flags" class="mx-4 my-6">
+        <v-data-table
+          :headers="headers"
+          :items="flags"
+          class="mx-4 my-6"
+          items-per-page="-1"
+        >
           <template #[`item.actions`]="{ item }">
             <v-switch
               v-model="item.enabled"

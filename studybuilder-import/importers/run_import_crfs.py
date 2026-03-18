@@ -15,6 +15,7 @@ from .utils.metrics import Metrics
 API_BASE_URL = load_env("API_BASE_URL")
 MDR_MIGRATION_ODM_VENDOR_NAMESPACES = load_env("MDR_MIGRATION_ODM_VENDOR_NAMESPACES")
 MDR_MIGRATION_ODM_VENDOR_ATTRIBUTES = load_env("MDR_MIGRATION_ODM_VENDOR_ATTRIBUTES")
+MDR_MIGRATION_ODM_VENDOR_ELEMENTS = load_env("MDR_MIGRATION_ODM_VENDOR_ELEMENTS")
 MDR_MIGRATION_ODM_STUDY_EVENTS = load_env("MDR_MIGRATION_ODM_STUDY_EVENTS")
 MDR_MIGRATION_ODM_FORMS = load_env("MDR_MIGRATION_ODM_FORMS")
 MDR_MIGRATION_ODM_ITEM_GROUPS = load_env("MDR_MIGRATION_ODM_ITEM_GROUPS")
@@ -45,21 +46,35 @@ def odm_vendor_namespace(data):
     }
 
 
-# name, data_type, value_regex
-def odm_vendor_attribute(data, vendor_namespace_uid):
+def odm_vendor_attribute(data):
     return {
         "path": "/concepts/odms/vendor-attributes",
         "body": {
             "name": data["name"],
-            "compatible_types": data["compatible_types"].split("|"),
+            "compatible_types": (
+                data["compatible_types"].split("||")
+                if data["vendor_namespace_uid"]
+                else []
+            ),
             "data_type": data["data_type"],
             "value_regex": data["value_regex"],
+            "vendor_namespace_uid": data["vendor_namespace_uid"],
+            "vendor_element_uid": data["vendor_element_uid"],
+        },
+    }
+
+
+def odm_vendor_element(data, vendor_namespace_uid):
+    return {
+        "path": "/concepts/odms/vendor-elements",
+        "body": {
+            "name": data["name"],
+            "compatible_types": data["compatible_types"].split("||"),
             "vendor_namespace_uid": vendor_namespace_uid,
         },
     }
 
 
-# library,oid,name,effective_date,retired_date
 def odm_study_event(data):
     return {
         "path": "/concepts/odms/study-events",
@@ -73,7 +88,6 @@ def odm_study_event(data):
     }
 
 
-# library,oid,name,prompt,repeating,translated_texts,aliases
 def odm_form(data):
     return {
         "path": "/concepts/odms/forms",
@@ -87,7 +101,6 @@ def odm_form(data):
     }
 
 
-# library,oid,name,prompt,repeating,isreferencedata,sasdatasetname,domain,origin,purpose,comment,language,description,instruction
 def odm_item_group(data, domain_uids):
     return {
         "path": "/concepts/odms/item-groups",
@@ -108,7 +121,6 @@ def odm_item_group(data, domain_uids):
     }
 
 
-# library,oid,name,prompt,datatype,length,significantdigits,codelist,term,unit,sasfieldname,sdsvarname,origin,comment,language,description,instruction
 def odm_item(data, units, terms):
     try:
         length = int(data["length"])
@@ -209,7 +221,6 @@ def odm_item_to_item_group(uid, data):
 
 
 def odm_item_to_activity_instance(item):
-    # odm_item_to_activity_instance_relationship
     return {
         "path": "/concepts/odms/items/",
         "body": item,
@@ -282,11 +293,9 @@ class Crfs(BaseImporter):
         for row in csvdata:
             if len(row) == 0:
                 continue
-            self.log.info(f'Adding odm vendor namespace {row["name"]}')
+            self.log.info("Adding odm vendor namespace '%s'", row["name"])
             data = odm_vendor_namespace(row)
 
-            # Create vendor namespace, and leave in draft state (no approve)
-            # TODO check if it exists before posting?
             res.append(self.api.post_to_api(data))
         return res
 
@@ -297,11 +306,49 @@ class Crfs(BaseImporter):
         for row in csvdata:
             if len(row) == 0:
                 continue
-            self.log.info(f'Adding odm vendor attribute {row["name"]}')
-            data = odm_vendor_attribute(row, vendor_namespace_uid)
+            self.log.info("Adding odm vendor attribute '%s'", row["name"])
 
-            # Create vendor attribute, and leave in draft state (no approve)
-            # TODO check if it exists before posting?
+            row["vendor_element_uid"] = None
+            row["vendor_namespace_uid"] = None
+
+            if row["element_name"]:
+                element_rs = self.api.get_all_from_api(
+                    "/concepts/odms/vendor-elements",
+                    params={
+                        "filters": json.dumps(
+                            {"name": {"v": [row["element_name"]], "op": "eq"}}
+                        ),
+                        "page_number": 1,
+                        "page_size": 0,
+                    },
+                )
+
+                if not element_rs:
+                    self.log.warning(
+                        "Unable to find vendor element '%s', skipping",
+                        row["element_name"],
+                    )
+                    continue
+
+                row["vendor_element_uid"] = element_rs[0]["uid"]
+
+            if not row["vendor_element_uid"]:
+                row["vendor_namespace_uid"] = vendor_namespace_uid
+
+            data = odm_vendor_attribute(row)
+
+            self.api.post_to_api(data)
+
+    @open_file()
+    def handle_odm_vendor_elements(self, csvfile, vendor_namespace_uid):
+        csvdata = csv.DictReader(csvfile)
+
+        for row in csvdata:
+            if len(row) == 0:
+                continue
+            self.log.info("Adding odm vendor element '%s'", row["name"])
+            data = odm_vendor_element(row, vendor_namespace_uid)
+
             self.api.post_to_api(data)
 
     @open_file()
@@ -311,11 +358,9 @@ class Crfs(BaseImporter):
         for row in csvdata:
             if len(row) == 0:
                 continue
-            self.log.info(f'Adding odm study event {row["name"]}')
+            self.log.info("Adding odm study event '%s'", row["name"])
             data = odm_study_event(row)
 
-            # Create study event, and leave in draft state (no approve)
-            # TODO check if it exists before posting?
             self.api.post_to_api(data)
 
     @open_file()
@@ -325,7 +370,7 @@ class Crfs(BaseImporter):
         for row in csvdata:
             if len(row) == 0:
                 continue
-            self.log.info(f'Adding odm form {row["name"]}')
+            self.log.info("Adding odm form '%s'", row["name"])
 
             row["aliases"] = self._transform_aliases(row["aliases"])
             row["translated_texts"] = self._transform_translated_texts(
@@ -334,8 +379,6 @@ class Crfs(BaseImporter):
 
             data = odm_form(row)
 
-            # Create study event, and leave in draft state (no approve)
-            # TODO check if it exists before posting?
             self.api.post_to_api(data)
 
     @open_file()
@@ -368,7 +411,7 @@ class Crfs(BaseImporter):
         for row in csvdata:
             if len(row) == 0:
                 continue
-            self.log.info(f"Adding odm item group '{row['name']}'")
+            self.log.info("Adding odm item group '%s'", row["name"])
 
             # Look up sdtm domains
             domains = []
@@ -379,7 +422,7 @@ class Crfs(BaseImporter):
                 if domain_uid is not None:
                     domains.append(domain_uid)
                 else:
-                    self.log.warning(f"Unable to find domain '{domain}'")
+                    self.log.warning("Unable to find domain '%s'", domain)
 
             row["aliases"] = self._transform_aliases(row["aliases"])
             row["translated_texts"] = self._transform_translated_texts(
@@ -388,8 +431,6 @@ class Crfs(BaseImporter):
 
             data = odm_item_group(row, domains)
 
-            # Create study event, and leave in draft state (no approve)
-            # TODO check if it exists before posting?
             self.api.post_to_api(data)
 
     @open_file()
@@ -406,7 +447,7 @@ class Crfs(BaseImporter):
         for row in csvdata:
             if len(row) == 0:
                 continue
-            self.log.info(f'Adding odm item {row["name"]}')
+            self.log.info("Adding odm item '%s'", row["name"])
 
             row["codelist"] = {}
             term_dicts = []
@@ -432,7 +473,9 @@ class Crfs(BaseImporter):
                             term_dicts.append(term_dict)
                         else:
                             self.log.warning(
-                                f"Unable to find term {term} in codelist {row["codelist"]["uid"]}"
+                                "Unable to find term '%s' in codelist '%s'",
+                                term,
+                                row["codelist"]["uid"],
                             )
 
             units = []
@@ -444,7 +487,7 @@ class Crfs(BaseImporter):
                         unit_dict = {"uid": unit_uid, "mandatory": True}
                         units.append(unit_dict)
                     else:
-                        self.log.warning(f"Unable to find unit {unit}")
+                        self.log.warning("Unable to find unit '%s'", unit)
 
             row["aliases"] = self._transform_aliases(row["aliases"])
             row["translated_texts"] = self._transform_translated_texts(
@@ -453,8 +496,6 @@ class Crfs(BaseImporter):
 
             data = odm_item(row, units, term_dicts)
 
-            # Create study event, and leave in draft state (no approve)
-            # TODO check if it exists before posting?
             self.api.post_to_api(data)
 
     @open_file()
@@ -475,15 +516,17 @@ class Crfs(BaseImporter):
             if len(row) == 0:
                 continue
             self.log.info(
-                f"Adding odm form '{row['form_oid']}' to study event '{row['study_event_oid']}'"
+                "Adding odm form '%s' to study event '%s'",
+                row["form_oid"],
+                row["study_event_oid"],
             )
 
             if row["form_oid"] not in all_forms:
-                self.log.warning(f"form '{row['form_oid']}' not found, skipping")
+                self.log.warning("form '%s' not found, skipping", row["form_oid"])
                 continue
             if row["study_event_oid"] not in all_study_events:
                 self.log.warning(
-                    f"Study Event '{row['study_event_oid']}' not found, skipping"
+                    "Study Event '%s' not found, skipping", row["study_event_oid"]
                 )
                 continue
 
@@ -513,16 +556,18 @@ class Crfs(BaseImporter):
             if len(row) == 0:
                 continue
             self.log.info(
-                f"Adding odm item group '{row['item_group_oid']}' to form '{row['form_oid']}'"
+                "Adding odm item group '%s' to form '%s'",
+                row["item_group_oid"],
+                row["form_oid"],
             )
 
             if row["item_group_oid"] not in all_itemgroups:
                 self.log.warning(
-                    f"Item group '{row['item_group_oid']}' not found, skipping"
+                    "Item group '%s' not found, skipping", row["item_group_oid"]
                 )
                 continue
             if row["form_oid"] not in all_forms:
-                self.log.warning(f"Form '{row['form_oid']}' not found, skipping")
+                self.log.warning("Form '%s' not found, skipping", row["form_oid"])
                 continue
 
             row["uid"] = all_itemgroups[row["item_group_oid"]]
@@ -549,15 +594,17 @@ class Crfs(BaseImporter):
             if len(row) == 0:
                 continue
             self.log.info(
-                f"Adding odm item '{row['item_oid']}' to item group '{row['item_group_oid']}'"
+                "Adding odm item '%s' to item group '%s'",
+                row["item_oid"],
+                row["item_group_oid"],
             )
 
             if row["item_oid"] not in all_items:
-                self.log.warning(f"Item '{row['item_oid']}' not found, skipping")
+                self.log.warning("Item '%s' not found, skipping", row["item_oid"])
                 continue
             if row["item_group_oid"] not in all_itemgroups:
                 self.log.warning(
-                    f"Item group '{row['item_group_oid']}' not found, skipping"
+                    "Item group '%s' not found, skipping", row["item_group_oid"]
                 )
                 continue
 
@@ -572,21 +619,11 @@ class Crfs(BaseImporter):
         csvdata = list(csv.DictReader(csvfile))
 
         item_oids = {data["item_oid"] for data in csvdata}
-        item_group_oids = {data["item_group_oid"] for data in csvdata}
-        form_oids = {data["form_oid"] for data in csvdata}
         activity_instance_names = {data["activity_instance_name"] for data in csvdata}
 
         odm_items = self.api.get_all_from_api(
             "/concepts/odms/items",
             params={"filters": json.dumps({"oid": {"v": list(item_oids)}})},
-        )
-        odm_item_groups = self.api.get_all_from_api(
-            "/concepts/odms/item-groups",
-            params={"filters": json.dumps({"oid": {"v": list(item_group_oids)}})},
-        )
-        odm_forms = self.api.get_all_from_api(
-            "/concepts/odms/forms",
-            params={"filters": json.dumps({"oid": {"v": list(form_oids)}})},
         )
         activity_instances = self.api.get_all_from_api(
             "/concepts/activities/activity-instances",
@@ -615,57 +652,11 @@ class Crfs(BaseImporter):
                     continue
 
                 self.log.info(
-                    "Connecting ODM Item '%s' of ODM Item Group '%s' of ODM Form '%s' to Activity Instance '%s' with Activity Item Class '%s'",
+                    "Connecting ODM Item '%s' to Activity Instance '%s' with Activity Item Class '%s'",
                     item_oid,
-                    row["item_group_oid"],
-                    row["form_oid"],
                     row["activity_instance_name"],
                     row["activity_item_class_name"],
                 )
-
-                if not (
-                    item_group := next(
-                        (
-                            oig
-                            for oig in odm_item_groups
-                            if oig["oid"] == row["item_group_oid"]
-                        ),
-                        None,
-                    )
-                ):
-                    self.log.warning(
-                        "ODM Item Group '%s' not found, skipping", row["item_group_oid"]
-                    )
-                    continue
-
-                if item_oid not in [oig["oid"] for oig in item_group["items"]]:
-                    self.log.warning(
-                        "ODM Item '%s' is not part of ODM Item Group '%s', skipping",
-                        item_oid,
-                        row["item_group_oid"],
-                    )
-                    continue
-
-                if not (
-                    form := next(
-                        (of for of in odm_forms if of["oid"] == row["form_oid"]),
-                        None,
-                    )
-                ):
-                    self.log.warning(
-                        "ODM Form '%s' not found, skipping", row["form_oid"]
-                    )
-                    continue
-
-                if row["item_group_oid"] not in [
-                    of["oid"] for of in form["item_groups"]
-                ]:
-                    self.log.warning(
-                        "ODM Item Group '%s' is not part of ODM Form '%s', skipping",
-                        row["item_group_oid"],
-                        row["form_oid"],
-                    )
-                    continue
 
                 if not (
                     activity_instance := next(
@@ -705,8 +696,6 @@ class Crfs(BaseImporter):
                     {
                         "activity_instance_uid": activity_instance["uid"],
                         "activity_item_class_uid": activity_item_class["uid"],
-                        "odm_form_uid": form["uid"],
-                        "odm_item_group_uid": item_group["uid"],
                         "order": row["order"] if row["order"].isdigit() else 99999,
                         "primary": map_boolean(row["primary"]),
                         "preset_response_value": row["preset_response_value"],
@@ -742,6 +731,14 @@ class Crfs(BaseImporter):
             MDR_MIGRATION_ODM_VENDOR_NAMESPACES
         )
         if vendor_namespace_res:
+            self.handle_odm_vendor_elements(
+                MDR_MIGRATION_ODM_VENDOR_ELEMENTS,
+                (
+                    vendor_namespace_res[0]
+                    and vendor_namespace_res[0]["uid"]
+                    or "OdmVendorNamespace_000001"
+                ),
+            )
             self.handle_odm_vendor_attributes(
                 MDR_MIGRATION_ODM_VENDOR_ATTRIBUTES,
                 (

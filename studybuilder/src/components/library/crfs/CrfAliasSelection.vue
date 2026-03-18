@@ -61,7 +61,6 @@
           :show-select="!readOnly"
           :hide-default-footer="props.readOnly"
           :hide-search-field="props.readOnly"
-          table-height="400px"
           :items-length="total"
           disable-filtering
           column-data-resource="concepts/odm-metadata/aliases"

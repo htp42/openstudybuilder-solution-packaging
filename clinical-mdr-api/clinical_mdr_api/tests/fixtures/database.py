@@ -17,8 +17,14 @@ from clinical_mdr_api.models.clinical_programmes.clinical_programme import (
     ClinicalProgramme,
 )
 from clinical_mdr_api.models.projects.project import Project
-from clinical_mdr_api.tests.integration.utils.data_library import inject_base_data
-from clinical_mdr_api.tests.integration.utils.utils import LIBRARY_NAME, TestUtils
+from clinical_mdr_api.tests.integration.utils.data_library import (
+    create_reason_for_lock_unlock_terms,
+    inject_base_data,
+)
+from clinical_mdr_api.tests.integration.utils.utils import (
+    SPONSOR_LIBRARY_NAME,
+    TestUtils,
+)
 from clinical_mdr_api.tests.utils.utils import get_db_name
 from common.config import settings
 from common.database import configure_database
@@ -141,13 +147,16 @@ def base_data(request, temp_database):
     """injects generic base data into a temporary database"""
 
     log.info("%s: injecting base data: inject_base_data()", request.fixturename)
-    inject_base_data()
+    _, test_data_dict = inject_base_data()
+    return test_data_dict
 
 
 class TempDatabasePopulated(NamedTuple):
     database_name: str
     clinical_programme: ClinicalProgramme
     project: Project
+    reason_for_lock_term_uid: str
+    reason_for_unlock_term_uid: str
 
 
 @pytest.fixture(scope="module")
@@ -175,7 +184,7 @@ def temp_database_populated(request, temp_database: str) -> TempDatabasePopulate
 
     ## Libraries
     TestUtils.create_library(settings.cdisc_library_name, True)
-    TestUtils.create_library(LIBRARY_NAME, True)
+    TestUtils.create_library(SPONSOR_LIBRARY_NAME, True)
     TestUtils.create_library("SNOMED", True)
     TestUtils.create_library(name=settings.requested_library_name, is_editable=True)
 
@@ -272,5 +281,14 @@ def temp_database_populated(request, temp_database: str) -> TempDatabasePopulate
         description="Test project for automated tests",
         clinical_programme_uid=clinical_programme.uid,
     )
-
-    return TempDatabasePopulated(temp_database, clinical_programme, project)
+    # Create CTTerms needed for locking/unlocking
+    lock_unlock_data = create_reason_for_lock_unlock_terms()
+    reason_for_lock_term_uid = lock_unlock_data["reason_for_lock_terms"][0].term_uid
+    reason_for_unlock_term_uid = lock_unlock_data["reason_for_unlock_terms"][0].term_uid
+    return TempDatabasePopulated(
+        temp_database,
+        clinical_programme,
+        project,
+        reason_for_lock_term_uid,
+        reason_for_unlock_term_uid,
+    )

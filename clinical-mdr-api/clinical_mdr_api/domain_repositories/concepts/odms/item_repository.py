@@ -36,7 +36,11 @@ from clinical_mdr_api.models.concepts.odms.odm_common_models import (
     OdmAliasModel,
     OdmTranslatedTextModel,
 )
-from clinical_mdr_api.models.concepts.odms.odm_item import OdmItem, OdmItemCodelist
+from clinical_mdr_api.models.concepts.odms.odm_item import (
+    OdmItem,
+    OdmItemCodelist,
+    OdmItemParentGroup,
+)
 from clinical_mdr_api.services._utils import ensure_transaction
 from clinical_mdr_api.utils import db_result_to_list
 from common.exceptions import NotFoundException
@@ -63,10 +67,6 @@ class ItemRepository(OdmGenericRepository[OdmItemAR]):
                 MATCH (ai)<-[:HAS_ACTIVITY_ITEM]-(aicr:ActivityItemClassRoot)
                 MATCH (ai)<-[:CONTAINS_ACTIVITY_ITEM]-(aiv:ActivityInstanceValue)<-[:LATEST]-(air:ActivityInstanceRoot)
                 WHERE elementId(oiv) = $element_id
-                MATCH (oigr:OdmItemGroupRoot)-[:HAS_VERSION]->(oigv:OdmItemGroupValue)
-                MATCH (oiv)<-[:ITEM_REF]-(oigv)-[:LINKS_TO_ACTIVITY_ITEM]->(ai)
-                MATCH (ofr:OdmFormRoot)-[:HAS_VERSION]->(ofv:OdmFormValue)
-                MATCH (oigv)<-[:ITEM_GROUP_REF]-(ofv)-[:LINKS_TO_ACTIVITY_ITEM]->(ai)
                 MATCH (ai)<-[:HAS_ACTIVITY_ITEM]-(aicr:ActivityItemClassRoot)
                 RETURN DISTINCT
                     air.uid AS activity_instance_uid,
@@ -74,8 +74,6 @@ class ItemRepository(OdmGenericRepository[OdmItemAR]):
                     aiv.adam_param_code AS activity_instance_adam_param_code,
                     aiv.topic_code AS activity_instance_topic_code,
                     aicr.uid AS activity_item_class_uid,
-                    ofr.uid AS odm_form_uid,
-                    oigr.uid AS odm_item_group_uid,
                     ltai.order AS order,
                     ltai.primary AS primary,
                     ltai.preset_response_value AS preset_response_value,
@@ -85,6 +83,27 @@ class ItemRepository(OdmGenericRepository[OdmItemAR]):
             ),
             params={"element_id": value.element_id},
         )
+
+        odm_item_group = None
+        odm_item_group_rs, _ = db.cypher_query(
+            """
+            MATCH (oiv:OdmItemValue)<-[:ITEM_REF]-(oigv:OdmItemGroupValue)<-[hv:HAS_VERSION]-(oigr:OdmItemGroupRoot)
+            WHERE elementId(oiv) = $element_id
+            RETURN
+                oigr.uid AS odm_item_group_uid,
+                oigv.oid AS odm_item_group_oid,
+                oigv.name AS odm_item_group_name
+            ORDER BY hv.start_date DESC, hv.end_date DESC
+            LIMIT 1
+            """,
+            params={"element_id": value.element_id},
+        )
+        if odm_item_group_rs:
+            odm_item_group = OdmItemParentGroup(
+                uid=odm_item_group_rs[0][0],
+                oid=odm_item_group_rs[0][1],
+                name=odm_item_group_rs[0][2],
+            )
 
         codelist = value.has_codelist.get_or_none()
         return OdmItemAR.from_repository_values(
@@ -100,6 +119,7 @@ class ItemRepository(OdmGenericRepository[OdmItemAR]):
                 sds_var_name=value.sds_var_name,
                 origin=value.origin,
                 comment=value.comment,
+                odm_item_group=odm_item_group,
                 translated_texts=[
                     OdmTranslatedTextModel(
                         text_type=translated_text_value.text_type,
@@ -177,6 +197,15 @@ class ItemRepository(OdmGenericRepository[OdmItemAR]):
                 sds_var_name=input_dict.get("sds_var_name"),
                 origin=input_dict.get("origin"),
                 comment=input_dict.get("comment"),
+                odm_item_group=(
+                    OdmItemParentGroup(
+                        uid=input_dict["odm_item_group"]["uid"],
+                        oid=input_dict["odm_item_group"].get("oid"),
+                        name=input_dict["odm_item_group"].get("name"),
+                    )
+                    if input_dict.get("odm_item_group", None)
+                    else None
+                ),
                 translated_texts=[
                     OdmTranslatedTextModel(
                         text_type=translated_text["text_type"],
@@ -242,6 +271,8 @@ concept_value.sds_var_name as sds_var_name,
 concept_value.origin as origin,
 concept_value.comment as comment,
 
+head([(concept_value)<-[:ITEM_REF]-(oigv:OdmItemGroupValue)<-[:HAS_VERSION]-(oigr:OdmItemGroupRoot) | {uid: oigr.uid, oid:oigv.oid, name: oigv.name }]) AS odm_item_group,
+
 [(concept_value)-[:HAS_TRANSLATED_TEXT]->(dv:OdmTranslatedText) | {text_type: dv.text_type, language: dv.language, text: dv.text}] AS translated_texts,
 
 [(concept_value)-[:HAS_ALIAS]->(av:OdmAlias) | {name: av.name, context: av.context}] AS aliases,
@@ -268,10 +299,6 @@ head([(concept_value)-[hc:HAS_CODELIST]->(ctcr:CTCodelistRoot)-[:HAS_ATTRIBUTES_
 CALL {
     WITH *
     MATCH (concept_value)-[ltai:LINKS_TO_ACTIVITY_ITEM]->(ai:ActivityItem)
-    MATCH (oigr:OdmItemGroupRoot)-[:HAS_VERSION]->(oigv:OdmItemGroupValue)
-    MATCH (concept_value)<-[:ITEM_REF]-(oigv)-[:LINKS_TO_ACTIVITY_ITEM]->(ai)
-    MATCH (ofr:OdmFormRoot)-[:HAS_VERSION]->(ofv:OdmFormValue)
-    MATCH (oigv)<-[:ITEM_GROUP_REF]-(ofv)-[:LINKS_TO_ACTIVITY_ITEM]->(ai)
     MATCH (ai)<-[:HAS_ACTIVITY_ITEM]-(aicr:ActivityItemClassRoot)
     MATCH (ai)<-[:CONTAINS_ACTIVITY_ITEM]-(aiv:ActivityInstanceValue)<-[:LATEST]-(air:ActivityInstanceRoot)
     RETURN COLLECT(DISTINCT {
@@ -280,8 +307,6 @@ CALL {
         activity_instance_adam_param_code: aiv.adam_param_code,
         activity_instance_topic_code: aiv.topic_code,
         activity_item_class_uid: aicr.uid,
-        odm_form_uid: ofr.uid,
-        odm_item_group_uid: oigr.uid,
         order: ltai.order,
         primary: ltai.primary,
         preset_response_value: ltai.preset_response_value,
@@ -327,8 +352,6 @@ apoc.coll.toSet([vendor_element_attribute in vendor_element_attributes | vendor_
                     -[:CONTAINS_ACTIVITY_ITEM]->(ai:ActivityItem)<-[:HAS_ACTIVITY_ITEM]-(:ActivityItemClassRoot {uid: $activity_item_class_uid})
                     MATCH (oiv:OdmItemValue)
                     WHERE elementId(oiv) = $element_id
-                    MATCH (ofr:OdmFormRoot {uid: $odm_form_uid})-[:LATEST]->(ofv:OdmFormValue)
-                    MATCH (oigr:OdmItemGroupRoot {uid: $odm_item_group_uid})-[:LATEST]->(oigv:OdmItemGroupValue)
 
                     MERGE (oiv)-[:LINKS_TO_ACTIVITY_ITEM {
                         order: $order,
@@ -337,8 +360,6 @@ apoc.coll.toSet([vendor_element_attribute in vendor_element_attributes | vendor_
                         value_condition: $value_condition,
                         value_dependent_map: $value_dependent_map
                     }]->(ai)
-                    MERGE (ofv)-[:LINKS_TO_ACTIVITY_ITEM]->(ai)
-                    MERGE (oigv)-[:LINKS_TO_ACTIVITY_ITEM]->(ai)
                     """
                 ),
                 params={
@@ -347,8 +368,6 @@ apoc.coll.toSet([vendor_element_attribute in vendor_element_attributes | vendor_
                     "activity_item_class_uid": activity_instance[
                         "activity_item_class_uid"
                     ],
-                    "odm_form_uid": activity_instance["odm_form_uid"],
-                    "odm_item_group_uid": activity_instance["odm_item_group_uid"],
                     "order": activity_instance["order"],
                     "primary": activity_instance["primary"],
                     "preset_response_value": activity_instance["preset_response_value"],
@@ -413,15 +432,10 @@ apoc.coll.toSet([vendor_element_attribute in vendor_element_attributes | vendor_
                 MATCH (ai)<-[:HAS_ACTIVITY_ITEM]-(aicr:ActivityItemClassRoot)
                 MATCH (ai)<-[:CONTAINS_ACTIVITY_ITEM]-(:ActivityInstanceValue)<-[:LATEST]-(air:ActivityInstanceRoot)
                 WHERE elementId(oiv) = $element_id
-                MATCH (oigr:OdmItemGroupRoot)-[:HAS_VERSION]->(:OdmItemGroupValue)
-                MATCH (ofr:OdmFormRoot)-[:HAS_VERSION]->(ofv:OdmFormValue)
-                MATCH (ai)<-[:HAS_ACTIVITY_ITEM]-(aicr:ActivityItemClassRoot)
 
                 RETURN DISTINCT
                     air.uid AS activity_instance_uid,
                     aicr.uid AS activity_item_class_uid,
-                    ofr.uid AS odm_form_uid,
-                    oigr.uid AS odm_item_group_uid,
                     ltai.order AS order,
                     ltai.primary AS primary,
                     ltai.preset_response_value AS preset_response_value,
@@ -436,8 +450,6 @@ apoc.coll.toSet([vendor_element_attribute in vendor_element_attributes | vendor_
             [
                 activity_instance["activity_instance_uid"],
                 activity_instance["activity_item_class_uid"],
-                activity_instance["odm_form_uid"],
-                activity_instance["odm_item_group_uid"],
                 activity_instance["order"],
                 activity_instance["primary"],
                 activity_instance["preset_response_value"],
@@ -598,7 +610,8 @@ apoc.coll.toSet([vendor_element_attribute in vendor_element_attributes | vendor_
                 cl_term[0].submission_value
                 for cl_term in cl_term_nodes
                 if cl_term[4].end_date is None
-            )
+            ),
+            None,
         )
 
         if rel and submission_value:

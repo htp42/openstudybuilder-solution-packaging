@@ -13,6 +13,7 @@ from clinical_mdr_api.tests.integration.utils.api import inject_and_clear_db
 from clinical_mdr_api.tests.integration.utils.data_library import (
     STARTUP_CT_CATALOGUE_CYPHER,
     STARTUP_STUDY_LIST_CYPHER,
+    create_reason_for_lock_unlock_terms,
     fix_study_preferred_time_unit,
 )
 from clinical_mdr_api.tests.integration.utils.method_library import (
@@ -33,6 +34,13 @@ class TestStudyEpochManagement(unittest.TestCase):
         db.cypher_query(STARTUP_STUDY_LIST_CYPHER)
         db.cypher_query(STARTUP_CT_CATALOGUE_CYPHER)
 
+        lock_unlock_data = create_reason_for_lock_unlock_terms()
+        self.reason_for_lock_term_uid = lock_unlock_data["reason_for_lock_terms"][
+            0
+        ].term_uid
+        self.reason_for_unlock_term_uid = lock_unlock_data["reason_for_unlock_terms"][
+            0
+        ].term_uid
         # Generate UIDs
         StudyRoot.generate_node_uids_if_not_present()
         self.study = StudyRoot.nodes.all()[0]
@@ -305,7 +313,11 @@ class TestStudyEpochManagement(unittest.TestCase):
         epoch = epoch_service.find_by_uid(epoch.uid, study_uid=epoch.study_uid)
         # locking and unlocking to create multiple study value relationships on the existent StudySelections
         TestUtils.create_study_fields_configuration()
-        TestUtils.lock_and_unlock_study(study_uid="study_root")
+        TestUtils.lock_and_unlock_study(
+            study_uid="study_root",
+            reason_for_lock_term_uid=self.reason_for_lock_term_uid,
+            reason_for_unlock_term_uid=self.reason_for_unlock_term_uid,
+        )
         start_rule = "New start rule"
         end_rule = "New end rule"
         edit_input = StudyEpochEditInput(
@@ -494,7 +506,11 @@ class TestStudyEpochManagement(unittest.TestCase):
 
         # locking and unlocking to create multiple study value relationships on the existent StudySelections
         TestUtils.create_study_fields_configuration()
-        TestUtils.lock_and_unlock_study(study_uid="study_root")
+        TestUtils.lock_and_unlock_study(
+            study_uid="study_root",
+            reason_for_lock_term_uid=self.reason_for_lock_term_uid,
+            reason_for_unlock_term_uid=self.reason_for_unlock_term_uid,
+        )
 
         epoch_service.delete(study_uid=ep1.study_uid, study_epoch_uid=ep1.uid)
 

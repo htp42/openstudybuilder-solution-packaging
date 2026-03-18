@@ -7,15 +7,18 @@
       <HelpButtonWithPanels :items="helpItems" />
       <v-spacer />
       <v-btn
-        class="expandHoverBtn"
         variant="outlined"
+        icon
+        size="small"
         color="nnBaseBlue"
         :disabled="lockSettings"
         :loading="soaContentLoadingStore.loading"
         @click="openSoaSettings"
       >
         <v-icon left>mdi-cog-outline</v-icon>
-        <span class="label">{{ $t('ProtocolFlowchart.soa_settings') }}</span>
+        <v-tooltip activator="parent" location="top">
+          {{ $t('ProtocolFlowchart.soa_settings') }}
+        </v-tooltip>
       </v-btn>
     </div>
     <v-tabs v-model="tab" bg-color="white">

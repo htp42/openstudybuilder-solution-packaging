@@ -45,4 +45,5 @@ before(function() {
     cy.createTestStudy('9879', 'Additional study for testing')
     cy.createTestStudy('9880', 'Study visits testing')
     cy.createTestStudy('9881', 'Empty study')
+    // Please note 9900 -> 9914 are reserved for study lock/unlock tests
 });

@@ -6,6 +6,14 @@ This document contains a set of user requirements related to OpenStudyBuilder Co
 
 Consumers must be able to retrieve a list of all library activities and activity instances via the Consumer API.
 
+# URS-ConsumerApi-Library-ControlledTerminology
+
+Consumers must be able to retrieve controlled terminology from the library via the Consumer API, including CT codelists and codelist terms.
+
+# URS-ConsumerApi-Library-UnitDefinitions
+
+Consumers must be able to retrieve a list of unit definitions for a specified unit subset from the library via the Consumer API.
+
 # URS-ConsumerApi-Studies
 
 Consumers must be able to retrieve a list of all studies that exist in OpenStudyBuilder via the Consumer API.
@@ -19,7 +27,6 @@ Consumers must be able to retrieve the following entities related to Schedule of
 - Study Activity Instances
 - Detailed SoA
 - Operational SoA
-
 
 # URS-ConsumerApi-Studies-Papillons
 

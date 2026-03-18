@@ -16,15 +16,17 @@
       >
         <template #extraActions>
           <v-btn
-            class="ml-2 expandHoverBtn"
+            class="ml-2"
+            icon
+            size="small"
             variant="outlined"
             color="nnBaseBlue"
             @click="goToPackagesHistory(catalogue_name)"
           >
-            <v-icon left>mdi-calendar-clock</v-icon>
-            <span class="label">{{
-              $t('CtPackageHistory.ct_packages_history')
-            }}</span>
+            <v-icon>mdi-calendar-clock</v-icon>
+            <v-tooltip activator="parent" location="top">
+              {{ $t('CtPackageHistory.ct_packages_history') }}
+            </v-tooltip>
           </v-btn>
         </template>
       </CodelistTable>

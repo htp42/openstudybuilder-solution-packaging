@@ -1,7 +1,9 @@
 """Test validation of activity group and subgroup status when creating/editing activities."""
 
 import pytest
+from fastapi.testclient import TestClient
 
+from clinical_mdr_api.main import app
 from clinical_mdr_api.services.concepts.activities.activity_group_service import (
     ActivityGroupService,
 )
@@ -11,8 +13,35 @@ from clinical_mdr_api.services.concepts.activities.activity_service import (
 from clinical_mdr_api.services.concepts.activities.activity_sub_group_service import (
     ActivitySubGroupService,
 )
+from clinical_mdr_api.tests.integration.utils.api import (
+    inject_and_clear_db,
+    inject_base_data,
+)
 from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 from common.exceptions import BusinessLogicException
+
+# pylint: disable=unused-argument
+# pylint: disable=redefined-outer-name
+# pylint: disable=too-many-arguments
+
+# pytest fixture functions have other fixture functions as arguments,
+# which pylint interprets as unused arguments
+
+
+@pytest.fixture(scope="module")
+def api_client(test_data):
+    """Create FastAPI test client
+    using the database name set in the `test_data` fixture"""
+    yield TestClient(app)
+
+
+@pytest.fixture(scope="module", autouse=True)
+def test_data():
+    """Initialize test data"""
+    db_name = "activity-group-status-validation.api"
+    inject_and_clear_db(db_name)
+    inject_base_data()
+    yield
 
 
 def test_create_activity_with_retired_activity_group_fails():

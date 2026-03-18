@@ -121,8 +121,35 @@ class OdmGenericRepository(ConceptGenericRepository[_AggregateRootType], ABC):
 
     @classmethod
     def _get_origin_and_relation_node(
-        cls, uid: str, relation_uid: str | None, relationship_type: RelationType
+        cls,
+        uid: str,
+        relation_uid: str | None,
+        relationship_type: RelationType,
+        zero_or_one_relation: bool = False,
     ):
+        def _has_relationship_to_others() -> bool:
+            root = ""
+            value = ""
+            if relation_node.__label__.endswith("Root"):
+                root = f":{relation_node.__label__}"
+            else:
+                value = f":{relation_node.__label__}"
+
+            query = f"""
+                MATCH (source:ConceptRoot{root})-[:LATEST]->(:ConceptValue{value})
+                -[:{origin_label.upper()}]-(:{cls.value_class.__label__})<-[:HAS_VERSION]-(target:{cls.root_class.__label__})
+                WHERE source.uid = $source_uid AND target.uid <> $target_uid
+                RETURN COUNT(*) > 0
+            """
+            result, _ = db.cypher_query(
+                query=query,
+                params={
+                    "source_uid": relation_uid,
+                    "target_uid": uid,
+                },
+            )
+            return result[0][0] if result and len(result) > 0 else False
+
         root_class_node = cls.root_class.nodes.get_or_none(uid=uid)
         value_class_node = root_class_node.has_latest_value.single()
 
@@ -169,10 +196,16 @@ class OdmGenericRepository(ConceptGenericRepository[_AggregateRootType], ABC):
         if relation_node is not None and relation_node_value_cls is not None:
             relation_node = relation_node.has_latest_value.single()
 
-        BusinessLogicException.raise_if(
-            not relation_node and relation_uid,
-            msg=f"Object with UID '{relation_uid}' doesn't exist.",
-        )
+        if not relation_node and relation_uid:
+            raise BusinessLogicException(
+                msg=f"Object with UID '{relation_uid}' doesn't exist.",
+            )
+
+        if relation_uid and zero_or_one_relation and _has_relationship_to_others():
+            raise BusinessLogicException(
+                msg=f"{relation_node.__label__.removesuffix('Value').removesuffix('Root')} with UID '{relation_uid}'"
+                f" is already connected to another {root_class_node.__label__.removesuffix('Root')}."
+            )
 
         return getattr(value_class_node, origin_label), relation_node
 
@@ -183,9 +216,13 @@ class OdmGenericRepository(ConceptGenericRepository[_AggregateRootType], ABC):
         relation_uid: str,
         relationship_type: RelationType,
         parameters: dict[str, Any] | None = None,
+        zero_or_one_relation: bool = False,
     ) -> None:
         origin, relation_node = self.__class__._get_origin_and_relation_node(
-            uid, relation_uid, relationship_type
+            uid,
+            relation_uid,
+            relationship_type,
+            zero_or_one_relation=zero_or_one_relation,
         )
 
         origin.disconnect(relation_node)

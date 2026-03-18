@@ -25,6 +25,7 @@ from common.models.error import ErrorResponse
     dependencies=[security, rbac.STUDY_READ],
     summary="List all study activity schedules currently defined for the study",
     response_model_exclude_unset=True,
+    response_model_exclude_none=True,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -118,6 +119,7 @@ The following values should be returned for all study activities:
 - order
     """,
     response_model_exclude_unset=True,
+    response_model_exclude_none=True,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,

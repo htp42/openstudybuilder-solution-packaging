@@ -2483,16 +2483,16 @@ class StudyFlowchartService:
         else:
             query = "MATCH (study_root:StudyRoot{uid:$study_uid})-[has_version:HAS_VERSION {version:$study_value_version}]-(study_value:StudyValue)"
         query += """
-            MATCH (study_activity_schedule:StudyActivitySchedule)<-[:HAS_STUDY_ACTIVITY_SCHEDULE]-(study_value)
-            MATCH (study_activity_schedule)<-[:STUDY_VISIT_HAS_SCHEDULE]-(study_visit:StudyVisit)<-[:HAS_STUDY_VISIT]-(study_value)
-            MATCH (study_visit)<-[:STUDY_EPOCH_HAS_STUDY_VISIT]-(study_epoch:StudyEpoch)<-[:HAS_STUDY_EPOCH]-(study_value)
-            MATCH (study_activity_schedule)<-[:STUDY_ACTIVITY_HAS_SCHEDULE]-(study_activity:StudyActivity)
+            MATCH (study_value)-[:HAS_STUDY_ACTIVITY]->(study_activity:StudyActivity)
                 -[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_INSTANCE]->(study_activity_instance:StudyActivityInstance)
                 <-[:HAS_STUDY_ACTIVITY_INSTANCE]-(study_value)
             WHERE NOT (study_activity)-[:BEFORE]-()
             MATCH (study_activity_instance)-[:HAS_SELECTED_ACTIVITY_INSTANCE]->(activity_instance_value:ActivityInstanceValue)
             MATCH (study_activity)-[:HAS_SELECTED_ACTIVITY]->(activity_value:ActivityValue)<-[:HAS_VERSION]-(:ActivityRoot)<-[:CONTAINS_CONCEPT]-(lib:Library)
-            WITH has_version,study_value, study_activity_schedule, study_visit, study_epoch, study_activity_instance, study_activity, activity_instance_value, lib,
+            OPTIONAL MATCH (study_activity)-[:STUDY_ACTIVITY_HAS_SCHEDULE]->(study_activity_schedule:StudyActivitySchedule)<-[:HAS_STUDY_ACTIVITY_SCHEDULE]-(study_value),
+                (study_activity_schedule)<-[:STUDY_VISIT_HAS_SCHEDULE]-(study_visit:StudyVisit)<-[:HAS_STUDY_VISIT]-(study_value),
+                (study_visit)<-[:STUDY_EPOCH_HAS_STUDY_VISIT]-(study_epoch:StudyEpoch)<-[:HAS_STUDY_EPOCH]-(study_value)
+            WITH has_version, study_value, study_activity_schedule, study_visit, study_epoch, study_activity_instance, study_activity, activity_instance_value, lib,
             head([(study_activity)-[:HAS_SELECTED_ACTIVITY]->(av:ActivityValue) | av]) as activity,
             head([(study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]->(study_activity_subgroup:StudyActivitySubGroup)
                 -[:HAS_SELECTED_ACTIVITY_SUBGROUP]->(activity_subgroup_value:ActivitySubGroupValue) 

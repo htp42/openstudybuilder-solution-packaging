@@ -157,8 +157,6 @@ class OdmFormValue(ConceptValue):
     repeating = BooleanProperty()
     sdtm_version = StringProperty()
 
-    links_to_activity_item = RelationshipTo(ActivityItem, "LINKS_TO_ACTIVITY_ITEM")
-
     has_translated_text = RelationshipTo(
         OdmTranslatedText, "HAS_TRANSLATED_TEXT", model=ClinicalMdrRel
     )
@@ -217,8 +215,6 @@ class OdmItemGroupValue(ConceptValue):
     origin = StringProperty()
     purpose = StringProperty()
     comment = StringProperty()
-
-    links_to_activity_item = RelationshipTo(ActivityItem, "LINKS_TO_ACTIVITY_ITEM")
 
     has_translated_text = RelationshipTo(
         OdmTranslatedText, "HAS_TRANSLATED_TEXT", model=ClinicalMdrRel

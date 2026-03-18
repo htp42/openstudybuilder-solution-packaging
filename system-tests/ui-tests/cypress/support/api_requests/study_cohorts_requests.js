@@ -1,6 +1,7 @@
 import { generateShortUniqueName } from "../helper_functions"
 import { arm_uid } from "./study_arm_requests"
 import { branch_uid } from "./study_branch_requests"
+const { getShortUniqueId } = require("../../support/helper_functions");
 
 let study_cohorts_uids
 const createCohortUrl = (studyUid) => `/studies/${studyUid}/study-cohorts`
@@ -27,7 +28,7 @@ const createCohortBody = (armUid, branchUid) => {
         ],
         "name": cohortName,
         "short_name": cohortName,
-        "code": `Code${Date.now()}`,
+        "code": `Code${getShortUniqueId()}`,
         "number_of_subjects": 1,
         "description": 'TestCohort'
     }

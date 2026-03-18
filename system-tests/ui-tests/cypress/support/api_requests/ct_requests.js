@@ -1,5 +1,7 @@
+const { getShortUniqueId } = require("../../support/helper_functions");
+
 Cypress.Commands.add('createAndOpenCodelist', () => {
-  let number = Date.now()
+  let number = getShortUniqueId()
   cy.request('POST', Cypress.env('API') + '/ct/codelists', {
     "extensible": true,
     "is_ordinal": true,
@@ -19,7 +21,7 @@ Cypress.Commands.add('createAndOpenCodelist', () => {
 })
 
 Cypress.Commands.add('createAndOpenTerm', () => {
-  let number = Date.now()
+  let number = getShortUniqueId()
   cy.request('POST', Cypress.env('API') + '/ct/terms', {
     catalogue_names: ['SEND CT'],
     codelists: [{codelist_uid: 'C100129', submission_value: `SubmissionCode${number}`, order: '1'}],

@@ -14,6 +14,9 @@ import logging
 import pytest
 from fastapi.testclient import TestClient
 
+from clinical_mdr_api.domains.controlled_terminologies.ct_codelist_attributes import (
+    DEFAULT_CODELIST_TYPE,
+)
 from clinical_mdr_api.main import app
 from clinical_mdr_api.tests.integration.utils.api import (
     inject_and_clear_db,
@@ -80,6 +83,7 @@ def test_post_create_codelist(api_client):
         "definition": "definition",
         "extensible": True,
         "is_ordinal": False,
+        "codelist_type": "Response",
         "sponsor_preferred_name": "Sponsor preferred name",
         "template_parameter": True,
         "library_name": SPONSOR_LIBRARY,
@@ -107,6 +111,7 @@ def test_post_create_codelist(api_client):
     assert res["definition"] == "definition"
     assert res["extensible"] is True
     assert res["is_ordinal"] is False
+    assert res["codelist_type"] == "Response"
     assert res["sponsor_preferred_name"] == "Sponsor preferred name"
     assert res["template_parameter"] is True
     assert res["library_name"] == SPONSOR_LIBRARY
@@ -155,6 +160,7 @@ def test_post_create_codelist_with_parent_codelist(api_client):
     assert res["definition"] == "definition"
     assert res["extensible"] is True
     assert res["is_ordinal"] is False
+    assert res["codelist_type"] == DEFAULT_CODELIST_TYPE
     assert res["sponsor_preferred_name"] == "Sponsor preferred name with parent"
     assert res["template_parameter"] is True
     assert res["library_name"] == SPONSOR_LIBRARY
@@ -181,6 +187,7 @@ def test_patch_draft_codelist(api_client):
         "nci_preferred_name": "new codelist preferred term",
         "definition": "new codelist definition",
         "extensible": True,
+        "codelist_type": "Response",
         "change_description": "changing codelist name",
     }
     response = api_client.patch(f"{URL}/{codelist.codelist_uid}/attributes", json=data)
@@ -198,6 +205,7 @@ def test_patch_draft_codelist(api_client):
     assert res["definition"] == "new codelist definition"
     assert res["extensible"] is True
     assert res["is_ordinal"] is False
+    assert res["codelist_type"] == "Response"
     assert res["library_name"] == SPONSOR_LIBRARY
     assert res["end_date"] is None
     assert res["status"] == "Draft"
@@ -297,6 +305,7 @@ def test_post_versions_codelist(api_client):
     assert res["definition"] == "codelist definition"
     assert res["extensible"] is False
     assert res["is_ordinal"] is False
+    assert res["codelist_type"] == DEFAULT_CODELIST_TYPE
     assert res["library_name"] == SPONSOR_LIBRARY
     assert res["end_date"] is None
     assert res["status"] == "Draft"
@@ -335,6 +344,7 @@ def test_post_approve_codelist(api_client):
     assert res["definition"] == "definition to approve"
     assert res["extensible"] is True
     assert res["is_ordinal"] is False
+    assert res["codelist_type"] == DEFAULT_CODELIST_TYPE
     assert res["library_name"] == SPONSOR_LIBRARY
     assert res["end_date"] is None
     assert res["status"] == "Final"
@@ -387,6 +397,7 @@ def test_get_codelist_with_parent_codelist_uid(api_client):
     assert res["definition"] == "Child definition"
     assert res["extensible"] is True
     assert res["is_ordinal"] is False
+    assert res["codelist_type"] == DEFAULT_CODELIST_TYPE
     assert res["library_name"] == SPONSOR_LIBRARY
     assert res["end_date"] is None
     assert res["status"] == "Draft"
@@ -522,6 +533,7 @@ def test_post_approve_child_codelist(api_client):
     assert res["definition"] == "Child definition for approval test"
     assert res["extensible"] is True
     assert res["is_ordinal"] is False
+    assert res["codelist_type"] == DEFAULT_CODELIST_TYPE
     assert res["library_name"] == SPONSOR_LIBRARY
     assert res["end_date"] is None
     assert res["status"] == "Final"

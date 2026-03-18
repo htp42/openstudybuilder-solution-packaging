@@ -25,6 +25,7 @@
           </div>
           <div>
             <NNTable
+              key="instancesTable"
               :headers="instanceClassHeaders"
               :items="searchTerm ? filteredInstanceClasses : instanceClasses"
               :items-length="
@@ -67,7 +68,7 @@
                 {{ item.adam_param_specific_enabled ? 'Yes' : 'No' }}
               </template>
               <template #[`item.mandatory`]="{ item }">
-                {{ item.mandatory ? 'Yes' : 'No' }}
+                {{ item.mandatory ? $t('_global.yes') : $t('_global.no') }}
               </template>
               <template #[`item.modified`]="{ item }">
                 {{ item.modified_date ? formatDate(item.modified_date) : '' }}
@@ -85,21 +86,49 @@
             </NNTable>
           </div>
         </div>
+        <div v-if="displayApplicableCodelists" class="activity-section">
+          <div class="section-header mb-1">
+            <h3 class="text-h6 font-weight-bold text-primary">
+              {{ $t('ActivityItemClassOverview.applicable_codelists') }}
+            </h3>
+          </div>
+          <div>
+            <NNTable
+              key="codelistsTable"
+              :headers="codelistHeaders"
+              :items="codelists"
+              :items-length="totalCodelists"
+              hide-default-switches
+              hide-export-button
+              hide-search-field
+              disable-filtering
+              no-padding
+              item-value="uid"
+              :loading="codelistsLoading"
+              @filter="fetchCodelists"
+            >
+              <template #[`item.attributes.is_ordinal`]="{ item }">
+                {{ item.is_ordinal ? $t('_global.yes') : $t('_global.no') }}
+              </template>
+            </NNTable>
+          </div>
+        </div>
       </v-card-text>
     </v-card>
   </div>
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-// import { useI18n } from 'vue-i18n'
+import { useI18n } from 'vue-i18n'
 import ActivitySummary from '@/components/library/ActivitySummary.vue'
 import NNTable from '@/components/tools/NNTable.vue'
 import StatusChip from '@/components/tools/StatusChip.vue'
 import activityItemClasses from '@/api/activityItemClasses'
+import filteringParameters from '@/utils/filteringParameters'
 
-// const { t } = useI18n()
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 
@@ -113,6 +142,9 @@ const instanceClassesPage = ref(1)
 const instanceClassesItemsPerPage = ref(100)
 const searchTerm = ref('')
 const filteredInstanceClasses = ref([])
+const codelists = ref([])
+const codelistsLoading = ref(false)
+const totalCodelists = ref(0)
 
 const itemsPerPageOptions = [10, 25, 50, 100, 500, 1000]
 
@@ -125,6 +157,23 @@ const instanceClassHeaders = [
   { title: 'VERSION', key: 'version' },
   { title: 'STATUS', key: 'status' },
 ]
+
+const codelistHeaders = [
+  { title: t('_global.name'), key: 'name.name' },
+  { title: t('_global.submission_value'), key: 'attributes.submission_value' },
+  {
+    title: t('CodeListDetail.nci_pref_name'),
+    key: 'attributes.nci_preferred_name',
+  },
+  { title: t('CodeListDetail.is_ordinal'), key: 'attributes.is_ordinal' },
+  { title: t('_global.definition'), key: 'attributes.definition' },
+]
+
+const displayApplicableCodelists = computed(
+  () =>
+    itemOverview.value.activity_item_class.name ===
+    'categoric_finding_original_result'
+)
 
 // Expose itemOverview for parent component
 defineExpose({ itemOverview })
@@ -257,6 +306,28 @@ function handleInstanceClassFilter(_filters, options) {
         filteredInstanceClasses.value = []
       }
     }
+  }
+}
+
+async function fetchCodelists(filters, options, filtersUpdated) {
+  const params = filteringParameters.prepareParameters(
+    options,
+    filters,
+    filtersUpdated
+  )
+  params.ct_catalogue_name = 'SDTM CT'
+  params.valid_codelists_for_item = true
+  codelistsLoading.value = true
+  try {
+    const resp = await activityItemClasses.getDatasetCodelists(
+      route.params.id,
+      'NA',
+      params
+    )
+    codelists.value = resp.data.items
+    totalCodelists.value = resp.data.total
+  } finally {
+    codelistsLoading.value = false
   }
 }
 

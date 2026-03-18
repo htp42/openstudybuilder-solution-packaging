@@ -1,11 +1,12 @@
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
+const { getShortUniqueId } = require("../../support/helper_functions");
 
 let data_supplier_name, description, apiBaseUrl, uiBaseUrl, defaultSupplierType, originSource, originType
 
 Given('The data supplier is found', () => cy.searchAndCheckPresence(data_supplier_name, true))
 
 Given('The user defines data supplier name, type, description, order, api url, frontend url, origin source and origin type', () => {
-    data_supplier_name = `E2E ${Date.now()}`
+    data_supplier_name = `E2E ${getShortUniqueId()}`
     description = 'Test Description', apiBaseUrl = 'APIURL', uiBaseUrl = 'UIURL'
     defaultSupplierType = 'EDC System', originSource = 'Clinical Study Sponsor', originType = 'Assigned Value'
     fillDataSupplierData()

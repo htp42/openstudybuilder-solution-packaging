@@ -21,6 +21,7 @@ from clinical_mdr_api.tests.integration.utils.api import inject_and_clear_db
 from clinical_mdr_api.tests.integration.utils.data_library import (
     STARTUP_CT_CATALOGUE_CYPHER,
     STARTUP_STUDY_LIST_CYPHER,
+    create_reason_for_lock_unlock_terms,
     fix_study_preferred_time_unit,
     get_codelist_with_term_cypher,
 )
@@ -39,6 +40,8 @@ from clinical_mdr_api.tests.utils.checks import assert_response_status_code
 from common.config import settings
 
 study_uid: str
+reason_for_lock_term_uid: str
+reason_for_unlock_term_uid: str
 
 log = logging.getLogger(__name__)
 
@@ -53,12 +56,15 @@ def api_client(test_data):
 @pytest.fixture(scope="module")
 def test_data():
     """Initialize test data"""
-    global study_uid
+    global study_uid, reason_for_lock_term_uid, reason_for_unlock_term_uid
     study_uid = "study_root"
     inject_and_clear_db("SDTMTEListingTest.api")
     db.cypher_query(STARTUP_STUDY_LIST_CYPHER)
     db.cypher_query(STARTUP_CT_CATALOGUE_CYPHER)
     study = generate_study_root()
+    lock_unlock_data = create_reason_for_lock_unlock_terms()
+    reason_for_lock_term_uid = lock_unlock_data["reason_for_lock_terms"][0].term_uid
+    reason_for_unlock_term_uid = lock_unlock_data["reason_for_unlock_terms"][0].term_uid
     # Create an epoch
     create_study_epoch_codelists_ret_cat_and_lib()
     _catalogue_name, library_name = get_catalogue_name_library_name()
@@ -209,7 +215,10 @@ def test_te_listing_versioning(api_client):
     # Lock
     response = api_client.post(
         f"/studies/{study_uid}/locks",
-        json={"change_description": "Lock 1"},
+        json={
+            "change_description": "Lock 1",
+            "reason_for_change_uid": reason_for_lock_term_uid,
+        },
     )
     assert_response_status_code(response, 201)
 
@@ -222,8 +231,14 @@ def test_te_listing_versioning(api_client):
     te_before_unlock = res
 
     # Unlock -- Study remain unlocked
-    response = api_client.delete(f"/studies/{study_uid}/locks")
-    assert_response_status_code(response, 200)
+    response = api_client.post(
+        f"/studies/{study_uid}/unlocks",
+        json={
+            "change_description": "Unlock",
+            "reason_for_change_uid": reason_for_unlock_term_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
 
     # get all visits
     response = api_client.get(

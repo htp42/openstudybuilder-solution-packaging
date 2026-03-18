@@ -205,6 +205,7 @@ class OdmItemGroupService(OdmGenericService[OdmItemGroupAR]):
                     "collection_exception_condition_oid": item.collection_exception_condition_oid,
                     "vendor": to_dict(item.vendor),
                 },
+                zero_or_one_relation=True,
             )
 
         odm_item_group_ar = self._find_by_uid_or_raise_not_found(normalize_string(uid))

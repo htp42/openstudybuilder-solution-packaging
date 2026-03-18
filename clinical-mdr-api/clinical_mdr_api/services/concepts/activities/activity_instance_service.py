@@ -30,7 +30,7 @@ from clinical_mdr_api.services.concepts import constants
 from clinical_mdr_api.services.concepts.concept_generic_service import (
     ConceptGenericService,
 )
-from common.exceptions import NotFoundException
+from common.exceptions import BusinessLogicException, NotFoundException
 from common.utils import get_edit_input_or_previous_value
 
 
@@ -155,6 +155,73 @@ class ActivityInstanceService(ConceptGenericService[ActivityInstanceAR]):
         perform_validation: bool = True,
     ) -> ActivityInstanceAR:
         fields_set = concept_edit_input.model_fields_set
+
+        # Validate that restricted fields cannot be modified
+        # Check activity_instance_class_uid
+        if (
+            "activity_instance_class_uid" in fields_set
+            and concept_edit_input.activity_instance_class_uid is not None
+            and concept_edit_input.activity_instance_class_uid
+            != item.concept_vo.activity_instance_class_uid
+        ):
+            raise BusinessLogicException(
+                msg="Activity instance class cannot be modified after creation.",
+            )
+
+        # Check topic_code
+        if "topic_code" in fields_set:
+            existing_topic_code = item.concept_vo.topic_code
+            new_topic_code = get_edit_input_or_previous_value(
+                concept_edit_input, item.concept_vo, "topic_code"
+            )
+            if existing_topic_code != new_topic_code:
+                raise BusinessLogicException(
+                    msg="Topic code cannot be modified after creation.",
+                )
+
+        # Check is_research_lab
+        if concept_edit_input.is_research_lab is not None:
+            if concept_edit_input.is_research_lab != item.concept_vo.is_research_lab:
+                raise BusinessLogicException(
+                    msg="Research lab flag cannot be modified after creation.",
+                )
+
+        # Check activity items with param/paramcd - their ct_terms cannot be modified
+        if (
+            "activity_items" in fields_set
+            and concept_edit_input.activity_items is not None
+        ):
+            # Create a map of existing activity items by their activity_item_class_uid
+            existing_items_by_class_uid: dict[str, ActivityItemVO] = {}
+            for existing_item in item.concept_vo.activity_items:
+                existing_items_by_class_uid[existing_item.activity_item_class_uid] = (
+                    existing_item
+                )
+
+            # Check each incoming activity item
+            for incoming_item in concept_edit_input.activity_items:
+                # Find the corresponding existing item
+                matched_existing_item = existing_items_by_class_uid.get(
+                    incoming_item.activity_item_class_uid
+                )
+
+                if (
+                    matched_existing_item is not None
+                    and matched_existing_item.is_adam_param_specific
+                ):
+                    # This activity item has param/paramcd - ct_terms cannot be modified
+                    existing_ct_term_uids = {
+                        term.uid for term in matched_existing_item.ct_terms
+                    }
+                    incoming_ct_term_uids = {
+                        ct_term.term_uid for ct_term in incoming_item.ct_terms
+                    }
+
+                    if existing_ct_term_uids != incoming_ct_term_uids:
+                        raise BusinessLogicException(
+                            msg="Activity items with param/paramcd cannot have their terms (ct_terms) modified after creation.",
+                        )
+
         if "activity_groupings" in fields_set:
             if concept_edit_input.activity_groupings:
                 activity_groupings = [

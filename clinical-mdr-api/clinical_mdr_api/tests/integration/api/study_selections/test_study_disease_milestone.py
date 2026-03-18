@@ -10,6 +10,7 @@ Tests for /studies/{study_uid}/study-disease-milestones endpoints
 # which pylint interprets as unused arguments
 
 import logging
+from typing import Any
 from unittest import mock
 
 import pytest
@@ -32,6 +33,7 @@ study: Study
 disease_milestone_uid: str
 disease_milestone_type_term: CTTerm
 disease_milestone_type_term2: CTTerm
+test_data_dict: dict[str, Any]
 
 
 @pytest.fixture(scope="module")
@@ -46,7 +48,9 @@ def test_data():
     """Initialize test data"""
     db_name = "studydiseasemilestoneapi"
     inject_and_clear_db(db_name)
-    inject_base_data()
+    global test_data_dict
+    _, test_data_dict = inject_base_data()
+
     global disease_milestone_type_term
     global disease_milestone_type_term2
     global study
@@ -69,6 +73,17 @@ def test_data():
         sponsor_preferred_name="Disease Milestone Type 2",
     )
     yield
+
+
+@pytest.mark.order("last")
+def test_integrity_checks_for_all_studies(api_client):
+    """
+    Test integrity checks for all available studies in the database.
+
+    This test should always be executed at the END to check the health of the remaining database.
+    It validates that all studies in the database pass integrity checks after all other tests have run.
+    """
+    TestUtils.run_integrity_checks_for_all_studies(api_client)
 
 
 def test_disease_milestone_modify_actions_on_locked_study(api_client):
@@ -104,7 +119,12 @@ def test_disease_milestone_modify_actions_on_locked_study(api_client):
     # Lock
     response = api_client.post(
         f"/studies/{study.uid}/locks",
-        json={"change_description": "Lock 1"},
+        json={
+            "change_description": "Lock 1",
+            "reason_for_change_uid": test_data_dict["reason_for_lock_terms"][
+                0
+            ].term_uid,
+        },
     )
     assert_response_status_code(response, 201)
 
@@ -154,8 +174,16 @@ def test_get_disease_milestone_data_for_specific_study_version(api_client):
     ).json()
 
     # Unlock
-    response = api_client.delete(f"/studies/{study.uid}/locks")
-    assert_response_status_code(response, 200)
+    response = api_client.post(
+        f"/studies/{study.uid}/unlocks",
+        json={
+            "change_description": "Unlock",
+            "reason_for_change_uid": test_data_dict["reason_for_unlock_terms"][
+                0
+            ].term_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
     # add another disease milestone
     response = api_client.post(
         f"/studies/{study.uid}/study-disease-milestones",

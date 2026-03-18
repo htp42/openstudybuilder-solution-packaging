@@ -3,7 +3,9 @@
     <template #activator="{ props }">
       <slot name="button" :props="props">
         <v-btn
-          class="ml-2 expandHoverBtn"
+          class="ml-2"
+          icon
+          size="small"
           variant="outlined"
           color="nnBaseBlue"
           v-bind="props"
@@ -11,8 +13,10 @@
           data-cy="table-export-button"
           :loading="loading"
         >
-          <v-icon left>mdi-download-outline</v-icon>
-          <span class="label">{{ $t('DataTableExportButton.export') }}</span>
+          <v-icon>mdi-download-outline</v-icon>
+          <v-tooltip activator="parent" location="top">
+            {{ $t('DataTableExportButton.export') }}
+          </v-tooltip>
         </v-btn>
       </slot>
     </template>
@@ -94,7 +98,7 @@ function createDownloadLink(content, format) {
   let fileName = `${props.objectLabel} ${today}.${format.extension}`
   if (window.location.pathname.startsWith('/studies')) {
     fileName =
-      `${studiesGeneralStore.selectedStudy ? studiesGeneralStore.selectedStudy.current_metadata.identification_metadata.study_id + ' ' : ''}` +
+      `${studiesGeneralStore.selectedStudy ? studiesGeneralStore.studyId + ' ' : ''}` +
       fileName
   }
   exportLoader.downloadFile(content, format.mediaType, fileName)

@@ -35,7 +35,10 @@ from clinical_mdr_api.tests.integration.utils.api import (
     inject_and_clear_db,
     inject_base_data,
 )
-from clinical_mdr_api.tests.integration.utils.utils import LIBRARY_NAME, TestUtils
+from clinical_mdr_api.tests.integration.utils.utils import (
+    SPONSOR_LIBRARY_NAME,
+    TestUtils,
+)
 from clinical_mdr_api.tests.utils.checks import assert_response_status_code
 from common.exceptions import BusinessLogicException
 
@@ -74,7 +77,7 @@ def api_client(test_data):
 @pytest.fixture(scope="module")
 def test_data():
     """Initialize test data"""
-    db_name = "activityinstances.apii"
+    db_name = "activityinstances.api"
     inject_and_clear_db(db_name)
     global base_test_data
     _study, base_test_data = inject_base_data(inject_unit_dimension=True)
@@ -1100,6 +1103,251 @@ def test_edit_activity_instance(api_client):
     assert activity_instance_preview.topic_code == "ACTIVITY_RESEARCH_1"
 
 
+def test_cannot_edit_activity_instance_class_uid(api_client):
+    """Test that editing activity_instance_class_uid raises BusinessLogicException"""
+    unique_topic_code = f"TEST_TC_CLASS_{uuid.uuid4().hex[:8]}"
+    activity_instance = TestUtils.create_activity_instance(
+        name="Test Instance for Class Edit",
+        activity_instance_class_uid=activity_instance_classes[0].uid,
+        name_sentence_case="test instance for class edit",
+        topic_code=unique_topic_code,
+        activities=[activities[0].uid],
+        activity_subgroups=[activity_subgroup.uid],
+        activity_groups=[activity_group.uid],
+        activity_items=[activity_items[0]],
+        approve=False,
+    )
+
+    # Try to edit activity_instance_class_uid
+    response = api_client.patch(
+        f"/concepts/activities/activity-instances/{activity_instance.uid}",
+        json={
+            "activity_instance_class_uid": activity_instance_classes[1].uid,
+            "change_description": "trying to change instance class",
+        },
+    )
+    assert_response_status_code(response, 400)
+    res = response.json()
+    assert res["type"] == "BusinessLogicException"
+    assert "Activity instance class cannot be modified after creation" in res["message"]
+
+
+def test_cannot_edit_topic_code(api_client):
+    """Test that editing topic_code raises BusinessLogicException"""
+    unique_topic_code = f"ORIGINAL_TC_{uuid.uuid4().hex[:8]}"
+    activity_instance = TestUtils.create_activity_instance(
+        name="Test Instance for Topic Code Edit",
+        activity_instance_class_uid=activity_instance_classes[0].uid,
+        name_sentence_case="test instance for topic code edit",
+        topic_code=unique_topic_code,
+        activities=[activities[0].uid],
+        activity_subgroups=[activity_subgroup.uid],
+        activity_groups=[activity_group.uid],
+        activity_items=[activity_items[0]],
+        approve=False,
+    )
+
+    # Try to edit topic_code
+    response = api_client.patch(
+        f"/concepts/activities/activity-instances/{activity_instance.uid}",
+        json={
+            "topic_code": "NEW_TOPIC_CODE",
+            "change_description": "trying to change topic code",
+        },
+    )
+    assert_response_status_code(response, 400)
+    res = response.json()
+    assert res["type"] == "BusinessLogicException"
+    assert "Topic code cannot be modified after creation" in res["message"]
+
+
+def test_cannot_edit_is_research_lab(api_client):
+    """Test that editing is_research_lab raises BusinessLogicException"""
+    unique_topic_code = f"TEST_TC_RESEARCH_{uuid.uuid4().hex[:8]}"
+    activity_instance = TestUtils.create_activity_instance(
+        name="Test Instance for Research Lab Edit",
+        activity_instance_class_uid=activity_instance_classes[0].uid,
+        name_sentence_case="test instance for research lab edit",
+        topic_code=unique_topic_code,
+        is_research_lab=False,
+        activities=[activities[0].uid],
+        activity_subgroups=[activity_subgroup.uid],
+        activity_groups=[activity_group.uid],
+        activity_items=[activity_items[0]],
+        approve=False,
+    )
+
+    # Try to edit is_research_lab from False to True
+    response = api_client.patch(
+        f"/concepts/activities/activity-instances/{activity_instance.uid}",
+        json={
+            "is_research_lab": True,
+            "change_description": "trying to change research lab flag",
+        },
+    )
+    assert_response_status_code(response, 400)
+    res = response.json()
+    assert res["type"] == "BusinessLogicException"
+    assert "Research lab flag cannot be modified after creation" in res["message"]
+
+
+def test_can_edit_allowed_fields(api_client):
+    """Test that editing allowed fields (name, name_sentence_case, adam_param_code, activity_groupings) succeeds"""
+    unique_topic_code = f"TEST_TC_ALLOWED_{uuid.uuid4().hex[:8]}"
+    activity_instance = TestUtils.create_activity_instance(
+        name="Test Instance for Allowed Edit",
+        activity_instance_class_uid=activity_instance_classes[0].uid,
+        name_sentence_case="test instance for allowed edit",
+        topic_code=unique_topic_code,
+        is_research_lab=False,
+        activities=[activities[0].uid],
+        activity_subgroups=[activity_subgroup.uid],
+        activity_groups=[activity_group.uid],
+        activity_items=[activity_items[0]],
+        approve=False,
+    )
+
+    # Edit allowed fields (keep the same activity to avoid interfering with other tests)
+    response = api_client.patch(
+        f"/concepts/activities/activity-instances/{activity_instance.uid}",
+        json={
+            "name": "Updated Name",
+            "name_sentence_case": "updated name",
+            "adam_param_code": "UPDATED_ADAM_CODE",
+            "activity_groupings": [
+                {
+                    "activity_uid": activities[
+                        0
+                    ].uid,  # Keep same activity to avoid test isolation issues
+                    "activity_subgroup_uid": activity_subgroup.uid,
+                    "activity_group_uid": activity_group.uid,
+                }
+            ],
+            "change_description": "updating allowed fields",
+        },
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert res["name"] == "Updated Name"
+    assert res["name_sentence_case"] == "updated name"
+    assert res["adam_param_code"] == "UPDATED_ADAM_CODE"
+    assert res["topic_code"] == unique_topic_code  # Should remain unchanged
+    assert res["is_research_lab"] is False  # Should remain unchanged
+    assert len(res["activity_groupings"]) == 1
+    assert res["activity_groupings"][0]["activity"]["uid"] == activities[0].uid
+
+
+def test_cannot_edit_ct_terms_for_param_paramcd_activity_items(api_client):
+    """Test that editing ct_terms for activity items with param/paramcd (is_adam_param_specific=True) raises BusinessLogicException"""
+    # Create an activity instance with an activity item that has param/paramcd
+    unique_topic_code = f"TEST_TC_PARAM_{uuid.uuid4().hex[:8]}"
+    activity_instance = TestUtils.create_activity_instance(
+        name="Test Instance for Param Paramcd Edit",
+        activity_instance_class_uid=activity_instance_classes[0].uid,
+        name_sentence_case="test instance for param paramcd edit",
+        topic_code=unique_topic_code,
+        activities=[activities[0].uid],
+        activity_subgroups=[activity_subgroup.uid],
+        activity_groups=[activity_group.uid],
+        activity_items=[
+            activity_items[0]
+        ],  # activity_items[0] has is_adam_param_specific=True
+        approve=False,
+    )
+
+    # Get the existing activity item to preserve its structure
+    response = api_client.get(
+        f"/concepts/activities/activity-instances/{activity_instance.uid}"
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    existing_item = res["activity_items"][0]
+    assert existing_item["is_adam_param_specific"] is True
+
+    # Try to edit the ct_terms of the param/paramcd activity item
+    # Create a modified activity item with different ct_terms
+    modified_activity_item = {
+        "activity_item_class_uid": existing_item["activity_item_class"]["uid"],
+        "ct_terms": [
+            {
+                "term_uid": ct_terms[1].term_uid,  # Use a different term
+                "codelist_uid": codelist.codelist_uid,
+            }
+        ],
+        "unit_definition_uids": [
+            unit["uid"] for unit in existing_item["unit_definitions"]
+        ],
+        "is_adam_param_specific": True,
+    }
+
+    response = api_client.patch(
+        f"/concepts/activities/activity-instances/{activity_instance.uid}",
+        json={
+            "activity_items": [modified_activity_item],
+            "change_description": "trying to change ct_terms for param/paramcd item",
+        },
+    )
+    assert_response_status_code(response, 400)
+    res = response.json()
+    assert res["type"] == "BusinessLogicException"
+    assert "param/paramcd cannot have their terms (ct_terms) modified" in res["message"]
+
+
+def test_can_edit_ct_terms_for_non_param_paramcd_activity_items(api_client):
+    """Test that editing ct_terms for activity items without param/paramcd (is_adam_param_specific=False) succeeds"""
+    # Create an activity instance with an activity item that does NOT have param/paramcd
+    unique_topic_code = f"TEST_TC_NON_PARAM_{uuid.uuid4().hex[:8]}"
+    activity_instance = TestUtils.create_activity_instance(
+        name="Test Instance for Non Param Edit",
+        activity_instance_class_uid=activity_instance_classes[0].uid,
+        name_sentence_case="test instance for non param edit",
+        topic_code=unique_topic_code,
+        activities=[activities[0].uid],
+        activity_subgroups=[activity_subgroup.uid],
+        activity_groups=[activity_group.uid],
+        activity_items=[
+            activity_items[1]
+        ],  # activity_items[1] has is_adam_param_specific=False
+        approve=False,
+    )
+
+    # Get the existing activity item
+    response = api_client.get(
+        f"/concepts/activities/activity-instances/{activity_instance.uid}"
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    existing_item = res["activity_items"][0]
+    assert existing_item["is_adam_param_specific"] is False
+
+    # Edit the ct_terms of the non-param/paramcd activity item (should succeed)
+    modified_activity_item = {
+        "activity_item_class_uid": existing_item["activity_item_class"]["uid"],
+        "ct_terms": [
+            {
+                "term_uid": ct_terms[0].term_uid,  # Use a different term
+                "codelist_uid": codelist.codelist_uid,
+            }
+        ],
+        "unit_definition_uids": [
+            unit["uid"] for unit in existing_item["unit_definitions"]
+        ],
+        "is_adam_param_specific": False,
+    }
+
+    response = api_client.patch(
+        f"/concepts/activities/activity-instances/{activity_instance.uid}",
+        json={
+            "activity_items": [modified_activity_item],
+            "change_description": "changing ct_terms for non-param/paramcd item",
+        },
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert len(res["activity_items"]) == 1
+    assert res["activity_items"][0]["ct_terms"][0]["uid"] == ct_terms[0].term_uid
+
+
 def test_post_activity_instance(api_client):
     item_to_post = activity_items[1]
     response = api_client.post(
@@ -1278,7 +1526,9 @@ def verify_instance_overview_content(res: dict[Any, Any]):
     assert res["activity_groupings"][0]["activity"]["uid"] == activities[0].uid
     assert res["activity_groupings"][0]["activity"]["name"] == activities[0].name
     assert res["activity_groupings"][0]["activity"]["definition"] is None
-    assert res["activity_groupings"][0]["activity"]["library_name"] == LIBRARY_NAME
+    assert (
+        res["activity_groupings"][0]["activity"]["library_name"] == SPONSOR_LIBRARY_NAME
+    )
 
     # activity subgroups
     assert (
@@ -1304,7 +1554,7 @@ def verify_instance_overview_content(res: dict[Any, Any]):
     assert res["activity_instance"]["is_legacy_usage"] is False
     assert res["activity_instance"]["is_derived"] is False
     assert res["activity_instance"]["topic_code"] == "topic code XXX"
-    assert res["activity_instance"]["library_name"] == LIBRARY_NAME
+    assert res["activity_instance"]["library_name"] == SPONSOR_LIBRARY_NAME
     assert "author_username" in res["activity_instance"]
     assert res["activity_instance"]["author_username"] is not None
 
@@ -1401,7 +1651,7 @@ def verify_activity_overview_content(res: dict[Any, Any]):
     assert res["activity"]["name_sentence_case"] == "Second activity"
     assert res["activity"]["definition"] is None
     assert res["activity"]["abbreviation"] is None
-    assert res["activity"]["library_name"] == LIBRARY_NAME
+    assert res["activity"]["library_name"] == SPONSOR_LIBRARY_NAME
 
     assert len(res["activity_groupings"]) == 1
 
@@ -1428,7 +1678,7 @@ def verify_activity_overview_content(res: dict[Any, Any]):
     assert res["activity_instances"][0]["is_legacy_usage"] is False
     assert res["activity_instances"][0]["is_derived"] is False
     assert res["activity_instances"][0]["topic_code"] == "topic code-AAA-0"
-    assert res["activity_instances"][0]["library_name"] == LIBRARY_NAME
+    assert res["activity_instances"][0]["library_name"] == SPONSOR_LIBRARY_NAME
 
     # activity instance class
     assert (
@@ -2134,7 +2384,7 @@ def test_create_activity_instance_with_non_final_subgroup_fails(api_client, test
     # Create a subgroup that will be retired
     retired_subgroup = TestUtils.create_activity_subgroup(
         name="Subgroup to Retire",
-        library_name=LIBRARY_NAME,
+        library_name=SPONSOR_LIBRARY_NAME,
     )
 
     # Create another activity that uses the soon-to-be-retired subgroup
@@ -2142,7 +2392,7 @@ def test_create_activity_instance_with_non_final_subgroup_fails(api_client, test
         name="Activity with Retired Subgroup",
         activity_groups=[activity_group.uid],
         activity_subgroups=[retired_subgroup.uid],
-        library_name=LIBRARY_NAME,
+        library_name=SPONSOR_LIBRARY_NAME,
     )
 
     # Directly update the subgroup to be retired by updating HAS_VERSION status
@@ -2170,7 +2420,7 @@ def test_create_activity_instance_with_non_final_subgroup_fails(api_client, test
                 }
             ],
             "activity_instance_class_uid": activity_instance_classes[0].uid,
-            "library_name": LIBRARY_NAME,
+            "library_name": SPONSOR_LIBRARY_NAME,
         },
     )
 

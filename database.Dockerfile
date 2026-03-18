@@ -1,4 +1,4 @@
-ARG NEO4J_IMAGE=neo4j:5.26.18-enterprise
+ARG NEO4J_IMAGE=neo4j:enterprise
 ARG PYTHON_IMAGE=python:3.13.0-slim
 
 # --- Build stage ----
@@ -6,16 +6,17 @@ ARG PYTHON_IMAGE=python:3.13.0-slim
 # The backup file produced is platform-independent data
 FROM --platform=$BUILDPLATFORM $PYTHON_IMAGE AS build-stage
 
-ARG NEO4J_DOWNLOAD_URL=https://dist.neo4j.org/neo4j-enterprise-5.26.18-unix.tar.gz
-ARG NEO4J_CHECKSUM=9f3d954467e43681210a4541df73dae563d4f960273333b4b6db788313ef4096
+ARG NEO4J_DOWNLOAD_URL=https://dist.neo4j.org/neo4j-enterprise
+ARG NEO4J_DOWNLOAD_FILEEXTENSION=unix.tar.gz
 
 ## Install required system packages, for clinical-mdr-api as well
 RUN apt-get update \
     && apt-get -y install \
     ca-certificates-java \
-    openjdk-17-jre-headless \
+    gpg \
     git \
     curl \
+    wget \
     python3-cffi \
     python3-brotli \
     libpango-1.0-0 \
@@ -25,6 +26,10 @@ RUN apt-get update \
     gcc \
     net-tools \ 
     && pip install --upgrade pip pipenv wheel \
+    && wget -qO - https://packages.adoptium.net/artifactory/api/gpg/key/public | gpg --dearmor | tee /etc/apt/trusted.gpg.d/adoptium.gpg > /dev/null \
+    && echo "deb https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" | tee /etc/apt/sources.list.d/adoptium.list \
+    && apt-get update \
+    && apt-get -y install temurin-25-jdk \
     && apt-get clean && rm -rf /var/lib/apt/lists && rm -rf ~/.cache
 
 WORKDIR /neo4j
@@ -56,8 +61,8 @@ ENV NEO4J_MDR_BOLT_PORT=7687 \
     NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
 
 # Install Neo4j from tarball
-RUN curl --fail --location --output neo4j.tar.gz --silent --show-error "$NEO4J_DOWNLOAD_URL" \
-    && echo "$NEO4J_CHECKSUM  neo4j.tar.gz" | sha256sum --check - \
+RUN export NEO4J_VERSION=$(curl "https://dist.neo4j.org/versions/v2/neo4j-versions.json" | jq -r '."dist-tags" .latest') \
+    && curl --fail --location --output neo4j.tar.gz --silent --show-error "$NEO4J_DOWNLOAD_URL-$NEO4J_VERSION-$NEO4J_DOWNLOAD_FILEEXTENSION" \
     && tar --extract --gzip --file neo4j.tar.gz --strip-components=1 \
     && rm neo4j.tar.gz \
     && mv labs/apoc*core.jar plugins/ \
@@ -172,8 +177,9 @@ RUN [ "x$UID" = "x1000" ] || { \
     ;}
 
 # Install APOC plugin
-RUN wget --quiet --timeout 60 --tries 2 --output-document /var/lib/neo4j/plugins/apoc.jar \
-    https://github.com/neo4j/apoc/releases/download/5.26.18/apoc-5.26.18-core.jar
+RUN export NEO4J_VERSION=$(wget "https://dist.neo4j.org/versions/v2/neo4j-versions.json"  -qO - | jq -r '."dist-tags" .latest') \
+    && wget --quiet --timeout 60 --tries 2 --output-document /var/lib/neo4j/plugins/apoc.jar \
+    https://github.com/neo4j/apoc/releases/download/$NEO4J_VERSION/apoc-$NEO4J_VERSION-core.jar
 
 # Copy database backup from build stage
 COPY --from=build-stage --chown=$USER:$GROUP /neo4j/data/backup /data/backup
@@ -184,7 +190,7 @@ ENV NEO4J_AUTH=neo4j/changeme1234 \
     NEO4J_apoc_import_file_enabled="true" \
     NEO4J_apoc_export_file_enabled="true" \
     NEO4J_dbms_security_procedures_unrestricted="apoc.*" \
-    NEO4J_dbms_databases_seed__from__uri__providers="URLConnectionSeedProvider" \
+    NEO4J_dbms_databases_seed__from__uri__providers="FileSeedProvider" \
     NEO4J_apoc_initializer_system_1="CREATE DATABASE mdrdb OPTIONS {existingData: 'use', seedURI:'file:///data/backup/mdrdockerdb.backup'} WAIT 60 SECONDS"
 
 # Volume attachment point: if an empty volume is mounted, it gets populated with the pre-built database from the image

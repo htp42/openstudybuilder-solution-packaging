@@ -58,12 +58,13 @@ Feature: Studies - Define Study - Study Data Specifications - Study Activity Ins
     Scenario: [Table][Options] User must be able to see the Study Activity Instances table with options listed in the scenario
         Given The test study '/data_specifications/instances' page is opened
         Then A table is visible with following options
-            | options                                                         |
-            | Select filters                                                  |
-            | Select columns                                                  |
-            | Export                                                          |
-            | Search                                                          |
-            | Show version history                                            |
+            | options                                            |
+            | filters-button                                     |
+            | columns-layout-button                              |
+            | table-export-button                                |
+            | select-rows                                        |
+            | search-field                                       |
+            | History                                            |
 
     Scenario: [Placeholder][Submitted] User must be able to see submitted placeholder in the Activity Instances table
         Given The test study '/activities/list' page is opened
@@ -347,139 +348,47 @@ Feature: Studies - Define Study - Study Data Specifications - Study Activity Ins
         Then The button 'Save as reviewed' is disabled
 
     Scenario: User must be presented with red exclamation mark icon when a change has occured for instance name
-        And [API] Study Activity is created and approved
+        Given [API] Study Activity is created and approved
         And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
         And [API] Get SoA Group 'INFORMED CONSENT' id
         And [API] Activity is added to the study
         And [API] Activity Instance new version is created
-        When Overview page for activity instance created via API is opened
-        And I click 'Edit' button
-        And Linked Activity group and subgroup are loaded
-        And Form continue button is clicked
-        And Form continue button is clicked
-        And The activity instace name is updated
-        And Form save button is clicked
+        And [API] Activity instance is updated with new name
         When The test study '/data_specifications/instances' page is opened
         And The Study Activity is found
         Then The red alert badge is present
 
-    Scenario: User must be presented with red exclamation mark icon when a change has occured for instance class
-        And [API] Study Activity is created and approved
-        And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
-        And [API] Get SoA Group 'INFORMED CONSENT' id
-        And [API] Activity is added to the study
-        And [API] Activity Instance new version is created
-        When Overview page for activity instance created via API is opened
-        And I click 'Edit' button
-        And Linked Activity group and subgroup are loaded
-        And Form continue button is clicked
-        And The activity instace class is updated
-        And Form continue button is clicked
-        And Form save button is clicked
-        When The test study '/data_specifications/instances' page is opened
-        And The Study Activity is found
-        Then The red alert badge is present
-
-    Scenario: User must be presented with red exclamation mark icon when a change has occured for instance topic code
-        And [API] Study Activity is created and approved
-        And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
-        And [API] Get SoA Group 'INFORMED CONSENT' id
-        And [API] Activity is added to the study
-        And [API] Activity Instance new version is created
-        When Overview page for activity instance created via API is opened
-        And I click 'Edit' button
-        And Linked Activity group and subgroup are loaded
-        And Form continue button is clicked
-        And Form continue button is clicked
-        And The activity instace topic code is updated
-        And Form save button is clicked
-        When The test study '/data_specifications/instances' page is opened
-        And The Study Activity is found
-        Then The red alert badge is present
-        
     Scenario: User must be presented with yellow exclamation mark when study activity updates has been declined
-        And [API] Study Activity is created and approved
+        Given [API] Study Activity is created and approved
         And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
         And [API] Get SoA Group 'INFORMED CONSENT' id
         And [API] Activity is added to the study
         And [API] Activity Instance new version is created
-        When Overview page for activity instance created via API is opened
-        And I click 'Edit' button
-        And Linked Activity group and subgroup are loaded
-        And Form continue button is clicked
-        And Form continue button is clicked
-        And The activity instace name is updated
-        And Form save button is clicked
+        And [API] Activity instance is updated with new name
         When The test study '/data_specifications/instances' page is opened
         And The Study Activity is found
         And The user declines the activity instance changes
         Then The yellow alert badge is present
 
     Scenario: Red exclamation mark must be removed when study activity updates has been accepted 
-        And [API] Study Activity is created and approved
+        Given [API] Study Activity is created and approved
         And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
         And [API] Get SoA Group 'INFORMED CONSENT' id
         And [API] Activity is added to the study
         And [API] Activity Instance new version is created
-        When Overview page for activity instance created via API is opened
-        And I click 'Edit' button
-        And Linked Activity group and subgroup are loaded
-        And Form continue button is clicked
-        And Form continue button is clicked
-        And The activity instace name is updated
-        And Form save button is clicked
+        And [API] Activity instance is updated with new name
         When The test study '/data_specifications/instances' page is opened
         And The Study Activity is found
         And The user accepts the activity instance changes
         Then The red alert badge is not present
 
     Scenario: Study activity is set to 'Review needed' when a change has occured for instance name
-        And [API] Study Activity is created and approved
+        Given [API] Study Activity is created and approved
         And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
         And [API] Get SoA Group 'INFORMED CONSENT' id
         And [API] Activity is added to the study
         And [API] Activity Instance new version is created
-        When Overview page for activity instance created via API is opened
-        And I click 'Edit' button
-        And Linked Activity group and subgroup are loaded
-        And Form continue button is clicked
-        And Form continue button is clicked
-        And The activity instace name is updated
-        And Form save button is clicked
-        When The test study '/data_specifications/instances' page is opened
-        And The Study Activity is found
-        Then The activity state is 'Review needed'
-
-    Scenario: Study activity is set to 'Review needed' when a change has occured for instance class
-        And [API] Study Activity is created and approved
-        And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
-        And [API] Get SoA Group 'INFORMED CONSENT' id
-        And [API] Activity is added to the study
-        And [API] Activity Instance new version is created
-        When Overview page for activity instance created via API is opened
-        And I click 'Edit' button
-        And Linked Activity group and subgroup are loaded
-        And Form continue button is clicked
-        And The activity instace class is updated
-        And Form continue button is clicked
-        And Form save button is clicked
-        When The test study '/data_specifications/instances' page is opened
-        And The Study Activity is found
-        Then The activity state is 'Review needed'
-
-    Scenario: Study activity is set to 'Review needed' when a change has occured for instance topic code
-        And [API] Study Activity is created and approved
-        And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
-        And [API] Get SoA Group 'INFORMED CONSENT' id
-        And [API] Activity is added to the study
-        And [API] Activity Instance new version is created
-        When Overview page for activity instance created via API is opened
-        And I click 'Edit' button
-        And Linked Activity group and subgroup are loaded
-        And Form continue button is clicked
-        And Form continue button is clicked
-        And The activity instace topic code is updated
-        And Form save button is clicked
+        And [API] Activity instance is updated with new name
         When The test study '/data_specifications/instances' page is opened
         And The Study Activity is found
         Then The activity state is 'Review needed'
@@ -495,18 +404,12 @@ Feature: Studies - Define Study - Study Data Specifications - Study Activity Ins
         Then The activity state is 'Review needed'
 
     Scenario: User must be able to mark study as 'Reviewed' when accepting all changes to instance
-        And [API] Study Activity is created and approved
+        Given [API] Study Activity is created and approved
         And The activity instance with data-sharing set to 'false', required for activity set to 'false' and default for activity set to 'false' exists
         And [API] Get SoA Group 'INFORMED CONSENT' id
         And [API] Activity is added to the study
         And [API] Activity Instance new version is created
-        When Overview page for activity instance created via API is opened
-        And I click 'Edit' button
-        And Linked Activity group and subgroup are loaded
-        And Form continue button is clicked
-        And Form continue button is clicked
-        And The activity instace name is updated
-        And Form save button is clicked
+        And [API] Activity instance is updated with new name
         When The test study '/data_specifications/instances' page is opened
         And The Study Activity is found
         And The user accepts the activity instance changes

@@ -74,11 +74,13 @@ class StudyEpochService(StudySelectionMixin):
         study_uid: str | None = None,
         study_value_version: str | None = None,
         terms_at_specific_date: datetime.date | None = None,
+        library_name: str = settings.sponsor_library_name,
     ):
         self._repos = MetaRepository()
         self.repo = self._repos.study_epoch_repository
         self.visit_repo = self._repos.study_visit_repository
         self.author = user().id()
+        self.library_name = library_name
 
         if study_uid:
             self.check_if_study_exists(study_uid=study_uid)
@@ -411,7 +413,9 @@ class StudyEpochService(StudySelectionMixin):
                 else:
                     subm_value = None
 
-                lib = self._repos.library_repository.find_by_name(name="Sponsor")
+                lib = self._repos.library_repository.find_by_name(
+                    name=self.library_name
+                )
                 library = LibraryVO.from_input_values_2(
                     library_name=lib.library_name,
                     is_library_editable_callback=lambda _: lib.is_editable,

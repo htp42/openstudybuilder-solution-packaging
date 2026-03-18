@@ -1,5 +1,6 @@
 import { generateShortUniqueName } from "../helper_functions"
 import { arm_uid } from "./study_arm_requests"
+const { getShortUniqueId } = require("../../support/helper_functions");
 
 export let branch_uid
 const createBranchUrl = (studyUid) => `/studies/${studyUid}/study-branch-arms` 
@@ -13,8 +14,8 @@ const createBranchBody = (armUid) => {
     return {
         "name": branchName,
         "short_name": branchName,
-        "randomization_group": `Random${Date.now()}`,
-        "code": `Code${Date.now()}`,
+        "randomization_group": `Random${getShortUniqueId()}`,
+        "code": `Code${getShortUniqueId()}`,
         "number_of_subjects": '10',
         "description": 'TestBranch',
         "arm_uid": armUid

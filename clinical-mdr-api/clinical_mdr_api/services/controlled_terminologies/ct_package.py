@@ -13,6 +13,7 @@ from clinical_mdr_api.repositories.ct_packages import (
 from clinical_mdr_api.services._meta_repository import MetaRepository  # type: ignore
 from clinical_mdr_api.utils import normalize_string
 from common.auth.user import user
+from common.config import settings
 from common.exceptions import BusinessLogicException, NotFoundException
 
 
@@ -82,7 +83,10 @@ class CTPackageService:
             self._close_all_repos()
 
     def create_sponsor_ct_package(
-        self, extends_package: str, effective_date: date
+        self,
+        extends_package: str,
+        effective_date: date,
+        library_name: str = settings.sponsor_library_name,
     ) -> CTPackage:
         try:
             sponsor_package_ar = (
@@ -90,6 +94,7 @@ class CTPackageService:
                     extends_package=extends_package,
                     effective_date=effective_date,
                     author_id=self.author_id,
+                    library_name=library_name,
                 )
             )
             return CTPackage.from_ct_package_ar(sponsor_package_ar)

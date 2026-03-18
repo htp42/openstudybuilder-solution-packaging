@@ -75,7 +75,9 @@
       </template>
       <template #actions="">
         <v-btn
-          class="ml-2 expandHoverBtn"
+          class="ml-2"
+          icon
+          size="small"
           variant="outlined"
           color="nnBaseBlue"
           :disabled="
@@ -88,7 +90,9 @@
           <v-icon left>{{
             editStepper ? 'mdi-pencil-outline' : 'mdi-plus'
           }}</v-icon>
-          <span class="label">{{ $t('StudyArmsTable.cohorts_stepper') }}</span>
+          <v-tooltip activator="parent" location="top">
+            {{ $t('StudyArmsTable.create_arm') }}
+          </v-tooltip>
         </v-btn>
       </template>
     </NNTable>

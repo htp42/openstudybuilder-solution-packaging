@@ -1,5 +1,6 @@
 import { apiGroupName } from "./api_library_steps"
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
+const { getShortUniqueId } = require("../../support/helper_functions");
 
 let activitysubgroup, abbreviation = "ABB", definition = "DEF"
 
@@ -64,14 +65,14 @@ When('[API] Activity subgroup is reactivated', () => cy.reactivateSubGroup())
 
 When('[API] Activity subgroup gets new version', () => cy.subGroupNewVersion())
 
-Given('[API] First activity subgroup for search test is created', () => createSubGroupViaApi(`SearchTest${Date.now()}`))
+Given('[API] First activity subgroup for search test is created', () => createSubGroupViaApi(`SearchTest${getShortUniqueId()}`))
 
-Given('[API] Second activity subgroup for search test is created', () => cy.createSubGroup(`SearchTest${Date.now()}`))
+Given('[API] Second activity subgroup for search test is created', () => cy.createSubGroup(`SearchTest${getShortUniqueId()}`))
 
 Given('[API] Activity subgroup is created', () => cy.createSubGroup())
 
 function fillSubGroupData() {
-    cy.get('[data-cy="groupform-activity-group-field"] input').click().type(activitysubgroup = `Subgroup${Date.now()}`)
+    cy.get('[data-cy="groupform-activity-group-field"] input').click().type(activitysubgroup = `Subgroup${getShortUniqueId()}`)
     cy.fillInput('groupform-abbreviation-field', abbreviation)
     cy.fillInput('groupform-definition-field', definition)
 }

@@ -13,12 +13,12 @@ Feature: Library - Code Lists - Sponsor
     Scenario: [Table][Options] User must be able to see table with correct options
         Given The '/library/sponsor' page is opened
         Then A table is visible with following options
-            | options                                                         |
-            | Select columns                                                  |
-            | Export                                                          |
-            | Select filters                                                  |
-            | Select rows                                                     |
-            | Search                                                          |
+            | options                                            |
+            | filters-button                                     |
+            | columns-layout-button                              |
+            | table-export-button                                |
+            | select-rows                                        |
+            | search-field                                       |
            # | search-with-terms                                               | to be implemented
            # | or-field                                                        | to be implemented
 

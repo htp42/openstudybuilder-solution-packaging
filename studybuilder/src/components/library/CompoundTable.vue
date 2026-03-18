@@ -15,15 +15,17 @@
   >
     <template #actions="">
       <v-btn
-        class="expandHoverBtn"
         color="nnBaseBlue"
-        :title="$t('CompoundForm.add_title')"
+        icon
+        size="small"
         :disabled="!accessGuard.checkPermission($roles.LIBRARY_WRITE)"
         variant="outlined"
         @click.stop="showCompoundForm = true"
       >
-        <v-icon left>mdi-plus</v-icon>
-        <span class="label">{{ $t('CompoundForm.add_title') }}</span>
+        <v-icon>mdi-plus</v-icon>
+        <v-tooltip activator="parent" location="top">
+          {{ $t('CompoundForm.add_title') }}
+        </v-tooltip>
       </v-btn>
     </template>
     <template #[`item.actions`]="{ item }">

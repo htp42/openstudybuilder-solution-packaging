@@ -73,28 +73,36 @@
           />
           <v-btn
             v-if="!disableFiltering && !onlyTextSearch"
-            class="ml-2 expandHoverBtn"
+            class="ml-2"
             variant="outlined"
             color="nnBaseBlue"
+            icon
+            size="small"
             data-cy="filters-button"
             :active="showFilterBar"
             @click="enableFiltering"
           >
-            <v-icon left>mdi-filter-outline</v-icon>
-            <span class="label">{{ $t('NNTableTooltips.filters') }}</span>
+            <v-icon>mdi-filter-outline</v-icon>
+            <v-tooltip activator="parent" location="top">
+              {{ $t('NNTableTooltips.filters') }}
+            </v-tooltip>
           </v-btn>
           <v-menu rounded offset-y :close-on-content-click="false">
             <template #activator="{ props }">
               <v-btn
                 v-if="(modifiableTable || modifyOnlyColumns) && !onlyTextSearch"
-                class="ml-2 expandHoverBtn"
+                class="ml-2"
                 variant="outlined"
                 color="nnBaseBlue"
+                icon
+                size="small"
                 v-bind="props"
                 data-cy="columns-layout-button"
               >
-                <v-icon left>mdi-table-column</v-icon>
-                <span class="label">Select columns</span>
+                <v-icon>mdi-table-column</v-icon>
+                <v-tooltip activator="parent" location="top">
+                  {{ $t('NNTableTooltips.select_columns') }}
+                </v-tooltip>
               </v-btn>
             </template>
             <v-list data-cy="show-columns-form" class="columnList">
@@ -136,13 +144,17 @@
           />
           <v-btn
             v-if="historyDataFetcher"
-            class="ml-2 expandHoverBtn"
+            class="ml-2"
             variant="outlined"
             color="nnBaseBlue"
+            icon
+            size="small"
             @click="openHistory"
           >
-            <v-icon left>mdi-history</v-icon>
-            <span class="label">Show version history</span>
+            <v-icon>mdi-history</v-icon>
+            <v-tooltip activator="parent" location="top">
+              {{ $t('NNTableTooltips.history') }}
+            </v-tooltip>
           </v-btn>
         </div>
 

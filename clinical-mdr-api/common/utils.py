@@ -540,3 +540,15 @@ def insert_space_after_commas(text: str, n: int, space=" ") -> str:
         result.append(part)
 
     return "".join(result)
+
+
+def db_pagination_clause(
+    page_size: int, page_number: int, one_element_extra: bool = False
+) -> str:
+    # Ensure Cypher injection would not be possible even if values weren't integer types
+    if not isinstance(page_size, int) or not isinstance(page_number, int):
+        raise TypeError("Expected page_size and page_number to be integers")
+    pagination_clause = ""
+    if page_size > 0:
+        pagination_clause = f"SKIP {page_number - 1} * {page_size} LIMIT {page_size + 1 if one_element_extra else page_size}"
+    return pagination_clause
