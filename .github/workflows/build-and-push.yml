@@ -16,11 +16,6 @@ on:
         required: true
         type: string
 
-  # Trigger on version tags pushed directly
-  push:
-    tags:
-      - 'v*.*.*'
-
   # Allow manual trigger
   workflow_dispatch:
     inputs:
@@ -43,6 +38,10 @@ on:
         required: false
         type: boolean
         default: false
+
+concurrency:
+  group: build-and-push
+  cancel-in-progress: true
 
 env:
   REPOSITORY: htp42/openstudybuilder
