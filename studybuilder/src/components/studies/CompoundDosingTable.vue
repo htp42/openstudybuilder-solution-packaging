@@ -14,9 +14,11 @@
     <template #actions="">
       <v-btn
         data-cy="add-study-compound-dosing"
+        class="ml-2"
         icon
         size="small"
-        color="primary"
+        variant="outlined"
+        color="nnBaseBlue"
         :disabled="
           !accessGuard.checkPermission($roles.STUDY_WRITE) ||
           selectedStudyVersion !== null

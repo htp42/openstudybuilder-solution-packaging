@@ -5,12 +5,9 @@
     item-title="sponsor_preferred_name"
     item-value="term_uid"
     return-object
-    density="compact"
-    variant="outlined"
     bg-color="nnWhite"
     clear-icon="mdi-close"
     clearable
-    rounded="lg"
     multiple
     :loading="loading"
     clear-on-select

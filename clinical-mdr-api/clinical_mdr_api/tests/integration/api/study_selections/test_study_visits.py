@@ -10,7 +10,8 @@ Tests for /studies/{study_uid}/study-visits endpoints
 # which pylint interprets as unused arguments
 
 from datetime import datetime, timezone
-from typing import Any
+from enum import Enum
+from typing import Any, Iterable, Mapping
 from unittest import mock
 
 import pytest
@@ -25,6 +26,7 @@ from clinical_mdr_api.models.clinical_programmes.clinical_programme import (
 from clinical_mdr_api.models.controlled_terminologies.ct_term_name import CTTermName
 from clinical_mdr_api.models.projects.project import Project
 from clinical_mdr_api.models.study_selections.study import Study
+from clinical_mdr_api.models.study_selections.study_visit import StudyVisitLite
 from clinical_mdr_api.tests.integration.utils.api import (
     inject_and_clear_db,
     inject_base_data,
@@ -46,8 +48,14 @@ from clinical_mdr_api.tests.integration.utils.method_library import (
     get_unit_uid_by_name,
 )
 from clinical_mdr_api.tests.integration.utils.utils import TestUtils
-from clinical_mdr_api.tests.utils.checks import assert_response_status_code
+from clinical_mdr_api.tests.utils.checks import (
+    assert_response_status_code,
+    parse_json_response,
+)
 from common.utils import VisitClass
+
+STUDY_VISIT_LITE_KEYS = set(StudyVisitLite.model_fields.keys())
+
 
 # Global variables shared between fixtures and tests
 study: Study
@@ -161,9 +169,9 @@ def test_visit_modify_actions_on_locked_study(api_client):
 
     inputs = {
         "study_epoch_uid": epoch_uid,
-        "visit_type_uid": "VisitType_0001",
+        "visit_type": {"term_uid": "VisitType_0001"},
         "show_visit": True,
-        "time_reference_uid": "VisitSubType_0005",
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 0,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",
@@ -209,9 +217,9 @@ def test_visit_modify_actions_on_locked_study(api_client):
 
     inputs = {
         "study_epoch_uid": epoch_uid,
-        "visit_type_uid": "VisitType_0003",
+        "visit_type": {"term_uid": "VisitType_0003"},
         "show_visit": True,
-        "time_reference_uid": "VisitSubType_0001",
+        "time_reference": {"term_uid": "VisitSubType_0001"},
         "time_value": 12,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",
@@ -234,9 +242,9 @@ def test_visit_modify_actions_on_locked_study(api_client):
         "study_uid": study.uid,
         "description": "new description",
         "study_epoch_uid": epoch_uid,
-        "visit_type_uid": "VisitType_0001",
+        "visit_type": {"term_uid": "VisitType_0001"},
         "show_visit": True,
-        "time_reference_uid": "VisitSubType_0005",
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 0,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",
@@ -308,9 +316,9 @@ def test_study_visit_versioning(api_client):
             "show_visit": True,
             "time_unit_uid": "UnitDefinition_000001",
             "time_value": 0,
-            "visit_contact_mode_uid": "VisitContactMode_0001",
-            "visit_type_uid": "VisitType_0001",
-            "time_reference_uid": "VisitSubType_0005",
+            "visit_contact_mode": {"term_uid": "VisitContactMode_0001"},
+            "visit_type": {"term_uid": "VisitType_0001"},
+            "time_reference": {"term_uid": "VisitSubType_0005"},
             "is_global_anchor_visit": True,
             "visit_class": "SINGLE_VISIT",
             "study_epoch_uid": _study_epoch.uid,
@@ -359,6 +367,8 @@ def test_study_visit_versioning(api_client):
     assert_response_status_code(response, 200)
     assert res["items"][0]["study_epoch_uid"] == _study_epoch.uid
 
+    assert_get_all_visits_lite_compares(res["items"], api_client, study.uid)
+
     # get specific study visit
     response = api_client.get(
         f"/studies/{study.uid}/study-visits/{study_visit_uid}",
@@ -404,8 +414,8 @@ def test_manually_defined_visit(api_client):
     for visit_timing in range(0, 100, 10):
         inputs = {
             "study_epoch_uid": study_epoch.uid,
-            "visit_type_uid": "VisitType_0002",
-            "time_reference_uid": "VisitSubType_0005",
+            "visit_type": {"term_uid": "VisitType_0002"},
+            "time_reference": {"term_uid": "VisitSubType_0005"},
             "time_value": visit_timing,
             "time_unit_uid": DAYUID,
             "visit_class": "SINGLE_VISIT",
@@ -432,8 +442,8 @@ def test_manually_defined_visit(api_client):
     special_visit_input = {
         "visit_sublabel_reference": last_scheduled_visit_uid,
         "study_epoch_uid": study_epoch.uid,
-        "visit_type_uid": "VisitType_0002",
-        "time_reference_uid": "VisitSubType_0005",
+        "visit_type": {"term_uid": "VisitType_0002"},
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_unit_uid": DAYUID,
         "visit_class": "SPECIAL_VISIT",
         "visit_subclass": "SINGLE_VISIT",
@@ -456,8 +466,8 @@ def test_manually_defined_visit(api_client):
 
     inputs = {
         "study_epoch_uid": study_epoch.uid,
-        "visit_type_uid": "VisitType_0002",
-        "time_reference_uid": "VisitSubType_0005",
+        "visit_type": {"term_uid": "VisitType_0002"},
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 55,
         "time_unit_uid": DAYUID,
         "visit_class": "MANUALLY_DEFINED_VISIT",
@@ -649,8 +659,8 @@ def test_non_manually_defined_visit(api_client):
     # Create 1 study visit
     inputs_visit = {
         "study_epoch_uid": study_epoch.uid,
-        "visit_type_uid": "VisitType_0002",
-        "time_reference_uid": "VisitSubType_0005",
+        "visit_type": {"term_uid": "VisitType_0002"},
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 20,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",
@@ -673,8 +683,8 @@ def test_non_manually_defined_visit(api_client):
     manually_defined_unique_number = 200
     vis_input = {
         "study_epoch_uid": study_epoch.uid,
-        "visit_type_uid": "VisitType_0002",
-        "time_reference_uid": "VisitSubType_0005",
+        "visit_type": {"term_uid": "VisitType_0002"},
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 25,
         "time_unit_uid": DAYUID,
         "visit_class": "MANUALLY_DEFINED_VISIT",
@@ -715,8 +725,8 @@ def test_non_manually_defined_visit(api_client):
     # And The <study visit field> is defined with a derived or preset test value that already exist for a manually defined study visit
     inputs_visit = {
         "study_epoch_uid": study_epoch.uid,
-        "visit_type_uid": "VisitType_0002",
-        "time_reference_uid": "VisitSubType_0005",
+        "visit_type": {"term_uid": "VisitType_0002"},
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 22,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",
@@ -745,8 +755,8 @@ def test_non_manually_defined_visit(api_client):
     # And The <study visit field> is defined with a derived or preset test value that already exist for a manually defined study visit
     inputs_visit = {
         "study_epoch_uid": study_epoch.uid,
-        "visit_type_uid": "VisitType_0002",
-        "time_reference_uid": "VisitSubType_0005",
+        "visit_type": {"term_uid": "VisitType_0002"},
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 22,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",
@@ -797,8 +807,8 @@ def test_non_manually_defined_visit(api_client):
     # Create a non_manually defined study visit with non-existed visit name, visit short name, visit number and unique visit number
     inputs = {
         "study_epoch_uid": study_epoch.uid,
-        "visit_type_uid": "VisitType_0002",
-        "time_reference_uid": "VisitSubType_0005",
+        "visit_type": {"term_uid": "VisitType_0002"},
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 57,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",
@@ -828,8 +838,8 @@ def test_manually_defined_visit_in_chronological_order_by_visit_timing(api_clien
     for visit_timing in range(0, 100, 20):
         inputs = {
             "study_epoch_uid": study_epoch.uid,
-            "visit_type_uid": "VisitType_0002",
-            "time_reference_uid": "VisitSubType_0005",
+            "visit_type": {"term_uid": "VisitType_0002"},
+            "time_reference": {"term_uid": "VisitSubType_0005"},
             "time_value": visit_timing,
             "time_unit_uid": DAYUID,
             "visit_class": "SINGLE_VISIT",
@@ -860,8 +870,8 @@ def test_manually_defined_visit_in_chronological_order_by_visit_timing(api_clien
     # And The test visit number is not defined in chronological order by study visit timing
     input1 = {
         "study_epoch_uid": study_epoch.uid,
-        "visit_type_uid": "VisitType_0002",
-        "time_reference_uid": "VisitSubType_0005",
+        "visit_type": {"term_uid": "VisitType_0002"},
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 30,
         "time_unit_uid": DAYUID,
         "visit_class": "MANUALLY_DEFINED_VISIT",
@@ -889,8 +899,8 @@ def test_manually_defined_visit_in_chronological_order_by_visit_timing(api_clien
 
     input2 = {
         "study_epoch_uid": study_epoch.uid,
-        "visit_type_uid": "VisitType_0002",
-        "time_reference_uid": "VisitSubType_0005",
+        "visit_type": {"term_uid": "VisitType_0002"},
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 30,
         "time_unit_uid": DAYUID,
         "visit_class": "MANUALLY_DEFINED_VISIT",
@@ -919,8 +929,8 @@ def test_manually_defined_visit_in_chronological_order_by_visit_timing(api_clien
     # Successfully post a manually defined visit with correct visit number and unique visit number in chronological order by visit timing
     input3 = {
         "study_epoch_uid": study_epoch.uid,
-        "visit_type_uid": "VisitType_0002",
-        "time_reference_uid": "VisitSubType_0005",
+        "visit_type": {"term_uid": "VisitType_0002"},
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 30,
         "time_unit_uid": DAYUID,
         "visit_class": "MANUALLY_DEFINED_VISIT",
@@ -944,8 +954,8 @@ def test_manually_defined_visit_in_chronological_order_by_visit_timing(api_clien
     # And The test unique visit number is not defined in chronological order by study visit timing
     input4 = {
         "study_epoch_uid": study_epoch.uid,
-        "visit_type_uid": "VisitType_0002",
-        "time_reference_uid": "VisitSubType_0005",
+        "visit_type": {"term_uid": "VisitType_0002"},
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 35,
         "time_unit_uid": DAYUID,
         "visit_class": "MANUALLY_DEFINED_VISIT",
@@ -973,8 +983,8 @@ def test_manually_defined_visit_in_chronological_order_by_visit_timing(api_clien
 
     input5 = {
         "study_epoch_uid": study_epoch.uid,
-        "visit_type_uid": "VisitType_0002",
-        "time_reference_uid": "VisitSubType_0005",
+        "visit_type": {"term_uid": "VisitType_0002"},
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 35,
         "time_unit_uid": DAYUID,
         "visit_class": "MANUALLY_DEFINED_VISIT",
@@ -1009,8 +1019,8 @@ def test_study_visit_timings(api_client):
     # timing -14
     inputs = {
         "study_epoch_uid": study_epoch.uid,
-        "visit_type_uid": "VisitType_0002",
-        "time_reference_uid": "VisitSubType_0005",
+        "visit_type": {"term_uid": "VisitType_0002"},
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": -14,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",
@@ -1106,9 +1116,9 @@ def test_create_repeating_visit(api_client):
 
     inputs = {
         "study_epoch_uid": _study_epoch.uid,
-        "visit_type_uid": "VisitType_0001",
+        "visit_type": {"term_uid": "VisitType_0001"},
         "show_visit": True,
-        "time_reference_uid": "VisitSubType_0005",
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 0,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",
@@ -1150,9 +1160,9 @@ def test_create_repeating_visit(api_client):
     # When A new repeating visit is created
     inputs = {
         "study_epoch_uid": _study_epoch.uid,
-        "visit_type_uid": "VisitType_0001",
+        "visit_type": {"term_uid": "VisitType_0001"},
         "show_visit": True,
-        "time_reference_uid": "VisitSubType_0005",
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": -2,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",
@@ -1203,9 +1213,9 @@ def test_create_visit_0(api_client):
 
     inputs = {
         "study_epoch_uid": study_epoch1.uid,
-        "visit_type_uid": "VisitType_0000",
+        "visit_type": {"term_uid": "VisitType_0000"},
         "show_visit": True,
-        "time_reference_uid": "VisitSubType_0005",
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": -1,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",
@@ -1236,9 +1246,9 @@ def test_create_visit_0(api_client):
 
     inputs = {
         "study_epoch_uid": study_epoch2.uid,
-        "visit_type_uid": "VisitType_0001",
+        "visit_type": {"term_uid": "VisitType_0001"},
         "show_visit": True,
-        "time_reference_uid": "VisitSubType_0005",
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 0,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",
@@ -1285,9 +1295,9 @@ def test_visit_0_created_chronologically(api_client):
     # Test pre-conditions: create two normal visits with different time value
     input1 = {
         "study_epoch_uid": study_epoch2.uid,
-        "visit_type_uid": "VisitType_0001",
+        "visit_type": {"term_uid": "VisitType_0001"},
         "show_visit": True,
-        "time_reference_uid": "VisitSubType_0005",
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 10,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",
@@ -1308,9 +1318,9 @@ def test_visit_0_created_chronologically(api_client):
 
     input2 = {
         "study_epoch_uid": study_epoch2.uid,
-        "visit_type_uid": "VisitType_0001",
+        "visit_type": {"term_uid": "VisitType_0001"},
         "show_visit": True,
-        "time_reference_uid": "VisitSubType_0005",
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 20,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",
@@ -1335,9 +1345,9 @@ def test_visit_0_created_chronologically(api_client):
     # Create an information visit with non-first timing
     inputs = {
         "study_epoch_uid": study_epoch1.uid,
-        "visit_type_uid": "VisitType_0000",
+        "visit_type": {"term_uid": "VisitType_0000"},
         "show_visit": True,
-        "time_reference_uid": "VisitSubType_0005",
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 15,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",
@@ -1387,9 +1397,9 @@ def test_visit_0_created_chronologically(api_client):
     # Create an information visit with first timing
     inputs = {
         "study_epoch_uid": study_epoch1.uid,
-        "visit_type_uid": "VisitType_0000",
+        "visit_type": {"term_uid": "VisitType_0000"},
         "show_visit": True,
-        "time_reference_uid": "VisitSubType_0005",
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 5,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",
@@ -1423,9 +1433,9 @@ def test_visit_0_created_chronologically(api_client):
     # When create a new non-information visit with first timing
     input3 = {
         "study_epoch_uid": study_epoch2.uid,
-        "visit_type_uid": "VisitType_0001",
+        "visit_type": {"term_uid": "VisitType_0001"},
         "show_visit": True,
-        "time_reference_uid": "VisitSubType_0005",
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 3,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",
@@ -1471,9 +1481,9 @@ def test_visit_0_edited_chronologically(api_client):
     # Create a normal visit
     input1 = {
         "study_epoch_uid": study_epoch2.uid,
-        "visit_type_uid": "VisitType_0001",
+        "visit_type": {"term_uid": "VisitType_0001"},
         "show_visit": True,
-        "time_reference_uid": "VisitSubType_0005",
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 10,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",
@@ -1496,9 +1506,9 @@ def test_visit_0_edited_chronologically(api_client):
     # Create an information visit with first timing
     inputs = {
         "study_epoch_uid": study_epoch1.uid,
-        "visit_type_uid": "VisitType_0000",
+        "visit_type": {"term_uid": "VisitType_0000"},
         "show_visit": True,
-        "time_reference_uid": "VisitSubType_0005",
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 2,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",
@@ -1528,9 +1538,9 @@ def test_visit_0_edited_chronologically(api_client):
             "show_visit": True,
             "time_unit_uid": "UnitDefinition_000001",
             "time_value": 2,
-            "visit_contact_mode_uid": "VisitContactMode_0001",
-            "visit_type_uid": "VisitType_0000",
-            "time_reference_uid": "VisitSubType_0005",
+            "visit_contact_mode": {"term_uid": "VisitContactMode_0001"},
+            "visit_type": {"term_uid": "VisitType_0000"},
+            "time_reference": {"term_uid": "VisitSubType_0005"},
             "is_global_anchor_visit": True,
             "visit_class": "SINGLE_VISIT",
             "study_epoch_uid": study_epoch1.uid,
@@ -1556,9 +1566,9 @@ def test_visit_0_edited_chronologically(api_client):
             "show_visit": True,
             "time_unit_uid": "UnitDefinition_000001",
             "time_value": 14,
-            "visit_contact_mode_uid": "VisitContactMode_0001",
-            "visit_type_uid": "VisitType_0000",
-            "time_reference_uid": "VisitSubType_0005",
+            "visit_contact_mode": {"term_uid": "VisitContactMode_0001"},
+            "visit_type": {"term_uid": "VisitType_0000"},
+            "time_reference": {"term_uid": "VisitSubType_0005"},
             "is_global_anchor_visit": True,
             "visit_class": "SINGLE_VISIT",
             "study_epoch_uid": study_epoch1.uid,
@@ -1580,9 +1590,9 @@ def test_visit_0_edited_chronologically(api_client):
     # Given A study information visit with visit 0 is created
     inputs = {
         "study_epoch_uid": study_epoch1.uid,
-        "visit_type_uid": "VisitType_0000",
+        "visit_type": {"term_uid": "VisitType_0000"},
         "show_visit": True,
-        "time_reference_uid": "VisitSubType_0005",
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 2,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",
@@ -1610,9 +1620,9 @@ def test_visit_0_edited_chronologically(api_client):
             "show_visit": True,
             "time_unit_uid": "UnitDefinition_000001",
             "time_value": 2,
-            "visit_contact_mode_uid": "VisitContactMode_0001",
-            "visit_type_uid": "VisitType_0001",
-            "time_reference_uid": "VisitSubType_0005",
+            "visit_contact_mode": {"term_uid": "VisitContactMode_0001"},
+            "visit_type": {"term_uid": "VisitType_0001"},
+            "time_reference": {"term_uid": "VisitSubType_0005"},
             "is_global_anchor_visit": False,
             "visit_class": "SINGLE_VISIT",
             "study_epoch_uid": study_epoch1.uid,
@@ -1657,7 +1667,7 @@ def test_study_visist_version_selecting_ct_package(api_client):
         params=params,
     )
     study_selection_breadcrumb = "study-visits"
-    study_selection_ctterm_uid_input_key = "visit_type_uid"
+    study_selection_ctterm_uid_input_key = "visit_type"
     study_selection_ctterm_key = "visit_type"
     study_selection_ctterm_name_key = "sponsor_preferred_name"
     study_for_ctterm_versioning = TestUtils.create_study()
@@ -1668,9 +1678,11 @@ def test_study_visist_version_selecting_ct_package(api_client):
 
     inputs = {
         "study_epoch_uid": study_epoch1.uid,
-        study_selection_ctterm_uid_input_key: initial_ct_term_study_standard_test.term_uid,
+        study_selection_ctterm_uid_input_key: {
+            "term_uid": initial_ct_term_study_standard_test.term_uid
+        },
         "show_visit": True,
-        "time_reference_uid": "VisitSubType_0005",
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 0,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",
@@ -1789,9 +1801,9 @@ def test_visit_window_unit_must_be_same_for_all_visits(api_client):
     study_epoch = create_study_epoch("EpochSubType_0001", study_uid=_study.uid)
     visit_input = {
         "study_epoch_uid": study_epoch.uid,
-        "visit_type_uid": "VisitType_0001",
+        "visit_type": {"term_uid": "VisitType_0001"},
         "show_visit": True,
-        "time_reference_uid": "VisitSubType_0005",
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 10,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",
@@ -1831,9 +1843,9 @@ def test_study_visit_circular_time_reference_cant_be_created(api_client):
     # Global Anchor Visit
     visit_input = {
         "study_epoch_uid": study_epoch.uid,
-        "visit_type_uid": "VisitType_0001",
+        "visit_type": {"term_uid": "VisitType_0001"},
         "show_visit": True,
-        "time_reference_uid": "VisitSubType_0005",
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 0,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",
@@ -1850,9 +1862,9 @@ def test_study_visit_circular_time_reference_cant_be_created(api_client):
 
     visit_input = {
         "study_epoch_uid": study_epoch.uid,
-        "visit_type_uid": "VisitType_0002",
+        "visit_type": {"term_uid": "VisitType_0002"},
         "show_visit": True,
-        "time_reference_uid": "VisitSubType_0001",
+        "time_reference": {"term_uid": "VisitSubType_0001"},
         "time_value": -10,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",
@@ -1869,9 +1881,9 @@ def test_study_visit_circular_time_reference_cant_be_created(api_client):
 
     visit_input = {
         "study_epoch_uid": study_epoch.uid,
-        "visit_type_uid": "VisitType_0001",
+        "visit_type": {"term_uid": "VisitType_0001"},
         "show_visit": True,
-        "time_reference_uid": "VisitSubType_0002",
+        "time_reference": {"term_uid": "VisitSubType_0002"},
         "time_value": 20,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",
@@ -1893,7 +1905,7 @@ def test_study_visit_circular_time_reference_cant_be_created(api_client):
     )
 
     datadict = visits_basic_data
-    datadict.update({"visit_type_uid": "VisitType_0003"})
+    datadict.update({"visit_type": {"term_uid": "VisitType_0003"}})
     response = api_client.post(
         f"/studies/{_study.uid}/study-visits",
         json=datadict,
@@ -1904,7 +1916,7 @@ def test_study_visit_circular_time_reference_cant_be_created(api_client):
 
     datadict.update(
         {
-            "visit_type_uid": "VisitType_0001",
+            "visit_type": {"term_uid": "VisitType_0001"},
             "uid": visit_uid,
             "study_uid": _study.uid,
         }
@@ -1927,9 +1939,9 @@ def test_global_anchor_visit_time_reference(api_client):
     study_epoch = create_study_epoch("EpochSubType_0001", study_uid=_study.uid)
     visit_input = {
         "study_epoch_uid": study_epoch.uid,
-        "visit_type_uid": "VisitType_0001",
+        "visit_type": {"term_uid": "VisitType_0001"},
         "show_visit": True,
-        "time_reference_uid": "VisitSubType_0002",
+        "time_reference": {"term_uid": "VisitSubType_0002"},
         "time_value": 0,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",
@@ -1950,7 +1962,7 @@ def test_global_anchor_visit_time_reference(api_client):
     )
 
     # Assigning 'Global anchor visit' as time reference
-    datadict.update({"time_reference_uid": "VisitSubType_0005"})
+    datadict.update({"time_reference": {"term_uid": "VisitSubType_0005"}})
     response = api_client.post(
         f"/studies/{_study.uid}/study-visits",
         json=datadict,
@@ -1958,7 +1970,7 @@ def test_global_anchor_visit_time_reference(api_client):
     assert_response_status_code(response, 201)
     visit_uid = response.json()["uid"]
 
-    datadict.update({"time_reference_uid": "VisitSubType_0002"})
+    datadict.update({"time_reference": {"term_uid": "VisitSubType_0002"}})
     response = api_client.patch(
         f"/studies/{_study.uid}/study-visits/{visit_uid}",
         json=datadict,
@@ -1980,9 +1992,9 @@ def test_study_visit_editing_study_epoch(api_client):
     # Global Anchor Visit
     visit_input = {
         "study_epoch_uid": study_epoch_1.uid,
-        "visit_type_uid": "VisitType_0001",
+        "visit_type": {"term_uid": "VisitType_0001"},
         "show_visit": True,
-        "time_reference_uid": "VisitSubType_0005",
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 0,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",
@@ -1999,9 +2011,9 @@ def test_study_visit_editing_study_epoch(api_client):
 
     for idx in range(1, 10):
         visit_input = {
-            "visit_type_uid": "VisitType_0001",
+            "visit_type": {"term_uid": "VisitType_0001"},
             "show_visit": True,
-            "time_reference_uid": "VisitSubType_0005",
+            "time_reference": {"term_uid": "VisitSubType_0005"},
             "time_value": idx,
             "time_unit_uid": DAYUID,
             "visit_class": "SINGLE_VISIT",
@@ -2118,8 +2130,8 @@ def test_creating_special_visit(api_client):
     # Global Anchor Visit
     inputs = {
         "study_epoch_uid": study_epoch.uid,
-        "visit_type_uid": "VisitType_0002",
-        "time_reference_uid": "VisitSubType_0005",
+        "visit_type": {"term_uid": "VisitType_0002"},
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 0,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",
@@ -2141,8 +2153,8 @@ def test_creating_special_visit(api_client):
     special_visit_input = {
         "visit_sublabel_reference": global_anchor_visit,
         "study_epoch_uid": study_epoch.uid,
-        "visit_type_uid": "VisitType_0002",
-        "time_reference_uid": "VisitSubType_0005",
+        "visit_type": {"term_uid": "VisitType_0002"},
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_unit_uid": DAYUID,
         "visit_class": "SPECIAL_VISIT",
         "visit_subclass": "SINGLE_VISIT",
@@ -2180,7 +2192,7 @@ def test_creating_special_visit(api_client):
 
     # Create early discontinuation special visit anchored to a visit that already has other special visits
     # assert that ordering for early discontinuation will start from 'X'
-    datadict.update({"visit_type_uid": "VisitType_0005"})
+    datadict.update({"visit_type": {"term_uid": "VisitType_0005"}})
     response = api_client.post(
         f"/studies/{study.uid}/study-visits",
         json=datadict,
@@ -2193,8 +2205,8 @@ def test_creating_special_visit(api_client):
     # Visit Day 10
     inputs = {
         "study_epoch_uid": second_study_epoch.uid,
-        "visit_type_uid": "VisitType_0002",
-        "time_reference_uid": "VisitSubType_0005",
+        "visit_type": {"term_uid": "VisitType_0002"},
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 10,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",
@@ -2214,8 +2226,8 @@ def test_creating_special_visit(api_client):
     special_visit_input = {
         "visit_sublabel_reference": visit_day_10,
         "study_epoch_uid": second_study_epoch.uid,
-        "visit_type_uid": "VisitType_0005",
-        "time_reference_uid": "VisitSubType_0005",
+        "visit_type": {"term_uid": "VisitType_0005"},
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_unit_uid": DAYUID,
         "visit_class": "SPECIAL_VISIT",
         "visit_subclass": "SINGLE_VISIT",
@@ -2247,8 +2259,8 @@ def test_editing_special_visit(api_client):
     # Global Anchor Visit
     inputs = {
         "study_epoch_uid": study_epoch.uid,
-        "visit_type_uid": "VisitType_0002",
-        "time_reference_uid": "VisitSubType_0005",
+        "visit_type": {"term_uid": "VisitType_0002"},
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 0,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",
@@ -2266,8 +2278,8 @@ def test_editing_special_visit(api_client):
     # Visit Day 10
     inputs = {
         "study_epoch_uid": study_epoch.uid,
-        "visit_type_uid": "VisitType_0002",
-        "time_reference_uid": "VisitSubType_0005",
+        "visit_type": {"term_uid": "VisitType_0002"},
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 10,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",
@@ -2287,8 +2299,8 @@ def test_editing_special_visit(api_client):
     special_visit_input = {
         "visit_sublabel_reference": visit_day_10,
         "study_epoch_uid": study_epoch.uid,
-        "visit_type_uid": "VisitType_0002",
-        "time_reference_uid": "VisitSubType_0005",
+        "visit_type": {"term_uid": "VisitType_0002"},
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_unit_uid": DAYUID,
         "visit_class": "SPECIAL_VISIT",
         "visit_subclass": "SINGLE_VISIT",
@@ -2308,8 +2320,8 @@ def test_editing_special_visit(api_client):
         "uid": special_visit_uid,
         "visit_sublabel_reference": visit_day_10,
         "study_epoch_uid": study_epoch.uid,
-        "visit_type_uid": "VisitType_0002",
-        "time_reference_uid": "VisitSubType_0005",
+        "visit_type": {"term_uid": "VisitType_0002"},
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_unit_uid": DAYUID,
         "visit_class": "SPECIAL_VISIT",
         "visit_subclass": "SINGLE_VISIT",
@@ -2350,8 +2362,12 @@ def test_get_all_visits_invalid_study_uid_or_version(
     if study_value_version is not None:
         params = {"study_value_version": study_value_version}
     else:
-        params = None
+        params = {}
 
+    response = api_client.get(f"/studies/{study_uid}/study-visits", params=params)
+    assert_response_status_code(response, 404)
+
+    params["lite"] = "TRUE"
     response = api_client.get(f"/studies/{study_uid}/study-visits", params=params)
     assert_response_status_code(response, 404)
 
@@ -2363,8 +2379,8 @@ def test_assert_uvn_is_changed_when_group_of_visits_is_modified(api_client):
     # Global Anchor Visit
     anchor_inputs = {
         "study_epoch_uid": study_epoch.uid,
-        "visit_type_uid": "VisitType_0002",
-        "time_reference_uid": "VisitSubType_0005",
+        "visit_type": {"term_uid": "VisitType_0002"},
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 0,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",
@@ -2384,8 +2400,8 @@ def test_assert_uvn_is_changed_when_group_of_visits_is_modified(api_client):
 
     inputs = {
         "study_epoch_uid": study_epoch.uid,
-        "visit_type_uid": "VisitType_0003",
-        "time_reference_uid": "VisitSubType_0002",
+        "visit_type": {"term_uid": "VisitType_0003"},
+        "time_reference": {"term_uid": "VisitSubType_0002"},
         "time_value": -10,
         "time_unit_uid": DAYUID,
         "visit_sublabel_reference": anchor_visit_uid,
@@ -2470,6 +2486,8 @@ def test_assert_uvn_is_changed_when_group_of_visits_is_modified(api_client):
     assert study_visits[1]["visit_name"] == "Visit 1"
     assert study_visits[1]["unique_visit_number"] == 110
 
+    assert_get_all_visits_lite_compares(study_visits, api_client, study.uid)
+
     # Call for StudyVisits but derive properties based on visit_number instead of returning them straight from DB
     response = api_client.get(
         f"/studies/{study.uid}/study-visits",
@@ -2486,6 +2504,8 @@ def test_assert_uvn_is_changed_when_group_of_visits_is_modified(api_client):
     assert study_visits[1]["visit_short_name"] == "V1D11"
     assert study_visits[1]["visit_name"] == "Visit 1"
     assert study_visits[1]["unique_visit_number"] == 110
+
+    assert_get_all_visits_lite_compares(study_visits, api_client, study.uid)
 
     response = api_client.get(
         f"/studies/{study.uid}/study-visits/{anchor_visit_uid}",
@@ -2537,8 +2557,8 @@ def test_it_is_possible_create_two_study_visits_with_the_same_timing(api_client)
     for idx_number in range(1, 5):
         inputs = {
             "study_epoch_uid": study_epoch.uid,
-            "visit_type_uid": "VisitType_0002",
-            "time_reference_uid": "VisitSubType_0005",
+            "visit_type": {"term_uid": "VisitType_0002"},
+            "time_reference": {"term_uid": "VisitSubType_0005"},
             "time_value": 10,
             "time_unit_uid": DAYUID,
             "visit_class": "SINGLE_VISIT",
@@ -2571,6 +2591,9 @@ def test_it_is_possible_create_two_study_visits_with_the_same_timing(api_client)
     )
     assert_response_status_code(response, 200)
     study_visits = response.json()["items"]
+
+    assert_get_all_visits_lite_compares(study_visits, api_client, test_study.uid)
+
     first_visit_uid = study_visits[0]["uid"]
     # Edit first StudyVisit with same timing and make sure it's still the first one in schedule
     new_description = "Edited Visit"
@@ -2605,11 +2628,13 @@ def test_it_is_possible_create_two_study_visits_with_the_same_timing(api_client)
             == created_study_visit["unique_visit_number"]
         )
 
+    assert_get_all_visits_lite_compares(study_visits, api_client, test_study.uid)
+
     # Although it is possible to create 2 visits with the same timing, it should not be possible 2 visits with timing set to 0
     inputs = {
         "study_epoch_uid": study_epoch.uid,
-        "visit_type_uid": "VisitType_0002",
-        "time_reference_uid": "VisitSubType_0005",
+        "visit_type": {"term_uid": "VisitType_0002"},
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 0,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",
@@ -2648,3 +2673,29 @@ def test_it_is_possible_create_two_study_visits_with_the_same_timing(api_client)
     assert_response_status_code(response, 409)
     res = response.json()
     assert res["message"] == "There already exists a visit with timing set to 0"
+
+
+def assert_get_all_visits_lite_compares(
+    expected_items: Iterable[Mapping],
+    api_client,
+    study_uid: str,
+    study_value_version: str | None = None,
+):
+    expected_visits = []
+    for item in expected_items:
+        item_dict = {k: v.value if isinstance(v, Enum) else v for k, v in item.items()}
+        expected_visits.append(visit := StudyVisitLite(**item_dict))
+
+        # Lite endpoint returns None for study_day/week_numbers for special visits
+        if visit.visit_class == VisitClass.SPECIAL_VISIT:
+            visit.study_day_number = None
+            visit.study_week_number = None
+
+    # get all visits lite version
+    params = {"lite": "true"}
+    if study_value_version:
+        params["study_value_version"] = study_value_version
+    response = api_client.get(f"/studies/{study_uid}/study-visits", params=params)
+    results = parse_json_response(response, status=200)
+    visits = [StudyVisitLite(**item) for item in results["items"]]
+    assert visits == expected_visits

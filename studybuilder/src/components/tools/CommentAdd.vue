@@ -4,7 +4,6 @@
       v-model="text"
       auto-grow
       rows="1"
-      variant="outlined"
       :class="isTransparent ? 'mx-0' : 'mx-5'"
       :label="$t('Comments.comment_add_placeholder')"
     />

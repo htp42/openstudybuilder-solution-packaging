@@ -89,7 +89,11 @@
       >
         <thead>
           <tr>
-            <th colspan="3" scope="col" style="color: white">
+            <th
+              :colspan="designClass !== cohortConstants.MANUAL ? 3 : 2"
+              scope="col"
+              style="color: white"
+            >
               {{ $t('StudyStructureOverview.study_structure') }}
             </th>
             <th

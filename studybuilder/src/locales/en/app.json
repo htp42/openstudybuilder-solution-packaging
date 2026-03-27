@@ -9,11 +9,14 @@
         "clear_all": "Clear all",
         "clear": "Clear",
         "reset": "Reset",
+        "reload": "Reload",
+        "default": "Default",
         "endpoint": "Endpoint",
         "endpoints": "Endpoints",
         "timeframe": "Time frame",
         "login": "Login",
         "logout": "Logout",
+        "preferences": "Preferences",
         "objective": "Objective",
         "objectives": "Objectives",
         "criteria": "Criteria",
@@ -1173,6 +1176,7 @@
             "cdash": "CDASH",
             "sdtm": "SDTM",
             "adam": "ADaM",
+            "sdtm_sponsor": "Sponsor SDTM",
             "list": "List",
             "gen_clinical_metadata": "General Clinical Metadata",
             "cdash_std": "CDASH Standards",
@@ -1293,7 +1297,9 @@
             "announcements": "System Announcement",
             "feature_flags": "Feature Flags",
             "complexity_burdens": "Complexity Burdens",
-            "odm_vendor_extensions": "ODM Vendor Extensions"
+            "data_completeness_tags": "Data Completeness Tags",
+            "odm_vendor_extensions": "ODM Vendor Extensions",
+            "global_preferences": "Global Preferences"
         }
     },
     "StudyDataSuppliers": {
@@ -1684,6 +1690,7 @@
         "title": "Study title",
         "subpart_id": "Subpart ID",
         "sub_study_id": "Sub study ID",
+        "data_completeness": "Data completeness",
         "lts_locked_ver": "Latest locked version",
         "lts_released_ver": "Latest released version",
         "lts_version": "Latest version"
@@ -2254,7 +2261,8 @@
         "show_only_handled": "Show only handled requests",
         "study_id": "Study ID",
         "activity_instance_classes": "Activity Instance Classes",
-        "activity_item_classes": "Activity Item Classes"
+        "activity_item_classes": "Activity Item Classes",
+        "archived_library": "Archived library"
     },
     "ActivityFormsInstantiations": {
         "select_type": "Select type",
@@ -2516,6 +2524,7 @@
         "definition": "Definition",
         "extensible": "Extensible",
         "is_ordinal": "Ordinal",
+        "type": "Codelist type",
         "new_attributes_version": "Create new attributes version",
         "new_attributes_version_success": "New version of attributes created",
         "approve_attributes_version": "Change status to Final",
@@ -2556,7 +2565,8 @@
         "is_ordinal": "Ordinal?",
         "ordinal_hint": "Mark the codelist as ordinal, meaning that the 'order' of the terms represent their numeric value.",
         "definition": "Definition",
-        "definition_hint": "Provide a complete definition of the code list"
+        "definition_hint": "Provide a complete definition of the code list",
+        "codelist_type": "Type"
     },
     "CodelistCreationForm": {
         "title": "Add sponsor code list",
@@ -3538,6 +3548,8 @@
         "keep_locked": "Keep Study locked",
         "protocol_header_version": "Protocol Header Version",
         "major_version_warning": "Major version is required",
+        "latest_metadata_version": "Latest metadata version",
+        "original_metadata_version": "Original metadata version",
         "unlock_warning": "Note, that this study has been locked to a protocol version. If the study has passed FPFV, you accept that you carry the risk of modifying the study metadata related to the protocol and downstream processing by proceeding. How do you want to proceed?"
     },
     "CTDashboardView": {
@@ -4310,6 +4322,8 @@
         "double_click_expand": "Double click to expand all child items.",
         "reordering_not_allowed": "<p>You can only reorder elements when:<ul><li>their parent is in Draft status</li><li>there are at least two elements at the same level</li></ul></p>",
         "link": "Link",
+        "question": "Question",
+        "display_text": "Display Text",
         "collections": "Collections",
         "forms": "Forms",
         "item_groups": "Item Groups",
@@ -4558,7 +4572,7 @@
         "desc_value": "Described Value Domain",
         "implements": "Implements",
         "core": "Core",
-        "qualifies_variable": "Qualifiers variables",
+        "qualifies_variable": "Qualifies variables",
         "described_value_domain": "Describe value domain",
         "notes": "Notes",
         "usage_restrictions": "Usage restrictions",
@@ -4572,6 +4586,15 @@
         "sendig_ar": "SENDIG AR",
         "sendig_dart": "SENDIG DART",
         "sendig_genetox": "SENDIG GENETOX"
+    },
+    "SponsorDataModels": {
+        "sdtm_title": "Sponsor SDTM",
+        "variable_type": "Type",
+        "length": "Length",
+        "datasets": "Datasets",
+        "role": "Role",
+        "xml_datatype": "XML data type",
+        "ig_comment": "IG comment"
     },
     "ActivityInstanceOverview": {
         "cosmos_yaml": "COSMoS YAML",
@@ -4645,6 +4668,7 @@
         "no_forms": "No ODM forms available"
     },
     "SubgroupOverview": {
+        "requested": "Requested",
         "noItemsAvailable": "No items available"
     },
     "activityInstancesTable": {
@@ -4980,6 +5004,30 @@
         "title": "Feature flags",
         "help": "Feature flags enable you to toggle features in OpenStudyBuilder on/off, thus controlling the visibility for the users. It only has an effect on the visibility in the environment you currently are in."
     },
+    "GlobalPreferencesView": {
+        "title": "Global Application Preferences",
+        "help": "These preferences apply as defaults for all users. Users can override them in their personal preferences.",
+        "update_success": "Global preferences updated",
+        "load_error": "Failed to load global preferences",
+        "save_error": "Failed to save global preferences"
+    },
+    "UserPreferencesView": {
+        "title": "My Preferences",
+        "help": "Customize your personal preferences. Reset individual preferences to use the global default.",
+        "overridden": "Custom",
+        "custom_value": "Using custom value.",
+        "global_default": "Global default",
+        "reset_to_default": "Reset to default",
+        "update_success": "Preferences saved",
+        "reset_success": "Preference reset to default",
+        "load_error": "Failed to load preferences",
+        "save_error": "Failed to save preferences",
+        "reset_error": "Failed to reset preference"
+    },
+    "PreferenceField": {
+        "min_error": "Minimum value is {min}",
+        "max_error": "Maximum value is {max}"
+    },
     "ActivityInstanceForm": {
         "add_title": "Add activity instance",
         "edit_title": "Edit activity instance",
@@ -5154,6 +5202,14 @@
         "admin_burdens_id": "Burden ID",
         "admin_burdens_site_burden": "Site burden",
         "admin_burdens_patient_burden": "Participant burden"
+    },
+    "StudyDataCompleteness": {
+        "admin_title": "Data Completeness Tags",
+        "admin_info": "Manage tags that track completeness of various data sections for each study.",
+        "admin_col_complete": "Complete?",
+        "admin_col_section": "Data section",
+        "admin_new_tag": "New tag",
+        "admin_select_study": "Select study"
     },
     "Pagination": {
         "rows_per_page": "Rows per page",

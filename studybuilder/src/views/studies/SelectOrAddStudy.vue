@@ -27,18 +27,15 @@
                 v-model="searchString"
                 clearable
                 clear-icon="mdi-close"
-                density="compact"
                 prepend-inner-icon="mdi-magnify"
                 :label="$t('_global.search')"
                 single-line
                 color="nnBaseBlue"
                 hide-details
                 style="min-width: 240px; max-width: 300px"
-                rounded="lg"
                 autocomplete="off"
                 class="searchFieldLabel ml-0"
                 data-cy="search-field"
-                variant="outlined"
               />
             </template>
             <template #customFiltering>
@@ -54,13 +51,10 @@
                     :key="header.key"
                     ref="select"
                     v-model="columnFilters[header.key]"
-                    density="compact"
                     clearable
                     multiple
-                    variant="outlined"
                     width="240px"
                     :label="header.title"
-                    rounded="lg"
                     color="nnBaseBlue"
                     bg-color="nnWhite"
                     class="filterAutocompleteLabel ml-1"
@@ -121,17 +115,14 @@
                 v-model="searchString"
                 clearable
                 clear-icon="mdi-close"
-                density="compact"
                 prepend-inner-icon="mdi-magnify"
                 :label="$t('_global.search')"
                 single-line
                 color="nnBaseBlue"
                 hide-details
                 style="min-width: 240px; max-width: 300px"
-                rounded="lg"
                 class="searchFieldLabel ml-0"
                 data-cy="search-field"
-                variant="outlined"
               />
             </template>
             <template #customFiltering>
@@ -147,13 +138,10 @@
                     :key="header.key"
                     ref="select"
                     v-model="columnFilters[header.key]"
-                    density="compact"
                     clearable
                     multiple
-                    variant="outlined"
                     width="240px"
                     :label="header.title"
-                    rounded="lg"
                     color="nnBaseBlue"
                     bg-color="nnWhite"
                     class="filterAutocompleteLabel ml-1"
@@ -281,6 +269,10 @@ const headers = [
     key: 'latest_released_version',
   },
   {
+    title: t('StudyTable.data_completeness'),
+    key: 'data_completeness_tags',
+  },
+  {
     title: t('_global.modified'),
     key: 'version_start_date',
   },
@@ -343,10 +335,10 @@ async function fetchActiveStudies(filters, options, filtersUpdated) {
       await api.getAllList().then((resp) => {
         resp.data.forEach((study) => {
           if (study.latest_locked_version) {
-            study.latest_locked_version = `${study.latest_locked_version.version_number} ${study.latest_locked_version.change_description}`
+            study.latest_locked_version = `${study.latest_locked_version.version_number} ${study.latest_locked_version.change_description ? study.latest_locked_version.change_description : ''}`
           }
           if (study.latest_released_version) {
-            study.latest_released_version = `${study.latest_released_version.version_number} ${study.latest_released_version.change_description}`
+            study.latest_released_version = `${study.latest_released_version.version_number} ${study.latest_released_version.change_description ? study.latest_released_version.change_description : ''}`
           }
         })
         activeStudies.value = resp.data
@@ -371,9 +363,36 @@ function handleFiltering(params) {
       delete columnFilters.value[key]
     }
   }
+
+  const matchesFilterValue = (studyValue, filterValue) => {
+    if (studyValue === null || studyValue === undefined) {
+      return false
+    }
+
+    if (Array.isArray(studyValue)) {
+      return studyValue.some((item) => matchesFilterValue(item, filterValue))
+    }
+
+    if (
+      typeof studyValue === 'string' ||
+      typeof filterValue === 'string' ||
+      typeof studyValue === 'number' ||
+      typeof filterValue === 'number'
+    ) {
+      const studyText = String(studyValue).toLowerCase()
+      const filterText = String(filterValue).toLowerCase()
+      return studyText.includes(filterText)
+    }
+
+    return studyValue === filterValue
+  }
+
   for (let key in columnFilters.value) {
+    const selectedValues = columnFilters.value[key]
     filteredStudies.value = filteredStudies.value.filter((study) => {
-      return columnFilters.value[key].indexOf(study[key]) !== -1
+      return selectedValues.some((filterValue) =>
+        matchesFilterValue(study[key], filterValue)
+      )
     })
   }
 
@@ -405,14 +424,27 @@ function handleFiltering(params) {
 }
 
 function getHeaderFilterData(key) {
-  if (navigationTabs.value.tab === 'active') {
-    return [...new Set(activeStudies.value.map((obj) => obj[[key]]))]
-      .filter((item) => item !== null && item !== undefined)
-      .sort()
-  }
-  return [...new Set(deletedStudies.value.map((obj) => obj[[key]]))]
-    .filter((item) => item !== null && item !== undefined)
-    .sort()
+  const source =
+    navigationTabs.value.tab === 'active'
+      ? activeStudies.value
+      : deletedStudies.value
+
+  const values = source.flatMap((obj) => {
+    const value = obj[key]
+
+    if (Array.isArray(value)) {
+      if (value.length === 0) {
+        return []
+      }
+      return value
+        .filter((item) => item !== null && item !== undefined)
+        .map((item) => String(item))
+    }
+
+    return value !== null && value !== undefined ? [value] : []
+  })
+
+  return [...new Set(values)].sort()
 }
 
 function clearFilters() {
@@ -428,7 +460,7 @@ async function fetchDeletedStudies(filters, options, filtersUpdated) {
   )
   try {
     if (deletedStudies.value.length === 0 || fullRefresh.value) {
-      await api.getAllList(true).then((resp) => {
+      await api.getAllList({ deleted: true }).then((resp) => {
         deletedStudies.value = resp.data
         fullRefresh.value = false
       })

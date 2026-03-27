@@ -12,6 +12,15 @@ export default {
   },
 
   /*
+   ** Return a relative human readable version of the given date string (e.g. "3 hours ago").
+   */
+  dateRelative(value) {
+    return DateTime.fromISO(value)
+      .setLocale(import.meta.env.VUE_APP_I18N_LOCALE)
+      .toRelative()
+  },
+
+  /*
    ** Display a boolean value as a yes/no alternative.
    */
   yesno(value) {

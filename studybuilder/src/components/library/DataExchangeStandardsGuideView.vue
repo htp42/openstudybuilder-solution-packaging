@@ -91,15 +91,7 @@
                       {{ tab[0].label }}
                     </p>
                   </v-col>
-                  <v-col cols="1">
-                    <div class="font-weight-bold">
-                      {{ $t('DataModels.ordinal') }}
-                    </div>
-                    <p class="font-weight-regular">
-                      {{ tab[0].data_model_ig.ordinal }}
-                    </p>
-                  </v-col>
-                  <v-col cols="9">
+                  <v-col cols="10">
                     <div class="font-weight-bold">
                       {{ $t('_global.description') }}
                     </div>

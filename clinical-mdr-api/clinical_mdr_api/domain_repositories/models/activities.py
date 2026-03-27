@@ -1,12 +1,8 @@
 from neomodel import (
-    ArrayProperty,
-    BooleanProperty,
-    FloatProperty,
     One,
     OneOrMore,
     RelationshipFrom,
     RelationshipTo,
-    StringProperty,
     ZeroOrMore,
     ZeroOrOne,
 )
@@ -21,6 +17,7 @@ from clinical_mdr_api.domain_repositories.models.concepts import (
     UnitDefinitionRoot,
 )
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
+    CTCodelistRoot,
     CTTermContext,
 )
 from clinical_mdr_api.domain_repositories.models.generic import (
@@ -28,6 +25,12 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     ClinicalMdrNodeWithUID,
     ClinicalMdrRel,
     VersionRelationship,
+)
+from common.neomodel import (
+    ArrayProperty,
+    BooleanProperty,
+    FloatProperty,
+    StringProperty,
 )
 
 
@@ -119,7 +122,7 @@ class ActivityGrouping(ClinicalMdrNodeWithUID):
 
 
 class ActivityValue(ConceptValue):
-    synonyms = ArrayProperty(StringProperty())
+    synonyms = ArrayProperty(StringProperty())  # type: ignore
     is_data_collected = BooleanProperty()
     is_multiple_selection_allowed = BooleanProperty(default=True)
     has_latest_value = RelationshipFrom("ActivityRoot", "LATEST", model=ClinicalMdrRel)
@@ -177,6 +180,9 @@ class ActivityItem(ClinicalMdrNode):
         ActivityItemClassRoot,
         "HAS_ACTIVITY_ITEM",
         model=ClinicalMdrRel,
+    )
+    has_codelist = RelationshipTo(
+        CTCodelistRoot, "HAS_CODELIST", model=ClinicalMdrRel, cardinality=ZeroOrMore
     )
     has_ct_term = RelationshipTo(
         CTTermContext, "HAS_CT_TERM", model=ClinicalMdrRel, cardinality=ZeroOrMore

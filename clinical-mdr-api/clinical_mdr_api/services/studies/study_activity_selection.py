@@ -100,6 +100,7 @@ from clinical_mdr_api.services.studies.study_soa_group import StudySoAGroupServi
 from common.auth.user import user
 from common.config import settings
 from common.exceptions import (
+    AlreadyExistsException,
     BusinessLogicException,
     MDRApiBaseException,
     MethodNotAllowedException,
@@ -239,12 +240,41 @@ class StudyActivitySelectionService(
         )
         return selection_ar_from_same_subgroup
 
+    def _validate_no_study_wide_duplicate(
+        self,
+        study_uid: str,
+        updated_selection: StudySelectionActivityVO,
+    ) -> None:
+        """Check that the updated selection doesn't duplicate an existing activity
+        with the same name and groupings anywhere in the study.
+
+        The AR-level validate() only sees a scoped subset (same study_activity_subgroup_uid),
+        so duplicates across different subgroup scopes would slip through without this check.
+        """
+        AlreadyExistsException.raise_if(
+            self.repository.activity_with_same_groupings_exists(
+                study_uid=study_uid,
+                activity_name=updated_selection.activity_name,
+                activity_subgroup_uid=updated_selection.activity_subgroup_uid,
+                activity_group_uid=updated_selection.activity_group_uid,
+                exclude_study_selection_uid=updated_selection.study_selection_uid,
+            ),
+            msg=(
+                f"There is already a Study Selection to the activity with Name "
+                f"'{updated_selection.activity_name}' with the same groupings."
+            ),
+        )
+
     def _update_aggregate(
         self,
         selection_aggregate: StudySelectionActivityAR,
         previous_selection: StudySelectionActivityVO,
         updated_selection: StudySelectionActivityVO,
     ):
+        self._validate_no_study_wide_duplicate(
+            study_uid=selection_aggregate.study_uid,
+            updated_selection=updated_selection,
+        )
         if (
             previous_selection.study_activity_subgroup_uid
             != updated_selection.study_activity_subgroup_uid
@@ -1389,6 +1419,10 @@ class StudyActivitySelectionService(
                 study_activity_selection,
                 self.selected_object_repository.check_exists_final_version,
                 self._repos.ct_term_name_repository.term_specific_exists_by_uid,
+            )
+            self._validate_no_study_wide_duplicate(
+                study_uid=study_uid,
+                updated_selection=study_activity_selection,
             )
             study_activity_aggregate.validate()
             # sync with DB and save the update

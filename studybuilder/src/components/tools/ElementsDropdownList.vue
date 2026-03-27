@@ -7,11 +7,8 @@
         label="Element"
         item-title="name"
         item-value="element_uid"
-        density="compact"
         clearable
         class="mt-6 cellWidth"
-        variant="outlined"
-        rounded="lg"
         @update:model-value="updateElement"
         @click:clear="deleteElement"
       />
@@ -62,9 +59,6 @@
           <v-textarea
             v-model="transitionRule"
             :rules="[(value) => formRules.max(value, 200)]"
-            variant="outlined"
-            density="compact"
-            rounded="lg"
             hide-details="auto"
           />
         </v-form>

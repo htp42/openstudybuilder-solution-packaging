@@ -25,7 +25,6 @@
               item-title="name"
               return-object
               :rules="[formRules.required]"
-              density="compact"
               clearable
               class="required"
             />
@@ -120,7 +119,6 @@
               data-cy="select-compound"
               return-object
               :rules="[formRules.required]"
-              density="compact"
               clearable
               class="required"
             >
@@ -208,9 +206,7 @@
                   :model-value="activeSubstance.inn"
                   :label="$t('CompoundForm.inn')"
                   data-cy="compound-inn"
-                  density="compact"
                   readonly
-                  variant="filled"
                   hide-details
                 />
               </v-col>
@@ -219,9 +215,7 @@
                   :model-value="activeSubstance.analyte_number"
                   :label="$t('CompoundForm.analyte_number')"
                   data-cy="compound-analyte-number"
-                  density="compact"
                   readonly
-                  variant="filled"
                   hide-details
                 />
               </v-col>
@@ -230,9 +224,7 @@
                   :model-value="activeSubstance.long_number"
                   :label="$t('CompoundForm.long_number')"
                   data-cy="compound-long-number"
-                  density="compact"
                   readonly
-                  variant="filled"
                   hide-details
                 />
               </v-col>
@@ -241,9 +233,7 @@
                   :model-value="activeSubstance.short_number"
                   :label="$t('CompoundForm.short_number')"
                   data-cy="compound-short-number"
-                  density="compact"
                   readonly
-                  variant="filled"
                   hide-details
                 />
               </v-col>
@@ -259,9 +249,7 @@
                   "
                   :label="$t('CompoundAliasForm.substance')"
                   data-cy="compound-substance-unii"
-                  density="compact"
                   readonly
-                  variant="filled"
                   hide-details
                 />
               </v-col>
@@ -274,9 +262,7 @@
                   "
                   :label="$t('CompoundAliasForm.pharmacological_class')"
                   data-cy="compound-pharmacological-class"
-                  density="compact"
                   readonly
-                  variant="filled"
                   hide-details
                 />
               </v-col>

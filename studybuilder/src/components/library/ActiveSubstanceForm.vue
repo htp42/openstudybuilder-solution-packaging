@@ -14,8 +14,6 @@
             <v-text-field
               v-model="form.inn"
               :label="$t('ActiveSubstance.inn')"
-              density="compact"
-              variant="outlined"
             />
           </v-col>
         </v-row>
@@ -24,8 +22,6 @@
             <v-text-field
               v-model="form.analyte_number"
               :label="$t('ActiveSubstance.analyte_number')"
-              density="compact"
-              variant="outlined"
             />
           </v-col>
         </v-row>
@@ -34,8 +30,6 @@
             <v-text-field
               v-model="form.short_number"
               :label="$t('ActiveSubstance.short_number')"
-              density="compact"
-              variant="outlined"
             />
           </v-col>
         </v-row>
@@ -44,8 +38,6 @@
             <v-text-field
               v-model="form.long_number"
               :label="$t('ActiveSubstance.long_number')"
-              density="compact"
-              variant="outlined"
             />
           </v-col>
         </v-row>
@@ -54,8 +46,6 @@
             <v-autocomplete
               v-model="form.unii_term_uid"
               :label="$t('ActiveSubstance.unii')"
-              density="compact"
-              variant="outlined"
               :items="substances"
               :filter-keys="[
                 'raw.name',

@@ -12,7 +12,9 @@ for scheme in ("bolt", "bolt+s", "neo4j", "neo4j+s"):
     urllib.parse.uses_netloc.append(scheme)
 
 
-def configure_database(neo4j_dsn: str, /, **driver_options) -> Driver:
+def configure_database(
+    neo4j_dsn: str, /, soft_cardinality_check: bool = True, **driver_options
+) -> Driver:
     parsed = urllib.parse.urlparse(neo4j_dsn)
 
     if parsed.scheme not in (
@@ -39,6 +41,7 @@ def configure_database(neo4j_dsn: str, /, **driver_options) -> Driver:
     neomodel_config.DRIVER = driver
     neomodel_config.DATABASE_NAME = database_name
     neomodel_config.DATABASE_URL = None
+    neomodel_config.SOFT_CARDINALITY_CHECK = soft_cardinality_check
 
     return driver
 

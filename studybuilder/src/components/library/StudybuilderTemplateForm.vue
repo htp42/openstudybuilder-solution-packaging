@@ -26,7 +26,6 @@
               v-model="form.change_description"
               :label="$t('HistoryTable.change_description')"
               rows="1"
-              density="compact"
               clearable
               auto-grow
               class="bg-white pa-5"

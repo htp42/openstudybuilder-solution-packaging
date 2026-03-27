@@ -88,7 +88,7 @@ class ActivityInstanceClassRepository(  # type: ignore[misc]
         filter_by: dict[str, dict[str, Any]] | None = None,
     ) -> NodeSet:
         return nodeset.subquery(
-            self.root_class.nodes.fetch_relations("has_version")
+            self.root_class.nodes.traverse("has_version")
             .intermediate_transform(
                 {"rel": {"source": RelationNameResolver("has_version")}},
                 ordering=[
@@ -412,13 +412,10 @@ class ActivityInstanceClassRepository(  # type: ignore[misc]
             query += "\n                SKIP $skip LIMIT $limit"
 
         # Build final query
-        final_query = (
-            query
-            + """
+        final_query = query + """
                 RETURN uid, name, definition, is_domain_specific,
                        status, version, modified_date, modified_by, library_name
             """
-        )
 
         params: dict[str, Any] = {"parent_uid": parent_uid, "version": version}
         if page_size > 0:
@@ -572,13 +569,10 @@ class ActivityInstanceClassRepository(  # type: ignore[misc]
             query += "\n                SKIP $skip LIMIT $limit"
 
         # Build final query
-        final_query = (
-            query
-            + """
+        final_query = query + """
                 RETURN DISTINCT uid, name, parent_name, parent_uid, definition,
                        status, version, modified_date, modified_by
             """
-        )
 
         params: dict[str, Any] = {"uid": activity_instance_class_uid}
         if version:

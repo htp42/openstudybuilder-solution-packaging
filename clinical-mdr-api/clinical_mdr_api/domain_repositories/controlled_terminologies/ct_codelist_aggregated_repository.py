@@ -181,22 +181,18 @@ class CTCodelistAggregatedRepository:
             )
             params["library"] = library
         if package:
-            where_clauses.append(
-                """
+            where_clauses.append("""
                 (:CTPackage {name: $package})-[:CONTAINS_CODELIST]->(:CTPackageCodelist)-[:CONTAINS_ATTRIBUTES]->
                 (:CTCodelistAttributesValue)<-[:HAS_VERSION]-(:CTCodelistAttributesRoot)<-[:HAS_ATTRIBUTES_ROOT]-(codelist_root)
-                """
-            )
+                """)
             params["package"] = package
         if is_sponsor:
-            where_clauses.append(
-                """
+            where_clauses.append("""
                 EXISTS {
                     MATCH (lib:Library)-[:CONTAINS_CODELIST]->(codelist_root)
                     WHERE lib.name <> $cdisc_library_name
                 }
-                """
-            )
+                """)
             params["cdisc_library_name"] = settings.cdisc_library_name
         query = "MATCH (codelist_root:CTCodelistRoot)"
         if where_clauses:

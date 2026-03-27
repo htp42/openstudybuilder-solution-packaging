@@ -1,6 +1,5 @@
-from neomodel import BooleanProperty, StringProperty
-
 from clinical_mdr_api.domain_repositories.models.generic import ClinicalMdrNodeWithUID
+from common.neomodel import BooleanProperty, StringProperty
 
 
 class Brand(ClinicalMdrNodeWithUID):

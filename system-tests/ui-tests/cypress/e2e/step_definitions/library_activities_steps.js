@@ -8,6 +8,8 @@ const { getShortUniqueId } = require("../../support/helper_functions");
 export let activityName, synonym, currentSubgroupName, currentGroupName
 const nciconceptid = "NCIID", nciconceptname = "NCINAME", abbreviation = "ABB", definition = "DEF"
 
+Then('Activity is present in first table row', () => cy.checkRowByIndex(0, 'Activity name', activityName))
+
 When('The Add activity button is clicked', () => cy.clickButton('add-activity'))
 
 Then('Activity is searched for and not found', () => cy.searchAndCheckPresence(activityName, false))

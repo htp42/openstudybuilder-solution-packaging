@@ -7,8 +7,6 @@
     item-value="term_uid"
     :rules="required ? [(v) => !!v || 'Data Supplier Type is required'] : []"
     :disabled="disabled"
-    variant="outlined"
-    density="compact"
     clearable
     :loading="loading"
     @update:model-value="handleChange"

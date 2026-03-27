@@ -2,7 +2,7 @@
 
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Path
+from fastapi import APIRouter, Path, Query
 from starlette.requests import Request
 
 from clinical_mdr_api.models.standard_data_models.dataset_class import DatasetClass
@@ -58,6 +58,12 @@ State after:
 # pylint: disable=unused-argument
 def get_dataset_classes(
     request: Request,  # request is actually required by the allow_exports decorator
+    data_model_name: Annotated[
+        str,
+        Query(
+            description="The full name of the model, for instance 'SDTM v2.0'",
+        ),
+    ],
     sort_by: _generic_descriptions.SORT_BY_QUERY = None,
     page_number: _generic_descriptions.PAGE_NUMBER_QUERY = settings.default_page_number,
     page_size: _generic_descriptions.PAGE_SIZE_QUERY = settings.default_page_size,
@@ -67,6 +73,7 @@ def get_dataset_classes(
 ) -> CustomPage[DatasetClass]:
     dataset_class_service = DatasetClassService()
     results = dataset_class_service.get_all_items(
+        data_model_name=data_model_name,
         sort_by=sort_by,
         page_number=page_number,
         page_size=page_size,
@@ -95,6 +102,12 @@ def get_dataset_classes(
     },
 )
 def get_distinct_values_for_header(
+    data_model_name: Annotated[
+        str,
+        Query(
+            description="The full name of the model, for instance 'SDTM v2.0'",
+        ),
+    ],
     field_name: _generic_descriptions.HEADER_FIELD_NAME_QUERY,
     search_string: _generic_descriptions.HEADER_SEARCH_STRING_QUERY = "",
     filters: _generic_descriptions.FILTERS_QUERY = None,
@@ -103,6 +116,7 @@ def get_distinct_values_for_header(
 ) -> list[Any]:
     dataset_class_service = DatasetClassService()
     return dataset_class_service.get_distinct_values_for_header(
+        data_model_name=data_model_name,
         field_name=field_name,
         search_string=search_string,
         filter_by=filters,
@@ -135,6 +149,14 @@ Possible errors:
 )
 def get_dataset_class(
     dataset_class_uid: Annotated[str, DatasetClassUID],
+    data_model_name: Annotated[
+        str,
+        Query(
+            description="The full name of the model, for instance 'SDTM v2.0'",
+        ),
+    ],
 ) -> DatasetClass:
     dataset_class_service = DatasetClassService()
-    return dataset_class_service.get_by_uid(uid=dataset_class_uid)
+    return dataset_class_service.get_by_uid(
+        uid=dataset_class_uid, data_model_name=data_model_name
+    )

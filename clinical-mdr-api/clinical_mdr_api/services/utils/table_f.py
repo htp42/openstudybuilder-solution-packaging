@@ -285,7 +285,7 @@ def tables_to_docx(
 
                 # add footnote symbols to a run within the paragraph
                 if t_cell.footnotes:
-                    run = x_para.add_run("\u00A0".join(t_cell.footnotes))
+                    run = x_para.add_run("\u00a0".join(t_cell.footnotes))
                     run.font.bold = True
                     run.font.superscript = True
 

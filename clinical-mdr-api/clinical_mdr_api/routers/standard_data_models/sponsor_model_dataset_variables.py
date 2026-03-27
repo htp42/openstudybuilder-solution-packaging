@@ -2,7 +2,7 @@
 
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Body, Path
+from fastapi import APIRouter, Body, Path, Query
 from starlette.requests import Request
 
 from clinical_mdr_api.models.standard_data_models.sponsor_model_dataset_variable import (
@@ -62,6 +62,18 @@ Possible errors:
 # pylint: disable=unused-argument
 def get_sponsor_model_dataset_variables(
     request: Request,  # request is actually required by the allow_exports decorator
+    sponsor_model_name: Annotated[
+        str,
+        Query(
+            description="The name of the sponsor model, for instance 'sdtmig_sponsormodel_3.2-NN15'",
+        ),
+    ],
+    sponsor_model_version: Annotated[
+        str,
+        Query(
+            description="The version number of the sponsor model, for instance '15'",
+        ),
+    ],
     sort_by: _generic_descriptions.SORT_BY_QUERY = None,
     page_number: _generic_descriptions.PAGE_NUMBER_QUERY = settings.default_page_number,
     page_size: _generic_descriptions.PAGE_SIZE_QUERY = settings.default_page_size,
@@ -71,6 +83,8 @@ def get_sponsor_model_dataset_variables(
 ) -> CustomPage[SponsorModelDatasetVariable]:
     sponsor_model_dataset_variable_service = SponsorModelDatasetVariableService()
     results = sponsor_model_dataset_variable_service.get_all_items(
+        sponsor_model_name=sponsor_model_name,
+        sponsor_model_version=sponsor_model_version,
         sort_by=sort_by,
         page_number=page_number,
         page_size=page_size,
@@ -99,7 +113,19 @@ def get_sponsor_model_dataset_variables(
     },
 )
 def get_distinct_values_for_header(
-    field_name: _generic_descriptions.HEADER_FIELD_NAME_QUERY,
+    sponsor_model_name: Annotated[
+        str,
+        Query(
+            description="The name of the sponsor model, for instance 'sdtmig_sponsormodel_3.2-NN15'",
+        ),
+    ],
+    sponsor_model_version_number: Annotated[
+        str | None,
+        Query(
+            description="The version number of the sponsor model",
+        ),
+    ] = None,
+    field_name: _generic_descriptions.HEADER_FIELD_NAME_QUERY = "",
     search_string: _generic_descriptions.HEADER_SEARCH_STRING_QUERY = "",
     filters: _generic_descriptions.FILTERS_QUERY = None,
     operator: _generic_descriptions.FILTER_OPERATOR_QUERY = settings.default_filter_operator,
@@ -112,6 +138,8 @@ def get_distinct_values_for_header(
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
         page_size=page_size,
+        sponsor_model_name=sponsor_model_name,
+        sponsor_model_version_number=sponsor_model_version_number,
     )
 
 

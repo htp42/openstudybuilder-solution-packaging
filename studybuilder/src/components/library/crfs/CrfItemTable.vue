@@ -7,8 +7,8 @@
       item-value="uid"
       :items-length="total"
       :initial-sort-by="[{ key: 'name', order: 'asc' }]"
-      column-data-resource="concepts/odms/items"
-      export-data-url="concepts/odms/items"
+      column-data-resource="odms/items"
+      export-data-url="odms/items"
       export-object-label="CRFItems"
       @filter="getItems"
     >
@@ -44,6 +44,16 @@
             </div>
           </template>
           <span>{{ item.name }}</span>
+        </v-tooltip>
+      </template>
+      <template #[`item.start_date`]="{ item }">
+        <v-tooltip location="top">
+          <template #activator="{ props }">
+            <span v-bind="props">{{
+              $filters.dateRelative(item.start_date)
+            }}</span>
+          </template>
+          {{ $filters.date(item.start_date) }}
         </v-tooltip>
       </template>
       <template #[`item.status`]="{ item }">
@@ -136,6 +146,8 @@ const headers = computed(() => [
   { title: t('CRFItems.type'), key: 'datatype', width: '1%' },
   { title: t('CRFItems.length'), key: 'length', width: '1%' },
   { title: t('CRFItems.sds_name'), key: 'sds_var_name' },
+  { title: t('_global.modified'), key: 'start_date' },
+  { title: t('_global.modified_by'), key: 'author_username' },
   { title: t('_global.version'), key: 'version', width: '1%' },
   { title: t('_global.status'), key: 'status', width: '1%' },
 ])

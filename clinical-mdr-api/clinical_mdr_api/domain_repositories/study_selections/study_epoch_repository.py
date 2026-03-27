@@ -247,27 +247,19 @@ class StudyEpochRepository:
             if not study_value_version:
                 query.append("WHERE NOT (study_epoch)-[:BEFORE]-()")
 
-        query.append(
-            dedent(
-                """
+        query.append(dedent("""
             MATCH (study_epoch)-[:HAS_EPOCH]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(epoch_ct_term_root:CTTermRoot)
             MATCH (study_epoch)-[:HAS_EPOCH_SUB_TYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(epoch_subtype_ct_term_root:CTTermRoot)
             MATCH (study_epoch)-[:HAS_EPOCH_TYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(epoch_type_ct_term_root:CTTermRoot)
-        """
-            )
-        )
+        """))
 
         if audit_trail:
-            query.append(
-                dedent(
-                    """
+            query.append(dedent("""
                 WITH *,
                     {term_uid: epoch_ct_term_root.uid} AS epoch_term,
                     {term_uid: epoch_subtype_ct_term_root.uid} AS epoch_subtype_term,
                     {term_uid: epoch_type_ct_term_root.uid} AS epoch_type_term
-            """
-                )
-            )
+            """))
 
         else:
             query.append(
@@ -286,9 +278,7 @@ class StudyEpochRepository:
                 )
             )
 
-        query.append(
-            dedent(
-                """
+        query.append(dedent("""
             WITH 
                 study_root.uid AS study_uid,
                 study_action,
@@ -298,9 +288,7 @@ class StudyEpochRepository:
                 epoch_type_term,
                 size([(study_epoch)-[:STUDY_EPOCH_HAS_STUDY_VISIT]->(study_visit:StudyVisit)<-[:HAS_STUDY_VISIT]-(study_value:StudyValue) | study_visit]) AS count_visits,
                 coalesce(head([(user:User)-[*0]-() WHERE user.user_id=study_action.author_id | user.username]), study_action.author_id) AS author_username
-        """
-            )
-        )
+        """))
         if audit_trail:
             query.append(
                 dedent(
@@ -340,7 +328,7 @@ class StudyEpochRepository:
         """
 
         sdc_node = (
-            StudyEpoch.nodes.fetch_relations(
+            StudyEpoch.nodes.traverse(
                 "has_design_cell__study_value",
                 "has_after",
                 "has_after__audit_trail",

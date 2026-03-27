@@ -14,7 +14,6 @@
             <v-text-field
               v-model="form.name"
               :label="$t('_global.name')"
-              density="compact"
               clearable
               :rules="[formRules.required]"
             />
@@ -23,7 +22,6 @@
             <v-text-field
               v-model="form.prefix"
               :label="$t('CRFExtensions.prefix')"
-              density="compact"
               clearable
               :rules="[formRules.required]"
             />
@@ -34,7 +32,6 @@
             <v-text-field
               v-model="form.url"
               :label="$t('CRFExtensions.url')"
-              density="compact"
               clearable
               :rules="[formRules.required]"
             />

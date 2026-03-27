@@ -73,6 +73,7 @@ def create_random_activity_instance_vo() -> ActivityInstanceVO:
             ActivityItemVO.from_repository_values(
                 activity_item_class_uid=random_str(),
                 activity_item_class_name=random_str(),
+                ct_codelist=None,
                 ct_terms=[
                     CTTermItem(
                         uid=random_str(), name=random_str(), codelist_uid=random_str()
@@ -88,6 +89,7 @@ def create_random_activity_instance_vo() -> ActivityInstanceVO:
             ActivityItemVO.from_repository_values(
                 activity_item_class_uid=random_str(),
                 activity_item_class_name=random_str(),
+                ct_codelist=None,
                 ct_terms=[
                     CTTermItem(
                         uid=random_str(), name=random_str(), codelist_uid=random_str()
@@ -314,6 +316,7 @@ class TestActivityInstanceNegative(unittest.TestCase):
                         ActivityItemVO.from_repository_values(
                             activity_item_class_uid=random_str(),
                             activity_item_class_name=random_str(),
+                            ct_codelist=None,
                             ct_terms={"name": random_str(), "uid": random_str()},
                             unit_definitions=[
                                 CompactUnitDefinition(
@@ -326,6 +329,7 @@ class TestActivityInstanceNegative(unittest.TestCase):
                         ActivityItemVO.from_repository_values(
                             activity_item_class_uid=random_str(),
                             activity_item_class_name=random_str(),
+                            ct_codelist=None,
                             ct_terms={"name": random_str(), "uid": random_str()},
                             unit_definitions=[
                                 CompactUnitDefinition(

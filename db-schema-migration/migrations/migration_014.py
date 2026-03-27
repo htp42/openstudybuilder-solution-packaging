@@ -1,4 +1,5 @@
-""" Schema migrations needed for release 1.16 to PROD post August 2025."""
+"""Schema migrations needed for release 1.16 to PROD post August 2025."""
+
 import os
 
 from migrations.common import migrate_ct_config_values, migrate_indexes_and_constraints

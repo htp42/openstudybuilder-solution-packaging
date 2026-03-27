@@ -175,9 +175,9 @@ def test_adam_listing_mdvisit_versioning(api_client, test_data):
             "show_visit": False,
             "time_unit_uid": "UnitDefinition_000002",
             "time_value": 0,
-            "visit_contact_mode_uid": "VisitContactMode_0001",
-            "visit_type_uid": "VisitType_0002",
-            "time_reference_uid": "VisitSubType_0002",
+            "visit_contact_mode": {"term_uid": "VisitContactMode_0001"},
+            "visit_type": {"term_uid": "VisitType_0002"},
+            "time_reference": {"term_uid": "VisitSubType_0002"},
             "is_global_anchor_visit": False,
             "visit_class": "SINGLE_VISIT",
             "study_epoch_uid": "StudyEpoch_000001",
@@ -187,7 +187,7 @@ def test_adam_listing_mdvisit_versioning(api_client, test_data):
     )
     res = response.json()
     assert_response_status_code(response, 200)
-    assert res["visit_type_uid"] == "VisitType_0002"
+    assert res["visit_type"]["term_uid"] == "VisitType_0002"
 
     # get all study visits of a specific study version
     response = api_client.get(

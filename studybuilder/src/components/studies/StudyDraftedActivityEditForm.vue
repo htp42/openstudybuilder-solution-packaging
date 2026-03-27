@@ -21,9 +21,7 @@
                 item-value="term_uid"
                 :rules="[formRules.required]"
                 :hint="$t('_help.StudyActivityForm.flowchart_group')"
-                variant="outlined"
                 color="nnBaseBlue"
-                rounded="lg"
                 class="mb-3"
                 persistent-hint
                 clearable
@@ -35,9 +33,7 @@
                 item-title="name"
                 item-value="uid"
                 clearable
-                variant="outlined"
                 color="nnBaseBlue"
-                rounded="lg"
                 :rules="form.soa_group_term_uid ? [formRules.required] : []"
                 @update:model-value="form.activity_subgroup_uid = null"
               />
@@ -49,9 +45,7 @@
                 item-title="name"
                 item-value="uid"
                 clearable
-                variant="outlined"
                 color="nnBaseBlue"
-                rounded="lg"
                 :disabled="form.activity_group_uid ? false : true"
               />
               <v-text-field
@@ -59,9 +53,7 @@
                 :label="$t('ActivityFormsRequested.name')"
                 data-cy="instance-name"
                 clearable
-                variant="outlined"
                 color="nnBaseBlue"
-                rounded="lg"
                 :rules="[formRules.required]"
               />
               <v-textarea
@@ -71,9 +63,7 @@
                 clearable
                 auto-grow
                 rows="1"
-                variant="outlined"
                 color="nnBaseBlue"
-                rounded="lg"
                 :rules="[formRules.required]"
               />
               <v-row>
@@ -87,7 +77,6 @@
                   :label="$t('ActivityForms.submit_request')"
                   class="mt-n5"
                   hide-details
-                  color="primary"
                 />
               </v-row>
             </v-col>

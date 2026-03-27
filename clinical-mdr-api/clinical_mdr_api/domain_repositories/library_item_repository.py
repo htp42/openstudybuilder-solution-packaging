@@ -8,7 +8,6 @@ import neo4j.time
 from cachetools import TTLCache, cached
 from cachetools.keys import hashkey
 from neomodel import (
-    OUTGOING,
     NodeClassNotDefined,
     RelationshipDefinition,
     RelationshipManager,
@@ -16,6 +15,7 @@ from neomodel import (
     db,
 )
 from neomodel.exceptions import DoesNotExist
+from neomodel.util import RelationshipDirection
 
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
     GenericRepository,
@@ -649,7 +649,7 @@ class LibraryItemRepositoryImplBase(
             root.__label__,
             {
                 "node_class": self.value_class,
-                "direction": OUTGOING,
+                "direction": RelationshipDirection.OUTGOING,
                 "model": VersionRelationship,
             },
         )
@@ -914,10 +914,10 @@ class LibraryItemRepositoryImplBase(
                     value, relationship = self._get_latest_value_with_status(
                         root,
                         status,
-                        has_version_rel,
-                        latest_draft_rel,
-                        latest_final_rel,
-                        latest_retired_rel,
+                        has_version_rel,  # type: ignore[arg-type]
+                        latest_draft_rel,  # type: ignore[arg-type]
+                        latest_final_rel,  # type: ignore[arg-type]
+                        latest_retired_rel,  # type: ignore[arg-type]
                     )
                 else:
                     # Find the latest version (regardless of status) that exists at the specified date
@@ -978,7 +978,7 @@ class LibraryItemRepositoryImplBase(
         latest_retired_rel: RelationshipManager,
     ) -> tuple[VersionValue | None, VersionRelationship | None]:
         relationship: VersionRelationship | None = None
-        value: VersionValue
+        value: VersionValue | None
 
         relationship_manager_to_use: RelationshipManager = latest_retired_rel
         if status == LibraryItemStatus.FINAL:
@@ -987,11 +987,12 @@ class LibraryItemRepositoryImplBase(
             relationship_manager_to_use = latest_draft_rel
         value = relationship_manager_to_use.get_or_none()
         if value is None:
-            value = has_version_rel.match(status=status.value).all()
-            if not value:
+            possible_values = has_version_rel.match(status=status.value).all()
+            if not possible_values:
                 return None, None
             end_dates = {
-                has_version_rel.relationship(node).end_date: node for node in value
+                has_version_rel.relationship(node).end_date: node
+                for node in possible_values
             }
             last_date = max(end_dates.keys())
             value = end_dates[last_date]
@@ -1419,13 +1420,13 @@ class LibraryItemRepositoryImplBase(
                 activity_root=activity_root,
                 activity_subgroups_root=activity_subgroups_root,
                 unit_definition=unit_definition,
-                indications=indications[0] if indications else [],
+                indications=indications,
                 template_type=template_type,
-                categories=categories[0] if categories else [],
-                subcategories=subcategories[0] if subcategories else [],
-                activities=activities[0] if activities else [],
-                activity_groups=activity_groups[0] if activity_groups else [],
-                activity_subgroups=activity_subgroups[0] if activity_subgroups else [],
+                categories=categories,
+                subcategories=subcategories,
+                activities=activities,
+                activity_groups=activity_groups,
+                activity_subgroups=activity_subgroups,
                 instance_template=instance_template,
             )
 
@@ -1687,13 +1688,13 @@ class LibraryItemRepositoryImplBase(
                 activity_root=activity_root,
                 activity_subgroups_root=activity_subgroups_root,
                 unit_definition=unit_definition,
-                indications=indications[0] if indications else [],
+                indications=indications,
                 template_type=template_type,
-                categories=categories[0] if categories else [],
-                subcategories=subcategories[0] if subcategories else [],
-                activities=activities[0] if activities else [],
-                activity_groups=activity_groups[0] if activity_groups else [],
-                activity_subgroups=activity_subgroups[0] if activity_subgroups else [],
+                categories=categories,
+                subcategories=subcategories,
+                activities=activities,
+                activity_groups=activity_groups,
+                activity_subgroups=activity_subgroups,
                 instance_template=instance_template,
                 **kwargs,
             )
@@ -1962,14 +1963,12 @@ class LibraryItemRepositoryImplBase(
                             ".", "_"
                         )
                         params[param_variable] = value
-                        fields_generic.append(
-                            f"""
+                        fields_generic.append(f"""
 CASE
     WHEN apoc.meta.cypher.isType({cypher_name}, "STRING") THEN toLower(toString({cypher_name})) {operator} toLower(toString(${param_variable}))
     ELSE {cypher_name} {operator} ${param_variable}
 END
-"""
-                        )
+""")
 
                 where_stmt += "(" + " OR ".join(fields_generic) + ")"
 
@@ -2017,14 +2016,12 @@ END
                             )
                         )
                         params[param_variable] = value
-                        fields_non_generic.append(
-                            f"""
+                        fields_non_generic.append(f"""
 CASE
     WHEN apoc.meta.cypher.isType({mapping[filter_name]}, "STRING") THEN toLower(toString({mapping[filter_name]})) {operator} toLower(toString(${param_variable}))
     ELSE {mapping[filter_name]} {operator} ${param_variable}
 END
-"""
-                        )
+""")
 
             if not where_stmt:
                 where_stmt += f" {filter_operator.value} ".join(fields_non_generic)
@@ -2626,36 +2623,6 @@ END
                 }
                 CALL{
                     WITH activity_item
-                    MATCH (activity_item)<-[ltai:LINKS_TO_ACTIVITY_ITEM]-(odm_form_root:OdmFormRoot)
-                    MATCH (odm_form_root)-[:LATEST]->(odm_form_value:OdmFormValue)
-                    RETURN collect(DISTINCT {
-                        uid: odm_form_root.uid,
-                        oid: odm_form_value.oid,
-                        name: odm_form_value.name,
-                        order: ltai.order,
-                        primary: ltai.primary,
-                        preset_response_value: ltai.preset_response_value,
-                        value_condition: ltai.value_condition,
-                        value_dependent_map: ltai.value_dependent_map
-                    }) AS odm_forms
-                }
-                CALL{
-                    WITH activity_item
-                    MATCH (activity_item)<-[ltai:LINKS_TO_ACTIVITY_ITEM]-(odm_item_group_root:OdmItemRoot)
-                    MATCH (odm_item_group_root)-[:LATEST]->(odm_item_group_value:OdmItemValue)
-                    RETURN collect(DISTINCT {
-                        uid: odm_item_group_root.uid,
-                        oid: odm_item_group_value.oid,
-                        name: odm_item_group_value.name,
-                        order: ltai.order,
-                        primary: ltai.primary,
-                        preset_response_value: ltai.preset_response_value,
-                        value_condition: ltai.value_condition,
-                        value_dependent_map: ltai.value_dependent_map
-                    }) AS odm_item_groups
-                }
-                CALL{
-                    WITH activity_item
                     MATCH (activity_item)<-[ltai:LINKS_TO_ACTIVITY_ITEM]-(odm_item_root:OdmItemRoot)
                     MATCH (odm_item_root)-[:LATEST]->(odm_item_value:OdmItemValue)
                     RETURN collect(DISTINCT {
@@ -2676,8 +2643,6 @@ END
                     unit_definitions: unit_definitions,
                     is_adam_param_specific: activity_item.is_adam_param_specific,
                     text_value: activity_item.text_value,
-                    odm_forms: odm_forms,
-                    odm_item_groups: odm_item_groups,
                     odm_items: odm_items
                 }) as activity_items
             }

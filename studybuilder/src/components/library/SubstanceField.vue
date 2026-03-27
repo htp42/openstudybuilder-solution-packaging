@@ -7,26 +7,16 @@
         :items="substances"
         item-title="name"
         return-object
-        density="compact"
       />
     </v-col>
     <v-col cols="6">
-      <v-text-field
-        :value="unii"
-        label="UNII"
-        variant="filled"
-        disabled
-        density="compact"
-        hide-details
-      />
+      <v-text-field :value="unii" label="UNII" disabled hide-details />
     </v-col>
     <v-col cols="6">
       <v-text-field
         :value="pclass"
         :label="$t('SubstanceField.pharmacological_class')"
-        variant="filled"
         disabled
-        density="compact"
         hide-details
       />
     </v-col>
@@ -34,9 +24,7 @@
       <v-text-field
         :value="medrtId"
         :label="$t('SubstanceField.medrt')"
-        variant="filled"
         disabled
-        density="compact"
         hide-details
       />
     </v-col>

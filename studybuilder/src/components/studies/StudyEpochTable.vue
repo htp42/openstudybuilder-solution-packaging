@@ -26,7 +26,6 @@
             :label="$t('NNTable.reorder_content')"
             hide-details
             class="mr-6"
-            color="primary"
             :disabled="!accessGuard.checkPermission($roles.STUDY_WRITE)"
           />
         </div>

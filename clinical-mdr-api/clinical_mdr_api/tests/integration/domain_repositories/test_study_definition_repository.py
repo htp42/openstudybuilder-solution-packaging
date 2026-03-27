@@ -898,6 +898,236 @@ class TestStudyDefinitionRepository(unittest.TestCase):
             # when
             repo.save(study)
 
+    def test__get_study_id__with_valid_study__returns_study_id(self):
+        """Test that get_study_id returns correct study_id when study exists with both prefix and number"""
+        # given
+        with db.transaction:
+            repo = StudyDefinitionRepositoryImpl(current_function_name())
+            created_study = create_random_study(
+                generate_uid_callback=repo.generate_uid,
+                new_id_metadata_fixed_values={
+                    "project_number": self.created_project.project_number
+                },
+                is_study_after_create=True,
+                author_id=current_function_name(),
+            )
+            repo.save(created_study)
+            repo.close()
+
+        # when
+        study_id = StudyDefinitionRepositoryImpl.get_study_id(created_study.uid)
+
+        # then
+        expected_id = f"{created_study.current_metadata.id_metadata.study_id_prefix}-{created_study.current_metadata.id_metadata.study_number}"
+        assert study_id == expected_id
+
+    def test__get_study_id__with_specific_version__returns_study_id(self):
+        """Test that get_study_id returns study_id for a specific version"""
+        # given
+        with db.transaction:
+            repo = StudyDefinitionRepositoryImpl(current_function_name())
+            created_study = create_random_study(
+                generate_uid_callback=repo.generate_uid,
+                new_id_metadata_fixed_values={
+                    "project_number": self.created_project.project_number
+                },
+                is_study_after_create=True,
+                author_id=current_function_name(),
+            )
+            repo.save(created_study)
+
+            # Create a locked version
+            study_to_lock = repo.find_by_uid(created_study.uid, for_update=True)
+            study_to_lock.edit_metadata(
+                study_title_exists_callback=lambda _, study_number: False,
+                study_short_title_exists_callback=lambda _, study_number: False,
+                new_study_description=StudyDescriptionVO.from_input_values(
+                    study_title="new_study_title", study_short_title="study_short_title"
+                ),
+                author_id=current_function_name(),
+            )
+            repo.save(study_to_lock)
+            study_to_lock = repo.find_by_uid(created_study.uid, for_update=True)
+            study_to_lock.lock(
+                version_description="locked version",
+                author_id=current_function_name(),
+            )
+            repo.save(study_to_lock)
+            locked_version = str(
+                study_to_lock.current_metadata.ver_metadata.version_number
+            )
+            repo.close()
+
+        # when
+        study_id = StudyDefinitionRepositoryImpl.get_study_id(
+            created_study.uid, study_value_version=locked_version
+        )
+
+        # then
+        expected_id = f"{created_study.current_metadata.id_metadata.study_id_prefix}-{created_study.current_metadata.id_metadata.study_number}"
+        assert study_id == expected_id
+
+    def test__get_study_id__with_nonexistent_uid__returns_none(self):
+        """Test that get_study_id returns None when study doesn't exist"""
+        # given
+        non_existent_uid = f"non-existent-uid-{random_str()}"
+
+        # when
+        study_id = StudyDefinitionRepositoryImpl.get_study_id(non_existent_uid)
+
+        # then
+        assert study_id is None
+
+    def test__get_study_id__with_nonexistent_version__returns_none(self):
+        """Test that get_study_id returns None when version doesn't exist"""
+        # given
+        with db.transaction:
+            repo = StudyDefinitionRepositoryImpl(current_function_name())
+            created_study = create_random_study(
+                generate_uid_callback=repo.generate_uid,
+                new_id_metadata_fixed_values={
+                    "project_number": self.created_project.project_number
+                },
+                is_study_after_create=True,
+                author_id=current_function_name(),
+            )
+            repo.save(created_study)
+            repo.close()
+
+        # when
+        study_id = StudyDefinitionRepositoryImpl.get_study_id(
+            created_study.uid, study_value_version="999.999"
+        )
+
+        # then
+        assert study_id is None
+
+    def test__get_study_id__with_missing_study_id_prefix__returns_none(self):
+        """Test that get_study_id returns None when study_id_prefix is missing"""
+        # given - create study and manually remove study_id_prefix
+        with db.transaction:
+            repo = StudyDefinitionRepositoryImpl(current_function_name())
+            created_study = create_random_study(
+                generate_uid_callback=repo.generate_uid,
+                new_id_metadata_fixed_values={
+                    "project_number": self.created_project.project_number
+                },
+                is_study_after_create=True,
+                author_id=current_function_name(),
+            )
+            repo.save(created_study)
+            repo.close()
+
+        # Manually set study_id_prefix to NULL in database
+        db.cypher_query(
+            """
+            MATCH (sr:StudyRoot {uid: $uid})-[:LATEST]->(sv:StudyValue)
+            SET sv.study_id_prefix = NULL
+            """,
+            {"uid": created_study.uid},
+        )
+
+        # when
+        study_id = StudyDefinitionRepositoryImpl.get_study_id(created_study.uid)
+
+        # then
+        assert study_id is None
+
+    def test__get_study_id__with_missing_study_number__returns_none(self):
+        """Test that get_study_id returns None when study_number is missing"""
+        # given - create study and manually remove study_number
+        with db.transaction:
+            repo = StudyDefinitionRepositoryImpl(current_function_name())
+            created_study = create_random_study(
+                generate_uid_callback=repo.generate_uid,
+                new_id_metadata_fixed_values={
+                    "project_number": self.created_project.project_number
+                },
+                is_study_after_create=True,
+                author_id=current_function_name(),
+            )
+            repo.save(created_study)
+            repo.close()
+
+        # Manually set study_number to NULL in database
+        db.cypher_query(
+            """
+            MATCH (sr:StudyRoot {uid: $uid})-[:LATEST]->(sv:StudyValue)
+            SET sv.study_number = NULL
+            """,
+            {"uid": created_study.uid},
+        )
+
+        # when
+        study_id = StudyDefinitionRepositoryImpl.get_study_id(created_study.uid)
+
+        # then
+        assert study_id is None
+
+    def test__get_study_id__with_subpart__returns_study_id_with_subpart(self):
+        """Test that get_study_id returns study_id including subpart_id when present"""
+        # given
+        with db.transaction:
+            repo = StudyDefinitionRepositoryImpl(current_function_name())
+            created_study = create_random_study(
+                generate_uid_callback=repo.generate_uid,
+                new_id_metadata_fixed_values={
+                    "project_number": self.created_project.project_number
+                },
+                is_study_after_create=True,
+                author_id=current_function_name(),
+            )
+            repo.save(created_study)
+            repo.close()
+
+        # Manually add subpart_id to the study
+        subpart_id = "SP1"
+        db.cypher_query(
+            """
+            MATCH (sr:StudyRoot {uid: $uid})-[:LATEST]->(sv:StudyValue)
+            SET sv.subpart_id = $subpart_id
+            """,
+            {"uid": created_study.uid, "subpart_id": subpart_id},
+        )
+
+        # when
+        study_id = StudyDefinitionRepositoryImpl.get_study_id(created_study.uid)
+
+        # then
+        expected_id = f"{created_study.current_metadata.id_metadata.study_id_prefix}-{created_study.current_metadata.id_metadata.study_number}"
+        assert study_id == expected_id
+
+    def test__get_study_id__after_release__returns_study_id(self):
+        """Test that get_study_id works correctly for released studies"""
+        # given
+        with db.transaction:
+            repo = StudyDefinitionRepositoryImpl(current_function_name())
+            created_study = create_random_study(
+                generate_uid_callback=repo.generate_uid,
+                new_id_metadata_fixed_values={
+                    "project_number": self.created_project.project_number
+                },
+                is_study_after_create=True,
+                author_id=current_function_name(),
+            )
+            repo.save(created_study)
+
+            # Release the study
+            study_to_release = repo.find_by_uid(created_study.uid, for_update=True)
+            study_to_release.release(
+                change_description="test release",
+                author_id=current_function_name(),
+            )
+            repo.save(study_to_release)
+            repo.close()
+
+        # when
+        study_id = StudyDefinitionRepositoryImpl.get_study_id(created_study.uid)
+
+        # then
+        expected_id = f"{created_study.current_metadata.id_metadata.study_id_prefix}-{created_study.current_metadata.id_metadata.study_number}"
+        assert study_id == expected_id
+
 
 @pytest.mark.parametrize(
     ("soa_preferences_input", "expected_preferences"),

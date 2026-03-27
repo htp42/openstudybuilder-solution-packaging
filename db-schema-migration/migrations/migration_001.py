@@ -1,4 +1,5 @@
-""" Schema migrations needed for release to PROD in January 2023."""
+"""Schema migrations needed for release to PROD in January 2023."""
+
 import os
 import re
 
@@ -198,8 +199,7 @@ def create_requested_library():
 def migrate_null_flavor_list(db_connection):
     logger.info("Migrating null flavor codelist terms...")
     logger.info("Replace NOT APPLICABLE with NA")
-    db_connection.cypher_query(
-        """
+    db_connection.cypher_query("""
         MATCH (n:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]->()-[:LATEST]-({code_submission_value: "NOT APPLICABLE"}),
         (n)<-[has_term:HAS_TERM]-(l:CTCodelistRoot)-[:HAS_NAME_ROOT]-(nr:CTCodelistNameRoot)-[:LATEST]-(name {name: "Null Flavor"}),
         (n)<-[reason:HAS_REASON_FOR_NULL_VALUE]-(f)
@@ -209,26 +209,21 @@ def migrate_null_flavor_list(db_connection):
         CALL apoc.refactor.to(reason, na)
         YIELD input AS i2, output AS o2
         RETURN *
-    """
-    )
+    """)
     logger.info("Remove QS from list")
-    db_connection.cypher_query(
-        """
+    db_connection.cypher_query("""
         MATCH (n:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]-()-[:LATEST]-({code_submission_value: "QS"}),
         (n)-[r:HAS_TERM]-(l:CTCodelistRoot)-[:HAS_NAME_ROOT]-(nr:CTCodelistNameRoot)-[:LATEST]-(name {name: "Null Flavor"})
         DELETE r
-    """
-    )
+    """)
 
 
 def migrate_codelist_extensible_flag(db_connection):
     logger.info("Making all Sponsor codelists extensible")
-    db_connection.cypher_query(
-        """
+    db_connection.cypher_query("""
         MATCH (clr:CTCodelistRoot)-[har:HAS_ATTRIBUTES_ROOT]-(ar)-[]-(av {extensible: false}), (clr)-[:CONTAINS_CODELIST]-(lib {name: "Sponsor"})
         SET av.extensible = true
-        """
-    )
+        """)
 
 
 if __name__ == "__main__":

@@ -6,7 +6,7 @@ Feature: Manage ODM Study Events in OpenStudyBuilder API
         Given The test user can call the OpenStudyBuilder API
 
     Scenario: User must be able to get an empty list of ODM study events
-        When the user calls the API endpoint 'concepts/odms/study-events'
+        When the user calls the API endpoint 'odms/study-events'
         Then the response must include an empty list of ODM study events
         And the response status code must be 200
     Test Coverage:
@@ -22,7 +22,7 @@ Feature: Manage ODM Study Events in OpenStudyBuilder API
         | /tests/integration/api/old/test_odm_study_events.py | @TestID: test_creating_a_new_odm_study_event |
 
     Scenario: User must be able to get a non-empty list of ODM study events
-        When the user calls the API endpoint 'concepts/odms/study-events'
+        When the user calls the API endpoint 'odms/study-events'
         Then the response must include the list of ODM study events
         And the response status code must be 200
     Test Coverage:
@@ -30,7 +30,7 @@ Feature: Manage ODM Study Events in OpenStudyBuilder API
         | /tests/integration/api/old/test_odm_study_events.py | @TestID: test_getting_non_empty_list_of_odm_study_events |
 
     Scenario: User must be able to get a specific ODM study event
-        When the user calls the API endpoint 'concepts/odms/study-events/' to get a specific ODM study event
+        When the user calls the API endpoint 'odms/study-events/' to get a specific ODM study event
         Then the response status code must be 200
         And the response must include the ODM study event
     Test Coverage:
@@ -38,7 +38,7 @@ Feature: Manage ODM Study Events in OpenStudyBuilder API
         | /tests/integration/api/old/test_odm_study_events.py | @TestID: test_getting_a_specific_odm_study_event |
 
     Scenario: User must be able to get possible header values of ODM study events
-        When the user calls the API endpoint 'concepts/odms/study-events/headers?field_name=name'
+        When the user calls the API endpoint 'odms/study-events/headers?field_name=name'
         Then the response status code must be 200
         And the response must include the list ["name1"]
     Test Coverage:
@@ -70,7 +70,7 @@ Feature: Manage ODM Study Events in OpenStudyBuilder API
         | /tests/integration/api/old/test_odm_study_events_negative.py | @TestID: test_cannot_create_a_new_odm_study_event_without_an_english_description |
 
     Scenario: User receives an error for retrieving a non-existent ODM study event
-        When the user calls the API endpoint 'concepts/odms/study-events/' for retrieving a non-existent ODM study event
+        When the user calls the API endpoint 'odms/study-events/' for retrieving a non-existent ODM study event
         Then the response status code must be 404
         And the response must include the message like "OdmStudyEventAR with UID 'OdmStudyEvent_000002' doesn't exist ..."
     Test Coverage:

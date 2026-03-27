@@ -26,7 +26,7 @@
           >
             <template #[`item.selection`]="{ item }">
               <v-radio-group v-model="selectedCodelist" hide-details>
-                <v-radio color="primary" :value="item.codelist_uid"></v-radio>
+                <v-radio :value="item.codelist_uid"></v-radio>
               </v-radio-group>
             </template>
           </NNTable>

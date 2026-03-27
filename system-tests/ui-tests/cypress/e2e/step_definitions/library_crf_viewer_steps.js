@@ -3,54 +3,30 @@ const { When, Then } = require("@badeball/cypress-cucumber-preprocessor");
 let crf_form; // To store selected CRF Form value
 
 When('I select one value from the CRF collection dropdown', () => {
-  // Find the v-input containing the CRF Collection label and interact with its input
-  cy.get('.v-input').filter(':has(label:contains("CRF Collection"))').within(() => {
-    cy.get('input[type="text"]').first().click({ force: true });
-  });
-  cy.wait(1000); // Wait for dropdown to load
-  // Wait for dropdown menu to appear and select the second item
-  cy.get('.v-overlay__content:visible .v-list')
-    .find('.v-list-item')
-    .eq(1)
-    .click({ force: true });
-  // Close the dropdown by clicking elsewhere
-  cy.get('body').click(0, 0);
-});
+  cy.contains('.v-input', 'CRF Collection').find('input').click({ force: true })
+  cy.wait(1000)
+  cy.get('.v-overlay__content:visible .v-list').find('.v-list-item').eq(1).click()
+  cy.contains('.v-input', 'CRF Collection').find('input').click({ force: true }) //defocus
+})
 
 When('I select one value from the CRF Forms dropdown', () => {
-  // Find the v-input containing the Form(s) label and interact with its input
-  cy.get('.v-input').filter(':has(label:contains("Form(s)"))').within(() => {
-    cy.get('input[type="text"]').first().click({ force: true });
-  });
-  cy.wait(1000); // Wait for dropdown to load
-  // Wait for dropdown menu to appear and select the last item
-  cy.get('.v-overlay__content:visible .v-list')
-    .find('.v-list-item')
-    .last()
-    .then(($item) => {
+  cy.wait(500)
+  cy.contains('.v-input', 'Form(s)').find('input').click({ force: true })
+  cy.wait(1000)
+  cy.get('.v-overlay__content:visible .v-list').find('.v-list-item').last().then(($item) => {
       crf_form = $item.text().trim();
       cy.wrap($item).click({ force: true });
-    });
-  // Close the dropdown by clicking elsewhere
-  cy.get('body').click(0, 0);
-
-});
+  })
+})
 
 When('I select a value from the Form Name dropdown', () => {
-  // Find the v-input containing the Form Name label and click its input
-  cy.get('.v-input').filter(':has(label:contains("Form Name"))').within(() => {
-    cy.get('input[type="text"]').first().click({ force: true });
-  });
-  cy.wait(1000); // Wait for dropdown to load
-  // Wait for dropdown menu to appear and select the first item
-  cy.get('.v-overlay__content:visible .v-list')
-    .find('.v-list-item')
-    .first()
-    .then(($item) => {
+  cy.contains('.v-input', 'Form Name').find('input').click({ force: true })
+  cy.wait(1000)
+  cy.get('.v-overlay__content:visible .v-list').find('.v-list-item').first().then(($item) => {
       crf_form = $item.text().trim();
       cy.wrap($item).click({ force: true });
-    });
-});
+  })
+})
 
 When ('I click the GENERATE button', () => {   
     cy.get('.v-btn').contains('Generate') // Find the button containing the text 'Generate'
@@ -59,39 +35,20 @@ When ('I click the GENERATE button', () => {
     .click();                        // Click the button
 })
 
+Then('I open stylesheets dropdown', () => {
+  cy.contains('.v-input', 'Stylesheet').find('input').click({ force: true })
+  cy.wait(1000)
+})
+
 Then("I can see two options: CRF with annotations and Downloadable Falcon in the Stylesheet dropdown list", () => {
-  // Find the Stylesheet dropdown container
-  cy.get('.v-input').filter(':has(label:contains("Stylesheet"))').then($dropdown => {
-    // If the dropdown is disabled, enable it or skip click
-    if ($dropdown.hasClass('v-input--disabled')) {
-      // Optionally, assert the dropdown is disabled
-      cy.wrap($dropdown).find('input[type="text"]').should('be.disabled');
-    } else {
-      // Open the dropdown
-      cy.wrap($dropdown).find('input[type="text"]').first().click({ force: true });
-      // Check for both options within the visible dropdown
-      cy.get('.v-overlay__content:visible .v-list').within(() => {
-        cy.get('.v-list-item__content').should('contain', 'CRF with annotations');
-        cy.get('.v-list-item__content').should('contain.text', 'Downloadable Falcon');
-      });
-      // Optionally close the dropdown
-      cy.get('body').click(0,0);
-    }
-  });
+    cy.get('.v-overlay__content:visible .v-list').within(() => {
+      cy.get('.v-list-item__content').should('contain', 'CRF with annotations');
+      cy.get('.v-list-item__content').should('contain.text', 'Downloadable Falcon');
+    });
 });
 
 When("I select Downloadable Falcon in the Stylesheet dropdown list", () => {
-  // Find the Stylesheet dropdown container
-  cy.get('.v-input').filter(':has(label:contains("Stylesheet"))').then($dropdown => {
-    if ($dropdown.hasClass('v-input--disabled')) {
-      // If disabled, assert and do not try to click
-      cy.wrap($dropdown).find('input[type="text"]').should('be.disabled');
-    } else {
-      // Open the dropdown and select the option
-      cy.wrap($dropdown).find('input[type="text"]').first().click({ force: true });
-      cy.get('.v-list-item__content').contains('Downloadable Falcon').click({ force: true });
-    }
-  });
+  cy.get('.v-list-item__content').contains('Downloadable Falcon').click({ force: true });
 });
 
 When("I select HTML option from the Stylesheet dropdown list", () => {
@@ -115,6 +72,13 @@ Then('The imported CRF view page should be displayed', () => {
     cy.get('body').contains(crf_form).should('be.visible'); 
 })
 
+When('User intercepts ODM document generation request', () => cy.intercept('/api/odms/metadata/report?targets=OdmForm*').as('generateReportDocument'))
+
+When('User intercepts ODM XMLS document generation request', () => cy.intercept('/api/odms/metadata/xmls/export?targets=OdmForm*').as('generateXmlsDocument'))
+
+When('User waits for ODM document generation request', () => cy.wait('@generateReportDocument').then(request => expect(request.response.statusCode).to.eq(200)))
+
+When('User waits for ODM XMLS document generation request', () => cy.wait('@generateXmlsDocument').then(request => expect(request.response.statusCode).to.eq(200)))
 
 When ('keep all other fields as default', () => {
 // No action needed, just a placeholder step

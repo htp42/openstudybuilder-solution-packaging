@@ -16,7 +16,10 @@ from clinical_mdr_api.models.controlled_terminologies.ct_term_name import CTTerm
 from clinical_mdr_api.models.study_selections.study import StudySoaPreferencesInput
 from clinical_mdr_api.models.study_selections.study_epoch import StudyEpoch
 from clinical_mdr_api.models.study_selections.study_soa_footnote import StudySoAFootnote
-from clinical_mdr_api.models.study_selections.study_visit import StudyVisit
+from clinical_mdr_api.models.study_selections.study_visit import (
+    StudyVisit,
+    StudyVisitLite,
+)
 from clinical_mdr_api.services.studies.study_flowchart import _T as _gettext
 from clinical_mdr_api.services.studies.study_flowchart import StudyFlowchartService
 from clinical_mdr_api.services.utils.table_f import TableRow, TableWithFootnotes
@@ -66,7 +69,9 @@ class MockStudyFlowchartService(StudyFlowchartService):
         pass
 
     def _get_soa_preferences(self, *_args, **_kwargs) -> StudySoaPreferencesInput:
-        return StudySoaPreferencesInput()
+        return StudySoaPreferencesInput(
+            show_epochs=True, show_milestones=False, baseline_as_time_zero=False
+        )
 
     def get_preferred_time_unit(self, *_args, **_kwargs) -> str:
         return "week"
@@ -174,7 +179,7 @@ def check_flowchart_table_first_rows(
             first_visit_of_each_group.setdefault(
                 collapse_visit_groups
                 and visit.consecutive_visit_group
-                or visit.visit_name,
+                or visit.visit_short_name,
                 visit,
             )
 
@@ -189,7 +194,7 @@ def check_flowchart_table_first_rows(
             i += 1
 
             if visit.is_soa_milestone:
-                if prev_visit_type_uid == visit.visit_type_uid:
+                if prev_visit_type_uid == visit.visit_type.term_uid:
                     # Same visit_type, then merged with the previous cell
                     assert row.cells[i].text == ""
                     assert row.cells[i].span == 0
@@ -197,7 +202,7 @@ def check_flowchart_table_first_rows(
 
                 else:
                     # Different visit_type, new label
-                    prev_visit_type_uid = visit.visit_type_uid
+                    prev_visit_type_uid = visit.visit_type.term_uid
                     assert row.cells[i].text == visit.visit_type.sponsor_preferred_name
                     assert row.cells[i].style == "header1"
                     assert row.cells[i].span > 0
@@ -334,7 +339,7 @@ def check_flowchart_table_visit_rows(
     for visit in study_visits:
         group_name = (
             not operational and visit.consecutive_visit_group
-        ) or visit.visit_name
+        ) or visit.visit_short_name
         visit_groups.setdefault(group_name, []).append(visit)
         visit_idx_by_uid[visit.uid] = len(visit_groups) + (2 if operational else 0)
 
@@ -347,7 +352,7 @@ def check_flowchart_table_visit_rows(
         assert (
             table.rows[row_idx].cells[i].text
             == (not operational and visit.consecutive_visit_group)
-            or visit.visit_name
+            or visit.visit_short_name
         )
 
         # THEN visits ref in second row
@@ -570,7 +575,7 @@ def test_group_visits(
             for visit in visit_group:
                 count_visits += 1
 
-                assert isinstance(visit, StudyVisit)
+                assert isinstance(visit, (StudyVisit, StudyVisitLite))
                 assert study_epoch_uid == visit.study_epoch_uid
 
                 if len(visit_group) == 1:

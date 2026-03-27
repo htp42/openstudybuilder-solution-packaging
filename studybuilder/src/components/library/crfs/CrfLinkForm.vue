@@ -22,6 +22,15 @@
           table-height="auto"
           @filter="getItems"
         >
+          <template #[`item.oid`]="{ item }">
+            {{ item.oid }}
+          </template>
+          <template #[`item.displayText`]="{ item }">
+            <div v-html="sanitizeHTMLHandler(getDisplayText(item))" />
+          </template>
+          <template #[`item.question`]="{ item }">
+            <div v-html="sanitizeHTMLHandler(getQuestion(item))" />
+          </template>
           <template #[`item.desc`]="{ item }">
             <div v-html="sanitizeHTMLHandler(getDescription(item))" />
           </template>
@@ -87,16 +96,33 @@ const items = ref([])
 const chosenItems = ref([])
 const total = ref(0)
 
-const availableItemsHeaders = computed(() => [
-  { title: '', key: 'add', width: '5%' },
-  { title: t('_global.name'), key: 'name', width: '25%' },
-  { title: t('_global.description'), key: 'desc', width: '35%' },
-  {
-    title: t('CRFTree.sponsor_instruction'),
-    key: 'notes',
-    width: '35%',
-  },
-])
+const availableItemsHeaders = computed(() => {
+  const headers = [
+    { title: '', key: 'add', width: '5%' },
+    { title: t('_global.name'), key: 'name', width: '15%' },
+    { title: t('_global.oid'), key: 'oid', width: '10%' },
+    { title: t('CRFTree.display_text'), key: 'displayText', width: '15%' },
+  ]
+
+  if (props.itemsType === 'items') {
+    headers.push({
+      title: t('CRFTree.question'),
+      key: 'question',
+      width: '15%',
+    })
+  }
+
+  headers.push(
+    { title: t('_global.description'), key: 'desc', width: '20%' },
+    {
+      title: t('CRFTree.sponsor_instruction'),
+      key: 'notes',
+      width: '20%',
+    }
+  )
+
+  return headers
+})
 
 const itemsTypeName = computed(() => {
   if (props.itemsType === 'forms') {
@@ -137,6 +163,24 @@ const getNotes = (item) => {
   return engDesc ? engDesc.text : ''
 }
 
+const getDisplayText = (item) => {
+  const engText = item.translated_texts.find(
+    (el) =>
+      [constants.EN, constants.ENG].includes(el.language) &&
+      el.text_type == 'osb:DisplayText'
+  )
+  return engText ? engText.text : ''
+}
+
+const getQuestion = (item) => {
+  const engQuestion = item.translated_texts.find(
+    (el) =>
+      [constants.EN, constants.ENG].includes(el.language) &&
+      el.text_type == 'Question'
+  )
+  return engQuestion ? engQuestion.text : ''
+}
+
 const submit = () => {
   const payload = []
   chosenItems.value.forEach((el, index) => {
@@ -151,7 +195,7 @@ const submit = () => {
       collection_exception_condition_oid: el.collection_exception_condition_oid
         ? el.collection_exception_condition_oid
         : null,
-      vendor: { attributes: [] },
+      vendor: el?.vendor || { attributes: [] },
     })
   })
   switch (props.itemsType) {

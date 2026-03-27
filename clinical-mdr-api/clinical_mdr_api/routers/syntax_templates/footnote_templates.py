@@ -74,14 +74,11 @@ Allowed parameters include : filter on fields, sort by field name with sort dire
         403: _generic_descriptions.ERROR_403,
         200: {
             "content": {
-                "text/csv": {
-                    "example": """
+                "text/csv": {"example": """
 "library","uid","name","start_date","end_date","status","version","change_description","author_username"
 "Sponsor","826d80a7-0b6a-419d-8ef1-80aa241d7ac7","First  [ComparatorIntervention]","2020-10-22T10:19:29+00:00",,"Draft","0.1","Initial version","NdSJ"
-"""
-                },
-                "text/xml": {
-                    "example": """
+"""},
+                "text/xml": {"example": """
 <?xml version="1.0" encoding="UTF-8" ?>
 <root>
     <data type="list">
@@ -96,8 +93,7 @@ Allowed parameters include : filter on fields, sort by field name with sort dire
         </item>
   </data>
 </root>
-"""
-                },
+"""},
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
             }
         },
@@ -274,14 +270,11 @@ The returned versions are ordered by `start_date` descending (newest entries fir
         403: _generic_descriptions.ERROR_403,
         200: {
             "content": {
-                "text/csv": {
-                    "example": """
+                "text/csv": {"example": """
 "library","uid","name","start_date","end_date","status","version","change_description","author_username"
 "Sponsor","826d80a7-0b6a-419d-8ef1-80aa241d7ac7","First  [ComparatorIntervention]","2020-10-22T10:19:29+00:00",,"Draft","0.1","Initial version","NdSJ"
-"""
-                },
-                "text/xml": {
-                    "example": """
+"""},
+                "text/xml": {"example": """
 <?xml version="1.0" encoding="UTF-8" ?>
 <root>
     <data type="list">
@@ -305,8 +298,7 @@ The returned versions are ordered by `start_date` descending (newest entries fir
         </item>
     </data>
 </root>
-"""
-                },
+"""},
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
             }
         },
@@ -408,8 +400,7 @@ If the request succeeds:
 * The 'version' property will be set to '0.1'.
 * The footnote template will be linked to a library.
 
-"""
-    + PARAMETERS_NOTE,
+""" + PARAMETERS_NOTE,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -453,8 +444,7 @@ If the request succeeds:
 Parameters in the 'name' property can only be changed if the footnote template has never been approved.
 Once the footnote template has been approved, only the surrounding text (excluding the parameters) can be changed.
 
-"""
-    + PARAMETERS_NOTE,
+""" + PARAMETERS_NOTE,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -734,8 +724,14 @@ In that case, the same parameter (with the same terms) is included multiple time
 )
 def get_parameters(
     footnote_template_uid: Annotated[str, FootnoteTemplateUID],
+    study_uid: Annotated[
+        str | None,
+        Query(
+            description="Optionally, the uid of the study to subset the parameters to (e.g. for StudyEndpoints parameters)",
+        ),
+    ] = None,
 ) -> list[TemplateParameter]:
-    return Service().get_parameters(uid=footnote_template_uid)
+    return Service().get_parameters(uid=footnote_template_uid, study_uid=study_uid)
 
 
 @router.post(

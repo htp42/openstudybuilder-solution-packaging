@@ -13,7 +13,7 @@ import httpx
 import neo4j.exceptions
 import openpyxl
 from fastapi.testclient import TestClient
-from neomodel.sync_.core import db
+from neomodel import db
 
 from common.config import settings
 from common.database import configure_database
@@ -85,6 +85,25 @@ def assert_response_status_code(response: httpx.Response, status: int | Iterable
         f"Actual response: {response.status_code} {response.reason_phrase}: {response.text[:1024]}\n"
         f"URL: {response.url}"
     )
+
+
+def assert_csv_format(csv_content: str, delimiter: str = ",") -> None:
+    """Assert that the CSV content is well-formed:
+    - Delimiter is the expected delimiter
+    - Each row has the same number of fields as the header
+    - No unexpected unescaped delimiters (field count mismatch would reveal this)
+    """
+    lines = csv_content.splitlines()
+    assert len(lines) >= 2, "CSV must have at least a header and one data row"
+    reader = csv.reader(lines, delimiter=delimiter)
+    header = next(reader)
+    expected_fields = len(header)
+    assert expected_fields > 0, "CSV header must have at least one field"
+    for line_num, row in enumerate(reader, start=2):
+        assert len(row) == expected_fields, (
+            f"Row {line_num} has {len(row)} fields, expected {expected_fields}. "
+            f"Row content: {row}"
+        )
 
 
 class TestUtils:

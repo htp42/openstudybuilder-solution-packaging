@@ -14,7 +14,6 @@
           v-model="inputAlias.context"
           :label="$t('CRFAliases.context')"
           data-cy="alias-context"
-          density="compact"
           :readonly="props.readOnly"
         />
       </v-col>
@@ -23,7 +22,6 @@
           v-model="inputAlias.name"
           :label="$t('CRFAliases.name')"
           data-cy="alias-name"
-          density="compact"
           :readonly="props.readOnly"
         />
       </v-col>

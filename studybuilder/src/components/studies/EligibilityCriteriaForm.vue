@@ -10,7 +10,7 @@
     @save="submit"
   >
     <template #[`step.creation_mode`]="{ step }">
-      <v-radio-group v-model="creationMode" color="primary">
+      <v-radio-group v-model="creationMode">
         <v-radio
           data-cy="criteria-from-template"
           :label="$t('EligibilityCriteriaForm.create_from_template')"
@@ -30,7 +30,11 @@
       <v-form :ref="`observer_${step}`">
         <v-row v-if="creationMode === 'select'">
           <v-col>
-            <StudySelectorField v-model="selectedStudies" :data="studies" />
+            <StudySelectorField
+              v-model="formSelectedStudy"
+              :data="studies"
+              :loading="studiesLoading"
+            />
           </v-col>
         </v-row>
       </v-form>
@@ -88,7 +92,7 @@
         <StudySelectionTable
           :headers="stdHeaders"
           data-fetcher-name="getAllStudyCriteria"
-          :studies="selectedStudies"
+          :selected-study="formSelectedStudy"
           :extra-data-fetcher-filters="extraDataFetcherFilters"
           column-data-resource="study-criteria"
           @item-selected="selectTemplate"
@@ -147,7 +151,6 @@
         </p>
         <v-switch
           v-model="preInstanceMode"
-          color="primary"
           :label="$t('StudyObjectiveForm.show_pre_instances')"
           hide-details
           class="ml-4"
@@ -375,11 +378,12 @@ export default {
       form: {},
       loadingParameters: false,
       loadingTemplates: false,
+      studiesLoading: false,
       parameters: [],
       parameterTypes: [],
       preInstanceMode: true,
       selectedCriteria: [],
-      selectedStudies: [],
+      formSelectedStudy: null,
       steps: this.getInitialSteps(),
       studies: [],
       createFromScratchSteps: [
@@ -470,11 +474,18 @@ export default {
     templateParameterTypes.getTypes().then((resp) => {
       this.parameterTypes = resp.data
     })
-    study.get({ has_study_criteria: true, page_size: 0 }).then((resp) => {
-      this.studies = resp.data.items.filter(
-        (study) => study.uid !== this.selectedStudy.uid
-      )
-    })
+
+    this.studiesLoading = true
+    study
+      .getAllList({ has_study_criteria: true })
+      .then((resp) => {
+        this.studies = resp.data.filter(
+          (study) => study.uid !== this.selectedStudy.uid
+        )
+      })
+      .finally(() => {
+        this.studiesLoading = false
+      })
   },
   methods: {
     sanitizeHTMLHandler(html) {
@@ -487,7 +498,7 @@ export default {
       this.steps = this.getInitialSteps()
       this.creationMode = 'template'
       this.form = {}
-      this.selectedStudies = []
+      this.formSelectedStudy = null
       this.selectedCriteria = []
       this.preInstanceMode = true
       this.apiEndpoint = this.preInstanceApi

@@ -136,11 +136,11 @@ def test_get_odm_xml_form(api_client):
         ],
     )
 
-    api_client.post("concepts/odms/forms/odm_form1/versions")
-    api_client.post("concepts/odms/item-groups/odm_item_group1/versions")
+    api_client.post("odms/forms/odm_form1/versions")
+    api_client.post("odms/item-groups/odm_item_group1/versions")
 
     response = api_client.post(
-        "concepts/odms/items",
+        "odms/items",
         json={
             "name": "with activity instance",
             "oid": "oid999",
@@ -164,7 +164,7 @@ def test_get_odm_xml_form(api_client):
     item_uid = rs["uid"]
 
     response = api_client.post(
-        "concepts/odms/item-groups/odm_item_group1/items",
+        "odms/item-groups/odm_item_group1/items",
         json=[
             {
                 "uid": item_uid,
@@ -177,7 +177,7 @@ def test_get_odm_xml_form(api_client):
     assert_response_status_code(response, 201)
 
     response = api_client.patch(
-        "concepts/odms/items/" + item_uid,
+        "odms/items/" + item_uid,
         json={
             "name": "with activity instance",
             "oid": "oid999",
@@ -216,7 +216,7 @@ def test_get_odm_xml_form(api_client):
     assert_response_status_code(response, 200)
 
     response = api_client.post(
-        "concepts/odms/metadata/xmls/export?targets=odm_form1&target_type=form&stylesheet=falcon&allowed_namespaces=*",
+        "odms/metadata/xmls/export?targets=odm_form1&target_type=form&stylesheet=falcon&allowed_namespaces=*",
     )
     assert_response_status_code(response, 200)
     assert_response_content_type(response, CONTENT_TYPE)
@@ -235,7 +235,7 @@ def test_get_odm_xml_form(api_client):
 
 def test_get_odm_xml_forms(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/xmls/export?targets=odm_form1&targets=odm_form2&target_type=form&stylesheet=falcon&allowed_namespaces=*",
+        "odms/metadata/xmls/export?targets=odm_form1&targets=odm_form2&target_type=form&stylesheet=falcon&allowed_namespaces=*",
     )
     assert_response_status_code(response, 200)
     assert_response_content_type(response, CONTENT_TYPE)
@@ -254,7 +254,7 @@ def test_get_odm_xml_forms(api_client):
 
 def test_get_odm_xml_forms_with_specific_version(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/xmls/export?targets=odm_form1,1.1&targets=odm_form2,1.0&target_type=form&stylesheet=falcon&allowed_namespaces=*",
+        "odms/metadata/xmls/export?targets=odm_form1,1.1&targets=odm_form2,1.0&target_type=form&stylesheet=falcon&allowed_namespaces=*",
     )
     assert_response_status_code(response, 200)
     assert_response_content_type(response, CONTENT_TYPE)
@@ -273,7 +273,7 @@ def test_get_odm_xml_forms_with_specific_version(api_client):
 
 def test_get_odm_xml_forms_without_specific_version(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/xmls/export?targets=odm_form1,&targets=odm_form2,&target_type=form&stylesheet=falcon&allowed_namespaces=*",
+        "odms/metadata/xmls/export?targets=odm_form1,&targets=odm_form2,&target_type=form&stylesheet=falcon&allowed_namespaces=*",
     )
     assert_response_status_code(response, 200)
     assert_response_content_type(response, CONTENT_TYPE)
@@ -292,7 +292,7 @@ def test_get_odm_xml_forms_without_specific_version(api_client):
 
 def test_get_odm_xml_item_group(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/xmls/export?targets=odm_item_group1&target_type=item_group&stylesheet=falcon&allowed_namespaces=*",
+        "odms/metadata/xmls/export?targets=odm_item_group1&target_type=item_group&stylesheet=falcon&allowed_namespaces=*",
     )
     assert_response_status_code(response, 200)
     assert_response_content_type(response, CONTENT_TYPE)
@@ -311,7 +311,7 @@ def test_get_odm_xml_item_group(api_client):
 
 def test_get_odm_xml_item(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/xmls/export?targets=odm_item1&target_type=item&stylesheet=falcon&allowed_namespaces=*",
+        "odms/metadata/xmls/export?targets=odm_item1&target_type=item&stylesheet=falcon&allowed_namespaces=*",
     )
     assert_response_status_code(response, 200)
     assert_response_content_type(response, CONTENT_TYPE)
@@ -330,7 +330,7 @@ def test_get_odm_xml_item(api_client):
 
 def test_get_odm_xml_with_allowed_namespaces(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/xmls/export?targets=odm_form1&target_type=form&allowed_namespaces=prefix",
+        "odms/metadata/xmls/export?targets=odm_form1&target_type=form&allowed_namespaces=prefix",
     )
     assert_response_status_code(response, 200)
     assert_response_content_type(response, CONTENT_TYPE)
@@ -346,7 +346,7 @@ def test_get_odm_xml_with_allowed_namespaces(api_client):
 
 def test_get_odm_xml_with_mapper_csv(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/xmls/export?target_type=form&targets=odm_form1&allowed_namespaces=*",
+        "odms/metadata/xmls/export?target_type=form&targets=odm_form1&allowed_namespaces=*",
         files={
             "mapper_file": (
                 "mapper.csv",
@@ -375,7 +375,7 @@ def test_get_odm_xml_with_mapper_csv(api_client):
 
 def test_get_odm_xml_pdf_version(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/xmls/export?target_type=form&targets=odm_form1&pdf=true&stylesheet=falcon"
+        "odms/metadata/xmls/export?target_type=form&targets=odm_form1&pdf=true&stylesheet=falcon"
     )
     assert_response_status_code(response, 200)
     assert_response_content_type(response, "application/pdf")
@@ -383,7 +383,7 @@ def test_get_odm_xml_pdf_version(api_client):
 
 def test_get_odm_html_version(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/report?target_type=form&targets=odm_form1"
+        "odms/metadata/report?target_type=form&targets=odm_form1"
     )
     assert_response_status_code(response, 200)
     assert_response_content_type(response, "text/html")
@@ -391,7 +391,7 @@ def test_get_odm_html_version(api_client):
 
 def test_throw_exception_if_target_type_is_not_supported(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/xmls/export?targets=study&target_type=study",
+        "odms/metadata/xmls/export?targets=study&target_type=study",
     )
 
     assert_response_status_code(response, 400)
@@ -403,7 +403,7 @@ def test_throw_exception_if_target_type_is_not_supported(api_client):
 
 def test_throw_exception_if_mapper_is_non_csv(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/xmls/export?targets=odm_form1&target_type=form",
+        "odms/metadata/xmls/export?targets=odm_form1&target_type=form",
         files={
             "mapper_file": (
                 "mapper.json",
@@ -421,7 +421,7 @@ def test_throw_exception_if_mapper_is_non_csv(api_client):
 
 def test_throw_exception_if_csv_header_missing(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/xmls/export?targets=odm_form1&target_type=form",
+        "odms/metadata/xmls/export?targets=odm_form1&target_type=form",
         files={
             "mapper_file": (
                 "mapper.csv",

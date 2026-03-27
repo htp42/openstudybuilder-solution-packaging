@@ -6,7 +6,7 @@ from enum import Enum
 from typing import Annotated, Any, Generic, Self, TypeVar
 
 from fastapi import Query, Request
-from neomodel.sync_.core import db
+from neomodel import db
 from pydantic import BaseModel, Field
 from requests.utils import requote_uri
 

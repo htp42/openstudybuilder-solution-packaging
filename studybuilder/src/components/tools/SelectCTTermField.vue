@@ -4,8 +4,6 @@
     :items="terms"
     item-value="term_uid"
     bg-color="white"
-    variant="outlined"
-    density="compact"
     hide-details
     :loading="loading"
   >

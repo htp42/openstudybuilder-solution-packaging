@@ -9,7 +9,7 @@ from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
-from neomodel.sync_.core import Database
+from neomodel.sync_.database import Database
 
 from clinical_mdr_api.services.studies.study import StudyService
 from clinical_mdr_api.services.studies.study_flowchart import StudyFlowchartService
@@ -25,7 +25,11 @@ from clinical_mdr_api.tests.integration.utils.method_library import (
 )
 from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 from consumer_api.consumer_api import app
-from consumer_api.tests.utils import assert_response_status_code, set_db
+from consumer_api.tests.utils import (
+    assert_csv_format,
+    assert_response_status_code,
+    set_db,
+)
 from consumer_api.v1 import models
 
 BASE_URL = "/v1"
@@ -273,6 +277,7 @@ def test_get_study_audit_trail(api_client):
     assert_response_status_code(response, 200)
 
     csv_content = response.content.decode("utf-8")
+    assert_csv_format(csv_content)
     csv_reader = csv.DictReader(csv_content.splitlines())
     rows = list(csv_reader)
     assert len(rows) > 0
@@ -283,6 +288,7 @@ def test_get_study_audit_trail(api_client):
     assert_response_status_code(response, 200)
 
     csv_content = response.content.decode("utf-8")
+    assert_csv_format(csv_content)
     csv_reader = csv.DictReader(csv_content.splitlines())
     rows = list(csv_reader)
     assert len(rows) > 0
@@ -330,6 +336,7 @@ def test_count_create_and_edit_actions_per_entity_type(api_client):
     assert_response_status_code(response, 200)
 
     csv_content = response.content.decode("utf-8")
+    assert_csv_format(csv_content)
     csv_reader = csv.DictReader(csv_content.splitlines())
     rows = list(csv_reader)
     assert len(rows) > 0

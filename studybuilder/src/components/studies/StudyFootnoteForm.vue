@@ -12,7 +12,7 @@
     @save="submit"
   >
     <template #[`step.creationMode`]="{ step }">
-      <v-radio-group v-model="creationMode" color="primary">
+      <v-radio-group v-model="creationMode">
         <v-radio
           data-cy="footnote-from-template"
           :label="$t('StudyFootnoteForm.template_mode')"
@@ -32,7 +32,11 @@
       <v-form :ref="`observer_${step}`">
         <v-row v-if="creationMode === 'select'">
           <v-col cols="3">
-            <StudySelectorField v-model="selectedStudies" :data="studies" />
+            <StudySelectorField
+              v-model="formSelectedStudy"
+              :data="studies"
+              :loading="studiesLoading"
+            />
           </v-col>
         </v-row>
       </v-form>
@@ -68,7 +72,7 @@
           :headers="footnoteHeaders"
           data-fetcher-name="getAllStudyFootnotes"
           :extra-data-fetcher-filters="extraStudyFootnoteFilters"
-          :studies="selectedStudies"
+          :selected-study="formSelectedStudy"
           column-data-resource="study-soa-footnotes"
           @item-selected="selectStudyFootnote"
         >
@@ -111,7 +115,6 @@
         </p>
         <v-switch
           v-model="preInstanceMode"
-          color="primary"
           :label="$t('StudyFootnoteForm.show_pre_instances')"
           hide-details
           class="ml-4"
@@ -299,6 +302,7 @@ export default {
       footnoteType: null,
       form: {},
       templateForm: {},
+      studiesLoading: false,
       loadingParameters: false,
       parameters: [],
       parameterTypes: [],
@@ -335,7 +339,7 @@ export default {
           class: 'text-center',
         },
       ],
-      selectedStudies: [],
+      formSelectedStudy: null,
       selectedStudyFootnotes: [],
       selectedTemplates: [],
       steps: this.getInitialSteps(),
@@ -445,11 +449,19 @@ export default {
     templateParameterTypes.getTypes().then((resp) => {
       this.parameterTypes = resp.data
     })
-    study.get({ has_study_footnote: true, page_size: 0 }).then((resp) => {
-      this.studies = resp.data.items.filter(
-        (study) => study.uid !== this.selectedStudy.uid
-      )
-    })
+
+    this.studiesLoading = true
+    study
+      .getAllList({ has_study_footnote: true })
+      .then((resp) => {
+        this.studies = resp.data.filter(
+          (study) => study.uid !== this.selectedStudy.uid
+        )
+      })
+      .finally(() => {
+        this.studiesLoading = false
+      })
+
     terms.getTermsByCodelist('footnoteTypes').then((resp) => {
       for (const type of resp.data.items) {
         if (
@@ -469,7 +481,7 @@ export default {
       this.templateForm = {}
       this.parameters = []
       this.selectedStudyFootnotes = []
-      this.selectedStudies = []
+      this.formSelectedStudy = null
       this.apiEndpoint = this.preInstanceApi
       this.$emit('close')
       this.$refs.stepper.reset()

@@ -1,4 +1,4 @@
-""" Schema migrations needed for release to PROD post-February 2023."""
+"""Schema migrations needed for release to PROD post-February 2023."""
 
 import asyncio
 import os
@@ -111,10 +111,8 @@ def migrate_syntax_templates_and_instances(db_connection):
         SET v:SyntaxIndexingInstanceValue
         RETURN *"""
     )
-    logger.info(
-        """Adding `SyntaxInstanceRoot` and `SyntaxInstanceValue` labels.
-        Renaming `CONTAINS_TIMEFRAME` relationship to `CONTAINS_SYNTAX_INSTANCE`"""
-    )
+    logger.info("""Adding `SyntaxInstanceRoot` and `SyntaxInstanceValue` labels.
+        Renaming `CONTAINS_TIMEFRAME` relationship to `CONTAINS_SYNTAX_INSTANCE`""")
     db_connection.cypher_query(
         """MATCH (:Library)-[rel:CONTAINS_TIMEFRAME]->(q:TimeframeRoot)
         SET q:SyntaxInstanceRoot
@@ -322,11 +320,9 @@ def migrate_syntax_sequence_id(db_connection):
         WHERE EXISTS((t)<-[:CONTAINS_SYNTAX_TEMPLATE]-(:Library {name: "Sponsor"}))
         DELETE l_rel"""
     )
-    db_connection.cypher_query(
-        """MATCH (n:SyntaxTemplateRoot)<-[r]-(m:Library) 
+    db_connection.cypher_query("""MATCH (n:SyntaxTemplateRoot)<-[r]-(m:Library) 
         WITH n, m, type(r) as t, tail(collect(r)) as coll 
-        FOREACH(x in coll | DELETE x)"""
-    )
+        FOREACH(x in coll | DELETE x)""")
     db_connection.cypher_query(
         """MATCH (t:CriteriaTemplateRoot)-[r:HAS_TYPE]->(:CTTermRoot)
         WITH t, MAX(ID(r)) AS max_id

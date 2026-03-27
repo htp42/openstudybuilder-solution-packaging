@@ -29,7 +29,7 @@
           <label class="v-label mr-4 mt-3">{{
             $t('CtPackageHistory.show')
           }}</label>
-          <v-radio-group v-model="display" density="compact">
+          <v-radio-group v-model="display">
             <v-radio
               :label="$t('CtPackageHistory.submission_value_choice')"
               value="submission_value"

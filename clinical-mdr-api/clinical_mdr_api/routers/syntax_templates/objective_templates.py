@@ -74,17 +74,13 @@ Allowed parameters include : filter on fields, sort by field name with sort dire
         403: _generic_descriptions.ERROR_403,
         200: {
             "content": {
-                "text/csv": {
-                    "example": """
+                "text/csv": {"example": """
 "library","uid","name","start_date","end_date","status","version","change_description","author_username"
 "Sponsor","826d80a7-0b6a-419d-8ef1-80aa241d7ac7","First  [ComparatorIntervention]","2020-10-22T10:19:29+00:00",,"Draft","0.1","Initial version","NdSJ"
-"""
-                },
-                "text/xml": {
-                    "example": """
+"""},
+                "text/xml": {"example": """
                     <?xml version="1.0" encoding="UTF-8" ?><root><data type="list"><item type="dict"><uid type="str">e9117175-918f-489e-9a6e-65e0025233a6</uid><name type="str">Alamakota</name><start_date type="str">2020-11-19T11:51:43.000Z</start_date><status type="str">Draft</status><version type="str">0.2</version><change_description type="str">Test</change_description><author_username type="str">someone@example.com</author_username></item></data></root>
-"""
-                },
+"""},
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
             }
         },
@@ -261,17 +257,13 @@ The returned versions are ordered by `start_date` descending (newest entries fir
         403: _generic_descriptions.ERROR_403,
         200: {
             "content": {
-                "text/csv": {
-                    "example": """
+                "text/csv": {"example": """
 "library";"uid";"name";"start_date";"end_date";"status";"version";"change_description";"author_username"
 "Sponsor";"826d80a7-0b6a-419d-8ef1-80aa241d7ac7";"First  [ComparatorIntervention]";"2020-10-22T10:19:29+00:00";;"Draft";"0.1";"Initial version";"NdSJ"
-"""
-                },
-                "text/xml": {
-                    "example": """
+"""},
+                "text/xml": {"example": """
                     <?xml version="1.0" encoding="UTF-8" ?><root><data type="list"><item type="dict"><name type="str">Alamakota</name><start_date type="str">2020-11-19 11:51:43+00:00</start_date><end_date type="str">None</end_date><status type="str">Draft</status><version type="str">0.2</version><change_description type="str">Test</change_description><author_username type="str">someone@example.com</author_username></item><item type="dict"><name type="str">Alamakota</name><start_date type="str">2020-11-19 11:51:07+00:00</start_date><end_date type="str">2020-11-19 11:51:43+00:00</end_date><status type="str">Draft</status><version type="str">0.1</version><change_description type="str">Initial version</change_description><author_username type="str">someone@example.com</author_username></item></data></root>
-"""
-                },
+"""},
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
             }
         },
@@ -373,8 +365,7 @@ If the request succeeds:
 * The 'version' property will be set to '0.1'.
 * The objective template will be linked to a library.
 
-"""
-    + PARAMETERS_NOTE,
+""" + PARAMETERS_NOTE,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -418,8 +409,7 @@ If the request succeeds:
 Parameters in the 'name' property can only be changed if the objective template has never been approved.
 Once the objective template has been approved, only the surrounding text (excluding the parameters) can be changed.
 
-"""
-    + PARAMETERS_NOTE,
+""" + PARAMETERS_NOTE,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,

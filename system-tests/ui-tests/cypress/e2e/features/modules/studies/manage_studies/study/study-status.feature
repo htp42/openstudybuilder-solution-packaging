@@ -22,7 +22,6 @@ Feature: Studies - Manage Study - Study Status
             | Reason for unlocking study            |
             | Other reason for unlocking            |
             | Reason for locking or releasing study |
-            | Other reason for locking or releasing |
             | Change description                    |
             | Protocol Version                      |
             | Metadata version                      |
@@ -60,9 +59,9 @@ Feature: Studies - Manage Study - Study Status
         When The test study '/study_status/study_status' page is opened
         Then The action button to lock the study is disabled
 
-    Scenario: [Lock] User must be able to lock study for data specification update reason
+    Scenario: [Lock] User must be able to lock study for study specification updates reason
         Given A test study '9901' in draft status with defined title exists
-        When The user locks the study for 'Data Specification Update' reason
+        When The user locks the study for 'Study Specification Updates' reason
         And The user provides protocol major version '1'
         And The user provides protocol minor version '2'
         And Action is confirmed by clicking save
@@ -123,22 +122,22 @@ Feature: Studies - Manage Study - Study Status
         Then The study is locked with 'Protocol QC' as a reason with major protocol version '1' and minor version '2'
 
     Scenario: [Unlock] User must be able to unlock study for amendment reason
-        Given A test study '9909' locked for 'Study Specification Updates' in major version '0' and minor version '0' exists
+        Given A test study '9909' locked for 'Study Specification Updates' in major version '0' and minor version '1' exists
         When The user unlocks the study for 'Protocol Amendment Updates' reason
         And Action is confirmed by clicking save
-        Then The study is unlocked with 'Amendment' as a reason with major protocol version '0' and minor version '0'
+        Then The study is unlocked with 'Amendment' as a reason with major protocol version '0' and minor version '1'
 
     Scenario: [Unlock] User must be able to unlock study for other reason
-        Given A test study '9911' locked for 'Study Specification Updates' in major version '0' and minor version '0' exists
+        Given A test study '9911' locked for 'Study Specification Updates' in major version '0' and minor version '1' exists
         When The user unlocks the study for 'Other' reason
         And Action is confirmed by clicking save
-        Then The study is unlocked with 'Other' as a reason with major protocol version '0' and minor version '0'
+        Then The study is unlocked with 'Other' as a reason with major protocol version '0' and minor version '1'
 
     Scenario: [Unlock] User must be able to unlock study for study specification updates reason
-        Given A test study '9912' locked for 'Study Specification Updates' in major version '0' and minor version '0' exists
+        Given A test study '9912' locked for 'Study Specification Updates' in major version '0' and minor version '1' exists
         When The user unlocks the study for 'Study Specification Updates' reason
         And Action is confirmed by clicking save
-        Then The study is unlocked with 'Study Specification Updates' as a reason with major protocol version '0' and minor version '0'
+        Then The study is unlocked with 'Study Specification Updates' as a reason with major protocol version '0' and minor version '1'
 
     Scenario: [Unlock] User must be able notified when unlocking a study with protocol version submitted
         Given A test study '9914' locked for 'Study Specification Updates' in major version '1' and minor version '2' exists

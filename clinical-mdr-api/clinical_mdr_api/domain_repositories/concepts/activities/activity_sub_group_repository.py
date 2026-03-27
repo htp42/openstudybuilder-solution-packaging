@@ -381,13 +381,10 @@ class ActivitySubGroupRepository(ConceptGenericRepository[ActivitySubGroupAR]):
 
         # Add COUNT query for total if needed
         if total_count:
-            count_query = (
-                query
-                + """
+            count_query = query + """
             // 9. Return the count of activities for pagination
             RETURN count(activity_uid) as total
             """
-            )
             count_result, _ = db.cypher_query(query=count_query, params=params)
             total = count_result[0][0] if count_result else 0
         else:
@@ -515,9 +512,7 @@ class ActivitySubGroupRepository(ConceptGenericRepository[ActivitySubGroupAR]):
                 MATCH (activity_subgroup_root:ActivitySubGroupRoot {uid:$uid})-[:LATEST]->(activity_subgroup_value:ActivitySubGroupValue)
                 """
 
-        query = (
-            match
-            + """
+        query = match + """
         // Find all activities linked to this subgroup value
         MATCH (activity_root:ActivityRoot)-[aihv:HAS_VERSION]->(activity_value:ActivityValue)-[:HAS_GROUPING]->
           (:ActivityGrouping)-[:HAS_SELECTED_SUBGROUP]->(activity_subgroup_value)
@@ -556,7 +551,6 @@ class ActivitySubGroupRepository(ConceptGenericRepository[ActivitySubGroupAR]):
         RETURN
             collect(activity) as activities
         """
-        )
         result_array, attribute_names = db.cypher_query(query=query, params=params)
         if len(result_array) == 0:
             return None

@@ -19,7 +19,6 @@
               :items="groups"
               item-title="name"
               item-value="uid"
-              density="compact"
               readonly
             />
           </v-col>
@@ -33,7 +32,6 @@
               :items="subGroups"
               item-title="name"
               item-value="uid"
-              density="compact"
               readonly
             />
           </v-col>
@@ -44,7 +42,6 @@
               v-model="activity.name"
               :label="$t('ActivityForms.activity_name')"
               data-cy="handlerequestform-activity-name-field"
-              density="compact"
               readonly
             />
           </v-col>
@@ -55,7 +52,6 @@
               v-model="activity.abbreviation"
               :label="$t('ActivityFormsRequested.abbreviation')"
               data-cy="handlerequestform-abbreviation-field"
-              density="compact"
               readonly
             />
           </v-col>
@@ -66,7 +62,6 @@
               v-model="activity.definition"
               :label="$t('ActivityFormsRequested.definition')"
               data-cy="handlerequestform-definition-field"
-              density="compact"
               auto-grow
               rows="1"
               readonly
@@ -79,7 +74,6 @@
               v-model="activity.request_rationale"
               :label="$t('ActivityFormsRequested.rationale_for_request')"
               data-cy="handlerequestform-rationale-for-request-field"
-              density="compact"
               auto-grow
               rows="1"
               readonly
@@ -99,7 +93,6 @@
               :items="groups"
               item-title="name"
               item-value="uid"
-              density="compact"
               clearable
               :rules="[formRules.required]"
               return-object
@@ -111,7 +104,6 @@
               :items="subGroups"
               item-title="name"
               item-value="uid"
-              density="compact"
               clearable
               :disabled="group ? false : true"
               :rules="[formRules.required]"
@@ -121,7 +113,6 @@
               v-model="form.name"
               :label="$t('ActivityForms.activity_name')"
               data-cy="sponsorform-activity-name-field"
-              density="compact"
               clearable
               :rules="[formRules.required]"
               @input="getActivities"
@@ -137,7 +128,6 @@
                   v-model="form.nci_concept_id"
                   :label="$t('ActivityForms.nci_concept_id')"
                   data-cy="sponsorform-nciconceptid-field"
-                  density="compact"
                   clearable
                 />
               </v-col>
@@ -146,14 +136,12 @@
               v-model="form.abbreviation"
               :label="$t('ActivityFormsRequested.abbreviation')"
               data-cy="sponsorform-abbreviation-field"
-              density="compact"
               clearable
             />
             <v-textarea
               v-model="form.definition"
               :label="$t('ActivityFormsRequested.definition')"
               data-cy="sponsorform-definition-field"
-              density="compact"
               clearable
               auto-grow
               rows="1"
@@ -163,7 +151,6 @@
               v-model="form.request_rationale"
               :label="$t('ActivityFormsRequested.rationale_for_request')"
               data-cy="sponsorform-rationale-for-request-field"
-              density="compact"
               clearable
               auto-grow
               rows="1"
@@ -203,7 +190,6 @@
               v-model="activity.activity_groupings[0].activity_group_name"
               :label="$t('ActivityForms.activity_group')"
               data-cy="confirmation-request-group-field"
-              density="compact"
               readonly
             />
             <v-text-field
@@ -213,14 +199,12 @@
               v-model="activity.activity_groupings[0].activity_subgroup_name"
               :label="$t('ActivityForms.activity_subgroup')"
               data-cy="confirmation-request-subgroup-field"
-              density="compact"
               readonly
             />
             <v-text-field
               v-model="activity.name"
               :label="$t('ActivityForms.activity_name')"
               data-cy="confirmation-request-activity-name-field"
-              density="compact"
               readonly
             />
           </v-col>
@@ -233,7 +217,6 @@
               v-model="group.name"
               :label="$t('ActivityForms.activity_group')"
               data-cy="confirmation-sponsor-group-field"
-              density="compact"
               readonly
             />
             <v-text-field
@@ -241,14 +224,12 @@
               v-model="subgroup.name"
               :label="$t('ActivityForms.activity_subgroup')"
               data-cy="confirmation-sponsor-subgroup-field"
-              density="compact"
               readonly
             />
             <v-text-field
               v-model="form.name"
               :label="$t('ActivityForms.activity_name')"
               data-cy="confirmation-sponsor-activity-name-field"
-              density="compact"
               readonly
             />
           </v-col>

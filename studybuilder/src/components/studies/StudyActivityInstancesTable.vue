@@ -167,7 +167,6 @@
           :items="item._availableBaselineVisits || []"
           item-title="visit_name"
           item-value="uid"
-          density="compact"
           multiple
           chips
           closable-chips
@@ -208,7 +207,6 @@
           :items="studyDataSuppliers"
           item-title="name"
           item-value="study_data_supplier_uid"
-          density="compact"
           clearable
           :disabled="!item.study_activity_instance_uid"
           @update:model-value="onSupplierChange(item, $event)"
@@ -240,7 +238,6 @@
           :items="originTypes"
           item-title="sponsor_preferred_name"
           item-value="term_uid"
-          density="compact"
           clearable
           :disabled="!item.study_activity_instance_uid"
           @update:model-value="markItemModified(item)"
@@ -272,7 +269,6 @@
           :items="originSources"
           item-title="sponsor_preferred_name"
           item-value="term_uid"
-          density="compact"
           clearable
           :disabled="!item.study_activity_instance_uid"
           @update:model-value="markItemModified(item)"

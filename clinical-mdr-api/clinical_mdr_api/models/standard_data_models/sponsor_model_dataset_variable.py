@@ -1,6 +1,6 @@
 from typing import Annotated, Any
 
-from pydantic import ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from clinical_mdr_api.domains.standard_data_models.sponsor_model_dataset_variable import (
     SponsorModelDatasetVariableAR,
@@ -10,41 +10,43 @@ from clinical_mdr_api.models.standard_data_models.sponsor_model import SponsorMo
 from clinical_mdr_api.models.utils import InputModel
 
 
+class ReferencedCodelist(BaseModel):
+    uid: str
+    submission_value: str
+
+
+class ReferencedTerm(BaseModel):
+    uid: str
+    submission_value: str
+
+
+class SimpleSponsorModelDataset(SponsorModelBase):
+    uid: str
+    ordinal: Annotated[
+        int | None,
+        Field(
+            json_schema_extra={
+                "nullable": True,
+            }
+        ),
+    ] = None
+    key_order: Annotated[int | None, Field(json_schema_extra={"nullable": True})] = None
+    version_number: int
+    sponsor_model_name: str
+
+
 class SponsorModelDatasetVariable(SponsorModelBase):
     model_config = ConfigDict(from_attributes=True, extra="allow")
 
-    uid: Annotated[
-        str | None, Field(json_schema_extra={"source": "uid", "nullable": True})
-    ] = None
-    library_name: Annotated[
-        str | None,
-        Field(json_schema_extra={"source": "has_library.name", "nullable": True}),
+    uid: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
+    dataset: Annotated[
+        SimpleSponsorModelDataset | None,
+        Field(json_schema_extra={"nullable": True}),
     ] = None
     is_basic_std: Annotated[
         bool | None,
         Field(
             json_schema_extra={
-                "source": "has_sponsor_model_instance.is_basic_std",
-                "nullable": True,
-                "remove_from_wildcard": True,
-            },
-        ),
-    ] = None
-    implemented_parent_dataset_class: Annotated[
-        str | None,
-        Field(
-            json_schema_extra={
-                "source": "has_sponsor_model_instance.implements_variable_class.has_variable_class.is_instance_of.uid",
-                "nullable": True,
-                "remove_from_wildcard": True,
-            },
-        ),
-    ] = None
-    implemented_variable_class: Annotated[
-        str | None,
-        Field(
-            json_schema_extra={
-                "souce": "has_sponsor_model_instance.implements_variable_class.is_instance_of.uid",
                 "nullable": True,
                 "remove_from_wildcard": True,
             },
@@ -54,16 +56,6 @@ class SponsorModelDatasetVariable(SponsorModelBase):
         str | None,
         Field(
             json_schema_extra={
-                "source": "has_sponsor_model_instance.label",
-                "nullable": True,
-            },
-        ),
-    ] = None
-    order: Annotated[
-        int | None,
-        Field(
-            json_schema_extra={
-                "source": "has_sponsor_model_instance.has_variable|ordinal",
                 "nullable": True,
             },
         ),
@@ -72,7 +64,6 @@ class SponsorModelDatasetVariable(SponsorModelBase):
         str | None,
         Field(
             json_schema_extra={
-                "source": "has_sponsor_model_instance.variable_type",
                 "nullable": True,
             },
         ),
@@ -81,7 +72,6 @@ class SponsorModelDatasetVariable(SponsorModelBase):
         int | None,
         Field(
             json_schema_extra={
-                "source": "has_sponsor_model_instance.length",
                 "nullable": True,
             },
         ),
@@ -90,7 +80,6 @@ class SponsorModelDatasetVariable(SponsorModelBase):
         str | None,
         Field(
             json_schema_extra={
-                "source": "has_sponsor_model_instance.display_format",
                 "nullable": True,
             },
         ),
@@ -99,7 +88,6 @@ class SponsorModelDatasetVariable(SponsorModelBase):
         str | None,
         Field(
             json_schema_extra={
-                "source": "has_sponsor_model_instance.xml_datatype",
                 "nullable": True,
             },
         ),
@@ -108,7 +96,6 @@ class SponsorModelDatasetVariable(SponsorModelBase):
         str | None,
         Field(
             json_schema_extra={
-                "source": "has_sponsor_model_instance.core",
                 "nullable": True,
             },
         ),
@@ -117,7 +104,6 @@ class SponsorModelDatasetVariable(SponsorModelBase):
         str | None,
         Field(
             json_schema_extra={
-                "source": "has_sponsor_model_instance.origin",
                 "nullable": True,
             },
         ),
@@ -126,7 +112,6 @@ class SponsorModelDatasetVariable(SponsorModelBase):
         str | None,
         Field(
             json_schema_extra={
-                "source": "has_sponsor_model_instance.origin_type",
                 "nullable": True,
             },
         ),
@@ -135,7 +120,6 @@ class SponsorModelDatasetVariable(SponsorModelBase):
         str | None,
         Field(
             json_schema_extra={
-                "source": "has_sponsor_model_instance.origin_source",
                 "nullable": True,
             },
         ),
@@ -144,7 +128,6 @@ class SponsorModelDatasetVariable(SponsorModelBase):
         str | None,
         Field(
             json_schema_extra={
-                "source": "has_sponsor_model_instance.role",
                 "nullable": True,
             },
         ),
@@ -153,7 +136,6 @@ class SponsorModelDatasetVariable(SponsorModelBase):
         str | None,
         Field(
             json_schema_extra={
-                "source": "has_sponsor_model_instance.term",
                 "nullable": True,
             },
         ),
@@ -162,7 +144,6 @@ class SponsorModelDatasetVariable(SponsorModelBase):
         str | None,
         Field(
             json_schema_extra={
-                "source": "has_sponsor_model_instance.algorithm",
                 "nullable": True,
             },
         ),
@@ -171,7 +152,6 @@ class SponsorModelDatasetVariable(SponsorModelBase):
         list[str] | None,
         Field(
             json_schema_extra={
-                "source": "has_sponsor_model_instance.qualifiers",
                 "nullable": True,
                 "remove_from_wildcard": True,
             },
@@ -181,7 +161,6 @@ class SponsorModelDatasetVariable(SponsorModelBase):
         bool | None,
         Field(
             json_schema_extra={
-                "source": "has_sponsor_model_instance.is_cdisc_std",
                 "nullable": True,
                 "remove_from_wildcard": True,
             },
@@ -191,7 +170,6 @@ class SponsorModelDatasetVariable(SponsorModelBase):
         str | None,
         Field(
             json_schema_extra={
-                "source": "has_sponsor_model_instance.comment",
                 "nullable": True,
             },
         ),
@@ -200,7 +178,6 @@ class SponsorModelDatasetVariable(SponsorModelBase):
         str | None,
         Field(
             json_schema_extra={
-                "source": "has_sponsor_model_instance.ig_comment",
                 "nullable": True,
             },
         ),
@@ -209,7 +186,6 @@ class SponsorModelDatasetVariable(SponsorModelBase):
         str | None,
         Field(
             json_schema_extra={
-                "source": "has_sponsor_model_instance.class_table",
                 "nullable": True,
             },
         ),
@@ -218,7 +194,6 @@ class SponsorModelDatasetVariable(SponsorModelBase):
         str | None,
         Field(
             json_schema_extra={
-                "source": "has_sponsor_model_instance.class_column",
                 "nullable": True,
             },
         ),
@@ -227,7 +202,6 @@ class SponsorModelDatasetVariable(SponsorModelBase):
         str | None,
         Field(
             json_schema_extra={
-                "source": "has_sponsor_model_instance.map_var_flag",
                 "nullable": True,
             },
         ),
@@ -236,7 +210,6 @@ class SponsorModelDatasetVariable(SponsorModelBase):
         str | None,
         Field(
             json_schema_extra={
-                "source": "has_sponsor_model_instance.fixed_mapping",
                 "nullable": True,
             },
         ),
@@ -245,7 +218,6 @@ class SponsorModelDatasetVariable(SponsorModelBase):
         bool | None,
         Field(
             json_schema_extra={
-                "source": "has_sponsor_model_instance.include_in_raw",
                 "nullable": True,
                 "remove_from_wildcard": True,
             },
@@ -255,7 +227,6 @@ class SponsorModelDatasetVariable(SponsorModelBase):
         bool | None,
         Field(
             json_schema_extra={
-                "source": "has_sponsor_model_instance.nn_internal",
                 "nullable": True,
                 "remove_from_wildcard": True,
             },
@@ -265,7 +236,6 @@ class SponsorModelDatasetVariable(SponsorModelBase):
         str | None,
         Field(
             json_schema_extra={
-                "source": "has_sponsor_model_instance.value_lvl_where_cols",
                 "nullable": True,
             },
         ),
@@ -274,7 +244,6 @@ class SponsorModelDatasetVariable(SponsorModelBase):
         str | None,
         Field(
             json_schema_extra={
-                "source": "has_sponsor_model_instance.value_lvl_label_col",
                 "nullable": True,
             },
         ),
@@ -283,7 +252,6 @@ class SponsorModelDatasetVariable(SponsorModelBase):
         str | None,
         Field(
             json_schema_extra={
-                "source": "has_sponsor_model_instance.value_lvl_collect_ct_val",
                 "nullable": True,
             },
         ),
@@ -292,7 +260,6 @@ class SponsorModelDatasetVariable(SponsorModelBase):
         str | None,
         Field(
             json_schema_extra={
-                "source": "has_sponsor_model_instance.value_lvl_ct_codelist_id_col",
                 "nullable": True,
             },
         ),
@@ -301,7 +268,6 @@ class SponsorModelDatasetVariable(SponsorModelBase):
         int | None,
         Field(
             json_schema_extra={
-                "source": "has_sponsor_model_instance.enrich_build_order",
                 "nullable": True,
             },
         ),
@@ -310,11 +276,68 @@ class SponsorModelDatasetVariable(SponsorModelBase):
         str | None,
         Field(
             json_schema_extra={
-                "source": "has_sponsor_model_instance.enrich_rule",
                 "nullable": True,
             },
         ),
     ] = None
+    referenced_codelists: list[ReferencedCodelist] = Field(default_factory=list)
+    referenced_terms: list[ReferencedTerm] = Field(default_factory=list)
+
+    @classmethod
+    def from_repository_output(cls, input_dict: dict[str, Any]):
+        return cls(
+            uid=input_dict["uid"],
+            dataset=SimpleSponsorModelDataset(
+                uid=input_dict.get("dataset", {}).get("uid"),
+                ordinal=input_dict.get("dataset", {}).get("ordinal"),
+                key_order=input_dict.get("dataset", {}).get("key_order"),
+                version_number=input_dict.get("dataset", {}).get("version_number"),
+                sponsor_model_name=input_dict.get("dataset", {}).get(
+                    "sponsor_model_name"
+                ),
+            ),
+            is_basic_std=input_dict.get("is_basic_std"),
+            label=input_dict.get("label"),
+            variable_type=input_dict.get("variable_type"),
+            length=input_dict.get("length"),
+            display_format=input_dict.get("display_format"),
+            xml_datatype=input_dict.get("xml_datatype"),
+            core=input_dict.get("core"),
+            origin=input_dict.get("origin"),
+            origin_type=input_dict.get("origin_type"),
+            origin_source=input_dict.get("origin_source"),
+            role=input_dict.get("role"),
+            term=input_dict.get("term"),
+            algorithm=input_dict.get("algorithm"),
+            qualifiers=input_dict.get("qualifiers"),
+            is_cdisc_std=input_dict.get("is_cdisc_std"),
+            comment=input_dict.get("comment"),
+            ig_comment=input_dict.get("ig_comment"),
+            class_table=input_dict.get("class_table"),
+            class_column=input_dict.get("class_column"),
+            map_var_flag=input_dict.get("map_var_flag"),
+            fixed_mapping=input_dict.get("fixed_mapping"),
+            include_in_raw=input_dict.get("include_in_raw"),
+            nn_internal=input_dict.get("nn_internal"),
+            value_lvl_where_cols=input_dict.get("value_lvl_where_cols"),
+            value_lvl_label_col=input_dict.get("value_lvl_label_col"),
+            value_lvl_collect_ct_val=input_dict.get("value_lvl_collect_ct_val"),
+            value_lvl_ct_codelist_id_col=input_dict.get("value_lvl_ct_codelist_id_col"),
+            enrich_build_order=input_dict.get("enrich_build_order"),
+            enrich_rule=input_dict.get("enrich_rule"),
+            referenced_codelists=[
+                ReferencedCodelist(
+                    uid=cl["uid"], submission_value=cl["submission_value"]
+                )
+                for cl in input_dict.get("referenced_codelists", [])
+                if cl is not None
+            ],
+            referenced_terms=[
+                ReferencedTerm(uid=t["uid"], submission_value=t["submission_value"])
+                for t in input_dict.get("referenced_terms", [])
+                if t is not None
+            ],
+        )
 
     @classmethod
     def from_sponsor_model_dataset_variable_ar(

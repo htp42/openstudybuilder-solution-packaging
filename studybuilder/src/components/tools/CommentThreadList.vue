@@ -123,7 +123,6 @@
                 <v-textarea
                   v-model="thread._newText"
                   auto-grow
-                  variant="outlined"
                   :label="$t('Comments.comment_edit')"
                 />
                 <div v-show="!loading" class="mt-n4 pb-4">
@@ -199,7 +198,6 @@
                   <v-textarea
                     v-model="reply._newText"
                     auto-grow
-                    variant="outlined"
                     :label="$t('Comments.reply_edit')"
                   />
                   <div v-show="!loading" class="mt-n4 pb-4">

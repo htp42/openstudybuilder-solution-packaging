@@ -83,11 +83,12 @@ def test_data():
             label=label,
             data_model_uid=data_model_uid,
             data_model_catalogue_name=data_model_catalogue_name,
+            data_model_name=data_model_name,
         )
-        for label, data_model_uid in [
-            ("DatasetClass A", data_models[0].uid),
-            ("DatasetClass B", data_models[1].uid),
-            ("DatasetClass C", data_models[2].uid),
+        for label, data_model_uid, data_model_name in [
+            ("DatasetClass A", data_models[0].uid, data_models[0].name),
+            ("DatasetClass B", data_models[1].uid, data_models[1].name),
+            ("DatasetClass C", data_models[2].uid, data_models[2].name),
         ]
     ]
     class_variable = TestUtils.create_variable_class(
@@ -229,7 +230,6 @@ DATASET_VARIABLE_FIELDS_ALL = [
     "completion_instructions",
     "implementation_notes",
     "mapping_instructions",
-    "data_model_ig_names",
     "dataset",
     "implements_variable",
     "has_mapping_target",
@@ -244,7 +244,6 @@ DATASET_VARIABLE_FIELDS_NOT_NULL = [
     "label",
     "dataset",
     "implements_variable",
-    "data_model_ig_names",
 ]
 
 
@@ -270,7 +269,6 @@ def test_get_class_variable(api_client):
     assert res["description"] == "DatasetVariable A desc"
     assert res["dataset"]["uid"] == dataset.uid
     assert res["implements_variable"]["name"] == class_variable.label
-    assert res["data_model_ig_names"] == [data_model_ig.name]
 
 
 def test_get_dataset_variables_pagination(api_client):
@@ -448,11 +446,6 @@ def test_filtering_wildcard(
             '{"implements_variable.name": {"v": ["VariableClass A label"]}}',
             "implements_variable.name",
             "VariableClass A label",
-        ),
-        pytest.param(
-            '{"data_model_ig_names": {"v": ["DataModelIG A"]}}',
-            "data_model_ig_names",
-            ["DataModelIG A"],
         ),
     ],
 )

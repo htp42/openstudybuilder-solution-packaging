@@ -515,21 +515,18 @@ Feature: Studies - Define Study - Study Activities - Schedule of Activities - De
     Scenario: [Table][Search][Negative] User must be able to search non-existing study activity
         Given The test study '/activities/soa' page is opened
         And Detailed SoA table is loaded
-        And User expand table
         When User search for non-existing activity
         Then No activities are found
 
     Scenario: [Table][Search][Negative] User must not be able to search activity by activity subgroup
         Given The test study '/activities/soa' page is opened
         And Detailed SoA table is loaded
-        And User expand table
         When User search study activity by subgroup
         Then No activities are found
 
     Scenario: [Table][Search][Negative] User must not be able to search activity by activity group
         Given The test study '/activities/soa' page is opened
         And Detailed SoA table is loaded
-        And User expand table
         When User search study activity by group
         Then No activities are found
 

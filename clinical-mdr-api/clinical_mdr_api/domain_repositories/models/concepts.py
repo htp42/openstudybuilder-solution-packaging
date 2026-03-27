@@ -1,14 +1,4 @@
-from neomodel import (
-    BooleanProperty,
-    FloatProperty,
-    IntegerProperty,
-    One,
-    RelationshipFrom,
-    RelationshipTo,
-    StringProperty,
-    ZeroOrMore,
-    ZeroOrOne,
-)
+from neomodel import One, RelationshipFrom, RelationshipTo, ZeroOrMore, ZeroOrOne
 
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTTermContext,
@@ -20,6 +10,12 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     VersionRelationship,
     VersionRoot,
     VersionValue,
+)
+from common.neomodel import (
+    BooleanProperty,
+    FloatProperty,
+    IntegerProperty,
+    StringProperty,
 )
 
 

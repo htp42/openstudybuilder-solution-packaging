@@ -8,7 +8,7 @@ export let activity_activity, current_activity_uid, study_activity_uid, activity
 export let exchangedActivities = []
 let activity_library, activity_soa_group, activity_group, activity_sub_group, edit_placeholder_name, current_study, new_activity_name
 
-When('User intercepts available studies request', () => cy.intercept('/api/studies?include_sections=study_description&has_study_activity=true&page_size=0').as('availableStudies'))
+When('User intercepts available studies request', () => cy.intercept('/api/studies/list?minimal_response=false&has_study_activity=true').as('availableStudies'))
 
 When('User waits for available studies request', () => cy.wait('@availableStudies'))
 
@@ -226,9 +226,8 @@ When('User selects select study {string}', (value) => {
     cy.contains('.v-overlay .v-list-item', value).click()
 })
 
-function getActivityData(rowIndex, getSoAGroupValue) {
+function getActivityData(rowIndex) {
     cy.getCellValueInPopUp(rowIndex, 'Library').then((text) => activity_library = text)
-    if (getSoAGroupValue) cy.getCellValueInPopUp(rowIndex, 'SoA group').then((text) => activity_soa_group = text)
     cy.getCellValueInPopUp(rowIndex, 'Activity group').then((text) => activity_group = text)
     cy.getCellValueInPopUp(rowIndex, 'Activity subgroup').then((text) => activity_sub_group = text)
     cy.getCellValueInPopUp(rowIndex, 'Activity').then((text) => activity_activity = text.slice(0, 50))
@@ -252,13 +251,13 @@ function addLibraryActivityByName() {
     cy.selectVSelect('flowchart-group', 'INFORMED CONSENT')
 }
 
-function selectActivityAndGetItsData(activity_soa_group = null) {
-    if (activity_soa_group) activity_soa_group = 'INFORMED CONSENT'
+function selectActivityAndGetItsData(soa_group = null) {
     cy.get('.v-data-table__td--select-row input').each((el, index) => {
         if (el.is(':enabled')) {
             cy.wrap(el).check()
-            if (activity_soa_group) selectSoAGroup(index, activity_soa_group)
-            getActivityData(index, !activity_soa_group)
+            soa_group ? selectSoAGroup(index, activity_soa_group = 'INFORMED CONSENT')
+                      : cy.getCellValueInPopUp(index, 'SoA group').then((text) => activity_soa_group = text)
+            getActivityData(index)
             return false
         }
     })
@@ -276,7 +275,7 @@ function fillPlaceholderData() {
 
 function selectSoAGroup(rowIndex, soaGroup) {
     cy.get('[data-cy="flowchart-group"]').eq(rowIndex).click()
-    cy.contains('.v-overlay .v-list-item-title', soaGroup).click({ force: true })
+    cy.contains('.v-overlay .v-list-item', soaGroup).click({ force: true })
 }
 
 function addActivityToStudyAndGetValues(studyUid) {

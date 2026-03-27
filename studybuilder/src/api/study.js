@@ -16,10 +16,11 @@ export default {
       { params }
     )
   },
-  getAllList(deleted = false) {
-    return repository.get(
-      `${resource}/list?minimal_response=false&deleted=${deleted}`
-    )
+  getAllList(options = {}) {
+    const params = {
+      ...options,
+    }
+    return repository.get(`${resource}/list?minimal_response=false`, { params })
   },
   projects_all() {
     const params = {
@@ -1028,5 +1029,16 @@ export default {
   },
   getStudyCrfForms(studyUid) {
     return repository.get(`studies/${studyUid}/odm-forms`)
+  },
+  enableTag(studyUid, data) {
+    return repository.post(
+      `${resource}/${studyUid}/data-completeness-tags`,
+      data
+    )
+  },
+  disableTag(studyUid, uid) {
+    return repository.delete(
+      `${resource}/${studyUid}/data-completeness-tags/${uid}`
+    )
   },
 }

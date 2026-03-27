@@ -68,7 +68,14 @@
         />
       </template>
       <template #[`item.version_start_date`]="{ item }">
-        {{ $filters.date(item.version_start_date) }}
+        <v-tooltip location="top">
+          <template #activator="{ props }">
+            <span v-bind="props">{{
+              $filters.dateRelative(item.version_start_date)
+            }}</span>
+          </template>
+          {{ $filters.date(item.version_start_date) }}
+        </v-tooltip>
       </template>
       <template #[`item.latest_locked_version`]="{ item }">
         <div class="d-flex">
@@ -133,6 +140,18 @@
                 item.latest_released_version.indexOf(' ')
               )
             }}
+          </div>
+        </div>
+      </template>
+      <template #[`item.data_completeness_tags`]="{ item }">
+        <div class="d-flex">
+          <div
+            v-for="tag in item.data_completeness_tags"
+            :key="tag"
+            class="version-chip"
+            style="white-space: nowrap"
+          >
+            {{ tag }}
           </div>
         </div>
       </template>
@@ -236,6 +255,10 @@ const headers = [
   {
     title: t('StudyTable.lts_released_ver'),
     key: 'latest_released_version',
+  },
+  {
+    title: t('StudyTable.data_completeness'),
+    key: 'data_completeness_tags',
   },
   {
     title: t('_global.status'),

@@ -13,6 +13,9 @@ class LibraryItem(BaseModel):
     name: str | None = None
 
 
+class CTCodelistItem(LibraryItem): ...
+
+
 class CTTermItem(LibraryItem):
     codelist_uid: str | None = None
     submission_value: str | None = None
@@ -27,6 +30,7 @@ class ActivityItemVO:
     is_adam_param_specific: bool
     activity_item_class_uid: str
     activity_item_class_name: str | None
+    ct_codelist: CTCodelistItem | None
     ct_terms: list[CTTermItem]
     unit_definitions: list[CompactUnitDefinition]
     text_value: str | None = None
@@ -37,6 +41,7 @@ class ActivityItemVO:
         is_adam_param_specific: bool,
         activity_item_class_uid: str,
         activity_item_class_name: str | None,
+        ct_codelist: CTCodelistItem | None,
         ct_terms: list[CTTermItem],
         unit_definitions: list[CompactUnitDefinition],
         text_value: str | None = None,
@@ -45,6 +50,7 @@ class ActivityItemVO:
             is_adam_param_specific=is_adam_param_specific,
             activity_item_class_uid=activity_item_class_uid,
             activity_item_class_name=activity_item_class_name,
+            ct_codelist=ct_codelist,
             ct_terms=ct_terms,
             unit_definitions=unit_definitions,
             text_value=text_value,

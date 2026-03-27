@@ -369,7 +369,7 @@ class StudyEpochService(StudySelectionMixin):
                 if epoch.term_uid not in self.study_epoch_epochs_by_uid:
                     self.study_epoch_epochs_by_uid[epoch.term_uid] = epoch
 
-            except (AlreadyExistsException, ValidationException):
+            except AlreadyExistsException, ValidationException:
                 pass
         # we are trying to find the ct term with given epoch name
         else:
@@ -813,7 +813,7 @@ class StudyEpochService(StudySelectionMixin):
             new_order < 0, msg="New order cannot be lesser than 1"
         )
         ValidationException.raise_if(
-            new_order > len(study_epochs),
+            new_order >= len(study_epochs),
             msg=f"New order cannot be greater than {len(study_epochs)}",
         )
         if new_order > old_order:

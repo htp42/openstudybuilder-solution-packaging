@@ -174,6 +174,21 @@ where each function writes a separate file named as `{function_name}.{run_label}
 
 A summary of all changes is also stored in markdown format, as `summary.{run_label}.md`.
 
+#### Log enrichment setting (`SWITCH_LOG_ENRICHMENT`)
+
+The `capture_changes` decorator uses the environment variable `SWITCH_LOG_ENRICHMENT` to control
+how Neo4j transaction log enrichment is handled:
+
+- `SWITCH_LOG_ENRICHMENT=true` (default, also used when the variable is not set):
+    the script updates `txLogEnrichment` via Cypher (`ALTER DATABASE ...`), and restores the
+    previous setting when the correction finishes.
+- `SWITCH_LOG_ENRICHMENT=false`:
+    the script does not execute `ALTER DATABASE ...`.
+    Instead, it checks that `txLogEnrichment` is already `FULL` and aborts with an error if it is not.
+
+When running against a Neo4j Aura database instance, set `SWITCH_LOG_ENRICHMENT=false`,
+because log enrichment is managed in the Aura admin UI instead of by executing a query.
+
 The `verify_func` argument can be used to provide a function that verifies that
 the correction was successful.
 This must be a function that takes no arguments, and any return value from the function is ignored.

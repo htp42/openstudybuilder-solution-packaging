@@ -16,7 +16,6 @@
               id="name"
               v-model="form.name"
               :label="$t('ClinicalProgrammeForm.name')"
-              density="compact"
               clearable
               data-cy="clinical-programme-name"
               :rules="[formRules.required]"

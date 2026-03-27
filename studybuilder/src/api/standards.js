@@ -24,4 +24,15 @@ export default {
   getDatasetVariables(params) {
     return repository.get(`${resource}/dataset-variables`, { params })
   },
+  getSponsorModels(params) {
+    return repository.get(`${resource}/sponsor-models/models`, { params })
+  },
+  getSponsorModelDatasets(params) {
+    return repository.get(`${resource}/sponsor-models/datasets`, { params })
+  },
+  getSponsorModelDatasetVariables(params) {
+    return repository.get(`${resource}/sponsor-models/dataset-variables`, {
+      params,
+    })
+  },
 }

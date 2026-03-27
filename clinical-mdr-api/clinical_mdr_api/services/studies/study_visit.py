@@ -77,14 +77,17 @@ from clinical_mdr_api.models.study_selections.study_visit import (
     AllowedTimeReferences,
     SimpleStudyVisit,
     StudyVisit,
-    StudyVisitBase,
     StudyVisitCreateInput,
+    StudyVisitDetailed,
     StudyVisitEditInput,
 )
 from clinical_mdr_api.models.study_selections.study_visit import (
     StudyVisitGroup as StudyVisitGroupModel,
 )
-from clinical_mdr_api.models.study_selections.study_visit import StudyVisitVersion
+from clinical_mdr_api.models.study_selections.study_visit import (
+    StudyVisitLite,
+    StudyVisitVersion,
+)
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository
@@ -159,11 +162,13 @@ class StudyVisitService(StudySelectionMixin):
 
     def _transform_all_to_response_history_model(
         self, visit: StudyVisitHistoryVO
-    ) -> StudyVisitBase:
+    ) -> StudyVisitDetailed:
         # For audit trail return model we shouldn't derive properties based on their position in the timeline as we don't know how the visit timeline looked for past visit versions
         # Due to this we have to take the values that are derived based on timeline directly from database representation
         self.update_ct_term_properties_of_study_visit(visit)
-        study_visit: StudyVisitBase = StudyVisitBase.transform_to_response_model(visit)
+        study_visit: StudyVisitDetailed = (
+            StudyVisitDetailed.transform_to_response_model(visit)
+        )
         study_visit.change_type = visit.change_type
         study_visit.end_date = convert_to_datetime(visit.end_date)
 
@@ -192,7 +197,7 @@ class StudyVisitService(StudySelectionMixin):
 
     def get_global_anchor_visit(self, study_uid: str) -> SimpleStudyVisit | None:
         global_anchor_visit = (
-            StudyVisitNeoModel.nodes.fetch_relations(
+            StudyVisitNeoModel.nodes.traverse(
                 "has_visit_name__has_latest_value",
                 "has_visit_type__has_selected_term__has_name_root__has_latest_value",
             )
@@ -214,7 +219,7 @@ class StudyVisitService(StudySelectionMixin):
         self, study_uid: str
     ) -> list[SimpleStudyVisit]:
         anchor_visits_in_a_group_of_subv = (
-            StudyVisitNeoModel.nodes.fetch_relations(
+            StudyVisitNeoModel.nodes.traverse(
                 "has_visit_name__has_latest_value",
                 "has_visit_type__has_selected_term__has_name_root__has_latest_value",
             )
@@ -233,7 +238,7 @@ class StudyVisitService(StudySelectionMixin):
         self, study_uid: str, study_epoch_uid: str
     ) -> list[SimpleStudyVisit]:
         anchor_visits_for_special_visit = (
-            StudyVisitNeoModel.nodes.fetch_relations(
+            StudyVisitNeoModel.nodes.traverse(
                 "has_visit_name__has_latest_value",
                 "has_visit_type__has_selected_term__has_name_root__has_latest_value",
             )
@@ -289,8 +294,10 @@ class StudyVisitService(StudySelectionMixin):
                 .filter(
                     has_study_visit__latest_value__uid=study_uid,  # Visit in study
                     has_study_activity_schedule__study_value__latest_value__uid=study_uid,  # With schedule in study
-                    has_study_activity_schedule__study_activity__has_study_activity__latest_value__uid=study_uid,  # With activity in study
-                    has_study_activity_schedule__study_activity__study_activity_has_study_activity_instance__uid=study_activity_instance_uid,  # And activity is parent of instance
+                    has_study_activity_schedule__study_activity__has_study_activity__latest_value__uid=study_uid,
+                    # With activity in study
+                    has_study_activity_schedule__study_activity__study_activity_has_study_activity_instance__uid=study_activity_instance_uid,
+                    # And activity is parent of instance
                 )
                 .order_by("visit_number")
                 .resolve_subgraph()
@@ -309,22 +316,30 @@ class StudyVisitService(StudySelectionMixin):
         total_count: bool = False,
         study_value_version: str | None = None,
         derive_props_based_on_timeline: bool = False,
-    ) -> GenericFilteringReturn[StudyVisit]:
+        lite: bool = False,
+    ) -> GenericFilteringReturn[StudyVisitLite | StudyVisit]:
         StudyService.check_if_study_uid_and_version_exists(
             study_uid, study_value_version
         )
 
-        visits = StudyVisitService._get_all_visits(
-            study_uid, study_value_version=study_value_version
-        )
-        visits = [
-            StudyVisit.transform_to_response_model(
-                visit,
-                study_value_version=study_value_version,
-                derive_props_based_on_timeline=derive_props_based_on_timeline,
+        if lite:
+            dicts = StudyVisitRepository.list_all_visits_by_study_uid(
+                study_uid=study_uid, study_value_version=study_value_version
             )
-            for visit in visits
-        ]
+            visits = [StudyVisitLite(**d) for d in dicts]
+
+        else:
+            visit_vos = StudyVisitService._get_all_visits(
+                study_uid, study_value_version=study_value_version
+            )
+            visits = [
+                StudyVisit.transform_to_response_model(
+                    visit,
+                    study_value_version=study_value_version,
+                    derive_props_based_on_timeline=derive_props_based_on_timeline,
+                )
+                for visit in visit_vos
+            ]
 
         filtered_visits = service_level_generic_filtering(
             items=visits,
@@ -630,7 +645,7 @@ class StudyVisitService(StudySelectionMixin):
             and visit_vo.visit_class not in visit_classes_without_timing
         ):
             reference_name = self.study_visit_time_references_by_uid[
-                visit_input.time_reference_uid
+                visit_input.time_reference.term_uid
             ]
             for visit in timeline._visits:
                 if (
@@ -783,9 +798,9 @@ class StudyVisitService(StudySelectionMixin):
                 timeline.remove_visit(visit_vo)
 
         ValidationException.raise_if(
-            visit_input.visit_contact_mode_uid
+            visit_input.visit_contact_mode.term_uid
             not in self.study_visit_contact_modes_by_uid,
-            msg=f"CT Term with UID '{visit_input.visit_contact_mode_uid}' is not a valid Visit Contact Mode term.",
+            msg=f"CT Term with UID '{visit_input.visit_contact_mode.term_uid}' is not a valid Visit Contact Mode term.",
         )
 
         visits_classes = [
@@ -893,7 +908,7 @@ class StudyVisitService(StudySelectionMixin):
                 msg="Time unit UID is required for creating a timepoint."
             )
 
-        if study_visit_input.time_reference_uid is None:
+        if study_visit_input.time_reference is None:
             raise exceptions.BusinessLogicException(
                 msg="Time reference UID is required for creating a timepoint."
             )
@@ -911,7 +926,7 @@ class StudyVisitService(StudySelectionMixin):
                 is_template_parameter=True,
                 numeric_value_uid=numeric_ar.uid,
                 unit_definition_uid=study_visit_input.time_unit_uid,
-                time_reference_uid=study_visit_input.time_reference_uid,
+                time_reference_uid=study_visit_input.time_reference.term_uid,
                 find_numeric_value_by_uid=self._repos.numeric_value_repository.find_by_uid_2,
                 find_unit_definition_by_uid=self._repos.unit_definition_repository.find_by_uid_2,
                 find_time_reference_by_uid=self._repos.ct_term_name_repository.find_by_uid,
@@ -924,7 +939,7 @@ class StudyVisitService(StudySelectionMixin):
         timepoint_object = TimePoint(
             uid=timepoint_ar.uid,
             visit_timereference=self.study_visit_time_references_by_uid[
-                study_visit_input.time_reference_uid
+                study_visit_input.time_reference.term_uid
             ],
             time_unit_uid=study_visit_input.time_unit_uid,
             visit_value=study_visit_input.time_value,
@@ -1001,16 +1016,16 @@ class StudyVisitService(StudySelectionMixin):
             conversion_factor_to_master=self._week_unit.concept_vo.conversion_factor_to_master,
         )
         visit_contact_mode = self.study_visit_contact_modes_by_uid.get(
-            create_input.visit_contact_mode_uid
+            create_input.visit_contact_mode.term_uid
         )
         exceptions.ValidationException.raise_if_not(
             visit_contact_mode,
-            msg=f"Visit contact mode '{create_input.visit_contact_mode_uid}' is invalid.",
+            msg=f"Visit contact mode '{create_input.visit_contact_mode.term_uid}' is invalid.",
         )
-        visit_type = self.study_visit_types_by_uid.get(create_input.visit_type_uid)
+        visit_type = self.study_visit_types_by_uid.get(create_input.visit_type.term_uid)
         exceptions.ValidationException.raise_if_not(
             visit_type,
-            msg=f"Visit type with UID '{create_input.visit_type_uid}' is not valid.",
+            msg=f"Visit type with UID '{create_input.visit_type.term_uid}' is not valid.",
         )
         study_visit_vo = StudyVisitVO(
             uid=self.repo.generate_uid(),
@@ -1027,9 +1042,9 @@ class StudyVisitService(StudySelectionMixin):
             visit_contact_mode=visit_contact_mode,
             epoch_allocation=(
                 self.study_visit_epoch_allocations_by_uid.get(
-                    create_input.epoch_allocation_uid
+                    create_input.epoch_allocation.term_uid
                 )
-                if create_input.epoch_allocation_uid
+                if create_input.epoch_allocation
                 else None
             ),
             visit_type=visit_type,
@@ -1064,8 +1079,8 @@ class StudyVisitService(StudySelectionMixin):
             missing_fields = []
             if create_input.time_unit_uid is None:
                 missing_fields.append("time_unit_uid")
-            if create_input.time_reference_uid is None:
-                missing_fields.append("time_reference_uid")
+            if create_input.time_reference is None:
+                missing_fields.append("time_reference")
             if create_input.time_value is None:
                 missing_fields.append("time_value")
             ValidationException.raise_if(

@@ -50,7 +50,6 @@
           v-model="overwrite"
           hide-details
           :label="$t('StudyCopyForm.overwrite_content')"
-          color="primary"
         >
           <v-radio
             :label="$t('_global.yes')"

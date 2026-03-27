@@ -67,14 +67,12 @@ def test_study_activity_item_root_value_pairs(migration):
 
 
 def test_single_activity_item_per_class(migration):
-    result = db.cypher_query(
-        """
+    result = db.cypher_query("""
         MATCH (instval:ActivityInstanceValue)-[cai:CONTAINS_ACTIVITY_ITEM]->(aiv:ActivityItem)<-[hai:HAS_ACTIVITY_ITEM]-(aicr:ActivityItemClassRoot)
         WITH instval, aicr, collect(aiv) as items
         WHERE size(items) > 1
         RETURN instval
-        """
-    )
+        """)
 
     assert (
         len(result[0]) == 0
@@ -226,34 +224,28 @@ def test_syntax_sequence_id_refinement_and_renumbering(migration):
     logger.info(
         "Verify that all SyntaxTemplateRoot and SyntaxPreInstanceRoot have a sequence_id"
     )
-    result = db.cypher_query(
-        """
+    result = db.cypher_query("""
             MATCH (n)
             WHERE (n:SyntaxTemplateRoot OR n:SyntaxPreInstanceRoot) AND n.sequence_id=null
             RETURN n
-        """
-    )
+        """)
     assert not result[0]
 
     logger.info(
         "Verify that sequence_id of all User Defined SyntaxTemplateRoot have 'U-' prefixed"
     )
-    result = db.cypher_query(
-        """
+    result = db.cypher_query("""
             MATCH (l:Library)-->(n:SyntaxTemplateRoot)
             RETURN n.sequence_id, l.name="User Defined"
-        """
-    )
+        """)
     assert all(seq[0].startswith("U-") for seq in result[0] if seq[1])
     assert all(not seq[0].startswith("U-") for seq in result[0] if not seq[1])
 
     logger.info(
         "Verify that sequence_id of all SyntaxPreInstanceRoot have prefixed the sequence_id of their SyntaxTemplateRoot"
     )
-    result = db.cypher_query(
-        """
+    result = db.cypher_query("""
             MATCH (n:SyntaxTemplateRoot)--(p:SyntaxPreInstanceRoot)
             RETURN n.sequence_id, p.sequence_id
-        """
-    )
+        """)
     assert all(seq[1].startswith(seq[0]) for seq in result[0])

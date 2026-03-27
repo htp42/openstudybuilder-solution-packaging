@@ -54,15 +54,13 @@ class StandardDataModelRepository(ABC):
         if not uid:
             return None
 
-        match_clause = self.generic_match_clause(
-            versioning_relationship="LATEST", uid=uid
-        )
+        match_clause = self.generic_match_clause(versioning_relationship="LATEST")
 
         filter_statements, filter_query_parameters = self.create_query_filter_statement(
-            **kwargs
+            uid=uid, find_by_uid=True, **kwargs
         )
         match_clause += filter_statements
-        alias_clause = self.generic_alias_clause() + self.specific_alias_clause()
+        alias_clause = self.specific_alias_clause()
         query = CypherQueryBuilder(
             match_clause=match_clause,
             alias_clause=alias_clause,
@@ -86,42 +84,11 @@ class StandardDataModelRepository(ABC):
 
         return extracted_items[0]
 
-    def generic_match_clause(
-        self, versioning_relationship: str, uid: str | None = None
-    ):
+    def generic_match_clause(self, versioning_relationship: str):
         standard_data_model_label = self.root_class.__label__
         standard_data_model_value_label = self.value_class.__label__
-        uid_filter = ""
-        if uid:
-            uid_filter = f"{{uid: '{uid}'}}"
-        return f"""MATCH (standard_root:{standard_data_model_label} {uid_filter})-[:{versioning_relationship}]->
+        return f"""MATCH (standard_root:{standard_data_model_label})-[:{versioning_relationship}]->
                 (standard_value:{standard_data_model_value_label})"""
-
-    def generic_alias_clause(self):
-        return """
-            DISTINCT *
-            CALL {
-                WITH standard_root, standard_value
-                MATCH (standard_root)-[hv:HAS_VERSION]-(standard_value)
-                WITH hv
-                ORDER BY
-                    toInteger(split(hv.version, '.')[0]) ASC,
-                    toInteger(split(hv.version, '.')[1]) ASC,
-                    hv.end_date ASC,
-                    hv.start_date ASC
-                WITH collect(hv) as hvs
-                RETURN last(hvs) AS version_rel
-            }
-            WITH *,
-                standard_root,
-                standard_root.uid AS uid,
-                standard_value.name AS name,
-                standard_value.description AS description,
-                standard_value,
-                version_rel.start_date AS start_date,
-                version_rel.end_date AS end_date,
-                version_rel.status AS status
-        """
 
     def _retrieve_items_from_cypher_res(
         self, result_array, attribute_names
@@ -141,10 +108,13 @@ class StandardDataModelRepository(ABC):
         return items
 
     def create_query_filter_statement(
-        self,
+        self, uid: str | None = None, **kwargs
     ) -> tuple[str, dict[Any, Any]]:
         filter_parameters: list[Any] = []
         filter_query_parameters: dict[Any, Any] = {}
+        if uid:
+            filter_parameters.append("standard_root.uid=$uid")
+            filter_query_parameters["uid"] = uid
         filter_statements = " AND ".join(filter_parameters)
         filter_statements = (
             "WHERE " + filter_statements if len(filter_statements) > 0 else ""
@@ -183,7 +153,7 @@ class StandardDataModelRepository(ABC):
         )
         match_clause += filter_statements
 
-        alias_clause = self.generic_alias_clause() + self.specific_alias_clause()
+        alias_clause = self.specific_alias_clause()
         query = CypherQueryBuilder(
             match_clause=match_clause,
             alias_clause=alias_clause,
@@ -259,7 +229,7 @@ class StandardDataModelRepository(ABC):
         )
         match_clause += filter_statements
         # Aliases clause
-        alias_clause = self.generic_alias_clause() + self.specific_alias_clause()
+        alias_clause = self.specific_alias_clause()
 
         # Add header field name to filter_by, to filter with a CONTAINS pattern
         filter_by = validate_filters_and_add_search_string(

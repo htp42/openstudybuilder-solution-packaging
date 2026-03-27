@@ -40,7 +40,6 @@
             <v-radio-group
               v-model="format"
               hide-details
-              color="primary"
               :rules="[formRules.required]"
             >
               <v-radio

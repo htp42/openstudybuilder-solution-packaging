@@ -9,7 +9,7 @@
     @save="submit"
   >
     <template #[`step.method`]>
-      <v-radio-group v-model="method" color="primary">
+      <v-radio-group v-model="method">
         <v-radio :label="$t('StudySubparts.create_new')" value="create" />
         <!-- Hidden for now due to the fact that creating a subpart from existing study removes that study.
              This will be handled in a separate feature.
@@ -67,7 +67,6 @@
               :label="$t('StudyForm.project_id')"
               :model-value="studiesGeneralStore.projectNumber"
               disabled
-              variant="filled"
               hide-details
               data-cy="project-name"
             />
@@ -79,7 +78,6 @@
               :label="$t('StudyForm.project_name')"
               :model-value="studiesGeneralStore.projectName"
               disabled
-              variant="filled"
               hide-details
             />
           </v-col>
@@ -90,7 +88,6 @@
             <v-text-field
               :label="$t('StudyForm.brand_name')"
               disabled
-              variant="filled"
               hide-details
             />
           </v-col>
@@ -100,7 +97,6 @@
             <v-text-field
               v-model="form.study_subpart_acronym"
               :label="$t('StudyForm.subpart_acronym')"
-              density="compact"
               clearable
               :rules="[formRules.required]"
             />
@@ -111,7 +107,6 @@
             <v-text-field
               v-model="form.study_acronym"
               :label="$t('StudyForm.acronym')"
-              density="compact"
               disabled
             />
           </v-col>
@@ -121,7 +116,6 @@
             <v-textarea
               v-model="form.description"
               :label="$t('_global.description')"
-              density="compact"
               clearable
               auto-grow
               rows="3"
@@ -158,9 +152,7 @@
               <v-col cols="4">
                 <v-text-field
                   :model-value="form.study_number"
-                  density="compact"
                   disabled
-                  variant="filled"
                   hide-details
                 />
               </v-col>
@@ -172,7 +164,6 @@
               <v-col cols="4">
                 <v-text-field
                   v-model="form.study_subpart_acronym"
-                  density="compact"
                   :rules="[formRules.required]"
                 />
               </v-col>
@@ -184,7 +175,6 @@
                 </span>
                 <v-textarea
                   v-model="form.description"
-                  density="compact"
                   clearable
                   auto-grow
                   rows="3"

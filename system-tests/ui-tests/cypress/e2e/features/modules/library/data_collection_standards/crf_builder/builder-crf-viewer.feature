@@ -18,23 +18,28 @@ Feature: Library - Data Collection Standards - CRF Builder - CRF Viewer
     When I select a value from the Form Name dropdown
     And I select HTML option from the Stylesheet dropdown list
     And keep all other fields as default
+    And User intercepts ODM document generation request
     And I click the GENERATE button
-    Then The imported CRF view page should be displayed
+    Then User waits for ODM document generation request
 
   Scenario: Verifying that the Falcon downloadable option in the Stylesheet dropdown works as expected
     Given The '/library/crf-builder/odm-viewer' page is opened
     When I select a value from the Form Name dropdown
+    And I open stylesheets dropdown
     And I select Downloadable Falcon in the Stylesheet dropdown list
     And keep all other fields as default
+    And User intercepts ODM XMLS document generation request
     And I click the GENERATE button
-    Then The imported CRF view page should be displayed
+    Then User waits for ODM XMLS document generation request
 
 @manual_test
   Scenario: Verify all highlighted text options/buttons in the CRF Viewer display page can be clicked and become un-highlighted
     Given The '/library/crf-builder/odm-viewer' page is opened
     When I select a value from the Form Name dropdown
     And keep all other fields as default
+    And User intercepts ODM document generation request
     And I click the GENERATE button
+    Then User waits for ODM document generation request
     Then The imported CRF view page should be displayed
     And all text options/buttons like 'Implementation Guidelines', 'Completion Guidelines', 'CDASH', 'SDTM', 'Topic Code', 'ADaM Code', and 'Keys' are highlighted
     When I click each text option/button one by one

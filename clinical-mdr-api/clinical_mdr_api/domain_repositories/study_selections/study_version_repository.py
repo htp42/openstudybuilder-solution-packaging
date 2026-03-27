@@ -270,7 +270,7 @@ class StudyVersionRepository:
         page_size: int = 10,
         page_number: int = 1,
         total_count: bool = True,
-        only_latest_major_protcol_version: bool = False,
+        only_latest_major_protocol_version: bool = False,
     ) -> tuple[list[dict[str, Any]], int]:
         """
         Retrieves the complete snapshot history of a Study, including all versioned states.
@@ -305,7 +305,7 @@ class StudyVersionRepository:
         OPTIONAL MATCH (sv)-[:HAS_REASON_FOR_LOCK]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)-->(:CTTermNameRoot)-[:LATEST_FINAL]->(lock_term_val:CTTermNameValue)
         OPTIONAL MATCH (sv)-[:HAS_REASON_FOR_UNLOCK]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)-->(:CTTermNameRoot)-[:LATEST_FINAL]->(unlock_term_val:CTTermNameValue)
         """
-        protocol_header_version_match = f"{'' if only_latest_major_protcol_version else 'OPTIONAL'} MATCH (study_value)-[:HAS_STUDY_DEFINITION_DOCUMENT]->(sdd:StudyDefinitionDocument)"
+        protocol_header_version_match = f"{'' if only_latest_major_protocol_version else 'OPTIONAL'} MATCH (study_value)-[:HAS_STUDY_DEFINITION_DOCUMENT]->(sdd:StudyDefinitionDocument)"
 
         return_query = """
         RETURN
@@ -333,7 +333,7 @@ class StudyVersionRepository:
                 # if only latest major protocol header version is requested, we do pagination in memory after filtering, as we can't do filtering in the query
                 (
                     db_pagination_clause(page_size, page_number, one_element_extra=True)
-                    if not only_latest_major_protcol_version
+                    if not only_latest_major_protocol_version
                     else ""
                 ),
             ]
@@ -343,26 +343,27 @@ class StudyVersionRepository:
             return [], 0
 
         history = [get_db_result_as_dict(row, columns) for row in rows]
-        # If only_latest_major_protcol_version is requested, we have to leave only
+        # If only_latest_major_protocol_version is requested, we have to leave only
         # major protocol header versions and leave only latest available version of it (with highest metadata version)
-        if only_latest_major_protcol_version:
-            latest_visited_protocol_header_version: str | None = None
-            filtered_history = []
+        if only_latest_major_protocol_version:
+            phv_to_index: dict[str, int] = {}
+            filtered_history: list[dict[str, Any]] = []
             for h in history:
                 major_version = h.get("protocol_header_major_version")
                 minor_version = h.get("protocol_header_minor_version")
-                if (
-                    major_version is not None
-                    and minor_version == 0
-                    and (protocol_header_version := f"{major_version}.{minor_version}")
-                    and protocol_header_version
-                    != latest_visited_protocol_header_version
-                ):
-                    filtered_history.append(h)
-                    latest_visited_protocol_header_version = protocol_header_version
+                if major_version is not None and minor_version == 0:
+                    phv = f"{major_version}.{minor_version}"
+                    if phv not in phv_to_index:
+                        h["original_metadata_version"] = h.get("metadata_version")
+                        phv_to_index[phv] = len(filtered_history)
+                        filtered_history.append(h)
+                    else:
+                        filtered_history[phv_to_index[phv]][
+                            "original_metadata_version"
+                        ] = h.get("metadata_version")
             history = filtered_history
 
-        if not only_latest_major_protcol_version:
+        if not only_latest_major_protocol_version:
             total = (
                 calculate_total_count_from_query_result(
                     result_count=len(history),

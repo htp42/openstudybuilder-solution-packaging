@@ -12,8 +12,6 @@
             :label="$t('_global.library')"
             :model-value="library"
             disabled
-            rounded="lg"
-            variant="outlined"
             class="mb-1"
           />
           <v-autocomplete
@@ -21,9 +19,7 @@
             :label="$t('StudyActivityForm.flowchart_group')"
             data-cy="flowchart-group"
             :items="flowchartGroups"
-            variant="outlined"
             color="nnBaseBlue"
-            rounded="lg"
             item-title="soa_group_term_name"
             return-object
             :rules="[formRules.required]"
@@ -33,9 +29,7 @@
             v-model="form.activity_group"
             :label="$t('StudyActivity.activity_group')"
             :items="groups"
-            variant="outlined"
             color="nnBaseBlue"
-            rounded="lg"
             class="mb-1"
             item-title="activity_group_name"
             return-object
@@ -47,9 +41,7 @@
             v-model="form.activity_subgroup"
             :label="$t('StudyActivity.activity_sub_group')"
             :items="subgroups"
-            variant="outlined"
             color="nnBaseBlue"
-            rounded="lg"
             class="mb-1"
             item-title="activity_subgroup_name"
             return-object
@@ -60,9 +52,7 @@
           <v-text-field
             :label="$t('StudyActivity.activity')"
             :model-value="activity"
-            variant="outlined"
             color="nnBaseBlue"
-            rounded="lg"
             class="mb-1"
             disabled
           />

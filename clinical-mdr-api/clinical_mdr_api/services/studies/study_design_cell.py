@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 
 from fastapi import status
 from neomodel import db
-from neomodel.sync_.match import Optional
+from neomodel.sync_.match import Path
 
 from clinical_mdr_api.domain_repositories.models.study_selections import (
     StudyDesignCell as StudyDesignCellNeoModel,
@@ -130,12 +130,12 @@ class StudyDesignCellService(StudySelectionMixin):
         self, study_uid: str, design_cell_uid: str
     ) -> StudyDesignCell:
         sdc_node = (
-            StudyDesignCellNeoModel.nodes.fetch_relations(
+            StudyDesignCellNeoModel.nodes.traverse(
                 "study_epoch__has_epoch__has_selected_term__has_name_root__has_latest_value",
                 "study_element",
                 "has_after__audit_trail",
-                Optional("study_arm"),
-                Optional("study_branch_arm"),
+                Path(value="study_arm", optional=True),
+                Path(value="study_branch_arm", optional=True),
             )
             .filter(study_value__latest_value__uid=study_uid, uid=design_cell_uid)
             .resolve_subgraph()

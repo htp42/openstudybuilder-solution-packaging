@@ -20,7 +20,7 @@ class SponsorModelDatasetVariableVO:
 
     dataset_uid: str | None
     variable_uid: str | None
-    sponsor_model_name: str | None
+    sponsor_model_name: str
     sponsor_model_version_number: str
 
     is_basic_std: bool

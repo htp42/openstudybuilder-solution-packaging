@@ -1,9 +1,11 @@
-from neomodel import StringProperty
+from neomodel import RelationshipTo
 
 from clinical_mdr_api.domain_repositories.models.generic import (
     ClinicalMdrNode,
     ZonedDateTimeProperty,
 )
+from clinical_mdr_api.domain_repositories.models.preferences import UserPreferences
+from common.neomodel import StringProperty
 
 
 class User(ClinicalMdrNode):
@@ -16,3 +18,5 @@ class User(ClinicalMdrNode):
     roles = StringProperty()
     created = ZonedDateTimeProperty()
     updated = ZonedDateTimeProperty()
+
+    has_preferences = RelationshipTo(UserPreferences, "HAS_PREFERENCES")

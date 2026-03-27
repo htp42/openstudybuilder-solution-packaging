@@ -34,18 +34,12 @@
             <v-text-field
               v-model="name"
               :label="$t('_global.name')"
-              density="compact"
               clearable
               :rules="[formRules.required]"
             />
           </v-col>
           <v-col cols="4">
-            <v-text-field
-              v-model="oid"
-              :label="$t('_global.oid')"
-              density="compact"
-              clearable
-            />
+            <v-text-field v-model="oid" :label="$t('_global.oid')" clearable />
           </v-col>
           <v-col cols="4">
             <v-autocomplete
@@ -55,7 +49,6 @@
               :label="$t('CRFDuplicationForm.item_to_link')"
               item-title="name"
               item-value="uid"
-              density="compact"
               clearable
               :rules="[formRules.required]"
               return-object

@@ -56,9 +56,10 @@ Feature: Library - Concepts - Activities - Activities - Extended Scope
         And [API] Activity in status Draft exists
         And [API] Activity is approved
         And The '/library/activities/activities' page is opened
-        And User sets status filter to 'all'
+        And User sets status filter to 'final'
         And Activity is searched for and found
         When The 'New version' option is clicked from the three dot menu list
+        And User sets status filter to 'draft'
         Then The item has status 'Draft' and version '1.1'
         When The 'Edit' option is clicked from the three dot menu list
         And The activity edition form is filled with data
@@ -66,6 +67,7 @@ Feature: Library - Concepts - Activities - Activities - Extended Scope
         And Activity is searched for and found
         Then The item has status 'Draft' and version '1.2'
         When The 'Approve' option is clicked from the three dot menu list
+        And User sets status filter to 'final'
         Then The item has status 'Final' and version '2.0'
 
     Scenario: [Create][Negative case][Draft group] User must not be able to create activity linked to Drafted group until it is approved
@@ -120,18 +122,18 @@ Feature: Library - Concepts - Activities - Activities - Extended Scope
 
     Scenario: [Cancel][Creation] User must be able to Cancel creation of the activity
         Given The '/library/activities/activities' page is opened
-        And User sets status filter to 'all'
         When The Add activity button is clicked
         And The activity form is filled with only mandatory data
         When Modal window form is closed by clicking cancel button
         And Action is confirmed by clicking continue
         Then The form is no longer available
+        And User sets status filter to 'draft'
         And Activity is searched for and not found
 
     Scenario: [Cancel][Edition] User must be able to Cancel edition of the activity
         And [API] Activity in status Draft exists
         Given The '/library/activities/activities' page is opened
-        And User sets status filter to 'all'
+        And User sets status filter to 'draft'
         And Activity is searched for and found
         When The 'Edit' option is clicked from the three dot menu list
         When The activity edition form is filled with data
@@ -143,7 +145,7 @@ Feature: Library - Concepts - Activities - Activities - Extended Scope
     Scenario: [Actions][Availability][Draft item] User must only have access to aprove, edit, delete, history actions for Drafted version of the activity
         And [API] Activity in status Draft exists
         Given The '/library/activities/activities' page is opened
-        And User sets status filter to 'all'
+        And User sets status filter to 'draft'
         And Activity is searched for and found
         And The item actions button is clicked
         Then Only actions that should be avaiable for the Draft item are displayed
@@ -161,7 +163,7 @@ Feature: Library - Concepts - Activities - Activities - Extended Scope
         And [API] Activity is approved
         And [API] Activity is inactivated
         Given The '/library/activities/activities' page is opened
-        And User sets status filter to 'all'
+        And User sets status filter to 'retired'
         And Activity is searched for and found
         And The item actions button is clicked
         Then Only actions that should be avaiable for the Retired item are displayed

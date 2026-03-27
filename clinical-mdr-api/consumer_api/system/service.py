@@ -2,7 +2,7 @@ import os
 import urllib.parse
 from typing import Annotated
 
-from neomodel.sync_.core import db
+from neomodel import db
 from pydantic import BaseModel, Field
 
 

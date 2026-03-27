@@ -13,9 +13,7 @@
             <v-text-field
               :label="$t('StudySubparts.derived_subpart_id')"
               :model-value="form.study_number"
-              density="compact"
               disabled
-              variant="filled"
               hide-details
             />
           </v-col>
@@ -25,8 +23,6 @@
             <v-text-field
               v-model="form.study_acronym"
               :label="$t('StudySubparts.study_acronym')"
-              density="compact"
-              variant="filled"
               hide-details
               disabled
             />
@@ -37,8 +33,6 @@
             <v-text-field
               v-model="form.study_subpart_acronym"
               :label="$t('StudySubparts.study_subpart_acronym')"
-              density="compact"
-              variant="filled"
               hide-details
             />
           </v-col>
@@ -48,7 +42,6 @@
             <v-textarea
               v-model="form.description"
               :label="$t('_global.description')"
-              density="compact"
               clearable
               auto-grow
               rows="3"

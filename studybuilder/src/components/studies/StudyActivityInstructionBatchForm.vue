@@ -11,11 +11,7 @@
     @step-loaded="onStepLoaded"
   >
     <template #[`step.creationMode`]>
-      <v-radio-group
-        v-model="creationMode"
-        data-cy="objective-method-radio"
-        color="primary"
-      >
+      <v-radio-group v-model="creationMode" data-cy="objective-method-radio">
         <v-radio
           :label="$t('StudyActivityInstructionBatchForm.select_mode')"
           value="select"
@@ -131,7 +127,6 @@
         </p>
         <v-switch
           v-model="preInstanceMode"
-          color="primary"
           :label="$t('StudyObjectiveForm.show_pre_instances')"
           hide-details
           class="ml-4"

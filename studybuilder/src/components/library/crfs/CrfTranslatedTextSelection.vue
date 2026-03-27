@@ -14,7 +14,6 @@
           v-model="inputTranslatedText.text_type"
           :label="t('CRFTranslatedTexts.text_type')"
           :items="translatedTextTypes"
-          density="compact"
           :readonly="props.readOnly"
         />
       </v-col>
@@ -32,7 +31,6 @@
                   : lang._2T
                 : lang._1
           "
-          density="compact"
           :readonly="props.readOnly"
         />
       </v-col>
@@ -54,7 +52,6 @@
           <v-textarea
             v-else
             v-model="sourceText"
-            variant="outlined"
             :readonly="props.readOnly"
             auto-grow
             hide-details

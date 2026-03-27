@@ -502,13 +502,11 @@ class StudyPharmaCMXML(BaseModel):
                     "eligibility": {
                         "study_population": {"textblock": None},
                         "sampling_method": None,
-                        "criteria": {
-                            "textblock": f""" Inclusion Criteria:
+                        "criteria": {"textblock": f""" Inclusion Criteria:
                                 {"".join(["-" + inclusion_criteria+"\n" for inclusion_criteria in study_pharma_cm.inclusion_criteria])}
                                 Exclusion Criteria:
                                 {"".join(["-" + exclusion_criteria+"\n" for exclusion_criteria in study_pharma_cm.exclusion_criteria])}
-                                """
-                        },
+                                """},
                         "healthy_volunteers": study_pharma_cm.accepts_healthy_volunteers,
                         "gender": None,
                         "gender_based": None,

@@ -128,7 +128,6 @@
                     :label="$t('StudyDataSuppliers.reorder_content')"
                     class="mr-6"
                     hide-details
-                    color="primary"
                   />
                 </div>
               </template>
@@ -237,8 +236,6 @@
                   v-model="formData.study_data_supplier_order"
                   label="Order"
                   type="number"
-                  variant="outlined"
-                  density="compact"
                   :rules="[(v) => !!v || 'Order is required']"
                 />
               </v-col>

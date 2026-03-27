@@ -14,13 +14,10 @@
             v-model="codelistSearch"
             clearable
             clear-icon="mdi-close"
-            density="compact"
             prepend-inner-icon="mdi-magnify"
             :label="$t('TermsSelectionForm.search_for_codelists')"
             color="nnBaseBlue"
             hide-details
-            rounded="lg"
-            variant="outlined"
             @update:model-value="fetchCodelists"
           />
           <v-radio-group v-model="searchMode" inline>
@@ -37,28 +34,22 @@
         <v-col cols="6" class="pl-8">
           <v-switch
             v-model="searchParams.only_ordinal_codelists"
-            color="primary"
             :label="$t('TermsSelectionForm.ordinal_codelists')"
             class="mr-4"
             hide-details
-            density="compact"
             @update:model-value="_fetchCodelists"
           />
           <v-switch
             v-model="searchParams.only_response_codelists"
-            color="primary"
             :label="$t('TermsSelectionForm.response_codelists')"
             class="mr-4"
             hide-details
-            density="compact"
             @update:model-value="_fetchCodelists"
           />
           <v-switch
             v-model="searchParams.match_whole_words"
-            color="primary"
             :label="$t('TermsSelectionForm.whole_word_match')"
             hide-details
-            density="compact"
           />
         </v-col>
       </v-row>
@@ -124,7 +115,6 @@
                   <v-checkbox
                     v-model="selectedTerms"
                     :value="item.raw.term_uid"
-                    color="primary"
                     hide-details
                     class="mr-2"
                   />

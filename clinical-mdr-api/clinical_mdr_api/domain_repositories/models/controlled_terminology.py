@@ -1,17 +1,6 @@
 from datetime import datetime
 
-from neomodel import (
-    ArrayProperty,
-    BooleanProperty,
-    DateProperty,
-    FloatProperty,
-    IntegerProperty,
-    One,
-    RelationshipFrom,
-    RelationshipTo,
-    StringProperty,
-    ZeroOrOne,
-)
+from neomodel import One, RelationshipFrom, RelationshipTo, ZeroOrOne
 
 from clinical_mdr_api.domain_repositories.models.generic import (
     ClinicalMdrNode,
@@ -23,6 +12,14 @@ from clinical_mdr_api.domain_repositories.models.generic import (
 )
 from clinical_mdr_api.domains.controlled_terminologies.ct_codelist_attributes import (
     DEFAULT_CODELIST_TYPE,
+)
+from common.neomodel import (
+    ArrayProperty,
+    BooleanProperty,
+    DateProperty,
+    FloatProperty,
+    IntegerProperty,
+    StringProperty,
 )
 
 
@@ -62,7 +59,7 @@ class CTCodelistAttributesValue(ControlledTerminology):
     extensible = BooleanProperty()
     synonyms = ArrayProperty()
     is_ordinal = BooleanProperty(default=False)
-    codelist_type = StringProperty(default=DEFAULT_CODELIST_TYPE)
+    codelist_type = StringProperty(default=DEFAULT_CODELIST_TYPE)  # type: ignore[call-arg]
 
 
 class CTCodelistAttributesRoot(ControlledTerminology):
@@ -168,8 +165,8 @@ class CodelistTermRelationship(ClinicalMdrRel):
     start_date: datetime = ZonedDateTimeProperty()
     end_date: datetime | None = ZonedDateTimeProperty()
     author_id = StringProperty()
-    order: int | None = IntegerProperty()
-    ordinal: float | None = FloatProperty()
+    order: int | None = IntegerProperty()  # type: ignore[assignment]
+    ordinal: float | None = FloatProperty()  # type: ignore[assignment]
 
 
 class CTCodelistRoot(ControlledTerminologyWithUID):

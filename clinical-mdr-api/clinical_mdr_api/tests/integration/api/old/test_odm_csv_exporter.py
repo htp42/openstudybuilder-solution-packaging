@@ -53,7 +53,7 @@ def test_data():
 
 def test_get_odm_study_event(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/csvs/export?target_uid=odm_study_event1&target_type=study_event",
+        "odms/metadata/csvs/export?target_uid=odm_study_event1&target_type=study_event",
         headers=HEADERS,
     )
 
@@ -67,7 +67,7 @@ def test_get_odm_study_event(api_client):
 
 def test_get_odm_form(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/csvs/export?target_uid=odm_form1&target_type=form",
+        "odms/metadata/csvs/export?target_uid=odm_form1&target_type=form",
         headers=HEADERS,
     )
 
@@ -81,7 +81,7 @@ def test_get_odm_form(api_client):
 
 def test_get_odm_item_group(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/csvs/export?target_uid=odm_item_group1&target_type=item_group",
+        "odms/metadata/csvs/export?target_uid=odm_item_group1&target_type=item_group",
         headers=HEADERS,
     )
 
@@ -95,7 +95,7 @@ def test_get_odm_item_group(api_client):
 
 def test_get_odm_item(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/csvs/export?target_uid=odm_item1&target_type=item",
+        "odms/metadata/csvs/export?target_uid=odm_item1&target_type=item",
         headers=HEADERS,
     )
 
@@ -109,7 +109,7 @@ def test_get_odm_item(api_client):
 
 def test_odm_not_supported_target_type(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/csvs/export?target_uid=wrong&target_type=study",
+        "odms/metadata/csvs/export?target_uid=wrong&target_type=study",
         headers=HEADERS,
     )
 
@@ -121,7 +121,7 @@ def test_odm_not_supported_target_type(api_client):
 
 def test_odm_study_event_not_found(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/csvs/export?target_uid=wrong&target_type=study_event",
+        "odms/metadata/csvs/export?target_uid=wrong&target_type=study_event",
         headers=HEADERS,
     )
 
@@ -130,7 +130,7 @@ def test_odm_study_event_not_found(api_client):
 
 def test_odm_form_not_found(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/csvs/export?target_uid=wrong&target_type=form",
+        "odms/metadata/csvs/export?target_uid=wrong&target_type=form",
         headers=HEADERS,
     )
 
@@ -139,7 +139,7 @@ def test_odm_form_not_found(api_client):
 
 def test_odm_item_group_not_found(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/csvs/export?target_uid=wrong&target_type=item_group",
+        "odms/metadata/csvs/export?target_uid=wrong&target_type=item_group",
         headers=HEADERS,
     )
 
@@ -148,7 +148,7 @@ def test_odm_item_group_not_found(api_client):
 
 def test_odm_item_not_found(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/csvs/export?target_uid=wrong&target_type=item",
+        "odms/metadata/csvs/export?target_uid=wrong&target_type=item",
         headers=HEADERS,
     )
 

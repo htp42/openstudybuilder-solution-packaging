@@ -240,6 +240,7 @@ def get_all(
             "latest_locked_version_description=latest_locked_version.change_description",
             "latest_released_version_number=latest_released_version.version_number",
             "latest_released_version_description=latest_released_version.change_description",
+            "data_completeness_tags",
         ],
         "formats": [
             "text/csv",
@@ -258,6 +259,42 @@ def get_studies_list(
             description="Indicates whether to return minimal response with only `uid`, `id` and `acronym`."
         ),
     ] = True,
+    has_study_objective: Annotated[
+        bool | None,
+        Query(
+            description="Filter studies by Study Objectives presence: `true` (has objectives), `false` (no objectives), or omit (all studies).",
+        ),
+    ] = None,
+    has_study_footnote: Annotated[
+        bool | None,
+        Query(
+            description="Filter studies by Study Objectives presence: `true` (has objectives), `false` (no objectives), or omit (all studies).",
+        ),
+    ] = None,
+    has_study_endpoint: Annotated[
+        bool | None,
+        Query(
+            description="Filter studies by Study Endpoints presence: `true` (has endpoints), `false` (no endpoints), or omit (all studies).",
+        ),
+    ] = None,
+    has_study_criteria: Annotated[
+        bool | None,
+        Query(
+            description="Filter studies by Study Criteria presence: `true` (has criteria), `false` (no criteria), or omit (all studies).",
+        ),
+    ] = None,
+    has_study_activity: Annotated[
+        bool | None,
+        Query(
+            description="Filter studies by Study Activities presence: `true` (has activities), `false` (no activities), or omit (all studies).",
+        ),
+    ] = None,
+    has_study_activity_instruction: Annotated[
+        bool | None,
+        Query(
+            description="Filter studies by Study Activity Instructions presence: `true` (has activity instructions), `false` (no activity instructions), or omit (all studies).",
+        ),
+    ] = None,
     deleted: Annotated[
         bool,
         Query(
@@ -270,7 +307,14 @@ def get_studies_list(
     """
     study_service = StudyService()
     return study_service.get_studies_list(
-        minimal_response=minimal_response, deleted=deleted
+        minimal_response=minimal_response,
+        has_study_objective=has_study_objective,
+        has_study_footnote=has_study_footnote,
+        has_study_endpoint=has_study_endpoint,
+        has_study_criteria=has_study_criteria,
+        has_study_activity=has_study_activity,
+        has_study_activity_instruction=has_study_activity_instruction,
+        deleted=deleted,
     )
 
 
@@ -550,7 +594,7 @@ Possible errors:
         },
     },
 )
-def delete_activity(study_uid: Annotated[str, StudyUID]):
+def delete_study(study_uid: Annotated[str, StudyUID]):
     study_service = StudyService()
     study_service.soft_delete(uid=study_uid)
 
@@ -799,7 +843,7 @@ def get_snapshot_history(
     page_number: _generic_descriptions.PAGE_NUMBER_QUERY = settings.default_page_number,
     page_size: _generic_descriptions.PAGE_SIZE_QUERY = settings.default_page_size,
     total_count: _generic_descriptions.TOTAL_COUNT_QUERY = False,
-    only_latest_major_protcol_version: Annotated[
+    only_latest_major_protocol_version: Annotated[
         bool,
         Query(
             description="Indicates whether Study snapshots without protocol header version should be returned",
@@ -812,7 +856,7 @@ def get_snapshot_history(
         page_number=page_number,
         page_size=page_size,
         total_count=total_count,
-        only_latest_major_protcol_version=only_latest_major_protcol_version,
+        only_latest_major_protocol_version=only_latest_major_protocol_version,
     )
     return CustomPage(
         items=snapshot_history.items,
@@ -1333,7 +1377,7 @@ def get_complexity_score(
         str | None,
         Query(
             description="Study Version Number",
-            example="2.1",
+            openapi_examples={"2.1": {"value": "2.1"}},
             alias="study_value_version",
         ),
     ] = None,

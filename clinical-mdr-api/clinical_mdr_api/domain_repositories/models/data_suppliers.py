@@ -1,4 +1,4 @@
-from neomodel import IntegerProperty, RelationshipTo, StringProperty, ZeroOrOne
+from neomodel import RelationshipTo, ZeroOrOne
 
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTTermContext,
@@ -9,6 +9,7 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     VersionRoot,
     VersionValue,
 )
+from common.neomodel import IntegerProperty, StringProperty
 
 
 class DataSupplierValue(VersionValue):

@@ -9,7 +9,6 @@
       return-object
       clearable
       v-bind="$attrs"
-      density="compact"
       @update:search-input="searchForUnit"
       @update:model-value="update"
     />

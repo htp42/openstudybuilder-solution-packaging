@@ -1642,6 +1642,13 @@ class StudyVersionHistory(BaseModel):
             json_schema_extra={"nullable": True},
         ),
     ] = None
+    original_metadata_version: Annotated[
+        str | None,
+        Field(
+            description="Metadata version of the first occurrence for the same protocol header version",
+            json_schema_extra={"nullable": True},
+        ),
+    ] = None
     protocol_header_major_version: Annotated[
         int | None,
         Field(
@@ -1699,6 +1706,7 @@ class StudyVersionHistory(BaseModel):
             reason_for_lock_name=val.get("reason_for_lock"),
             reason_for_unlock_name=val.get("reason_for_unlock"),
             metadata_version=val.get("metadata_version"),
+            original_metadata_version=val.get("original_metadata_version"),
             protocol_header_major_version=val.get("protocol_header_major_version"),
             protocol_header_minor_version=val.get("protocol_header_minor_version"),
             description=val.get("description"),
@@ -1764,6 +1772,10 @@ class StudySimple(StudyMinimal):
     latest_released_version: Annotated[
         VersionInfo | None, Field(json_schema_extra={"nullable": True})
     ] = None
+    data_completeness_tags: list[str] = Field(
+        description="List of data completeness tag names assigned to the study.",
+        default_factory=list,
+    )
 
     @classmethod
     def from_input(
@@ -1798,6 +1810,7 @@ class StudySimple(StudyMinimal):
                 if val.get("latest_released_version") is not None
                 else None
             ),
+            data_completeness_tags=val.get("data_completeness_tags", []),
         )
 
 

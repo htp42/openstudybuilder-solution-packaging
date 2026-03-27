@@ -7,7 +7,6 @@
       item-value="term_uid"
       item-title="name"
       return-object
-      density="compact"
       clearable
       v-bind="$attrs"
       @update:model-value="update"

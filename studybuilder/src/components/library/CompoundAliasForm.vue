@@ -22,10 +22,8 @@
               item-title="name"
               item-value="uid"
               return-object
-              density="compact"
               clearable
               hide-no-data
-              variant="outlined"
               :loading="loadingCompounds"
               :rules="[formRules.required]"
             />
@@ -53,8 +51,6 @@
             <v-text-field
               v-model="form.name"
               :label="$t('CompoundAliasForm.name')"
-              density="compact"
-              variant="outlined"
               clearable
               :rules="[formRules.required]"
             />
@@ -65,8 +61,6 @@
             <v-text-field
               v-model="form.name_sentence_case"
               :label="$t('CompoundAliasForm.sentence_case_name')"
-              density="compact"
-              variant="outlined"
               clearable
               :rules="[formRules.required]"
             />
@@ -86,8 +80,6 @@
             <v-textarea
               v-model="form.definition"
               :label="$t('_global.definition')"
-              density="compact"
-              variant="outlined"
               clearable
               auto-grow
               rows="1"
@@ -99,11 +91,9 @@
             <v-textarea
               v-model="form.change_description"
               :label="$t('HistoryTable.change_description')"
-              density="compact"
               clearable
               auto-grow
               rows="1"
-              variant="outlined"
               :rules="[formRules.required]"
             />
           </v-col>

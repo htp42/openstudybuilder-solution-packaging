@@ -268,6 +268,7 @@ def api_post(path: str, payload: dict, params: Optional[Any] = None):
 def api_patch(path: str, payload: dict, params: Optional[Any] = None):
     """Issues http PATCH request with specified payload.
     Returns the response."""
+    refresh_token()
     url = API_BASE_URL + path
     logger.info("PATCH %s", url)
     res = requests.patch(
@@ -280,6 +281,7 @@ def api_patch(path: str, payload: dict, params: Optional[Any] = None):
 def api_delete(path: str):
     """Issues http DELETE request with specified payload.
     Returns the response."""
+    refresh_token()
     url = API_BASE_URL + path
     logger.info("DELETE %s", url)
     res = requests.delete(url, timeout=30, headers=API_HEADERS)

@@ -122,8 +122,7 @@ class TestListStudies(unittest.TestCase):
         )
 
         # Create a criteria template
-        db.cypher_query(
-            """
+        db.cypher_query("""
             MATCH (incl:CTTermRoot {uid: "C25532"})
             MATCH (library:Library {name: "Sponsor"})
             MERGE (incl)<-[:HAS_SELECTED_TERM]-(:CTTermContext)<-[:HAS_TYPE]-(ctr1:CriteriaTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot {uid: "incl_criteria_1"})
@@ -136,8 +135,7 @@ class TestListStudies(unittest.TestCase):
             set hv.author_id = "unknown-user"
             set hv.version = "1.0"
             MERGE (library)-[:CONTAINS_SYNTAX_TEMPLATE]->(ctr1)
-            """
-        )
+            """)
 
         # Create a study criteria
         StudyCriteriaSelectionService().make_selection_create_criteria(
@@ -152,8 +150,7 @@ class TestListStudies(unittest.TestCase):
         )
 
         # Create an Activity Instruction Template
-        db.cypher_query(
-            """
+        db.cypher_query("""
             MATCH (lib:Library {name: "Sponsor"})
             MERGE (adt:ActivityInstructionTemplateRoot:SyntaxTemplateRoot {uid: "ActivityInstructionTemplate_000001"})
             -[relt:LATEST_FINAL]->(adtv:ActivityInstructionTemplateValue:SyntaxTemplateValue
@@ -166,8 +163,7 @@ class TestListStudies(unittest.TestCase):
             set hv.status = "Final"
             set hv.author_id = "unknown-user"
             set hv.version = "1.0"
-            """
-        )
+            """)
 
         # Create a study activity instruction
         StudyActivityInstructionService().create(
@@ -183,8 +179,7 @@ class TestListStudies(unittest.TestCase):
         )
 
         # Let's create an empty study
-        db.cypher_query(
-            """
+        db.cypher_query("""
             MERGE (sr:StudyRoot {uid: "study_root2"})-[:LATEST]->(sv:StudyValue{study_id_prefix: "some_id2", study_number:"1"})
             MERGE (sr)-[hv:HAS_VERSION]->(sv)
             MERGE (sr)-[ld:LATEST_DRAFT]->(sv)
@@ -197,8 +192,7 @@ class TestListStudies(unittest.TestCase):
             WITH sv
             MATCH (p:Project {uid: "Project_000001"})
             MERGE (p)-[:HAS_FIELD]->(sf:StudyField:StudyProjectField)<-[:HAS_PROJECT]-(sv)
-            """
-        )
+            """)
 
         self.study_service = StudyService()
 

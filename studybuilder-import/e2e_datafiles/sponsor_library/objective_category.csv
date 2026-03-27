@@ -1,6 +1,6 @@
 CODELIST_SUBMVAL,TERM_SUBMVAL,SPONSOR_NAME,SPONSOR_NAME_SENTENCE_CASE,NCI_PREFERRED_NAME,ORDER,CONCEPT_ID,CATALOGUES,DEFINITION
-OBJTCAT,Efficacy,Efficacy,efficacy,,1,C88183,
-OBJTCAT,Safety,Safety,safety,,2,C60828,
-OBJTCAT,Pharmacokinetics,Pharmacokinetics,pharmacokinetics,,3,C15299,
-OBJTCAT,Pharmacodynamics,Pharmacodynamics,pharmacodynamics,,4,C15720,
-OBJTCAT,Bioequivalence,Bioequivalence,bioequivalence,,5,C71763,
+OBJTCAT,efficacy,Efficacy,efficacy,,1,C88183,
+OBJTCAT,safety,Safety,safety,,2,C60828,
+OBJTCAT,pharmacokinetics,Pharmacokinetics,pharmacokinetics,,3,C15299,
+OBJTCAT,pharmacodynamics,Pharmacodynamics,pharmacodynamics,,4,C15720,
+OBJTCAT,bioequivalence,Bioequivalence,bioequivalence,,5,C71763,

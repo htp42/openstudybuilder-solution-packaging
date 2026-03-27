@@ -19,15 +19,10 @@ class DatasetScenarioRepository(StandardDataModelRepository):
     return_model = DatasetScenarioAPIModel
 
     # pylint: disable=unused-argument
-    def generic_match_clause(
-        self, versioning_relationship: str, uid: str | None = None
-    ):
+    def generic_match_clause(self, versioning_relationship: str):
         standard_data_model_label = self.root_class.__label__
         standard_data_model_value_label = self.value_class.__label__
-        uid_filter = ""
-        if uid:
-            uid_filter = f"{{uid: '{uid}'}}"
-        return f"""MATCH (standard_root:{standard_data_model_label} {uid_filter})-[:HAS_INSTANCE]->
+        return f"""MATCH (standard_root:{standard_data_model_label})-[:HAS_INSTANCE]->
                 (standard_value:{standard_data_model_value_label})<-[has_dataset_scenario:HAS_DATASET_SCENARIO]-
                 (dataset_instance:DatasetInstance)<-[:HAS_DATASET]-(data_model_ig_value:DataModelIGValue)
                 <-[:HAS_VERSION]-(data_model_ig_root:DataModelIGRoot)
@@ -37,7 +32,7 @@ class DatasetScenarioRepository(StandardDataModelRepository):
         (
             filter_statements_from_standard,
             filter_query_parameters,
-        ) = super().create_query_filter_statement()
+        ) = super().create_query_filter_statement(**kwargs)
         filter_parameters = []
 
         ValidationException.raise_if(
@@ -86,7 +81,8 @@ class DatasetScenarioRepository(StandardDataModelRepository):
 
     def specific_alias_clause(self) -> str:
         return """
-        WITH *,
+            *,
+            standard_root.uid AS uid,
             standard_value.label AS label,
             head([(standard_root)<-[:HAS_DATASET_SCENARIO]-(catalogue:DataModelCatalogue) | catalogue.name]) AS catalogue_name,
             {ordinal:has_dataset_scenario.ordinal, uid:dataset_root.uid} AS dataset,

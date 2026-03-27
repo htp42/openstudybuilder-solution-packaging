@@ -1,14 +1,14 @@
 # Set the build target (either "dev" or "prod") with a default of "dev"
 ARG TARGET=dev
-ARG PYTHON_IMAGE=python:3.13.0-slim
+ARG PYTHON_IMAGE=python:3.14-slim
 
-# Start with a slim default Python 3.13.0 base image, creating a shared base stage
+# Start with a slim default Python base image, creating a shared base stage
 FROM $PYTHON_IMAGE AS common-stage
 
 # Update package lists, upgrade installed packages and install required system packages
 RUN apt-get update \
     && apt-get -y upgrade \
-    && apt-get -y install curl git libpango-1.0-0 libpangoft2-1.0-0 \
+    && apt-get -y install curl git libpango-1.0-0 libpangoft2-1.0-0 libffi-dev zlib1g-dev libxml2-dev libxslt-dev build-essential \
     && pip install --upgrade pip pipenv wheel \
     && apt-get clean && rm -rf /var/lib/apt/lists && rm -rf ~/.cache
 

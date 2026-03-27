@@ -1,4 +1,4 @@
-from neomodel import RelationshipFrom, RelationshipTo, StringProperty, db
+from neomodel import RelationshipFrom, RelationshipTo, db
 
 from clinical_mdr_api.domain_repositories.models.generic import (
     ClinicalMdrNode,
@@ -7,6 +7,7 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     VersionRoot,
     VersionValue,
 )
+from common.neomodel import StringProperty
 
 
 class TemplateParameter(ClinicalMdrNode):

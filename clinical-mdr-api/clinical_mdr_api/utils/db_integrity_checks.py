@@ -113,8 +113,7 @@ QUERIES: list[tuple[str, str, str]] = [
         WITH root, collect(v) as versions
         WITH root, [v IN tail(versions) WHERE v.end_date IS NULL] as bad
         WITH root WHERE size(bad) > 0
-        """
-        + build_root_summary_return_statement("root"),
+        """ + build_root_summary_return_statement("root"),
     ),
     (
         "only_one_latest_for_study_root",
@@ -123,8 +122,7 @@ QUERIES: list[tuple[str, str, str]] = [
         MATCH (root:StudyRoot {uid: $study_uid})-[v:LATEST|LATEST_DRAFT|LATEST_FINAL|LATEST_RETIRED]->()
         WITH root, collect(type(v)) as types
         WHERE size(apoc.coll.duplicates(types)) > 0
-        """
-        + build_root_summary_return_statement("root"),
+        """ + build_root_summary_return_statement("root"),
     ),
     (
         "test_no_duplicated_study_version_by_status_and_dates",
@@ -134,8 +132,7 @@ QUERIES: list[tuple[str, str, str]] = [
         WITH root, collect(v.status) as statuses, v
         WITH root, statuses, collect(v.start_date) as starts, collect(v.end_date) as ends
         WHERE (size(apoc.coll.duplicates(starts)) > 0 OR size(apoc.coll.duplicates(ends)) > 0)
-        """
-        + build_root_summary_return_statement("root"),
+        """ + build_root_summary_return_statement("root"),
     ),
     (
         "no_study_version_has_negative_duration",
@@ -143,8 +140,7 @@ QUERIES: list[tuple[str, str, str]] = [
         """
         MATCH (root:StudyRoot {uid: $study_uid})-[v:HAS_VERSION|LATEST_DRAFT|LATEST_FINAL|LATEST_LOCKED|LATEST_RETIRED|LATEST_RELEASED]->()
         WHERE v.end_date IS NOT NULL AND v.end_date < v.start_date
-        """
-        + build_root_summary_return_statement("root"),
+        """ + build_root_summary_return_statement("root"),
     ),
     (
         "no_study_version_lacks_start_date",
@@ -152,8 +148,7 @@ QUERIES: list[tuple[str, str, str]] = [
         """
         MATCH (root:StudyRoot {uid: $study_uid})-[v:HAS_VERSION|LATEST_DRAFT|LATEST_FINAL|LATEST_LOCKED|LATEST_RETIRED|LATEST_RELEASED]->()
         WHERE v.start_date IS NULL
-        """
-        + build_root_summary_return_statement("root"),
+        """ + build_root_summary_return_statement("root"),
     ),
     (
         "no_study_version_lacks_end_date",
@@ -161,8 +156,7 @@ QUERIES: list[tuple[str, str, str]] = [
         """
         MATCH (root:StudyRoot {uid: $study_uid})-[v:HAS_VERSION]->(sv)
         WHERE v.end_date IS NULL AND NOT (root)-[:LATEST]->(sv)
-        """
-        + build_root_summary_return_statement("root"),
+        """ + build_root_summary_return_statement("root"),
     ),
     (
         "study_versions_in_chronologic_order",
@@ -199,8 +193,7 @@ QUERIES: list[tuple[str, str, str]] = [
         WITH root, latest, collect(value) as values
         WITH root, latest, last(values) as latest_by_date
         WITH root WHERE latest <> latest_by_date
-        """
-        + build_root_summary_return_statement("root"),
+        """ + build_root_summary_return_statement("root"),
     ),
     (
         "no_latest_without_has_version",
@@ -209,8 +202,7 @@ QUERIES: list[tuple[str, str, str]] = [
         MATCH (root:StudyRoot {uid: $study_uid})-[lat:LATEST_DRAFT|LATEST_FINAL|LATEST_LOCKED|LATEST_RETIRED|LATEST_RELEASED]->(value)
         WHERE lat.version IS NOT NULL AND lat.status IS NOT NULL
             AND NOT (root)-[:HAS_VERSION {version: lat.version, status: lat.status}]->(value)
-        """
-        + build_root_summary_return_statement("root"),
+        """ + build_root_summary_return_statement("root"),
     ),
     (
         "no_released_without_locked",
@@ -218,8 +210,7 @@ QUERIES: list[tuple[str, str, str]] = [
         """
         MATCH (root:StudyRoot {uid: $study_uid})-[hvl:HAS_VERSION {status: "LOCKED"}]->(value)
         WHERE NOT (root)-[:HAS_VERSION {change_description: hvl.change_description, status: "RELEASED"}]->(value)
-        """
-        + build_root_summary_return_statement("root"),
+        """ + build_root_summary_return_statement("root"),
     ),
     (
         "unique_study_selection_on_each_study_value",
@@ -232,8 +223,7 @@ QUERIES: list[tuple[str, str, str]] = [
         WHERE ss_uid_count>=2
         MATCH (sv)--(n)
         WHERE n.uid = ss_uid
-        """
-        + build_root_summary_return_statement("n"),
+        """ + build_root_summary_return_statement("n"),
     ),
     # test_study_selection_audit_trail.py
     (
@@ -242,8 +232,7 @@ QUERIES: list[tuple[str, str, str]] = [
         """
         MATCH (sr:StudyRoot {uid: $study_uid})-[:AUDIT_TRAIL]->(all_sa:StudyAction)-->(ss:StudySelection)
         WHERE NOT (:StudyAction)-[:AFTER]->(ss) AND NOT (:UpdateSoASnapshot)-[:AFTER]->(ss)
-        """
-        + build_root_summary_return_statement("ss"),
+        """ + build_root_summary_return_statement("ss"),
     ),
     (
         "study_action_after_relation",
@@ -254,8 +243,7 @@ QUERIES: list[tuple[str, str, str]] = [
                 NOT (sa)-[:AFTER]->()
                 AND NOT sa:UpdateSoASnapshot //TODO: will change to StudyActionLog
                 AND NOT (sa)-[:BEFORE]->(:StudyValue)
-        """
-        + build_root_summary_return_statement("sa"),
+        """ + build_root_summary_return_statement("sa"),
     ),
     (
         "study_selection_labels",
@@ -265,8 +253,7 @@ QUERIES: list[tuple[str, str, str]] = [
         WHERE NOT ss:StudySelection AND
             NOT ss.uid is NULL
         WITH ss
-        """
-        + build_root_summary_return_statement("ss"),
+        """ + build_root_summary_return_statement("ss"),
     ),
     (
         "time_coherence_on_each_study_selection_required_relationship",
@@ -311,8 +298,7 @@ QUERIES: list[tuple[str, str, str]] = [
                 AND ss3.uid<>ss1.uid
         WITH ss1, ss1_ss2, ss2, ss2_saction, ss2_old_version
             WHERE ss3 IS NULL
-        """
-        + build_root_summary_return_statement("ss1"),
+        """ + build_root_summary_return_statement("ss1"),
     ),
     (
         "study_actions_are_in_chronological_order",
@@ -327,8 +313,7 @@ QUERIES: list[tuple[str, str, str]] = [
             RETURN ALL(i IN RANGE(1, SIZE(dates)-1) WHERE dates[i-1] <= dates[i]) AS inOrder
         }
         WITH sr, ss WHERE NOT inOrder
-        """
-        + build_root_summary_return_statement("ss"),
+        """ + build_root_summary_return_statement("ss"),
     ),
     # test_study_selection.py
     (
@@ -339,8 +324,7 @@ QUERIES: list[tuple[str, str, str]] = [
         OPTIONAL MATCH (av)<-[ahv:HAS_VERSION]-(ar:ActivityRoot) 
         WHERE ahv.start_date < sa.date AND (ahv.end_date IS NULL OR ahv.end_date > sa.date) AND ahv.status = "Final"
         WITH sa, sact, av WHERE ar IS NULL
-        """
-        + build_root_summary_return_statement("sact"),
+        """ + build_root_summary_return_statement("sact"),
     ),
     # testing study versions and study definition documents
     (
@@ -352,8 +336,7 @@ QUERIES: list[tuple[str, str, str]] = [
         OPTIONAL MATCH (study_value)-[:HAS_STUDY_VERSION]->(study_version:StudyVersion)
         WITH study_version, collect(DISTINCT study_definition_document) as study_definition_documents
         WHERE size(study_definition_documents) > 1
-        """
-        + build_root_summary_return_statement("study_version"),
+        """ + build_root_summary_return_statement("study_version"),
     ),
     (
         "study_version_exists_if_has_protocol_soa_cell_and_study_definition_document_exists",
@@ -363,8 +346,7 @@ QUERIES: list[tuple[str, str, str]] = [
         MATCH (study_value)-[:HAS_STUDY_DEFINITION_DOCUMENT]->(study_definition_document:StudyDefinitionDocument)
         OPTIONAL MATCH (study_value)-[:HAS_STUDY_VERSION]->(study_version:StudyVersion)
         WHERE soa_cell IS NOT NULL AND study_definition_document IS NOT NULL AND study_version IS NULL
-        """
-        + build_root_summary_return_statement("study_definition_document"),
+        """ + build_root_summary_return_statement("study_definition_document"),
     ),
     (
         "study_version_exists_if_study_definition_document_exists",
@@ -372,8 +354,7 @@ QUERIES: list[tuple[str, str, str]] = [
         """
         MATCH (study_root:StudyRoot {uid: $study_uid})-[:HAS_VERSION]->(study_value:StudyValue)-[:HAS_STUDY_DEFINITION_DOCUMENT]->(study_definition_document:StudyDefinitionDocument)
         WHERE study_definition_document IS NOT NULL AND NOT (study_value)-[:HAS_STUDY_VERSION]->(:StudyVersion)
-        """
-        + build_root_summary_return_statement("study_definition_document"),
+        """ + build_root_summary_return_statement("study_definition_document"),
     ),
     (
         "FINAL_or_RELEASED_study_version_exisits_if_study_version_node_exists",
@@ -383,8 +364,7 @@ QUERIES: list[tuple[str, str, str]] = [
         WHERE has_version.status IN ["FINAL", "RELEASED"]
         WITH study_version, collect(has_version) as final_or_released_versions
         WHERE size(final_or_released_versions) = 0
-        """
-        + build_root_summary_return_statement("study_version"),
+        """ + build_root_summary_return_statement("study_version"),
     ),
 ]
 

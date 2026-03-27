@@ -19,7 +19,6 @@
               :items="programmes"
               item-title="name"
               item-value="uid"
-              density="compact"
               clearable
               :rules="[formRules.required]"
             />
@@ -31,7 +30,6 @@
               id="name"
               v-model="form.name"
               :label="$t('ProjectForm.name')"
-              density="compact"
               clearable
               data-cy="project-name"
               :rules="[formRules.required]"
@@ -44,7 +42,6 @@
               id="project-number"
               v-model="form.project_number"
               :label="$t('ProjectForm.project_number')"
-              density="compact"
               clearable
               data-cy="project-number"
               :rules="[formRules.required]"
@@ -57,7 +54,6 @@
               id="description"
               v-model="form.description"
               :label="$t('ProjectForm.description')"
-              density="compact"
               clearable
               data-cy="project-description"
               :rules="[formRules.required]"

@@ -171,6 +171,7 @@ def set_up_base_graph_for_studies():
             study_title_exists_callback=lambda _, study_number: False,
             study_short_title_exists_callback=lambda _, study_number: False,
             study_number_exists_callback=lambda x, y: False,
+            study_acronym_exists_callback=lambda x, y: False,
             author_id=AUTHOR_ID,
         )
         test_data.studies_repository.save(study_ar)

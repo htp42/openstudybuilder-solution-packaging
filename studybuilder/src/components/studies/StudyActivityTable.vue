@@ -116,7 +116,14 @@
       {{ $filters.yesno(item.activity.is_data_collected) }}
     </template>
     <template #[`item.start_date`]="{ item }">
-      {{ $filters.date(item.start_date) }}
+      <v-tooltip location="top">
+        <template #activator="{ props }">
+          <span v-bind="props">{{
+            $filters.dateRelative(item.start_date)
+          }}</span>
+        </template>
+        {{ $filters.date(item.start_date) }}
+      </v-tooltip>
     </template>
   </NNTable>
   <v-dialog

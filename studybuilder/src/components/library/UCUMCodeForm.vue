@@ -15,7 +15,6 @@
               v-model="form.name"
               :label="$t('_global.name')"
               :rules="[formRules.required]"
-              density="compact"
               clearable
             />
           </v-col>
@@ -26,7 +25,6 @@
               v-model="form.definition"
               :label="$t('UCUM.description')"
               :rules="[formRules.required]"
-              density="compact"
               clearable
               auto-grow
               rows="1"
@@ -39,7 +37,6 @@
               v-model="form.change_description"
               :label="$t('_global.change_description')"
               :rules="[formRules.required]"
-              density="compact"
               clearable
               auto-grow
               rows="1"

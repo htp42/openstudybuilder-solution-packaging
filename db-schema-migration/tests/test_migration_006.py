@@ -130,9 +130,11 @@ def test_migrate_study_activity_instances(migration):
                     study_activity_instance["study_activity_group"][
                         "activity_group_uid"
                     ],
-                    study_activity_instance["activity_instance"]["uid"]
-                    if study_activity_instance["activity_instance"]
-                    else None,
+                    (
+                        study_activity_instance["activity_instance"]["uid"]
+                        if study_activity_instance["activity_instance"]
+                        else None
+                    ),
                 )
             #     vals = list(study_activity_instance_dict.values())
             # assert len(set(vals)) == len(

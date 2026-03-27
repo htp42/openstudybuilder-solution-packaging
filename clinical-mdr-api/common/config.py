@@ -67,6 +67,9 @@ class Settings(BaseSettings):
     neo4j_dsn: str
     neo4j_connection_lifetime: float = 29 * 60
     neo4j_liveness_check_timeout: float = 5 * 60
+    soft_cardinality_check: bool = (
+        True  # This will prevent cardinality violations from being raised as errors.
+    )
 
     # Cache Configuration
     cache_max_size: int = 1000

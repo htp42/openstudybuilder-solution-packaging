@@ -1,10 +1,10 @@
+from datetime import datetime
 from typing import Annotated, Self
 
 from pydantic import ConfigDict, Field
 
 from clinical_mdr_api.domains.standard_data_models.sponsor_model import SponsorModelAR
-from clinical_mdr_api.models.concepts.concept import VersionProperties
-from clinical_mdr_api.models.libraries.library import Library
+from clinical_mdr_api.models import _generic_descriptions
 from clinical_mdr_api.models.utils import BaseModel, InputModel
 
 
@@ -12,32 +12,64 @@ class SponsorModelBase(BaseModel):
     pass
 
 
-class SponsorModel(SponsorModelBase, VersionProperties):
+class SponsorModel(SponsorModelBase):
     model_config = ConfigDict(from_attributes=True)
 
     uid: Annotated[
         str | None,
-        Field(json_schema_extra={"source": "uid", "nullable": True}),
-    ] = None
+        Field(json_schema_extra={"source": "uid"}),
+    ]
     name: Annotated[
         str,
         Field(
             description="The name or the sponsor model. E.g. sdtm_sponsormodel_3.2-NN15",
-            json_schema_extra={"source": "has_latest_sponsor_model_value.name"},
+            json_schema_extra={"source": "has_sponsor_model_version.name"},
+        ),
+    ]
+    start_date: Annotated[
+        datetime | None,
+        Field(
+            description=_generic_descriptions.START_DATE,
+            json_schema_extra={
+                "source": "has_sponsor_model_version|start_date",
+                "nullable": True,
+            },
+        ),
+    ] = None
+    end_date: Annotated[
+        datetime | None,
+        Field(
+            description=_generic_descriptions.END_DATE,
+            json_schema_extra={
+                "source": "has_sponsor_model_version|end_date",
+                "nullable": True,
+            },
+        ),
+    ] = None
+    status: Annotated[
+        str | None,
+        Field(
+            json_schema_extra={
+                "source": "has_sponsor_model_version|status",
+                "nullable": True,
+            },
+        ),
+    ] = None
+    version: Annotated[
+        str,
+        Field(
+            description="Version of the sponsor model.",
+            json_schema_extra={"source": "has_sponsor_model_version|version"},
         ),
     ]
     extended_implementation_guide: Annotated[
         str | None,
         Field(
             json_schema_extra={
-                "source": "has_latest_sponsor_model_value__extends_version.name",
+                "source": "has_sponsor_model_version.extends_version.name",
                 "nullable": True,
             },
         ),
-    ] = None
-    library_name: Annotated[
-        str | None,
-        Field(json_schema_extra={"source": "has_library.name", "nullable": True}),
     ] = None
 
     @classmethod
@@ -48,13 +80,10 @@ class SponsorModel(SponsorModelBase, VersionProperties):
         return cls(
             uid=sponsor_model_ar.uid,
             name=sponsor_model_ar.name,
-            library_name=Library.from_library_vo(sponsor_model_ar.library).name,
             start_date=sponsor_model_ar.item_metadata.start_date,
             end_date=sponsor_model_ar.item_metadata.end_date,
             status=sponsor_model_ar.item_metadata.status.value,
             version=sponsor_model_ar.item_metadata.version,
-            change_description=sponsor_model_ar.item_metadata.change_description,
-            author_username=sponsor_model_ar.item_metadata.author_username,
         )
 
 

@@ -149,6 +149,11 @@ thead.v-data-table-header {
   background: rgb(var(--v-theme-tableGray));
 }
 
+.v-data-table .v-data-table-header__content,
+.v-data-table .v-data-table__th .headerRow {
+  font-size: 12px !important;
+}
+
 .theme--light.v-sheet.v-stepper {
   box-shadow: none !important;
 }

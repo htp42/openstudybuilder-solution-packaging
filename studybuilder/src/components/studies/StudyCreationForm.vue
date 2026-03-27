@@ -12,7 +12,7 @@
       <div class="dialog-sub-title mb-4">
         {{ $t('StudyCreationForm.creation_mode_title') }}
       </div>
-      <v-radio-group v-model="createFromScratch" color="primary">
+      <v-radio-group v-model="createFromScratch">
         <v-radio
           :value="true"
           :label="$t('StudyCreationForm.create_from_scratch')"
@@ -41,9 +41,6 @@
                 item-title="project_number"
                 return-object
                 :rules="[formRules.required]"
-                density="compact"
-                variant="outlined"
-                rounded="lg"
                 clearable
                 data-cy="project-id"
                 @update:model-value="updateProject"
@@ -54,10 +51,7 @@
                 :label="$t('StudyForm.project_name')"
                 :model-value="project.name"
                 disabled
-                variant="outlined"
-                rounded="lg"
                 hide-details
-                density="compact"
                 data-cy="project-name"
               />
             </v-col>
@@ -68,10 +62,7 @@
                 :label="$t('StudyForm.brand_name')"
                 :model-value="project.brand_name"
                 disabled
-                variant="outlined"
-                rounded="lg"
                 hide-details
-                density="compact"
                 data-cy="brand-name"
               />
             </v-col>
@@ -88,12 +79,8 @@
                       studyForm.study_acronym,
                       $t('StudyForm.one_of_two_error_message')
                     ),
-                  (value) =>
-                    formRules.max(value, appStore.userData.studyNumberLength),
+                  (value) => formRules.max(value, appStore.studyNumberLength),
                 ]"
-                density="compact"
-                variant="outlined"
-                rounded="lg"
                 clearable
                 data-cy="study-number"
               />
@@ -113,9 +100,6 @@
                       $t('StudyForm.one_of_two_error_message')
                     ),
                 ]"
-                density="compact"
-                variant="outlined"
-                rounded="lg"
                 clearable
                 data-cy="study-acronym"
               />
@@ -125,10 +109,7 @@
                 :label="$t('StudyForm.study_id')"
                 :model-value="studyId"
                 disabled
-                variant="outlined"
-                rounded="lg"
                 hide-details
-                density="compact"
                 data-cy="study-id"
               />
             </v-col>

@@ -1,4 +1,5 @@
-""" Schema migrations needed for release 1.17 to PROD post August 2025."""
+"""Schema migrations needed for release 1.17 to PROD post August 2025."""
+
 import json
 import os
 

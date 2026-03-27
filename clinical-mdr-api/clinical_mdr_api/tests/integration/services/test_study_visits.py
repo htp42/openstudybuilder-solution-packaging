@@ -1,4 +1,5 @@
 import unittest
+from typing import Iterable
 
 from neomodel import db
 
@@ -15,6 +16,7 @@ from clinical_mdr_api.models.study_selections.study_visit import (
     StudyVisit,
     StudyVisitCreateInput,
     StudyVisitEditInput,
+    StudyVisitLite,
 )
 from clinical_mdr_api.services.studies.study_activity_schedule import (
     StudyActivityScheduleService,
@@ -52,6 +54,7 @@ from common.exceptions import (
     ValidationException,
     VisitsAreNotEqualException,
 )
+from common.utils import VisitClass
 
 
 class TestStudyVisitManagement(unittest.TestCase):
@@ -101,8 +104,8 @@ class TestStudyVisitManagement(unittest.TestCase):
     def test__list__visits_studies(self):
         inputs = {
             "study_epoch_uid": self.epoch1.uid,
-            "visit_type_uid": "VisitType_0001",
-            "time_reference_uid": "VisitSubType_0005",
+            "visit_type": {"term_uid": "VisitType_0001"},
+            "time_reference": {"term_uid": "VisitSubType_0005"},
             "time_value": 0,
             "time_unit_uid": self.day_uid,
             "is_global_anchor_visit": True,
@@ -119,8 +122,8 @@ class TestStudyVisitManagement(unittest.TestCase):
 
         create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
-            visit_type_uid="VisitType_0001",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0001"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=0,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=True,
@@ -129,8 +132,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         )
         create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
-            visit_type_uid="VisitType_0003",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0003"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=12,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=False,
@@ -139,8 +142,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         )
         create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
-            visit_type_uid="VisitType_0003",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0003"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=10,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=False,
@@ -149,8 +152,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         )
         inputs = {
             "study_epoch_uid": self.epoch1.uid,
-            "visit_type_uid": "VisitType_0004",
-            "time_reference_uid": "VisitSubType_0005",
+            "visit_type": {"term_uid": "VisitType_0004"},
+            "time_reference": {"term_uid": "VisitSubType_0005"},
             "time_value": 20,
             "time_unit_uid": self.day_uid,
             "is_global_anchor_visit": False,
@@ -167,8 +170,8 @@ class TestStudyVisitManagement(unittest.TestCase):
 
         version3 = create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
-            visit_type_uid="VisitType_0004",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0004"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=20,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=False,
@@ -180,8 +183,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         self.assertEqual(version3.week_in_study_label, "Week 2")
         version4 = create_visit_with_update(
             study_epoch_uid=self.epoch2.uid,
-            visit_type_uid="VisitType_0002",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0002"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=30,
             time_unit_uid=self.day_uid,
             visit_sublabel_reference=None,
@@ -191,8 +194,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         )
         version5 = create_visit_with_update(
             study_epoch_uid=self.epoch2.uid,
-            visit_type_uid="VisitType_0003",
-            time_reference_uid="VisitSubType_0002",
+            visit_type={"term_uid": "VisitType_0003"},
+            time_reference={"term_uid": "VisitSubType_0002"},
             time_value=31,
             time_unit_uid=self.day_uid,
             visit_sublabel_reference=version4.uid,
@@ -203,6 +206,9 @@ class TestStudyVisitManagement(unittest.TestCase):
         visit_service: StudyVisitService = StudyVisitService(study_uid=self.study.uid)
         visits = visit_service.get_all_visits(self.study.uid)
         self.assertEqual(len(visits.items), 6)
+
+        # check lite version of get_all_visits returns the same visits as normal version
+        assert_get_all_visits_lite_compares(visits.items, self.study.uid)
 
         v3new: StudyVisit = visit_service.find_by_uid(
             study_uid=self.study.uid, uid=version3.uid
@@ -251,8 +257,8 @@ class TestStudyVisitManagement(unittest.TestCase):
 
         inputs = {
             "study_epoch_uid": self.epoch2.uid,
-            "visit_type_uid": "VisitType_0003",
-            "time_reference_uid": "VisitSubType_0002",
+            "visit_type": {"term_uid": "VisitType_0003"},
+            "time_reference": {"term_uid": "VisitSubType_0002"},
             "time_value": 40,
             "time_unit_uid": self.day_uid,
             "visit_sublabel_reference": version4.uid,
@@ -327,8 +333,8 @@ class TestStudyVisitManagement(unittest.TestCase):
             v3new.uid,
             uid=v3new.uid,
             study_epoch_uid=self.epoch1.uid,
-            visit_type_uid="VisitType_0004",
-            time_reference_uid="VisitSubType_0001",
+            visit_type={"term_uid": "VisitType_0004"},
+            time_reference={"term_uid": "VisitSubType_0001"},
             time_value=25,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=False,
@@ -342,26 +348,26 @@ class TestStudyVisitManagement(unittest.TestCase):
 
         input_values = {
             "study_epoch_uid": self.epoch1.uid,
-            "visit_type_uid": "VisitType_0001",
-            "time_reference_uid": "VisitSubType_0001",
+            "visit_type": {"term_uid": "VisitType_0001"},
+            "time_reference": {"term_uid": "VisitSubType_0001"},
             "time_value": 0,
             "time_unit_uid": self.day_uid,
-            "visit_contact_mode_uid": "VisitContactMode_0002",
+            "visit_contact_mode": {"term_uid": "VisitContactMode_0002"},
             "max_visit_window_value": 10,
             "min_visit_window_value": 0,
             "show_visit": True,
             "is_global_anchor_visit": False,
             "visit_class": "SINGLE_VISIT",
             "visit_subclass": "SINGLE_VISIT",
-            "epoch_allocation_uid": "EpochAllocation_0002",
+            "epoch_allocation": {"term_uid": "EpochAllocation_0002"},
         }
         visit = create_visit_with_update(**input_values)
         visit_after_create = visit_service.find_by_uid(
             study_uid=self.study.uid, uid=visit.uid
         )
         self.assertEqual(
-            visit_after_create.visit_contact_mode_uid,
-            input_values["visit_contact_mode_uid"],
+            visit_after_create.visit_contact_mode.term_uid,
+            input_values["visit_contact_mode"]["term_uid"],
         )
         self.assertEqual(
             visit_after_create.max_visit_window_value,
@@ -377,14 +383,16 @@ class TestStudyVisitManagement(unittest.TestCase):
         self.assertEqual(visit_after_create.time_value, input_values["time_value"])
         self.assertEqual(visit_after_create.show_visit, input_values["show_visit"])
         self.assertEqual(
-            visit_after_create.time_reference_uid, input_values["time_reference_uid"]
+            visit_after_create.time_reference.term_uid,
+            input_values["time_reference"]["term_uid"],
         )
         self.assertEqual(
-            visit_after_create.visit_type_uid, input_values["visit_type_uid"]
+            visit_after_create.visit_type.term_uid,
+            input_values["visit_type"]["term_uid"],
         )
         self.assertEqual(
-            visit_after_create.epoch_allocation_uid,
-            input_values["epoch_allocation_uid"],
+            visit_after_create.epoch_allocation.term_uid,
+            input_values["epoch_allocation"]["term_uid"],
         )
         self.assertEqual(visit_after_create.study_duration_weeks_label, "0 weeks")
         self.assertEqual(visit_after_create.week_in_study_label, "Week 0")
@@ -393,14 +401,14 @@ class TestStudyVisitManagement(unittest.TestCase):
         visit_service = StudyVisitService(study_uid=self.study.uid)
         visit = create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
-            visit_type_uid="VisitType_0001",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0001"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=0,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=True,
             visit_class="SINGLE_VISIT",
             visit_subclass="SINGLE_VISIT",
-            epoch_allocation_uid="EpochAllocation_0001",
+            epoch_allocation={"term_uid": "EpochAllocation_0001"},
         )
         self.assertEqual(
             visit.is_soa_milestone,
@@ -437,11 +445,11 @@ class TestStudyVisitManagement(unittest.TestCase):
         edit_input = {
             "uid": visit.uid,
             "study_epoch_uid": visit.study_epoch_uid,
-            "visit_type_uid": "VisitType_0001",
-            "time_reference_uid": "VisitSubType_0005",
+            "visit_type": {"term_uid": "VisitType_0001"},
+            "time_reference": {"term_uid": "VisitSubType_0005"},
             "time_value": 7,
             "time_unit_uid": self.day_uid,
-            "visit_contact_mode_uid": "VisitContactMode_0002",
+            "visit_contact_mode": {"term_uid": "VisitContactMode_0002"},
             "max_visit_window_value": 10,
             "min_visit_window_value": 0,
             "visit_window_unit_uid": visit.visit_window_unit_uid,
@@ -450,7 +458,7 @@ class TestStudyVisitManagement(unittest.TestCase):
             "is_soa_milestone": True,
             "visit_class": "SINGLE_VISIT",
             "visit_subclass": "SINGLE_VISIT",
-            "epoch_allocation_uid": "EpochAllocation_0002",
+            "epoch_allocation": {"term_uid": "EpochAllocation_0002"},
         }
         visit_service.edit(
             study_uid=visit.study_uid,
@@ -465,8 +473,8 @@ class TestStudyVisitManagement(unittest.TestCase):
             True,
         )
         self.assertEqual(
-            visit_after_update.visit_contact_mode_uid,
-            edit_input["visit_contact_mode_uid"],
+            visit_after_update.visit_contact_mode.term_uid,
+            edit_input["visit_contact_mode"]["term_uid"],
         )
         self.assertEqual(
             visit_after_update.max_visit_window_value,
@@ -480,13 +488,15 @@ class TestStudyVisitManagement(unittest.TestCase):
         self.assertEqual(visit_after_update.time_value, edit_input["time_value"])
         self.assertEqual(visit_after_update.show_visit, edit_input["show_visit"])
         self.assertEqual(
-            visit_after_update.time_reference_uid, edit_input["time_reference_uid"]
+            visit_after_update.time_reference.term_uid,
+            edit_input["time_reference"]["term_uid"],
         )
         self.assertEqual(
-            visit_after_update.visit_type_uid, edit_input["visit_type_uid"]
+            visit_after_update.visit_type.term_uid, edit_input["visit_type"]["term_uid"]
         )
         self.assertEqual(
-            visit_after_update.epoch_allocation_uid, edit_input["epoch_allocation_uid"]
+            visit_after_update.epoch_allocation.term_uid,
+            edit_input["epoch_allocation"]["term_uid"],
         )
         self.assertEqual(visit_after_update.study_duration_weeks_label, "1 weeks")
         self.assertEqual(visit_after_update.week_in_study_label, "Week 1")
@@ -495,15 +505,15 @@ class TestStudyVisitManagement(unittest.TestCase):
         visit_service = StudyVisitService(study_uid=self.study.uid)
         first_visit = create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
-            visit_type_uid="VisitType_0001",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0001"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=0,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=True,
             is_soa_milestone=True,
             visit_class="SINGLE_VISIT",
             visit_subclass="SINGLE_VISIT",
-            epoch_allocation_uid="EpochAllocation_0001",
+            epoch_allocation={"term_uid": "EpochAllocation_0001"},
         )
         self.assertEqual(first_visit.is_soa_milestone, True)
 
@@ -530,11 +540,11 @@ class TestStudyVisitManagement(unittest.TestCase):
         edit_input = {
             "uid": first_visit.uid,
             "study_epoch_uid": first_visit.study_epoch_uid,
-            "visit_type_uid": "VisitType_0001",
-            "time_reference_uid": "VisitSubType_0005",
+            "visit_type": {"term_uid": "VisitType_0001"},
+            "time_reference": {"term_uid": "VisitSubType_0005"},
             "time_value": 7,
             "time_unit_uid": self.day_uid,
-            "visit_contact_mode_uid": "VisitContactMode_0002",
+            "visit_contact_mode": {"term_uid": "VisitContactMode_0002"},
             "max_visit_window_value": 10,
             "min_visit_window_value": 0,
             "visit_window_unit_uid": first_visit.visit_window_unit_uid,
@@ -543,7 +553,7 @@ class TestStudyVisitManagement(unittest.TestCase):
             "is_soa_milestone": False,
             "visit_class": "SINGLE_VISIT",
             "visit_subclass": "SINGLE_VISIT",
-            "epoch_allocation_uid": "EpochAllocation_0002",
+            "epoch_allocation": {"term_uid": "EpochAllocation_0002"},
         }
         visit_service.edit(
             study_uid=first_visit.study_uid,
@@ -556,8 +566,8 @@ class TestStudyVisitManagement(unittest.TestCase):
 
         self.assertEqual(visit_after_update.is_soa_milestone, False)
         self.assertEqual(
-            visit_after_update.visit_contact_mode_uid,
-            edit_input["visit_contact_mode_uid"],
+            visit_after_update.visit_contact_mode.term_uid,
+            edit_input["visit_contact_mode"]["term_uid"],
         )
         self.assertEqual(
             visit_after_update.max_visit_window_value,
@@ -571,13 +581,15 @@ class TestStudyVisitManagement(unittest.TestCase):
         self.assertEqual(visit_after_update.time_value, edit_input["time_value"])
         self.assertEqual(visit_after_update.show_visit, edit_input["show_visit"])
         self.assertEqual(
-            visit_after_update.time_reference_uid, edit_input["time_reference_uid"]
+            visit_after_update.time_reference.term_uid,
+            edit_input["time_reference"]["term_uid"],
         )
         self.assertEqual(
-            visit_after_update.visit_type_uid, edit_input["visit_type_uid"]
+            visit_after_update.visit_type.term_uid, edit_input["visit_type"]["term_uid"]
         )
         self.assertEqual(
-            visit_after_update.epoch_allocation_uid, edit_input["epoch_allocation_uid"]
+            visit_after_update.epoch_allocation.term_uid,
+            edit_input["epoch_allocation"]["term_uid"],
         )
         self.assertEqual(visit_after_update.study_duration_weeks_label, "1 weeks")
         self.assertEqual(visit_after_update.week_in_study_label, "Week 1")
@@ -591,8 +603,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         first_visit_after_create = visits_versions[1]
         self.assertEqual(first_visit_after_edit.uid, first_visit.uid)
         self.assertEqual(
-            first_visit_after_edit.visit_contact_mode_uid,
-            edit_input["visit_contact_mode_uid"],
+            first_visit_after_edit.visit_contact_mode.term_uid,
+            edit_input["visit_contact_mode"]["term_uid"],
         )
         self.assertEqual(
             first_visit_after_edit.max_visit_window_value,
@@ -605,8 +617,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         self.assertEqual(first_visit_after_edit.time_value, edit_input["time_value"])
 
         self.assertEqual(
-            first_visit_after_edit.epoch_allocation_uid,
-            edit_input["epoch_allocation_uid"],
+            first_visit_after_edit.epoch_allocation.term_uid,
+            edit_input["epoch_allocation"]["term_uid"],
         )
         self.assertGreater(
             first_visit_after_edit.start_date, first_visit_after_create.start_date
@@ -625,8 +637,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         time_value = 30
         second_visit = create_visit_with_update(
             study_epoch_uid=self.epoch2.uid,
-            visit_type_uid="VisitType_0002",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0002"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=time_value,
             time_unit_uid=self.day_uid,
             visit_sublabel_reference=None,
@@ -644,8 +656,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         second_visit_history = all_visits_versions[2]
         self.assertEqual(first_visit_after_edit.uid, first_visit.uid)
         self.assertEqual(
-            first_visit_after_edit.visit_contact_mode_uid,
-            edit_input["visit_contact_mode_uid"],
+            first_visit_after_edit.visit_contact_mode.term_uid,
+            edit_input["visit_contact_mode"]["term_uid"],
         )
         self.assertEqual(
             first_visit_after_edit.max_visit_window_value,
@@ -661,14 +673,16 @@ class TestStudyVisitManagement(unittest.TestCase):
         self.assertEqual(first_visit_after_edit.time_value, edit_input["time_value"])
         self.assertEqual(first_visit_after_edit.show_visit, edit_input["show_visit"])
         self.assertEqual(
-            first_visit_after_edit.time_reference_uid, edit_input["time_reference_uid"]
+            first_visit_after_edit.time_reference.term_uid,
+            edit_input["time_reference"]["term_uid"],
         )
         self.assertEqual(
-            first_visit_after_edit.visit_type_uid, edit_input["visit_type_uid"]
+            first_visit_after_edit.visit_type.term_uid,
+            edit_input["visit_type"]["term_uid"],
         )
         self.assertEqual(
-            first_visit_after_edit.epoch_allocation_uid,
-            edit_input["epoch_allocation_uid"],
+            first_visit_after_edit.epoch_allocation.term_uid,
+            edit_input["epoch_allocation"]["term_uid"],
         )
         self.assertEqual(first_visit_after_edit.uid, first_visit_after_create.uid)
         self.assertGreater(
@@ -691,8 +705,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         visit_service = StudyVisitService(study_uid=self.study.uid)
         create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
-            visit_type_uid="VisitType_0001",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0001"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=0,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=True,
@@ -702,8 +716,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         time_value = 30
         first_visit_in_seq_of_subvisits = create_visit_with_update(
             study_epoch_uid=self.epoch2.uid,
-            visit_type_uid="VisitType_0002",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0002"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=time_value,
             time_unit_uid=self.day_uid,
             visit_sublabel_reference=None,
@@ -715,10 +729,11 @@ class TestStudyVisitManagement(unittest.TestCase):
         # we add so many subvists as there is a logic of
         # recalculating subvists unique-visit-numbers when we exceed allowed limits
         for i in range(1, 21):
+            all_visits = None
             create_visit_with_update(
                 study_epoch_uid=self.epoch2.uid,
-                visit_type_uid="VisitType_0003",
-                time_reference_uid="VisitSubType_0005",
+                visit_type={"term_uid": "VisitType_0003"},
+                time_reference={"term_uid": "VisitSubType_0005"},
                 time_value=time_value + i,
                 time_unit_uid=self.day_uid,
                 visit_sublabel_reference=first_visit_in_seq_of_subvisits.uid,
@@ -777,10 +792,15 @@ class TestStudyVisitManagement(unittest.TestCase):
                     self.assertEqual(
                         sub_visit.unique_visit_number, sub_visit_uvn + sub_idx * 1
                     )
+
+            # check lite version of get_all_visits returns the same visits as normal version
+            if all_visits:
+                assert_get_all_visits_lite_compares(all_visits, self.study.uid)
+
         create_visit_with_update(
             study_epoch_uid=self.epoch2.uid,
-            visit_type_uid="VisitType_0003",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0003"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=-1,
             time_unit_uid=self.day_uid,
             visit_sublabel_reference=first_visit_in_seq_of_subvisits.uid,
@@ -811,6 +831,9 @@ class TestStudyVisitManagement(unittest.TestCase):
         all_visits = visit_service.get_all_visits(study_uid=self.study.uid).items
         self.assertEqual(len(all_visits), 23)
 
+        # check lite version of get_all_visits returns the same visits as normal version
+        assert_get_all_visits_lite_compares(all_visits, self.study.uid)
+
         all_visits = [visit for visit in all_visits if visit.visit_number == 2]
 
         self.assertEqual(all_visits[0].unique_visit_number, sub_visit_uvn)
@@ -826,8 +849,8 @@ class TestStudyVisitManagement(unittest.TestCase):
 
         vis = create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
-            visit_type_uid="VisitType_0001",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0001"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=0,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=True,
@@ -859,7 +882,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         self.assertEqual(global_anchor_visit.uid, vis.uid)
         self.assertEqual(global_anchor_visit.visit_name, vis.visit_name)
         self.assertEqual(
-            global_anchor_visit.visit_type_name, vis.visit_type.sponsor_preferred_name
+            global_anchor_visit.visit_type_name,
+            vis.visit_type.sponsor_preferred_name,
         )
 
     def test__get_anchor_visits_in_a_group_of_subvisits(self):
@@ -872,8 +896,8 @@ class TestStudyVisitManagement(unittest.TestCase):
 
         create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
-            visit_type_uid="VisitType_0001",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0001"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=0,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=True,
@@ -882,8 +906,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         )
         anchor_visit = create_visit_with_update(
             study_epoch_uid=self.epoch2.uid,
-            visit_type_uid="VisitType_0002",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0002"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=30,
             time_unit_uid=self.day_uid,
             visit_sublabel_reference=None,
@@ -926,8 +950,8 @@ class TestStudyVisitManagement(unittest.TestCase):
 
         create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
-            visit_type_uid="VisitType_0001",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0001"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=0,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=True,
@@ -936,8 +960,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         )
         create_visit_with_update(
             study_epoch_uid=self.epoch3.uid,
-            visit_type_uid="VisitType_0003",
-            time_reference_uid="VisitSubType_0001",
+            visit_type={"term_uid": "VisitType_0003"},
+            time_reference={"term_uid": "VisitSubType_0001"},
             time_value=10,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=False,
@@ -946,8 +970,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         )
         create_visit_with_update(
             study_epoch_uid=self.epoch3.uid,
-            visit_type_uid="VisitType_0003",
-            time_reference_uid="VisitSubType_0001",
+            visit_type={"term_uid": "VisitType_0003"},
+            time_reference={"term_uid": "VisitSubType_0001"},
             time_value=30,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=False,
@@ -992,8 +1016,8 @@ class TestStudyVisitManagement(unittest.TestCase):
 
         create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
-            visit_type_uid="VisitType_0001",
-            time_reference_uid="VisitSubType_0001",
+            visit_type={"term_uid": "VisitType_0001"},
+            time_reference={"term_uid": "VisitSubType_0001"},
             time_value=0,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=False,
@@ -1002,8 +1026,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         )
         create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
-            visit_type_uid="VisitType_0003",
-            time_reference_uid="VisitSubType_0001",
+            visit_type={"term_uid": "VisitType_0003"},
+            time_reference={"term_uid": "VisitSubType_0001"},
             time_value=10,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=False,
@@ -1012,8 +1036,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         )
         create_visit_with_update(
             study_epoch_uid=self.epoch2.uid,
-            visit_type_uid="VisitType_0003",
-            time_reference_uid="VisitSubType_0001",
+            visit_type={"term_uid": "VisitType_0003"},
+            time_reference={"term_uid": "VisitSubType_0001"},
             time_value=30,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=False,
@@ -1022,8 +1046,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         )
         create_visit_with_update(
             study_epoch_uid=self.epoch2.uid,
-            visit_type_uid="VisitType_0003",
-            time_reference_uid="VisitSubType_0001",
+            visit_type={"term_uid": "VisitType_0003"},
+            time_reference={"term_uid": "VisitSubType_0001"},
             time_value=40,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=False,
@@ -1032,8 +1056,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         )
         create_visit_with_update(
             study_epoch_uid=self.epoch3.uid,
-            visit_type_uid="VisitType_0003",
-            time_reference_uid="VisitSubType_0001",
+            visit_type={"term_uid": "VisitType_0003"},
+            time_reference={"term_uid": "VisitSubType_0001"},
             time_value=50,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=False,
@@ -1102,8 +1126,8 @@ class TestStudyVisitManagement(unittest.TestCase):
     def test__create_visit_with_duplicated_timing__error_raised(self):
         create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
-            visit_type_uid="VisitType_0001",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0001"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=0,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=True,
@@ -1132,8 +1156,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         with self.assertRaises(ValidationException):
             create_visit_with_update(
                 study_epoch_uid=self.epoch1.uid,
-                visit_type_uid="VisitType_0001",
-                time_reference_uid="VisitSubType_0005",
+                visit_type={"term_uid": "VisitType_0001"},
+                time_reference={"term_uid": "VisitSubType_0005"},
                 time_value=0,
                 time_unit_uid=self.day_uid,
                 is_global_anchor_visit=True,
@@ -1145,8 +1169,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         visit_service: StudyVisitService = StudyVisitService(study_uid=self.study.uid)
         create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
-            visit_type_uid="VisitType_0001",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0001"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=0,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=True,
@@ -1155,8 +1179,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         )
         create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
-            visit_type_uid="VisitType_0002",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0002"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=10,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=False,
@@ -1170,8 +1194,8 @@ class TestStudyVisitManagement(unittest.TestCase):
             "description": "description",
             "start_rule": "start_rule",
             "end_rule": "end_rule",
-            "visit_contact_mode_uid": "VisitContactMode_0001",
-            "visit_type_uid": "VisitType_0003",
+            "visit_contact_mode": {"term_uid": "VisitContactMode_0001"},
+            "visit_type": {"term_uid": "VisitType_0003"},
             "is_global_anchor_visit": False,
             "visit_class": "NON_VISIT",
         }
@@ -1207,11 +1231,14 @@ class TestStudyVisitManagement(unittest.TestCase):
         self.assertEqual(all_visits[0].time_value, 0)
         self.assertEqual(all_visits[1].time_value, 10)
         self.assertEqual(all_visits[2].time_value, None)
-        self.assertEqual(all_visits[2].time_reference_uid, None)
+        self.assertEqual(all_visits[2].time_reference, None)
         self.assertEqual(all_visits[2].time_reference, None)
         self.assertEqual(all_visits[2].visit_number, settings.non_visit_number)
         self.assertEqual(all_visits[2].min_visit_window_value, -9999)
         self.assertEqual(all_visits[2].max_visit_window_value, 9999)
+
+        # check lite version of get_all_visits returns the same visits as normal version
+        assert_get_all_visits_lite_compares(all_visits, self.study.uid)
 
         unscheduled_visit_input = {
             "study_epoch_uid": self.epoch1.uid,
@@ -1220,8 +1247,8 @@ class TestStudyVisitManagement(unittest.TestCase):
             "description": "description",
             "start_rule": "start_rule",
             "end_rule": "end_rule",
-            "visit_contact_mode_uid": "VisitContactMode_0001",
-            "visit_type_uid": "VisitType_0003",
+            "visit_contact_mode": {"term_uid": "VisitContactMode_0001"},
+            "visit_type": {"term_uid": "VisitType_0003"},
             "is_global_anchor_visit": False,
             "visit_class": "UNSCHEDULED_VISIT",
         }
@@ -1257,8 +1284,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         visit_service: StudyVisitService = StudyVisitService(study_uid=self.study.uid)
         create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
-            visit_type_uid="VisitType_0001",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0001"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=0,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=True,
@@ -1267,8 +1294,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         )
         special_visit_anchor = create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
-            visit_type_uid="VisitType_0002",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0002"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=10,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=False,
@@ -1277,8 +1304,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         )
         create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
-            visit_type_uid="VisitType_0003",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0003"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=15,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=False,
@@ -1311,8 +1338,8 @@ class TestStudyVisitManagement(unittest.TestCase):
             "description": "description",
             "start_rule": "start_rule",
             "end_rule": "end_rule",
-            "visit_contact_mode_uid": "VisitContactMode_0001",
-            "visit_type_uid": "VisitType_0003",
+            "visit_contact_mode": {"term_uid": "VisitContactMode_0001"},
+            "visit_type": {"term_uid": "VisitType_0003"},
             "is_global_anchor_visit": False,
             "visit_class": "SPECIAL_VISIT",
             "visit_sublabel_reference": special_visit_anchor.uid,
@@ -1347,13 +1374,16 @@ class TestStudyVisitManagement(unittest.TestCase):
         self.assertEqual(all_visits[0].time_value, 0)
         self.assertEqual(all_visits[1].time_value, 10)
         self.assertIsNone(all_visits[2].time_value)
-        self.assertIsNone(all_visits[2].time_reference_uid)
+        self.assertIsNone(all_visits[2].time_reference)
         self.assertIsNone(all_visits[2].time_reference)
         self.assertEqual(all_visits[2].visit_number, special_visit_anchor.visit_number)
         self.assertEqual(
             all_visits[2].visit_short_name, special_visit_anchor.visit_short_name + "A"
         )
         self.assertEqual(all_visits[3].time_value, 15)
+
+        # check lite version of get_all_visits returns the same visits as normal version
+        assert_get_all_visits_lite_compares(all_visits, self.study.uid)
 
         with self.assertRaises(BusinessLogicException) as message:
             visit_service.delete(
@@ -1375,8 +1405,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         visit_service: StudyVisitService = StudyVisitService(study_uid=self.study.uid)
         create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
-            visit_type_uid="VisitType_0001",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0001"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=0,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=True,
@@ -1385,8 +1415,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         )
         second_vis = create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
-            visit_type_uid="VisitType_0002",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0002"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=10,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=False,
@@ -1395,8 +1425,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         )
         third_visit = create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
-            visit_type_uid="VisitType_0002",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0002"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=15,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=False,
@@ -1405,8 +1435,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         )
         fourth_visit = create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
-            visit_type_uid="VisitType_0002",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0002"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=20,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=False,
@@ -1420,6 +1450,10 @@ class TestStudyVisitManagement(unittest.TestCase):
             group_format=VisitGroupFormat.LIST,
         )
         all_visits = visit_service.get_all_visits(study_uid=self.study.uid).items
+
+        # check lite version of get_all_visits returns the same visits as normal version
+        assert_get_all_visits_lite_compares(all_visits, self.study.uid)
+
         consecutive_visit_group = ",".join(
             [
                 third_visit.visit_short_name,
@@ -1435,8 +1469,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         # The call to create visit in the middle of V3,V4 group should succeed as the group is grouped in the LIST format
         visit_after_third_and_before_fourth = create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
-            visit_type_uid="VisitType_0002",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0002"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=17,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=False,
@@ -1448,6 +1482,9 @@ class TestStudyVisitManagement(unittest.TestCase):
         visit_service.delete(study_uid=self.study.uid, study_visit_uid=second_vis.uid)
         all_visits = visit_service.get_all_visits(study_uid=self.study.uid).items
         self.assertEqual(len(all_visits), 4)
+
+        # check lite version of get_all_visits returns the same visits as normal version
+        assert_get_all_visits_lite_compares(all_visits, self.study.uid)
 
         # There was another visit created in between V1 and V3, so the new group name should be 'V1,V3'
         updated_consecutive_group_name = ",".join(
@@ -1467,8 +1504,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         visit_service: StudyVisitService = StudyVisitService(study_uid=self.study.uid)
         create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
-            visit_type_uid="VisitType_0001",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0001"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=0,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=True,
@@ -1477,8 +1514,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         )
         second_vis = create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
-            visit_type_uid="VisitType_0002",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0002"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=10,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=False,
@@ -1487,8 +1524,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         )
         third_visit = create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
-            visit_type_uid="VisitType_0002",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0002"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=15,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=False,
@@ -1497,8 +1534,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         )
         fourth_visit = create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
-            visit_type_uid="VisitType_0002",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0002"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=20,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=False,
@@ -1548,6 +1585,9 @@ class TestStudyVisitManagement(unittest.TestCase):
         self.assertEqual(all_visits[1].consecutive_visit_group, consecutive_visit_group)
         self.assertEqual(all_visits[2].consecutive_visit_group, consecutive_visit_group)
 
+        # check lite version of get_all_visits returns the same visits as normal version
+        assert_get_all_visits_lite_compares(all_visits, self.study.uid)
+
         # It shouldn't be possible to create a visit in the middle of a consecutive visit group which is grouped in the RANGE format
         with self.assertRaises(ValidationException) as message:
             visit_input = generate_default_input_data_for_visit()
@@ -1564,10 +1604,10 @@ class TestStudyVisitManagement(unittest.TestCase):
             edit_input = {
                 "uid": third_visit.uid,
                 "study_epoch_uid": third_visit.study_epoch_uid,
-                "time_reference_uid": third_visit.time_reference_uid,
+                "time_reference": {"term_uid": third_visit.time_reference.term_uid},
                 "time_value": 18,
-                "visit_type_uid": third_visit.visit_type_uid,
-                "visit_contact_mode_uid": "VisitContactMode_0001",
+                "visit_type": {"term_uid": third_visit.visit_type.term_uid},
+                "visit_contact_mode": {"term_uid": "VisitContactMode_0001"},
                 "time_unit_uid": third_visit.time_unit_uid,
                 "is_global_anchor_visit": third_visit.is_global_anchor_visit,
                 "visit_class": third_visit.visit_class,
@@ -1587,8 +1627,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         visit_service: StudyVisitService = StudyVisitService(study_uid=self.study.uid)
         create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
-            visit_type_uid="VisitType_0001",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0001"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=0,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=True,
@@ -1597,8 +1637,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         )
         second_visit = create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
-            visit_type_uid="VisitType_0002",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0002"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=10,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=False,
@@ -1670,14 +1710,14 @@ class TestStudyVisitManagement(unittest.TestCase):
 
         third_visit = create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
-            visit_type_uid="VisitType_0003",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0003"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=15,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=False,
             visit_class="SINGLE_VISIT",
             visit_subclass="SINGLE_VISIT",
-            visit_contact_mode_uid="VisitContactMode_0002",
+            visit_contact_mode={"term_uid": "VisitContactMode_0002"},
             max_visit_window_value=10,
             min_visit_window_value=-10,
         )
@@ -1760,11 +1800,11 @@ class TestStudyVisitManagement(unittest.TestCase):
         edit_input = {
             "uid": third_visit.uid,
             "study_epoch_uid": third_visit.study_epoch_uid,
-            "visit_type_uid": "VisitType_0002",
-            "visit_contact_mode_uid": "VisitContactMode_0001",
+            "visit_type": {"term_uid": "VisitType_0002"},
+            "visit_contact_mode": {"term_uid": "VisitContactMode_0001"},
             "max_visit_window_value": 1,
             "min_visit_window_value": -1,
-            "time_reference_uid": third_visit.time_reference_uid,
+            "time_reference": {"term_uid": third_visit.time_reference.term_uid},
             "time_value": third_visit.time_value,
             "time_unit_uid": third_visit.time_unit_uid,
             "is_global_anchor_visit": third_visit.is_global_anchor_visit,
@@ -1832,12 +1872,16 @@ class TestStudyVisitManagement(unittest.TestCase):
             all_visits[2].max_visit_window_value, all_visits[1].max_visit_window_value
         )
         self.assertEqual(
-            all_visits[2].visit_contact_mode_uid, all_visits[1].visit_contact_mode_uid
+            all_visits[2].visit_contact_mode.term_uid,
+            all_visits[1].visit_contact_mode.term_uid,
         )
         self.assertEqual(
             all_visits[2].visit_contact_mode.sponsor_preferred_name,
             all_visits[1].visit_contact_mode.sponsor_preferred_name,
         )
+
+        # check lite version of get_all_visits returns the same visits as normal version
+        assert_get_all_visits_lite_compares(all_visits, self.study.uid)
 
     def test__group_visits_in_consecutive_group__visits_are_already_in_consecutive_groups(
         self,
@@ -1845,8 +1889,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         visit_service: StudyVisitService = StudyVisitService(study_uid=self.study.uid)
         create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
-            visit_type_uid="VisitType_0001",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0001"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=0,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=True,
@@ -1855,8 +1899,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         )
         second_visit = create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
-            visit_type_uid="VisitType_0002",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0002"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=10,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=False,
@@ -1865,8 +1909,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         )
         third_visit = create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
-            visit_type_uid="VisitType_0002",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0002"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=11,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=False,
@@ -1908,8 +1952,8 @@ class TestStudyVisitManagement(unittest.TestCase):
 
         fourth_visit = create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
-            visit_type_uid="VisitType_0002",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0002"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=15,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=False,
@@ -1956,6 +2000,9 @@ class TestStudyVisitManagement(unittest.TestCase):
             all_visits[3].consecutive_visit_group, all_visits[1].consecutive_visit_group
         )
 
+        # check lite version of get_all_visits returns the same visits as normal version
+        assert_get_all_visits_lite_compares(all_visits, self.study.uid)
+
         all_available_consecutive_groups = visit_service.get_consecutive_groups(
             study_uid=self.study.uid
         )
@@ -1970,8 +2017,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         visit_service: StudyVisitService = StudyVisitService(study_uid=self.study.uid)
         first_visit = create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
-            visit_type_uid="VisitType_0001",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0001"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=0,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=True,
@@ -1980,8 +2027,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         )
         second_visit = create_visit_with_update(
             study_epoch_uid=self.epoch2.uid,
-            visit_type_uid="VisitType_0002",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0002"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=10,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=False,
@@ -1990,8 +2037,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         )
         third_visit = create_visit_with_update(
             study_epoch_uid=self.epoch2.uid,
-            visit_type_uid="VisitType_0002",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0002"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=11,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=False,
@@ -2000,8 +2047,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         )
         first_subv = create_visit_with_update(
             study_epoch_uid=self.epoch2.uid,
-            visit_type_uid="VisitType_0002",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0002"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=12,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=False,
@@ -2011,8 +2058,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         )
         second_subv = create_visit_with_update(
             study_epoch_uid=self.epoch2.uid,
-            visit_type_uid="VisitType_0002",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0002"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=13,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=False,
@@ -2076,6 +2123,9 @@ class TestStudyVisitManagement(unittest.TestCase):
             all_visits[1].consecutive_visit_group, all_visits[2].consecutive_visit_group
         )
 
+        # check lite version of get_all_visits returns the same visits as normal version
+        assert_get_all_visits_lite_compares(all_visits, self.study.uid)
+
         all_available_consecutive_groups = visit_service.get_consecutive_groups(
             study_uid=self.study.uid
         )
@@ -2100,6 +2150,9 @@ class TestStudyVisitManagement(unittest.TestCase):
             all_visits[3].consecutive_visit_group, all_visits[4].consecutive_visit_group
         )
 
+        # check lite version of get_all_visits returns the same visits as normal version
+        assert_get_all_visits_lite_compares(all_visits, self.study.uid)
+
         all_available_consecutive_groups = visit_service.get_consecutive_groups(
             study_uid=self.study.uid
         )
@@ -2117,8 +2170,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         visit_service: StudyVisitService = StudyVisitService(study_uid=self.study.uid)
         create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
-            visit_type_uid="VisitType_0001",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0001"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=0,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=True,
@@ -2127,8 +2180,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         )
         second_visit = create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
-            visit_type_uid="VisitType_0002",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0002"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=10,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=False,
@@ -2137,8 +2190,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         )
         third_visit = create_visit_with_update(
             study_epoch_uid=self.epoch1.uid,
-            visit_type_uid="VisitType_0002",
-            time_reference_uid="VisitSubType_0005",
+            visit_type={"term_uid": "VisitType_0002"},
+            time_reference={"term_uid": "VisitSubType_0005"},
             time_value=15,
             time_unit_uid=self.day_uid,
             is_global_anchor_visit=False,
@@ -2178,6 +2231,9 @@ class TestStudyVisitManagement(unittest.TestCase):
         self.assertEqual(all_visits[1].consecutive_visit_group, consecutive_visit_group)
         self.assertEqual(all_visits[2].consecutive_visit_group, consecutive_visit_group)
 
+        # check lite version of get_all_visits returns the same visits as normal version
+        assert_get_all_visits_lite_compares(all_visits, self.study.uid)
+
         all_available_consecutive_groups = visit_service.get_consecutive_groups(
             study_uid=self.study.uid
         )
@@ -2208,6 +2264,9 @@ class TestStudyVisitManagement(unittest.TestCase):
         )
         self.assertEqual(len(all_available_consecutive_groups), 0)
 
+        # check lite version of get_all_visits returns the same visits as normal version
+        assert_get_all_visits_lite_compares(all_visits, self.study.uid)
+
     def test_get_anchor_visit_for_special_visit(self):
         visit_service: StudyVisitService = StudyVisitService(study_uid=self.study.uid)
         # create 5 visits in epoch 1
@@ -2215,8 +2274,8 @@ class TestStudyVisitManagement(unittest.TestCase):
             is_global_anchor_visit = bool(idx == 0)
             create_visit_with_update(
                 study_epoch_uid=self.epoch1.uid,
-                visit_type_uid="VisitType_0002",
-                time_reference_uid="VisitSubType_0005",
+                visit_type={"term_uid": "VisitType_0002"},
+                time_reference={"term_uid": "VisitSubType_0005"},
                 time_value=idx,
                 time_unit_uid=self.day_uid,
                 is_global_anchor_visit=is_global_anchor_visit,
@@ -2227,8 +2286,8 @@ class TestStudyVisitManagement(unittest.TestCase):
         for idx in range(5, 10):
             create_visit_with_update(
                 study_epoch_uid=self.epoch2.uid,
-                visit_type_uid="VisitType_0002",
-                time_reference_uid="VisitSubType_0005",
+                visit_type={"term_uid": "VisitType_0002"},
+                time_reference={"term_uid": "VisitSubType_0005"},
                 time_value=idx,
                 time_unit_uid=self.day_uid,
                 is_global_anchor_visit=False,
@@ -2284,3 +2343,25 @@ class TestStudyVisitManagement(unittest.TestCase):
             visits_grouped[-2].consecutive_visit_group
             == f"{study_visits[-5].visit_short_name}-{study_visits[-2].visit_short_name}"
         )
+
+        # check lite version of get_all_visits returns the same visits as normal version
+        assert_get_all_visits_lite_compares(visits_grouped, study.uid)
+
+
+def assert_get_all_visits_lite_compares(
+    expected_items: Iterable[StudyVisit],
+    study_uid: str,
+    study_value_version: str | None = None,
+):
+    expected_items = [StudyVisitLite(**v.model_dump()) for v in expected_items]
+
+    # Lite endpoint returns None for study_day/week_numbers for special visits
+    for visit in expected_items:
+        if visit.visit_class == VisitClass.SPECIAL_VISIT:
+            visit.study_day_number = None
+            visit.study_week_number = None
+
+    lite = StudyVisitService.get_all_visits(
+        study_uid, study_value_version=study_value_version, lite=True
+    )
+    assert lite.items == expected_items

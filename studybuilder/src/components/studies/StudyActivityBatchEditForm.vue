@@ -17,9 +17,7 @@
         return-object
         clearable
         class="mt-4"
-        variant="outlined"
         color="nnBaseBlue"
-        rounded="lg"
       />
       <v-checkbox
         v-model="form.deleteSelection"

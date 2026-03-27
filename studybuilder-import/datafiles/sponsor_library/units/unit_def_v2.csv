@@ -558,7 +558,7 @@ CDISC Synonym(s): umol/mL
 CDISC Definition: A unit of concentration (molarity unit) equal to one millimole of solute per liter of solution.
 NCI Preferred Term: Millimole per Liter 
 Sponser defined. 
-micromol / milliliter",35,mmol/L,N,N,N,N,N,N,Y,Y,
+micromol / milliliter",35,umol/mL,N,N,N,N,Y,N,Y,Y,
 GPL U/mL,U_IU Concentration,N,Y,N,N,N,,N,N,1,GPL U/mL,,C117971,"A unit for semiquantitative measurement of IgG autoantibodies to proteins associated with negatively charged phospholipids evaluated against an established reference standard, per unit of volume equal to one milliliter.",1,[GPL'U]/mL,N,N,N,N,N,N,Y,Y,
 kg/L,CONCENTRATION,Y,Y,N,Y,N,,N,N,1000,kg/L,,C64566,"SDTM Terminology 2017-06-30
 Code:C64566
@@ -1027,7 +1027,7 @@ NCI preffered term: Titer
 nmol/mL,CONCENTRATION,Y,Y,N,Y,N,,Y,N,0.000001,umol/L,,C48508,"CDISC code: umol/L
 CDISC synonym: nmol/mL
 
-",35,umol/L,N,N,N,N,N,N,Y,Y,
+",35,nmol/mL,N,N,N,N,N,N,Y,Y,
 g/mol,CONCENTRATION,N,Y,N,Y,N,,Y,N,1,g/mol,,C73721,A unit of mass commonly used to express the molar mass of a substance in gram(s) per mole. (NCI),1,g/mol,N,N,N,N,N,N,Y,Y,
 uU/mL,U_IU Concentration,Y,Y,N,N,N,,N,N,1,mU/L,,C67408,"uU/mL : microunits / mililiter
 CDISC not found
@@ -1294,7 +1294,7 @@ NCI preferred term: Kilogram per Cubic Meter",35,kg/m3,N,N,N,N,N,N,Y,Y,
 mg/mL,CONCENTRATION,Y,Y,N,Y,N,,N,N,1,g/L,,C42576,"miligram / mili liter
 
 [strength subset]
-",35,kg/m3,N,N,N,N,Y,N,Y,Y,
+",35,mg/mL,N,N,N,N,Y,N,Y,Y,
 GLOBULE,DOSE UNIT,N,Y,N,N,N,,N,N,1,GLOBULE,,C91803,"A dosing measurement based on the globule unit.
 
 [dose subset]",1,{GLOBULE},N,N,Y,N,N,N,Y,Y,
@@ -1312,7 +1312,7 @@ CDISC Description: An arbitrary unit of substance content expressed in unit(s) p
 NCI preferred term: Unit per Milliliter
 
 [strength subset]
-",2000,{Unit}/ml,N,N,N,N,Y,N,Y,Y,
+",2000,U/mL,N,N,N,N,Y,N,Y,Y,
 Absorbance U,OPTICAL DENSITY,Y,Y,Y,N,N,,N,N,1,Absorbance U,,C73686,"CDISC code: C73686
 CDISC submission value: Absorbance U
 CDISC synonym: Absorbance Unit

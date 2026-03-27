@@ -124,6 +124,12 @@ def test_data():
             parent_uid="ActivityInstanceClass_000002",
         ),
         TestUtils.create_activity_instance_class(name="NumericFindings"),
+        TestUtils.create_activity_instance_class(
+            name="Activity instance class 4",
+            definition="def Activity instance class 4",
+            is_domain_specific=True,
+            level=4,
+        ),
     ]
     global activity_item_classes
     global data_type_term
@@ -187,14 +193,31 @@ def test_data():
             role_uid=role_term.term_uid,
             data_type_uid=data_type_term.term_uid,
         ),
+        TestUtils.create_activity_item_class(
+            name="Activity Item Class name4",
+            order=4,
+            activity_instance_classes=[
+                {
+                    "uid": activity_instance_classes[3].uid,
+                    "mandatory": False,
+                    "is_adam_param_specific_enabled": False,
+                    "is_additional_optional": False,
+                    "is_default_linked": False,
+                }
+            ],
+            role_uid=role_term.term_uid,
+            data_type_uid=data_type_term.term_uid,
+        ),
     ]
     global ct_terms
-    # global odm_form
-    # global odm_item_group
-    # global odm_item
     global codelist
 
-    codelist = TestUtils.create_ct_codelist(extensible=True, approve=True)
+    codelist = TestUtils.create_ct_codelist(
+        name="Codelist",
+        sponsor_preferred_name="Codelist",
+        extensible=True,
+        approve=True,
+    )
     ct_terms = [
         TestUtils.create_ct_term(
             codelist_uid=codelist.codelist_uid,
@@ -238,6 +261,13 @@ def test_data():
                     "codelist_uid": codelist.codelist_uid,
                 },
             ],
+            "unit_definition_uids": [],
+            "is_adam_param_specific": False,
+        },
+        {
+            "activity_item_class_uid": activity_item_classes[3].uid,
+            "ct_terms": [],
+            "ct_codelist_uid": codelist.codelist_uid,
             "unit_definition_uids": [],
             "is_adam_param_specific": False,
         },
@@ -308,16 +338,17 @@ def test_data():
             activity_items=[activity_items[0], activity_items[1]],
         ),
     ]
-    TestUtils.create_activity_instance(
-        activity_instance_class_uid=activity_instance_classes[0].uid,
-        nci_concept_id="C-ZZZ",
-        topic_code="topic code ZZZ",
-        is_required_for_activity=True,
-        activities=[activities[0].uid],
-        activity_subgroups=[activity_subgroup.uid],
-        activity_groups=[activity_group.uid],
-        activity_items=[activity_items[0], activity_items[1], activity_items[2]],
-        preview=True,
+    activity_instances_all.append(
+        TestUtils.create_activity_instance(
+            activity_instance_class_uid=activity_instance_classes[2].uid,
+            nci_concept_id="C-XYZ",
+            topic_code="topic code XYZ",
+            is_required_for_activity=True,
+            activities=[activities[0].uid],
+            activity_subgroups=[activity_subgroup.uid],
+            activity_groups=[activity_group.uid],
+            activity_items=[activity_items[3]],
+        )
     )
 
     for index in range(5):
@@ -522,7 +553,7 @@ def test_get_activity_instances_pagination(api_client):
         pytest.param(3, 1, True, None, 3),
         pytest.param(3, 2, True, None, 3),
         pytest.param(10, 2, True, None, 10),
-        pytest.param(10, 3, True, None, 5),  # Total number of data models is 25
+        pytest.param(10, 3, True, None, 6),  # Total number of data models is 26
         pytest.param(10, 1, True, '{"name": false}', 10),
         pytest.param(10, 2, True, '{"name": true}', 10),
         pytest.param(10, 1, True, '{"activity_name": true}', 10),
@@ -1507,6 +1538,28 @@ def test_activity_instance_versioning(api_client):
     assert_response_status_code(response, 400)
     res = response.json()
     assert res["message"] == "Object has been accepted"
+
+
+def test_activity_instance_with_codelist(api_client):
+    response = api_client.get(
+        f"/concepts/activities/activity-instances/{activity_instances_all[5].uid}",
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert res["activity_items"][0]["ct_codelist"] == {
+        "uid": codelist.codelist_uid,
+        "name": codelist.name,
+    }
+
+    response = api_client.get(
+        f"""/concepts/activities/activity-instances?filters={{"uid": {{"v": ["{activity_instances_all[5].uid}"]}}}}""",
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert res["items"][0]["activity_items"][0]["ct_codelist"] == {
+        "uid": codelist.codelist_uid,
+        "name": codelist.name,
+    }
 
 
 def test_activity_instance_overview(api_client):
@@ -2662,3 +2715,46 @@ def test_level_3_activity_instance_with_parent_mandatory_item_success(api_client
     assert res["name"] == "level 3 instance with parent mandatory"
     assert res["activity_instance_class"]["uid"] == activity_instance_classes[2].uid
     assert len(res["activity_items"]) == 2
+
+
+def test_cannot_provide_ct_terms_and_ct_codelist(api_client):
+    response = api_client.post(
+        "/concepts/activities/activity-instances",
+        json={
+            "name": "cannot provide both ct terms and ct codelist",
+            "name_sentence_case": "cannot provide both ct terms and ct codelist",
+            "activity_groupings": [
+                {
+                    "activity_uid": activities[0].uid,
+                    "activity_subgroup_uid": activity_subgroup.uid,
+                    "activity_group_uid": activity_group.uid,
+                }
+            ],
+            "activity_instance_class_uid": activity_instance_classes[2].uid,
+            "activity_items": [
+                {
+                    "activity_item_class_uid": activity_item_classes[2].uid,
+                    "ct_codelist_uid": codelist.codelist_uid,
+                    "ct_terms": [
+                        {
+                            "term_uid": ct_terms[0].term_uid,
+                            "codelist_uid": codelist.codelist_uid,
+                        }
+                    ],
+                    "unit_definition_uids": [],
+                    "is_adam_param_specific": False,
+                },
+            ],
+            "strict_mode": True,
+            "library_name": "Sponsor",
+        },
+    )
+    assert_response_status_code(response, 400)
+    res = response.json()
+    assert res["type"] == "RequestValidationError"
+    assert res["details"][0] == {
+        "error_code": "value_error",
+        "field": ["body", "activity_items", 0],
+        "msg": "Value error, Both ct_terms and ct_codelist cannot be provided at the same time for an ActivityItem.",
+        "ctx": {"error": {}},
+    }

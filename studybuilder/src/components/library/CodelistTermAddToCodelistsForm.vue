@@ -50,7 +50,6 @@
               data-cy="term-sponsor-preferred-name"
               :label="$t('_global.submission_value')"
               :rules="[formRules.required]"
-              density="compact"
               clearable
             />
           </v-col>
@@ -60,7 +59,6 @@
               data-cy="term-order"
               :label="$t('_global.order')"
               :rules="[formRules.required]"
-              density="compact"
               clearable
             />
           </v-col>

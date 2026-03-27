@@ -8,7 +8,7 @@
             ? t('CRFActivityInstanceManagement.form_view')
             : t('CRFActivityInstanceManagement.table_view')
         "
-        density="compact"
+        base-color="primary"
         hide-details
         class="ml-4"
       />
@@ -20,7 +20,6 @@
           v-model="activityInstance"
           item-title="name"
           item-value="uid"
-          variant="outlined"
           :label="t('CRFActivityInstanceManagement.select_activity_instance')"
           :items="availableActivityInstances"
           :loading="formLoading"
@@ -43,8 +42,6 @@
             <div class="d-block">
               <v-number-input
                 v-model="item.order"
-                variant="outlined"
-                density="compact"
                 hide-details
                 hide
                 control-variant="hidden"
@@ -58,9 +55,7 @@
             <div class="d-block">
               <v-switch
                 v-model="item.primary"
-                density="compact"
                 hide-details
-                color="primary"
                 :disabled="disableEdit(item)"
                 @change="removePrimary(item)"
               />
@@ -169,7 +164,6 @@
                     :items="availableActivityInstances"
                     item-title="name"
                     item-value="uid"
-                    density="compact"
                     :clearable="!readOnly"
                     :readonly="readOnly"
                     :rules="[formRules.required]"
@@ -192,7 +186,6 @@
                     :items="ai.availableActivityItemClasses"
                     item-title="name"
                     item-value="uid"
-                    density="compact"
                     :clearable="!readOnly"
                     :readonly="readOnly || !ai.activity_instance_uid"
                     :rules="[formRules.required]"
@@ -216,7 +209,6 @@
                   <v-text-field
                     v-model="ai.preset_response_value"
                     :label="t('CRFItems.preset_response_value')"
-                    density="compact"
                     :clearable="!readOnly"
                     :readonly="readOnly || !ai.activity_item_class_uid"
                   />
@@ -231,7 +223,6 @@
                   <v-text-field
                     v-model="ai.value_condition"
                     :label="t('CRFItems.value_condition')"
-                    density="compact"
                     :clearable="!readOnly"
                     :readonly="readOnly || !ai.activity_item_class_uid"
                   />
@@ -246,7 +237,6 @@
                   <v-text-field
                     v-model="ai.value_dependent_map"
                     :label="t('CRFItems.value_dependent_map')"
-                    density="compact"
                     :clearable="!readOnly"
                     :readonly="readOnly || !ai.activity_item_class_uid"
                   />
@@ -261,7 +251,6 @@
                   <v-number-input
                     v-model="ai.order"
                     :label="t('_global.order')"
-                    density="compact"
                     :clearable="!readOnly"
                     :readonly="readOnly || !ai.activity_item_class_uid"
                   />
@@ -276,7 +265,6 @@
                   <v-checkbox
                     v-model="ai.primary"
                     :label="t('CRFItems.primary')"
-                    density="compact"
                     :readonly="readOnly || !ai.activity_item_class_uid"
                   />
                 </v-skeleton-loader>

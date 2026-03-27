@@ -1,12 +1,4 @@
-from neomodel import (
-    BooleanProperty,
-    IntegerProperty,
-    RelationshipFrom,
-    RelationshipTo,
-    StringProperty,
-    ZeroOrMore,
-    db,
-)
+from neomodel import RelationshipFrom, RelationshipTo, ZeroOrMore, db
 
 from clinical_mdr_api.domain_repositories.models.activities import (
     ActivityGroupRoot,
@@ -31,6 +23,7 @@ from clinical_mdr_api.domain_repositories.models.template_parameter import (
     TemplateParameterTermRoot,
     TemplateParameterTermValue,
 )
+from common.neomodel import BooleanProperty, IntegerProperty, StringProperty
 
 
 #########################

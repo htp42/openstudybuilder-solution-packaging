@@ -6,7 +6,6 @@
         v-if="showChild"
         v-model="value"
         :label="props.label"
-        color="primary"
         hide-details
         class="mx-6"
       />

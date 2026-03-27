@@ -1,6 +1,6 @@
 <template>
   <div>
-    <v-row v-if="!doc" class="mt-2 ml-2 mr-2">
+    <v-row v-if="!doc && !loadedOnce" class="mt-2 ml-2 mr-2">
       <v-col cols="4">
         <v-select
           v-model="data.target_type"
@@ -62,7 +62,7 @@
       </v-col>
     </v-row>
     <v-row
-      v-if="!doc"
+      v-if="!doc && !loadedOnce"
       class="mt-2 ml-2 mr-2"
       @click="() => activateShake(!data.target_uid)"
     >
@@ -108,11 +108,7 @@
           </template>
 
           <template #selection="{ item, index }">
-            <v-chip
-              v-if="index < 2"
-              :text="item.title"
-              density="compact"
-            ></v-chip>
+            <v-chip v-if="index < 2" :text="item.title" />
 
             <span
               v-if="index === 2"
@@ -140,39 +136,44 @@
     </v-row>
     <v-row v-else class="mt-0 ml-2">
       <v-btn
-        v-show="doc"
         size="small"
         color="primary"
-        class="mr-4 mt-3 white--text"
+        class="mr-4 mt-3"
         icon="mdi-arrow-left"
         :title="$t('_global.back')"
         @click="clearXml"
       />
       <v-btn
-        v-show="doc"
+        size="small"
+        color="primary"
+        class="mr-4 mt-3"
+        icon="mdi-cached"
+        :title="$t('_global.reload')"
+        :loading="loading"
+        @click="loadXml"
+      />
+      <v-btn
         size="small"
         color="nnGreen1"
-        class="ml-4 mt-3 white--text"
+        class="ml-4 mt-3"
         :title="$t('DataTableExportButton.export_xml')"
         :loading="xmlDownloadLoading"
         icon="mdi-file-xml-box"
         @click="downloadXml"
       />
       <v-btn
-        v-show="doc !== ''"
         size="small"
         color="nnGreen1"
-        class="ml-4 mt-3 white--text"
+        class="ml-4 mt-3"
         :title="$t('DataTableExportButton.export_pdf')"
         :loading="pdfDownloadLoading"
         icon="mdi-file-pdf-box"
         @click="downloadPdf"
       />
       <v-btn
-        v-show="doc !== ''"
         size="small"
         color="nnGreen1"
-        class="ml-4 mt-3 white--text"
+        class="ml-4 mt-3"
         :title="$t('DataTableExportButton.export_html')"
         :loading="htmlDownloadLoading"
         icon="mdi-file-document-outline"
@@ -182,7 +183,6 @@
       <v-switch
         v-model="showOdmXml"
         :label="$t('OdmViewer.source_code')"
-        color="primary"
         class="mr-6"
         inset
       ></v-switch>
@@ -284,6 +284,7 @@ const data = ref({
   ],
   selectedStylesheet: 'html',
 })
+const loadedOnce = ref(false)
 const loading = ref(false)
 const xmlDownloadLoading = ref(false)
 const pdfDownloadLoading = ref(false)
@@ -352,9 +353,9 @@ function toggleNamespace() {
 }
 
 function automaticLoad() {
+  setElements()
   data.value.target_type = route.params.type || 'form'
   data.value.target_uid = route.params.uid || null
-  setElements()
   if (_isEmpty(allowedNamespaces.value)) {
     crfs.getAllNamespaces({ page_size: 0 }).then((resp) => {
       allowedNamespaces.value = resp.data.items.map((item) => item.prefix)
@@ -454,6 +455,7 @@ function getAllowedNamespaces() {
 }
 
 async function loadXml() {
+  loadedOnce.value = true
   doc.value = ''
   loading.value = true
   data.value.version =
@@ -570,6 +572,7 @@ function downloadPdf() {
 }
 
 function clearXml() {
+  loadedOnce.value = false
   doc.value = null
   url = ''
   router.push({ name: 'Crfs', params: { tab: 'odm-viewer' } })

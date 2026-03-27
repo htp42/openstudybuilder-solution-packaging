@@ -39,9 +39,9 @@ import study from '@/api/study'
 import filteringParameters from '@/utils/filteringParameters'
 
 const props = defineProps({
-  studies: {
-    type: Array,
-    default: () => [],
+  selectedStudy: {
+    type: Object,
+    default: null,
   },
   headers: {
     type: Array,
@@ -67,9 +67,9 @@ const studySelectionItems = ref([])
 const total = ref(0)
 
 watch(
-  () => props.studies,
+  () => props.selectedStudy,
   (value) => {
-    if (value && value.length) {
+    if (value && Object.keys(value).length) {
       getStudySelection()
     }
   }
@@ -85,10 +85,6 @@ async function getStudySelection(filters, options, filtersUpdated) {
     filters,
     filtersUpdated
   )
-  const studiesUids = []
-  props.studies.forEach((el) => {
-    studiesUids.push(el.uid)
-  })
   if (params.filters) {
     params.filters = JSON.parse(params.filters)
   } else {
@@ -97,14 +93,12 @@ async function getStudySelection(filters, options, filtersUpdated) {
   if (props.extraDataFetcherFilters) {
     Object.assign(params.filters, { ...props.extraDataFetcherFilters })
   }
-  params.filters.study_uid = { v: studiesUids }
+  params.filters.study_uid = { v: [props.selectedStudy.uid] }
   study[props.dataFetcherName](params).then((resp) => {
     studySelectionItems.value = resp.data.items
     studySelectionItems.value.forEach((el) => {
       el.study_id =
-        props.studies[
-          props.studies.findIndex((study) => study.uid === el.study_uid)
-        ].current_metadata.identification_metadata.study_id
+        props.selectedStudy.current_metadata.identification_metadata.study_id
     })
     total.value = resp.data.total
   })
@@ -115,7 +109,7 @@ function selectItem(item) {
 }
 
 function updateHeaderFilters(jsonFilter, params) {
-  jsonFilter.study_uid = { v: props.studies.map((study) => study.uid) }
+  jsonFilter.study_uid = { v: [props.selectedStudy.uid] }
   return {
     jsonFilter,
     params,

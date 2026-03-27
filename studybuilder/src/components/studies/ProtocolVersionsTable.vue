@@ -21,9 +21,6 @@
         />
       </div>
     </template>
-    <template #[`item.modified_date`]="{ item }">
-      {{ $filters.date(item.modified_date) }}
-    </template>
     <template #[`item.protocol_version`]="{ item }">
       {{ getProtocolVersion(item) }}
     </template>
@@ -72,16 +69,12 @@ const headers = [
     key: 'protocol_version',
   },
   {
-    title: t('Study.meta_version'),
+    title: t('Study.latest_metadata_version'),
     key: 'metadata_version',
   },
   {
-    title: t('_global.modified'),
-    key: 'modified_date',
-  },
-  {
-    title: t('_global.modified_by'),
-    key: 'modified_by',
+    title: t('Study.original_metadata_version'),
+    key: 'original_metadata_version',
   },
 ]
 const items = ref([])
@@ -102,7 +95,7 @@ function fetchItems(filters, options, filtersUpdated) {
     filters,
     filtersUpdated
   )
-  params.only_latest_major_protcol_version = true
+  params.only_latest_major_protocol_version = true
   api
     .getStudySnapshotHistory(studiesGeneralStore.selectedStudy.uid, params)
     .then((resp) => {

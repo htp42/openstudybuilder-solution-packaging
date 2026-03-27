@@ -34,7 +34,7 @@ def test_create_a_new_odm_vendor_namespace(api_client):
         "prefix": "prefix",
         "url": "url1",
     }
-    response = api_client.post("concepts/odms/vendor-namespaces", json=data)
+    response = api_client.post("odms/vendor-namespaces", json=data)
 
     assert_response_status_code(response, 201)
 
@@ -55,32 +55,65 @@ def test_create_a_new_odm_vendor_namespace(api_client):
     assert res["possible_actions"] == ["approve", "delete", "edit"]
 
 
-def test_cannot_create_a_new_odm_vendor_namespace_with_existing_name_prefix_and_url(
+def test_cannot_create_a_new_odm_vendor_namespace_with_existing_name(
     api_client,
 ):
     data = {
         "library_name": "Sponsor",
         "name": "name1",
         "prefix": "prefix",
-        "url": "url1",
+        "url": "url",
     }
-    response = api_client.post("concepts/odms/vendor-namespaces", json=data)
+    response = api_client.post("odms/vendor-namespaces", json=data)
 
     assert_response_status_code(response, 409)
 
     res = response.json()
 
     assert res["type"] == "AlreadyExistsException"
-    assert (
-        res["message"]
-        == "ODM Vendor Namespace with ['name: name1', 'prefix: prefix', 'url: url1'] already exists."
-    )
+    assert res["message"] == "ODM Vendor Namespace with Name 'name1' already exists."
+
+
+def test_cannot_create_a_new_odm_vendor_namespace_with_existing_prefix(
+    api_client,
+):
+    data = {
+        "library_name": "Sponsor",
+        "name": "name",
+        "prefix": "prefix",
+        "url": "url",
+    }
+    response = api_client.post("odms/vendor-namespaces", json=data)
+
+    assert_response_status_code(response, 409)
+
+    res = response.json()
+
+    assert res["type"] == "AlreadyExistsException"
+    assert res["message"] == "ODM Vendor Namespace with Prefix 'prefix' already exists."
+
+
+def test_cannot_create_a_new_odm_vendor_namespace_with_existing_url(
+    api_client,
+):
+    data = {
+        "library_name": "Sponsor",
+        "name": "name",
+        "prefix": "prefixNew",
+        "url": "url1",
+    }
+    response = api_client.post("odms/vendor-namespaces", json=data)
+
+    assert_response_status_code(response, 409)
+
+    res = response.json()
+
+    assert res["type"] == "AlreadyExistsException"
+    assert res["message"] == "ODM Vendor Namespace with Url 'url1' already exists."
 
 
 def test_getting_error_for_retrieving_non_existent_odm_vendor_namespace(api_client):
-    response = api_client.get(
-        "concepts/odms/vendor-namespaces/OdmVendorNamespace_000002"
-    )
+    response = api_client.get("odms/vendor-namespaces/OdmVendorNamespace_000002")
 
     assert_response_status_code(response, 404)
 
@@ -95,7 +128,7 @@ def test_getting_error_for_retrieving_non_existent_odm_vendor_namespace(api_clie
 
 def test_cannot_inactivate_an_odm_vendor_namespace_that_is_in_draft_status(api_client):
     response = api_client.delete(
-        "concepts/odms/vendor-namespaces/OdmVendorNamespace_000001/activations"
+        "odms/vendor-namespaces/OdmVendorNamespace_000001/activations"
     )
 
     assert_response_status_code(response, 400)
@@ -108,7 +141,7 @@ def test_cannot_inactivate_an_odm_vendor_namespace_that_is_in_draft_status(api_c
 
 def test_cannot_reactivate_an_odm_vendor_namespace_that_is_not_retired(api_client):
     response = api_client.post(
-        "concepts/odms/vendor-namespaces/OdmVendorNamespace_000001/activations"
+        "odms/vendor-namespaces/OdmVendorNamespace_000001/activations"
     )
 
     assert_response_status_code(response, 400)
@@ -128,7 +161,7 @@ def test_create_odm_vendor_element_with_relation_to_the_odm_vendor_namespace(
         "compatible_types": ["FormDef"],
         "vendor_namespace_uid": "OdmVendorNamespace_000001",
     }
-    response = api_client.post("concepts/odms/vendor-elements", json=data)
+    response = api_client.post("odms/vendor-elements", json=data)
 
     assert_response_status_code(response, 201)
 
@@ -157,9 +190,7 @@ def test_create_odm_vendor_element_with_relation_to_the_odm_vendor_namespace(
 
 
 def test_cannot_delete_an_odm_vendor_namespace_that_is_being_used(api_client):
-    response = api_client.delete(
-        "concepts/odms/vendor-namespaces/OdmVendorNamespace_000001"
-    )
+    response = api_client.delete("odms/vendor-namespaces/OdmVendorNamespace_000001")
 
     assert_response_status_code(response, 400)
 
@@ -170,7 +201,7 @@ def test_cannot_delete_an_odm_vendor_namespace_that_is_being_used(api_client):
 
 
 def test_cannot_delete_non_existent_odm_vendor_namespace(api_client):
-    response = api_client.delete("concepts/odms/vendor-namespaces/wrong_uid")
+    response = api_client.delete("odms/vendor-namespaces/wrong_uid")
 
     assert_response_status_code(response, 404)
 

@@ -3,8 +3,9 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Sequence
 
-from neomodel.sync_.core import NodeMeta, db
-from neomodel.sync_.match import Collect, NodeNameResolver, Optional, Size
+from neomodel import db
+from neomodel.sync_.match import Collect, NodeNameResolver, Path, Size
+from neomodel.sync_.node import NodeMeta
 
 from clinical_mdr_api.domain_repositories.generic_repository import (
     RepositoryClosureData,
@@ -133,7 +134,7 @@ class StudyDefinitionRepository(ABC):
         # now get the data from db
         snapshot: StudyDefinitionSnapshot | None
         additional_closure: Any
-        (snapshot, additional_closure) = self._retrieve_snapshot_by_uid(
+        snapshot, additional_closure = self._retrieve_snapshot_by_uid(
             uid=uid,
             for_update=for_update,
             study_value_version=study_value_version,
@@ -263,15 +264,55 @@ RETURN
     def get_study_structure_statistics(self, uid: str) -> dict[str, int] | None:
         result = (
             StudyValue.nodes.filter(latest_value__uid=uid)
-            .traverse_relations(
-                Optional("has_study_arm"),
-                Optional("has_study_branch_arm"),
-                Optional("has_study_element"),
-                Optional("has_study_cohort"),
-                Optional("has_study_epoch"),
-                Optional("has_study_footnote__references_study_epoch"),
-                Optional("has_study_visit"),
-                Optional("has_study_footnote__references_study_visit"),
+            .traverse(
+                Path(
+                    value="has_study_arm",
+                    optional=True,
+                    include_nodes_in_return=False,
+                    include_rels_in_return=False,
+                ),
+                Path(
+                    value="has_study_branch_arm",
+                    optional=True,
+                    include_nodes_in_return=False,
+                    include_rels_in_return=False,
+                ),
+                Path(
+                    value="has_study_element",
+                    optional=True,
+                    include_nodes_in_return=False,
+                    include_rels_in_return=False,
+                ),
+                Path(
+                    value="has_study_cohort",
+                    optional=True,
+                    include_nodes_in_return=False,
+                    include_rels_in_return=False,
+                ),
+                Path(
+                    value="has_study_epoch",
+                    optional=True,
+                    include_nodes_in_return=False,
+                    include_rels_in_return=False,
+                ),
+                Path(
+                    value="has_study_footnote__references_study_epoch",
+                    optional=True,
+                    include_nodes_in_return=False,
+                    include_rels_in_return=False,
+                ),
+                Path(
+                    value="has_study_visit",
+                    optional=True,
+                    include_nodes_in_return=False,
+                    include_rels_in_return=False,
+                ),
+                Path(
+                    value="has_study_footnote__references_study_visit",
+                    optional=True,
+                    include_nodes_in_return=False,
+                    include_rels_in_return=False,
+                ),
             )
             .annotate(
                 arm_count=Size(
@@ -353,32 +394,32 @@ RETURN
 
         # COPY NODES AND OUTBOUND RELATIONSHIPS
         query = f"""
-WITH 
-    $study_src_uid as study_src, 
-    $study_target_uid as study_target, 
+WITH
+    $study_src_uid as study_src,
+    $study_target_uid as study_target,
     $to_copy_labels as to_copy_labels
-with 
-    study_src, 
-    study_target, 
+with
+    study_src,
+    study_target,
     apoc.text.join(to_copy_labels, '|') AS to_copy_labels_text
 
-MATCH 
+MATCH
     (sr_src:StudyRoot)-[:LATEST]->
     (sv_src:StudyValue)
-    WHERE 
+    WHERE
         sr_src.uid = study_src
-MATCH 
+MATCH
     (sr_target:StudyRoot)-[:LATEST]->
     (sv_target:StudyValue)
-    WHERE 
+    WHERE
         sr_target.uid = study_target
 
 CALL apoc.cypher.run("
-    MATCH 
+    MATCH
         (selection_src:StudySelection&(" + to_copy_labels_text + "))<-[sv_has_selection]-
         (sv_src)
     WHERE type(sv_has_selection) <> 'HAS_PROTOCOL_SOA_CELL' AND type(sv_has_selection) <> 'HAS_PROTOCOL_SOA_FOOTNOTE'
-    MATCH 
+    MATCH
         (sr_src)-[audit_trail:AUDIT_TRAIL]->
         (saction_src:StudyAction)-[saction_selection:AFTER]->
         (selection_src)
@@ -389,12 +430,12 @@ CALL apoc.cypher.run("
             (sv_src)
         )
         WHERE {exclusions}
-    return sr_src, sv_src,collect(path) as paths ", 
+    return sr_src, sv_src,collect(path) as paths ",
 {{sr_src:sr_src, sv_src:sv_src }})
 YIELD value
 
 WITH  sr_target, value.sr_src as sr_src, sv_target, value.sv_src as sv_src,value.paths as paths
-    
+
 CALL apoc.refactor.cloneSubgraphFromPaths(paths, {{
     standinNodes:[[sv_src, sv_target], [sr_src,sr_target]]
 }})
@@ -419,22 +460,65 @@ RETURN rel
 
         # COPY BETWEEN SELECTIONS RELATIONSHIPS
         query = """
-WITH $study_src_uid as study_src, $study_target_uid as study_target, $to_copy_labels as to_copy_labels
+WITH
+    $study_src_uid as study_src,
+    $study_target_uid as study_target,
+    $to_copy_labels as to_copy_labels
 
-MATCH (sr_from:StudyRoot)-[:LATEST]->(sv_from:StudyValue)-[sv_to_ss_source]->(selection_src_from:StudySelection)-[r_ext_src]->(selection_src_to:StudySelection)
-    where sr_from.uid = study_src AND type(sv_to_ss_source) <> "HAS_PROTOCOL_SOA_CELL" AND type(sv_to_ss_source) <> "HAS_PROTOCOL_SOA_FOOTNOTE"
-WITH selection_src_from.uid as from_uid, type(r_ext_src) AS from_rel_type_to, selection_src_to.uid as to_uid, study_target, to_copy_labels
-match (sr_to:StudyRoot)-[:LATEST]->(sv_to:StudyValue)-->(a:StudySelection)
-    where sr_to.uid = study_target
-match (sr_to)-[:LATEST]->(sv_to)-[sv_to__b]->(b:StudySelection) 
-    WHERE type(sv_to__b) <> "HAS_PROTOCOL_SOA_CELL" AND type(sv_to__b) <> "HAS_PROTOCOL_SOA_FOOTNOTE"
-WITH a,b, from_rel_type_to
-    where a.uid = from_uid
-    and b.uid = to_uid
-    AND ANY(label IN labels(a) WHERE label IN to_copy_labels)
-WITH DISTINCT a,b,from_rel_type_to
+MATCH
+    (sr_from:StudyRoot)-[:LATEST]->
+    (sv_from:StudyValue)-[sv_to_ss_source]->
+    (selection_src_from:StudySelection)-[r_ext_src]->
+    (selection_src_to:StudySelection)
+        where
+            sr_from.uid = study_src
+            AND type(sv_to_ss_source) <> "HAS_PROTOCOL_SOA_CELL"
+            AND type(sv_to_ss_source) <> "HAS_PROTOCOL_SOA_FOOTNOTE"
+MATCH (selection_src_to)--(sv_from)
 
-call apoc.merge.relationship(a, from_rel_type_to, null, Null, b)
+WITH
+    selection_src_from.uid as from_uid,
+    type(r_ext_src) AS from_rel_type_to,
+    selection_src_to.uid as to_uid,
+    study_target,
+    to_copy_labels
+MATCH
+    (sr_to:StudyRoot)-[:LATEST]->
+    (sv_to:StudyValue)-->
+    (a:StudySelection)
+        where
+            sr_to.uid = study_target
+MATCH
+    (sr_to)-[:LATEST]->
+    (sv_to)-[sv_to__b]->
+    (b:StudySelection)
+        WHERE
+            type(sv_to__b) <> "HAS_PROTOCOL_SOA_CELL"
+            AND type(sv_to__b) <> "HAS_PROTOCOL_SOA_FOOTNOTE"
+WITH
+    a,
+    b,
+    from_rel_type_to
+        where
+            a.uid = from_uid
+            and b.uid = to_uid
+            AND ANY(
+                label IN labels(a)
+                    WHERE
+                        label IN to_copy_labels
+            )
+WITH DISTINCT
+    a,
+    b,
+    from_rel_type_to
+
+call apoc.merge.relationship(
+    a,
+    from_rel_type_to,
+    null,
+    Null,
+    b
+)
 yield rel
 
 
@@ -459,7 +543,7 @@ unwind to_copy_labels as to_copy_labels_unw
 MATCH (sr_target:StudyRoot)-[:LATEST]->(sv_target:StudyValue)-[relationship]-(selection_target:StudySelection)
     where sr_target.uid = study_target AND type(relationship) <> "HAS_PROTOCOL_SOA_CELL" AND type(relationship) <> "HAS_PROTOCOL_SOA_FOOTNOTE"
 
-// Update the counter value and generate new UID and 
+// Update the counter value and generate new UID and
 CALL {
     WITH to_copy_labels_unw, selection_target
     WITH to_copy_labels_unw, selection_target
@@ -603,6 +687,28 @@ return *
 
         return bool(rs[0])
 
+    @staticmethod
+    def study_acronym_exists(study_acronym: str, uid: str | None = None) -> bool:
+        """
+        Checks whether a normal study or a parent study with specified study acronym already exists within the database.
+        """
+        params = {"study_acronym": study_acronym}
+
+        query = """
+            MATCH (value:StudyValue {study_acronym: $study_acronym})<-[:LATEST]-(root:StudyRoot)
+            WHERE NOT (value)<-[:HAS_STUDY_SUBPART]-(:StudyValue)
+        """
+
+        if uid:
+            query += " AND NOT root.uid = $uid "
+            params |= {"uid": uid}
+
+        query += " RETURN value"
+
+        rs = db.cypher_query(query, params=params)
+
+        return bool(rs[0])
+
     def save(
         self, study: StudyDefinitionAR, is_subpart_relationship_update=False
     ) -> None:
@@ -653,15 +759,55 @@ return *
             not_for_update=True, repository=self, additional_closure=None
         )
 
-    def get_studies_list(self, deleted: bool = False) -> list[dict[str, Any]]:
+    def get_studies_list(
+        self,
+        has_study_objective: bool | None = None,
+        has_study_footnote: bool | None = None,
+        has_study_endpoint: bool | None = None,
+        has_study_criteria: bool | None = None,
+        has_study_activity: bool | None = None,
+        has_study_activity_instruction: bool | None = None,
+        deleted: bool = False,
+    ) -> list[dict[str, Any]]:
         """
         Public method to retrieve a list of all studies in the repository.
         Returns a list of dictionaries.
         """
+
+        def where_stmt():
+            conditions = []
+
+            checks = [
+                (has_study_objective, "HAS_STUDY_OBJECTIVE", "StudyObjective"),
+                (has_study_footnote, "HAS_STUDY_FOOTNOTE", "StudySoAFootnote"),
+                (has_study_endpoint, "HAS_STUDY_ENDPOINT", "StudyEndpoint"),
+                (has_study_criteria, "HAS_STUDY_CRITERIA", "StudyCriteria"),
+                (has_study_activity, "HAS_STUDY_ACTIVITY", "StudyActivity"),
+                (
+                    has_study_activity_instruction,
+                    "HAS_STUDY_ACTIVITY_INSTRUCTION",
+                    "StudyActivityInstruction",
+                ),
+            ]
+
+            for flag, relationship, node_label in checks:
+                if flag is not None:
+                    prefix = "" if flag else "NOT "
+                    conditions.append(
+                        f"{prefix}EXISTS((sv)-[:{relationship}]->(:{node_label}))"
+                    )
+
+            if not deleted:
+                conditions.append("NOT EXISTS((sv)<-[:BEFORE]-(:Delete))")
+            else:
+                conditions.append("EXISTS((sv)<-[:BEFORE]-(:Delete))")
+
+            return f"WHERE {' AND '.join(conditions)}" if conditions else ""
+
         self._check_not_closed()
         query = f"""
             MATCH (sr:StudyRoot)-[:LATEST]->(sv:StudyValue)-[:HAS_PROJECT]-(:StudyProjectField)<-[:HAS_FIELD]-(p:Project)<-[:HOLDS_PROJECT]-(cp:ClinicalProgramme)
-            WHERE {'' if deleted else 'NOT'} EXISTS((sv)<-[:BEFORE]-(:Delete))
+            {where_stmt()}
 
             WITH sr,sv,p,cp
             OPTIONAL MATCH (sv)-[:HAS_TEXT_FIELD]->(stf:StudyTextField {{field_name: 'study_title'}})
@@ -700,7 +846,8 @@ return *
                 current_version.version as version_number,
                 COALESCE(author.username, current_version.author_id) as author,
                 latest_locked_version,
-                latest_released_version
+                latest_released_version,
+                [(sr)-[:HAS_COMPLETENESS_TAG]->(t:DataCompletenessTag) | t.name] as data_completeness_tags
             ORDER BY uid
         """
         rs = db.cypher_query(query)
@@ -723,6 +870,7 @@ return *
                 "version_author": row[14],
                 "latest_locked_version": row[15],
                 "latest_released_version": row[16],
+                "data_completeness_tags": row[17],
             }
             for row in rs[0]
         ]
@@ -1063,7 +1211,7 @@ return *
         study_uid: str,
         for_protocol_soa: bool = False,
         study_value_version: str | None = None,
-    ) -> StudyPreferredTimeUnit:
+    ) -> list[StudyPreferredTimeUnit]:
         """
         A method that gets a StudyTimeField for the study preferred time unit. The preferred time unit is the unit definition
         that is used to display items like study visits on the timescale.
@@ -1073,7 +1221,7 @@ return *
     @abstractmethod
     def post_preferred_time_unit(
         self, study_uid: str, unit_definition_uid: str, for_protocol_soa: bool = False
-    ) -> StudyPreferredTimeUnit:
+    ) -> list[StudyPreferredTimeUnit]:
         """
         A method that creates a StudyTimeField for the study preferred time unit. The preferred time unit is the unit definition
         that is used to display items like study visits on the timescale.
@@ -1083,7 +1231,7 @@ return *
     @abstractmethod
     def edit_preferred_time_unit(
         self, study_uid: str, unit_definition_uid: str, for_protocol_soa: bool = False
-    ) -> StudyPreferredTimeUnit:
+    ) -> list[StudyPreferredTimeUnit]:
         """
         A method that edits a StudyTimeField for the study preferred time unit. The preferred time unit is the unit definition
         that is used to display items like study visits on the timescale.
@@ -1163,6 +1311,13 @@ return *
         Returns:
             bool: True if the study exists, False otherwise.
         """
+
+    @staticmethod
+    @abstractmethod
+    def get_study_id(
+        study_uid: str, study_value_version: str | None = None
+    ) -> str | None:
+        """Returns Study id if Study exists and StudyVersion exists and not deleted, and both study_id_prefix and study_number are defined, otherwise None."""
 
     @staticmethod
     @abstractmethod

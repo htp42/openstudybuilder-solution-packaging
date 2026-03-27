@@ -8,7 +8,8 @@ from enum import Enum
 from time import time
 from typing import AbstractSet, Any, Callable, Mapping, MutableMapping, Self, TypeVar
 
-import neomodel.sync_.core
+from neomodel.sync_.database import Database
+from neomodel.sync_.transaction import TransactionProxy
 from pydantic import BaseModel
 
 from clinical_mdr_api.domain_repositories.libraries.library_repository import (
@@ -1158,7 +1159,7 @@ def build_simple_filters(
     return None
 
 
-class AggregatedTransactionProxy(neomodel.sync_.core.TransactionProxy):
+class AggregatedTransactionProxy(TransactionProxy):
     """context manager to manage database transaction if there is no active transaction in progress, else do nothing"""
 
     __manage_transaction = None
@@ -1182,7 +1183,7 @@ class AggregatedTransactionProxy(neomodel.sync_.core.TransactionProxy):
 _Func = TypeVar("_Func", bound=Callable[..., Any])
 
 
-def ensure_transaction(db: neomodel.sync_.core.Database) -> Callable[[_Func], _Func]:
+def ensure_transaction(db: Database) -> Callable[[_Func], _Func]:
     """decorator to manage transaction `with TransactionProxy(db)` only if not already in db a transaction"""
 
     def decorate(func: _Func) -> _Func:
@@ -1195,7 +1196,7 @@ def ensure_transaction(db: neomodel.sync_.core.Database) -> Callable[[_Func], _F
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             if db._active_transaction is None:
                 # No active transaction, wrap call into TransactionProxy to start and manage a transaction
-                with neomodel.sync_.core.TransactionProxy(db):
+                with TransactionProxy(db):
                     return func(*args, **kwargs)
 
             else:

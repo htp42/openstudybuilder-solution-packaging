@@ -84,6 +84,7 @@ def test_data():
             label=f"DatasetClass{i} label",
             data_model_uid=data_model.uid,
             data_model_catalogue_name=data_model_catalogue_name,
+            data_model_name=data_model.name,
         )
         for i in range(3)
     ]

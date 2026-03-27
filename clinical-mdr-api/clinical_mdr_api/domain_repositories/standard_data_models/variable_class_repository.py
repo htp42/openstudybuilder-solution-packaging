@@ -19,15 +19,10 @@ class VariableClassRepository(StandardDataModelRepository):
     return_model = VariableClassAPIModel
 
     # pylint: disable=unused-argument
-    def generic_match_clause(
-        self, versioning_relationship: str, uid: str | None = None
-    ):
+    def generic_match_clause(self, versioning_relationship: str):
         standard_data_model_label = self.root_class.__label__
         standard_data_model_value_label = self.value_class.__label__
-        uid_filter = ""
-        if uid:
-            uid_filter = f"{{uid: '{uid}'}}"
-        return f"""MATCH (standard_root:{standard_data_model_label} {uid_filter})-[:HAS_INSTANCE]->
+        return f"""MATCH (standard_root:{standard_data_model_label})-[:HAS_INSTANCE]->
                 (standard_value:{standard_data_model_value_label})<-[has_variable_class_rel:HAS_VARIABLE_CLASS]-
                 (dataset_class_value:DatasetClassInstance)<-[:HAS_DATASET_CLASS]-(data_model_value:DataModelValue)
                 <-[:HAS_VERSION]-(data_model_root:DataModelRoot)"""
@@ -36,7 +31,7 @@ class VariableClassRepository(StandardDataModelRepository):
         (
             filter_statements_from_standard,
             filter_query_parameters,
-        ) = super().create_query_filter_statement()
+        ) = super().create_query_filter_statement(**kwargs)
         filter_parameters = []
         if kwargs.get("dataset_class_name"):
             dataset_class_name = kwargs.get("dataset_class_name")
@@ -92,8 +87,10 @@ class VariableClassRepository(StandardDataModelRepository):
 
     def specific_alias_clause(self) -> str:
         return """
-        WITH *,
+            *,
+            standard_root.uid AS uid,
             standard_value.label AS label,
+            standard_value.description AS description,
             standard_value.implementation_notes AS implementation_notes,
             standard_value.title AS title,
             standard_value.core AS core,
@@ -107,18 +104,13 @@ class VariableClassRepository(StandardDataModelRepository):
             standard_value.notes AS notes,
             standard_value.usage_restrictions AS usage_restrictions,
             standard_value.examples AS examples,
-            head([(standard_value)-[:QUALIFIES_VARIABLE {catalogue:$data_model_name, version_number:$data_model_version}]->(qualified_variable:VariableClassInstance)<-[:HAS_INSTANCE]-(qualified_variable_root) | {
-                uid:qualified_variable_root.uid, name:qualified_variable.label }]) AS qualifies_variable,
-            {dataset_class_name:dataset_class_value.label, ordinal:has_variable_class_rel.ordinal} AS dataset_class,
-            head([(standard_value)<-[:IMPLEMENTS_VARIABLE]-(dataset_variable_value:DatasetVariableInstance) | 
-                dataset_variable_value.label]) AS dataset_variable_name,
-            apoc.coll.toSet([(standard_value)<-[:HAS_VARIABLE_CLASS]-
-                (:DatasetClassInstance)<-[:HAS_DATASET_CLASS]-(model_value:DataModelValue)
-                | model_value.name]) AS data_model_names,
+            [(standard_value)-[:QUALIFIES_VARIABLE {catalogue:$data_model_name, version_number:$data_model_version}]->(qualified_variable:VariableClassInstance)<-[:HAS_INSTANCE]-(qualified_variable_root) | {
+                uid:qualified_variable_root.uid, name:qualified_variable.label }] AS qualifies_variables,
+            {dataset_class_name:dataset_class_value.label, ordinal:toInteger(has_variable_class_rel.ordinal)} AS dataset_class,
             head([(standard_root)<-[:HAS_VARIABLE_CLASS]-(catalogue:DataModelCatalogue) | catalogue.name]) AS catalogue_name,
             [(standard_value)-[:REFERENCES_CODELIST]->(codelist_root:CTCodelistRoot)-[:HAS_NAME_ROOT]-()-[:LATEST]->
                 (codelist_value:CTCodelistNameValue) | {uid:codelist_root.uid, name:codelist_value.name }] AS referenced_codelists,
-            head([(standard_value)-[mt_rel:HAS_MAPPING_TARGET]->(class_variable_value:VariableClassInstance)
+            [(standard_value)-[mt_rel:HAS_MAPPING_TARGET]->(class_variable_value:VariableClassInstance)
                 <-[:HAS_INSTANCE]-(class_variable_root:VariableClass) WHERE mt_rel.version_number=$data_model_version
-                | {uid:class_variable_root.uid, name:class_variable_value.label}]) AS has_mapping_target
+                | {uid:class_variable_root.uid, name:class_variable_value.label}] AS has_mapping_targets
         """

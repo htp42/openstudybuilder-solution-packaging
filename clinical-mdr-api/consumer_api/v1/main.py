@@ -661,6 +661,14 @@ def get_studies_audit_trail(
     ]
     csv_output = ",".join(keys) + "\n"
     for entry in audit_trail:
+        # None values are returned as empty string
+        # lists are returned as val1|val2
+        for key in keys:
+            if entry[key] is None:
+                entry[key] = ""
+            elif isinstance(entry[key], list):
+                entry[key] = "|".join(entry[key])
+
         csv_output += ",".join(str(entry[key]) for key in keys)
         csv_output += "\n"
 

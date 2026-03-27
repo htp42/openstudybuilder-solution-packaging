@@ -1,6 +1,6 @@
 import repository from './repository'
 
-const resource = 'concepts/odms'
+const resource = 'odms'
 
 export default {
   get(source, params) {

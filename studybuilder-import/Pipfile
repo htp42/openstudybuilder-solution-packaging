@@ -13,7 +13,7 @@ isort = "~=5.13.2"
 black = "~=24.10.0"
 
 [requires]
-python_version = "3.13"
+python_version = "3.14"
 
 [scripts]
 build-sbom = "pipenv run python3 assbom.py --pipfile --fallback-dir doc/licenses --level 2 --output sbom.md"
@@ -35,8 +35,8 @@ mockdata = "python -m importers.run_import_mockdata"
 mockdatajson = "python -m importers.run_import_mockdatajson"
 e2e = "python -m importers.run_import_e2e"
 sponsormodels = "python -m importers.run_import_sponsormodels"
+response_codelists = "python -m importers.run_import_response_codelists"
 validatedatafiles = "python -m test_datafiles_e2e_sync"
-
 format = """sh -c "
     python -m isort . \
     && python -m black . \

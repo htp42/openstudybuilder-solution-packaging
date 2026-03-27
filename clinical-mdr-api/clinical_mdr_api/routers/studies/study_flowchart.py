@@ -167,7 +167,7 @@ def get_study_flowchart_docx(
         .get_document_stream()
     )
 
-    study_id = _get_study_id(study_uid, study_value_version)
+    study_id = StudyService().get_study_id(study_uid, study_value_version)
     filename = f"{study_id or study_uid} {layout.value} SoA.docx"
     mime_type = MIME_TYPE_DOCX
 
@@ -203,7 +203,7 @@ def get_study_flowchart_xlsx(
     stream = io.BytesIO()
     workbook.save(stream)
 
-    study_id = _get_study_id(study_uid, study_value_version)
+    study_id = StudyService().get_study_id(study_uid, study_value_version)
     filename = f"{study_id or study_uid} {layout.value} SoA.xlsx"
     mime_type = MIME_TYPE_XLSX
 
@@ -238,7 +238,7 @@ def get_operational_soa_xlsx(
     stream = io.BytesIO()
     xlsx.save(stream)
 
-    study_id = _get_study_id(study_uid, study_value_version)
+    study_id = StudyService().get_study_id(study_uid, study_value_version)
     filename = f"{study_id or study_uid} {layout.value} SoA.xlsx"
     mime_type = MIME_TYPE_XLSX
 
@@ -299,7 +299,7 @@ def get_detailed_soa_xlsx(
     stream = io.BytesIO()
     xlsx.save(stream)
 
-    study_id = _get_study_id(study_uid, study_value_version)
+    study_id = StudyService().get_study_id(study_uid, study_value_version)
     filename = f"{study_id or study_uid} {layout.value} SoA.xlsx"
     mime_type = MIME_TYPE_XLSX
 
@@ -573,16 +573,6 @@ def update_soa_snapshot(
         layout=layout,
     )
     return Response(content=None, status_code=status.HTTP_201_CREATED)
-
-
-def _get_study_id(study_uid, study_value_version):
-    """gets study_id of study"""
-
-    study = StudyService().get_by_uid(
-        study_uid, study_value_version=study_value_version
-    )
-
-    return study.current_metadata.identification_metadata.study_id
 
 
 def _streaming_response(

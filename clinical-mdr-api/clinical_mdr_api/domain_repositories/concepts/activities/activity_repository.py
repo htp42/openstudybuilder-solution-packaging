@@ -435,11 +435,14 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
 
     def _create_new_value_node(self, ar: ActivityAR) -> ActivityValue:
         value_node: ActivityValue = super()._create_new_value_node(ar=ar)
-        value_node.synonyms = ar.concept_vo.synonyms
-        value_node.request_rationale = ar.concept_vo.request_rationale
+        value_node.synonyms = ar.concept_vo.synonyms  # type: ignore[assignment]
+        if ar.concept_vo.request_rationale:
+            value_node.request_rationale = ar.concept_vo.request_rationale
         value_node.is_request_final = ar.concept_vo.is_request_final
-        value_node.reason_for_rejecting = ar.concept_vo.reason_for_rejecting
-        value_node.contact_person = ar.concept_vo.contact_person
+        if ar.concept_vo.reason_for_rejecting:
+            value_node.reason_for_rejecting = ar.concept_vo.reason_for_rejecting
+        if ar.concept_vo.contact_person:
+            value_node.contact_person = ar.concept_vo.contact_person
         value_node.is_request_rejected = ar.concept_vo.is_request_rejected
         value_node.is_data_collected = ar.concept_vo.is_data_collected
         value_node.is_multiple_selection_allowed = (
@@ -797,9 +800,7 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
                         RETURN last(hvs) as has_version
                     }
                     """
-        query = (
-            match
-            + """
+        query = match + """
         WITH DISTINCT activity_root,activity_value, has_version,
             head([(library)-[:CONTAINS_CONCEPT]->(activity_root) | library.name]) AS activity_library_name,
             [(activity_root)-[versions:HAS_VERSION]->(:ActivityValue) | versions.version] as all_versions,
@@ -870,7 +871,6 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
                   ) | v.version]
                 ) AS all_versions
             """
-        )
         result_array, attribute_names = db.cypher_query(query=query, params=params)
         BusinessLogicException.raise_if(
             len(result_array) != 1,
@@ -1043,9 +1043,7 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
                 MATCH (activity_root:ActivityRoot {uid:$uid})-[:LATEST]->(activity_value:ActivityValue)
                 """
 
-        query = (
-            match
-            + """
+        query = match + """
         MATCH (activity_value)-[:HAS_GROUPING]->(activity_grouping:ActivityGrouping)<-[:HAS_ACTIVITY]-
             (activity_instance_value:ActivityInstanceValue)<-[aihv:HAS_VERSION]-(activity_instance_root:ActivityInstanceRoot)
         OPTIONAL MATCH (activity_grouping)-[:HAS_SELECTED_SUBGROUP]->(activity_subgroup_value:ActivitySubGroupValue)<-[:HAS_VERSION]-(activity_subgroup_root:ActivitySubGroupRoot)
@@ -1084,7 +1082,6 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
         RETURN
             collect(activity_instance) as activity_instances
         """
-        )
         result_array, attribute_names = db.cypher_query(query=query, params=params)
         if len(result_array) == 0:
             return None

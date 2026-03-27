@@ -97,11 +97,9 @@ class NeomodelExtBaseRepository:
         self.check_for_incorrect_optional_markers(nodes, q_filters)
         nodes = nodes.order_by(sort_paths[0] if len(sort_paths) > 0 else "uid")
         nodes = nodes.filter(*q_filters)[start:end]
-        nodes = nodes.resolve_subgraph()
+        subgraph = nodes.resolve_subgraph()
 
-        all_data_model = [
-            self.return_model.model_validate(activity_node) for activity_node in nodes
-        ]
+        all_data_model = [self.return_model.model_validate(node) for node in subgraph]
         if total_count:
             len_query = self.root_class.nodes.filter(*q_filters)
             all_nodes = len(len_query)
@@ -159,7 +157,7 @@ class NeomodelExtBaseRepository:
         elif "__" in field_path:
             path, prop = field_path.rsplit("__", 1)
             source = NodeNameResolver(path)
-            nodeset = nodeset.fetch_relations(path)
+            nodeset = nodeset.traverse(path)
         else:
             # FIXME: we need a proper way to resolve the variable name (NodeNameResolver
             # does not support 'self'...)

@@ -20,7 +20,6 @@
               :label="$t('ActivityForms.activity')"
               data-cy="instanceform-activity-dropdown"
               item-title="name"
-              density="compact"
               clearable
               class="mt-4"
               return-object
@@ -67,7 +66,6 @@
               data-cy="instanceform-instanceclass-dropdown"
               item-title="name"
               item-value="uid"
-              density="compact"
               clearable
               class="mt-4"
               :rules="[formRules.required]"
@@ -114,7 +112,6 @@
               v-model="form.nci_concept_id"
               :label="$t('ActivityTable.nci_concept_id')"
               data-cy="instanceform-nciconceptid-field"
-              density="compact"
               clearable
             />
           </v-col>
@@ -123,7 +120,6 @@
               v-model="form.nci_concept_name"
               :label="$t('ActivityTable.nci_concept_name')"
               data-cy="instanceform-nciconceptname-field"
-              density="compact"
               clearable
             />
           </v-col>

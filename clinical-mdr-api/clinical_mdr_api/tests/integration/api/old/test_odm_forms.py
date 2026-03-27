@@ -39,7 +39,7 @@ def test_data():
 
 
 def test_getting_empty_list_of_odm_forms(api_client):
-    response = api_client.get("concepts/odms/forms")
+    response = api_client.get("odms/forms")
 
     assert_response_status_code(response, 200)
 
@@ -104,7 +104,7 @@ def test_creating_a_new_odm_form(api_client):
         ],
         "vendor_attributes": [{"uid": "odm_vendor_attribute4", "value": "value"}],
     }
-    response = api_client.post("concepts/odms/forms", json=data)
+    response = api_client.post("odms/forms", json=data)
 
     assert_response_status_code(response, 201)
 
@@ -192,7 +192,7 @@ def test_creating_a_new_odm_form(api_client):
 
 
 def test_getting_non_empty_list_of_odm_forms(api_client):
-    response = api_client.get("concepts/odms/forms")
+    response = api_client.get("odms/forms")
 
     assert_response_status_code(response, 200)
 
@@ -280,7 +280,7 @@ def test_getting_non_empty_list_of_odm_forms(api_client):
 
 
 def test_getting_possible_header_values_of_odm_forms(api_client):
-    response = api_client.get("concepts/odms/forms/headers?field_name=name")
+    response = api_client.get("odms/forms/headers?field_name=name")
 
     assert_response_status_code(response, 200)
 
@@ -290,7 +290,7 @@ def test_getting_possible_header_values_of_odm_forms(api_client):
 
 
 def test_getting_a_specific_odm_form(api_client):
-    response = api_client.get("concepts/odms/forms/OdmForm_000001")
+    response = api_client.get("odms/forms/OdmForm_000001")
 
     assert_response_status_code(response, 200)
 
@@ -377,7 +377,7 @@ def test_getting_a_specific_odm_form(api_client):
 
 
 def test_getting_versions_of_a_specific_odm_form(api_client):
-    response = api_client.get("concepts/odms/forms/OdmForm_000001/versions")
+    response = api_client.get("odms/forms/OdmForm_000001/versions")
 
     assert_response_status_code(response, 200)
 
@@ -525,7 +525,7 @@ def test_updating_an_existing_odm_form(api_client):
             {"uid": "odm_vendor_attribute3", "value": "value"},
         ],
     }
-    response = api_client.patch("concepts/odms/forms/OdmForm_000001", json=data)
+    response = api_client.patch("odms/forms/OdmForm_000001", json=data)
 
     assert_response_status_code(response, 200)
 
@@ -613,7 +613,7 @@ def test_updating_an_existing_odm_form(api_client):
 
 
 def test_getting_a_specific_odm_form_in_specific_version(api_client):
-    response = api_client.get("concepts/odms/forms/OdmForm_000001?version=0.1")
+    response = api_client.get("odms/forms/OdmForm_000001?version=0.1")
 
     assert_response_status_code(response, 200)
 
@@ -691,9 +691,7 @@ def test_adding_odm_item_groups_to_a_specific_odm_form(api_client):
             "vendor": {"attributes": [{"uid": "odm_vendor_attribute3", "value": "No"}]},
         }
     ]
-    response = api_client.post(
-        "concepts/odms/forms/OdmForm_000001/item-groups", json=data
-    )
+    response = api_client.post("odms/forms/OdmForm_000001/item-groups", json=data)
 
     assert_response_status_code(response, 201)
 
@@ -814,7 +812,7 @@ def test_overriding_odm_item_groups_from_a_specific_odm_form(api_client):
         }
     ]
     response = api_client.post(
-        "concepts/odms/forms/OdmForm_000001/item-groups?override=true", json=data
+        "odms/forms/OdmForm_000001/item-groups?override=true", json=data
     )
 
     assert_response_status_code(response, 201)
@@ -981,7 +979,7 @@ def test_managing_odm_vendors_of_a_specific_odm_form(api_client):
         ],
         "vendor_attributes": [{"uid": "odm_vendor_attribute4", "value": "value"}],
     }
-    response = api_client.patch("concepts/odms/forms/OdmForm_000001", json=data)
+    response = api_client.patch("odms/forms/OdmForm_000001", json=data)
 
     assert_response_status_code(response, 200)
 
@@ -1091,7 +1089,7 @@ def test_managing_odm_vendors_of_a_specific_odm_form(api_client):
 
 
 def test_approving_an_odm_form(api_client):
-    response = api_client.post("concepts/odms/forms/OdmForm_000001/approvals")
+    response = api_client.post("odms/forms/OdmForm_000001/approvals")
 
     assert_response_status_code(response, 201)
 
@@ -1201,7 +1199,7 @@ def test_approving_an_odm_form(api_client):
 
 
 def test_inactivating_a_specific_odm_form(api_client):
-    response = api_client.delete("concepts/odms/forms/OdmForm_000001/activations")
+    response = api_client.delete("odms/forms/OdmForm_000001/activations")
 
     assert_response_status_code(response, 200)
 
@@ -1311,7 +1309,7 @@ def test_inactivating_a_specific_odm_form(api_client):
 
 
 def test_reactivating_a_specific_odm_form(api_client):
-    response = api_client.post("concepts/odms/forms/OdmForm_000001/activations")
+    response = api_client.post("odms/forms/OdmForm_000001/activations")
 
     assert_response_status_code(response, 200)
 
@@ -1421,7 +1419,7 @@ def test_reactivating_a_specific_odm_form(api_client):
 
 
 def test_creating_a_new_odm_form_version(api_client):
-    response = api_client.post("concepts/odms/forms/OdmForm_000001/versions")
+    response = api_client.post("odms/forms/OdmForm_000001/versions")
 
     assert_response_status_code(response, 201)
 
@@ -1546,7 +1544,7 @@ def test_create_a_new_odm_form_for_deleting_it(api_client):
         ],
         "aliases": [],
     }
-    response = api_client.post("concepts/odms/forms", json=data)
+    response = api_client.post("odms/forms", json=data)
 
     assert_response_status_code(response, 201)
 
@@ -1579,7 +1577,7 @@ def test_create_a_new_odm_form_for_deleting_it(api_client):
 
 
 def test_deleting_a_specific_odm_form(api_client):
-    response = api_client.delete("concepts/odms/forms/OdmForm_000002")
+    response = api_client.delete("odms/forms/OdmForm_000002")
 
     assert_response_status_code(response, 204)
 
@@ -1611,7 +1609,7 @@ def test_creating_a_new_odm_form_with_relations(api_client):
         ],
         "aliases": [],
     }
-    response = api_client.post("concepts/odms/forms", json=data)
+    response = api_client.post("odms/forms", json=data)
 
     assert_response_status_code(response, 201)
 
@@ -1691,7 +1689,7 @@ def test_updating_an_existing_odm_form_with_relations(api_client):
             {"uid": "odm_vendor_attribute3", "value": "value"},
         ],
     }
-    response = api_client.patch("concepts/odms/forms/OdmForm_000001", json=data)
+    response = api_client.patch("odms/forms/OdmForm_000001", json=data)
 
     assert_response_status_code(response, 200)
 
@@ -1785,7 +1783,7 @@ def test_create_a_new_odm_study_event_with_relation_to_odm_form(api_client):
         "retired_date": "2022-04-21",
         "description": "description1",
     }
-    response = api_client.post("concepts/odms/study-events", json=data)
+    response = api_client.post("odms/study-events", json=data)
 
     assert_response_status_code(response, 201)
 
@@ -1819,7 +1817,7 @@ def test_add_the_odm_form_to_the_odm_study_event(api_client):
         }
     ]
     response = api_client.post(
-        "concepts/odms/study-events/OdmStudyEvent_000001/forms", json=data
+        "odms/study-events/OdmStudyEvent_000001/forms", json=data
     )
 
     assert_response_status_code(response, 201)
@@ -1855,7 +1853,7 @@ def test_add_the_odm_form_to_the_odm_study_event(api_client):
 
 
 def test_getting_uids_of_a_specific_odm_forms_active_relationships(api_client):
-    response = api_client.get("concepts/odms/forms/OdmForm_000001/relationships")
+    response = api_client.get("odms/forms/OdmForm_000001/relationships")
 
     assert_response_status_code(response, 200)
 
@@ -1865,7 +1863,7 @@ def test_getting_uids_of_a_specific_odm_forms_active_relationships(api_client):
 
 
 def test_getting_all_odm_forms_that_belongs_to_an_odm_study_event(api_client):
-    response = api_client.get("concepts/odms/forms/study-events")
+    response = api_client.get("odms/forms/study-events")
 
     assert_response_status_code(response, 200)
 

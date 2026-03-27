@@ -29,7 +29,7 @@ def test_data():
 
 
 def test_getting_empty_list_of_odm_conditions(api_client):
-    response = api_client.get("concepts/odms/conditions")
+    response = api_client.get("odms/conditions")
 
     assert_response_status_code(response, 200)
 
@@ -88,7 +88,7 @@ def test_creating_a_new_odm_condition(api_client):
         ],
         "aliases": [{"context": "context1", "name": "name1"}],
     }
-    response = api_client.post("concepts/odms/conditions", json=data)
+    response = api_client.post("odms/conditions", json=data)
 
     assert_response_status_code(response, 201)
 
@@ -153,7 +153,7 @@ def test_creating_a_new_odm_condition(api_client):
 
 
 def test_getting_non_empty_list_of_odm_conditions(api_client):
-    response = api_client.get("concepts/odms/conditions")
+    response = api_client.get("odms/conditions")
 
     assert_response_status_code(response, 200)
 
@@ -218,7 +218,7 @@ def test_getting_non_empty_list_of_odm_conditions(api_client):
 
 
 def test_getting_possible_header_values_of_odm_conditions(api_client):
-    response = api_client.get("concepts/odms/conditions/headers?field_name=name")
+    response = api_client.get("odms/conditions/headers?field_name=name")
 
     assert_response_status_code(response, 200)
 
@@ -228,7 +228,7 @@ def test_getting_possible_header_values_of_odm_conditions(api_client):
 
 
 def test_getting_a_specific_odm_condition(api_client):
-    response = api_client.get("concepts/odms/conditions/OdmCondition_000001")
+    response = api_client.get("odms/conditions/OdmCondition_000001")
 
     assert_response_status_code(response, 200)
 
@@ -293,7 +293,7 @@ def test_getting_a_specific_odm_condition(api_client):
 
 
 def test_getting_versions_of_a_specific_odm_condition(api_client):
-    response = api_client.get("concepts/odms/conditions/OdmCondition_000001/versions")
+    response = api_client.get("odms/conditions/OdmCondition_000001/versions")
 
     assert_response_status_code(response, 200)
 
@@ -408,9 +408,7 @@ def test_updating_an_existing_odm_condition(api_client):
         ],
         "aliases": [{"context": "context1", "name": "name1"}],
     }
-    response = api_client.patch(
-        "concepts/odms/conditions/OdmCondition_000001", json=data
-    )
+    response = api_client.patch("odms/conditions/OdmCondition_000001", json=data)
 
     assert_response_status_code(response, 200)
 
@@ -475,9 +473,7 @@ def test_updating_an_existing_odm_condition(api_client):
 
 
 def test_getting_a_specific_odm_condition_in_specific_version(api_client):
-    response = api_client.get(
-        "concepts/odms/conditions/OdmCondition_000001?version=0.1"
-    )
+    response = api_client.get("odms/conditions/OdmCondition_000001?version=0.1")
 
     assert_response_status_code(response, 200)
 
@@ -542,7 +538,7 @@ def test_getting_a_specific_odm_condition_in_specific_version(api_client):
 
 
 def test_approving_an_odm_condition(api_client):
-    response = api_client.post("concepts/odms/conditions/OdmCondition_000001/approvals")
+    response = api_client.post("odms/conditions/OdmCondition_000001/approvals")
 
     assert_response_status_code(response, 201)
 
@@ -607,9 +603,7 @@ def test_approving_an_odm_condition(api_client):
 
 
 def test_inactivating_a_specific_odm_condition(api_client):
-    response = api_client.delete(
-        "concepts/odms/conditions/OdmCondition_000001/activations"
-    )
+    response = api_client.delete("odms/conditions/OdmCondition_000001/activations")
 
     assert_response_status_code(response, 200)
 
@@ -674,9 +668,7 @@ def test_inactivating_a_specific_odm_condition(api_client):
 
 
 def test_reactivating_a_specific_odm_condition(api_client):
-    response = api_client.post(
-        "concepts/odms/conditions/OdmCondition_000001/activations"
-    )
+    response = api_client.post("odms/conditions/OdmCondition_000001/activations")
 
     assert_response_status_code(response, 200)
 
@@ -741,7 +733,7 @@ def test_reactivating_a_specific_odm_condition(api_client):
 
 
 def test_creating_a_new_odm_condition_version(api_client):
-    response = api_client.post("concepts/odms/conditions/OdmCondition_000001/versions")
+    response = api_client.post("odms/conditions/OdmCondition_000001/versions")
 
     assert_response_status_code(response, 201)
 
@@ -820,7 +812,7 @@ def test_create_a_new_odm_condition_for_deleting_it(api_client):
         ],
         "aliases": [],
     }
-    response = api_client.post("concepts/odms/conditions", json=data)
+    response = api_client.post("odms/conditions", json=data)
 
     assert_response_status_code(response, 201)
 
@@ -848,7 +840,7 @@ def test_create_a_new_odm_condition_for_deleting_it(api_client):
 
 
 def test_deleting_a_specific_odm_condition(api_client):
-    response = api_client.delete("concepts/odms/conditions/OdmCondition_000002")
+    response = api_client.delete("odms/conditions/OdmCondition_000002")
 
     assert_response_status_code(response, 204)
 
@@ -871,7 +863,7 @@ def test_creating_a_new_odm_condition_with_relations(api_client):
         ],
         "aliases": [],
     }
-    response = api_client.post("concepts/odms/conditions", json=data)
+    response = api_client.post("odms/conditions", json=data)
 
     assert_response_status_code(response, 201)
 
@@ -923,9 +915,7 @@ def test_updating_an_existing_odm_condition_with_relations(api_client):
         ],
         "aliases": [{"context": "context1", "name": "name1"}],
     }
-    response = api_client.patch(
-        "concepts/odms/conditions/OdmCondition_000001", json=data
-    )
+    response = api_client.patch("odms/conditions/OdmCondition_000001", json=data)
 
     assert_response_status_code(response, 200)
 
@@ -959,9 +949,7 @@ def test_updating_an_existing_odm_condition_with_relations(api_client):
 
 
 def test_getting_uids_of_a_specific_odm_conditions_active_relationships(api_client):
-    response = api_client.get(
-        "concepts/odms/conditions/OdmCondition_000001/relationships"
-    )
+    response = api_client.get("odms/conditions/OdmCondition_000001/relationships")
 
     assert_response_status_code(response, 200)
 

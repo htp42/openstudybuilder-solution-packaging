@@ -13,7 +13,6 @@
         <v-text-field
           v-model="form.timing"
           :label="$t('StudyVisitForm.time_value')"
-          density="compact"
           :rules="[formRules.required]"
           type="number"
         />

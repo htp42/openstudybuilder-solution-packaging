@@ -8,8 +8,8 @@
       sort-desc
       :items-length="total"
       :initial-sort-by="[{ key: 'name', order: 'asc' }]"
-      column-data-resource="concepts/odms/study-events"
-      export-data-url="concepts/odms/study-events"
+      column-data-resource="odms/study-events"
+      export-data-url="odms/study-events"
       export-object-label="CRFCollections"
       @filter="getCollections"
     >
@@ -32,6 +32,16 @@
       </template>
       <template #[`item.actions`]="{ item }">
         <ActionsMenu :actions="actions" :item="item" />
+      </template>
+      <template #[`item.start_date`]="{ item }">
+        <v-tooltip location="top">
+          <template #activator="{ props }">
+            <span v-bind="props">{{
+              $filters.dateRelative(item.start_date)
+            }}</span>
+          </template>
+          {{ $filters.date(item.start_date) }}
+        </v-tooltip>
       </template>
       <template #[`item.status`]="{ item }">
         <StatusChip :status="item.status" />
@@ -117,6 +127,8 @@ const headers = computed(() => [
   { title: t('_global.name'), key: 'name' },
   { title: t('CRFCollections.effective_date'), key: 'effective_date' },
   { title: t('CRFCollections.retired_date'), key: 'retired_date' },
+  { title: t('_global.modified'), key: 'start_date' },
+  { title: t('_global.modified_by'), key: 'author_username' },
   { title: t('_global.version'), key: 'version' },
   { title: t('_global.status'), key: 'status' },
 ])

@@ -1,4 +1,5 @@
-""" Schema migrations needed for release to PROD post Oct 2023."""
+"""Schema migrations needed for release to PROD post Oct 2023."""
+
 import os
 
 from migrations.common import migrate_ct_config_values, migrate_indexes_and_constraints
@@ -34,11 +35,9 @@ def main():
 
 
 def fix_study_epoch_order(db_connection, log):
-    studies, _ = db_connection.cypher_query(
-        """
+    studies, _ = db_connection.cypher_query("""
         MATCH (study_root:StudyRoot) return study_root.uid
-        """
-    )
+        """)
     for study in studies:
         study_uid = study[0]
         log.info("Fixing StudyEpoch order for the following Study (%s)", study_uid)
@@ -81,13 +80,11 @@ def terms_name_codelist_mapping(db_connection, term_name):
 
 
 def list_variables_to_link(db_connection):
-    variables_data, meta = db_connection.cypher_query(
-        """
+    variables_data, meta = db_connection.cypher_query("""
             MATCH (root:DatasetVariable)-[:HAS_INSTANCE]->(v:DatasetVariableInstance)
             WHERE v.value_list IS NOT NULL AND NOT EXISTS ((v)-[:REFERENCES_TERM]->(:CTTermRoot))
             RETURN id(v) AS id, v.value_list AS value_list, root.uid AS uid
-        """
-    )
+        """)
     return [dict(zip(meta, row)) for row in variables_data]
 
 
@@ -239,8 +236,7 @@ def migrate_delete_study_actions_on_study_fields(db_connection, log):
     log.info(
         "Migrating - Fixing bad deletions on deleted StudyFields to have the StudyActions standard convention"
     )
-    _result, _ = db_connection.cypher_query(
-        """
+    _result, _ = db_connection.cypher_query("""
         // MATCH BAD DELETED StudySelection
         MATCH (del:Delete)-[ss_del]-(ss:StudyField)
 
@@ -272,8 +268,7 @@ def migrate_delete_study_actions_on_study_fields(db_connection, log):
         DELETE ss_old_del
 
         RETURN  DISTINCT ID(ss_old)
-        """
-    )
+        """)
     logger.info("Output - StudyFields ID Migrated %s", _result)
 
 
@@ -335,11 +330,9 @@ def migrate_study_activity_group_audit_trail_node(db_connection, log):
 
 
 def migrate_study_activity_instances(db_connection, log):
-    studies, _ = db_connection.cypher_query(
-        """
+    studies, _ = db_connection.cypher_query("""
         MATCH (study_root:StudyRoot) return study_root.uid
-        """
-    )
+        """)
     for study in studies:
         study_uid = study[0]
         log.info(
@@ -387,11 +380,9 @@ def migrate_study_activity_instances(db_connection, log):
 
 
 def remove_duplicated_study_activity_schedules(db_connection, log):
-    studies, _ = db_connection.cypher_query(
-        """
+    studies, _ = db_connection.cypher_query("""
         MATCH (study_root:StudyRoot) return study_root.uid
-        """
-    )
+        """)
     for study in studies:
         study_uid = study[0]
         log.info(
@@ -445,8 +436,7 @@ def migrate_week_in_study(db_connection, log):
     log.info(
         "Migration: Adding WeekInStudy relationship to all StudyVisits that have StudyDurationWeeks relationship"
     )
-    study_visits_with_duration_weeks, _ = db_connection.cypher_query(
-        """
+    study_visits_with_duration_weeks, _ = db_connection.cypher_query("""
         MATCH (sv:StudyVisit)-[hsdw:HAS_STUDY_DURATION_WEEKS]->
         (nvr:ConceptRoot:NumericValueRoot:SimpleConceptRoot:StudyDurationWeeksRoot:TemplateParameterTermRoot)-[hv:HAS_VERSION]->
         (nv:ConceptValue:NumericValue:SimpleConceptValue:StudyDurationWeeksValue:TemplateParameterTermValue)
@@ -464,8 +454,7 @@ def migrate_week_in_study(db_connection, log):
             hv.version,
             lib.is_editable,
             lib.name
-        """
-    )
+        """)
 
     for visit in study_visits_with_duration_weeks:
         name = "Week " + visit[2].replace(" weeks", "")
@@ -569,12 +558,10 @@ def migrate_week_in_study(db_connection, log):
 
 def migrate_soa_preferred_time_unit(db_connection, log):
     log.info("Migration: Adding StudyTimeField for soa_preferred_time_unit.")
-    week_unit_definition_uid = db_connection.cypher_query(
-        """
+    week_unit_definition_uid = db_connection.cypher_query("""
         MATCH (udr:UnitDefinitionRoot)-->(:UnitDefinitionValue {name: "week"})
         RETURN DISTINCT udr.uid
-        """
-    )[0][0][0]
+        """)[0][0][0]
 
     db_connection.cypher_query(
         """
@@ -609,8 +596,7 @@ def migrate_study_activity_grouping_and_audit_trail(db_connection, log):
     log.info(
         "Migration: Merging duplicated StudyActivitySubGroup nodes for StudyActivity linked to Albumin Activity in the Study_000002"
     )
-    _ = db_connection.cypher_query(
-        """
+    _ = db_connection.cypher_query("""
         MATCH (sa:StudyActivity {uid:"StudyActivity_000351"})-[sahasg:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]->(sasg:StudyActivitySubGroup)-[hsasg:HAS_SELECTED_ACTIVITY_SUBGROUP]-(asgv:ActivitySubGroupValue)
         WITH sa, collect(sasg) as sasgs WHERE size(sasgs) > 1
         WITH sa
@@ -619,13 +605,11 @@ def migrate_study_activity_grouping_and_audit_trail(db_connection, log):
         WITH collect(sasg2) as gs
         FOREACH(duplicated_subgroup in gs | DETACH DELETE duplicated_subgroup)
         return *
-        """
-    )
+        """)
     log.info(
         "Migration: Merging duplicated StudyActivityGroup nodes for StudyActivity linked to Albumin Activity in the Study_000002"
     )
-    _ = db_connection.cypher_query(
-        """
+    _ = db_connection.cypher_query("""
         MATCH (sa:StudyActivity {uid:"StudyActivity_000351"})-[sahag:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(sag:StudyActivityGroup)-[hsag:HAS_SELECTED_ACTIVITY_GROUP]-(agv:ActivityGroupValue)
         WITH sa, collect(sag) as sags WHERE size(sags) > 1
         WITH sa
@@ -634,35 +618,29 @@ def migrate_study_activity_grouping_and_audit_trail(db_connection, log):
         WITH collect(sag2) as gs
         FOREACH(duplicated_group in gs | DETACH DELETE duplicated_group)
         return *
-        """
-    )
+        """)
     log.info("Migration: Add missing StudyAction nodes for StudyActivitySubGroup nodes")
-    _ = db_connection.cypher_query(
-        """
+    _ = db_connection.cypher_query("""
         MATCH (study_activity_subgroup:StudyActivitySubGroup)
         WHERE NOT (study_activity_subgroup)<-[:AFTER|BEFORE]-()
         MATCH (study_activity_subgroup)<-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]-(study_activity:StudyActivity)
             <-[:AFTER|BEFORE]-(:StudyAction)<-[:AUDIT_TRAIL]-(correct_study_root_node)
         WITH DISTINCT correct_study_root_node, study_activity_subgroup
         MERGE (correct_study_root_node)-[:AUDIT_TRAIL]->(study_action:Create:StudyAction {user_initials:"schema-migration", date:datetime()})-[:AFTER]->(study_activity_subgroup)
-        """
-    )
+        """)
 
     log.info("Migration: Add missing StudyAction nodes for StudyActivityGroup nodes")
-    _ = db_connection.cypher_query(
-        """
+    _ = db_connection.cypher_query("""
         MATCH (study_activity_group:StudyActivityGroup)
         WHERE NOT (study_activity_group)<-[:AFTER|BEFORE]-()
         MATCH (study_activity_group)<-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]-(study_activity:StudyActivity)
             <-[:AFTER|BEFORE]-(:StudyAction)<-[:AUDIT_TRAIL]-(correct_study_root_node)
         WITH DISTINCT correct_study_root_node, study_activity_group
         MERGE (correct_study_root_node)-[:AUDIT_TRAIL]->(study_action:Create:StudyAction {user_initials:"schema-migration", date:datetime()})-[:AFTER]->(study_activity_group)
-        """
-    )
+        """)
 
     log.info("Migration: Merging duplicated StudyActivitySubGroup nodes")
-    _ = db_connection.cypher_query(
-        """
+    _ = db_connection.cypher_query("""
         MATCH (sa:StudyActivity)-[sahasg:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]->(sasg:StudyActivitySubGroup)-[hsasg:HAS_SELECTED_ACTIVITY_SUBGROUP]-(asgv:ActivitySubGroupValue)
         WITH sa, asgv, collect(sasg) as sasgs WHERE size(sasgs) > 1
         CALL {
@@ -674,27 +652,23 @@ def migrate_study_activity_grouping_and_audit_trail(db_connection, log):
             RETURN node
         } IN TRANSACTIONS
         return sa
-        """
-    )
+        """)
 
     log.info(
         "Migration: Remove redundant StudyAction nodes for StudyActivitySubGroup nodes"
     )
-    _ = db_connection.cypher_query(
-        """
+    _ = db_connection.cypher_query("""
         MATCH (s:StudyActivitySubGroup)-[:AFTER|BEFORE]-(study_action)
         WHERE (s)-[:AFTER]-(study_action) and (s)-[:BEFORE]-(study_action)
         DETACH DELETE study_action
         RETURN *
-        """
-    )
+        """)
 
     for rel in ["BEFORE", "AFTER"]:
         log.info(
             f"Migration: Removing duplicated {rel} StudyAction nodes for StudyActivitySubGroup nodes"
         )
-        _ = db_connection.cypher_query(
-            f"""
+        _ = db_connection.cypher_query(f"""
             MATCH (sasg:StudyActivitySubGroup)-[:{rel}]-(action:StudyAction)
             WITH sasg, collect(action) as actions WHERE size(actions) > 1
             CALL {{
@@ -706,12 +680,10 @@ def migrate_study_activity_grouping_and_audit_trail(db_connection, log):
                 FOREACH (n IN actions_to_delete | DETACH DELETE n)
             }} IN TRANSACTIONS
             return sasg
-            """
-        )
+            """)
 
     log.info("Migration: Merging duplicated StudyActivityGroup nodes")
-    _ = db_connection.cypher_query(
-        """
+    _ = db_connection.cypher_query("""
         MATCH (sa:StudyActivity)-[sahsag:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(sag:StudyActivityGroup)-[hsag:HAS_SELECTED_ACTIVITY_GROUP]-(agv:ActivityGroupValue)
         WITH sa, agv, collect(sag) as sags WHERE size(sags) > 1
         CALL {
@@ -723,27 +695,23 @@ def migrate_study_activity_grouping_and_audit_trail(db_connection, log):
             RETURN node
         } IN TRANSACTIONS
         return sa
-        """
-    )
+        """)
 
     log.info(
         "Migration: Remove redundant StudyAction nodes for StudyActivityGroup nodes"
     )
-    _ = db_connection.cypher_query(
-        """
+    _ = db_connection.cypher_query("""
         MATCH (s:StudyActivityGroup)-[:AFTER|BEFORE]-(study_action)
         WHERE (s)-[:AFTER]-(study_action) and (s)-[:BEFORE]-(study_action)
         DETACH DELETE study_action
         RETURN *
-        """
-    )
+        """)
 
     for rel in ["BEFORE", "AFTER"]:
         log.info(
             f"Migration: Removing duplicated {rel} StudyAction nodes for StudyActivityGroup nodes"
         )
-        _ = db_connection.cypher_query(
-            f"""
+        _ = db_connection.cypher_query(f"""
             MATCH (sag:StudyActivityGroup)-[:{rel}]-(action:StudyAction)
             WITH sag, collect(action) as actions WHERE size(actions) > 1
             CALL {{
@@ -755,26 +723,21 @@ def migrate_study_activity_grouping_and_audit_trail(db_connection, log):
                 FOREACH (n IN actions_to_delete | DETACH DELETE n)
             }} IN TRANSACTIONS
             return sag
-            """
-        )
+            """)
 
     for group_class in ["StudyActivityGroup", "StudyActivitySubGroup"]:
         log.info(f"Migration: Removing incomplete Edits for {group_class} nodes")
-        _ = db_connection.cypher_query(
-            f"""
+        _ = db_connection.cypher_query(f"""
             MATCH (sasg:{group_class})<-[:BEFORE]-(edit:Edit)
             WHERE NOT (edit)-[:AFTER]->()
             DETACH DELETE edit
-            """
-        )
+            """)
 
 
 def remove_broken_study_activity_instances(db_connection, log):
-    studies, _ = db_connection.cypher_query(
-        """
+    studies, _ = db_connection.cypher_query("""
         MATCH (study_root:StudyRoot) return study_root.uid
-        """
-    )
+        """)
     for study in studies:
         study_uid = study[0]
         log.info(
@@ -794,14 +757,12 @@ def migrate_nullify_unit_definition_name_sentence_case(db_connection, log):
     log.info(
         "Replace UnitDefinitionValue.name_sentence_case usage in Syntax Instances with UnitDefinitionValue.name"
     )
-    db_connection.cypher_query(
-        """
+    db_connection.cypher_query("""
         MATCH (uv:UnitDefinitionValue)--(ur:UnitDefinitionRoot:TemplateParameterTermRoot)--(i:SyntaxInstanceValue)
         WHERE uv.name_sentence_case IS NOT NULL
         SET i.name = replace(i.name, "[" + uv.name_sentence_case + "]", "[" + uv.name + "]")
         SET i.name_plain = replace(i.name_plain, uv.name_sentence_case, uv.name)
-        """
-    )
+        """)
 
     log.info("Nullifying UnitDefinitionValue.name_sentence_case")
     db_connection.cypher_query(
@@ -813,27 +774,23 @@ def migrate_missing_activity_item_class(db_connection, log):
     log.info(
         "Add missing HAS_ACTIVITY_ITEM relationship from ActivityItemClassRoot to ActivityItem"
     )
-    db_connection.cypher_query(
-        """
+    db_connection.cypher_query("""
         MATCH (ai:ActivityItem) WHERE NOT (ai)<-[:HAS_ACTIVITY_ITEM]-()
         MATCH (aicr:ActivityItemClassRoot)-[:LATEST]->(aicv:ActivityItemClassValue {name: "test_name_code"})
         MERGE (aicr)-[:HAS_ACTIVITY_ITEM]->(ai) RETURN *
-        """
-    )
+        """)
 
 
 def migrate_remove_invalid_activity_instances(db_connection, log):
     log.info(
         "Removing invalid ActivityInstances that miss the HAS_ACTIVITY relationship"
     )
-    db_connection.cypher_query(
-        """
+    db_connection.cypher_query("""
         MATCH (aiv:ActivityInstanceValue) WHERE NOT (aiv)-[:HAS_ACTIVITY]->(:ActivityGrouping) 
         MATCH (aiv)<-[]-(air:ActivityInstanceRoot)-[:CONTAINS_CONCEPT]-(:Library {name: "Sponsor"})
         OPTIONAL MATCH (aiv)-[:CONTAINS_ACTIVITY_ITEM]-(ai:ActivityItem)
         DETACH DELETE aiv, air, ai
-        """
-    )
+        """)
 
 
 if __name__ == "__main__":

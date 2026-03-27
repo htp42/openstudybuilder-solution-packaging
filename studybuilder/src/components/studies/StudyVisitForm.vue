@@ -20,7 +20,6 @@
               v-if="!loading"
               v-model="form.visit_class"
               :rules="[formRules.required]"
-              color="primary"
             >
               <v-radio
                 v-for="visitClass in visitClasses"
@@ -71,7 +70,6 @@
                   v-model="form.visit_subclass"
                   inline
                   hide-details
-                  color="primary"
                 >
                   <v-radio
                     :label="$t('StudyVisitForm.single_visit')"
@@ -103,7 +101,7 @@
             <v-row>
               <v-col cols="4">
                 <v-autocomplete
-                  v-model="form.visit_type_uid"
+                  v-model="form.visit_type.term_uid"
                   :label="$t('StudyVisitForm.visit_type')"
                   data-cy="visit-type"
                   :items="visitTypes"
@@ -118,7 +116,7 @@
               </v-col>
               <v-col cols="4">
                 <v-autocomplete
-                  v-model="form.visit_contact_mode_uid"
+                  v-model="form.visit_contact_mode.term_uid"
                   :label="$t('StudyVisitForm.contact_mode')"
                   data-cy="contact-mode"
                   :items="contactModes"
@@ -145,6 +143,7 @@
                     v-if="displayAnchorVisitFlag"
                     v-model="form.is_global_anchor_visit"
                     :label="$t('StudyVisitForm.anchor_visit')"
+                    class="mr-2"
                     data-cy="anchor-visit-checkbox"
                     :hint="$t('StudyVisitForm.anchor_visit_hint')"
                     persistent-hint
@@ -153,8 +152,6 @@
                     v-model="currentAnchorVisit"
                     :label="$t('StudyVisitForm.current_anchor_visit')"
                     readonly
-                    variant="filled"
-                    class="ml-4"
                   />
                 </div>
               </v-col>
@@ -164,8 +161,6 @@
                 v-model="form.is_soa_milestone"
                 class="ml-4 pt-0 mt-0"
                 :label="$t('StudyVisitForm.soa_milestone')"
-                density="compact"
-                color="primary"
               />
             </v-row>
             <v-row v-if="showTimingFields">
@@ -176,7 +171,7 @@
                       visitConstants.SUBCLASS_ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV &&
                     form.visit_class !== visitConstants.CLASS_SPECIAL_VISIT
                   "
-                  v-model="form.time_reference_uid"
+                  v-model="form.time_reference.term_uid"
                   :label="$t('StudyVisitForm.time_reference')"
                   data-cy="time-reference"
                   :items="timeReferences"
@@ -258,7 +253,7 @@
               "
               density="compact"
               type="warning"
-              class="text-white"
+              class="text-white mb-2"
               :text="$t('StudyVisitForm.visit_number_uniqueness_warning')"
             />
             <v-row>
@@ -327,7 +322,6 @@
                     data-cy="study-day-label"
                     readonly
                     disabled
-                    variant="filled"
                     :loading="previewLoading"
                   />
                   <v-text-field
@@ -337,7 +331,6 @@
                     class="mt-6"
                     readonly
                     disabled
-                    variant="filled"
                     :loading="previewLoading"
                   />
                 </v-col>
@@ -352,7 +345,7 @@
               <div class="sub-title">
                 {{ $t('StudyVisitForm.visit_window') }}
               </div>
-              <v-alert density="compact" type="warning" class="text-white">
+              <v-alert density="compact" type="warning" class="text-white mb-2">
                 <div
                   v-html="sanitizeHTML($t('StudyVisitForm.visit_window_alert'))"
                 />
@@ -424,7 +417,7 @@
             <v-row>
               <v-col cols="6">
                 <v-autocomplete
-                  v-model="form.epoch_allocation_uid"
+                  v-model="form.epoch_allocation.term_uid"
                   :label="$t('StudyVisitForm.epoch_allocation')"
                   data-cy="epoch-allocation-rule"
                   :items="epochAllocations"
@@ -608,13 +601,13 @@ const visitClasses = [
 ]
 const milestoneAvailable = computed(() => {
   if (
-    form.value.visit_type_uid &&
+    form.value.visit_type.term_uid &&
     [
       visitConstants.VISIT_TYPE_NON_VISIT,
       visitConstants.VISIT_TYPE_UNSCHEDULED,
     ].indexOf(
       visitTypes.value.find(
-        (type) => type.term_uid === form.value.visit_type_uid
+        (type) => type.term_uid === form.value.visit_type.term_uid
       ).sponsor_preferred_name
     ) === -1
   ) {
@@ -793,7 +786,7 @@ watch(
     if (value) {
       form.value.time_value = 0
       disableTimeValue.value = true
-      form.value.time_reference_uid = timeReferences.value.find(
+      form.value.time_reference.term_uid = timeReferences.value.find(
         (val) =>
           val.sponsor_preferred_name ===
           visitConstants.TIMEREF_GLOBAL_ANCHOR_VISIT
@@ -818,7 +811,7 @@ watch(
           visitConstants.CONTACT_MODE_VIRTUAL_VISIT
       )
       if (contactMode) {
-        form.value.visit_contact_mode_uid = contactMode.term_uid
+        form.value.visit_contact_mode.term_uid = contactMode.term_uid
       }
     }
     if (
@@ -839,7 +832,7 @@ onMounted(() => {
 })
 
 function validateEpochAllocationRule(value) {
-  if (form.value.epoch_allocation_uid) {
+  if (form.value.epoch_allocation.term_uid) {
     return
   }
   if (
@@ -910,6 +903,10 @@ function getInitialFormContent(item) {
     min_visit_window_value: 0,
     max_visit_window_value: 0,
     visit_subclass: visitConstants.CLASS_SINGLE_VISIT,
+    visit_contact_mode: {},
+    visit_type: {},
+    epoch_allocation: {},
+    time_reference: {},
   }
 }
 async function submit() {
@@ -948,7 +945,7 @@ async function addObject() {
     data.visit_subclass ===
       visitConstants.SUBCLASS_ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV
   ) {
-    data.time_reference_uid = timeReferences.value.find(
+    data.time_reference.term_uid = timeReferences.value.find(
       (item) =>
         item.sponsor_preferred_name ===
         visitConstants.TIMEREF_ANCHOR_VISIT_IN_VISIT_GROUP
@@ -958,7 +955,6 @@ async function addObject() {
     data.visit_class !== visitConstants.CLASS_MANUALLY_DEFINED_VISIT
   ) {
     delete data.time_value
-    delete data.time_reference_uid
     delete data.min_visit_window_value
     delete data.max_visit_window_value
     delete data.time_unit_uid
@@ -985,97 +981,113 @@ async function updateObject() {
   notificationHub.add({ msg: t('StudyVisitForm.update_success') })
 }
 function getVisitPreview() {
-  if (props.studyVisit) {
-    return
-  }
-  const mandatoryFields = [
-    'visit_type_uid',
-    'visit_contact_mode_uid',
-    'study_epoch_uid',
-  ]
-  if (
-    form.value.visit_class === visitConstants.CLASS_SINGLE_VISIT ||
-    form.value.visit_class === visitConstants.CLASS_MANUALLY_DEFINED_VISIT
-  ) {
-    mandatoryFields.push('time_reference_uid', 'time_value')
-    if (
-      form.value.visit_class === visitConstants.CLASS_MANUALLY_DEFINED_VISIT
-    ) {
-      mandatoryFields.push(
-        'visit_name',
-        'visit_short_name',
-        'visit_number',
-        'unique_visit_number'
-      )
-    }
-  }
-  if (
-    form.value.visit_subclass ===
-    visitConstants.SUBCLASS_ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV
-  ) {
-    mandatoryFields[mandatoryFields.indexOf('time_reference_uid')] =
-      'visit_sublabel_reference'
-  }
-  for (const field of mandatoryFields) {
-    if (form.value[field] === undefined || form.value[field] === null) {
+  try {
+    if (props.studyVisit) {
       return
     }
-  }
-  const payload = { ...form.value }
-  if (
-    payload.visit_class !== visitConstants.CLASS_SINGLE_VISIT &&
-    payload.visit_class !== visitConstants.CLASS_MANUALLY_DEFINED_VISIT
-  ) {
-    payload.time_reference_uid = timeReferences.value.find(
-      (item) =>
-        item.sponsor_preferred_name ===
-        visitConstants.TIMEREF_GLOBAL_ANCHOR_VISIT
-    ).term_uid
-    payload.time_value = 0
-  }
-  if (
-    payload.visit_subclass ===
-    visitConstants.SUBCLASS_ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV
-  ) {
-    payload.time_reference_uid = timeReferences.value.find(
-      (item) =>
-        item.sponsor_preferred_name ===
-        visitConstants.TIMEREF_GLOBAL_ANCHOR_VISIT
-    ).term_uid
-  }
-  if (
-    payload.visit_class === visitConstants.CLASS_SPECIAL_VISIT &&
-    !payload.visit_sublabel_reference
-  ) {
-    return
-  }
-  payload.time_unit_uid = payload.time_unit.uid
-  delete payload.time_unit
-  payload.is_global_anchor_visit = false
-  previewLoading.value = true
-
-  epochsStore
-    .getStudyVisitPreview({ studyUid: selectedStudy.value.uid, input: payload })
-    .then((resp) => {
-      let fields = []
+    const mandatoryFields = [
+      'visit_type.term_uid',
+      'visit_contact_mode.term_uid',
+      'study_epoch_uid',
+    ]
+    if (
+      form.value.visit_class === visitConstants.CLASS_SINGLE_VISIT ||
+      form.value.visit_class === visitConstants.CLASS_MANUALLY_DEFINED_VISIT
+    ) {
+      mandatoryFields.push('time_reference.term_uid', 'time_value')
       if (
-        form.value.visit_class !== visitConstants.CLASS_MANUALLY_DEFINED_VISIT
+        form.value.visit_class === visitConstants.CLASS_MANUALLY_DEFINED_VISIT
       ) {
-        fields = fields.concat([
+        mandatoryFields.push(
           'visit_name',
           'visit_short_name',
           'visit_number',
-          'unique_visit_number',
-        ])
+          'unique_visit_number'
+        )
       }
-      fields = fields.concat(['study_day_label', 'study_week_label'])
-      for (const field of fields) {
-        form.value[field] = resp.data[field]
+    }
+    if (
+      form.value.visit_subclass ===
+      visitConstants.SUBCLASS_ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV
+    ) {
+      mandatoryFields[mandatoryFields.indexOf('time_reference.term_uid')] =
+        'visit_sublabel_reference'
+    }
+    const getFieldValue = (source, fieldPath) => {
+      if (!fieldPath.includes('.')) {
+        return source[fieldPath]
       }
-    })
-    .finally(() => {
-      previewLoading.value = false
-    })
+      return fieldPath
+        .split('.')
+        .reduce((currentValue, key) => currentValue?.[key], source)
+    }
+    for (const field of mandatoryFields) {
+      const fieldValue = getFieldValue(form.value, field)
+      if (fieldValue === undefined || fieldValue === null) {
+        return
+      }
+    }
+    const payload = { ...form.value }
+    if (
+      payload.visit_class !== visitConstants.CLASS_SINGLE_VISIT &&
+      payload.visit_class !== visitConstants.CLASS_MANUALLY_DEFINED_VISIT
+    ) {
+      payload.time_reference_uid = timeReferences.value.find(
+        (item) =>
+          item.sponsor_preferred_name ===
+          visitConstants.TIMEREF_GLOBAL_ANCHOR_VISIT
+      ).term_uid
+      payload.time_value = 0
+    }
+    if (
+      payload.visit_subclass ===
+      visitConstants.SUBCLASS_ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV
+    ) {
+      payload.time_reference_uid = timeReferences.value.find(
+        (item) =>
+          item.sponsor_preferred_name ===
+          visitConstants.TIMEREF_GLOBAL_ANCHOR_VISIT
+      ).term_uid
+    }
+    if (
+      payload.visit_class === visitConstants.CLASS_SPECIAL_VISIT &&
+      !payload.visit_sublabel_reference
+    ) {
+      return
+    }
+    payload.time_unit_uid = payload.time_unit.uid
+    delete payload.time_unit
+    payload.is_global_anchor_visit = false
+    previewLoading.value = true
+
+    epochsStore
+      .getStudyVisitPreview({
+        studyUid: selectedStudy.value.uid,
+        input: payload,
+      })
+      .then((resp) => {
+        let fields = []
+        if (
+          form.value.visit_class !== visitConstants.CLASS_MANUALLY_DEFINED_VISIT
+        ) {
+          fields = fields.concat([
+            'visit_name',
+            'visit_short_name',
+            'visit_number',
+            'unique_visit_number',
+          ])
+        }
+        fields = fields.concat(['study_day_label', 'study_week_label'])
+        for (const field of fields) {
+          form.value[field] = resp.data[field]
+        }
+      })
+      .finally(() => {
+        previewLoading.value = false
+      })
+  } catch (error) {
+    console.error('Error in getVisitPreview:', error)
+  }
 }
 
 function callbacks() {
@@ -1164,7 +1176,7 @@ function onTabChange(number) {
 }
 function setVisitType(value) {
   if (visitTypes.value.length) {
-    form.value.visit_type_uid = visitTypes.value.find(
+    form.value.visit_type.term_uid = visitTypes.value.find(
       (item) => item.sponsor_preferred_name === value
     ).term_uid
     getVisitPreview()
@@ -1172,7 +1184,7 @@ function setVisitType(value) {
 }
 function setEpochAllocationRule(value) {
   if (epochAllocations.value.length) {
-    form.value.epoch_allocation_uid = epochAllocations.value.find(
+    form.value.epoch_allocation.term_uid = epochAllocations.value.find(
       (item) => item.sponsor_preferred_name === value
     ).term_uid
   }

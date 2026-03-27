@@ -10,7 +10,6 @@
           :label="$t('ProtocolFlowchart.show_split_menu')"
           hide-details
           class="mr-4"
-          color="primary"
           :readonly="soaContentLoadingStore.loading || toggle.length !== 0"
           :disabled="toggle.length !== 0"
           :loading="soaContentLoadingStore.loading ? 'warning' : null"
@@ -21,7 +20,6 @@
           :label="$t('ProtocolFlowchart.show_epochs')"
           hide-details
           class="mr-4"
-          color="primary"
           :readonly="soaContentLoadingStore.loading"
           :loading="soaContentLoadingStore.loading ? 'warning' : null"
           @update:model-value="updateSoaPreferences('show_epochs')"
@@ -32,7 +30,6 @@
           :label="$t('ProtocolFlowchart.show_milestones')"
           hide-details
           class="mr-4"
-          color="primary"
           :readonly="soaContentLoadingStore.loading"
           :loading="soaContentLoadingStore.loading ? 'warning' : null"
           @update:model-value="updateSoaPreferences('show_milestones')"
@@ -225,6 +222,9 @@ function scrollToSplit(visit) {
 
 async function loadVisits() {
   try {
+    // These visit names are placeholders and should be excluded from split-menu grouping.
+    const excludedVisitNames = new Set(['29500', '29999'])
+
     const visits = props.studyVisits.map((v) => ({
       name: v.visit_short_name,
       uid: v.uid,
@@ -240,6 +240,11 @@ async function loadVisits() {
       if (!visit.show_visit) {
         continue
       }
+
+      if (excludedVisitNames.has(`${visit.name}`.trim())) {
+        continue
+      }
+
       if (!visit.group) {
         if (lastVisitInGroup) {
           result.push(lastVisitInGroup)

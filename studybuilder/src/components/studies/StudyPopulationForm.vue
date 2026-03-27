@@ -123,7 +123,6 @@
               item-value="term_uid"
               item-title="sponsor_preferred_name"
               return-object
-              density="compact"
               clearable
               hide-details="auto"
             />

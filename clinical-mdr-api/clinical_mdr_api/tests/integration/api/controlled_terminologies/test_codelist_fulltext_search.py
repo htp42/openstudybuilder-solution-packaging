@@ -38,21 +38,17 @@ URL = "/ct/codelists"
 def create_fulltext_indexes():
     """Create the full-text indexes needed for the search endpoints"""
     # Index on CTCodelistNameValue and CTCodelistAttributesValue
-    db.cypher_query(
-        """
+    db.cypher_query("""
         CREATE FULLTEXT INDEX codelist_fulltext_index IF NOT EXISTS
         FOR (n:CTCodelistNameValue|CTCodelistAttributesValue)
         ON EACH [n.name, n.submission_value]
-        """
-    )
+        """)
     # Index on CTTermNameValue and CTTermAttributesValue
-    db.cypher_query(
-        """
+    db.cypher_query("""
         CREATE FULLTEXT INDEX term_fulltext_index IF NOT EXISTS
         FOR (n:CTTermNameValue|CTTermAttributesValue)
         ON EACH [n.name, n.submission_value]
-        """
-    )
+        """)
     # Wait for indexes to be online
     db.cypher_query("CALL db.awaitIndexes(300)")
 

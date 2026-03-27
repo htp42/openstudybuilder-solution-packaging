@@ -56,7 +56,7 @@ class NetworkSimulator:
                 else:
                     print("Zero bytes, closing connection, request: ", is_request)
                     break
-            except (ConnectionResetError, OSError, BrokenPipeError):
+            except ConnectionResetError, OSError, BrokenPipeError:
                 print("Got exception, closing connection, request: ", is_request)
                 break
         source_socket.close()
@@ -96,7 +96,7 @@ class NetworkSimulator:
                     self.running = False
                     self.server_socket.close()
                     break
-                elif user_input == "r":
+                if user_input == "r":
                     print("Resetting counters...")
                     self.nbr_requests = 0
                     self.nbr_replies = 0

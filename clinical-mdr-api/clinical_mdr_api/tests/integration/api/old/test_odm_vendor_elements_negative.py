@@ -37,7 +37,7 @@ def test_create_a_new_odm_vendor_element(api_client):
         "compatible_types": ["FormDef"],
         "vendor_namespace_uid": "odm_vendor_namespace1",
     }
-    response = api_client.post("concepts/odms/vendor-elements", json=data)
+    response = api_client.post("odms/vendor-elements", json=data)
 
     assert_response_status_code(response, 201)
 
@@ -66,7 +66,7 @@ def test_create_a_new_odm_vendor_element(api_client):
 
 
 def test_getting_error_for_retrieving_non_existent_odm_vendor_element(api_client):
-    response = api_client.get("concepts/odms/vendor-elements/OdmVendorElement_000002")
+    response = api_client.get("odms/vendor-elements/OdmVendorElement_000002")
 
     assert_response_status_code(response, 404)
 
@@ -88,7 +88,7 @@ def test_cannot_create_a_new_odm_vendor_element_without_providing_compatible_typ
         "compatible_types": [],
         "vendor_namespace_uid": "odm_vendor_namespace1",
     }
-    response = api_client.post("concepts/odms/vendor-elements", json=data)
+    response = api_client.post("odms/vendor-elements", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -114,7 +114,7 @@ def test_cannot_create_a_new_odm_vendor_element_without_first_char_uppercase(
         "compatible_types": ["FormDef"],
         "vendor_namespace_uid": "odm_vendor_namespace1",
     }
-    response = api_client.post("concepts/odms/vendor-elements", json=data)
+    response = api_client.post("odms/vendor-elements", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -145,7 +145,7 @@ def test_cannot_create_a_new_odm_vendor_element_if_odm_vendor_namespace_doesnt_e
         "compatible_types": ["FormDef"],
         "vendor_namespace_uid": "wrong_uid",
     }
-    response = api_client.post("concepts/odms/vendor-elements", json=data)
+    response = api_client.post("odms/vendor-elements", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -154,7 +154,7 @@ def test_cannot_create_a_new_odm_vendor_element_if_odm_vendor_namespace_doesnt_e
     assert res["type"] == "BusinessLogicException"
     assert (
         res["message"]
-        == """ODM Vendor Element tried to connect to non-existent concepts [('Concept Name: ODM Vendor Namespace', "uids: {'wrong_uid'}")]."""
+        == "ODM Vendor Element tried to connect to non-existent ODM Vendor Namespace with UID 'wrong_uid'."
     )
 
 
@@ -165,7 +165,7 @@ def test_cannot_create_a_new_odm_vendor_element_with_existing_name(api_client):
         "compatible_types": ["FormDef"],
         "vendor_namespace_uid": "odm_vendor_namespace1",
     }
-    response = api_client.post("concepts/odms/vendor-elements", json=data)
+    response = api_client.post("odms/vendor-elements", json=data)
 
     assert_response_status_code(response, 409)
 
@@ -177,7 +177,7 @@ def test_cannot_create_a_new_odm_vendor_element_with_existing_name(api_client):
 
 def test_cannot_inactivate_an_odm_vendor_element_that_is_in_draft_status(api_client):
     response = api_client.delete(
-        "concepts/odms/vendor-elements/OdmVendorElement_000001/activations"
+        "odms/vendor-elements/OdmVendorElement_000001/activations"
     )
 
     assert_response_status_code(response, 400)
@@ -190,7 +190,7 @@ def test_cannot_inactivate_an_odm_vendor_element_that_is_in_draft_status(api_cli
 
 def test_cannot_reactivate_an_odm_vendor_element_that_is_not_retired(api_client):
     response = api_client.post(
-        "concepts/odms/vendor-elements/OdmVendorElement_000001/activations"
+        "odms/vendor-elements/OdmVendorElement_000001/activations"
     )
 
     assert_response_status_code(response, 400)
@@ -211,7 +211,7 @@ def test_create_an_odm_form(api_client):
         "translated_texts": [],
         "aliases": [],
     }
-    response = api_client.post("concepts/odms/forms", json=data)
+    response = api_client.post("odms/forms", json=data)
 
     assert_response_status_code(response, 201)
 
@@ -251,7 +251,7 @@ def test_add_odm_vendor_element_to_the_odm_form(api_client):
         "vendor_attributes": [],
         "change_description": "change desc",
     }
-    response = api_client.patch("concepts/odms/forms/OdmForm_000001", json=data)
+    response = api_client.patch("odms/forms/OdmForm_000001", json=data)
 
     assert_response_status_code(response, 200)
 
@@ -280,9 +280,7 @@ def test_add_odm_vendor_element_to_the_odm_form(api_client):
 
 
 def test_cannot_delete_an_odm_vendor_element_that_is_being_used(api_client):
-    response = api_client.delete(
-        "concepts/odms/vendor-elements/OdmVendorElement_000001"
-    )
+    response = api_client.delete("odms/vendor-elements/OdmVendorElement_000001")
 
     assert_response_status_code(response, 400)
 
@@ -293,7 +291,7 @@ def test_cannot_delete_an_odm_vendor_element_that_is_being_used(api_client):
 
 
 def test_cannot_delete_non_existent_odm_vendor_element(api_client):
-    response = api_client.delete("concepts/odms/vendor-elements/wrong_uid")
+    response = api_client.delete("odms/vendor-elements/wrong_uid")
 
     assert_response_status_code(response, 404)
 

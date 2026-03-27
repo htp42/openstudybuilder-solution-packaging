@@ -79,7 +79,7 @@ def test_create_a_new_odm_method(api_client):
         ],
         "aliases": [{"context": "context1", "name": "name1"}],
     }
-    response = api_client.post("concepts/odms/methods", json=data)
+    response = api_client.post("odms/methods", json=data)
 
     assert_response_status_code(response, 201)
 
@@ -195,7 +195,7 @@ def test_cannot_create_a_new_odm_method_with_same_properties(api_client):
         ],
         "aliases": [{"context": "context1", "name": "name1"}],
     }
-    response = api_client.post("concepts/odms/methods", json=data)
+    response = api_client.post("odms/methods", json=data)
 
     assert_response_status_code(response, 409)
 
@@ -224,7 +224,7 @@ def test_cannot_create_a_new_odm_method_without_an_english_description(api_clien
         ],
         "aliases": [],
     }
-    response = api_client.post("concepts/odms/methods", json=data)
+    response = api_client.post("odms/methods", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -238,7 +238,7 @@ def test_cannot_create_a_new_odm_method_without_an_english_description(api_clien
 
 
 def test_getting_error_for_retrieving_non_existent_odm_method(api_client):
-    response = api_client.get("concepts/odms/methods/OdmMethod_000002")
+    response = api_client.get("odms/methods/OdmMethod_000002")
 
     assert_response_status_code(response, 404)
 
@@ -252,7 +252,7 @@ def test_getting_error_for_retrieving_non_existent_odm_method(api_client):
 
 
 def test_cannot_inactivate_an_odm_method_that_is_in_draft_status(api_client):
-    response = api_client.delete("concepts/odms/methods/OdmMethod_000001/activations")
+    response = api_client.delete("odms/methods/OdmMethod_000001/activations")
 
     assert_response_status_code(response, 400)
 
@@ -263,7 +263,7 @@ def test_cannot_inactivate_an_odm_method_that_is_in_draft_status(api_client):
 
 
 def test_cannot_reactivate_an_odm_method_that_is_not_retired(api_client):
-    response = api_client.post("concepts/odms/methods/OdmMethod_000001/activations")
+    response = api_client.post("odms/methods/OdmMethod_000001/activations")
 
     assert_response_status_code(response, 400)
 
@@ -299,7 +299,7 @@ def test_cannot_add_duplicate_translated_texts(api_client, text_type: str):
         ],
         "aliases": [],
     }
-    response = api_client.post("concepts/odms/methods", json=data)
+    response = api_client.post("odms/methods", json=data)
 
     assert_response_status_code(response, 400)
 

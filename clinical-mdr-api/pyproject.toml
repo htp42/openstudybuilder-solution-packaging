@@ -1,7 +1,7 @@
 [project]
 name = 'clinical-mdr-api'
 readme = 'README.md'
-requires-python = '>=3.13'
+requires-python = '>=3.14'
 license = 'TBD'
 authors = [
     {name = 'OpenStudyBuilder', email = 'OpenStudyBuilder@gmail.com'}
@@ -20,6 +20,7 @@ addopts = "--cov-config=.coveragerc"
 [tool.isort]
 profile = 'black'
 src_paths = ['clinical_mdr_api', 'consumer_api', 'common', 'sblint', 'extensions']
+known_third_party = ['neomodel']
 
 [tool.pylint.'MASTER']
 extension-pkg-allow-list = 'pydantic, lxml'

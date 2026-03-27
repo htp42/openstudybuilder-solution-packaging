@@ -328,8 +328,16 @@
             background-color: #D1D5DB;
         }
 
+        .bg-red-50 {
+            background-color: #FEF2F2;
+        }
+
         .bg-red-100 {
             background-color: #FEE2E2;
+        }
+
+        .bg-red-900 {
+            background-color: #7F1D1D;
         }
 
         .bg-cyan-300 {
@@ -519,7 +527,7 @@
         <div class="bg-blue-50 border-0 border-l-4 border-blue-900 rounded mt-2 p-2">
             <div class="mb-2">
                 <span class="me-2 text-blue-900 text-xs font-bold tracking-wider">
-                    COMPLETION INSTRUCTION
+                    COMPLETION INSTRUCTIONS
                 </span>
             </div>
             {% for completion_instruction in completion_instructions %}
@@ -545,7 +553,7 @@
         <div class="bg-green-50 border-0 border-l-4 border-green-900 rounded mt-2 p-2">
             <div class="mb-2">
                 <span class="me-2 text-green-900 text-xs font-bold tracking-wider">
-                    DESIGN NOTE
+                    DESIGN NOTES
                 </span>
             </div>
             {% for design_note in design_notes %}
@@ -565,24 +573,17 @@
 
     {% macro render_units(units, item_uid, item_group_uid, form_uid) %}
     {% if units and units|length > 0 %}
-    <table class="mt-2">
-        <tr>
-            <td class="align-center pr-2">Units:</td>
-            <td>
-                {% for unit in units %}
-                <div>
-                    <input type="radio" name="{{ item_uid }}-{{ item_group_uid }}-{{ form_uid }}-units"
-                        id="{{ item_uid }}-{{ item_group_uid }}-{{ form_uid }}-unit-{{ loop.index0 }}" />
-                    <label for="{{ item_uid }}-{{ item_group_uid }}-{{ form_uid }}-unit-{{ loop.index0 }}">{{
-                        unit.name }}</label>
-                </div>
-                <div class="text-red-600 text-xs font-medium keys-container hidden">
-                    [Version={{ unit.version }}]
-                </div>
-                {% endfor %}
-            </td>
-        </tr>
-    </table>
+    {% for unit in units %}
+    <div>
+        <input type="radio" name="{{ item_uid }}-{{ item_group_uid }}-{{ form_uid }}-units"
+            id="{{ item_uid }}-{{ item_group_uid }}-{{ form_uid }}-unit-{{ loop.index0 }}" />
+        <label for="{{ item_uid }}-{{ item_group_uid }}-{{ form_uid }}-unit-{{ loop.index0 }}">{{
+            unit.name }}</label>
+        <div class="text-red-600 text-xs font-medium keys-container hidden">
+            [Version={{ unit.version }}]
+        </div>
+    </div>
+    {% endfor %}
     {% endif %}
     {% endmacro %}
 
@@ -616,7 +617,7 @@
             </div>
         </div>
 
-        {% macro render_item(item_in, item_group_uid, form_uid, group_domains) %}
+        {% macro render_item(item_in, item_group_uid, form_uid, group_domains, form_integrations) %}
         {% set item = data.odm_items | selectattr('uid', '==', item_in.uid) | first | default('') %}
         {% if item_in.vendor %}
         {% set indent_attr = item_in.vendor.attributes | selectattr('name', '==', 'indentLevel') | first | default('')
@@ -662,28 +663,39 @@
                     </h4>
 
                     <div class="text-red-600 text-xs keys-container hidden">
-                        [OID={{ item_in.oid }}, Version={{ item_in.version }}]
+                        [OID={{ item_in.oid }}, Version={{ item_in.version }}, DataType={{ item.datatype }}{{
+                        ', Length='+item.length|string if item.length is not none else '' }}]
                     </div>
 
                     {% set seen = [] %}
                     {% for item_activity_instance in item.activity_instances %}
                     {% if item_activity_instance.activity_instance_uid not in seen %}
                     {% set _ = seen.append(item_activity_instance.activity_instance_uid) %}
-                    <div class="bg-green-600 activity-instance-container py-2 px-2 mt-2 w-fit rounded hidden">
-                        <div class="text-white font-bold mb-2">Activity Instance: {{
-                            item_activity_instance.activity_instance_name }}
-                        </div>
-                        <div class="mb-2">
-                            <span class="text-white">Topic Code:</span> <span
-                                class="bg-cyan-300 p-1 text-xs border-black border rounded">
-                                {{ item_activity_instance.activity_instance_topic_code }}
-                            </span>
-                        </div>
-                        <div>
-                            <span class="text-white">ADaM Param Code:</span> <span
-                                class="bg-cyan-300 p-1 text-xs border-black border rounded">
-                                {{ item_activity_instance.activity_instance_adam_param_code }}
-                            </span>
+                    <div class="activity-instance-container hidden mb-2">
+                        <div class="bg-green-50 border-0 border-l-4 border-green-900 rounded mt-2 p-2">
+                            <div class="mb-2">
+                                <span class="me-2 text-green-900 text-xs font-bold tracking-wider">
+                                    ACTIVITY INSTANCE: {{ item_activity_instance.activity_instance_name | default('') }}
+                                </span>
+                            </div>
+                            <div class="flex items-center">
+                                <span
+                                    class="px-1 me-2 bg-green-900 text-white text-xs font-medium border-black border rounded">
+                                    Topic Code
+                                </span>
+                                <span class="mx-2 italic text-green-900 leading-normal font-medium text-sm">
+                                    {{ item_activity_instance.activity_instance_topic_code }}
+                                </span>
+                            </div>
+                            <div class="flex items-center">
+                                <span
+                                    class="px-1 me-2 bg-green-900 text-white text-xs font-medium border-black border rounded">
+                                    ADaM Param Code
+                                </span>
+                                <span class="mx-2 italic text-green-900 leading-normal font-medium text-sm">
+                                    {{ item_activity_instance.activity_instance_adam_param_code }}
+                                </span>
+                            </div>
                         </div>
                     </div>
                     {% endif %}
@@ -696,21 +708,31 @@
                     item_activity_instance.uid) | selectattr('name', '==', 'topicCode') | first | default('') %}
                     {% set adam_param_code = item.vendor_element_attributes | selectattr('vendor_element_uid', '==',
                     item_activity_instance.uid) | selectattr('name', '==', 'adamCode') | first | default('') %}
-                    <div class="bg-red-600 activity-instance-container py-2 px-2 mt-2 w-fit rounded hidden">
-                        <div class="text-white font-bold mb-2">Activity Instance: {{
-                            item_activity_instance.value | default('') }}
-                        </div>
-                        <div class="mb-2">
-                            <span class="text-white">Topic Code:</span> <span
-                                class="bg-cyan-300 p-1 text-xs border-black border rounded">
-                                {{ topic_code.value }}
-                            </span>
-                        </div>
-                        <div>
-                            <span class="text-white">ADaM Param Code:</span> <span
-                                class="bg-cyan-300 p-1 text-xs border-black border rounded">
-                                {{ adam_param_code.value }}
-                            </span>
+                    <div class="activity-instance-container hidden mb-2">
+                        <div class="bg-red-50 border-0 border-l-4 border-red-900 rounded mt-2 p-2">
+                            <div class="mb-2">
+                                <span class="me-2 text-red-900 text-xs font-bold tracking-wider">
+                                    ACTIVITY INSTANCE: {{ item_activity_instance.value | default('') }}
+                                </span>
+                            </div>
+                            <div class="flex items-center">
+                                <span
+                                    class="px-1 me-2 bg-red-900 text-white text-xs font-medium border-black border rounded">
+                                    Topic Code
+                                </span>
+                                <span class="mx-2 italic text-red-900 leading-normal font-medium text-sm">
+                                    {{ topic_code.value }}
+                                </span>
+                            </div>
+                            <div class="flex items-center">
+                                <span
+                                    class="px-1 me-2 bg-red-900 text-white text-xs font-medium border-black border rounded">
+                                    ADaM Param Code
+                                </span>
+                                <span class="mx-2 italic text-red-900 leading-normal font-medium text-sm">
+                                    {{ adam_param_code.value }}
+                                </span>
+                            </div>
                         </div>
                     </div>
                     {% endfor %}
@@ -749,15 +771,12 @@
                         class="p-2 border border-gray-300 rounded w-50" />
                     {% endif %}
 
-                    {% if item.length is not none and not item.terms %}
-                    <span class="{{ 'text-green-700' if optional_question.value|lower == 'yes' else '' }}">
-                        {{ item.length }} char(s)
-                    </span>
-                    {% endif %}
 
                     {{ render_design_notes(item.translated_texts) }}
 
-                    {{ render_units(item.unit_definitions, item.uid, item_group_uid, form_uid) }}
+                    <div class="{{ 'text-green-700' if optional_question.value|lower == 'yes' else '' }}">
+                        {{ render_units(item.unit_definitions, item.uid, item_group_uid, form_uid) }}
+                    </div>
                 </div>
             </td>
             {% endif %}
@@ -820,6 +839,29 @@
                 </div>
                 {% endfor %}
             </td>
+            <td class="border border-gray-600 p-2 w-28">
+                {% if item_in.vendor %}
+                {% set optional_question = item_in.vendor.attributes | selectattr('name', '==', 'optionalQuestion') |
+                first | default('') %}
+                {% else %}
+                {% set optional_question = '' %}
+                {% endif %}
+                {% set integrations = [] %}
+                {% for alias in item.aliases %}
+                {% if alias.context|lower == 'cdtmintegration' %}
+                {% if ':' in alias.name %}
+                {% set code, _ = alias.name.split(':', maxsplit=1) %}
+                {% set _ = integrations.append(code) %}
+                {% else %}
+                {% set _ = integrations.append(alias.name) %}
+                {% endif %}
+                {% set _ = form_integrations.append(alias.name) %}
+                {% endif %}
+                {% endfor %}
+                <span class="{{ 'text-green-700' if optional_question.value|lower == 'yes' else '' }}">
+                    {{ integrations | join(', ')}}
+                </span>
+            </td>
         </tr>
         {% endmacro %}
 
@@ -858,7 +900,7 @@
                 {% set optional_question = item_in.vendor.attributes | selectattr('name', '==', 'optionalQuestion') |
                 first | default('') %}
                 <td
-                    class="border border-gray-600 h-40 {{ 'text-green-700' if optional_question.value|lower == 'yes' else '' }}">
+                    class="border border-gray-600 p-2 {{ 'text-green-700' if optional_question.value|lower == 'yes' else '' }}">
                     {% if item.codelist is not none %}
                     {% for term in item.terms %}
                     <div class="mb-1">
@@ -878,26 +920,40 @@
                         term.version }}]
                     </div>
                     {% endfor %}
+                    {% else %}
+                    <input type="{{ get_input_type(item.datatype|lower)|trim }}"
+                        class="p-2 border border-gray-300 rounded" />
                     {% endif %}
 
-                    {{ render_units(item.unit_definitions, item.uid, item_group_uid, form_uid) }}
-
+                    <div class="{{ 'text-green-700' if optional_question.value|lower == 'yes' else '' }}">
+                        {{ render_units(item.unit_definitions, item.uid, item_group_uid, form_uid) }}
+                    </div>
                     {% for item_activity_instance in item.activity_instances %}
-                    <div class="bg-green-600 activity-instance-container py-2 px-2 mt-2 w-fit rounded hidden">
-                        <div class="text-white font-bold mb-2">Activity Instance: {{
-                            item_activity_instance.activity_instance_name }}
-                        </div>
-                        <div class="mb-2">
-                            <span class="text-white">Topic Code:</span> <span
-                                class="bg-cyan-300 p-1 text-xs border-black border rounded">
-                                {{ item_activity_instance.activity_instance_topic_code }}
-                            </span>
-                        </div>
-                        <div>
-                            <span class="text-white">ADaM Param Code:</span> <span
-                                class="bg-cyan-300 p-1 text-xs border-black border rounded">
-                                {{ item_activity_instance.activity_instance_adam_param_code }}
-                            </span>
+                    <div class="activity-instance-container hidden mb-2">
+                        <div class="bg-green-50 border-0 border-l-4 border-green-900 rounded mt-2 p-2">
+                            <div class="mb-2">
+                                <span class="me-2 text-green-900 text-xs font-bold tracking-wider">
+                                    ACTIVITY INSTANCE: {{ item_activity_instance.activity_instance_name | default('') }}
+                                </span>
+                            </div>
+                            <div class="flex items-center">
+                                <span
+                                    class="px-1 me-2 bg-green-900 text-white text-xs font-medium border-black border rounded">
+                                    Topic Code
+                                </span>
+                                <span class="mx-2 italic text-green-900 leading-normal font-medium text-sm">
+                                    {{ item_activity_instance.activity_instance_topic_code }}
+                                </span>
+                            </div>
+                            <div class="flex items-center">
+                                <span
+                                    class="px-1 me-2 bg-green-900 text-white text-xs font-medium border-black border rounded">
+                                    ADaM Param Code
+                                </span>
+                                <span class="mx-2 italic text-green-900 leading-normal font-medium text-sm">
+                                    {{ item_activity_instance.activity_instance_adam_param_code }}
+                                </span>
+                            </div>
                         </div>
                     </div>
                     {% endfor %}
@@ -910,21 +966,31 @@
                     item_activity_instance.uid) | selectattr('name', '==', 'topicCode') | first | default('') %}
                     {% set adam_param_code = item.vendor_element_attributes | selectattr('vendor_element_uid', '==',
                     item_activity_instance.uid) | selectattr('name', '==', 'adamCode') | first | default('') %}
-                    <div class="bg-red-600 activity-instance-container py-2 px-2 mt-2 w-fit rounded hidden">
-                        <div class="text-white font-bold mb-2">Activity Instance: {{
-                            item_activity_instance.value | default('') }}
-                        </div>
-                        <div class="mb-2">
-                            <span class="text-white">Topic Code:</span> <span
-                                class="bg-cyan-300 p-1 text-xs border-black border rounded">
-                                {{ topic_code.value }}
-                            </span>
-                        </div>
-                        <div>
-                            <span class="text-white">ADaM Param Code:</span> <span
-                                class="bg-cyan-300 p-1 text-xs border-black border rounded">
-                                {{ adam_param_code.value }}
-                            </span>
+                    <div class="activity-instance-container hidden mb-2">
+                        <div class="bg-red-50 border-0 border-l-4 border-red-900 rounded mt-2 p-2">
+                            <div class="mb-2">
+                                <span class="me-2 text-red-900 text-xs font-bold tracking-wider">
+                                    ACTIVITY INSTANCE: {{ item_activity_instance.value | default('') }}
+                                </span>
+                            </div>
+                            <div class="flex items-center">
+                                <span
+                                    class="px-1 me-2 bg-red-900 text-white text-xs font-medium border-black border rounded">
+                                    Topic Code
+                                </span>
+                                <span class="mx-2 italic text-red-900 leading-normal font-medium text-sm">
+                                    {{ topic_code.value }}
+                                </span>
+                            </div>
+                            <div class="flex items-center">
+                                <span
+                                    class="px-1 me-2 bg-red-900 text-white text-xs font-medium border-black border rounded">
+                                    ADaM Param Code
+                                </span>
+                                <span class="mx-2 italic text-red-900 leading-normal font-medium text-sm">
+                                    {{ adam_param_code.value }}
+                                </span>
+                            </div>
                         </div>
                     </div>
                     {% endfor %}
@@ -989,8 +1055,9 @@
                     </div>
 
 
-                    <div class="text-red-600 text-xs font-medium keys-container hidden">
-                        [OID={{ item_in.oid }}, Version={{ item_in.version }}]
+                    <div class="text-red-600 text-xs mt-2 font-medium keys-container hidden">
+                        [OID={{ item_in.oid }}, Version={{ item_in.version }}, DataType={{ item.datatype }}{{
+                        ', Length='+item.length|string if item.length is not none else '' }}]
                     </div>
                 </td>
                 {% endfor %}
@@ -998,7 +1065,7 @@
         </table>
         {% endmacro %}
 
-        {% macro render_item_group(item_group_in, form_uid) %}
+        {% macro render_item_group(item_group_in, form_uid, form_integrations) %}
         {% set item_group = data.odm_item_groups | selectattr('uid', '==', item_group_in.uid) | first | default('') %}
         {% set domains = {} %}
         {% for domain in item_group.sdtm_domains %}
@@ -1006,9 +1073,11 @@
         {% endfor %}
 
         <table class="w-full border-collapse mb-4">
+            {% set display_as_table = item_group_in.vendor.attributes | selectattr('name', '==', 'displayAsTable') |
+            first | default(none) if item_group_in.vendor else none %}
             <thead>
                 <tr class="bg-gray-300">
-                    <th class="border border-gray-600 p-2 text-left" colspan="3">
+                    <th class="border border-gray-600 p-2 text-left" colspan="{{ 3 if display_as_table.value != 'Yes' else item_group.items|length }}">
                         <h3 class="inline-block font-medium my-2 text-md">
                             <svg xmlns="http://www.w3.org/2000/svg" style="display: inline-block;" viewBox="0 0 24 24"
                                 width="20" height="20">
@@ -1030,6 +1099,7 @@
                         {{ render_design_notes(item_group.translated_texts) }}
                     </th>
 
+                    {% if display_as_table.value != "Yes" %}
                     <th class="border border-gray-600 p-2 text-left">
                         {% for sub_val, (name, color) in domains.items() %}
                         <div class="sdtm-container hidden my-2">
@@ -1040,15 +1110,16 @@
                         </div>
                         {% endfor %}
                     </th>
+
+                    <th class="border border-gray-600 p-2 text-left">Integration</th>
+                    {% endif %}
                 </tr>
             </thead>
 
             <tbody>
-                {% set display_as_table = item_group_in.vendor.attributes | selectattr('name', '==', 'displayAsTable') |
-                first | default(none) if item_group_in.vendor else none %}
                 {% if display_as_table.value != "Yes" %}
                 {% for item_ref in item_group.items %}
-                {{ render_item(item_ref, item_group.uid, form_uid, domains) }}
+                {{ render_item(item_ref, item_group.uid, form_uid, domains, form_integrations) }}
                 {% endfor %}
                 {% else %}
                 <tr>
@@ -1062,6 +1133,7 @@
         {% endmacro %}
 
         {% macro render_form(form_in) %}
+        {% set integrations = [] %}
         <div class="border-l-4 border-0 rounded-lg border-gray-500 bg-gray-50 p-4 mb-4">
             <div class="text-lg mb-4">
                 <h2 class="inline-block font-medium my-2 text-md">
@@ -1083,8 +1155,12 @@
             {{ render_design_notes(form_in.translated_texts) }}
 
             {% for item_group_ref in form_in.item_groups %}
-            {{ render_item_group(item_group_ref, form_in.uid) }}
+            {{ render_item_group(item_group_ref, form_in.uid, integrations) }}
             {% endfor %}
+
+            {% if integrations %}
+            Integration: {{ integrations | unique | join(', ') }}
+            {% endif %}
         </div>
         {% endmacro %}
 
@@ -1097,13 +1173,13 @@
 
         {% macro render_all_item_groups(item_groups) %}
         {% for item_group in item_groups %}
-        {{ render_item_group(item_group, none) }}
+        {{ render_item_group(item_group, none, []) }}
         {% endfor %}
         {% endmacro %}
 
         {% macro render_all_items(items) %}
         {% for item in items %}
-        {{ render_item(item, none, none, {}) }}
+        {{ render_item(item, none, none, {}, []) }}
         {% endfor %}
         {% endmacro %}
 

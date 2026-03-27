@@ -1,4 +1,5 @@
-""" Schema migrations needed for release to PROD post May/June 2023."""
+"""Schema migrations needed for release to PROD post May/June 2023."""
+
 import os
 import re
 
@@ -44,8 +45,7 @@ def main():
 
 def maintain_relationships_query(db_connection):
     logger.info("Migrating - Maintaining relationships")
-    result, _ = db_connection.cypher_query(
-        """
+    result, _ = db_connection.cypher_query("""
         MATCH (ss1_init:StudySelection)<-[required_rel]-(ss2_init:StudySelection)
         WITH DISTINCT ss1_init.uid as ss1_uid, TYPE(required_rel) AS required_rel_type, ss2_init.uid as ss2_uid
         WHERE TYPE(required_rel) IN [
@@ -110,8 +110,7 @@ def maintain_relationships_query(db_connection):
         WITH TYPE(output) as output_type, ss1_uid,ss2_uid
         WHERE output IS NOT NULL
         RETURN *
-        """
-    )
+        """)
     logger.info("Output - relationshisp maintained %s", result)
 
 
@@ -119,8 +118,7 @@ def migrate_study_selection_labels(db_connection):
     logger.info(
         "Migrating Study Selections to have StudySelection label on them and delete OrderedStudySelection labels on the Study Selections who has it"
     )
-    _result, _ = db_connection.cypher_query(
-        """
+    _result, _ = db_connection.cypher_query("""
         MATCH (n)
         WHERE n:StudyActivitySchedule OR n:StudyActivityInstruction OR n:StudyDesignCell OR n:StudyEpoch OR n:StudyDiseaseMilestone
         WITH n
@@ -146,8 +144,7 @@ def migrate_study_selection_labels(db_connection):
         })
         YIELD value
         RETURN *
-        """
-    )
+        """)
 
 
 def migrate_study_selection_deletion_and_maintain_dropped_and_switched_rels(
@@ -156,8 +153,7 @@ def migrate_study_selection_deletion_and_maintain_dropped_and_switched_rels(
     logger.info(
         "Migrating - Fixing bad deletions on Visit, Epoch, ActivitySchedule, ActivityInstruction, but dropping relationships on delete after version will be maintained afterwards"
     )
-    result, _ = db_connection.cypher_query(
-        """
+    result, _ = db_connection.cypher_query("""
         // MATCH BAD DELETED StudySelection
         MATCH (del:Delete)-[ss_del]-(ss)
         WHERE NOT ss:StudyRoot AND
@@ -193,8 +189,7 @@ def migrate_study_selection_deletion_and_maintain_dropped_and_switched_rels(
         DELETE ss_old_sv
 
         RETURN DISTINCT output.uid
-        """
-    )
+        """)
     logger.info("Output - SS Migrated %s", result)
     maintain_relationships_query(db_connection=db_connection)
 
@@ -203,8 +198,7 @@ def migrate_study_selection_cascade_delete(db_connection):
     logger.info(
         "Migrating - StudyActivitySchedule Cascade Deletion when Study Visit is deleted, leave the last node as dropped relationship, will be maintained afterwards"
     )
-    result, _ = db_connection.cypher_query(
-        """
+    result, _ = db_connection.cypher_query("""
 
         Match (sr:StudyRoot)--(:StudyValue)--(se:StudyActivitySchedule)
         OPTIONAL MATCH (pre_svis_saction:Delete)-[:AFTER]-(pre_svis:StudyVisit)--(se)
@@ -257,8 +251,7 @@ def migrate_study_selection_cascade_delete(db_connection):
         //CONNECT OLD NODE
         MERGE (sa)-[:BEFORE]->(se_old)
         RETURN DISTINCT output.uid
-        """
-    )
+        """)
     logger.info("Output - nodes cascade deleted %s", result)
 
     maintain_relationships_query(db_connection=db_connection)
@@ -268,8 +261,7 @@ def migrate_activity_groupings(db_connection):
     logger.info(
         "Migrating ActivitySubGroups by adding ActivityValidGroups, and removing old relationships"
     )
-    _result, _ = db_connection.cypher_query(
-        """
+    _result, _ = db_connection.cypher_query("""
             // ActivityValidGroups
             MATCH (activity_subgroup_value:ActivitySubGroupValue)-[in_group_hierarchy:IN_GROUP]->(activity_group_value:ActivityGroupValue)
             CREATE (activity_valid_group:ActivityValidGroup)
@@ -282,16 +274,14 @@ def migrate_activity_groupings(db_connection):
             MERGE (activity_valid_group)<-[:HAS_GROUP]-(activity_subgroup_value)
             MERGE (activity_valid_group)-[:IN_GROUP]->(activity_group_value)
             DETACH DELETE in_group_hierarchy
-        """
-    )
+        """)
 
 
 def migrate_activities(db_connection):
     logger.info(
         "Migrating Activities by adding ActivityGroupings, and removing old relationships"
     )
-    _result, _ = db_connection.cypher_query(
-        """
+    _result, _ = db_connection.cypher_query("""
             MATCH (activity_value:ActivityValue)-[old_in_sub_group_hierarchy:IN_SUB_GROUP]->(activity_subgroup_value:ActivitySubGroupValue)
                 -[:HAS_GROUP]->(activity_valid_group:ActivityValidGroup)
 
@@ -312,26 +302,21 @@ def migrate_activities(db_connection):
             MATCH (instance_value:ActivityInstanceValue)-[old_in_hierarchy:IN_HIERARCHY]->(activity_value)
             MERGE (instance_value)-[:HAS_ACTIVITY]->(activity_grouping)
             DETACH DELETE old_in_hierarchy
-        """
-    )
+        """)
 
 
 def migrate_refinement_of_syntax_sequence_id(db_connection):
     logger.info("Remove T of Template from sequence_id of SyntaxTemplate")
     regex = "(?<=[A-Z])T(?=\\d)"
-    db_connection.cypher_query(
-        f"""
+    db_connection.cypher_query(f"""
         MATCH (n:SyntaxTemplateRoot)
         SET n.sequence_id = apoc.text.replace(n.sequence_id, '{regex}', '');
-        """
-    )
+        """)
     logger.info("Remove T of Template from sequence_id of SyntaxPreInstance")
-    db_connection.cypher_query(
-        f"""
+    db_connection.cypher_query(f"""
         MATCH (n:SyntaxPreInstanceRoot)
         SET n.sequence_id = apoc.text.replace(n.sequence_id, '{regex}', '');
-        """
-    )
+        """)
 
     logger.info(
         "Make sequence_id of CriteriaTemplateRoot sequential within the criteria template type"
@@ -349,12 +334,10 @@ def migrate_refinement_of_syntax_sequence_id(db_connection):
         seq_uids.sort(key=lambda x, p=prefix: int(x.split(p)[1]))
 
         for idx, elm in enumerate(seq_uids, 1):
-            db_connection.cypher_query(
-                f"""
+            db_connection.cypher_query(f"""
                 MATCH (n:CriteriaTemplateRoot {{sequence_id: "{elm}"}})
                 SET n.sequence_id = "{prefix}{idx}"
-                """
-            )
+                """)
 
     logger.info(
         "Make sequence_id of CriteriaPreInstanceRoot sequential within the parent template"
@@ -371,18 +354,15 @@ def migrate_refinement_of_syntax_sequence_id(db_connection):
 
         for idx, seq_id in enumerate(seq_uids, 1):
             prefix = re.match("[a-zA-Z]*\\d*P", seq_id).group()
-            db_connection.cypher_query(
-                f"""
+            db_connection.cypher_query(f"""
                 MATCH (n:CriteriaPreInstanceRoot {{sequence_id: "{seq_id}"}})
                 SET n.sequence_id = "{prefix}{idx}"
-                """
-            )
+                """)
 
 
 def migrate_study_activity_subgroup_and_group(db_connection):
     logger.info("Migrating StudyActivitySubGroup and StudyActivityGroup nodes")
-    _result, _ = db_connection.cypher_query(
-        """
+    _result, _ = db_connection.cypher_query("""
             MATCH (study_value:StudyValue)-[:HAS_STUDY_ACTIVITY]->(study_activity:StudyActivity)-[:HAS_SELECTED_ACTIVITY]->
                 (activity_value:ActivityValue)-[:HAS_GROUPING]->(:ActivityGrouping)-[:IN_SUBGROUP]->
                 (activity_valid_group:ActivityValidGroup)-[:IN_GROUP]->(activity_group_value:ActivityGroupValue)
@@ -418,14 +398,12 @@ def migrate_study_activity_subgroup_and_group(db_connection):
             MERGE (study_value)-[:HAS_STUDY_ACTIVITY_GROUP]->(study_activity_group)
             MERGE (study_activity_subgroup)-[:STUDY_ACTIVITY_SUBGROUP_HAS_STUDY_ACTIVITY_GROUP]->(study_activity_group)
             MERGE (study_activity_group)-[:HAS_SELECTED_ACTIVITY_GROUP]->(activity_group_value)
-        """
-    )
+        """)
 
 
 def migrate_simple_concept_value_nodes(db_connection):
     logger.info("Migrating SimpleConceptValue nodes")
-    _result, _ = db_connection.cypher_query(
-        """            
+    _result, _ = db_connection.cypher_query("""            
             MATCH (n:SimpleConceptRoot)-[:HAS_VERSION]->(m:SimpleConceptValue)
             WITH m, apoc.coll.sortNodes(collect(n), 'uid') as duplicated_roots
             
@@ -463,8 +441,7 @@ def migrate_simple_concept_value_nodes(db_connection):
             ) YIELD value
             DETACH DELETE duplicated_root
             RETURN *
-        """
-    )
+        """)
 
 
 if __name__ == "__main__":

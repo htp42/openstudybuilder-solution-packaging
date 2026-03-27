@@ -23,7 +23,6 @@
                 :items="groups"
                 item-title="name"
                 item-value="uid"
-                density="compact"
                 clearable
                 :disabled="notApplicable"
                 :rules="[
@@ -52,7 +51,6 @@
                 :items="subGroups"
                 item-title="name"
                 item-value="uid"
-                density="compact"
                 clearable
                 multiple
                 :disabled="notApplicable"
@@ -81,7 +79,6 @@
                 :items="activities"
                 item-title="name"
                 return-object
-                density="compact"
                 clearable
                 multiple
                 :disabled="notApplicable"

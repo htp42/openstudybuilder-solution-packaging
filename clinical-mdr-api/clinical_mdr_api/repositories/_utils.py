@@ -18,13 +18,13 @@ from clinical_mdr_api.models.concepts.activities.activity import (
     ActivityGroupingHierarchySimpleModel,
 )
 from clinical_mdr_api.models.concepts.concept import VersionProperties
-from clinical_mdr_api.models.concepts.odms.odm_common_models import (
-    OdmAliasModel,
-    OdmTranslatedTextModel,
-)
 from clinical_mdr_api.models.controlled_terminologies.ct_term import (
     SimpleDictionaryTermModel,
     SimpleTermModel,
+)
+from clinical_mdr_api.models.odms.common_models import (
+    OdmAliasModel,
+    OdmTranslatedTextModel,
 )
 from clinical_mdr_api.models.standard_data_models.sponsor_model import SponsorModelBase
 from common.exceptions import ValidationException
@@ -230,7 +230,9 @@ def is_injected_field(field) -> bool:
     return False
 
 
-def get_order_by_clause(sort_by: dict[str, bool] | None, model: type[BaseModel]):
+def get_order_by_clause(
+    sort_by: dict[str, bool] | None, model: type[BaseModel]
+) -> list[str]:
     sort_paths = []
     if sort_by:
         for key, value in sort_by.items():

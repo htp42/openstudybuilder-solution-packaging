@@ -6,7 +6,7 @@ Feature: Manage ODM Forms in OpenStudyBuilder API
         Given The test user can call the OpenStudyBuilder API
 
     Scenario: User must be able to get an empty list of ODM forms
-        When the user calls the API endpoint 'concepts/odms/forms'
+        When the user calls the API endpoint 'odms/forms'
         Then the response must include an empty list of ODM forms
         And the response status code must be 200
     Test Coverage:
@@ -22,7 +22,7 @@ Feature: Manage ODM Forms in OpenStudyBuilder API
         | /tests/integration/api/old/test_odm_forms.py   | @TestID: test_creating_a_new_odm_form |
 
     Scenario: User must be able to get a list of ODM forms
-        When the user calls the API endpoint 'concepts/odms/forms'
+        When the user calls the API endpoint 'odms/forms'
         Then the response must include the list of ODM forms
         And the response status code must be 200
     Test Coverage:
@@ -30,7 +30,7 @@ Feature: Manage ODM Forms in OpenStudyBuilder API
         | /tests/integration/api/old/test_odm_forms.py   | @TestID: test_getting_non_empty_list_of_odm_forms |
 
     Scenario: User must be able to get a specific ODM form
-        When the user calls the API endpoint 'concepts/odms/forms/' to get a specific ODM form
+        When the user calls the API endpoint 'odms/forms/' to get a specific ODM form
         Then the response status code must be 200
         And the response must include the ODM form
     Test Coverage:
@@ -38,7 +38,7 @@ Feature: Manage ODM Forms in OpenStudyBuilder API
         | /tests/integration/api/old/test_odm_forms.py      | @TestID: test_getting_a_specific_odm_form |
 
     Scenario: User must be able to get possible header values of ODM forms
-        When the user calls the API endpoint 'concepts/odms/forms/headers?field_name=name'
+        When the user calls the API endpoint 'odms/forms/headers?field_name=name'
         Then the response status code must be 200
         And the response must include the list ["name1"]
     Test Coverage:
@@ -102,7 +102,7 @@ Feature: Manage ODM Forms in OpenStudyBuilder API
         | /tests/integration/api/old/test_odm_forms_negative.py  | @TestID: test_cannot_create_a_new_odm_form_without_an_english_description |
 
     Scenario: User receives an error for retrieving a non-existent ODM form
-        When the user calls the API endpoint 'concepts/odms/forms/' for retrieving a non-existent ODM form
+        When the user calls the API endpoint 'odms/forms/' for retrieving a non-existent ODM form
         Then the response status code must be 404
         And the response must include the message like "OdmFormAR with UID 'OdmForm_000002' doesn't exist or there's no version with requested status or version number."
     Test Coverage:

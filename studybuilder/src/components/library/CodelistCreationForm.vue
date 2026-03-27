@@ -21,7 +21,6 @@
               item-value="name"
               multiple
               clearable
-              density="compact"
               persistent-hint
               :rules="[formRules.required]"
             />
@@ -38,7 +37,6 @@
               data-cy="sponsor-preffered-name"
               :label="$t('CodelistSponsorValuesForm.pref_name')"
               clearable
-              density="compact"
               class="mt-2"
               :rules="[formRules.required]"
             />
@@ -48,9 +46,7 @@
           <v-col>
             <v-switch
               v-model="form.template_parameter"
-              color="primary"
               :label="$t('CodelistSponsorValuesForm.tpl_parameter')"
-              density="compact"
             />
           </v-col>
         </v-row>
@@ -60,12 +56,23 @@
       <v-form :ref="`observer_${step}`">
         <v-row>
           <v-col>
+            <v-select
+              v-model="form.codelist_type"
+              data-cy="codelist-type"
+              :label="$t('CodelistAttributesForm.codelist_type')"
+              :items="codelistTypes"
+              clearable
+              :rules="[formRules.required]"
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col>
             <v-text-field
               v-model="form.name"
               data-cy="codelist-name"
               :label="$t('CodelistAttributesForm.name')"
               clearable
-              density="compact"
               :rules="[formRules.required]"
             />
           </v-col>
@@ -76,7 +83,6 @@
               v-model="form.submission_value"
               data-cy="submission-value"
               :label="$t('CodelistAttributesForm.subm_value')"
-              density="compact"
               clearable
               :rules="[formRules.required]"
             />
@@ -88,7 +94,6 @@
               v-model="form.nci_preferred_name"
               data-cy="nci-preffered-name"
               :label="$t('CodelistAttributesForm.nci_pref_name')"
-              density="compact"
               clearable
             />
           </v-col>
@@ -97,10 +102,8 @@
           <v-col>
             <v-switch
               v-model="form.extensible"
-              color="primary"
               data-cy="extensible-toggle"
               :label="$t('CodelistAttributesForm.extensible')"
-              density="compact"
             />
           </v-col>
         </v-row>
@@ -108,10 +111,8 @@
           <v-col>
             <v-switch
               v-model="form.is_ordinal"
-              color="primary"
               data-cy="ordinal-toggle"
               :label="$t('CodelistAttributesForm.is_ordinal')"
-              density="compact"
             />
           </v-col>
         </v-row>
@@ -124,7 +125,6 @@
               rows="1"
               clearable
               auto-grow
-              density="compact"
               :rules="[formRules.required]"
             />
           </v-col>
@@ -157,6 +157,7 @@ const form = ref({
   is_ordinal: false,
   library_name: 'Sponsor',
   template_parameter: false,
+  codelist_type: 'Standard',
 })
 const confirm = ref()
 const observer_1 = ref()
@@ -164,6 +165,7 @@ const observer_2 = ref()
 const observer_3 = ref()
 const stepper = ref()
 
+const codelistTypes = ['Response', 'Standard']
 const helpItems = [
   'CodelistCreationForm.catalogue',
   'CodelistSponsorValuesForm.pref_name',

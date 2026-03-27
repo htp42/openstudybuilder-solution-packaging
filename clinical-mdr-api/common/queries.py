@@ -1,22 +1,21 @@
 """Common query patterns"""
 
+# pylint: disable=invalid-name
+
 from textwrap import dedent
 
 # Gives ct_terms_datetime for effective study_standard_version of a StudyValue
-study_standard_version_ct_terms_datetime = dedent(
-    """
+study_standard_version_ct_terms_datetime = dedent("""
     CALL {
         WITH study_value 
         OPTIONAL MATCH (study_value)-[:HAS_STUDY_STANDARD_VERSION]->(study_standard_version:StudyStandardVersion)-[:HAS_CT_PACKAGE]->(ct_package:CTPackage)
         WHERE ct_package.uid CONTAINS "SDTM CT"
         RETURN datetime(toString(date(ct_package.effective_date)) + 'T23:59:59.999999000Z') AS ct_terms_datetime
     }
-"""
-)
+""")
 
 # Gives CTTermNameValue as {value} for a CTTermRoot {root} at given ct_terms_datetime (f-string)
-ct_term_name_at_datetime = dedent(
-    """
+ct_term_name_at_datetime = dedent("""
     CALL {{
         WITH {root}, ct_terms_datetime
         OPTIONAL MATCH ({root})-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[version:HAS_VERSION]->(value:CTTermNameValue)
@@ -34,5 +33,4 @@ ct_term_name_at_datetime = dedent(
             date_conflict: NOT dates_match
         }} AS {value}
     }}
-"""
-).rstrip()
+""").rstrip()

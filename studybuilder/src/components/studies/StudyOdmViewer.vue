@@ -6,8 +6,6 @@
           v-model="selectedForms"
           :items="forms"
           :label="$t('OdmViewer.forms')"
-          variant="outlined"
-          density="compact"
           clearable
           multiple
           class="mt-2"
@@ -56,8 +54,6 @@
         <v-select
           v-model="data.selectedStylesheet"
           :items="data.stylesheet"
-          variant="outlined"
-          density="compact"
           class="mt-2"
           :label="$t('OdmViewer.stylesheet')"
           :disabled="_isEmpty(selectedForms)"

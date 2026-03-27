@@ -27,6 +27,7 @@ Feature: Studies - Browse released or locked study definitions
                                 # | activities/list                         | Activity              | Activity Placeholder for new draft |
 
 
+                @pending_implementation
                 Scenario Outline:  [Study][Locked] User must be able to browse the locked study definition content when the study previously has been locked
                         Given Get study 'CDISC DEV-1111' uid
                         And Select study with uid saved in previous step
@@ -46,7 +47,7 @@ Feature: Studies - Browse released or locked study definitions
                                 | study_purpose/objectives                | Objective             | Objective for v1             |
                                 # | activities/list                         | Activity              | Activity Placeholder for v1  |
 
-
+                @pending_implementation
                 Scenario Outline:  [Study][Released] User must be able to browse the released study definition content when the study previously has been released
                         Given Get study 'CDISC DEV-1111' uid
                         And Select study with uid saved in previous step

@@ -62,7 +62,7 @@ class DataSuppliers(BaseImporter):
 
             rs = self.api.post_to_api(data)
 
-            if map_boolean(data_supplier_data["is_retired"]):
+            if rs is not None and map_boolean(data_supplier_data["is_retired"]):
                 self.api.delete_to_api(f'{data["path"]}/{rs["uid"]}/activations')
 
     def run(self):

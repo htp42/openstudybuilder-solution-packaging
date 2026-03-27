@@ -15,7 +15,6 @@
               v-model="dataSupplier.name"
               :label="t('DataSupplierView.DataSupplierForm.name') + '*'"
               data-cy="data-supplier-name"
-              density="compact"
               clearable
               class="mt-3"
               :rules="[formRules.required]"
@@ -33,7 +32,6 @@
               :items="dataSupplierTypes"
               item-title="sponsor_preferred_name"
               item-value="term_uid"
-              density="compact"
               persistent-hint
               :rules="[formRules.required]"
             />
@@ -45,7 +43,6 @@
               v-model="dataSupplier.description"
               :label="t('DataSupplierView.DataSupplierForm.description')"
               data-cy="data-supplier-description"
-              density="compact"
               clearable
             />
           </v-col>
@@ -61,7 +58,6 @@
               :hint="t('_help.DataSupplierView.DataSupplierForm.order_hint')"
               persistent-hint
               data-cy="data-supplier-order"
-              density="compact"
               :min="1"
             />
           </v-col>
@@ -72,7 +68,6 @@
               v-model="dataSupplier.api_base_url"
               :label="t('DataSupplierView.DataSupplierForm.api_base_url')"
               data-cy="data-supplier-description"
-              density="compact"
               clearable
             />
           </v-col>
@@ -81,7 +76,6 @@
               v-model="dataSupplier.ui_base_url"
               :label="t('DataSupplierView.DataSupplierForm.ui_base_url')"
               data-cy="data-supplier-description"
-              density="compact"
               clearable
             />
           </v-col>
@@ -96,7 +90,6 @@
               item-title="sponsor_preferred_name"
               item-value="term_uid"
               clearable
-              density="compact"
               persistent-hint
             />
           </v-col>
@@ -109,7 +102,6 @@
               item-title="sponsor_preferred_name"
               item-value="term_uid"
               clearable
-              density="compact"
               persistent-hint
             />
           </v-col>

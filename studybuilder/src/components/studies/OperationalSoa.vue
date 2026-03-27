@@ -6,7 +6,6 @@
         :label="$t('DetailedFlowchart.expand_all')"
         hide-details
         class="ml-2 flex-grow-0"
-        color="primary"
         @update:model-value="toggleAllRowState"
       />
       <v-switch
@@ -14,7 +13,6 @@
         :label="$t('DetailedFlowchart.show_flowchart_groups')"
         hide-details
         class="ml-6 flex-grow-0"
-        color="primary"
         :disabled="selectedStudyVersion !== null"
       />
       <v-spacer />

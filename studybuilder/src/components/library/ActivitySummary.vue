@@ -20,8 +20,6 @@
                   v-if="allVersions && allVersions.length"
                   :items="allVersions"
                   :model-value="field.value"
-                  variant="outlined"
-                  density="compact"
                   hide-details
                   class="version-select"
                   @update:model-value="$emit('version-change', $event)"

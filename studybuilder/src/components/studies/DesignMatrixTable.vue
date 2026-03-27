@@ -22,7 +22,6 @@
           class="mr-6"
           hide-details
           :title="$t('DesignMatrix.transition_rules_help')"
-          color="primary"
         />
       </template>
       <template #actions>

@@ -14,7 +14,6 @@
             <v-text-field
               v-model="form.name"
               :label="$t('CRFExtensions.attr_name')"
-              density="compact"
               clearable
               :rules="[formRules.required]"
             />
@@ -27,7 +26,6 @@
               item-title="submission_value"
               item-value="submission_value"
               :rules="[formRules.required]"
-              density="compact"
               clearable
             />
           </v-col>
@@ -39,7 +37,6 @@
               :label="$t('CRFExtensions.compatible_types')"
               :items="compatibleTypes"
               :rules="[formRules.required]"
-              density="compact"
               multiple
               clearable
             />
@@ -48,7 +45,6 @@
             <v-text-field
               v-model="form.value_regex"
               :label="$t('CRFExtensions.regex_expression')"
-              density="compact"
               clearable
             />
           </v-col>

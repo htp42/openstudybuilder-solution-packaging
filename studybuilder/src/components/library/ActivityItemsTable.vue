@@ -28,7 +28,6 @@
             :no-data-text="t('activityItemsTable.noItemsFound')"
             :use-cached-filtering="false"
             @filter="handleFilter"
-            @update:options="updateTableOptions"
           >
             <template #[`item.name`]="{ item }">
               <div class="d-block">
@@ -69,6 +68,7 @@
                 <span v-if="item.ct_terms && item.ct_terms.length > 0">
                   {{ item.ct_terms.map((term) => term.name).join(', ') }}
                 </span>
+                <span v-else-if="item.ct_codelist">*</span>
                 <span v-else>-</span>
               </div>
             </template>
@@ -81,6 +81,7 @@
                       .join(', ')
                   }}
                 </span>
+                <span v-else-if="item.ct_codelist">*</span>
                 <span v-else>-</span>
               </div>
             </template>
@@ -317,31 +318,25 @@ function applySearchFilter(searchTerm, page = 1, perPage = 10) {
 
 // Handles filtering of activity items based on search term
 function handleFilter(_, options) {
-  // Handle search - only if search actually changed
-  if (options?.search !== currentSearch.value) {
-    currentPage.value = 1 // Reset to page 1 when search changes
-    applySearchFilter(options.search, 1, itemsPerPage.value)
-  }
-}
-
-// Handle table options changes (pagination and sorting)
-function updateTableOptions(options) {
   if (!options) return
 
-  // Update pagination values
-  if (options.page !== undefined) {
-    currentPage.value = options.page
-  }
-  if (options.itemsPerPage !== undefined) {
-    itemsPerPage.value = options.itemsPerPage
-  }
+  const searchChanged = options.search !== currentSearch.value
+  const nextPerPage = searchChanged
+    ? itemsPerPage.value
+    : options.itemsPerPage !== undefined
+      ? options.itemsPerPage
+      : itemsPerPage.value
+  const nextPage =
+    options.page !== undefined
+      ? options.page
+      : searchChanged
+        ? 1
+        : currentPage.value
 
-  // Apply filter with updated pagination
-  applySearchFilter(
-    currentSearch.value,
-    options.page || currentPage.value,
-    options.itemsPerPage || itemsPerPage.value
-  )
+  itemsPerPage.value = nextPerPage
+  currentPage.value = searchChanged ? 1 : nextPage
+
+  applySearchFilter(options.search, currentPage.value, itemsPerPage.value)
 }
 </script>
 

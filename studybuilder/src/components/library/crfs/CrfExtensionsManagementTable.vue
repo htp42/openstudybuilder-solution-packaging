@@ -58,7 +58,6 @@
                 <v-text-field
                   v-model="selectedExtensions[index].value"
                   :label="$t('_global.value')"
-                  density="compact"
                   class="mt-3"
                   :readonly="readOnly"
                 />
@@ -114,7 +113,6 @@
                           ].value
                         "
                         :label="$t('_global.value')"
-                        density="compact"
                         :readonly="readOnly"
                       />
                     </td>

@@ -23,25 +23,22 @@ class DatasetClass(BaseModel):
         None
     )
     catalogue_name: Annotated[str, Field()]
-    parent_class: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
-        None
-    )
-    data_models: Annotated[list[SimpleDataModelForDatasetClass], Field()]
+    parent_class_name: Annotated[
+        str | None, Field(json_schema_extra={"nullable": True})
+    ] = None
+    data_model: Annotated[SimpleDataModelForDatasetClass, Field()]
 
     @classmethod
     def from_repository_output(cls, input_dict: dict[str, Any]):
         return cls(
-            uid=input_dict["uid"],
+            uid=input_dict.get("standard_root").get("uid"),
             label=input_dict.get("standard_value").get("label"),
             title=input_dict.get("standard_value").get("title"),
             description=input_dict.get("standard_value").get("description"),
             catalogue_name=input_dict["catalogue_name"],
-            parent_class=input_dict.get("parent_class_name"),
-            data_models=[
-                SimpleDataModelForDatasetClass(
-                    data_model_name=data_model.get("data_model_name"),
-                    ordinal=data_model.get("ordinal"),
-                )
-                for data_model in input_dict.get("data_models")
-            ],
+            parent_class_name=input_dict.get("parent_class_name"),
+            data_model=SimpleDataModelForDatasetClass(
+                data_model_name=input_dict.get("data_model", {}).get("name"),
+                ordinal=input_dict.get("data_model", {}).get("ordinal"),
+            ),
         )

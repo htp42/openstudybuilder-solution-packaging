@@ -57,7 +57,7 @@ def test_data():
 
 def test_import_odm_xml(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/xmls/import",
+        "odms/metadata/xmls/import",
         files={"xml_file": ("odm.xml", IMPORT_INPUT1, CONTENT_TYPE)},
     )
 
@@ -71,7 +71,7 @@ def test_import_odm_xml(api_client):
 
 def test_import_odm_vendor_with_csv_mapper(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/xmls/import",
+        "odms/metadata/xmls/import",
         files={
             "xml_file": ("odm.xml", IMPORT_INPUT2, CONTENT_TYPE),
             "mapper_file": (
@@ -97,7 +97,7 @@ def test_import_odm_vendor_with_csv_mapper(api_client):
 def test_import_clinspark_odm_xml(api_client):
     db.cypher_query("MERGE (:CTCatalogue {name:'CDASH CT'})")
     response = api_client.post(
-        "concepts/odms/metadata/xmls/import?exporter=clinspark",
+        "odms/metadata/xmls/import?exporter=clinspark",
         files={"xml_file": ("clinspark.xml", CLINSPARK_INPUT, CONTENT_TYPE)},
     )
 
@@ -111,7 +111,7 @@ def test_import_clinspark_odm_xml(api_client):
 
 def test_throw_exception_if_file_is_not_xml(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/xmls/import",
+        "odms/metadata/xmls/import",
         files={
             "xml_file": (
                 "mapper.json",
@@ -131,7 +131,7 @@ def test_throw_exception_if_file_is_not_xml(api_client):
 
 def test_throw_exception_if_vendor_attributes_dont_match_their_regex(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/xmls/import",
+        "odms/metadata/xmls/import",
         files={"xml_file": ("odm.xml", IMPORT_INPUT4, CONTENT_TYPE)},
     )
 
@@ -148,7 +148,7 @@ def test_throw_exception_if_vendor_attributes_dont_match_their_regex(api_client)
 
 def test_throw_exception_if_ref_vendor_attributes_dont_match_their_regex(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/xmls/import",
+        "odms/metadata/xmls/import",
         files={"xml_file": ("odm.xml", IMPORT_INPUT5, CONTENT_TYPE)},
     )
 
@@ -165,7 +165,7 @@ def test_throw_exception_if_ref_vendor_attributes_dont_match_their_regex(api_cli
 
 def test_throw_exception_if_measurementunits_dont_exist(api_client):
     response = api_client.post(
-        "concepts/odms/metadata/xmls/import",
+        "odms/metadata/xmls/import",
         files={"xml_file": ("odm.xml", IMPORT_INPUT3, CONTENT_TYPE)},
     )
 
@@ -183,7 +183,7 @@ def test_throw_exception_if_measurementunitref_refers_to_non_present_measurement
     api_client,
 ):
     response = api_client.post(
-        "concepts/odms/metadata/xmls/import",
+        "odms/metadata/xmls/import",
         files={"xml_file": ("odm.xml", IMPORT_INPUT6, CONTENT_TYPE)},
     )
 

@@ -37,7 +37,7 @@ MDR_MIGRATION_ODM_ITEMS_TO_ACTIVITY_INSTANCES = load_env(
 # name, prefix, namespace
 def odm_vendor_namespace(data):
     return {
-        "path": "/concepts/odms/vendor-namespaces",
+        "path": "/odms/vendor-namespaces",
         "body": {
             "name": data["name"],
             "prefix": data["prefix"],
@@ -48,7 +48,7 @@ def odm_vendor_namespace(data):
 
 def odm_vendor_attribute(data):
     return {
-        "path": "/concepts/odms/vendor-attributes",
+        "path": "/odms/vendor-attributes",
         "body": {
             "name": data["name"],
             "compatible_types": (
@@ -66,7 +66,7 @@ def odm_vendor_attribute(data):
 
 def odm_vendor_element(data, vendor_namespace_uid):
     return {
-        "path": "/concepts/odms/vendor-elements",
+        "path": "/odms/vendor-elements",
         "body": {
             "name": data["name"],
             "compatible_types": data["compatible_types"].split("||"),
@@ -77,7 +77,7 @@ def odm_vendor_element(data, vendor_namespace_uid):
 
 def odm_study_event(data):
     return {
-        "path": "/concepts/odms/study-events",
+        "path": "/odms/study-events",
         "body": {
             "name": data["name"],
             "oid": data["oid"],
@@ -90,7 +90,7 @@ def odm_study_event(data):
 
 def odm_form(data):
     return {
-        "path": "/concepts/odms/forms",
+        "path": "/odms/forms",
         "body": {
             "name": data["name"],
             "oid": data["oid"],
@@ -103,7 +103,7 @@ def odm_form(data):
 
 def odm_item_group(data, domain_uids):
     return {
-        "path": "/concepts/odms/item-groups",
+        "path": "/odms/item-groups",
         "body": {
             "name": data["name"],
             "oid": data["oid"],
@@ -132,7 +132,7 @@ def odm_item(data, units, terms):
         significant_digits = None
 
     return {
-        "path": "/concepts/odms/items",
+        "path": "/odms/items",
         "body": {
             "name": data["name"],
             "oid": data["oid"],
@@ -163,7 +163,7 @@ def odm_item(data, units, terms):
 
 def odm_form_to_study_event(uid, data):
     return {
-        "path": f"/concepts/odms/study-events/{uid}/forms",
+        "path": f"/odms/study-events/{uid}/forms",
         "body": [
             {
                 "uid": data["uid"],
@@ -181,7 +181,7 @@ def odm_form_to_study_event(uid, data):
 
 def odm_item_group_to_form(uid, data):
     return {
-        "path": f"/concepts/odms/forms/{uid}/item-groups",
+        "path": f"/odms/forms/{uid}/item-groups",
         "body": [
             {
                 "uid": data["uid"],
@@ -199,7 +199,7 @@ def odm_item_group_to_form(uid, data):
 
 def odm_item_to_item_group(uid, data):
     return {
-        "path": f"/concepts/odms/item-groups/{uid}/items",
+        "path": f"/odms/item-groups/{uid}/items",
         "body": [
             {
                 "uid": data["uid"],
@@ -222,7 +222,7 @@ def odm_item_to_item_group(uid, data):
 
 def odm_item_to_activity_instance(item):
     return {
-        "path": "/concepts/odms/items/",
+        "path": "/odms/items/",
         "body": item,
     }
 
@@ -313,7 +313,7 @@ class Crfs(BaseImporter):
 
             if row["element_name"]:
                 element_rs = self.api.get_all_from_api(
-                    "/concepts/odms/vendor-elements",
+                    "/odms/vendor-elements",
                     params={
                         "filters": json.dumps(
                             {"name": {"v": [row["element_name"]], "op": "eq"}}
@@ -501,8 +501,8 @@ class Crfs(BaseImporter):
     @open_file()
     def handle_odm_forms_to_study_events(self, csvfile):
         csvdata = csv.DictReader(csvfile)
-        odm_forms = self.api.get_all_from_api("/concepts/odms/forms")
-        odm_study_events = self.api.get_all_from_api("/concepts/odms/study-events")
+        odm_forms = self.api.get_all_from_api("/odms/forms")
+        odm_study_events = self.api.get_all_from_api("/odms/study-events")
 
         all_forms = {}
         for form in odm_forms:
@@ -541,8 +541,8 @@ class Crfs(BaseImporter):
     @open_file()
     def handle_odm_item_groups_to_forms(self, csvfile):
         csvdata = csv.DictReader(csvfile)
-        odm_itemgroups = self.api.get_all_from_api("/concepts/odms/item-groups")
-        odm_forms = self.api.get_all_from_api("/concepts/odms/forms")
+        odm_itemgroups = self.api.get_all_from_api("/odms/item-groups")
+        odm_forms = self.api.get_all_from_api("/odms/forms")
 
         all_itemgroups = {}
         for itemgroup in odm_itemgroups:
@@ -579,8 +579,8 @@ class Crfs(BaseImporter):
     @open_file()
     def handle_odm_items_to_item_groups(self, csvfile):
         csvdata = csv.DictReader(csvfile)
-        odm_items = self.api.get_all_from_api("/concepts/odms/items")
-        odm_itemgroups = self.api.get_all_from_api("/concepts/odms/item-groups")
+        odm_items = self.api.get_all_from_api("/odms/items")
+        odm_itemgroups = self.api.get_all_from_api("/odms/item-groups")
 
         all_items = {}
         for item in odm_items:
@@ -622,7 +622,7 @@ class Crfs(BaseImporter):
         activity_instance_names = {data["activity_instance_name"] for data in csvdata}
 
         odm_items = self.api.get_all_from_api(
-            "/concepts/odms/items",
+            "/odms/items",
             params={"filters": json.dumps({"oid": {"v": list(item_oids)}})},
         )
         activity_instances = self.api.get_all_from_api(

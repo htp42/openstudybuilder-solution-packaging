@@ -298,6 +298,12 @@ class StudyDefinitionRepositoryFake(StudyDefinitionRepository):
     ) -> None:
         return
 
+    @staticmethod
+    def get_study_id(
+        study_uid: str, study_value_version: str | None = None
+    ) -> str | None:
+        return None
+
 
 def _random_study_number() -> str:
     choice = [str(_) for _ in range(0, 10)]

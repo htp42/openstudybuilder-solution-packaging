@@ -253,7 +253,11 @@ class StudyVisitVO:
     def study_day_number(self):
         if self.study_day:
             return self.study_day.value
-        if self.visit_class == VisitClass.SPECIAL_VISIT and self.anchor_visit:
+        if (
+            self.visit_class == VisitClass.SPECIAL_VISIT
+            and self.anchor_visit
+            and self.anchor_visit is not self
+        ):
             return self.anchor_visit.study_day_number
         return None
 
@@ -261,7 +265,11 @@ class StudyVisitVO:
     def study_week_number(self):
         if self.study_week:
             return self.study_week.value
-        if self.visit_class == VisitClass.SPECIAL_VISIT and self.anchor_visit:
+        if (
+            self.visit_class == VisitClass.SPECIAL_VISIT
+            and self.anchor_visit
+            and self.anchor_visit is not self
+        ):
             return self.anchor_visit.study_week_number
         return None
 
@@ -358,18 +366,25 @@ class StudyVisitVO:
             return ["edit", "delete", "lock"]
         return None
 
-    def get_absolute_duration(self) -> int | None:
+    def get_absolute_duration(self, _seen: set[str] | None = None) -> int | None:
         # Special visit doesn't have a timing but we want to place it
         # after the anchor visit for the special visit hence we derive timing based on the anchor visit
+        if _seen is None:
+            _seen = set()
+        if self.uid in _seen:
+            raise exceptions.BusinessLogicException(
+                msg=f"Circular anchor visit reference detected at visit '{self.uid}' while resolving absolute duration."
+            )
+        _seen.add(self.uid)  # type: ignore[arg-type]
         if self.visit_class == VisitClass.SPECIAL_VISIT and self.anchor_visit:
-            return self.anchor_visit.get_absolute_duration()
+            return self.anchor_visit.get_absolute_duration(_seen=_seen)
         if self.timepoint:
             if self.timepoint.visit_value == 0:
                 return 0
             if self.anchor_visit is not None:
                 return (
                     self.get_unified_duration()
-                    + self.anchor_visit.get_absolute_duration()
+                    + self.anchor_visit.get_absolute_duration(_seen=_seen)
                 )
             return self.get_unified_duration()
         return None

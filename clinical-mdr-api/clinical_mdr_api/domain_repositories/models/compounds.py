@@ -1,4 +1,4 @@
-from neomodel import BooleanProperty, One, RelationshipFrom, RelationshipTo
+from neomodel import One, RelationshipFrom, RelationshipTo
 
 from clinical_mdr_api.domain_repositories.models.concepts import (
     ConceptRoot,
@@ -8,6 +8,7 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     ClinicalMdrRel,
     VersionRelationship,
 )
+from common.neomodel import BooleanProperty
 
 
 class CompoundValue(ConceptValue):

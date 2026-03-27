@@ -67,10 +67,7 @@
               data-cy="term-sponsor-preferred-name"
               :label="$t('CodelistTermCreationForm.sponsor_pref_name')"
               :rules="[formRules.required]"
-              density="compact"
               clearable
-              variant="outlined"
-              rounded="lg"
               @update:model-value="setSentenceCase"
             />
           </v-col>
@@ -85,10 +82,7 @@
                 formRules.required,
                 (value) => formRules.sameAs(value, form.sponsor_preferred_name),
               ]"
-              density="compact"
               clearable
-              variant="outlined"
-              rounded="lg"
             />
           </v-col>
         </v-row>
@@ -102,10 +96,7 @@
               v-model="form.concept_id"
               data-cy="term-concept-id"
               :label="$t('CodelistTermCreationForm.concept_id')"
-              density="compact"
               clearable
-              variant="outlined"
-              rounded="lg"
             />
           </v-col>
         </v-row>
@@ -115,10 +106,7 @@
               v-model="form.nci_preferred_name"
               data-cy="term-nci-preffered-name"
               :label="$t('CodelistTermCreationForm.nci_pref_name')"
-              density="compact"
               clearable
-              variant="outlined"
-              rounded="lg"
             />
           </v-col>
         </v-row>
@@ -129,12 +117,9 @@
               data-cy="term-definition"
               :label="$t('CodelistTermCreationForm.definition')"
               :rules="[formRules.required]"
-              density="compact"
               clearable
               auto-grow
               rows="1"
-              variant="outlined"
-              rounded="lg"
             />
           </v-col>
         </v-row>
@@ -149,10 +134,7 @@
               data-cy="term-name"
               :label="$t('CodelistTermCreationForm.submission_value')"
               :rules="[formRules.required]"
-              density="compact"
               clearable
-              variant="outlined"
-              rounded="lg"
             />
           </v-col>
         </v-row>
@@ -163,10 +145,7 @@
               data-cy="term-order"
               :label="$t('CodelistTermCreationForm.order')"
               :rules="[formRules.required]"
-              density="compact"
               clearable
-              variant="outlined"
-              rounded="lg"
             />
           </v-col>
         </v-row>
@@ -207,10 +186,7 @@
               data-cy="term-order"
               :label="$t('_global.order')"
               :rules="[formRules.required]"
-              density="compact"
               clearable
-              variant="outlined"
-              rounded="lg"
             />
           </v-col>
         </v-row>

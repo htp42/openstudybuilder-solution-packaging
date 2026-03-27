@@ -3,12 +3,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from neomodel import db
-from neomodel.sync_.match import (
-    Collect,
-    NodeNameResolver,
-    Optional,
-    RelationNameResolver,
-)
+from neomodel.sync_.match import Collect, NodeNameResolver, Path, RelationNameResolver
 
 from clinical_mdr_api import utils
 from clinical_mdr_api.domain_repositories._utils.helpers import (
@@ -719,8 +714,7 @@ class StudySelectionCompoundRepository:
             WITH DISTINCT all_sc
             """
         compound_selections_audit_trail = db.cypher_query(
-            cypher
-            + """
+            cypher + """
             OPTIONAL MATCH (all_sc)-[:HAS_SELECTED_COMPOUND]->(:CompoundAliasValue)-[:IS_COMPOUND]->(cr:CompoundRoot)
             OPTIONAL MATCH (all_sc)-[:HAS_SELECTED_COMPOUND]->(:CompoundAliasValue)<-[:LATEST]-(car:CompoundAliasRoot)
             OPTIONAL MATCH (all_sc)-[:HAS_MEDICINAL_PRODUCT]->(:MedicinalProductValue)<-[:HAS_VERSION]-(mpr:MedicinalProductRoot)
@@ -841,10 +835,11 @@ class StudySelectionCompoundRepository:
     @staticmethod
     def get_compound_uid_to_arm_uids_mapping(study_uid: str) -> dict[str, set[str]]:
         results = (
-            StudyRoot.nodes.fetch_relations(
-                Optional(
-                    "latest_value__has_study_compound__has_compound_dosing__study_element__has_design_cell__study_arm"
-                )
+            StudyRoot.nodes.traverse(
+                Path(
+                    value="latest_value__has_study_compound__has_compound_dosing__study_element__has_design_cell__study_arm",
+                    optional=True,
+                ),
             )
             .filter(uid=study_uid)
             .annotate(

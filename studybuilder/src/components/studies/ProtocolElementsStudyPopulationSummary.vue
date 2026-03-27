@@ -6,7 +6,7 @@
       </v-card-title>
     </div>
     <div>
-      <v-radio-group v-model="expand" row color="primary" class="pt-2 ml-5">
+      <v-radio-group v-model="expand" row class="pt-2 ml-5">
         <v-radio :label="$t('StudyPopulationView.show_all')" :value="true" />
         <v-radio :label="$t('StudyPopulationView.hide_all')" :value="false" />
       </v-radio-group>

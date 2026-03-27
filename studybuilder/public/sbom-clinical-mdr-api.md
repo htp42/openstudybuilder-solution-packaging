@@ -1,97 +1,97 @@
 
 ## Installed packages
 
-| Package                  | Version     | License                                                      |
-|--------------------------|-------------|--------------------------------------------------------------|
-| annotated-doc            | 0.0.4       | [MIT](#annotated-doc)                                        |
-| annotated-types          | 0.6.0       | [see below](#annotated-types)                                |
-| anyio                    | 4.12.1      | [MIT](#anyio)                                                |
-| asyncache                | 0.3.1       | [MIT](#asyncache)                                            |
-| attrs                    | 25.4.0      | [MIT](#attrs)                                                |
-| Authlib                  | 1.6.8       | [BSD-3-Clause](#authlib)                                     |
-| azure-core               | 1.38.2      | [MIT License](#azure-core)                                   |
-| azure-identity           | 1.25.2      | [MIT](#azure-identity)                                       |
-| beautifulsoup4           | 4.12.3      | [MIT License](#beautifulsoup4)                               |
-| brotli                   | 1.2.0       | [MIT](#brotli)                                               |
-| cachetools               | 5.5.2       | [MIT](#cachetools)                                           |
-| certifi                  | 2026.1.4    | [MPL-2.0](#certifi)                                          |
-| cffi                     | 2.0.0       | [MIT](#cffi)                                                 |
-| charset-normalizer       | 3.4.4       | [MIT](#charset-normalizer)                                   |
-| click                    | 8.3.1       | [BSD-3-Clause](#click)                                       |
-| colour                   | 0.1.5       | [BSD 3-Clause License](#colour)                              |
-| cryptography             | 46.0.5      | [Apache-2.0 OR BSD-3-Clause](#cryptography)                  |
-| cssselect2               | 0.9.0       | [see below](#cssselect2)                                     |
-| deepdiff                 | 8.6.1       | [see below](#deepdiff)                                       |
-| dict2xml                 | 1.7.8       | [MIT](#dict2xml)                                             |
-| docraptor                | 3.1.0       | [MIT](#docraptor)                                            |
-| et_xmlfile               | 2.0.0       | [MIT](#et_xmlfile)                                           |
-| fastapi                  | 0.131.0     | [MIT](#fastapi)                                              |
-| fhir_core                | 1.1.5       | [BSD license](#fhir_core)                                    |
-| fhir.resources           | 8.2.0       | BSD license (missing)                                        |
-| fonttools                | 4.61.1      | [MIT](#fonttools)                                            |
-| google-api-core          | 2.30.0      | [Apache 2.0](#google-api-core)                               |
-| google-auth              | 2.48.0      | [Apache 2.0](#google-auth)                                   |
-| googleapis-common-protos | 1.72.0      | [Apache 2.0](#googleapis-common-protos)                      |
-| h11                      | 0.16.0      | [MIT](#h11)                                                  |
-| httpcore                 | 1.0.9       | [BSD-3-Clause](#httpcore)                                    |
-| httpx                    | 0.27.2      | [BSD-3-Clause](#httpx)                                       |
-| hypothesis               | 6.115.6     | [MPL-2.0](#hypothesis)                                       |
-| idna                     | 3.11        | [BSD-3-Clause](#idna)                                        |
-| Jinja2                   | 3.1.6       | [see below](#jinja2)                                         |
-| lxml                     | 5.3.2       | [BSD-3-Clause](#lxml)                                        |
-| MarkupSafe               | 3.0.3       | [BSD-3-Clause](#markupsafe)                                  |
-| msal                     | 1.35.0      | [MIT](#msal)                                                 |
-| msal-extensions          | 1.3.1       | [MIT License](#msal-extensions)                              |
-| neo4j                    | 5.28.3      | [Apache License, Version 2.0](#neo4j)                        |
-| neomodel                 | 5.5.3       | [MIT](#neomodel)                                             |
-| nh3                      | 0.2.22      | [MIT](#nh3)                                                  |
-| numpy                    | 2.4.2       | [BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0](#numpy) |
-| opencensus               | 0.11.4      | [Apache-2.0](#opencensus)                                    |
-| opencensus-context       | 0.1.3       | [Apache-2.0](#opencensus-context)                            |
-| opencensus-ext-azure     | 1.1.15      | [Apache-2.0](#opencensus-ext-azure)                          |
-| openpyxl                 | 3.1.5       | [MIT](#openpyxl)                                             |
-| orderly-set              | 5.5.0       | [see below](#orderly-set)                                    |
-| pandas                   | 3.0.1       | [see below](#pandas)                                         |
-| pillow                   | 12.1.1      | [MIT-CMU](#pillow)                                           |
-| proto-plus               | 1.27.1      | [Apache 2.0](#proto-plus)                                    |
-| protobuf                 | 6.33.5      | [3-Clause BSD License](#protobuf)                            |
-| psutil                   | 7.2.2       | [BSD-3-Clause](#psutil)                                      |
-| pyasn1                   | 0.6.2       | [BSD-2-Clause](#pyasn1)                                      |
-| pyasn1_modules           | 0.4.2       | [BSD](#pyasn1_modules)                                       |
-| pycparser                | 3.0         | [BSD-3-Clause](#pycparser)                                   |
-| pydantic                 | 2.10.6      | [MIT](#pydantic)                                             |
-| pydantic_core            | 2.27.2      | [MIT](#pydantic_core)                                        |
-| pydantic-settings        | 2.7.1       | [MIT](#pydantic-settings)                                    |
-| pydyf                    | 0.12.1      | [see below](#pydyf)                                          |
-| PyJWT                    | 2.11.0      | [MIT](#pyjwt)                                                |
-| pyphen                   | 0.17.2      | [see below](#pyphen)                                         |
-| python-dateutil          | 2.9.0.post0 | [Dual License](#python-dateutil)                             |
-| python-docx              | 1.1.2       | [MIT](#python-docx)                                          |
-| python-dotenv            | 1.2.1       | [BSD-3-Clause](#python-dotenv)                               |
-| python-multipart         | 0.0.22      | [Apache-2.0](#python-multipart)                              |
-| pytz                     | 2025.2      | [MIT](#pytz)                                                 |
-| PyYAML                   | 6.0.3       | [MIT](#pyyaml)                                               |
-| requests                 | 2.32.5      | [Apache-2.0](#requests)                                      |
-| rsa                      | 4.9.1       | [Apache-2.0](#rsa)                                           |
-| six                      | 1.17.0      | [MIT](#six)                                                  |
-| sniffio                  | 1.3.1       | [MIT OR Apache-2.0](#sniffio)                                |
-| sortedcontainers         | 2.4.0       | [Apache 2.0](#sortedcontainers)                              |
-| soupsieve                | 2.8.3       | [MIT](#soupsieve)                                            |
-| starlette                | 0.52.1      | [BSD-3-Clause](#starlette)                                   |
-| starlette-context        | 0.4.0       | [MIT](#starlette-context)                                    |
-| stringcase               | 1.2.0       | [MIT](#stringcase)                                           |
-| tinycss2                 | 1.5.1       | [see below](#tinycss2)                                       |
-| tinyhtml5                | 2.0.0       | [see below](#tinyhtml5)                                      |
-| typing_extensions        | 4.15.0      | [PSF-2.0](#typing_extensions)                                |
-| typing-inspection        | 0.4.2       | [MIT](#typing-inspection)                                    |
-| urllib3                  | 2.6.3       | [MIT](#urllib3)                                              |
-| usdm                     | 0.65.0      | [see below](#usdm)                                           |
-| uvicorn                  | 0.32.1      | [BSD-3-Clause](#uvicorn)                                     |
-| weasyprint               | 68.1        | [see below](#weasyprint)                                     |
-| webencodings             | 0.5.1       | [BSD](#webencodings)                                         |
-| xsdata                   | 24.11       | [MIT](#xsdata)                                               |
-| yattag                   | 1.16.1      | [see below](#yattag)                                         |
-| zopfli                   | 0.4.1       | [Apache-2.0](#zopfli)                                        |
+| Package                  | Version      | License                                                      |
+|--------------------------|--------------|--------------------------------------------------------------|
+| annotated-doc            | 0.0.4        | [MIT](#annotated-doc)                                        |
+| annotated-types          | 0.6.0        | [see below](#annotated-types)                                |
+| anyio                    | 4.12.1       | [MIT](#anyio)                                                |
+| asyncache                | 0.3.1        | [MIT](#asyncache)                                            |
+| attrs                    | 25.4.0       | [MIT](#attrs)                                                |
+| Authlib                  | 1.6.9        | [BSD-3-Clause](#authlib)                                     |
+| azure-core               | 1.38.2       | [MIT License](#azure-core)                                   |
+| azure-identity           | 1.25.2       | [MIT](#azure-identity)                                       |
+| beautifulsoup4           | 4.12.3       | [MIT License](#beautifulsoup4)                               |
+| brotli                   | 1.2.0        | [MIT](#brotli)                                               |
+| cachetools               | 5.5.2        | [MIT](#cachetools)                                           |
+| certifi                  | 2026.2.25    | [MPL-2.0](#certifi)                                          |
+| cffi                     | 2.0.0        | [MIT](#cffi)                                                 |
+| charset-normalizer       | 3.4.5        | [MIT](#charset-normalizer)                                   |
+| click                    | 8.3.1        | [BSD-3-Clause](#click)                                       |
+| colour                   | 0.1.5        | [BSD 3-Clause License](#colour)                              |
+| cryptography             | 46.0.5       | [Apache-2.0 OR BSD-3-Clause](#cryptography)                  |
+| cssselect2               | 0.9.0        | [see below](#cssselect2)                                     |
+| deepdiff                 | 8.6.1        | [see below](#deepdiff)                                       |
+| dict2xml                 | 1.7.8        | [MIT](#dict2xml)                                             |
+| docraptor                | 3.1.0        | [MIT](#docraptor)                                            |
+| et_xmlfile               | 2.0.0        | [MIT](#et_xmlfile)                                           |
+| fastapi                  | 0.131.0      | [MIT](#fastapi)                                              |
+| fhir_core                | 1.1.5        | [BSD license](#fhir_core)                                    |
+| fhir.resources           | 8.2.0        | [BSD license](#fhirresources)                                |
+| fonttools                | 4.61.1       | [MIT](#fonttools)                                            |
+| google-api-core          | 2.30.0       | [Apache 2.0](#google-api-core)                               |
+| google-auth              | 2.48.0       | [Apache 2.0](#google-auth)                                   |
+| googleapis-common-protos | 1.72.0       | [Apache 2.0](#googleapis-common-protos)                      |
+| h11                      | 0.16.0       | [MIT](#h11)                                                  |
+| httpcore                 | 1.0.9        | [BSD-3-Clause](#httpcore)                                    |
+| httpx                    | 0.27.2       | [BSD-3-Clause](#httpx)                                       |
+| hypothesis               | 6.115.6      | [MPL-2.0](#hypothesis)                                       |
+| idna                     | 3.11         | [BSD-3-Clause](#idna)                                        |
+| Jinja2                   | 3.1.6        | [see below](#jinja2)                                         |
+| lxml                     | 5.3.2        | [BSD-3-Clause](#lxml)                                        |
+| MarkupSafe               | 3.0.3        | [BSD-3-Clause](#markupsafe)                                  |
+| msal                     | 1.35.1       | [MIT](#msal)                                                 |
+| msal-extensions          | 1.3.1        | [MIT License](#msal-extensions)                              |
+| neo4j                    | 5.28.3       | [Apache License, Version 2.0](#neo4j)                        |
+| neomodel                 | 5.5.3        | [MIT](#neomodel)                                             |
+| nh3                      | 0.2.22       | [MIT](#nh3)                                                  |
+| numpy                    | 2.4.2        | [BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0](#numpy) |
+| opencensus               | 0.11.4       | [Apache-2.0](#opencensus)                                    |
+| opencensus-context       | 0.1.3        | [Apache-2.0](#opencensus-context)                            |
+| opencensus-ext-azure     | 1.1.15       | [Apache-2.0](#opencensus-ext-azure)                          |
+| openpyxl                 | 3.1.5        | [MIT](#openpyxl)                                             |
+| orderly-set              | 5.5.0        | [see below](#orderly-set)                                    |
+| pandas                   | 3.0.1        | [see below](#pandas)                                         |
+| pillow                   | 12.1.1       | [MIT-CMU](#pillow)                                           |
+| proto-plus               | 1.27.1       | [Apache 2.0](#proto-plus)                                    |
+| protobuf                 | 6.33.5       | [3-Clause BSD License](#protobuf)                            |
+| psutil                   | 7.2.2        | [BSD-3-Clause](#psutil)                                      |
+| pyasn1                   | 0.6.2        | [BSD-2-Clause](#pyasn1)                                      |
+| pyasn1_modules           | 0.4.2        | [BSD](#pyasn1_modules)                                       |
+| pycparser                | 3.0          | [BSD-3-Clause](#pycparser)                                   |
+| pydantic                 | 2.12.5       | [MIT](#pydantic)                                             |
+| pydantic_core            | 2.41.5       | [MIT](#pydantic_core)                                        |
+| pydantic-settings        | 2.7.1        | [MIT](#pydantic-settings)                                    |
+| pydyf                    | 0.12.1       | [see below](#pydyf)                                          |
+| PyJWT                    | 2.11.0       | [MIT](#pyjwt)                                                |
+| pyphen                   | 0.17.2       | [see below](#pyphen)                                         |
+| python-dateutil          | 2.9.0.post0  | [Dual License](#python-dateutil)                             |
+| python-docx              | 1.1.2        | [MIT](#python-docx)                                          |
+| python-dotenv            | 1.2.2        | [BSD-3-Clause](#python-dotenv)                               |
+| python-multipart         | 0.0.22       | [Apache-2.0](#python-multipart)                              |
+| pytz                     | 2026.1.post1 | [MIT](#pytz)                                                 |
+| PyYAML                   | 6.0.3        | [MIT](#pyyaml)                                               |
+| requests                 | 2.32.5       | [Apache-2.0](#requests)                                      |
+| rsa                      | 4.9.1        | [Apache-2.0](#rsa)                                           |
+| six                      | 1.17.0       | [MIT](#six)                                                  |
+| sniffio                  | 1.3.1        | [MIT OR Apache-2.0](#sniffio)                                |
+| sortedcontainers         | 2.4.0        | [Apache 2.0](#sortedcontainers)                              |
+| soupsieve                | 2.8.3        | [MIT](#soupsieve)                                            |
+| starlette                | 0.52.1       | [BSD-3-Clause](#starlette)                                   |
+| starlette-context        | 0.4.0        | [MIT](#starlette-context)                                    |
+| stringcase               | 1.2.0        | [MIT](#stringcase)                                           |
+| tinycss2                 | 1.5.1        | [see below](#tinycss2)                                       |
+| tinyhtml5                | 2.1.0        | [see below](#tinyhtml5)                                      |
+| typing_extensions        | 4.15.0       | [PSF-2.0](#typing_extensions)                                |
+| typing-inspection        | 0.4.2        | [MIT](#typing-inspection)                                    |
+| urllib3                  | 2.6.3        | [MIT](#urllib3)                                              |
+| usdm                     | 0.65.0       | [see below](#usdm)                                           |
+| uvicorn                  | 0.32.1       | [BSD-3-Clause](#uvicorn)                                     |
+| weasyprint               | 68.1         | [see below](#weasyprint)                                     |
+| webencodings             | 0.5.1        | [BSD](#webencodings)                                         |
+| xsdata                   | 26.2         | [MIT](#xsdata)                                               |
+| yattag                   | 1.16.1       | [see below](#yattag)                                         |
+| zopfli                   | 0.4.1        | [Apache-2.0](#zopfli)                                        |
 
 
 ## Third-party package licenses
@@ -1273,6 +1273,39 @@
 
 ---
 ### fhir_core
+
+    BSD License
+
+    Copyright (c) 2019, Md Nazrul Islam
+    All rights reserved.
+
+    Redistribution and use in source and binary forms, with or without modification,
+    are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright notice, this
+      list of conditions and the following disclaimer.
+
+    * Redistributions in binary form must reproduce the above copyright notice, this
+      list of conditions and the following disclaimer in the documentation and/or
+      other materials provided with the distribution.
+
+    * Neither the name of the copyright holder nor the names of its
+      contributors may be used to endorse or promote products derived from this
+      software without specific prior written permission.
+
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+    ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+    WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+    IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+    INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+    BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+    DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+    OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+    OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+    OF THE POSSIBILITY OF SUCH DAMAGE.
+
+---
+### fhir.resources
 
     BSD License
 
@@ -10882,7 +10915,7 @@
     that what they have is not the original version, so that the original
     author's reputation will not be affected by problems that might be
     introduced by others.
-
+
       Finally, software patents pose a constant threat to the existence of
     any free program.  We wish to make sure that a company cannot
     effectively restrict the users of a free program by obtaining a
@@ -10938,7 +10971,7 @@
     "work based on the library" and a "work that uses the library".  The
     former contains code derived from the library, whereas the latter must
     be combined with the library in order to run.
-
+
                       GNU LESSER GENERAL PUBLIC LICENSE
        TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
 
@@ -10985,7 +11018,7 @@
       You may charge a fee for the physical act of transferring a copy,
     and you may at your option offer warranty protection in exchange for a
     fee.
-
+
       2. You may modify your copy or copies of the Library or any portion
     of it, thus forming a work based on the Library, and copy and
     distribute such modifications or work under the terms of Section 1
@@ -11043,7 +11076,7 @@
     ordinary GNU General Public License has appeared, then you can specify
     that version instead if you wish.)  Do not make any other change in
     these notices.
-
+
       Once this change is made in a given copy, it is irreversible for
     that copy, so the ordinary GNU General Public License applies to all
     subsequent copies and derivative works made from that copy.
@@ -11094,7 +11127,7 @@
     distribute the object code for the work under the terms of Section 6.
     Any executables containing that work also fall under Section 6,
     whether or not they are linked directly with the Library itself.
-
+
       6. As an exception to the Sections above, you may also combine or
     link a "work that uses the Library" with the Library to produce a
     work containing portions of the Library, and distribute that work
@@ -11156,7 +11189,7 @@
     accompany the operating system.  Such a contradiction means you cannot
     use both them and the Library together in an executable that you
     distribute.
-
+
       7. You may place library facilities that are a work based on the
     Library side-by-side in a single library together with other library
     facilities not covered by this License, and distribute such a combined
@@ -11197,7 +11230,7 @@
     restrictions on the recipients' exercise of the rights granted herein.
     You are not responsible for enforcing compliance by third parties with
     this License.
-
+
       11. If, as a consequence of a court judgment or allegation of patent
     infringement or for any other reason (not limited to patent issues),
     conditions are imposed on you (whether by court order, agreement or
@@ -11249,7 +11282,7 @@
     the Free Software Foundation.  If the Library does not specify a
     license version number, you may choose any version ever published by
     the Free Software Foundation.
-
+
       14. If you wish to incorporate parts of the Library into other free
     programs whose distribution conditions are incompatible with these,
     write to the author to ask for permission.  For software which is
@@ -11283,7 +11316,7 @@
     DAMAGES.
 
                          END OF TERMS AND CONDITIONS
-
+
                How to Apply These Terms to Your New Libraries
 
       If you develop a new library, and you want it to be of the greatest
@@ -11431,7 +11464,7 @@
     that what they have is not the original version, so that the original
     author's reputation will not be affected by problems that might be
     introduced by others.
-
+
       Finally, software patents pose a constant threat to the existence of
     any free program.  We wish to make sure that a company cannot
     effectively restrict the users of a free program by obtaining a
@@ -11487,7 +11520,7 @@
     "work based on the library" and a "work that uses the library".  The
     former contains code derived from the library, whereas the latter must
     be combined with the library in order to run.
-
+
                       GNU LESSER GENERAL PUBLIC LICENSE
        TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
 
@@ -11534,7 +11567,7 @@
       You may charge a fee for the physical act of transferring a copy,
     and you may at your option offer warranty protection in exchange for a
     fee.
-
+
       2. You may modify your copy or copies of the Library or any portion
     of it, thus forming a work based on the Library, and copy and
     distribute such modifications or work under the terms of Section 1
@@ -11592,7 +11625,7 @@
     ordinary GNU General Public License has appeared, then you can specify
     that version instead if you wish.)  Do not make any other change in
     these notices.
-
+
       Once this change is made in a given copy, it is irreversible for
     that copy, so the ordinary GNU General Public License applies to all
     subsequent copies and derivative works made from that copy.
@@ -11643,7 +11676,7 @@
     distribute the object code for the work under the terms of Section 6.
     Any executables containing that work also fall under Section 6,
     whether or not they are linked directly with the Library itself.
-
+
       6. As an exception to the Sections above, you may also combine or
     link a "work that uses the Library" with the Library to produce a
     work containing portions of the Library, and distribute that work
@@ -11705,7 +11738,7 @@
     accompany the operating system.  Such a contradiction means you cannot
     use both them and the Library together in an executable that you
     distribute.
-
+
       7. You may place library facilities that are a work based on the
     Library side-by-side in a single library together with other library
     facilities not covered by this License, and distribute such a combined
@@ -11746,7 +11779,7 @@
     restrictions on the recipients' exercise of the rights granted herein.
     You are not responsible for enforcing compliance by third parties with
     this License.
-
+
       11. If, as a consequence of a court judgment or allegation of patent
     infringement or for any other reason (not limited to patent issues),
     conditions are imposed on you (whether by court order, agreement or
@@ -11798,7 +11831,7 @@
     the Free Software Foundation.  If the Library does not specify a
     license version number, you may choose any version ever published by
     the Free Software Foundation.
-
+
       14. If you wish to incorporate parts of the Library into other free
     programs whose distribution conditions are incompatible with these,
     write to the author to ask for permission.  For software which is
@@ -11832,7 +11865,7 @@
     DAMAGES.
 
                          END OF TERMS AND CONDITIONS
-
+
                How to Apply These Terms to Your New Libraries
 
       If you develop a new library, and you want it to be of the greatest

@@ -61,12 +61,12 @@ def item_metadata(draw):
     author_id = _item_metadata.author_id
     author_username = AUTHOR_USERNAME
     change_description = _item_metadata.change_description
-    (major_version, minor_version) = draw(
+    major_version, minor_version = draw(
         tuples(integers(min_value=0), integers(min_value=0)).filter(
             lambda t: t[0] > 0 or t[1] > 0
         )
     )
-    (start_date, end_date) = draw(
+    start_date, end_date = draw(
         tuples(
             datetimes(max_value=datetime.now()),
             one_of(none(), datetimes(max_value=datetime.now())),

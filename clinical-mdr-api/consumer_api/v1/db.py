@@ -105,6 +105,7 @@ def get_studies(
             }}) AS authors
         ORDER BY hv.start_date DESC
         WITH
+            study_root,
             study_root.uid as uid,
             study_value.study_acronym as acronym,
             study_value.study_id_prefix as id_prefix,
@@ -136,7 +137,8 @@ def get_studies(
             id_prefix,
             number,
             id,
-            versions
+            versions,
+            [(study_root)-[:HAS_COMPLETENESS_TAG]->(t:DataCompletenessTag) | t.name] as data_completeness_tags
         """
 
     full_query = " ".join(

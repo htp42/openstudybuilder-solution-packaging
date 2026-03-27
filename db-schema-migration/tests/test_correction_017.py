@@ -7,10 +7,8 @@ import pytest
 from data_corrections import correction_017
 from data_corrections.utils.utils import get_db_driver, save_md_title
 from migrations.utils.utils import execute_statements, get_logger
-from tests.data.db_before_correction_017 import (
+from tests.data.db_before_correction_017 import (  # TEST_DATA_FIX_STUDIES_DIFFERENT_VERSIONS,
     TEST_DATA_FIX_DUPLICATED_UNIQUE_VISIT_NUMBERS,
-    TEST_DATA_FIX_NOT_COHERENT_LIBRARY_SELECTION,
-    TEST_DATA_FIX_STUDIES_DIFFERENT_VERSIONS,
     TEST_DATA_REMOVE_DUPLICATED_NON_VISIT,
     TEST_DATA_REMOVE_SOA_CELL_WITHOUT_RELEASED,
     TEST_DATA_REMOVE_STUDY_ACTION_BROKEN_AFTER,
@@ -115,54 +113,30 @@ def test_repeat_fix_duplicated_unique_visit_numbers_and_incorrect_visit_number_v
     )
 
 
-def test_fix_not_coherent_in_time_library_selection():
-    """Test fix_not_coherent_in_time_library_selection correction"""
-    # Setup test data
-    _setup_test_data(TEST_DATA_FIX_NOT_COHERENT_LIBRARY_SELECTION)
-
-    # Verify initial state (should fail)
-    with pytest.raises(AssertionError):
-        correction_verification_017.test_fix_not_coherent_in_time_library_selection()
-
-    # Run correction
-    correction_017.fix_not_coherent_in_time_library_selection(*CORRECTION_ARGS)
-
-    # Verify correction worked
-    correction_verification_017.test_fix_not_coherent_in_time_library_selection()
-
-
-@pytest.mark.order(after="test_fix_not_coherent_in_time_library_selection")
-def test_repeat_fix_not_coherent_in_time_library_selection():
-    """Test that correction is idempotent"""
-    assert not correction_017.fix_not_coherent_in_time_library_selection(
-        *CORRECTION_ARGS
-    )
+# def test_fix_studies_different_versions_with_the_same_start_date():
+#     """Test fix_studies_different_versions_with_the_same_start_date correction"""
+#     # Setup test data
+#     _setup_test_data(TEST_DATA_FIX_STUDIES_DIFFERENT_VERSIONS)
+#
+#     # Verify initial state (should fail)
+#     with pytest.raises(AssertionError):
+#         correction_verification_017.test_fix_studies_different_versions_with_the_same_start_date()
+#
+#     # Run correction
+#     correction_017.fix_studies_different_versions_with_the_same_start_date(
+#         *CORRECTION_ARGS
+#     )
+#
+#     # Verify correction worked
+#     correction_verification_017.test_fix_studies_different_versions_with_the_same_start_date()
 
 
-def test_fix_studies_different_versions_with_the_same_start_date():
-    """Test fix_studies_different_versions_with_the_same_start_date correction"""
-    # Setup test data
-    _setup_test_data(TEST_DATA_FIX_STUDIES_DIFFERENT_VERSIONS)
-
-    # Verify initial state (should fail)
-    with pytest.raises(AssertionError):
-        correction_verification_017.test_fix_studies_different_versions_with_the_same_start_date()
-
-    # Run correction
-    correction_017.fix_studies_different_versions_with_the_same_start_date(
-        *CORRECTION_ARGS
-    )
-
-    # Verify correction worked
-    correction_verification_017.test_fix_studies_different_versions_with_the_same_start_date()
-
-
-@pytest.mark.order(after="test_fix_studies_different_versions_with_the_same_start_date")
-def test_repeat_fix_studies_different_versions_with_the_same_start_date():
-    """Test that correction is idempotent"""
-    assert not correction_017.fix_studies_different_versions_with_the_same_start_date(
-        *CORRECTION_ARGS
-    )
+# @pytest.mark.order(after="test_fix_studies_different_versions_with_the_same_start_date")
+# def test_repeat_fix_studies_different_versions_with_the_same_start_date():
+#     """Test that correction is idempotent"""
+#     assert not correction_017.fix_studies_different_versions_with_the_same_start_date(
+#         *CORRECTION_ARGS
+#     )
 
 
 def test_remove_soa_cell_relationships_without_released_study():

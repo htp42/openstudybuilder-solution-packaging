@@ -19,7 +19,6 @@
               :items="libraries"
               item-title="name"
               item-value="name"
-              density="compact"
               clearable
               :rules="[formRules.required]"
             />
@@ -32,7 +31,6 @@
               autocomplete="off"
               :label="$t('_global.name')"
               data-cy="unit-name"
-              density="compact"
               clearable
               :rules="[formRules.required]"
             />
@@ -49,7 +47,6 @@
               item-value="term_uid"
               single-line
               multiple
-              density="compact"
               clearable
               :rules="[formRules.required]"
             />
@@ -66,7 +63,6 @@
               item-value="term_uid"
               single-line
               multiple
-              density="compact"
               clearable
             />
           </v-col>
@@ -77,48 +73,34 @@
               v-model="form.convertible_unit"
               :label="$t('UnitForm.convertible_unit')"
               data-cy="convertible-unit"
-              density="compact"
-              color="primary"
             />
             <v-switch
               v-model="form.use_molecular_weight"
               :label="$t('UnitForm.molecular_weight')"
-              density="compact"
-              color="primary"
             />
             <v-switch
               v-model="form.use_complex_unit_conversion"
               :label="$t('UnitForm.complex_conversion')"
-              density="compact"
-              color="primary"
             />
             <v-switch
               v-model="form.display_unit"
               :label="$t('UnitForm.display_unit')"
               data-cy="display-unit"
-              density="compact"
-              color="primary"
             />
             <v-switch
               v-model="form.master_unit"
               :label="$t('UnitForm.master_unit')"
               data-cy="master-unit"
-              density="compact"
-              color="primary"
             />
             <v-switch
               v-model="form.si_unit"
               :label="$t('UnitForm.si_unit')"
               data-cy="si-unit"
-              density="compact"
-              color="primary"
             />
             <v-switch
               v-model="form.us_conventional_unit"
               :label="$t('UnitForm.us_unit')"
               data-cy="us-unit"
-              density="compact"
-              color="primary"
             />
           </v-col>
           <v-col>
@@ -135,7 +117,6 @@
               item-title="sponsor_preferred_name"
               item-value="term_uid"
               clearable
-              density="compact"
             />
           </v-col>
         </v-row>
@@ -145,7 +126,6 @@
               v-model="form.legacy_code"
               :label="$t('UnitForm.legacy_code')"
               data-cy="unit-legacy-code"
-              density="compact"
               clearable
             />
           </v-col>
@@ -156,7 +136,6 @@
               v-model="form.conversion_factor_to_master"
               :label="$t('UnitForm.conversion_factor')"
               data-cy="unit-conversion-factor"
-              density="compact"
               clearable
               precision="5"
             />
@@ -169,7 +148,6 @@
             }}</label>
             <v-textarea
               v-model="form.change_description"
-              density="compact"
               clearable
               auto-grow
               rows="1"

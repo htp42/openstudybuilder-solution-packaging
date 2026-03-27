@@ -7,8 +7,8 @@
       item-value="uid"
       :items-length="total"
       :initial-sort-by="[{ key: 'name', order: 'asc' }]"
-      column-data-resource="concepts/odms/item-groups"
-      export-data-url="concepts/odms/item-groups"
+      column-data-resource="odms/item-groups"
+      export-data-url="odms/item-groups"
       export-object-label="CRFItemGroups"
       @filter="getItemGroups"
     >
@@ -45,6 +45,16 @@
       </template>
       <template #[`item.repeating`]="{ item }">
         {{ item.repeating }}
+      </template>
+      <template #[`item.start_date`]="{ item }">
+        <v-tooltip location="top">
+          <template #activator="{ props }">
+            <span v-bind="props">{{
+              $filters.dateRelative(item.start_date)
+            }}</span>
+          </template>
+          {{ $filters.date(item.start_date) }}
+        </v-tooltip>
       </template>
       <template #[`item.status`]="{ item }">
         <StatusChip :status="item.status" />
@@ -141,6 +151,8 @@ const headers = computed(() => [
     key: 'repeating',
     width: '1%',
   },
+  { title: t('_global.modified'), key: 'start_date' },
+  { title: t('_global.modified_by'), key: 'author_username' },
   { title: t('_global.version'), key: 'version', width: '1%' },
   { title: t('_global.status'), key: 'status', width: '1%' },
 ])

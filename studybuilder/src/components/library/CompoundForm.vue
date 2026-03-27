@@ -25,8 +25,6 @@
             <v-text-field
               v-model="form.name"
               :label="$t('CompoundForm.name')"
-              density="compact"
-              variant="outlined"
               :rules="[formRules.required]"
               class="required"
             />
@@ -37,11 +35,9 @@
             <v-textarea
               v-model="form.definition"
               :label="$t('_global.definition')"
-              density="compact"
               clearable
               auto-grow
               rows="1"
-              variant="outlined"
             />
           </v-col>
         </v-row>
@@ -50,11 +46,9 @@
             <v-textarea
               v-model="form.change_description"
               :label="$t('HistoryTable.change_description')"
-              density="compact"
               clearable
               auto-grow
               rows="1"
-              variant="outlined"
               :rules="[formRules.required]"
             />
           </v-col>

@@ -55,11 +55,7 @@
           >
             <template #[`item.selection`]="{ item }">
               <v-radio-group v-model="selectedTerm" hide-details>
-                <v-radio
-                  density="compact"
-                  color="primary"
-                  :value="item.term_uid"
-                ></v-radio>
+                <v-radio :value="item.term_uid"></v-radio>
               </v-radio-group>
             </template>
           </NNTable>

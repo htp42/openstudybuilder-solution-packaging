@@ -40,7 +40,7 @@ When('Origin Type and Origin Source are automatically populated in the edition m
 When('{string} dropdown is activated in the edition form', (headerName) => {
     cy.get('.v-overlay table thead th').each((header, index) => {
         if (header.text() == headerName) {
-            cy.get('.v-overlay table tbody tr td').eq(index).find('[role="combobox"]').click()
+            cy.get('.v-overlay table tbody tr td').eq(index).find('[role="combobox"] .v-field__input').click()
             return false
         }
     })
@@ -49,7 +49,7 @@ When('{string} dropdown is activated in the edition form', (headerName) => {
 When('{string} dropdown is activated in the edition mode', (headerName) => {
     cy.get('table thead th').each((header, index) => {
         if (header.text() == headerName) {
-            cy.get('table tbody tr td').eq(index).find('[role="combobox"]').click()
+            cy.get('table tbody tr td').eq(index).find('[role="combobox"] .v-field__input').click()
             return false
         }
     })

@@ -6,7 +6,7 @@ Feature: Manage ODM Vendor Attributes in OpenStudyBuilder API
         Given The test user can call the OpenStudyBuilder API
 
     Scenario: User must be able to get an empty list of ODM vendor attributes
-        When the user calls the API endpoint 'concepts/odms/vendor-attributes'
+        When the user calls the API endpoint 'odms/vendor-attributes'
         Then the response must include an empty list of ODM vendor attributes
         And the response status code must be 200
     Test Coverage:
@@ -22,7 +22,7 @@ Feature: Manage ODM Vendor Attributes in OpenStudyBuilder API
         | /tests/integration/api/old/test_odm_vendor_attributes.py | @TestID: test_creating_a_new_odm_vendor_attribute_with_relation_to_odm_vendor_namespace |
 
     Scenario: User must be able to get a non-empty list of ODM vendor attributes
-        When the user calls the API endpoint 'concepts/odms/vendor-attributes' get a non-empty list of ODM vendor attributes
+        When the user calls the API endpoint 'odms/vendor-attributes' get a non-empty list of ODM vendor attributes
         Then the response must include the list of ODM vendor attributes that were created
         And the response status code must be 200
     Test Coverage:
@@ -30,7 +30,7 @@ Feature: Manage ODM Vendor Attributes in OpenStudyBuilder API
         | /tests/integration/api/old/test_odm_vendor_attributes.py | @TestID: test_getting_non_empty_list_of_odm_vendor_attributes |
 
     Scenario: User must be able to get a specific ODM vendor attribute
-        When the user calls the API endpoint 'concepts/odms/vendor-attributes/' to get a specific ODM vendor attribute
+        When the user calls the API endpoint 'odms/vendor-attributes/' to get a specific ODM vendor attribute
         Then the response status code must be 200
         And the response must include the ODM vendor attribute
     Test Coverage:
@@ -38,7 +38,7 @@ Feature: Manage ODM Vendor Attributes in OpenStudyBuilder API
         | /tests/integration/api/old/test_odm_vendor_attributes.py | @TestID: test_getting_a_specific_odm_vendor_attribute |
 
     Scenario: User must be able to get possible header values of ODM vendor attributes
-        When the user calls the API endpoint 'concepts/odms/vendor-attributes/headers?field_name=name'
+        When the user calls the API endpoint 'odms/vendor-attributes/headers?field_name=name'
         Then the response status code must be 200
         And the response must include the list ["nameOne"]
     Test Coverage:
@@ -70,7 +70,7 @@ Feature: Manage ODM Vendor Attributes in OpenStudyBuilder API
         | /tests/integration/api/old/test_odm_vendor_attributes_negative.py | @TestID: test_cannot_create_a_new_odm_vendor_attribute_without_an_english_description |
 
     Scenario: User receives an error for retrieving a non-existent ODM vendor attribute
-        When the user calls the API endpoint 'concepts/odms/vendor-attributes/' for retrieving a non-existent ODM vendor attribute
+        When the user calls the API endpoint 'odms/vendor-attributes/' for retrieving a non-existent ODM vendor attribute
         Then the response status code must be 404
         And the response must include the message like "OdmVendorAttributeAR with UID 'OdmVendorAttribute_000003' doesn't exist ..."
     Test Coverage:

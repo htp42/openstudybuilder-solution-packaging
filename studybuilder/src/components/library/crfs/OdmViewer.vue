@@ -6,8 +6,6 @@
           v-model="selectedCollections"
           :items="collections"
           :label="$t('OdmViewer.crf_collection')"
-          variant="outlined"
-          density="compact"
           clearable
           multiple
           return-object
@@ -60,8 +58,6 @@
           v-model="selectedForms"
           :items="forms"
           :label="$t('OdmViewer.forms')"
-          variant="outlined"
-          density="compact"
           clearable
           multiple
           class="mt-2"
@@ -121,8 +117,6 @@
         <v-select
           v-model="data.selectedStylesheet"
           :items="data.stylesheet"
-          variant="outlined"
-          density="compact"
           class="mt-2"
           :label="$t('OdmViewer.stylesheet')"
           :disabled="selectedForms.length === 0"
@@ -249,6 +243,10 @@ const data = ref({
   target_type: 'form',
   stylesheet: [
     {
+      title: t('OdmViewer.html'),
+      value: 'html',
+    },
+    {
       title: t('OdmViewer.crf_with_annotations'),
       value: 'with-annotations',
     },
@@ -257,7 +255,7 @@ const data = ref({
       value: 'falcon',
     },
   ],
-  selectedStylesheet: 'falcon',
+  selectedStylesheet: 'html',
 })
 const loading = ref(false)
 const exportLoading = ref(false)
@@ -333,17 +331,10 @@ async function loadXml() {
   for (const form of selectedForms.value) {
     data.value.targets += `targets=${form}&`
   }
-  crfs.getXml(data.value).then((resp) => {
-    const parser = new DOMParser()
-    xmlString.value = resp.data
-    xml = parser.parseFromString(resp.data, 'application/xml')
-    const xsltProcessor = new XSLTProcessor()
-    crfs.getXsl(data.value.selectedStylesheet).then((resp) => {
-      const xmlDoc = parser.parseFromString(resp.data, 'text/xml')
-      xsltProcessor.importStylesheet(xmlDoc)
-      doc.value = new XMLSerializer().serializeToString(
-        xsltProcessor.transformToDocument(xml)
-      )
+  if (data.value.selectedStylesheet === 'html') {
+    crfs.getReport(data.value).then((resp) => {
+      doc.value = resp.data
+      xmlString.value = resp.data
 
       let iframe = document.createElement('iframe')
       iframe.classList.add('frame')
@@ -354,7 +345,30 @@ async function loadXml() {
 
       loading.value = false
     })
-  })
+  } else {
+    crfs.getXml(data.value).then((resp) => {
+      const parser = new DOMParser()
+      xmlString.value = resp.data
+      xml = parser.parseFromString(resp.data, 'application/xml')
+      const xsltProcessor = new XSLTProcessor()
+      crfs.getXsl(data.value.selectedStylesheet).then((resp) => {
+        const xmlDoc = parser.parseFromString(resp.data, 'text/xml')
+        xsltProcessor.importStylesheet(xmlDoc)
+        doc.value = new XMLSerializer().serializeToString(
+          xsltProcessor.transformToDocument(xml)
+        )
+
+        let iframe = document.createElement('iframe')
+        iframe.classList.add('frame')
+        document.querySelector('iframe').replaceWith(iframe)
+        let iframeDoc = iframe.contentDocument
+        iframeDoc.write(doc.value)
+        iframeDoc.close()
+
+        loading.value = false
+      })
+    })
+  }
 }
 
 function getDownloadFileName() {

@@ -37,33 +37,6 @@ from clinical_mdr_api.domain_repositories.concepts.compound_repository import (
 from clinical_mdr_api.domain_repositories.concepts.medicinal_product_repository import (
     MedicinalProductRepository,
 )
-from clinical_mdr_api.domain_repositories.concepts.odms.condition_repository import (
-    ConditionRepository,
-)
-from clinical_mdr_api.domain_repositories.concepts.odms.form_repository import (
-    FormRepository,
-)
-from clinical_mdr_api.domain_repositories.concepts.odms.item_group_repository import (
-    ItemGroupRepository,
-)
-from clinical_mdr_api.domain_repositories.concepts.odms.item_repository import (
-    ItemRepository,
-)
-from clinical_mdr_api.domain_repositories.concepts.odms.method_repository import (
-    MethodRepository,
-)
-from clinical_mdr_api.domain_repositories.concepts.odms.study_event_repository import (
-    StudyEventRepository,
-)
-from clinical_mdr_api.domain_repositories.concepts.odms.vendor_attribute_repository import (
-    VendorAttributeRepository,
-)
-from clinical_mdr_api.domain_repositories.concepts.odms.vendor_element_repository import (
-    VendorElementRepository,
-)
-from clinical_mdr_api.domain_repositories.concepts.odms.vendor_namespace_repository import (
-    VendorNamespaceRepository,
-)
 from clinical_mdr_api.domain_repositories.concepts.pharmaceutical_product_repository import (
     PharmaceuticalProductRepository,
 )
@@ -144,6 +117,27 @@ from clinical_mdr_api.domain_repositories.dictionaries.dictionary_term_substance
 )
 from clinical_mdr_api.domain_repositories.libraries.library_repository import (
     LibraryRepository,
+)
+from clinical_mdr_api.domain_repositories.odms.condition_repository import (
+    ConditionRepository,
+)
+from clinical_mdr_api.domain_repositories.odms.form_repository import FormRepository
+from clinical_mdr_api.domain_repositories.odms.item_group_repository import (
+    ItemGroupRepository,
+)
+from clinical_mdr_api.domain_repositories.odms.item_repository import ItemRepository
+from clinical_mdr_api.domain_repositories.odms.method_repository import MethodRepository
+from clinical_mdr_api.domain_repositories.odms.study_event_repository import (
+    StudyEventRepository,
+)
+from clinical_mdr_api.domain_repositories.odms.vendor_attribute_repository import (
+    VendorAttributeRepository,
+)
+from clinical_mdr_api.domain_repositories.odms.vendor_element_repository import (
+    VendorElementRepository,
+)
+from clinical_mdr_api.domain_repositories.odms.vendor_namespace_repository import (
+    VendorNamespaceRepository,
 )
 from clinical_mdr_api.domain_repositories.projects.project_repository import (
     ProjectRepository,

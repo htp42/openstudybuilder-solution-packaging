@@ -4,8 +4,6 @@
       <v-text-field
         v-model="form.formulation_name"
         :label="$t('Formulation.formulation')"
-        density="compact"
-        variant="outlined"
         @update:model-value="update()"
       />
     </v-col>
@@ -15,11 +13,9 @@
       <v-autocomplete
         v-model="form.active_substance_uid"
         :label="$t('Formulation.active_substance')"
-        density="compact"
         :items="formulationsStore.activeSubstances"
         :item-title="getSubstanceTitle"
         item-value="uid"
-        variant="outlined"
         :filter-keys="[
           'raw.long_number',
           'raw.inn',
@@ -33,10 +29,7 @@
         <template #item="{ props, item }">
           <v-list-item v-bind="props" :title="getSubstanceTitle(item.raw)">
             <v-list-item-subtitle class="pa-2">
-              <template v-if="item.raw.inn">
-                {{ item.raw.inn }}
-              </template>
-              <template v-else> - </template>
+              {{ getSubstanceSubtitle(item.raw) }}
             </v-list-item-subtitle>
           </v-list-item>
         </template>
@@ -89,8 +82,6 @@
             :items="formulationsStore.adverseEvents"
             item-title="sponsor_preferred_name"
             item-value="term_uid"
-            density="compact"
-            variant="outlined"
             clearable
             @update:model-value="update"
           />
@@ -120,8 +111,11 @@
 
 <script setup>
 import { inject, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useFormulationsStore } from '@/stores/library-formulations'
 import NumericValueWithUnitField from '@/components/tools/NumericValueWithUnitField.vue'
+
+const { t } = useI18n()
 
 const formulationsStore = useFormulationsStore()
 const formRules = inject('formRules')
@@ -182,6 +176,14 @@ function getSubstanceTitle(item) {
     return item.inn
   }
   return '-'
+}
+
+function getSubstanceSubtitle(item) {
+  let retVals = [
+    `${t('ActiveSubstance.inn')}: ${item.inn ?? '-'}`,
+    `${t('ActiveSubstance.analyte_number')}: ${item.analyte_number ?? '-'}`,
+  ]
+  return retVals.join(', ')
 }
 </script>
 

@@ -12,8 +12,6 @@
           item-value="uid"
           return-object
           :disabled="selectValueOnly || props.disabled"
-          variant="outlined"
-          density="compact"
           class="w-50"
           @update:model-value="resetAndUpdate"
         />
@@ -44,8 +42,6 @@
           item-title="name"
           item-value="uid"
           bg-color="white"
-          variant="outlined"
-          density="compact"
           class="ml-4 w-50"
           :loading="loading"
           :disabled="props.disabled"

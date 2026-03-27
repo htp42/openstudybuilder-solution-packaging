@@ -6,7 +6,7 @@ Feature: Manage ODM Conditions in OpenStudyBuilder API
         Given The test user can call the OpenStudyBuilder API
         
     Scenario: User must be able to get an empty list of ODM conditions
-        When the user calls the API endpoint 'concepts/odms/conditions'
+        When the user calls the API endpoint 'odms/conditions'
         Then the response must include an empty list of ODM conditions
         And the response status code must be 200
     Test Coverage:
@@ -22,7 +22,7 @@ Feature: Manage ODM Conditions in OpenStudyBuilder API
         | /tests/integration/api/old/test_odm_conditions.py | @TestID: test_creating_a_new_odm_condition |
 
     Scenario: User must be able to get a list of ODM conditions
-        When the user calls the API endpoint 'concepts/odms/conditions'
+        When the user calls the API endpoint 'odms/conditions'
         Then the response must include the list of ODM conditions
         And the response status code must be 200
     Test Coverage:
@@ -30,7 +30,7 @@ Feature: Manage ODM Conditions in OpenStudyBuilder API
         | /tests/integration/api/old/test_odm_conditions.py | @TestID: test_getting_non_empty_list_of_odm_conditions |
 
     Scenario: User must be able to get a specific ODM condition
-        When the user calls the API endpoint 'concepts/odms/conditions/'
+        When the user calls the API endpoint 'odms/conditions/'
         Then the response status code must be 200
         And the response must include the ODM condition
     Test Coverage:
@@ -38,7 +38,7 @@ Feature: Manage ODM Conditions in OpenStudyBuilder API
         | /tests/integration/api/old/test_odm_conditions.py | @TestID: test_getting_a_specific_odm_condition |
 
     Scenario: User must be able to get possible header values of ODM conditions
-        When the user calls the API endpoint 'concepts/odms/conditions/headers?field_name=name'
+        When the user calls the API endpoint 'odms/conditions/headers?field_name=name'
         Then the response status code must be 200
         And the response must include the list ["name1"]
     Test Coverage:
@@ -109,7 +109,7 @@ Feature: Manage ODM Conditions in OpenStudyBuilder API
         | /tests/integration/api/old/test_odm_conditions_negative.py | @TestID: test_cannot_create_a_new_odm_condition_without_an_english_description |
 
     Scenario: User receives an error for retrieving a non-existent ODM condition
-        When the user calls the API endpoint 'concepts/odms/conditions/' for retrieving a non-existent ODM condition
+        When the user calls the API endpoint 'odms/conditions/' for retrieving a non-existent ODM condition
         Then the response status code must be 404
         And the response must include the message like "OdmConditionAR with UID 'OdmCondition_000002' doesn't exist or there's no version with requested status or version number."
     Test Coverage:

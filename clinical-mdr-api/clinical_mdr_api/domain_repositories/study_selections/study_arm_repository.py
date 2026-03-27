@@ -71,7 +71,7 @@ class StudySelectionArmRepository:
         """
 
         sdc_node = (
-            StudyArm.nodes.fetch_relations("has_design_cell", "has_after")
+            StudyArm.nodes.traverse("has_design_cell", "has_after")
             .filter(
                 study_value__latest_value__uid=study_uid,
                 uid=arm_uid,
@@ -558,8 +558,7 @@ class StudySelectionArmRepository:
                     WITH DISTINCT all_sa
                     """
         specific_arm_selections_audit_trail = db.cypher_query(
-            cypher
-            + """
+            cypher + """
             WITH DISTINCT all_sa
             OPTIONAL MATCH (all_sa)-[:HAS_ARM_TYPE]->(st:CTTermContext)-[:HAS_SELECTED_TERM]->(at:CTTermRoot)
             OPTIONAL MATCH (bars:StudyBranchArm)<-[:STUDY_ARM_HAS_BRANCH_ARM]-(all_sa)

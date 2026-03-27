@@ -13,7 +13,7 @@ When('Transition rules edit window is opened', () => cy.get('.v-overlay .v-card-
 
 When('{int} element is selected', (elementIndex) => cy.get('.v-select__content .v-list-item').eq(elementIndex).click())
 
-Then('User triggers dropdown for element assignment to epoch {string}', (epochName) => perfomAction(epochName, '[role="combobox"]'))
+Then('User triggers dropdown for element assignment to epoch {string}', (epochName) => perfomAction(epochName, '[role="combobox"] .v-field__input'))
 
 Then('User open transition rules edit mode for epoch {string}', (epochName) => perfomAction(epochName, 'button[hide-details]'))
 
@@ -50,5 +50,5 @@ function checkValueForEpoch(epochName, validation) {
 
 function fillTransitionRule(value) {
     transitionRule = value
-    cy.get('.v-card textarea').clear().type(transitionRule)
+    cy.get('.v-card textarea').clear().type(transitionRule, {delay: 0})
 }

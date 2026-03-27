@@ -11,7 +11,7 @@
     @save="submit"
   >
     <template #[`step.creationMode`]="{ step }">
-      <v-radio-group v-model="creationMode" color="primary">
+      <v-radio-group v-model="creationMode">
         <v-radio
           :label="$t('StudyEndpointForm.template_mode')"
           value="template"
@@ -25,7 +25,11 @@
       <v-form :ref="`observer_${step}`">
         <v-row v-if="creationMode === 'studies'">
           <v-col>
-            <StudySelectorField v-model="selectedStudies" :data="studies" />
+            <StudySelectorField
+              v-model="formSelectedStudy"
+              :data="studies"
+              :loading="studiesLoading"
+            />
           </v-col>
         </v-row>
       </v-form>
@@ -62,7 +66,7 @@
           :headers="endpointHeaders"
           data-fetcher-name="getAllStudyEndpoints"
           :extra-data-fetcher-filters="extraStudyEndpointFilters"
-          :studies="selectedStudies"
+          :selected-study="formSelectedStudy"
           column-data-resource="study-endpoints"
           @item-selected="selectStudyEndpoint"
         >
@@ -177,7 +181,6 @@
         </p>
         <v-switch
           v-model="preInstanceMode"
-          color="primary"
           :label="$t('StudyObjectiveForm.show_pre_instances')"
           hide-details
           class="ml-4"
@@ -482,6 +485,7 @@ export default {
         'endpoint.status': { v: [statuses.FINAL] },
       },
       form: this.getInitialForm(),
+      studiesLoading: false,
       loadingEndpointParameters: false,
       loadingTimeframeParameters: false,
       objectiveHeaders: [
@@ -556,7 +560,7 @@ export default {
           class: 'text-center',
         },
       ],
-      selectedStudies: [],
+      formSelectedStudy: null,
       selectedEndpointHeaders: [
         { title: '', key: 'actions', width: '1%' },
         { title: this.$t('Study.study_id'), key: 'study_id' },
@@ -719,11 +723,17 @@ export default {
     templateParameterTypes.getTypes().then((resp) => {
       this.parameterTypes = resp.data
     })
-    study.get({ has_study_endpoint: true, page_size: 0 }).then((resp) => {
-      this.studies = resp.data.items.filter(
-        (study) => study.uid !== this.selectedStudy.uid
-      )
-    })
+    this.studiesLoading = true
+    study
+      .getAllList({ has_study_endpoint: true })
+      .then((resp) => {
+        this.studies = resp.data.filter(
+          (study) => study.uid !== this.selectedStudy.uid
+        )
+      })
+      .finally(() => {
+        this.studiesLoading = false
+      })
   },
   methods: {
     watchEndpointTemplate() {

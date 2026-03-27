@@ -16,12 +16,7 @@
               >
                 <div class="d-flex align-start justify-start">
                   <div class="mr-6">
-                    <v-switch
-                      v-model="form.published"
-                      color="primary"
-                      hide-details
-                      density="compact"
-                    />
+                    <v-switch v-model="form.published" hide-details />
                   </div>
                   <div class="text-nnTrueBlue pt-2">
                     <div class="font-weight-bold mb-2 title">
@@ -53,16 +48,12 @@
               <v-text-field
                 v-model="form.title"
                 :label="$t('SystemAnnouncementsView.announcement_title')"
-                variant="outlined"
-                density="compact"
                 :rules="[formRules.required]"
                 class="mb-3"
               />
               <v-textarea
                 v-model="form.description"
                 :label="$t('SystemAnnouncementsView.announcement_description')"
-                variant="outlined"
-                density="compact"
                 :rules="[formRules.required]"
               />
               <div class="page-subtitle">
@@ -71,15 +62,11 @@
               <v-text-field
                 v-model="form.started_at"
                 :label="$t('SystemAnnouncementsView.start_at')"
-                variant="outlined"
-                density="compact"
                 type="datetime-local"
               />
               <v-text-field
                 v-model="form.ended_at"
                 :label="$t('SystemAnnouncementsView.end_at')"
-                variant="outlined"
-                density="compact"
                 type="datetime-local"
               />
             </v-col>

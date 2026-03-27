@@ -34,19 +34,21 @@
       <div class="d-flex align-center mb-4">
         <v-text-field
           v-model="search"
-          :label="$t('DetailedFlowchart.search_activities')"
+          :label="$t('_global.search')"
+          autocomplete="off"
+          clearable
+          clear-icon="mdi-close"
+          prepend-inner-icon="mdi-magnify"
           class="ml-2 mr-6 mt-5"
           style="max-width: 300px"
-          variant="outlined"
-          density="compact"
           :disabled="sortMode"
+          @click:clear="search = ''"
         />
         <v-switch
           v-model="expandAllRows"
           :label="$t('DetailedFlowchart.expand_all')"
           hide-details
           class="flex-grow-0"
-          color="primary"
           :disabled="sortMode"
           @update:model-value="toggleAllRowState"
         />
@@ -373,7 +375,6 @@
                         !accessGuard.checkPermission($roles.STUDY_WRITE) ||
                         studiesGeneralStore.selectedStudyVersion !== null
                       "
-                      density="compact"
                     />
                     <v-btn
                       v-else-if="!footnoteMode"
@@ -475,37 +476,42 @@
                 :class="row.class"
                 style="height: 35px"
               >
-                <td class="sticky-column" style="min-width: 300px">
+                <td class="sticky-column" style="min-width: 320px">
                   <div class="d-flex align-center justify-start">
-                    <v-btn
-                      v-if="
-                        !props.readOnly && !scheduleMethods.isActivityRow(row)
-                      "
-                      :icon="
-                        getDisplayButtonIcon(`row-${row.cells[0].refs[0]?.uid}`)
-                      "
-                      variant="text"
-                      size="x-small"
-                      @click="
-                        toggleRowState(`row-${row.cells[0].refs[0]?.uid}`)
-                      "
-                    />
-                    <ActionsMenu
-                      v-if="row.order"
-                      v-model="actionMenuStates[index]"
-                      size="small"
-                      :actions="actions"
-                      :item="{ row: row, index: index }"
-                      :disabled="
-                        Boolean(studiesGeneralStore.selectedStudyVersion)
-                      "
-                      @update:model-value="highlightRow(row)"
-                    />
+                    <div class="row-fixed-width">
+                      <v-btn
+                        v-if="
+                          !props.readOnly && !scheduleMethods.isActivityRow(row)
+                        "
+                        :icon="
+                          getDisplayButtonIcon(
+                            `row-${row.cells[0].refs[0]?.uid}`
+                          )
+                        "
+                        variant="text"
+                        size="x-small"
+                        @click="
+                          toggleRowState(`row-${row.cells[0].refs[0]?.uid}`)
+                        "
+                      />
+                    </div>
+                    <div class="row-fixed-width">
+                      <ActionsMenu
+                        v-if="row.order"
+                        v-model="actionMenuStates[index]"
+                        size="small"
+                        :actions="actions"
+                        :item="{ row: row, index: index }"
+                        :disabled="
+                          Boolean(studiesGeneralStore.selectedStudyVersion)
+                        "
+                        @update:model-value="highlightRow(row)"
+                      />
+                    </div>
                     <v-checkbox
                       v-if="
                         !props.readOnly && scheduleMethods.isActivityRow(row)
                       "
-                      color="primary"
                       hide-details
                       :model-value="
                         studyActivitySelection.findIndex(
@@ -517,7 +523,6 @@
                         !accessGuard.checkPermission($roles.STUDY_WRITE) ||
                         studiesGeneralStore.selectedStudyVersion !== null
                       "
-                      density="compact"
                       :style="footnoteMode ? 'visibility: hidden;' : ''"
                       class="flex-grow-0 ml-12 scale75"
                       @update:model-value="
@@ -529,7 +534,6 @@
                         !props.readOnly &&
                         scheduleMethods.getSoaRowType(row) === 'subGroup'
                       "
-                      color="primary"
                       true-icon="mdi-checkbox-multiple-marked-outline"
                       false-icon="mdi-checkbox-multiple-blank-outline"
                       hide-details
@@ -537,7 +541,6 @@
                         !accessGuard.checkPermission($roles.STUDY_WRITE) ||
                         studiesGeneralStore.selectedStudyVersion !== null
                       "
-                      density="compact"
                       :style="footnoteMode ? 'visibility: hidden;' : ''"
                       class="flex-grow-0 scale75 ml-4"
                       @update:model-value="
@@ -545,15 +548,41 @@
                       "
                     />
 
-                    <div class="ml-4">
-                      {{ row.cells[0].text }}
-                      <div class="badgeActivities">
-                        {{
-                          scheduleMethods.getElementFootnotesLetters(
-                            row.cells[0]?.refs[0]?.uid
-                          )
-                        }}
-                      </div>
+                    <div class="ml-4 row-label-wrapper">
+                      <span class="row-label-activator">
+                        <span class="row-label-text">
+                          <span
+                            :class="{
+                              'search-match-cell': isSearchMatch(
+                                row.cells[0].text
+                              ),
+                            }"
+                          >
+                            {{ row.cells[0].text }}
+                            <span
+                              v-if="
+                                scheduleMethods.getElementFootnotesLetters(
+                                  row.cells[0]?.refs[0]?.uid
+                                )
+                              "
+                              class="badgeActivities"
+                            >
+                              {{
+                                scheduleMethods.getElementFootnotesLetters(
+                                  row.cells[0]?.refs[0]?.uid
+                                )
+                              }}
+                            </span>
+                          </span>
+                        </span>
+                        <v-tooltip
+                          v-if="row.cells[0].text"
+                          activator="parent"
+                          location="top"
+                        >
+                          {{ row.cells[0].text }}
+                        </v-tooltip>
+                      </span>
                     </div>
                     <v-btn
                       v-if="
@@ -1147,48 +1176,138 @@ const search = ref('')
 const studyVisits = ref([])
 
 const soaRows = computed(() => {
-  // Activities searching handler
-  if (search.value.length >= 3) {
-    let itemsToSearch = soaContent.value?.rows.slice(
-      soaContent.value.num_header_rows
-    )
-    const result = itemsToSearch.filter((obj) => {
-      return !(
-        !obj.cells[0].text.toLowerCase().includes(search.value.toLowerCase()) &&
-        scheduleMethods.isActivityRow(obj)
+  // Hierarchical search handler for SoA table rows.
+  // Rules:
+  // 1) SoA group match => whole SoA subtree.
+  // 2) Group match => whole group subtree + SoA parent.
+  // 3) Subgroup/activity match => matching subgroup subtree + parents.
+  const searchTerm = String(search.value ?? '')
+    .trim()
+    .toLowerCase()
+  if (searchTerm.length >= 3) {
+    // We search only data rows (header rows are excluded).
+    const itemsToSearch =
+      soaContent.value?.rows.slice(soaContent.value.num_header_rows) || []
+    const result = []
+    const getRowStyle = (row) => row?.cells?.[0]?.style
+    const rowMatchesSearch = (row) => {
+      const rowText = row?.cells?.[0]?.text
+      return (
+        typeof rowText === 'string' &&
+        rowText.toLowerCase().includes(searchTerm)
       )
-    })
-    try {
-      for (let i = result.length - 1; i >= 0; i--) {
-        // Removing all subgroups without activities
-        if (
-          result[i].cells[0].style === 'subGroup' &&
-          (!result[i + 1] || !scheduleMethods.isActivityRow(result[i + 1]))
-        ) {
-          result.splice(i, 1)
-        }
-      }
-      // Removing all groups without subgroups
-      for (let i = result.length - 1; i >= 0; i--) {
-        if (
-          result[i].cells[0].style === 'group' &&
-          (!result[i + 1] || result[i + 1].cells[0].style !== 'subGroup')
-        ) {
-          result.splice(i, 1)
-        }
-      }
-      // Removing all soagroups without groups
-      for (let i = result.length - 1; i >= 0; i--) {
-        if (
-          result[i].cells[0].style === 'soaGroup' &&
-          (!result[i + 1] || result[i + 1].cells[0].style !== 'group')
-        ) {
-          result.splice(i, 1)
-        }
-      }
-    } catch (error) {
-      console.error(error)
     }
+
+    let index = 0
+    // Walk top-level blocks from one SoA group to the next.
+    while (index < itemsToSearch.length) {
+      const soaGroupRow = itemsToSearch[index]
+      const soaGroupStyle = getRowStyle(soaGroupRow)
+
+      // Fallback for unexpected data shape: still allow search to return matching rows.
+      if (soaGroupStyle !== 'soaGroup') {
+        if (rowMatchesSearch(soaGroupRow)) {
+          result.push(soaGroupRow)
+        }
+        index += 1
+        continue
+      }
+
+      const soaGroupStartIndex = index
+      index += 1
+
+      // If SoA group itself matches, include full branch until next SoA group.
+      if (rowMatchesSearch(soaGroupRow)) {
+        while (
+          index < itemsToSearch.length &&
+          getRowStyle(itemsToSearch[index]) !== 'soaGroup'
+        ) {
+          index += 1
+        }
+        result.push(...itemsToSearch.slice(soaGroupStartIndex, index))
+        continue
+      }
+
+      const soaChildrenToInclude = []
+
+      // Evaluate all rows that belong to this SoA group.
+      while (
+        index < itemsToSearch.length &&
+        getRowStyle(itemsToSearch[index]) !== 'soaGroup'
+      ) {
+        const currentRow = itemsToSearch[index]
+
+        // Fallback inside SoA group for unexpected non-group rows.
+        if (getRowStyle(currentRow) !== 'group') {
+          if (rowMatchesSearch(currentRow)) {
+            soaChildrenToInclude.push(currentRow)
+          }
+          index += 1
+          continue
+        }
+
+        const groupStart = index
+        index += 1
+        while (index < itemsToSearch.length) {
+          const currentStyle = getRowStyle(itemsToSearch[index])
+          if (currentStyle === 'soaGroup' || currentStyle === 'group') {
+            break
+          }
+          index += 1
+        }
+
+        const groupRows = itemsToSearch.slice(groupStart, index)
+        const groupRow = groupRows[0]
+
+        // Group match => include full group subtree (all its subgroups/activities).
+        if (rowMatchesSearch(groupRow)) {
+          soaChildrenToInclude.push(...groupRows)
+          continue
+        }
+
+        // No group match: keep only matching subgroup branches (with full children)
+        // and matching direct children that are not under a subgroup.
+        const subgroupOrChildRowsToInclude = []
+        let localIndex = 1
+
+        // Scan inside one group, subgroup-by-subgroup.
+        while (localIndex < groupRows.length) {
+          const row = groupRows[localIndex]
+          if (getRowStyle(row) === 'subGroup') {
+            const subGroupStart = localIndex
+            localIndex += 1
+            // Collect rows until next subgroup; this is one subgroup subtree.
+            while (
+              localIndex < groupRows.length &&
+              getRowStyle(groupRows[localIndex]) !== 'subGroup'
+            ) {
+              localIndex += 1
+            }
+            const subGroupRows = groupRows.slice(subGroupStart, localIndex)
+            // If subgroup or any child matches, include entire subgroup subtree.
+            if (subGroupRows.some((subRow) => rowMatchesSearch(subRow))) {
+              subgroupOrChildRowsToInclude.push(...subGroupRows)
+            }
+            continue
+          }
+
+          if (rowMatchesSearch(row)) {
+            subgroupOrChildRowsToInclude.push(row)
+          }
+          localIndex += 1
+        }
+
+        if (subgroupOrChildRowsToInclude.length) {
+          soaChildrenToInclude.push(groupRow, ...subgroupOrChildRowsToInclude)
+        }
+      }
+
+      // Add SoA parent only when something inside it matched.
+      if (soaChildrenToInclude.length) {
+        result.push(soaGroupRow, ...soaChildrenToInclude)
+      }
+    }
+
     return result
   }
   const result = []
@@ -1422,6 +1541,7 @@ function observeWidth() {
 function getStudyVisits() {
   const params = {
     page_size: 0,
+    lite: true,
   }
   studyEpochs
     .getStudyVisits(studiesGeneralStore.selectedStudy.uid, params)
@@ -2294,6 +2414,15 @@ function multipleVisitsSelected() {
   // Check if more than one visit is selected
   return selectedVisitIndexes.value.length > 1
 }
+
+function isSearchMatch(text) {
+  const searchTerm = search.value?.trim().toLowerCase()
+  if (!(searchTerm.length >= 3) || typeof text !== 'string') {
+    return false
+  }
+
+  return text.toLowerCase().includes(searchTerm)
+}
 </script>
 
 <style lang="scss" scoped>
@@ -2334,6 +2463,8 @@ td {
 
 .sticky-header {
   overflow-y: auto;
+  overscroll-behavior-y: contain;
+  overflow-anchor: none;
 
   thead th {
     position: sticky;
@@ -2406,7 +2537,7 @@ input[type='checkbox'] {
   cursor: pointer;
 }
 
-::v-deep .v-badge__badge {
+:deep(.v-badge__badge) {
   font-weight: 700;
 }
 
@@ -2438,5 +2569,40 @@ input[type='checkbox'] {
   display: inline-flex;
   height: 35px;
   align-items: center;
+}
+
+.row-fixed-width {
+  width: 28px;
+  min-width: 28px;
+  display: flex;
+  justify-content: center;
+}
+
+.row-label-wrapper {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.row-label-activator {
+  display: inline-block;
+  max-width: 100%;
+}
+
+.row-label-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-width: 100%;
+  word-break: break-word;
+}
+
+.search-match-cell {
+  background-color: rgb(var(--v-theme-nnGoldenSun200));
+  border-radius: 10px;
+  padding: 0px 3px;
+  display: inline;
+  box-decoration-break: clone;
 }
 </style>

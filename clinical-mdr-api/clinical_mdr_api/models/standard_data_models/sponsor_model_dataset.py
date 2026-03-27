@@ -10,6 +10,24 @@ from clinical_mdr_api.models.standard_data_models.sponsor_model import SponsorMo
 from clinical_mdr_api.models.utils import InputModel
 
 
+class SimpleSponsorModelDataModelIG(SponsorModelBase):
+    ordinal: Annotated[
+        int | None,
+        Field(
+            json_schema_extra={
+                "source": "has_sponsor_model_instance.has_dataset|ordinal",
+                "nullable": True,
+            }
+        ),
+    ] = None
+    name: Annotated[
+        str,
+        Field(
+            json_schema_extra={"source": "has_sponsor_model_instance.has_dataset.name"}
+        ),
+    ]
+
+
 class SponsorModelDataset(SponsorModelBase):
     model_config = ConfigDict(from_attributes=True, extra="allow")
 
@@ -17,24 +35,15 @@ class SponsorModelDataset(SponsorModelBase):
         str | None,
         Field(json_schema_extra={"source": "uid", "nullable": True}),
     ] = None
-    library_name: Annotated[
-        str | None,
-        Field(json_schema_extra={"source": "has_library.name", "nullable": True}),
+    sponsor_model: Annotated[
+        SimpleSponsorModelDataModelIG | None,
+        Field(json_schema_extra={"nullable": True}),
     ] = None
     is_basic_std: Annotated[
         bool | None,
         Field(
             json_schema_extra={
                 "source": "has_sponsor_model_instance.is_basic_std",
-                "nullable": True,
-            },
-        ),
-    ] = None
-    implemented_dataset_class: Annotated[
-        str | None,
-        Field(
-            json_schema_extra={
-                "source": "has_sponsor_model_instance.implements_dataset_class.is_instance_of.uid",
                 "nullable": True,
             },
         ),

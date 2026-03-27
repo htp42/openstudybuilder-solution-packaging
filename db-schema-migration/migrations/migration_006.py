@@ -1,4 +1,5 @@
-""" Schema migrations needed for release to PROD post Mar 2024."""
+"""Schema migrations needed for release to PROD post Mar 2024."""
+
 import os
 from math import ceil, floor
 

@@ -49,7 +49,7 @@ class StudySourceVariableRepository:
             }
 
         nodes = ListDistinct(
-            StudySourceVariableNeomodel.nodes.fetch_relations(
+            StudySourceVariableNeomodel.nodes.traverse(
                 "has_after__audit_trail",
             )
             .filter(**filters)
@@ -75,12 +75,10 @@ class StudySourceVariableRepository:
         source_variable: StudySourceVariableEnum | None = (
             study_source_variable_input.source_variable
         )
-        study_source_variable_node = StudySourceVariableNeomodel.create(
-            {
-                "source_variable": source_variable.value if source_variable else None,
-                "source_variable_description": study_source_variable_input.source_variable_description,
-            }
-        )[0]
+        study_source_variable_node = StudySourceVariableNeomodel(
+            source_variable=source_variable.value if source_variable else None,
+            source_variable_description=study_source_variable_input.source_variable_description,
+        ).save()
         latest_study_value.has_study_source_variable.connect(study_source_variable_node)
         _manage_versioning_with_relations(
             study_root=study_root,
@@ -110,12 +108,10 @@ class StudySourceVariableRepository:
         source_variable: StudySourceVariableEnum | None = (
             study_source_variable_input.source_variable
         )
-        study_source_variable_node = StudySourceVariableNeomodel.create(
-            {
-                "source_variable": source_variable.value if source_variable else None,
-                "source_variable_description": study_source_variable_input.source_variable_description,
-            }
-        )[0]
+        study_source_variable_node = StudySourceVariableNeomodel(
+            source_variable=source_variable.value if source_variable else None,
+            source_variable_description=study_source_variable_input.source_variable_description,
+        ).save()
         latest_study_value.has_study_source_variable.connect(study_source_variable_node)
 
         _manage_versioning_with_relations(

@@ -18,7 +18,7 @@ class DatasetScenario(BaseModel):
     @classmethod
     def from_repository_output(cls, input_dict: dict[str, Any]):
         return cls(
-            uid=input_dict["uid"],
+            uid=input_dict.get("standard_root").get("uid"),
             label=input_dict.get("standard_value").get("label"),
             catalogue_name=input_dict["catalogue_name"],
             dataset=SimpleDatasetForDatasetVariable(

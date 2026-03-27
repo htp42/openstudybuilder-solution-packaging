@@ -367,6 +367,16 @@ class SimpleCTTermNameWithConflictFlag(BaseModel):
         )
 
 
+class CTTermUidInput(BaseModel):
+    """Minimal input model accepting only a CT term UID.
+
+    Used in POST/PATCH input models to align the input shape with the
+    nested-object shape returned by the corresponding GET response model.
+    """
+
+    term_uid: Annotated[str, Field()]
+
+
 class TermWithCodelistMetadata(BaseModel):
     term_uid: Annotated[str, Field()]
     name: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None

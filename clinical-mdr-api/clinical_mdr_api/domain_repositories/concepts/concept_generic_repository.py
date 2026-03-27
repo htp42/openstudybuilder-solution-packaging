@@ -46,6 +46,7 @@ class ConceptGenericRepository(
     return_model: type = BaseModel
     filter_query_parameters: dict[Any, Any] = {}
     sort_by: dict[Any, Any] | None = None
+    wildcard_properties_list: list[str] | None = None
 
     @abstractmethod
     def _create_aggregate_root_instance_from_cypher_result(
@@ -379,6 +380,7 @@ class ConceptGenericRepository(
             filter_operator=filter_operator,
             total_count=total_count,
             return_model=self.return_model,
+            wildcard_properties_list=self.wildcard_properties_list,
             format_filter_sort_keys=self.format_filter_sort_keys,
             one_element_extra=filtering_active,
         )

@@ -24,7 +24,6 @@
                 v-model="form.name"
                 :label="$t('CRFForms.name') + '*'"
                 data-cy="form-oid-name"
-                density="compact"
                 :clearable="!isReadOnly"
                 :readonly="isReadOnly"
                 :rules="[formRules.required]"
@@ -35,7 +34,6 @@
                 v-model="form.oid"
                 :label="$t('CRFForms.oid')"
                 data-cy="form-oid"
-                density="compact"
                 :clearable="!isReadOnly"
                 :readonly="isReadOnly"
               />
@@ -410,10 +408,11 @@ async function submit() {
     if (isEdit()) {
       await crfs
         .updateForm(form.value, props.selectedForm.uid)
-        .then(async () => {
+        .then(async (resp) => {
           notificationHub.add({
             msg: t('CRFForms.form_updated'),
           })
+          emit('updateForm', resp.data)
           close()
         })
     } else {

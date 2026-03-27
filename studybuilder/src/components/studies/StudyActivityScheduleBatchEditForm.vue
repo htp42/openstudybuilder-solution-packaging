@@ -19,9 +19,7 @@
           return-object
           clearable
           class="mt-4"
-          variant="outlined"
           color="nnBaseBlue"
-          rounded="lg"
         />
         <v-autocomplete
           v-model="selectedVisitsGrouped"

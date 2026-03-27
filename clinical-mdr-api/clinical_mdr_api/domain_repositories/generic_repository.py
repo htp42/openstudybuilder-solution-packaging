@@ -96,12 +96,14 @@ class RepositoryImpl:
     ):
         """
         Creates versioned root and versioned object nodes.
-        # TODO - GEneration of uids should be removed (additional service?)
+        # TODO - Generation of uids should be removed (additional service?)
         """
         if save_root:
             self._db_save_node(root)
         self._db_save_node(value)
 
+        latest_draft: RelationshipDefinition | None
+        latest_final: RelationshipDefinition | None
         (
             has_version,
             has_latest_value,
@@ -281,14 +283,10 @@ def _manage_versioning_with_relations(
     if "date" not in properties:
         properties["date"] = datetime.datetime.now(datetime.timezone.utc)
     properties = action_type.deflate(properties, skip_empty=True)
-    query.append(
-        dedent(
-            f"""
+    query.append(dedent(f"""
         CREATE (action:{':'.join(action_type.inherited_labels())}:StudyAction {{{', '.join(f'{k}: ${k}' for k in properties)}}})<-[:AUDIT_TRAIL]-(study_root)
         WITH *
-    """
-        ).strip()
-    )
+    """).strip())
 
     # Match & link previous node
     if before:
@@ -306,7 +304,7 @@ def _manage_versioning_with_relations(
 
     # Copy relationships
     if before and after:
-        _exclude_relationships = set()
+        _exclude_relationships: set[Any] = set()
         _exclude_labels = {
             StudyValue.__name__,  # exclude (HAS_...) relations from StudyValue node
             StudyAction.__name__,  # exclude (BEFORE/AFTER) relations from StudyAction node
@@ -323,9 +321,7 @@ def _manage_versioning_with_relations(
                     "exclude_relationships must be an iterable of StructuredNode subclasses or relationship type strings."
                 )
 
-        query.append(
-            dedent(
-                """
+        query.append(dedent("""
             CALL {
                 WITH before, after
                 MATCH (before)-[r]->(target)
@@ -340,26 +336,20 @@ def _manage_versioning_with_relations(
                 CALL apoc.create.relationship(source, type(r), properties(r), after) YIELD rel
                 RETURN count(rel) AS num_rels_in
             }
-        """
-            ).strip()
-        )
+        """).strip())
         params["_exclude_relationships"] = tuple(_exclude_relationships)
         params["_exclude_labels"] = tuple(_exclude_labels)
 
     # Unlink previous relationship from latest StudyValue
     if before:
-        query.append(
-            dedent(
-                """
+        query.append(dedent("""
             CALL {
                 WITH study_value, before
                 MATCH (study_value)-[rel]->(before)
                 DELETE rel
                 RETURN count(rel) AS num_rels_del
             }
-        """
-            ).strip()
-        )
+        """).strip())
 
     # Execute query
     query.append("RETURN action")

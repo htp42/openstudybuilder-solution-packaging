@@ -20,7 +20,6 @@
               item-value="arm_uid"
               clearable
               multiple
-              density="compact"
             />
           </v-col>
         </v-row>
@@ -35,7 +34,6 @@
               item-value="branch_arm_uid"
               clearable
               multiple
-              density="compact"
             />
           </v-col>
         </v-row>
@@ -48,7 +46,6 @@
               :rules="[formRules.required, formRules.max(form.name, 200)]"
               clearable
               class="required"
-              density="compact"
             />
           </v-col>
         </v-row>
@@ -61,7 +58,6 @@
               :rules="[formRules.required, formRules.max(form.short_name, 20)]"
               clearable
               class="required"
-              density="compact"
             />
           </v-col>
         </v-row>
@@ -80,7 +76,6 @@
               type="number"
               clearable
               class="required"
-              density="compact"
             />
           </v-col>
         </v-row>
@@ -100,7 +95,6 @@
               data-cy="study-cohort-planned-number-of-subjects"
               type="number"
               clearable
-              density="compact"
               @update:model-value="
                 form.number_of_subjects = $event !== '' ? $event : null
               "
@@ -114,7 +108,6 @@
               :label="$t('_global.description')"
               data-cy="study-cohort-description"
               clearable
-              density="compact"
             />
           </v-col>
         </v-row>

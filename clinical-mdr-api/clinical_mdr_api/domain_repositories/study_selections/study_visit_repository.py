@@ -497,9 +497,7 @@ class StudyVisitRepository:
         if filters:
             query.append(f"WHERE {' AND '.join(filters)}")
 
-        query.append(
-            dedent(
-                """
+        query.append(dedent("""
             MATCH (study_visit)-[:HAS_VISIT_TYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(visit_type_term:CTTermRoot)
             MATCH (study_visit)-[:HAS_VISIT_CONTACT_MODE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(visit_contact_mode_term:CTTermRoot)
             OPTIONAL MATCH (study_visit)-[:HAS_REPEATING_FREQUENCY]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(repeating_frequency_term:CTTermRoot)
@@ -509,14 +507,10 @@ class StudyVisitRepository:
             OPTIONAL MATCH (timepoint_value)-[:HAS_UNIT_DEFINITION]->(timepoint_unit_root:UnitDefinitionRoot)-[:LATEST]->(timepoint_unit_value:UnitDefinitionValue)
             OPTIONAL MATCH (timepoint_value)-[:HAS_TIME_REFERENCE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(time_reference_term:CTTermRoot)
             OPTIONAL MATCH (timepoint_value)-[:HAS_VALUE]->(numeric_root:NumericValueRoot)-[:LATEST]->(numeric_value:NumericValue)
-        """
-            ).rstrip()
-        )
+        """).rstrip())
 
         if audit_trail:
-            query.append(
-                dedent(
-                    """
+            query.append(dedent("""
             WITH *,
                 {term_uid: epoch_term_root.uid} AS epoch_term,
                 {term_uid: visit_type_term.uid} AS visit_type,
@@ -524,9 +518,7 @@ class StudyVisitRepository:
                 CASE WHEN repeating_frequency_term.uid IS NULL THEN NULL ELSE {term_uid: repeating_frequency_term.uid} END AS repeating_frequency,
                 CASE WHEN epoch_allocation_term.uid IS NULL THEN NULL ELSE {term_uid: epoch_allocation_term.uid} END AS epoch_allocation,
                 CASE WHEN time_reference_term.uid IS NULL THEN NULL ELSE {term_uid: time_reference_term.uid} END AS time_reference
-                    """
-                ).rstrip()
-            )
+                    """).rstrip())
 
         else:
             query.append(
@@ -560,9 +552,7 @@ class StudyVisitRepository:
                 )
             )
 
-        query.append(
-            dedent(
-                """
+        query.append(dedent("""
             WITH 
                 study_root.uid AS study_uid,
                 study_value.study_id_prefix AS study_id_prefix,
@@ -608,12 +598,9 @@ class StudyVisitRepository:
                         | {vis: consecutive_visits, unique_visit_number: toInteger(consecutive_visits.unique_visit_number)}
                     ], '^unique_visit_number')
                 }]) AS group
-                """
-            ).rstrip()
-        )
+                """).rstrip())
 
-        return_statement = dedent(
-            """
+        return_statement = dedent("""
             RETURN *,
                 CASE
                     WHEN group.visit_group.group_format = "range" 
@@ -630,8 +617,7 @@ class StudyVisitRepository:
                             }
                     ELSE null
                 END AS consecutive_visit_group
-             """
-        ).rstrip()
+             """).rstrip()
 
         if audit_trail:
             query.append(
@@ -662,6 +648,121 @@ class StudyVisitRepository:
             study_visits, attributes_names
         )
         return extracted_items
+
+    @staticmethod
+    @trace_calls
+    def list_all_visits_query(
+        study_uid: str,
+        study_value_version: str | None = None,
+    ) -> tuple[str, dict[Any, Any]]:
+        """List all visits of a specific study version, returning fewer properties"""
+
+        query = []
+        params = {"study_uid": study_uid}
+
+        if study_value_version:
+            query.append(
+                "MATCH (study_root:StudyRoot {uid: $study_uid})-[:HAS_VERSION{status: $study_status, version: $study_value_version}]->(study_value:StudyValue)"
+            )
+            params["study_value_version"] = study_value_version
+            params["study_status"] = StudyStatus.RELEASED.value
+        else:
+            query.append(
+                "MATCH (study_root:StudyRoot {uid: $study_uid})-[:LATEST]->(study_value:StudyValue)"
+            )
+
+        query.append(queries.study_standard_version_ct_terms_datetime)
+
+        query.append("MATCH (study_value)-[:HAS_STUDY_VISIT]->(study_visit:StudyVisit)")
+
+        if not study_value_version:
+            query.append("WHERE NOT (study_visit)-[:BEFORE]-()")
+
+        query.append(
+            "MATCH (study_visit)<-[:STUDY_EPOCH_HAS_STUDY_VISIT]-(study_epoch:StudyEpoch)<-[:HAS_STUDY_EPOCH]-(study_value)"
+            "MATCH (study_epoch)-[:HAS_EPOCH]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(epoch_term_root:CTTermRoot)"
+        )
+
+        if not study_value_version:
+            query.append("WHERE NOT (study_epoch)-[:BEFORE]-()")
+
+        query.append(
+            "MATCH (study_visit)-[:HAS_VISIT_TYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(visit_type_term:CTTermRoot)"
+        )
+        query.append(
+            "OPTIONAL MATCH (study_visit)-[:HAS_WINDOW_UNIT]->(window_unit_root:UnitDefinitionRoot)-[:LATEST]->(window_unit_value:UnitDefinitionValue)"
+        )
+
+        query.append(
+            queries.ct_term_name_at_datetime.format(
+                root="epoch_term_root", value="epoch_term"
+            )
+        )
+        query.append(
+            queries.ct_term_name_at_datetime.format(
+                root="visit_type_term", value="visit_type"
+            )
+        )
+
+        query.append(dedent("""
+            WITH 
+                study_visit,
+                study_epoch,
+                epoch_term,
+                visit_type,
+                window_unit_root,
+                window_unit_value,
+                head([(study_visit)-[:HAS_STUDY_DAY]->(sdr:StudyDayRoot)-[:LATEST]->(sdv:StudyDayValue) | {uid:sdr.uid, value:sdv.value}]) AS study_day,
+                head([(study_visit)-[:HAS_STUDY_DURATION_DAYS]->(sdr:StudyDurationDaysRoot)-[:LATEST]->(sdv:StudyDurationDaysValue) | {uid:sdr.uid, value:sdv.value}]) AS study_duration_days,
+                head([(study_visit)-[:HAS_STUDY_WEEK]->(swr:StudyWeekRoot)-[:LATEST]->(swv:StudyWeekValue) | {uid:swr.uid, value:swv.value}]) AS study_week,
+                head([(study_visit)-[:HAS_STUDY_DURATION_WEEKS]->(swr:StudyDurationWeeksRoot)-[:LATEST]->(swv:StudyDurationWeeksValue) | {uid:swr.uid, value:swv.value}]) AS study_duration_weeks,
+                head([(study_visit)-[:IN_VISIT_GROUP]->(visit_group:StudyVisitGroup) | 
+                {
+                    visit_group:visit_group,
+                    consecutive_visits: apoc.coll.sortMaps([
+                        (visit_group)<-[:IN_VISIT_GROUP]-(consecutive_visits:StudyVisit)<-[:HAS_STUDY_VISIT]-(study_value)
+                        | {vis: consecutive_visits, unique_visit_number: toInteger(consecutive_visits.unique_visit_number)}
+                    ], '^unique_visit_number')
+                }]) AS group
+                """).rstrip())
+
+        query.append(dedent("""
+            RETURN
+                study_visit { .*,
+                    consecutive_visit_group: CASE group.visit_group.group_format
+                        WHEN "range" THEN head(group.consecutive_visits).vis.short_visit_label + "-" + last(group.consecutive_visits).vis.short_visit_label 
+                        WHEN "list" THEN apoc.text.join([visit in group.consecutive_visits | visit.vis.short_visit_label], ',') 
+                        ELSE null END,
+                    consecutive_visit_group_uid: group.visit_group.uid,
+                    visit_short_name: study_visit.short_visit_label,
+                    study_day_number: study_day.value,
+                    study_duration_days: study_duration_days.value,
+                    study_week_number: study_week.value,
+                    study_duration_weeks: study_duration_weeks.value,
+                    min_visit_window_value: study_visit.visit_window_min,
+                    max_visit_window_value: study_visit.visit_window_max,
+                    visit_window_unit_uid: window_unit_root.uid,
+                    visit_window_unit_name: window_unit_value.name,
+                    study_epoch_uid: study_epoch.uid,
+                    study_epoch: epoch_term,
+                    visit_type: visit_type
+                } AS StudyVisit
+             """).rstrip())
+
+        query.append("ORDER BY toInteger(study_visit.unique_visit_number)")
+
+        return "\n".join(query), params
+
+    @classmethod
+    @trace_calls
+    def list_all_visits_by_study_uid(
+        cls, study_uid: str, study_value_version: str | None = None
+    ) -> list[dict[str, Any]]:
+        query, params = cls.list_all_visits_query(
+            study_uid=study_uid, study_value_version=study_value_version
+        )
+        results, _ = db.cypher_query(query=query, params=params)
+        return [record[0] for record in results]
 
     def find_all_visits_referencing_study_visit(
         self, study_visit_uid: str

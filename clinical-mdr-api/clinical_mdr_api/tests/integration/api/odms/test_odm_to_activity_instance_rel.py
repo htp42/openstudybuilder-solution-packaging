@@ -31,11 +31,11 @@ from clinical_mdr_api.models.concepts.activities.activity_item import ActivityIt
 from clinical_mdr_api.models.concepts.activities.activity_sub_group import (
     ActivitySubGroup,
 )
-from clinical_mdr_api.models.concepts.odms.odm_form import OdmForm
-from clinical_mdr_api.models.concepts.odms.odm_item import OdmItem
-from clinical_mdr_api.models.concepts.odms.odm_item_group import OdmItemGroup
 from clinical_mdr_api.models.controlled_terminologies.ct_codelist import CTCodelist
 from clinical_mdr_api.models.controlled_terminologies.ct_term import CTTerm
+from clinical_mdr_api.models.odms.form import OdmForm
+from clinical_mdr_api.models.odms.item import OdmItem
+from clinical_mdr_api.models.odms.item_group import OdmItemGroup
 from clinical_mdr_api.tests.integration.utils.api import (
     inject_and_clear_db,
     inject_base_data,
@@ -277,7 +277,7 @@ def test_data(api_client):
     items.append(TestUtils.create_odm_item(name="Item 1", oid="I1", approve=False))
 
     api_client.post(
-        f"concepts/odms/forms/{forms[0].uid}/item-groups",
+        f"odms/forms/{forms[0].uid}/item-groups",
         json=[
             {
                 "uid": item_groups[0].uid,
@@ -291,7 +291,7 @@ def test_data(api_client):
     )
 
     api_client.post(
-        f"concepts/odms/item-groups/{item_groups[0].uid}/items",
+        f"odms/item-groups/{item_groups[0].uid}/items",
         json=[
             {
                 "uid": items[0].uid,
@@ -312,7 +312,7 @@ def test_data(api_client):
 
 
 def test_get_odm_item_without_activity_instance_relationship(api_client):
-    response = api_client.get(f"concepts/odms/items/{items[0].uid}")
+    response = api_client.get(f"odms/items/{items[0].uid}")
     assert_response_status_code(response, 200)
     res = response.json()
     assert res["uid"] == items[0].uid
@@ -322,7 +322,7 @@ def test_get_odm_item_without_activity_instance_relationship(api_client):
 
 def test_add_activity_instance_relationship_to_odm_item(api_client):
     response = api_client.patch(
-        f"concepts/odms/items/{items[0].uid}",
+        f"odms/items/{items[0].uid}",
         json={
             "name": "name1",
             "oid": "oid1",
@@ -382,7 +382,7 @@ def test_add_activity_instance_relationship_to_odm_item(api_client):
 
 
 def test_get_odm_item_with_activity_instance_relationship(api_client):
-    response = api_client.get(f"concepts/odms/items/{items[0].uid}")
+    response = api_client.get(f"odms/items/{items[0].uid}")
     assert_response_status_code(response, 200)
     res = response.json()
     assert res["uid"] == items[0].uid
@@ -416,7 +416,7 @@ def test_get_odm_item_with_activity_instance_relationship(api_client):
 
 def test_activity_instance_relationship_to_odm_item(api_client):
     response = api_client.patch(
-        f"concepts/odms/forms/{forms[0].uid}",
+        f"odms/forms/{forms[0].uid}",
         json={
             "name": "name1",
             "oid": "oid1",
@@ -435,7 +435,7 @@ def test_activity_instance_relationship_to_odm_item(api_client):
 
 def test_remove_activity_instance_relationship_from_odm_item(api_client):
     response = api_client.patch(
-        f"concepts/odms/items/{items[0].uid}",
+        f"odms/items/{items[0].uid}",
         json={
             "name": "name1",
             "oid": "oid1",
@@ -468,7 +468,7 @@ def test_remove_activity_instance_relationship_from_odm_item(api_client):
 
 def test_cannot_add_more_than_one_same_activity_instance_to_odm_item(api_client):
     response = api_client.patch(
-        f"concepts/odms/items/{items[0].uid}",
+        f"odms/items/{items[0].uid}",
         json={
             "name": "name1",
             "oid": "oid1",

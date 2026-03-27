@@ -4,7 +4,7 @@ const { getShortUniqueId } = require("../../support/helper_functions");
 let crfItemName, crfItemOid
 
 When('User waits for CRF Items data to load', () => {
-    cy.intercept('/api/concepts/odms/items?*').as('getData')
+    cy.intercept('/api/odms/items?*').as('getData')
     cy.wait('@getData', { timeout: 90000 })
 })
 

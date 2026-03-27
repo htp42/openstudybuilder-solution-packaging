@@ -39,7 +39,7 @@ def test_data():
 
 
 def test_getting_empty_list_of_odm_items(api_client):
-    response = api_client.get("concepts/odms/items")
+    response = api_client.get("odms/items")
 
     assert_response_status_code(response, 200)
 
@@ -123,7 +123,7 @@ def test_creating_a_new_odm_item(api_client):
         ],
         "vendor_attributes": [{"uid": "odm_vendor_attribute4", "value": "value"}],
     }
-    response = api_client.post("concepts/odms/items", json=data)
+    response = api_client.post("odms/items", json=data)
 
     assert_response_status_code(response, 201)
 
@@ -251,7 +251,7 @@ def test_creating_a_new_odm_item(api_client):
 
 
 def test_getting_non_empty_list_of_odm_items(api_client):
-    response = api_client.get("concepts/odms/items")
+    response = api_client.get("odms/items")
 
     assert_response_status_code(response, 200)
 
@@ -378,7 +378,7 @@ def test_getting_non_empty_list_of_odm_items(api_client):
 
 
 def test_getting_possible_header_values_of_odm_items(api_client):
-    response = api_client.get("concepts/odms/items/headers?field_name=name")
+    response = api_client.get("odms/items/headers?field_name=name")
 
     assert_response_status_code(response, 200)
 
@@ -388,7 +388,7 @@ def test_getting_possible_header_values_of_odm_items(api_client):
 
 
 def test_getting_a_specific_odm_item(api_client):
-    response = api_client.get("concepts/odms/items/OdmItem_000001")
+    response = api_client.get("odms/items/OdmItem_000001")
 
     assert_response_status_code(response, 200)
 
@@ -516,7 +516,7 @@ def test_getting_a_specific_odm_item(api_client):
 
 
 def test_getting_versions_of_a_specific_odm_item(api_client):
-    response = api_client.get("concepts/odms/items/OdmItem_000001/versions")
+    response = api_client.get("odms/items/OdmItem_000001/versions")
 
     assert_response_status_code(response, 200)
 
@@ -722,7 +722,7 @@ def test_updating_an_existing_odm_item(api_client):
             {"uid": "odm_vendor_attribute3", "value": "value"},
         ],
     }
-    response = api_client.patch("concepts/odms/items/OdmItem_000001", json=data)
+    response = api_client.patch("odms/items/OdmItem_000001", json=data)
 
     assert_response_status_code(response, 200)
 
@@ -850,7 +850,7 @@ def test_updating_an_existing_odm_item(api_client):
 
 
 def test_getting_a_specific_odm_item_in_specific_version(api_client):
-    response = api_client.get("concepts/odms/items/OdmItem_000001?version=0.1")
+    response = api_client.get("odms/items/OdmItem_000001?version=0.1")
 
     assert_response_status_code(response, 200)
 
@@ -958,7 +958,7 @@ def test_getting_a_specific_odm_item_in_specific_version(api_client):
 
 
 def test_approving_an_odm_item(api_client):
-    response = api_client.post("concepts/odms/items/OdmItem_000001/approvals")
+    response = api_client.post("odms/items/OdmItem_000001/approvals")
 
     assert_response_status_code(response, 201)
 
@@ -1086,7 +1086,7 @@ def test_approving_an_odm_item(api_client):
 
 
 def test_inactivating_a_specific_odm_item(api_client):
-    response = api_client.delete("concepts/odms/items/OdmItem_000001/activations")
+    response = api_client.delete("odms/items/OdmItem_000001/activations")
 
     assert_response_status_code(response, 200)
 
@@ -1214,7 +1214,7 @@ def test_inactivating_a_specific_odm_item(api_client):
 
 
 def test_reactivating_a_specific_odm_item(api_client):
-    response = api_client.post("concepts/odms/items/OdmItem_000001/activations")
+    response = api_client.post("odms/items/OdmItem_000001/activations")
 
     assert_response_status_code(response, 200)
 
@@ -1342,7 +1342,7 @@ def test_reactivating_a_specific_odm_item(api_client):
 
 
 def test_creating_a_new_odm_item_version(api_client):
-    response = api_client.post("concepts/odms/items/OdmItem_000001/versions")
+    response = api_client.post("odms/items/OdmItem_000001/versions")
 
     assert_response_status_code(response, 201)
 
@@ -1496,7 +1496,7 @@ def test_create_a_new_odm_item_for_deleting_it(api_client):
         "codelist_uid": None,
         "terms": [],
     }
-    response = api_client.post("concepts/odms/items", json=data)
+    response = api_client.post("odms/items", json=data)
 
     assert_response_status_code(response, 201)
 
@@ -1551,7 +1551,7 @@ def test_create_a_new_odm_item_for_deleting_it(api_client):
 
 
 def test_deleting_a_specific_odm_item(api_client):
-    response = api_client.delete("concepts/odms/items/OdmItem_000002")
+    response = api_client.delete("odms/items/OdmItem_000002")
 
     assert_response_status_code(response, 204)
 
@@ -1592,7 +1592,7 @@ def test_creating_a_new_odm_item_with_relations(api_client):
         "codelist_uid": None,
         "terms": [],
     }
-    response = api_client.post("concepts/odms/items", json=data)
+    response = api_client.post("odms/items", json=data)
 
     assert_response_status_code(response, 201)
 
@@ -1691,7 +1691,7 @@ def test_updating_an_existing_odm_item_with_relations(api_client):
             {"uid": "odm_vendor_attribute3", "value": "value"},
         ],
     }
-    response = api_client.patch("concepts/odms/items/OdmItem_000001", json=data)
+    response = api_client.patch("odms/items/OdmItem_000001", json=data)
 
     assert_response_status_code(response, 200)
 
@@ -1809,7 +1809,7 @@ def test_create_a_new_odm_item_group_with_relation_to_odm_item(api_client):
         "aliases": [],
         "sdtm_domain_uids": [],
     }
-    response = api_client.post("concepts/odms/item-groups", json=data)
+    response = api_client.post("odms/item-groups", json=data)
 
     assert_response_status_code(response, 201)
 
@@ -1857,9 +1857,7 @@ def test_add_the_odm_item_to_the_odm_item_group(api_client):
             },
         }
     ]
-    response = api_client.post(
-        "concepts/odms/item-groups/OdmItemGroup_000001/items", json=data
-    )
+    response = api_client.post("odms/item-groups/OdmItemGroup_000001/items", json=data)
 
     assert_response_status_code(response, 201)
 
@@ -1918,9 +1916,7 @@ def test_add_the_odm_item_to_the_odm_item_group(api_client):
 
 
 def test_approve_the_odm_item_group(api_client):
-    response = api_client.post(
-        "concepts/odms/item-groups/OdmItemGroup_000001/approvals"
-    )
+    response = api_client.post("odms/item-groups/OdmItemGroup_000001/approvals")
 
     assert_response_status_code(response, 201)
 
@@ -1979,7 +1975,7 @@ def test_approve_the_odm_item_group(api_client):
 
 
 def test_getting_uids_of_a_specific_odm_items_active_relationships(api_client):
-    response = api_client.get("concepts/odms/items/OdmItem_000001/relationships")
+    response = api_client.get("odms/items/OdmItem_000001/relationships")
 
     assert_response_status_code(response, 200)
 
@@ -1989,7 +1985,7 @@ def test_getting_uids_of_a_specific_odm_items_active_relationships(api_client):
 
 
 def test_getting_all_odm_items_that_belongs_to_an_odm_item_groups(api_client):
-    response = api_client.get("concepts/odms/items/item-groups")
+    response = api_client.get("odms/items/item-groups")
 
     assert_response_status_code(response, 200)
 

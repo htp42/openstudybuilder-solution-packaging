@@ -1137,7 +1137,7 @@ class USDMMapper:
                 name=sv.visit_short_name,
                 label=sv.visit_name,
                 description=sv.description,
-                type=self.get_ct_package_term_as_usdm_code(sv.visit_type_uid),
+                type=self.get_ct_package_term_as_usdm_code(sv.visit_type.term_uid),
                 transitionStartRule=USDMTransitionRule(
                     id=self._id_manager.get_id(USDMTransitionRule.__name__),
                     name="Transition Start Rule",
@@ -1149,7 +1149,9 @@ class USDMMapper:
                     text=sv.end_rule if sv.end_rule is not None else "",
                 ),
                 contactModes=[
-                    self.get_ct_package_term_as_usdm_code(sv.visit_contact_mode_uid)
+                    self.get_ct_package_term_as_usdm_code(
+                        sv.visit_contact_mode.term_uid
+                    )
                 ],
                 nextId=(
                     self._id_manager.get_id(

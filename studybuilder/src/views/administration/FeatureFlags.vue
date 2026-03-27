@@ -22,7 +22,6 @@
           <template #[`item.actions`]="{ item }">
             <v-switch
               v-model="item.enabled"
-              color="primary"
               hide-details
               @update:model-value="(value) => toggleFlagState(item, value)"
             />

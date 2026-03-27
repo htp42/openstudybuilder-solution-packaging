@@ -142,9 +142,7 @@ class StudyDesignCellRepository:
                 "MATCH (sr:StudyRoot {uid: $study_uid})-[:LATEST]->(sv:StudyValue)"
             ]
 
-        query.append(
-            dedent(
-                """
+        query.append(dedent("""
             MATCH (sv)-[:HAS_STUDY_DESIGN_CELL]->(sdc:StudyDesignCell)<-[:AFTER]-(study_action:StudyAction)
             MATCH (sdc)<-[:STUDY_EPOCH_HAS_DESIGN_CELL]-(sep:StudyEpoch)<-[:HAS_STUDY_EPOCH]-(sv)
             MATCH (sep)-[:HAS_EPOCH]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(epoch_term_root:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST_FINAL]->(epoch_name:CTTermNameValue)
@@ -152,17 +150,13 @@ class StudyDesignCellRepository:
             OPTIONAL MATCH (sdc)<-[:STUDY_ARM_HAS_DESIGN_CELL]-(sarm:StudyArm)<-[:HAS_STUDY_ARM]-(sv)
             OPTIONAL MATCH (sdc)<-[:STUDY_BRANCH_ARM_HAS_DESIGN_CELL]-(sbarm:StudyBranchArm)<-[:HAS_STUDY_BRANCH_ARM]-(sv)
             OPTIONAL MATCH (user:User {user_id: study_action.author_id}) 
-        """
-            ).strip()
-        )
+        """).strip())
 
         if filters:
             query.append("WITH *")
             query.append("WHERE " + " AND ".join(filters))
 
-        query.append(
-            dedent(
-                """
+        query.append(dedent("""
             RETURN DISTINCT sdc {
                 uid: sdc.uid,
                 study_uid: sr.uid,
@@ -181,9 +175,7 @@ class StudyDesignCellRepository:
                 author_username: user.username
             } AS vo
             ORDER BY vo.order
-        """
-            ).strip()
-        )
+        """).strip())
 
         results, _ = db.cypher_query("\n".join(query), params=params)
 
@@ -599,8 +591,7 @@ class StudyDesignCellRepository:
             WITH DISTINCT all_sdc
             """
         specific_design_cells_audit_trail = db.cypher_query(
-            cypher
-            + """
+            cypher + """
             OPTIONAL MATCH (all_sdc)<-[:STUDY_BRANCH_ARM_HAS_DESIGN_CELL]-(sba:StudyBranchArm)
             OPTIONAL MATCH (all_sdc)<-[:STUDY_ARM_HAS_DESIGN_CELL]-(sa:StudyArm)
             MATCH (all_sdc)<-[:STUDY_EPOCH_HAS_DESIGN_CELL]-(se:StudyEpoch)

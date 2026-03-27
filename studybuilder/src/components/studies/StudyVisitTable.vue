@@ -19,14 +19,13 @@
                   hide-details
                   focused
                   class="mt-2 mb-2"
-                  color="primary"
                   @update:model-value="updatePreferredTimeUnit"
                 >
                   <v-radio :label="$t('_global.day')" value="day" />
                   <v-radio :label="$t('_global.week')" value="week" />
                 </v-radio-group>
               </v-row>
-              <div>
+              <div class="studyVisitBarChartContainer">
                 <BarChart
                   :key="barChartKey"
                   :chart-data="barChartDatasets"
@@ -35,7 +34,7 @@
                   class="pr-3"
                 />
               </div>
-              <div>
+              <div class="studyVisitBubbleChartContainer">
                 <BubbleChart
                   :chart-data="lineChartDatasets"
                   :options="lineChartOptions"
@@ -177,7 +176,7 @@
             @update:model-value="disableOthers(item)"
           />
         </div>
-        <CTTermDisplay v-else :term="item.study_epoch" />
+        <CTTermDisplay v-else :term="item.study_epoch || {}" />
       </template>
       <template #[`item.visit_type.sponsor_preferred_name`]="{ item }">
         <CTTermDisplay :term="item.visit_type" />
@@ -190,7 +189,6 @@
             item-title="label"
             item-value="value"
             class="cellWidth"
-            density="compact"
             :disabled="item.disabled && itemsDisabled"
             @update:model-value="
               (disableOthers(item), (item.study_epoch_uid = null))
@@ -209,7 +207,6 @@
             item-title="label"
             item-value="value"
             class="cellWidth"
-            density="compact"
             :disabled="item.disabled && itemsDisabled"
             @update:model-value="disableOthers(item)"
           />
@@ -225,7 +222,6 @@
             :items="frequencies"
             item-title="sponsor_preferred_name"
             item-value="term_uid"
-            density="compact"
             :disabled="
               (item.disabled && itemsDisabled) ||
               item.visit_subclass !== visitConstants.SUBCLASS_REPEATING_VISIT
@@ -250,13 +246,11 @@
           <v-row class="wideCellWidth">
             <v-text-field
               v-model="item.min_visit_window_value"
-              density="compact"
               :disabled="item.disabled && itemsDisabled"
               @input="disableOthers(item)"
             />
             <v-text-field
               v-model="item.max_visit_window_value"
-              density="compact"
               :disabled="item.disabled && itemsDisabled"
               @input="disableOthers(item)"
             />
@@ -265,7 +259,6 @@
               :items="epochsStore.studyTimeUnits"
               item-title="name"
               item-value="uid"
-              density="compact"
               class="cellWidth"
               :disabled="item.disabled && itemsDisabled"
               @update:model-value="disableOthers(item)"
@@ -297,18 +290,19 @@
       <template #[`item.epoch_allocation.sponsor_preferred_name`]="{ item }">
         <div v-if="editMode">
           <v-select
-            v-model="item.epoch_allocation_uid"
+            :model-value="item.epoch_allocation?.term_uid ?? null"
             data-cy="epoch-allocation-rule"
             :items="epochAllocations"
             item-title="sponsor_preferred_name"
             item-value="term_uid"
             class="cellWidth"
-            density="compact"
-            @update:model-value="disableOthers(item)"
+            @update:model-value="
+              (value) => updateNestedTermUid(item, 'epoch_allocation', value)
+            "
           />
         </div>
         <div v-else>
-          {{ item.epoch_allocation.sponsor_preferred_name }}
+          {{ item.epoch_allocation?.sponsor_preferred_name }}
         </div>
       </template>
       <template #[`item.is_global_anchor_visit`]="{ item }">
@@ -343,7 +337,6 @@
           <v-row class="cellWidth">
             <v-text-field
               v-model="item.time_value"
-              density="compact"
               width="60px"
               :disabled="item.disabled && itemsDisabled"
               @input="disableOthers(item)"
@@ -353,7 +346,6 @@
               :items="epochsStore.studyTimeUnits"
               item-title="name"
               item-value="uid"
-              density="compact"
               class="cellWidth"
               :disabled="item.disabled && itemsDisabled"
               @update:model-value="disableOthers(item)"
@@ -367,19 +359,18 @@
       <template #[`item.visit_contact_mode.sponsor_preferred_name`]="{ item }">
         <div v-if="editMode">
           <v-select
-            v-model="item.visit_contact_mode_uid"
+            :model-value="item.visit_contact_mode?.term_uid ?? null"
             class="cellWidth"
             :items="contactModes"
             item-title="sponsor_preferred_name"
             item-value="term_uid"
-            density="compact"
             :disabled="item.disabled && itemsDisabled"
-            @update:model-value="disableOthers(item)"
+            @update:model-value="
+              (value) => updateNestedTermUid(item, 'visit_contact_mode', value)
+            "
           />
         </div>
-        <div v-else>
-          <CTTermDisplay :term="item.visit_contact_mode" />
-        </div>
+        <CTTermDisplay v-else :term="item.visit_contact_mode || {}" />
       </template>
       <template #[`item.time_reference_name`]="{ item }">
         <div
@@ -398,14 +389,15 @@
                 visitConstants.SUBCLASS_ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV &&
               item.visit_class !== visitConstants.CLASS_SPECIAL_VISIT
             "
-            v-model="item.time_reference_uid"
+            :model-value="item.time_reference?.term_uid ?? null"
             class="cellWidth"
             :items="timeReferences"
             item-title="sponsor_preferred_name"
             item-value="term_uid"
-            density="compact"
             :disabled="item.disabled && itemsDisabled"
-            @update:model-value="disableOthers(item)"
+            @update:model-value="
+              (value) => updateNestedTermUid(item, 'time_reference', value)
+            "
           />
           <v-select
             v-else
@@ -414,7 +406,6 @@
             :items="anchorVisits"
             item-title="visit_name"
             item-value="uid"
-            density="compact"
             :disabled="item.disabled && itemsDisabled"
             @update:model-value="disableOthers(item)"
           />
@@ -428,7 +419,7 @@
           {{ item.visit_subname }}
         </div>
         <div v-else>
-          {{ item.time_reference_name }}
+          {{ item.time_reference?.sponsor_preferred_name }}
         </div>
       </template>
       <template #[`item.description`]="{ item }">
@@ -436,7 +427,6 @@
           <v-row>
             <v-text-field
               v-model="item.description"
-              density="compact"
               class="cellWidth"
               :disabled="item.disabled && itemsDisabled"
               @input="disableOthers(item)"
@@ -452,7 +442,6 @@
           <v-row>
             <v-text-field
               v-model="item.start_rule"
-              density="compact"
               class="cellWidth"
               :disabled="item.disabled && itemsDisabled"
               @input="disableOthers(item)"
@@ -468,7 +457,6 @@
           <v-row>
             <v-text-field
               v-model="item.end_rule"
-              density="compact"
               class="cellWidth"
               :disabled="item.disabled && itemsDisabled"
               @input="disableOthers(item)"
@@ -480,7 +468,14 @@
         </div>
       </template>
       <template #[`item.start_date`]="{ item }">
-        {{ $filters.date(item.start_date) }}
+        <v-tooltip location="top">
+          <template #activator="{ props }">
+            <span v-bind="props">{{
+              $filters.dateRelative(item.start_date)
+            }}</span>
+          </template>
+          {{ $filters.date(item.start_date) }}
+        </v-tooltip>
       </template>
       <template #[`item.actions`]="{ item }">
         <ActionsMenu
@@ -654,7 +649,10 @@ const headers = ref([
     title: t('StudyVisitForm.contact_mode'),
     key: 'visit_contact_mode.sponsor_preferred_name',
   },
-  { title: t('StudyVisitForm.time_reference'), key: 'time_reference_name' },
+  {
+    title: t('StudyVisitForm.time_reference'),
+    key: 'time_reference.sponsor_preferred_name',
+  },
   { title: t('StudyVisitForm.time_value'), key: 'time_value' },
   { title: t('StudyVisitForm.visit_number'), key: 'visit_number' },
   {
@@ -720,7 +718,10 @@ const defaultColumns = ref([
     title: t('StudyVisitForm.contact_mode'),
     key: 'visit_contact_mode.sponsor_preferred_name',
   },
-  { title: t('StudyVisitForm.time_reference'), key: 'time_reference_name' },
+  {
+    title: t('StudyVisitForm.time_reference'),
+    key: 'time_reference.sponsor_preferred_name',
+  },
   { title: t('StudyVisitForm.time_value'), key: 'time_value' },
   { title: t('StudyVisitForm.visit_number'), key: 'visit_number' },
   {
@@ -761,7 +762,10 @@ const editHeaders = ref([
     title: t('StudyVisitForm.study_epoch'),
     key: 'study_epoch.sponsor_preferred_name',
   },
-  { title: t('StudyVisitForm.visit_type'), key: 'visit_type_name' },
+  {
+    title: t('StudyVisitForm.visit_type'),
+    key: 'visit_type.sponsor_preferred_name',
+  },
   { title: t('StudyVisitForm.soa_milestone'), key: 'is_soa_milestone' },
   { title: t('StudyVisitForm.visit_class'), key: 'visit_class' },
   { title: t('StudyVisitForm.visit_sub_class'), key: 'visit_subclass' },
@@ -777,7 +781,10 @@ const editHeaders = ref([
     title: t('StudyVisitForm.contact_mode'),
     key: 'visit_contact_mode.sponsor_preferred_name',
   },
-  { title: t('StudyVisitForm.time_reference'), key: 'time_reference_name' },
+  {
+    title: t('StudyVisitForm.time_reference'),
+    key: 'time_reference.sponsor_preferred_name',
+  },
   { title: t('StudyVisitForm.time_value'), key: 'time_value', width: '10%' },
   { title: t('StudyVisitForm.visit_name'), key: 'visit_name' },
   { title: t('StudyVisitForm.visit_window'), key: 'visit_window' },
@@ -954,13 +961,13 @@ const totalVisits = computed(() => {
 const barChartStyles = computed(() => {
   return {
     position: 'relative',
-    height: '200px',
+    height: '100%',
   }
 })
 const lineChartStyles = computed(() => {
   return {
     position: 'relative',
-    height: '60px',
+    height: '100%',
   }
 })
 const exportDataUrl = computed(() => {
@@ -1104,6 +1111,14 @@ function disableOthers(item) {
     })
     itemsDisabled.value = true
   }
+}
+
+function updateNestedTermUid(item, fieldName, value) {
+  if (!item[fieldName]) {
+    item[fieldName] = {}
+  }
+  item[fieldName].term_uid = value
+  disableOthers(item)
 }
 
 function saveVisit(item) {
@@ -1308,7 +1323,7 @@ function buildChart() {
       label: el.visit_name,
       backgroundColor: 'rgb(6, 57, 112)',
       contact_mode: el.visit_contact_mode.sponsor_preferred_name,
-      visit_type: el.visit_type_name,
+      visit_type: el.visit_type.sponsor_preferred_name,
       week: el.study_week_label,
     })
     sameWeek = el.study_week_label
@@ -1367,5 +1382,13 @@ function updatePreferredTimeUnit(value) {
 }
 .epochCellWidth {
   width: 200px;
+}
+.studyVisitBarChartContainer {
+  position: relative;
+  height: 150px;
+}
+.studyVisitBubbleChartContainer {
+  position: relative;
+  height: 50px;
 }
 </style>

@@ -16,6 +16,7 @@ Feature: Library - Data Collection Standards - CRF Viewer
     Given The '/library/crf-viewer/odm-viewer' page is opened
     When I select one value from the CRF collection dropdown
     And I select one value from the CRF Forms dropdown
+    And I open stylesheets dropdown
     Then I can see two options: CRF with annotations and Downloadable Falcon in the Stylesheet dropdown list 
     And I select Downloadable Falcon in the Stylesheet dropdown list
     And I click the GENERATE button

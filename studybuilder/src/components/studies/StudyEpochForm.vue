@@ -28,8 +28,8 @@
               :items="uniqueTypeGroups"
               item-title="type_name"
               item-value="type"
-              density="compact"
               :rules="[formRules.required]"
+              autocomplete="off"
               clearable
               data-cy="epoch-type"
               :disabled="studyEpoch ? true : false"
@@ -45,8 +45,8 @@
               :items="subtypeGroups"
               item-title="subtype_name"
               item-value="subtype"
-              density="compact"
               :rules="[formRules.required]"
+              autocomplete="off"
               clearable
               data-cy="epoch-subtype"
               :disabled="studyEpoch ? true : false"
@@ -65,9 +65,7 @@
               data-cy="select-epoch"
               :label="$t('StudyEpochForm.name')"
               :loading="epochNameLoading"
-              density="compact"
               disabled
-              variant="filled"
             />
           </v-col>
         </v-row>
@@ -80,7 +78,6 @@
               :label="$t('StudyEpochForm.start_rule')"
               rows="1"
               auto-grow
-              density="compact"
             />
           </v-col>
         </v-row>
@@ -93,7 +90,6 @@
               :label="$t('StudyEpochForm.stop_rule')"
               rows="1"
               auto-grow
-              density="compact"
             />
           </v-col>
         </v-row>
@@ -106,7 +102,6 @@
               :label="$t('StudyEpochForm.description')"
               rows="1"
               auto-grow
-              density="compact"
             />
           </v-col>
         </v-row>
@@ -117,7 +112,6 @@
           <v-textarea
             v-model="form.change_description"
             :rules="[formRules.required]"
-            density="compact"
             clearable
             rows="1"
             auto-grow
@@ -265,53 +259,68 @@ async function cancel() {
   }
 }
 
-function setEpochGroups() {
-  let type = ''
-  let subtype = ''
-  if (!form.value.epoch_subtype && !form.value.epoch_type) {
-    form.value.epoch = ''
-    subtypeGroups.value = groups.value
-    typeGroups.value = groups.value
-    epochDisplay.value = ''
-  } else if (!form.value.epoch_subtype) {
-    form.value.epoch = ''
-    type = form.value.epoch_type
-    subtypeGroups.value = groups.value
-    typeGroups.value = groups.value
-    subtypeGroups.value = groups.value.filter(function (value) {
-      return value.type === type
-    })
-    epochDisplay.value = ''
-  } else if (!form.value.epoch_type) {
-    form.value.epoch = ''
+async function setEpochGroups() {
+  formRef.value.working = true
+
+  try {
+    let type = ''
+    let subtype = ''
+
+    if (!form.value.epoch_subtype && !form.value.epoch_type) {
+      form.value.epoch = ''
+      subtypeGroups.value = groups.value
+      typeGroups.value = groups.value
+      epochDisplay.value = ''
+      return
+    }
+
+    if (!form.value.epoch_subtype) {
+      form.value.epoch = ''
+      type = form.value.epoch_type
+      subtypeGroups.value = groups.value
+      typeGroups.value = groups.value
+      subtypeGroups.value = groups.value.filter(function (value) {
+        return value.type === type
+      })
+      epochDisplay.value = ''
+      return
+    }
+
+    if (!form.value.epoch_type) {
+      form.value.epoch = ''
+      subtype = form.value.epoch_subtype
+      typeGroups.value = groups.value
+      subtypeGroups.value = groups.value
+      typeGroups.value = groups.value.filter(function (value) {
+        return value.subtype === subtype
+      })
+      epochDisplay.value = ''
+      return
+    }
+
     subtype = form.value.epoch_subtype
-    typeGroups.value = groups.value
-    subtypeGroups.value = groups.value
+    type = form.value.epoch_type
     typeGroups.value = groups.value.filter(function (value) {
       return value.subtype === subtype
     })
-    epochDisplay.value = ''
-  } else {
-    subtype = form.value.epoch_subtype
-    type = form.value.epoch_type
-    typeGroups.value = groups.value.filter(function (value) {
-      return value.subtype === subtype
-    })
     subtypeGroups.value = groups.value.filter(function (value) {
       return value.type === type
     })
+
     epochNameLoading.value = true
     const data = {
       study_uid: selectedStudy.value.uid,
       epoch_subtype: subtype,
     }
-    studyEpochsApi
-      .getPreviewEpoch(selectedStudy.value.uid, data)
-      .then((resp) => {
-        form.value.epoch = resp.data.epoch
-        epochDisplay.value = resp.data.epoch_name
-        epochNameLoading.value = false
-      })
+    const resp = await studyEpochsApi.getPreviewEpoch(
+      selectedStudy.value.uid,
+      data
+    )
+    form.value.epoch = resp.data.epoch
+    epochDisplay.value = resp.data.epoch_name
+  } finally {
+    epochNameLoading.value = false
+    formRef.value.working = false
   }
 }
 

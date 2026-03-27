@@ -58,37 +58,8 @@ UpdateSoASnapshot) must have an AFTER relationship.
 - `StudyAction` nodes
 
 
-## 5. Correction: fix_not_coherent_in_time_library_selection
 
-#### Problem description
-Some StudyActivity nodes reference ActivityValue nodes that don't have valid HAS_VERSION
-relationships at the time when the Create action was performed. This happens when the
-ActivityValue version's start_date or end_date doesn't cover the Create action date.
-Specifically, Activity_000317 version 7.0's HAS_VERSION relationship doesn't cover
-the dates when some Create actions were performed.
-#### Change description
-- Fix version 7.0 of Activity_000317 by adjusting its HAS_VERSION start_date to cover
-  the earliest Create action date that references it
-#### Nodes and relationships affected
-- `HAS_VERSION` relationship for Activity_000317 version 7.0
-
-
-## 6. Correction: fix_studies_different_versions_with_the_same_start_date
-
-#### Problem description
-Some StudyRoot nodes have different versions with the same start_date, which violates
-the constraint that no version should have a start_date greater than or equal to the
-latest version's start_date. This happens when a previous version has the same start_date
-as the latest version.
-#### Change description
-- For each StudyRoot, find versions with start_date >= the latest version's start_date
-- Subtract 1 millisecond from those previous versions' start_date to make them earlier
-- This ensures proper chronological ordering of versions
-#### Nodes and relationships affected
-- `HAS_VERSION` relationships for StudyRoot nodes
-
-
-## 7. Correction: remove_soa_cell_relationships_without_released_study
+## 5. Correction: remove_soa_cell_relationships_without_released_study
 
 #### Problem description
 Some StudyValue nodes have HAS_PROTOCOL_SOA_CELL or HAS_PROTOCOL_SOA_FOOTNOTE relationships

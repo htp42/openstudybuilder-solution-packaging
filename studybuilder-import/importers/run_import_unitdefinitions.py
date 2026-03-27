@@ -321,8 +321,7 @@ class Units(BaseImporter):
 
     def run(self):
         self.log.info("Importing unit definitions")
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(self.async_run())
+        asyncio.run(self.async_run())
         self.log.info("Done importing unit definitions")
 
 

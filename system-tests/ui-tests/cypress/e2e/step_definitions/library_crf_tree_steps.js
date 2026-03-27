@@ -8,25 +8,25 @@ let selectedItemGroup
 let selectedItem
 
 Given('The CRF Template in {string} status exists in database', (status) => {
-    cy.request(Cypress.env('API') + '/concepts/odms/templates').then((resp) => {
+    cy.request(Cypress.env('API') + '/odms/templates').then((resp) => {
         expect(JSON.stringify(resp.body.items)).to.contain(status)
     })
 })
 
 Given('The CRF Form in {string} status exists in database', (status) => {
-    cy.request(Cypress.env('API') + '/concepts/odms/forms').then((resp) => {
+    cy.request(Cypress.env('API') + '/odms/forms').then((resp) => {
         expect(JSON.stringify(resp.body.items)).to.contain(status)
     })
 })
 
 Given('The CRF Item Group in {string} status exists in database', (status) => {
-    cy.request(Cypress.env('API') + '/concepts/odms/item-groups').then((resp) => {
+    cy.request(Cypress.env('API') + '/odms/item-groups').then((resp) => {
         expect(JSON.stringify(resp.body.items)).to.contain(status)
     })
 })
 
 Given('The CRF Item in {string} status exists in database', (status) => {
-    cy.request(Cypress.env('API') + '/concepts/odms/items').then((resp) => {
+    cy.request(Cypress.env('API') + '/odms/items').then((resp) => {
         expect(JSON.stringify(resp.body.items)).to.contain(status)
     })
 })

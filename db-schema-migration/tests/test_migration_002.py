@@ -226,22 +226,18 @@ def test_item_versioning(migration):
 def test_syntax_sequence_id(migration):
     reg_pattern = "[a-z_-]|(?<=_)[0]*(?=[1-9])"
     logger.info("Verify sequence_id of all Syntax Templates except Criteria Templates")
-    result = db.cypher_query(
-        """MATCH (t:SyntaxTemplateRoot)
+    result = db.cypher_query("""MATCH (t:SyntaxTemplateRoot)
         WHERE NOT t:CriteriaTemplateRoot
-        RETURN t.uid as uid, t.sequence_id as seq_id"""
-    )
+        RETURN t.uid as uid, t.sequence_id as seq_id""")
     for uid, seq_id in result[0]:
         assert seq_id == re.sub(reg_pattern, "", uid)
 
     logger.info("Verify sequence_id of Criteria Templates")
-    result = db.cypher_query(
-        """MATCH (t:CriteriaTemplateRoot)
+    result = db.cypher_query("""MATCH (t:CriteriaTemplateRoot)
         MATCH (t)-[:HAS_TYPE]->(:CTTermRoot)-->(:CTTermNameRoot)-[:LATEST]->(ctnv:CTTermNameValue)
         WITH t, apoc.text.replace(t.uid, '[^0-9]', '') as uid_number,
         "Criteria" + apoc.text.replace(ctnv.name, ' |Criteria|CRITERIA|criteria', '') + "Template" as special_abbr
-        RETURN special_abbr + "_" + uid_number as uid, t.sequence_id as seq_id"""
-    )
+        RETURN special_abbr + "_" + uid_number as uid, t.sequence_id as seq_id""")
     for uid, seq_id in result[0]:
         assert seq_id == re.sub(reg_pattern, "", uid)
 

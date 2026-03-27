@@ -1,4 +1,4 @@
-from neomodel import BooleanProperty, RelationshipTo, StringProperty
+from neomodel import RelationshipTo
 
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTCodelistRoot,
@@ -10,6 +10,7 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     VersionRoot,
     VersionValue,
 )
+from common.neomodel import BooleanProperty, StringProperty
 
 
 class CTConfigValue(VersionValue):

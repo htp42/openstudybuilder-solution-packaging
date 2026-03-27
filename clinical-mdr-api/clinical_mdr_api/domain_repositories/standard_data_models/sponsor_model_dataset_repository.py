@@ -1,10 +1,7 @@
+from typing import Any
+
 from neomodel import NodeSet, db
-from neomodel.sync_.match import (
-    Collect,
-    NodeNameResolver,
-    Optional,
-    RelationNameResolver,
-)
+from neomodel.sync_.match import Collect, NodeNameResolver, Path, RelationNameResolver
 
 from clinical_mdr_api.domain_repositories.library_item_repository import (
     LibraryItemRepositoryImplBase,
@@ -35,6 +32,7 @@ from clinical_mdr_api.domains.versioned_object_aggregate import LibraryVO
 from clinical_mdr_api.models.standard_data_models.sponsor_model_dataset import (
     SponsorModelDataset,
 )
+from clinical_mdr_api.repositories._utils import FilterOperator
 from common.exceptions import BusinessLogicException
 
 
@@ -46,31 +44,86 @@ class SponsorModelDatasetRepository(  # type: ignore[misc]
     return_model = SponsorModelDataset
 
     def get_neomodel_extension_query(self) -> NodeSet:
-        return Dataset.nodes.fetch_relations(
-            "has_sponsor_model_instance__has_dataset",
-            "has_dataset__has_library",
-            Optional(
-                "has_sponsor_model_instance__implements_dataset_class__is_instance_of"
-            ),
-            Optional("has_sponsor_model_instance__has_key"),
-            Optional("has_sponsor_model_instance__has_sort_key"),
-        ).annotate(
-            Collect(RelationNameResolver("has_sponsor_model_instance"), distinct=True),
-            Collect(
-                NodeNameResolver("has_sponsor_model_instance__has_key"), distinct=True
-            ),
-            Collect(
-                RelationNameResolver("has_sponsor_model_instance__has_key"),
-                distinct=True,
-            ),
-            Collect(
-                NodeNameResolver("has_sponsor_model_instance__has_sort_key"),
-                distinct=True,
-            ),
-            Collect(
-                RelationNameResolver("has_sponsor_model_instance__has_sort_key"),
-                distinct=True,
-            ),
+        return (
+            Dataset.nodes.traverse(
+                "has_sponsor_model_instance__has_dataset",
+                Path(
+                    value="has_sponsor_model_instance__has_key",
+                    optional=True,
+                    include_rels_in_return=False,
+                ),
+                Path(
+                    value="has_sponsor_model_instance__has_sort_key",
+                    optional=True,
+                    include_rels_in_return=False,
+                ),
+            )
+            .unique_variables("has_sponsor_model_instance")
+            .annotate(
+                Collect(
+                    NodeNameResolver("has_sponsor_model_instance__has_key"),
+                    distinct=True,
+                ),
+                Collect(
+                    RelationNameResolver("has_sponsor_model_instance__has_key"),
+                    distinct=True,
+                ),
+                Collect(
+                    NodeNameResolver("has_sponsor_model_instance__has_sort_key"),
+                    distinct=True,
+                ),
+                Collect(
+                    RelationNameResolver("has_sponsor_model_instance__has_sort_key"),
+                    distinct=True,
+                ),
+            )
+            .order_by("has_sponsor_model_instance__has_dataset|ordinal")
+        )
+
+    def find_all(
+        self,
+        sort_by: dict[str, bool] | None = None,
+        page_number: int = 1,
+        page_size: int = 0,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
+        total_count: bool = False,
+        **kwargs,
+    ):
+        sponsor_model_name = kwargs.get("sponsor_model_name")
+        if sponsor_model_name:
+            if filter_by is None:
+                filter_by = {}
+            filter_by["sponsor_model.name"] = {"v": [sponsor_model_name], "op": "eq"}
+        return super().find_all(
+            sort_by=sort_by,
+            page_number=page_number,
+            page_size=page_size,
+            filter_by=filter_by,
+            filter_operator=filter_operator,
+            total_count=total_count,
+        )
+
+    def get_distinct_headers(
+        self,
+        field_name: str,
+        search_string: str = "",
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
+        page_size: int = 10,
+        **kwargs,
+    ) -> list[Any]:
+        sponsor_model_name = kwargs.get("sponsor_model_name")
+        if sponsor_model_name:
+            if filter_by is None:
+                filter_by = {}
+            filter_by["sponsor_model.name"] = {"v": [sponsor_model_name], "op": "eq"}
+        return super().get_distinct_headers(
+            field_name=field_name,
+            search_string=search_string,
+            filter_by=filter_by,
+            filter_operator=filter_operator,
+            page_size=page_size,
         )
 
     def _has_data_changed(
@@ -202,7 +255,7 @@ class SponsorModelDatasetRepository(  # type: ignore[misc]
             implemented_dataset_class = DatasetClass.nodes.filter(
                 uid=ar.sponsor_model_dataset_vo.implemented_dataset_class,
                 has_instance__has_dataset_class__implements__extended_by__name=ar.sponsor_model_dataset_vo.sponsor_model_name,
-            ).fetch_relations("has_instance")
+            ).traverse("has_instance")
             BusinessLogicException.raise_if_not(
                 implemented_dataset_class,
                 msg=f"Dataset class with uid '{ar.sponsor_model_dataset_vo.implemented_dataset_class}' does not exist.",

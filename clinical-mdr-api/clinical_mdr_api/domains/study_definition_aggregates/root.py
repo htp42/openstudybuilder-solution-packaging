@@ -358,6 +358,9 @@ class StudyDefinitionAR:
         study_number_exists_callback: Callable[[str, str | None], bool] = (
             lambda x, y: False
         ),
+        study_acronym_exists_callback: Callable[[str, str | None], bool] = (
+            lambda x, y: False
+        ),
         project_exists_callback: Callable[[str], bool] = lambda _: True,
         study_type_exists_callback: Callable[[str], bool] = lambda _: True,
         trial_intent_type_exists_callback: Callable[[str], bool] = lambda _: True,
@@ -518,10 +521,12 @@ class StudyDefinitionAR:
                     uid=self.uid,
                     project_exists_callback=project_exists_callback,
                     study_number_exists_callback=study_number_exists_callback,
+                    study_acronym_exists_callback=study_acronym_exists_callback,
                     is_subpart=is_subpart,
                     previous_is_subpart=previous_is_subpart,
                     updatable_subpart=updatable_subpart,
                     previous_project_number=self.current_metadata.id_metadata.project_number,
+                    previous_study_acronym=self.current_metadata.id_metadata.study_acronym,
                 )
                 self._draft_metadata = StudyMetadataVO(
                     id_metadata=new_id_metadata,
@@ -1046,6 +1051,9 @@ class StudyDefinitionAR:
         study_number_exists_callback: Callable[[str, str | None], bool] = (
             lambda x, y: False
         ),
+        study_acronym_exists_callback: Callable[[str, str | None], bool] = (
+            lambda x, y: False
+        ),
         initial_high_level_study_design: HighLevelStudyDesignVO = _DEF_INITIAL_HIGH_LEVEL_STUDY_DESIGN,
         initial_study_population: StudyPopulationVO = _DEF_INITIAL_STUDY_POPULATION,
         initial_study_intervention: StudyInterventionVO = _DEF_INITIAL_STUDY_INTERVENTION,
@@ -1215,6 +1223,7 @@ class StudyDefinitionAR:
             trial_intent_type_exists_callback=trial_intent_type_exists_callback,
             project_exists_callback=project_exists_callback,
             study_number_exists_callback=study_number_exists_callback,
+            study_acronym_exists_callback=study_acronym_exists_callback,
             null_value_exists_callback=null_value_exists_callback,
             diagnosis_group_exists_callback=diagnosis_group_exists_callback,
             disease_condition_or_indication_exists_callback=disease_condition_or_indication_exists_callback,

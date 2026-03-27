@@ -1,15 +1,15 @@
 
 ## Installed packages
 
-| Package            | Version  | License                               |
-|--------------------|----------|---------------------------------------|
-| certifi            | 2026.1.4 | [MPL-2.0](#certifi)                   |
-| charset-normalizer | 3.4.4    | [MIT](#charset-normalizer)            |
-| idna               | 3.11     | [BSD-3-Clause](#idna)                 |
-| neo4j              | 4.4.13   | [Apache License, Version 2.0](#neo4j) |
-| pytz               | 2025.2   | [MIT](#pytz)                          |
-| requests           | 2.32.4   | [Apache-2.0](#requests)               |
-| urllib3            | 2.6.3    | [MIT](#urllib3)                       |
+| Package            | Version   | License                               |
+|--------------------|-----------|---------------------------------------|
+| certifi            | 2026.2.25 | [MPL-2.0](#certifi)                   |
+| charset-normalizer | 3.4.4     | [MIT](#charset-normalizer)            |
+| idna               | 3.11      | [BSD-3-Clause](#idna)                 |
+| neo4j              | 4.4.13    | [Apache License, Version 2.0](#neo4j) |
+| pytz               | 2025.2    | [MIT](#pytz)                          |
+| requests           | 2.32.5    | [Apache-2.0](#requests)               |
+| urllib3            | 2.6.3     | [MIT](#urllib3)                       |
 
 
 ## Third-party package licenses

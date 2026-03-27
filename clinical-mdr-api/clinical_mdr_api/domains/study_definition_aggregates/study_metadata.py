@@ -136,11 +136,15 @@ class StudyIdentificationMetadataVO:
         study_number_exists_callback: Callable[[str, str | None], bool] = (
             lambda x, y: False
         ),
+        study_acronym_exists_callback: Callable[[str, str | None], bool] = (
+            lambda x, y: False
+        ),
         null_value_exists_callback: Callable[[str], bool] = lambda _: True,
         is_subpart: bool = False,
         previous_is_subpart: bool = False,
         updatable_subpart: bool = False,
         previous_project_number: str | None = None,
+        previous_study_acronym: str | None = None,
         uid: str | None = None,
     ) -> None:
         """
@@ -200,6 +204,18 @@ class StudyIdentificationMetadataVO:
             self.study_number,
             "Study Number",
         )
+
+        if (
+            not is_subpart
+            and self.study_acronym is not None
+            and previous_study_acronym != self.study_acronym
+            and study_acronym_exists_callback(self.study_acronym, uid)
+        ):
+            raise exceptions.AlreadyExistsException(
+                "Study",
+                self.study_acronym,
+                "Study Acronym",
+            )
 
     def is_valid(
         self,
@@ -1555,6 +1571,9 @@ class StudyMetadataVO:
         study_number_exists_callback: Callable[[str, str | None], bool] = (
             lambda x, y: False
         ),
+        study_acronym_exists_callback: Callable[[str, str | None], bool] = (
+            lambda x, y: False
+        ),
         study_type_exists_callback: Callable[[str], bool] = lambda _: True,
         trial_intent_type_exists_callback: Callable[[str], bool] = lambda _: True,
         trial_type_exists_callback: Callable[[str], bool] = lambda _: True,
@@ -1587,6 +1606,7 @@ class StudyMetadataVO:
         self.id_metadata.validate(
             project_exists_callback=project_exists_callback,
             study_number_exists_callback=study_number_exists_callback,
+            study_acronym_exists_callback=study_acronym_exists_callback,
             is_subpart=is_subpart,
         )
         self.ver_metadata.validate()

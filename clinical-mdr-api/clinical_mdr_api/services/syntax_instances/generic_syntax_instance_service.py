@@ -2,7 +2,8 @@ import abc
 from typing import Callable, TypeVar
 
 from neomodel import db
-from neomodel.sync_ import core
+from neomodel.exceptions import DoesNotExist
+from neomodel.sync_.node import NodeMeta
 from pydantic import BaseModel
 
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
@@ -149,7 +150,7 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
                     self.repository.save(item)
 
             return self._transform_aggregate_root_to_pydantic_model(item_ar=item)
-        except core.DoesNotExist as exc:
+        except DoesNotExist as exc:
             raise NotFoundException("Library", template.library_name, "Name") from exc
 
     def _get_template_vo_by_template_uid(self, template_uid: str) -> TemplateVO | None:
@@ -214,7 +215,7 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
                 include_study_endpoints=include_study_endpoints,
             )
             return process_parameters(parameters)
-        except core.DoesNotExist as exc:
+        except DoesNotExist as exc:
             raise NotFoundException(field_value=uid) from exc
 
     def _create_parameter_entries(
@@ -248,7 +249,6 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
                 parameter_term_uids_to_fetch=template_parameter_terms,
             )
         )
-
         ValidationException.raise_if(
             not template.parameter_terms and self._allowed_parameters,
             msg="parameter_terms must be provided.",
@@ -318,7 +318,7 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
     def get_referencing_studies(
         self,
         uid: str,
-        node_type: core.NodeMeta,
+        node_type: NodeMeta,
         include_sections: list[StudyComponentEnum] | None = None,
         exclude_sections: list[StudyComponentEnum] | None = None,
     ) -> list[Study]:

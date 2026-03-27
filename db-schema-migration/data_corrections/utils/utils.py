@@ -17,6 +17,9 @@ logger = get_logger(os.path.basename(__file__))
 DATABASE_NAME = load_env("DATABASE_NAME")
 DATABASE_URL = load_env("DATABASE_URL")
 CHANGE_LOG_DIR = load_env("CHANGE_LOG_DIR", default="correction_change_logs")
+SWITCH_LOG_ENRICHMENT = (
+    load_env("SWITCH_LOG_ENRICHMENT", default="true").strip().lower() == "true"
+)
 
 environment = Environment(
     loader=FileSystemLoader(os.path.join(os.path.dirname(__file__), "templates"))
@@ -300,6 +303,7 @@ def capture_changes(
             driver = get_arg_value(args, func_arg_names, "db_driver")
             log = get_arg_value(args, func_arg_names, "log")
             label = get_arg_value(args, func_arg_names, "run_label")
+            previous_cdc_setting = None
             summary_params["func_args"] = []
             for arg_name in func_arg_names:
                 if arg_name not in ["db_driver", "log", "run_label"]:
@@ -307,10 +311,25 @@ def capture_changes(
                         (arg_name, get_arg_value(args, func_arg_names, arg_name))
                     )
             if not docs_only:
-                previous_cdc_setting = enable_cdc(driver, DATABASE_NAME)
-                log.info(
-                    f"Log enrichment enabled, previous setting was '{previous_cdc_setting}'"
-                )
+                if SWITCH_LOG_ENRICHMENT:
+                    previous_cdc_setting = enable_cdc(driver, DATABASE_NAME)
+                    log.info(
+                        "Log enrichment enabled, previous setting was '%s'",
+                        previous_cdc_setting,
+                    )
+                else:
+                    current_log_enrichment_setting = query_log_enrichment_setting(
+                        driver, DATABASE_NAME
+                    )
+                    if current_log_enrichment_setting != LOG_ENRICHMENT_FULL:
+                        raise RuntimeError(
+                            "SWITCH_LOG_ENRICHMENT is false, but txLogEnrichment is "
+                            f"'{current_log_enrichment_setting}'. Expected '{LOG_ENRICHMENT_FULL}'."
+                        )
+                    log.info(
+                        "SWITCH_LOG_ENRICHMENT is false and txLogEnrichment is '%s'.",
+                        current_log_enrichment_setting,
+                    )
                 id_before = get_current_change_id(driver)
             save_change_description(summary_params, label, has_subtasks, task_level)
             try:
@@ -344,14 +363,22 @@ def capture_changes(
                     # This is especially important for API-based corrections that use separate transactions
                     time.sleep(0.5)
                     changes = get_changes_since_id(driver, id_before)
-                    if previous_cdc_setting != LOG_ENRICHMENT_DIFF:
-                        log.info(
-                            f"Restoring previous log enrichment setting '{previous_cdc_setting}'"
-                        )
-                        set_log_enrichment(driver, DATABASE_NAME, previous_cdc_setting)
+                    if SWITCH_LOG_ENRICHMENT:
+                        if previous_cdc_setting != LOG_ENRICHMENT_DIFF:
+                            log.info(
+                                "Restoring previous log enrichment setting '%s'",
+                                previous_cdc_setting,
+                            )
+                            set_log_enrichment(
+                                driver, DATABASE_NAME, previous_cdc_setting
+                            )
+                        else:
+                            log.info(
+                                "Log enrichment was already enabled, no need to restore setting"
+                            )
                     else:
                         log.info(
-                            "Log enrichment was already enabled, no need to restore setting"
+                            "SWITCH_LOG_ENRICHMENT is false, keeping existing txLogEnrichment setting"
                         )
                 else:
                     changes = None

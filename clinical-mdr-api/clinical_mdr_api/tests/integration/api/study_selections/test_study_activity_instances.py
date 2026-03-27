@@ -671,9 +671,9 @@ def test_create_study_activity_instance(api_client):
     inputs = {
         "study_uid": test_study.uid,
         "study_epoch_uid": test_study_epoch.uid,
-        "visit_type_uid": "VisitType_0001",
+        "visit_type": {"term_uid": "VisitType_0001"},
         "show_visit": True,
-        "time_reference_uid": "VisitSubType_0005",
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 100,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",
@@ -708,7 +708,7 @@ def test_create_study_activity_instance(api_client):
         {
             "uid": study_visit_1.uid,
             "visit_name": study_visit_1.visit_name,
-            "visit_type_name": study_visit_1.visit_type_name,
+            "visit_type_name": study_visit_1.visit_type.sponsor_preferred_name,
         }
     ]
 
@@ -725,7 +725,7 @@ def test_create_study_activity_instance(api_client):
         {
             "uid": study_visit_1.uid,
             "visit_name": study_visit_1.visit_name,
-            "visit_type_name": study_visit_1.visit_type_name,
+            "visit_type_name": study_visit_1.visit_type.sponsor_preferred_name,
         }
     ]
 
@@ -782,9 +782,9 @@ def test_edit_study_activity_instance(api_client):
     inputs = {
         "study_uid": test_study.uid,
         "study_epoch_uid": test_study_epoch.uid,
-        "visit_type_uid": "VisitType_0001",
+        "visit_type": {"term_uid": "VisitType_0001"},
         "show_visit": True,
-        "time_reference_uid": "VisitSubType_0005",
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 100,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",
@@ -852,12 +852,12 @@ def test_edit_study_activity_instance(api_client):
     assert {
         "uid": study_visit_1.uid,
         "visit_name": study_visit_1.visit_name,
-        "visit_type_name": study_visit_1.visit_type_name,
+        "visit_type_name": study_visit_1.visit_type.sponsor_preferred_name,
     } in res["baseline_visits"]
     assert {
         "uid": study_visit_2.uid,
         "visit_name": study_visit_2.visit_name,
-        "visit_type_name": study_visit_2.visit_type_name,
+        "visit_type_name": study_visit_2.visit_type.sponsor_preferred_name,
     } in res["baseline_visits"]
     expected_audit_trail_length += 1
 
@@ -877,7 +877,7 @@ def test_edit_study_activity_instance(api_client):
     assert {
         "uid": study_visit_2.uid,
         "visit_name": study_visit_2.visit_name,
-        "visit_type_name": study_visit_2.visit_type_name,
+        "visit_type_name": study_visit_2.visit_type.sponsor_preferred_name,
     } in res["baseline_visits"]
     expected_audit_trail_length += 1
 
@@ -895,7 +895,7 @@ def test_edit_study_activity_instance(api_client):
     assert {
         "uid": study_visit_2.uid,
         "visit_name": study_visit_2.visit_name,
-        "visit_type_name": study_visit_2.visit_type_name,
+        "visit_type_name": study_visit_2.visit_type.sponsor_preferred_name,
     } in res["baseline_visits"]
     expected_audit_trail_length += 1
 
@@ -966,7 +966,7 @@ def test_edit_study_activity_instance(api_client):
     assert {
         "uid": study_visit_2.uid,
         "visit_name": study_visit_2.visit_name,
-        "visit_type_name": study_visit_2.visit_type_name,
+        "visit_type_name": study_visit_2.visit_type.sponsor_preferred_name,
     } in res["baseline_visits"]
     expected_audit_trail_length += 1
     # Before deleting visit, check that patching visit does not change baseline visits
@@ -985,7 +985,7 @@ def test_edit_study_activity_instance(api_client):
     assert {
         "uid": study_visit_2.uid,
         "visit_name": study_visit_2.visit_name,
-        "visit_type_name": study_visit_2.visit_type_name,
+        "visit_type_name": study_visit_2.visit_type.sponsor_preferred_name,
     } in res["baseline_visits"]
 
     # Delete Visit 2 - should remove visit 2 from baseline visits

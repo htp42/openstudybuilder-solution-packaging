@@ -1,10 +1,5 @@
 <template>
-  <v-radio-group
-    :key="radioKey"
-    v-model="value"
-    density="compact"
-    v-bind="$attrs"
-  >
+  <v-radio-group :key="radioKey" v-model="value" v-bind="$attrs">
     <v-row>
       <v-col cols="12">
         <v-radio
@@ -15,7 +10,6 @@
           class="fixed-width"
           :label="booleanValue.label"
           :value="booleanValue.value"
-          color="primary"
           @mouseup="clearCurrentRadioValue(booleanValue)"
         />
       </v-col>

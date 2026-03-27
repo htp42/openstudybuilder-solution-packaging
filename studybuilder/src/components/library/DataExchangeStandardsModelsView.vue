@@ -87,17 +87,7 @@
                           {{ tab.label }}
                         </p>
                       </v-col>
-                      <v-col cols="1">
-                        <div class="font-weight-bold">
-                          {{ $t('DataModels.ordinal') }}
-                        </div>
-                        <p class="font-weight-regular">
-                          {{
-                            tab.data_models[0] ? tab.data_models[0].ordinal : ''
-                          }}
-                        </p>
-                      </v-col>
-                      <v-col cols="9">
+                      <v-col cols="10">
                         <div class="font-weight-bold">
                           {{ $t('_global.description') }}
                         </div>
@@ -216,22 +206,10 @@ function redirectToGuide(item) {
 function chooseModelVersion(model) {
   activeModel.value = model
   const params = {
-    filters: {
-      'data_models.data_model_name': {
-        v: [activeModel.value.name],
-        op: 'eq',
-      },
-    },
+    data_model_name: activeModel.value.name,
     page_size: 0,
   }
   standards.getDatasetClasses(params).then((resp) => {
-    resp.data.items.forEach((element) => {
-      if (element.data_models.length > 1) {
-        element.data_models = element.data_models.filter((element) => {
-          return element.data_model_name === activeModel.value.name
-        })
-      }
-    })
     datasetClasses.value = resp.data.items
     activeTab.value = 0
     getVariables(datasetClasses.value[0].label)

@@ -1,226 +1,305 @@
 <template>
   <v-card elevation="0" class="nn-grey">
     <v-card-title class="d-flex align-center">
-      <span class="page-title"
-        >{{ $t('StudyTitleForm.title') }} ({{ studyId }})</span
-      >
-      <v-spacer />
-      <v-btn class="secondary-btn" color="white" @click="close">
-        {{ $t('_global.cancel') }}
-      </v-btn>
-      <v-btn
-        data-cy="save-button"
-        color="secondary"
-        :loading="working"
-        class="ml-3"
-        @click="submit"
-      >
-        {{ $t('_global.save') }}
-      </v-btn>
+      <div class="page-title">
+        {{ $t('StudyTitleForm.title') }} ({{ studiesGeneralStore.studyId }})
+      </div>
     </v-card-title>
-    <v-card-text ref="container" class="mt-4">
-      <div class="bg-white pa-4 mb-6">
+    <v-card-text ref="container" class="mb-12 pb-12">
+      <div class="bg-white pa-6 mb-6 form-panel">
         <v-form ref="observer">
-          <div class="d-flex">
-            <label class="v-label">{{
-              $t('StudyTitleForm.title_label')
-            }}</label>
-            <v-spacer />
-            <span>{{ currentTitleLength }} / {{ maxTitleLength }}</span>
+          <div class="input-block mb-5">
+            <div class="d-flex align-center mb-1">
+              <label class="field-label">{{
+                $t('StudyTitleForm.title_label')
+              }}</label>
+              <v-spacer />
+              <span class="counter"
+                >{{ currentTitleLength }} / {{ maxTitleLength }}</span
+              >
+            </div>
+            <v-textarea
+              v-model="form.study_title"
+              data-cy="study-title"
+              :maxlength="maxTitleLength"
+              :hint="$t('StudyTitleForm.title_hint')"
+              persistent-hint
+              rows="2"
+              class="mb-1"
+              auto-grow
+              :rules="[formRules.required]"
+            />
           </div>
-          <v-textarea
-            ref="titlearea"
-            v-model="form.study_title"
-            data-cy="study-title"
-            :maxlength="maxTitleLength"
-            :hint="$t('StudyTitleForm.title_hint')"
-            persistent-hint
-            rows="1"
-            auto-grow
-            :rules="[formRules.required]"
-          />
-          <div class="d-flex mt-6">
-            <label class="v-label">{{
-              $t('StudyTitleForm.short_title')
-            }}</label>
-            <v-spacer />
-            <span
-              >{{ currentShortTitleLength }} / {{ maxTitleLength / 2 }}</span
-            >
+          <div class="input-block">
+            <div class="d-flex align-center mb-1">
+              <label class="field-label">{{
+                $t('StudyTitleForm.short_title')
+              }}</label>
+              <v-spacer />
+              <span class="counter"
+                >{{ currentShortTitleLength }} / {{ shortTitleMaxLength }}</span
+              >
+            </div>
+            <v-textarea
+              v-model="form.study_short_title"
+              data-cy="short-study-title"
+              :maxlength="shortTitleMaxLength"
+              :hint="$t('StudyTitleForm.short_title_hint')"
+              persistent-hint
+              rows="2"
+              class="mb-1"
+              auto-grow
+              :rules="[formRules.required]"
+            />
           </div>
-          <v-textarea
-            ref="shorttitlearea"
-            v-model="form.study_short_title"
-            data-cy="short-study-title"
-            :maxlength="maxTitleLength / 2"
-            :hint="$t('StudyTitleForm.short_title_hint')"
-            persistent-hint
-            rows="1"
-            auto-grow
-            :rules="[formRules.required]"
-          />
         </v-form>
       </div>
-      <div class="text-grey font-italic mx-4 mb-0">
-        {{ $t('StudyTitleForm.global_help') }}
+      <div class="d-flex align-center text-grey font-italic">
+        <v-icon size="18" class="mr-1">mdi-information-outline</v-icon>
+        <span>{{ $t('StudyTitleForm.global_help') }}</span>
       </div>
-      <v-data-table :headers="headers" :items="studies" height="30vh">
-        <template #[`item.actions`]="{ item }">
-          <v-btn
-            data-cy="copy-title"
-            icon="mdi-content-copy"
-            color="primary"
-            :title="$t('StudyTitleForm.copy_title')"
-            variant="text"
-            @click="copyTitle(item)"
-          />
-        </template>
-      </v-data-table>
+      <div class="table-panel mt-4">
+        <div class="table-header px-4 py-3">
+          <div class="text-subtitle-2 font-weight-bold">
+            {{ $t('StudyTitleForm.copy_title') }}
+          </div>
+        </div>
+        <v-data-table
+          :headers="headers"
+          :items="studies"
+          :loading="loading"
+          height="35vh"
+        >
+          <template #[`item.actions`]="{ item }">
+            <v-btn
+              data-cy="copy-title"
+              icon="mdi-content-copy"
+              color="primary"
+              :title="$t('StudyTitleForm.copy_title')"
+              variant="text"
+              @click="copyTitle(item)"
+            />
+          </template>
+        </v-data-table>
+      </div>
     </v-card-text>
+    <v-card-actions class="bg-white fixed-actions border-t-thin">
+      <v-col>
+        <v-btn
+          class="secondary-btn"
+          variant="outlined"
+          width="120px"
+          rounded="xl"
+          @click="close"
+        >
+          {{ $t('_global.cancel') }}
+        </v-btn>
+      </v-col>
+      <v-spacer />
+      <div class="mx-2">
+        <v-row>
+          <v-col>
+            <v-btn
+              data-cy="save-button"
+              color="secondary"
+              variant="flat"
+              width="120px"
+              rounded="xl"
+              :loading="working"
+              @click.stop="submit"
+            >
+              {{ $t('_global.save') }}
+            </v-btn>
+          </v-col>
+        </v-row>
+      </div>
+    </v-card-actions>
     <ConfirmDialog ref="confirm" :text-cols="6" :action-cols="5" />
   </v-card>
 </template>
 
-<script>
-import { computed } from 'vue'
+<script setup>
+import { computed, inject, onMounted, ref, watch } from 'vue'
 import study from '@/api/study'
 import _isEqual from 'lodash/isEqual'
 import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
+import { useI18n } from 'vue-i18n'
 
-export default {
-  components: {
-    ConfirmDialog,
+const props = defineProps({
+  description: {
+    type: Object,
+    default: undefined,
   },
-  inject: ['notificationHub', 'formRules'],
-  props: {
-    description: {
-      type: Object,
-      default: undefined,
-    },
+})
+
+const emit = defineEmits(['close', 'updated'])
+
+const studiesGeneralStore = useStudiesGeneralStore()
+const notificationHub = inject('notificationHub')
+const formRules = inject('formRules')
+const { t } = useI18n()
+
+const observer = ref()
+const confirm = ref()
+
+const form = ref({})
+const maxTitleLength = 600
+const shortTitleMaxLength = maxTitleLength / 2
+const studies = ref([])
+const working = ref(false)
+
+function cloneDescription(description) {
+  return description ? JSON.parse(JSON.stringify(description)) : {}
+}
+
+const headers = computed(() => [
+  { title: '', key: 'actions', width: '1%' },
+  {
+    title: t('StudyTitleForm.project_id'),
+    key: 'current_metadata.identification_metadata.project_number',
   },
-  emits: ['close', 'updated'],
-  setup() {
-    const studiesGeneralStore = useStudiesGeneralStore()
-    return {
-      selectedStudy: computed(() => studiesGeneralStore.selectedStudy),
-      studyId: studiesGeneralStore.studyId,
+  {
+    title: t('StudyTitleForm.project_name'),
+    key: 'current_metadata.identification_metadata.project_name',
+  },
+  {
+    title: t('StudyTitleForm.study_id'),
+    key: 'current_metadata.identification_metadata.study_id',
+  },
+  {
+    title: t('StudyTitleForm.study_title'),
+    key: 'current_metadata.study_description.study_title',
+  },
+  {
+    title: t('StudyTitleForm.short_title'),
+    key: 'current_metadata.study_description.study_short_title',
+  },
+])
+
+const loading = ref(false)
+
+const currentTitleLength = computed(() => {
+  if (form.value.study_title) {
+    return form.value.study_title.length
+  }
+  return 0
+})
+
+const currentShortTitleLength = computed(() => {
+  if (form.value.study_short_title) {
+    return form.value.study_short_title.length
+  }
+  return 0
+})
+
+watch(
+  () => props.description,
+  (value) => {
+    if (value) {
+      form.value = cloneDescription(value)
     }
   },
-  data() {
-    return {
-      form: {},
-      headers: [
-        { title: '', key: 'actions', width: '1%' },
-        {
-          title: this.$t('StudyTitleForm.project_id'),
-          key: 'current_metadata.identification_metadata.project_number',
-        },
-        {
-          title: this.$t('StudyTitleForm.project_name'),
-          key: 'current_metadata.identification_metadata.project_name',
-        },
-        {
-          title: this.$t('StudyTitleForm.study_id'),
-          key: 'current_metadata.identification_metadata.study_id',
-        },
-        {
-          title: this.$t('StudyTitleForm.study_title'),
-          key: 'current_metadata.study_description.study_title',
-        },
-        {
-          title: this.$t('StudyTitleForm.short_title'),
-          key: 'current_metadata.study_description.study_short_title',
-        },
-      ],
-      maxTitleLength: 600,
-      studies: [],
-      working: false,
-    }
-  },
-  computed: {
-    currentTitleLength() {
-      if (this.form.study_title) {
-        return this.form.study_title.length
-      }
-      return 0
-    },
-    currentShortTitleLength() {
-      if (this.form.study_short_title) {
-        return this.form.study_short_title.length
-      }
-      return 0
-    },
-  },
-  watch: {
-    description: {
-      handler(value) {
-        if (value) {
-          this.form = JSON.parse(JSON.stringify(value))
-        }
-      },
-      immediate: true,
-    },
-  },
-  mounted() {
-    study.getAll().then((resp) => {
-      this.studies = resp.data.items
+  { immediate: true }
+)
+
+onMounted(() => {
+  loading.value = true
+  study
+    .getAll()
+    .then((resp) => {
+      studies.value = resp.data.items
     })
-  },
-  methods: {
-    async close() {
-      this.notificationHub.clearErrors()
-      if (_isEqual(this.form, this.description)) {
-        this.$emit('close')
-        return
-      }
-      const options = {
-        type: 'warning',
-        cancelLabel: this.$t('_global.cancel'),
-        agreeLabel: this.$t('_global.continue'),
-      }
-      if (
-        await this.$refs.confirm.open(
-          this.$t('_global.cancel_changes'),
-          options
-        )
-      ) {
-        this.form = this.description
-        this.$emit('close')
-      }
-    },
-    copyTitle(study) {
-      this.form.study_title =
-        study.current_metadata.study_description.study_title
-      this.form.study_short_title =
-        study.current_metadata.study_description.study_short_title
-    },
-    async submit() {
-      const { valid } = await this.$refs.observer.validate()
-      if (!valid) return
+    .finally(() => {
+      loading.value = false
+    })
+})
 
-      this.notificationHub.clearErrors()
+async function close() {
+  notificationHub.clearErrors()
+  if (_isEqual(form.value, props.description)) {
+    emit('close')
+    return
+  }
+  const options = {
+    type: 'warning',
+    cancelLabel: t('_global.cancel'),
+    agreeLabel: t('_global.continue'),
+  }
+  if (await confirm.value.open(t('_global.cancel_changes'), options)) {
+    form.value = cloneDescription(props.description)
+    emit('close')
+  }
+}
 
-      if (_isEqual(this.form, this.description)) {
-        this.notificationHub.add({
-          msg: this.$t('_global.no_changes'),
-          type: 'info',
-        })
-        this.close()
-        return
-      }
-      this.working = true
-      try {
-        await study.updateStudyDescription(this.selectedStudy.uid, this.form)
-        this.$emit('updated')
-        this.notificationHub.add({
-          msg: this.$t('StudyTitleForm.update_success'),
-        })
-        this.$emit('close')
-      } finally {
-        this.working = false
-      }
-    },
-  },
+function copyTitle(studyItem) {
+  form.value.study_title =
+    studyItem.current_metadata.study_description.study_title
+  form.value.study_short_title =
+    studyItem.current_metadata.study_description.study_short_title
+}
+
+async function submit() {
+  const { valid } = await observer.value.validate()
+  if (!valid) return
+
+  notificationHub.clearErrors()
+
+  if (_isEqual(form.value, props.description)) {
+    notificationHub.add({
+      msg: t('_global.no_changes'),
+      type: 'info',
+    })
+    close()
+    return
+  }
+  working.value = true
+  try {
+    await study.updateStudyDescription(
+      studiesGeneralStore.selectedStudy.uid,
+      form.value
+    )
+    emit('updated')
+    notificationHub.add({
+      msg: t('StudyTitleForm.update_success'),
+    })
+    emit('close')
+  } finally {
+    working.value = false
+  }
 }
 </script>
+
+<style scoped>
+.form-panel {
+  border: 1px solid rgb(var(--v-theme-greyBackground));
+  border-radius: 12px;
+}
+
+.input-block {
+  border: 1px solid rgb(var(--v-theme-greyBackground));
+  border-radius: 10px;
+  padding: 12px 12px 4px;
+}
+
+.field-label {
+  font-weight: 600;
+  font-size: 14px;
+  color: rgb(var(--v-theme-darkGrey)) !important;
+}
+
+.counter {
+  color: rgb(var(--v-theme-greyText));
+  font-size: 12px;
+}
+
+.table-panel {
+  border: 1px solid rgb(var(--v-theme-greyBackground));
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.table-header {
+  background: rgb(var(--v-theme-nnLightBlue100));
+}
+</style>

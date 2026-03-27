@@ -6,7 +6,7 @@ Feature: Manage ODM Items in OpenStudyBuilder API
         Given The test user can call the OpenStudyBuilder API
 
     Scenario: User must be able to get an empty list of ODM items
-        When the user calls the API endpoint 'concepts/odms/items'
+        When the user calls the API endpoint 'odms/items'
         Then the response must include an empty list of ODM items
         And the response status code must be 200
     Test Coverage:
@@ -22,7 +22,7 @@ Feature: Manage ODM Items in OpenStudyBuilder API
         | /tests/integration/api/old/test_odm_items.py     | @TestID: test_creating_a_new_odm_item |
 
     Scenario: User must be able to get a non-empty list of ODM items
-        When the user calls the API endpoint 'concepts/odms/items'
+        When the user calls the API endpoint 'odms/items'
         Then the response must include the list of ODM items with expected properties
         And the response status code must be 200
     Test Coverage:
@@ -30,7 +30,7 @@ Feature: Manage ODM Items in OpenStudyBuilder API
         | /tests/integration/api/old/test_odm_items.py     | @TestID: test_getting_non_empty_list_of_odm_items |
 
     Scenario: User must be able to get a specific ODM item
-        When the user calls the API endpoint 'concepts/odms/items/' to get a specific ODM item
+        When the user calls the API endpoint 'odms/items/' to get a specific ODM item
         Then the response status code must be 200
         And the response must include the ODM item
     Test Coverage:  
@@ -38,7 +38,7 @@ Feature: Manage ODM Items in OpenStudyBuilder API
         | /tests/integration/api/old/test_odm_items.py     | @TestID: test_getting_a_specific_odm_item |
 
     Scenario: User must be able to get possible header values of ODM items
-        When the user calls the API endpoint 'concepts/odms/items/headers?field_name=name'
+        When the user calls the API endpoint 'odms/items/headers?field_name=name'
         Then the response status code must be 200
         And the response must include the list ["name1"]
     Test Coverage:
@@ -120,7 +120,7 @@ Feature: Manage ODM Items in OpenStudyBuilder API
         | /tests/integration/api/old/test_odm_items_negative.py | @TestID: test_cannot_create_a_new_odm_item_without_an_english_description |
 
     Scenario: User receives an error for retrieving a non-existent ODM item
-        When the user calls the API endpoint 'concepts/odms/items/' for retrieving an non-existed ODM item
+        When the user calls the API endpoint 'odms/items/' for retrieving an non-existed ODM item
         Then the response status code must be 404
         And the response must include the message like "OdmItemAR with UID 'OdmItem_000002' doesn't exist ..."
     Test Coverage:

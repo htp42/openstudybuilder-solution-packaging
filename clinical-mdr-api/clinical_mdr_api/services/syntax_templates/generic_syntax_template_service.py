@@ -2,7 +2,7 @@ import abc
 from typing import TypeVar
 
 from neomodel import db
-from neomodel.sync_ import core
+from neomodel.exceptions import DoesNotExist
 from pydantic import BaseModel
 
 from clinical_mdr_api.domain_repositories.syntax_instances.generic_syntax_instance_repository import (
@@ -93,7 +93,7 @@ class GenericSyntaxTemplateService(GenericSyntaxService[_AggregateRootType], abc
                 self.repository.save(item)
 
             return self._transform_aggregate_root_to_pydantic_model(item)
-        except core.DoesNotExist as exc:
+        except DoesNotExist as exc:
             raise NotFoundException("Library", template.library_name, "Name") from exc
 
     def _create_template_vo(self, template: BaseModel) -> tuple[TemplateVO, LibraryVO]:
@@ -280,7 +280,7 @@ class GenericSyntaxTemplateService(GenericSyntaxService[_AggregateRootType], abc
                 include_study_endpoints=include_study_endpoints,
             )
             return process_parameters(parameters)
-        except core.DoesNotExist as exc:
+        except DoesNotExist as exc:
             raise NotFoundException(field_value=uid) from exc
 
     @db.transaction

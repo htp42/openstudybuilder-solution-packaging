@@ -81,8 +81,7 @@ class ComplexTemplateParameterRepository:
         return values
 
     def find_all_with_samples(self):
-        items, _ = db.cypher_query(
-            """
+        items, _ = db.cypher_query("""
             MATCH (pt:TemplateParameter)
             CALL {
                 WITH pt
@@ -98,8 +97,7 @@ class ComplexTemplateParameterRepository:
                 pt.name AS name,
                 terms
             ORDER BY name
-        """
-        )
+        """)
         return_value = [{"name": item[0], "terms": item[1]} for item in items]
         return return_value
 

@@ -332,7 +332,7 @@ class StudySelectionBranchArmRepository:
                 "has_branch_arm__study_value__latest_value__uid": study_uid,
             }
         sa_nodes = (
-            StudyArm.nodes.fetch_relations("has_branch_arm__study_value__has_version")
+            StudyArm.nodes.traverse("has_branch_arm__study_value__has_version")
             .filter(**filters)
             .order_by("order")
             .all()
@@ -397,7 +397,7 @@ class StudySelectionBranchArmRepository:
         :return:
         """
         sdc_node = (
-            StudyBranchArm.nodes.fetch_relations("has_after")
+            StudyBranchArm.nodes.traverse("has_after")
             .filter(study_value__latest_value__uid=study_uid, uid=branch_arm_uid)
             .resolve_subgraph()
         )
@@ -405,7 +405,7 @@ class StudySelectionBranchArmRepository:
 
     def get_branch_arms_connected_to_arm(self, study_uid: str, study_arm_uid: str):
         sdc_nodes = (
-            StudyArm.nodes.fetch_relations("has_branch_arm__study_value__latest_value")
+            StudyArm.nodes.traverse("has_branch_arm__study_value__latest_value")
             .filter(uid=study_arm_uid, study_value__latest_value__uid=study_uid)
             .order_by("order")
             .all()
@@ -420,9 +420,7 @@ class StudySelectionBranchArmRepository:
         self, study_uid: str, study_cohort_uid: str
     ):
         sdc_nodes = (
-            StudyCohort.nodes.fetch_relations(
-                "branch_arm_root__study_value__latest_value"
-            )
+            StudyCohort.nodes.traverse("branch_arm_root__study_value__latest_value")
             .filter(uid=study_cohort_uid, study_value__latest_value__uid=study_uid)
             .order_by("order")
             .all()
@@ -441,9 +439,7 @@ class StudySelectionBranchArmRepository:
         :return:
         """
         sdc_node = (
-            StudyBranchArm.nodes.fetch_relations(
-                "has_design_cell__study_value", "has_after"
-            )
+            StudyBranchArm.nodes.traverse("has_design_cell__study_value", "has_after")
             .filter(study_value__latest_value__uid=study_uid, uid=branch_arm_uid)
             .resolve_subgraph()
         )
@@ -457,7 +453,7 @@ class StudySelectionBranchArmRepository:
         :return:
         """
         sdc_node = (
-            StudyBranchArm.nodes.fetch_relations("arm_root", "has_after")
+            StudyBranchArm.nodes.traverse("arm_root", "has_after")
             .filter(
                 study_value__latest_value__uid=study_uid, arm_root__uid=arm_root_uid
             )
@@ -730,8 +726,7 @@ class StudySelectionBranchArmRepository:
                     WITH DISTINCT all_sba
                     """
         specific_branch_arm_selections_audit_trail = db.cypher_query(
-            cypher
-            + """
+            cypher + """
             WITH DISTINCT all_sba
             OPTIONAL MATCH (at:StudyArm)-[:STUDY_ARM_HAS_BRANCH_ARM]->(all_sba)
             WITH DISTINCT all_sba, at

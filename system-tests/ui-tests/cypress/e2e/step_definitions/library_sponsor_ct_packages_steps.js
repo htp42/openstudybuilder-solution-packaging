@@ -29,7 +29,7 @@ When('Sponsor CT Package is created for the same date as already existing one', 
 
 function startSponsorCTPackageCreation() {
     cy.wait(1000)
-    cy.get('[data-cy="sponsor-ct-catalogue-dropdown"] [role="combobox"]').click()
+    cy.get('[data-cy="sponsor-ct-catalogue-dropdown"] .v-field__input').click()
     cy.get('.v-overlay__content .v-list-item').contains('SDTM CT').click()
-    cy.get('.v-overlay__content [role="combobox"]').eq(1).click()
+    cy.contains('[role="combobox"]', 'Select a CDISC CT package').click()
 }

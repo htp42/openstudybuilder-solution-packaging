@@ -855,7 +855,7 @@ class StudyDesignFigureService:
             # look up epoch column
             col = table[0][idx]
 
-            if visit.visit_type_uid == label.get("id"):
+            if visit.visit_type.term_uid == label.get("id"):
                 # same visit type, span to next column
                 label["width"] = col["x"] - label["x"] + col["width"]
                 # reflow text with new width
@@ -866,7 +866,7 @@ class StudyDesignFigureService:
             else:
                 # a different visit type deserves a new label
                 label = {
-                    "id": visit.visit_type_uid,
+                    "id": visit.visit_type.term_uid,
                     "klass": "visit-type",
                     "paddings": (0, 0),
                     "text": visit.visit_type.sponsor_preferred_name,

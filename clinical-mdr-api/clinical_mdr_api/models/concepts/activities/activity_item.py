@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from pydantic import ConfigDict, Field
+from pydantic import ConfigDict, Field, model_validator
 
 from clinical_mdr_api.models.utils import BaseModel, PostInputModel
 
@@ -63,6 +63,27 @@ class CompactCTTerm(BaseModel):
     ] = None
 
 
+class CompactCodelist(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    uid: Annotated[
+        str | None,
+        Field(
+            json_schema_extra={
+                "nullable": True,
+            }
+        ),
+    ] = None
+    name: Annotated[
+        str | None,
+        Field(
+            json_schema_extra={
+                "nullable": True,
+            },
+        ),
+    ] = None
+
+
 class CompactUnitDefinition(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -96,6 +117,7 @@ class ActivityItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     activity_item_class: Annotated[CompactActivityItemClassForActivityItem, Field()]
+    ct_codelist: Annotated[CompactCodelist | None, Field()] = None
     ct_terms: list[CompactCTTerm] = Field(default_factory=list)
     unit_definitions: list[CompactUnitDefinition] = Field(default_factory=list)
     is_adam_param_specific: Annotated[bool, Field()]
@@ -108,7 +130,16 @@ class ActivityItemCreateInput(PostInputModel):
         codelist_uid: Annotated[str, Field(min_length=1)]
 
     activity_item_class_uid: Annotated[str, Field(min_length=1)]
+    ct_codelist_uid: Annotated[str | None, Field()] = None
     ct_terms: Annotated[list[CTTermsInput], Field()]
     unit_definition_uids: Annotated[list[str], Field()]
     is_adam_param_specific: Annotated[bool, Field()]
     text_value: Annotated[str | None, Field()] = None
+
+    @model_validator(mode="after")
+    def validate_codelist_and_terms(self):
+        if self.ct_terms and self.ct_codelist_uid:
+            raise ValueError(
+                "Both ct_terms and ct_codelist cannot be provided at the same time for an ActivityItem."
+            )
+        return self

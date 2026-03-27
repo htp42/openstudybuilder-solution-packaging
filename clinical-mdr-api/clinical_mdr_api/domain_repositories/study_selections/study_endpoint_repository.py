@@ -619,8 +619,7 @@ class StudySelectionEndpointRepository:
             WITH DISTINCT all_se
             """
         specific_objective_selections_audit_trail = db.cypher_query(
-            cypher
-            + """
+            cypher + """
             MATCH (all_se)-[:HAS_SELECTED_ENDPOINT]->(ev:EndpointValue)
 
             CALL {
@@ -756,8 +755,7 @@ class StudySelectionEndpointRepository:
                 "MATCH (sr:StudyRoot{uid:$study_uid})-[:LATEST]-(sv:StudyValue)"
             )
         result = db.cypher_query(
-            root_match
-            + """
+            root_match + """
                 MATCH (sv)--(se:StudyEndpoint)-[:STUDY_ENDPOINT_HAS_STUDY_OBJECTIVE]->(so:StudyObjective{uid:$study_objective_uid})--(sv)
                 RETURN count(distinct se)
             """,

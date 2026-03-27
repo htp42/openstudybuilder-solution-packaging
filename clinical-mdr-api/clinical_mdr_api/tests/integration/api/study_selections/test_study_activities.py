@@ -304,9 +304,9 @@ def test_data():
     inputs = {
         "study_uid": study.uid,
         "study_epoch_uid": study_epoch.uid,
-        "visit_type_uid": "VisitType_0001",
+        "visit_type": {"term_uid": "VisitType_0001"},
         "show_visit": True,
-        "time_reference_uid": "VisitSubType_0005",
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 100,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",
@@ -749,9 +749,9 @@ def test_cascade_delete_on_activities_schedules(api_client):
     # create visit
     inputs = {
         "study_epoch_uid": study_epoch.uid,
-        "visit_type_uid": "VisitType_0001",
+        "visit_type": {"term_uid": "VisitType_0001"},
         "show_visit": True,
-        "time_reference_uid": "VisitSubType_0005",
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 0,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",
@@ -861,9 +861,9 @@ def test_maintain_outbound_rels(api_client):
     # create visit
     inputs = {
         "study_epoch_uid": epoch_uid,
-        "visit_type_uid": "VisitType_0001",
+        "visit_type": {"term_uid": "VisitType_0001"},
         "show_visit": True,
-        "time_reference_uid": "VisitSubType_0005",
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 0,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",
@@ -1001,9 +1001,9 @@ def test_versioning_on_activity_activity_instruction_activity_schedule_as_group(
     # create visit
     inputs = {
         "study_epoch_uid": study_epoch.uid,
-        "visit_type_uid": "VisitType_0001",
+        "visit_type": {"term_uid": "VisitType_0001"},
         "show_visit": True,
-        "time_reference_uid": "VisitSubType_0005",
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 0,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",
@@ -2610,7 +2610,8 @@ def test_sync_study_activity_to_latest_version_of_activity(api_client):
             general_activity_group.uid,
         ],
     )
-    # StudyActivity created for different parents to validate order numbers after updating activity to newer version
+    # StudyActivity created for same (SoAGroup, ActivityGroup) but different ActivitySubGroup
+    # to validate order numbers after updating activity to newer version
     TestUtils.create_study_activity(
         study_uid=test_study.uid,
         activity_uid=weight_activity.uid,
@@ -2745,28 +2746,6 @@ def test_sync_study_activity_to_latest_version_of_activity(api_client):
     assert_response_status_code(response, 200)
     response = api_client.post(
         f"/concepts/activities/activity-groups/{general_activity_group.uid}/approvals"
-    )
-    assert_response_status_code(response, 201)
-
-    # Update ActivitySubGroup to latest ActivityGroup version
-    response = api_client.post(
-        f"/concepts/activities/activity-sub-groups/{randomisation_activity_subgroup.uid}/versions"
-    )
-    assert_response_status_code(response, 201)
-
-    response = api_client.put(
-        f"/concepts/activities/activity-sub-groups/{randomisation_activity_subgroup.uid}",
-        json={
-            "name": randomisation_activity_subgroup.name,
-            "name_sentence_case": randomisation_activity_subgroup.name.lower(),
-            "library_name": randomisation_activity_subgroup.library_name,
-            "activity_groups": [general_activity_group.uid],
-            "change_description": "Pulled ActivityGroup change",
-        },
-    )
-    assert_response_status_code(response, 200)
-    response = api_client.post(
-        f"/concepts/activities/activity-sub-groups/{randomisation_activity_subgroup.uid}/approvals"
     )
     assert_response_status_code(response, 201)
 
@@ -3339,7 +3318,7 @@ def test_study_activity_placeholder_replacement_with_multiple_activities(api_cli
     visit_to_create = generate_default_input_data_for_visit().copy()
     visit_to_create.update(
         {
-            "visit_type_uid": generic_study_visit.visit_type_uid,
+            "visit_type": {"term_uid": generic_study_visit.visit_type.term_uid},
         }
     )
     second_visit = TestUtils.create_study_visit(
@@ -4119,7 +4098,7 @@ def test_study_activity_placeholder_reordering(api_client):
     assert study_activities[2]["order"] == 3
 
 
-def test_create_duplicated_study_activitiy(api_client):
+def test_only_final_activity_can_be_selected_to_study(api_client):
     # Test only Final Activity can be added to Study
     draft_or_retired_activity = TestUtils.create_activity(
         name="Draft/Retired Activity",
@@ -4172,35 +4151,208 @@ def test_create_duplicated_study_activitiy(api_client):
         == f"There is no approved Activity with name '{draft_or_retired_activity.name}'."
     )
 
-    # Test the same Activity with same groupings can't be selected twice in the same Study
-    custom_activity = TestUtils.create_activity(
-        name="custom_activity",
-        activity_subgroups=[
-            randomisation_activity_subgroup.uid,
-        ],
+
+def test_cross_soa_group_duplicate_study_activity_blocked_on_create(api_client):
+    test_study = TestUtils.create_study(project_number=project.project_number)
+
+    cross_scope_activity = TestUtils.create_activity(
+        name="CrossScopeActivity",
+        activity_subgroups=[randomisation_activity_subgroup.uid],
         activity_groups=[general_activity_group.uid],
     )
-    TestUtils.create_study_activity(
-        study_uid=study.uid,
-        activity_uid=custom_activity.uid,
-        activity_group_uid=general_activity_group.uid,
-        activity_subgroup_uid=randomisation_activity_subgroup.uid,
-        soa_group_term_uid=term_efficacy_uid,
-    )
+
+    # First selection under Efficacy → succeeds
     response = api_client.post(
-        f"/studies/{study.uid}/study-activities",
+        f"/studies/{test_study.uid}/study-activities",
         json={
-            "activity_uid": custom_activity.uid,
+            "activity_uid": cross_scope_activity.uid,
             "activity_subgroup_uid": randomisation_activity_subgroup.uid,
             "activity_group_uid": general_activity_group.uid,
             "soa_group_term_uid": term_efficacy_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
+
+    # Second selection under Safety (different SoA group, same activity+groupings) → 409
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activities",
+        json={
+            "activity_uid": cross_scope_activity.uid,
+            "activity_subgroup_uid": randomisation_activity_subgroup.uid,
+            "activity_group_uid": general_activity_group.uid,
+            "soa_group_term_uid": informed_consent_uid,
         },
     )
     assert_response_status_code(response, 409)
     res = response.json()
     assert (
         res["message"]
-        == f"There is already a Study Selection to the activity with Name '{custom_activity.name}' with the same groupings."
+        == f"There is already a Study Selection to the activity with Name '{cross_scope_activity.name}' with the same groupings."
+    )
+
+
+def test_cross_soa_group_duplicate_study_activity_blocked_on_patch(api_client):
+    test_study = TestUtils.create_study(project_number=project.project_number)
+
+    # Create an activity linked to two subgroups under the same group
+    subgroup_a = TestUtils.create_activity_subgroup(name="PatchDupSubgroupA")
+    subgroup_b = TestUtils.create_activity_subgroup(name="PatchDupSubgroupB")
+    patch_dup_activity = TestUtils.create_activity(
+        name="PatchDuplicateActivity",
+        activity_subgroups=[subgroup_a.uid, subgroup_b.uid],
+        activity_groups=[general_activity_group.uid, general_activity_group.uid],
+    )
+
+    # First study activity: subgroup A under Efficacy SoA group
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activities",
+        json={
+            "activity_uid": patch_dup_activity.uid,
+            "activity_subgroup_uid": subgroup_a.uid,
+            "activity_group_uid": general_activity_group.uid,
+            "soa_group_term_uid": term_efficacy_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
+
+    # Second study activity: subgroup B under a *different* SoA group (Safety)
+    # Different SoA group → different study_activity_subgroup_uid → invisible to AR validate()
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activities",
+        json={
+            "activity_uid": patch_dup_activity.uid,
+            "activity_subgroup_uid": subgroup_b.uid,
+            "activity_group_uid": general_activity_group.uid,
+            "soa_group_term_uid": informed_consent_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
+    second_study_activity_uid = response.json()["study_activity_uid"]
+
+    # Patch second: subgroup B → A.  Now both share (activity, subgroup A, group)
+    # but they remain under separate SoA groups so AR validate() still can't see them.
+    response = api_client.patch(
+        f"/studies/{test_study.uid}/study-activities/{second_study_activity_uid}",
+        json={
+            "activity_subgroup_uid": subgroup_a.uid,
+            "activity_group_uid": general_activity_group.uid,
+        },
+    )
+    assert_response_status_code(response, 409)
+    res = response.json()
+    assert (
+        res["message"]
+        == f"There is already a Study Selection to the activity with Name '{patch_dup_activity.name}' with the same groupings."
+    )
+
+
+def test_sync_latest_version_blocked_when_target_grouping_already_exists(api_client):
+    test_study = TestUtils.create_study(project_number=project.project_number)
+
+    sync_subgroup = TestUtils.create_activity_subgroup(name="SyncDupSubgroup")
+    group_a = TestUtils.create_activity_group(name="SyncDupGroupA")
+    group_b = TestUtils.create_activity_group(name="SyncDupGroupB")
+    sync_activity = TestUtils.create_activity(
+        name="SyncDuplicateActivity",
+        activity_subgroups=[sync_subgroup.uid, sync_subgroup.uid],
+        activity_groups=[group_a.uid, group_b.uid],
+    )
+
+    # Study activity #1: (subgroup, group_a) under Efficacy
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activities",
+        json={
+            "activity_uid": sync_activity.uid,
+            "activity_subgroup_uid": sync_subgroup.uid,
+            "activity_group_uid": group_a.uid,
+            "soa_group_term_uid": term_efficacy_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
+    first_study_activity_uid = response.json()["study_activity_uid"]
+
+    # Study activity #2: (subgroup, group_b) under the same SoA group (Efficacy)
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activities",
+        json={
+            "activity_uid": sync_activity.uid,
+            "activity_subgroup_uid": sync_subgroup.uid,
+            "activity_group_uid": group_b.uid,
+            "soa_group_term_uid": term_efficacy_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
+
+    # --- Modify the subgroup at library level so its version advances ---
+    response = api_client.post(
+        f"/concepts/activities/activity-sub-groups/{sync_subgroup.uid}/versions"
+    )
+    assert_response_status_code(response, 201)
+    response = api_client.put(
+        f"/concepts/activities/activity-sub-groups/{sync_subgroup.uid}",
+        json={
+            "name": sync_subgroup.name,
+            "name_sentence_case": sync_subgroup.name.lower(),
+            "library_name": sync_subgroup.library_name,
+            "activity_groups": [group_a.uid, group_b.uid],
+            "change_description": "Version bump to cause sync_latest_version divergence",
+        },
+    )
+    assert_response_status_code(response, 200)
+    response = api_client.post(
+        f"/concepts/activities/activity-sub-groups/{sync_subgroup.uid}/approvals"
+    )
+    assert_response_status_code(response, 201)
+
+    # --- Update the activity at library level: remove group_a ---
+    response = api_client.post(
+        f"/concepts/activities/activities/{sync_activity.uid}/versions"
+    )
+    assert_response_status_code(response, 201)
+
+    response = api_client.put(
+        f"/concepts/activities/activities/{sync_activity.uid}",
+        json={
+            "name": sync_activity.name,
+            "name_sentence_case": sync_activity.name.lower(),
+            "activity_groupings": [
+                {
+                    "activity_group_uid": group_b.uid,
+                    "activity_subgroup_uid": sync_subgroup.uid,
+                },
+            ],
+            "library_name": sync_activity.library_name,
+            "change_description": "Removed group_a, only group_b remains",
+        },
+    )
+    assert_response_status_code(response, 200)
+
+    response = api_client.post(
+        f"/concepts/activities/activities/{sync_activity.uid}/approvals"
+    )
+    assert_response_status_code(response, 201)
+
+    # Verify first study activity sees a newer version is available
+    response = api_client.get(
+        f"/studies/{test_study.uid}/study-activities/{first_study_activity_uid}"
+    )
+    assert_response_status_code(response, 200)
+    assert response.json()["latest_activity"] is not None
+
+    # --- Sync first study activity to latest, requesting (subgroup, group_b) ---
+    # That grouping is already used by study activity #2 → should be blocked
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-activities/{first_study_activity_uid}/sync-latest-version",
+        json={
+            "activity_group_uid": group_b.uid,
+            "activity_subgroup_uid": sync_subgroup.uid,
+        },
+    )
+    assert_response_status_code(response, 409)
+    res = response.json()
+    assert (
+        res["message"]
+        == f"There is already a Study Selection to the activity with Name '{sync_activity.name}' with the same groupings."
     )
 
 
@@ -4272,9 +4424,9 @@ def test_batch_operations_for_combined_study_activity_and_activity_schedules(
     inputs = {
         "study_uid": test_study.uid,
         "study_epoch_uid": study_epoch.uid,
-        "visit_type_uid": "VisitType_0001",
+        "visit_type": {"term_uid": "VisitType_0001"},
         "show_visit": True,
-        "time_reference_uid": "VisitSubType_0005",
+        "time_reference": {"term_uid": "VisitSubType_0005"},
         "time_value": 100,
         "time_unit_uid": DAYUID,
         "visit_class": "SINGLE_VISIT",

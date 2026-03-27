@@ -14,7 +14,7 @@ class SimpleReferencedCodelistForVariableClass(BaseModel):
 
 
 class SimpleDatasetClassForVariableClass(BaseModel):
-    ordinal: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
+    ordinal: Annotated[int | None, Field(json_schema_extra={"nullable": True})] = None
     dataset_class_name: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
@@ -59,26 +59,22 @@ class VariableClass(BaseModel):
     ] = None
     examples: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
     dataset_class: Annotated[SimpleDatasetClassForVariableClass, Field()]
-    dataset_variable_name: Annotated[
-        str | None, Field(json_schema_extra={"nullable": True})
-    ] = None
     catalogue_name: Annotated[str, Field()]
-    data_model_names: Annotated[list[str], Field()]
-    has_mapping_target: Annotated[
-        SimpleMappingTarget | None, Field(json_schema_extra={"nullable": True})
+    has_mapping_targets: Annotated[
+        list[SimpleMappingTarget] | None, Field(json_schema_extra={"nullable": True})
     ] = None
     referenced_codelists: Annotated[
         list[SimpleReferencedCodelistForVariableClass] | None,
         Field(json_schema_extra={"nullable": True}),
     ] = None
-    qualifies_variable: Annotated[
-        SimpleVariableClass | None, Field(json_schema_extra={"nullable": True})
+    qualifies_variables: Annotated[
+        list[SimpleVariableClass] | None, Field(json_schema_extra={"nullable": True})
     ] = None
 
     @classmethod
     def from_repository_output(cls, input_dict: dict[str, Any]):
         return cls(
-            uid=input_dict["uid"],
+            uid=input_dict.get("standard_root").get("uid"),
             label=input_dict.get("standard_value").get("label"),
             title=input_dict.get("standard_value").get("title"),
             description=input_dict.get("standard_value").get("description"),
@@ -111,8 +107,6 @@ class VariableClass(BaseModel):
                 ),
                 ordinal=input_dict.get("dataset_class").get("ordinal"),
             ),
-            dataset_variable_name=input_dict.get("dataset_variable_name"),
-            data_model_names=input_dict["data_model_names"],
             referenced_codelists=(
                 [
                     SimpleReferencedCodelistForVariableClass(
@@ -123,20 +117,22 @@ class VariableClass(BaseModel):
                 ]
                 or None
             ),
-            has_mapping_target=(
-                SimpleMappingTarget(
-                    uid=input_dict.get("has_mapping_target").get("uid"),
-                    name=input_dict.get("has_mapping_target").get("name"),
-                )
-                if input_dict.get("has_mapping_target")
-                else None
+            has_mapping_targets=(
+                [
+                    SimpleMappingTarget(
+                        uid=target.get("uid"),
+                        name=target.get("name"),
+                    )
+                    for target in input_dict.get("has_mapping_targets")
+                ]
             ),
-            qualifies_variable=(
-                SimpleVariableClass(
-                    uid=input_dict.get("qualifies_variable").get("uid"),
-                    name=input_dict.get("qualifies_variable").get("name"),
-                )
-                if input_dict.get("qualifies_variable")
-                else None
+            qualifies_variables=(
+                [
+                    SimpleVariableClass(
+                        uid=variable.get("uid"),
+                        name=variable.get("name"),
+                    )
+                    for variable in input_dict.get("qualifies_variables")
+                ]
             ),
         )

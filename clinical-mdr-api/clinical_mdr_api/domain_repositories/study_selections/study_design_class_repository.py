@@ -37,7 +37,7 @@ class StudyDesignClassRepository:
 
         nodes = (
             ListDistinct(
-                StudyDesignClassNeomodel.nodes.fetch_relations(
+                StudyDesignClassNeomodel.nodes.traverse(
                     "has_after__audit_trail",
                 )
                 .filter(**filters)
@@ -82,9 +82,9 @@ class StudyDesignClassRepository:
         study_root = StudyRoot.nodes.get(uid=study_uid)
         latest_study_value: StudyValue = study_root.latest_value.single()
 
-        study_design_class_node = StudyDesignClassNeomodel.create(
-            {"value": study_design_class_input.value.value}
-        )[0]
+        study_design_class_node = StudyDesignClassNeomodel(
+            value=study_design_class_input.value.value
+        ).save()
         latest_study_value.has_study_design_class.connect(study_design_class_node)
 
         _manage_versioning_with_relations(
@@ -112,9 +112,9 @@ class StudyDesignClassRepository:
         # disconnect the previous version from StudyValue
         latest_study_value.has_study_design_class.disconnect(previous_node)
 
-        study_design_class_node = StudyDesignClassNeomodel.create(
-            {"value": study_design_class_input.value.value}
-        )[0]
+        study_design_class_node = StudyDesignClassNeomodel(
+            value=study_design_class_input.value.value
+        ).save()
         latest_study_value.has_study_design_class.connect(study_design_class_node)
 
         _manage_versioning_with_relations(

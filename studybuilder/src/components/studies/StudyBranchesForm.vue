@@ -22,7 +22,6 @@
               clearable
               :disabled="Object.keys(editedBranchArm).length !== 0"
               class="required"
-              density="compact"
             />
           </v-col>
         </v-row>
@@ -35,7 +34,6 @@
               :rules="[formRules.required, formRules.max(form.name, 200)]"
               clearable
               class="required"
-              density="compact"
             />
           </v-col>
         </v-row>
@@ -48,7 +46,6 @@
               :rules="[formRules.required, formRules.max(form.short_name, 20)]"
               clearable
               class="required"
-              density="compact"
             />
           </v-col>
         </v-row>
@@ -60,7 +57,6 @@
               data-cy="study-branch-arm-randomisation-group"
               clearable
               :rules="[formRules.max(form.randomization_group, 20)]"
-              density="compact"
               @blur="enableBranchCode"
             />
           </v-col>
@@ -74,7 +70,6 @@
               :rules="codeRules"
               clearable
               :disabled="!branchCodeEnable && !isEdit()"
-              density="compact"
             />
           </v-col>
         </v-row>
@@ -94,7 +89,6 @@
               ]"
               type="number"
               clearable
-              density="compact"
             />
           </v-col>
         </v-row>
@@ -105,7 +99,6 @@
               :label="$t('_global.description')"
               data-cy="study-branch-arm-description"
               clearable
-              density="compact"
             />
           </v-col>
         </v-row>

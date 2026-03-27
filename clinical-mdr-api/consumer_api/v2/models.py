@@ -29,6 +29,10 @@ class Study(BaseModel):
         str | None,
         Field(description="Study number", json_schema_extra={"nullable": True}),
     ] = None
+    data_completeness_tags: list[str] = Field(
+        description="List of data completeness tag names assigned to the study.",
+        default_factory=list,
+    )
 
     @classmethod
     def from_input(cls, val: dict[str, Any]):
@@ -38,4 +42,5 @@ class Study(BaseModel):
             acronym=val["acronym"],
             id_prefix=val["id_prefix"],
             number=val["number"],
+            data_completeness_tags=val.get("data_completeness_tags", []),
         )

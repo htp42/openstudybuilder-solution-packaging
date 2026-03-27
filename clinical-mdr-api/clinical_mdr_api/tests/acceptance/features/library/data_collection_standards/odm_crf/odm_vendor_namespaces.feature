@@ -6,7 +6,7 @@ Feature: Manage ODM Vendor Namespaces in OpenStudyBuilder API
         Given The test user can call the OpenStudyBuilder API
 
     Scenario: User must be able to get an empty list of ODM vendor namespaces
-        When the user calls the API endpoint 'concepts/odms/vendor-namespaces'
+        When the user calls the API endpoint 'odms/vendor-namespaces'
         Then the response must include an empty list of ODM vendor namespaces
         And the response status code must be 200
     Test Coverage:
@@ -22,7 +22,7 @@ Feature: Manage ODM Vendor Namespaces in OpenStudyBuilder API
         | /tests/integration/api/old/test_odm_vendor_namespaces.py | @TestID: test_creating_a_new_odm_vendor_namespace |
 
     Scenario: User must be able to get a non-empty list of ODM vendor namespaces
-        When the user calls the API endpoint 'concepts/odms/vendor-namespaces' to get a non-empty list of ODM vendor namespaces
+        When the user calls the API endpoint 'odms/vendor-namespaces' to get a non-empty list of ODM vendor namespaces
         Then the response must include ODM vendor namespaces
         And the response status code must be 200
     Test Coverage:
@@ -30,7 +30,7 @@ Feature: Manage ODM Vendor Namespaces in OpenStudyBuilder API
         | /tests/integration/api/old/test_odm_vendor_namespaces.py | @TestID: test_getting_non_empty_list_of_odm_vendor_namespaces |
 
     Scenario: User must be able to get a specific ODM vendor namespace
-        When the user calls the API endpoint 'concepts/odms/vendor-namespaces/' to get a specific ODM vendor namespace
+        When the user calls the API endpoint 'odms/vendor-namespaces/' to get a specific ODM vendor namespace
         Then the response must include the details of ODM vendor namespace
         And the response status code must be 200
     Test Coverage:
@@ -46,7 +46,7 @@ Feature: Manage ODM Vendor Namespaces in OpenStudyBuilder API
         | /tests/integration/api/old/test_odm_vendor_namespaces.py | @TestID: test_updating_an_existing_odm_vendor_namespace |
 
     Scenario: User must be able to get the versions of a specific ODM vendor namespace
-        When the user calls the API endpoint 'concepts/odms/vendor-namespaces/uid/versions'
+        When the user calls the API endpoint 'odms/vendor-namespaces/uid/versions'
         Then the response must include the versions of the ODM vendor namespace
         And the response status code must be 200
     Test Coverage:
@@ -93,7 +93,7 @@ Feature: Manage ODM Vendor Namespaces in OpenStudyBuilder API
         | /tests/integration/api/old/test_odm_vendor_namespaces.py | @TestID: test_deleting_a_specific_odm_vendor_namespace |
 
     Scenario: User must receive an error for retrieving a non-existent ODM vendor namespace
-        When the user calls the API endpoint 'concepts/odms/vendor-namespaces/' for retrieving a non-existent ODM vendor namespace
+        When the user calls the API endpoint 'odms/vendor-namespaces/' for retrieving a non-existent ODM vendor namespace
         Then the response status code must be 404
         And the response must indicate the ODM vendor namespace does not exist
     Test Coverage:

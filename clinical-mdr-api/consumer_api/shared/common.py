@@ -5,7 +5,7 @@ from enum import Enum
 from typing import Any
 
 from fastapi import Query
-from neomodel.sync_.core import db
+from neomodel import db
 
 from common.config import settings
 from common.exceptions import ValidationException

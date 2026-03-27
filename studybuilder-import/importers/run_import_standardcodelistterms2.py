@@ -311,8 +311,7 @@ class StandardCodelistTerms2(BaseImporter):
 
     def run(self):
         self.log.info("Migrating sponsor terms")
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(self.async_run())
+        asyncio.run(self.async_run())
         self.log.info("Done migrating sponsor terms")
 
 

@@ -6,7 +6,7 @@ Feature: Manage ODM Item Groups in OpenStudyBuilder API
         Given The test user can call the OpenStudyBuilder API
 
     Scenario: User must be able to get an empty list of ODM item groups
-        When the user calls the API endpoint 'concepts/odms/item-groups'
+        When the user calls the API endpoint 'odms/item-groups'
         Then the response must include an empty list of ODM item groups
         And the response status code must be 200
     Test Coverage:
@@ -22,7 +22,7 @@ Feature: Manage ODM Item Groups in OpenStudyBuilder API
         | /tests/integration/api/old/test_odm_item_groups.py | @TestID: test_creating_a_new_odm_item_group |
 
     Scenario: User must be able to get a list of ODM item groups
-        When the user calls the API endpoint 'concepts/odms/item-groups' to get a list of ODM item groups
+        When the user calls the API endpoint 'odms/item-groups' to get a list of ODM item groups
         Then the response must include the list of ODM item groups
         And the response status code must be 200
     Test Coverage:
@@ -30,7 +30,7 @@ Feature: Manage ODM Item Groups in OpenStudyBuilder API
         | /tests/integration/api/old/test_odm_item_groups.py | @TestID: test_getting_non_empty_list_of_odm_item_groups |
 
     Scenario: User must be able to get a specific ODM item group
-        When the user calls the API endpoint 'concepts/odms/item-groups/' to get a specific ODM item group
+        When the user calls the API endpoint 'odms/item-groups/' to get a specific ODM item group
         Then the response status code must be 200
         And the response must include the ODM item group
     Test Coverage:
@@ -38,7 +38,7 @@ Feature: Manage ODM Item Groups in OpenStudyBuilder API
         | /tests/integration/api/old/test_odm_item_groups.py | @TestID: test_getting_a_specific_odm_item_group |
 
     Scenario: User must be able to get possible header values of ODM item groups
-        When the user calls the API endpoint 'concepts/odms/item-groups/headers?field_name=name'
+        When the user calls the API endpoint 'odms/item-groups/headers?field_name=name'
         Then the response status code must be 200
         And the response must include the list ["name1"]
     Test Coverage:
@@ -128,7 +128,7 @@ Feature: Manage ODM Item Groups in OpenStudyBuilder API
         | /tests/integration/api/old/test_odm_item_groups_negative.py | @TestID: test_cannot_create_a_new_odm_item_group_without_an_english_description |
 
     Scenario: User receives an error for retrieving a non-existent ODM item group
-        When the user calls the API endpoint 'concepts/odms/item-groups/' for retrieving a non-existent ODM item group
+        When the user calls the API endpoint 'odms/item-groups/' for retrieving a non-existent ODM item group
         Then the response status code must be 404
         And the response must include the message like "OdmItemGroupAR with UID 'OdmItemGroup_000002' doesn't exist ..."
     Test Coverage:

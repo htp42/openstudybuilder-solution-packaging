@@ -71,11 +71,13 @@ class StudySoARepository:
             params["study_value_version"] = study_value_version
             params["study_status"] = StudyStatus.RELEASED.value
             query = [
-                "MATCH (:StudyRoot {uid: $study_uid})-[:HAS_VERSION{status: $study_status, version: $study_value_version}]->(sv:StudyValue)"
+                "MATCH (study_root:StudyRoot {uid: $study_uid})-[study_version:HAS_VERSION {status: $study_status, version: $study_value_version}]->(study_value:StudyValue)"
             ]
 
         else:
-            query = ["MATCH (:StudyRoot {uid: $study_uid})-[:LATEST]->(sv:StudyValue)"]
+            query = [
+                "MATCH (study_root:StudyRoot {uid: $study_uid})-[study_version:LATEST]->(study_value:StudyValue)"
+            ]
 
         return query, params
 
@@ -94,7 +96,7 @@ class StudySoARepository:
         query = "\n".join(
             sv_query
             + [
-                "MATCH (sv)-[cell:HAS_PROTOCOL_SOA_CELL]->(ss:StudySelection)",
+                "MATCH (study_value)-[cell:HAS_PROTOCOL_SOA_CELL]->()",
                 "DELETE cell",
             ]
         )
@@ -103,7 +105,7 @@ class StudySoARepository:
         query = "\n".join(
             sv_query
             + [
-                "MATCH (sv)-[fn:HAS_PROTOCOL_SOA_FOOTNOTE]->(sfn:StudySoAFootnote)-[]->(ss)",
+                "MATCH (study_value)-[fn:HAS_PROTOCOL_SOA_FOOTNOTE]->()",
                 "DELETE fn",
             ]
         )
@@ -124,27 +126,26 @@ class StudySoARepository:
         sv_query, params = self._study_value_query(study_uid, study_value_version)
 
         query = list(sv_query)
-        query.append("MATCH (sv)-[cell:HAS_PROTOCOL_SOA_CELL]->(ss:StudySelection)")
-        query.append(
-            "OPTIONAL MATCH (sv)-[fn:HAS_PROTOCOL_SOA_FOOTNOTE]->(sfn:StudySoAFootnote)-[]->(ss)"
-        )
-        query.append("WITH cell, ss, fn, sfn")
-        query.append("ORDER BY cell.row, cell.column, cell.order, fn.order")
-        query.append(
-            "WITH cell, ss, COLLECT({order: fn.order, symbol: fn.symbol, uid: sfn.uid}) AS sfns"
-        )
-        query.append("RETURN cell, ss, sfns")
+        query.append(dedent("""
+            MATCH (study_value)-[cell:HAS_PROTOCOL_SOA_CELL]->(ss:StudySelection)
+            RETURN cell, ss, 
+               apoc.coll.sortMaps(
+                   [(study_value)-[fn:HAS_PROTOCOL_SOA_FOOTNOTE]->(sfn:StudySoAFootnote)-->(ss) | {order: fn.order, symbol: fn.symbol, uid: sfn.uid}], 
+                   '^order'
+               ) AS sfns
+            ORDER BY cell.row, cell.column, cell.order
+        """).strip())
 
         results, _ = db.cypher_query("\n".join(query), params)
 
         cell_references = [self._to_soa_cell_reference(*result) for result in results]
 
         query = list(sv_query)
-        query.append(
-            "MATCH (sv)-[fn:HAS_PROTOCOL_SOA_FOOTNOTE]->(sfn:StudySoAFootnote)"
-        )
-        query.append("RETURN fn, sfn")
-        query.append("ORDER BY fn.order")
+        query.append(dedent("""
+            MATCH (study_value)-[fn:HAS_PROTOCOL_SOA_FOOTNOTE]->(sfn:StudySoAFootnote)
+            RETURN fn, sfn
+            ORDER BY fn.order
+        """).strip())
 
         results, _ = db.cypher_query("\n".join(query), params)
 
@@ -321,59 +322,34 @@ class StudySoARepository:
         action.save()
         study_root.audit_trail.connect(action)
 
-    @staticmethod
+    @classmethod
     @trace_calls(
-        args=[0, 1, 2], kwargs=["study_uid", "study_value_version", "get_instances"]
+        args=[1, 2, 3], kwargs=["study_uid", "study_value_version", "get_instances"]
     )
     def query_study_activities(
+        cls,
         study_uid: str,
         study_value_version: str | None = None,
         get_instances: bool = False,
     ):
-        query = []
-        params = {
-            "study_uid": study_uid,
-            "study_version": study_value_version,
-            "study_status": StudyStatus.RELEASED.value,  # used only if study_value_version set
-            "requested_library_name": settings.requested_library_name,
-        }
-
-        if study_value_version:
-            query.append(
-                "MATCH (study_root:StudyRoot {uid: $study_uid})-[study_version:HAS_VERSION {status: $study_status, version: $study_version}]->(study_value:StudyValue)"
-            )
-        else:
-            query.append(
-                "MATCH (study_root:StudyRoot {uid: $study_uid})-[study_version:LATEST]->(study_value:StudyValue)"
-            )
+        query, params = cls._study_value_query(study_uid, study_value_version)
+        params["requested_library_name"] = settings.requested_library_name
 
         query.append(queries.study_standard_version_ct_terms_datetime)
 
-        query.append(
-            dedent(
-                """
+        query.append(dedent("""
             MATCH (study_value)-[:HAS_STUDY_ACTIVITY]->
                 (study_activity:StudyActivity)-[:HAS_SELECTED_ACTIVITY]->
                 (activity_value:ActivityValue)<-[:HAS_VERSION]-
                 (activity_root:ActivityRoot)<-[:CONTAINS_CONCEPT]-
                 (act_library:Library)
-        """
-            )
-        )
-        # Removed filter that excluded Requested library activities to support L3 MVP feature #3446656
-        # Previously: if get_instances: query.append("WHERE act_library.name <> $requested_library_name")
-        # Now placeholders (Requested library activities) will appear in operational SoA (L3)
-        query.append(
-            dedent(
-                """
+
             MATCH (study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->
                 (study_soa_group:StudySoAGroup)-[:HAS_FLOWCHART_GROUP]->
                 (:CTTermContext)-[:HAS_SELECTED_TERM]->
                 (soa_group_term_root:CTTermRoot)
             WHERE (study_soa_group)<-[:HAS_STUDY_SOA_GROUP]-(study_value)
-        """
-            )
-        )
+        """))
 
         query.append(
             queries.ct_term_name_at_datetime.format(
@@ -382,9 +358,7 @@ class StudySoARepository:
             )
         )
 
-        query.append(
-            dedent(
-                """
+        query.append(dedent("""
             OPTIONAL MATCH (study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->
                 (study_activity_group:StudyActivityGroup)-[:HAS_SELECTED_ACTIVITY_GROUP]->
                 (activity_group_value:ActivityGroupValue)<-[:HAS_VERSION]-(activity_group_root:ActivityGroupRoot)
@@ -394,18 +368,14 @@ class StudySoARepository:
                 (study_activity_subgroup:StudyActivitySubGroup)-[:HAS_SELECTED_ACTIVITY_SUBGROUP]->
                 (activity_subgroup_value:ActivitySubGroupValue)<-[:HAS_VERSION]-(activity_subgroup_root:ActivitySubGroupRoot)
             WHERE (study_activity_subgroup)<-[:HAS_STUDY_ACTIVITY_SUBGROUP]-(study_value)
-        """
-            )
-        )
+        """))
 
         if get_instances:
-            query.append(
-                dedent(
-                    """
+            query.append(dedent("""
             OPTIONAL MATCH (study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_INSTANCE]->
                 (study_activity_instance:StudyActivityInstance)
             WHERE (study_activity_instance)<-[:HAS_STUDY_ACTIVITY_INSTANCE]-(study_value)
-            // by optional match, it keeps study activity instance placeholders in the results
+
             OPTIONAL MATCH (study_activity_instance)-[:HAS_SELECTED_ACTIVITY_INSTANCE]->
                 (activity_instance_value:ActivityInstanceValue)<-[:HAS_VERSION]-
                 (activity_instance_root:ActivityInstanceRoot)<-[:CONTAINS_CONCEPT]-
@@ -414,26 +384,18 @@ class StudySoARepository:
             OPTIONAL MATCH (activity_instance_value:ActivityInstanceValue)-[:ACTIVITY_INSTANCE_CLASS]->
                 (activity_instance_class_root:ActivityInstanceClassRoot)-[:LATEST]->
                 (activity_instance_class_latest_value:ActivityInstanceClassValue)
-            """
-                )
-            )
+            """))
 
-        query.append(
-            dedent(
-                """
+        query.append(dedent("""
             WITH DISTINCT *
             ORDER BY COALESCE(study_soa_group.order, 0), COALESCE(study_activity_group.order, 0),
                 COALESCE(study_activity_subgroup.order, 0), COALESCE(study_activity.order, 0)
-        """
-            )
-        )
+        """))
         if get_instances:
             # Use COALESCE to handle NULL instance orders for placeholders without instances
             query.append(", COALESCE(study_activity_instance.order, 0)")
 
-        query.append(
-            dedent(
-                """
+        query.append(dedent("""
             RETURN {
                 study_activity_uid: study_activity.uid,
                 activity: {
@@ -448,13 +410,9 @@ class StudySoARepository:
                 },
                 accepted_version: study_activity.accepted_version,
                 keep_old_version: COALESCE(study_activity.keep_old_version, false),
-            """
-            )
-        )
+            """))
         if get_instances:
-            query.append(
-                dedent(
-                    """
+            query.append(dedent("""
                 study_activity_instance_uid: study_activity_instance.uid,
                 activity_instance: CASE WHEN activity_instance_root IS NOT NULL THEN {
                     uid: activity_instance_root.uid,
@@ -493,14 +451,10 @@ class StudySoARepository:
                 show_activity_instance_in_protocol_flowchart: COALESCE(study_activity_instance.show_activity_instance_in_protocol_flowchart, false),
                 is_important: COALESCE(study_activity_instance.is_important, false),
                 order: study_activity_instance.order,
-            """
-                )
-            )
+            """))
         else:
             query.append("    order: study_activity.order,")
-        query.append(
-            dedent(
-                """
+        query.append(dedent("""
                 show_activity_in_protocol_flowchart: study_activity.show_activity_in_protocol_flowchart,
                 show_activity_group_in_protocol_flowchart: COALESCE(study_activity_group.show_activity_group_in_protocol_flowchart, false),
                 show_activity_subgroup_in_protocol_flowchart: COALESCE(study_activity_subgroup.show_activity_subgroup_in_protocol_flowchart, false),
@@ -526,9 +480,7 @@ class StudySoARepository:
                 study_uid: study_root.uid,
                 study_version: study_version.version
             } AS selection
-        """
-            )
-        )
+        """))
 
         results, headers = db.cypher_query("\n".join(query), params=params)
         return results, headers

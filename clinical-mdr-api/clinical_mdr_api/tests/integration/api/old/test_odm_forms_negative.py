@@ -89,7 +89,7 @@ def test_create_a_new_odm_form(api_client):
         ],
         "aliases": [{"context": "context1", "name": "name1"}],
     }
-    response = api_client.post("concepts/odms/forms", json=data)
+    response = api_client.post("odms/forms", json=data)
 
     assert_response_status_code(response, 201)
 
@@ -213,7 +213,7 @@ def test_cannot_add_odm_vendor_attribute_with_an_invalid_value_to_an_odm_form(
         "vendor_attributes": [{"uid": "odm_vendor_attribute3", "value": "3423"}],
         "change_description": "desc doesnt change",
     }
-    response = api_client.patch("concepts/odms/forms/OdmForm_000001", json=data)
+    response = api_client.patch("odms/forms/OdmForm_000001", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -285,7 +285,7 @@ def test_cannot_add_odm_vendor_element_attribute_with_an_invalid_value_to_an_odm
         "vendor_attributes": [{"uid": "odm_vendor_attribute1", "value": "3423"}],
         "change_description": "desc doesnt change",
     }
-    response = api_client.patch("concepts/odms/forms/OdmForm_000001", json=data)
+    response = api_client.patch("odms/forms/OdmForm_000001", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -357,7 +357,7 @@ def test_add_odm_vendor_element_to_an_odm_form(api_client):
         "vendor_attributes": [],
         "change_description": "desc doesnt change",
     }
-    response = api_client.patch("concepts/odms/forms/OdmForm_000001", json=data)
+    response = api_client.patch("odms/forms/OdmForm_000001", json=data)
 
     assert_response_status_code(response, 200)
 
@@ -486,7 +486,7 @@ def test_cannot_create_a_new_odm_form_with_same_properties(api_client):
         ],
         "aliases": [{"context": "context1", "name": "name1"}],
     }
-    response = api_client.post("concepts/odms/forms", json=data)
+    response = api_client.post("odms/forms", json=data)
 
     assert_response_status_code(response, 409)
 
@@ -515,7 +515,7 @@ def test_cannot_create_a_new_odm_form_without_an_english_description(api_client)
         ],
         "aliases": [],
     }
-    response = api_client.post("concepts/odms/forms", json=data)
+    response = api_client.post("odms/forms", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -529,7 +529,7 @@ def test_cannot_create_a_new_odm_form_without_an_english_description(api_client)
 
 
 def test_getting_error_for_retrieving_non_existent_odm_form(api_client):
-    response = api_client.get("concepts/odms/forms/OdmForm_000002")
+    response = api_client.get("odms/forms/OdmForm_000002")
 
     assert_response_status_code(response, 404)
 
@@ -543,7 +543,7 @@ def test_getting_error_for_retrieving_non_existent_odm_form(api_client):
 
 
 def test_cannot_inactivate_an_odm_form_that_is_in_draft_status(api_client):
-    response = api_client.delete("concepts/odms/forms/OdmForm_000001/activations")
+    response = api_client.delete("odms/forms/OdmForm_000001/activations")
 
     assert_response_status_code(response, 400)
 
@@ -554,7 +554,7 @@ def test_cannot_inactivate_an_odm_form_that_is_in_draft_status(api_client):
 
 
 def test_cannot_reactivate_an_odm_form_that_is_not_retired(api_client):
-    response = api_client.post("concepts/odms/forms/OdmForm_000001/activations")
+    response = api_client.post("odms/forms/OdmForm_000001/activations")
 
     assert_response_status_code(response, 400)
 
@@ -623,7 +623,7 @@ def test_cannot_override_odm_vendor_element_that_has_attributes_connected_this_o
         "vendor_attributes": [],
         "change_description": "desc doesnt change",
     }
-    response = api_client.patch("concepts/odms/forms/OdmForm_000001", json=data)
+    response = api_client.patch("odms/forms/OdmForm_000001", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -693,7 +693,7 @@ def test_cannot_add_odm_vendor_element_attribute_to_an_odm_form_as_an_odm_vendor
         "vendor_attributes": [{"uid": "odm_vendor_attribute1", "value": "value"}],
         "change_description": "desc doesnt change",
     }
-    response = api_client.patch("concepts/odms/forms/OdmForm_000001", json=data)
+    response = api_client.patch("odms/forms/OdmForm_000001", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -765,7 +765,7 @@ def test_cannot_add_odm_vendor_attribute_to_an_odm_form_as_an_odm_vendor_element
         "vendor_attributes": [],
         "change_description": "desc doesnt change",
     }
-    response = api_client.patch("concepts/odms/forms/OdmForm_000001", json=data)
+    response = api_client.patch("odms/forms/OdmForm_000001", json=data)
 
     res = response.json()
 
@@ -789,9 +789,7 @@ def test_cannot_add_odm_item_groups_with_an_invalid_value_to_an_odm_form(api_cli
             },
         }
     ]
-    response = api_client.post(
-        "concepts/odms/forms/OdmForm_000001/item-groups", json=data
-    )
+    response = api_client.post("odms/forms/OdmForm_000001/item-groups", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -861,19 +859,16 @@ def test_cannot_add_a_non_compatible_odm_vendor_attribute_to_an_odm_form(api_cli
         "vendor_attributes": [{"uid": "odm_vendor_attribute5", "value": "value"}],
         "change_description": "desc doesnt change",
     }
-    response = api_client.patch("concepts/odms/forms/OdmForm_000001", json=data)
+    response = api_client.patch("odms/forms/OdmForm_000001", json=data)
 
     assert_response_status_code(response, 400)
 
     res = response.json()
 
     assert res["type"] == "BusinessLogicException"
-    assert (
-        res["message"]
-        == """Trying to add non-compatible ODM Vendor:
+    assert res["message"] == """Trying to add non-compatible ODM Vendor:
 
 {'odm_vendor_attribute5': ['NonCompatibleVendor']}"""
-    )
 
 
 def test_cannot_add_a_non_compatible_odm_vendor_element_to_an_odm_form(api_client):
@@ -931,19 +926,16 @@ def test_cannot_add_a_non_compatible_odm_vendor_element_to_an_odm_form(api_clien
         "vendor_attributes": [],
         "change_description": "desc doesnt change",
     }
-    response = api_client.patch("concepts/odms/forms/OdmForm_000001", json=data)
+    response = api_client.patch("odms/forms/OdmForm_000001", json=data)
 
     assert_response_status_code(response, 400)
 
     res = response.json()
 
     assert res["type"] == "BusinessLogicException"
-    assert (
-        res["message"]
-        == """Trying to add non-compatible ODM Vendor:
+    assert res["message"] == """Trying to add non-compatible ODM Vendor:
 
 {'odm_vendor_element4': ['NonCompatibleVendor']}"""
-    )
 
 
 def test_cannot_add_odm_item_groups_with_non_compatible_odm_vendor_attribute_to_a_specific_odm_form(
@@ -959,25 +951,20 @@ def test_cannot_add_odm_item_groups_with_non_compatible_odm_vendor_attribute_to_
             "vendor": {"attributes": [{"uid": "odm_vendor_attribute5", "value": "No"}]},
         }
     ]
-    response = api_client.post(
-        "concepts/odms/forms/OdmForm_000001/item-groups", json=data
-    )
+    response = api_client.post("odms/forms/OdmForm_000001/item-groups", json=data)
 
     assert_response_status_code(response, 400)
 
     res = response.json()
 
     assert res["type"] == "BusinessLogicException"
-    assert (
-        res["message"]
-        == """Trying to add non-compatible ODM Vendor:
+    assert res["message"] == """Trying to add non-compatible ODM Vendor:
 
 {'odm_vendor_attribute5': ['NonCompatibleVendor']}"""
-    )
 
 
 def test_approve_odm_form(api_client):
-    response = api_client.post("concepts/odms/forms/OdmForm_000001/approvals")
+    response = api_client.post("odms/forms/OdmForm_000001/approvals")
 
     assert_response_status_code(response, 201)
 
@@ -1056,7 +1043,7 @@ def test_approve_odm_form(api_client):
 
 
 def test_inactivate_odm_form(api_client):
-    response = api_client.delete("concepts/odms/forms/OdmForm_000001/activations")
+    response = api_client.delete("odms/forms/OdmForm_000001/activations")
 
     assert_response_status_code(response, 200)
 
@@ -1147,9 +1134,7 @@ def test_cannot_add_odm_item_groups_to_an_odm_form_that_is_in_retired_status(
             "vendor": {"attributes": []},
         }
     ]
-    response = api_client.post(
-        "concepts/odms/forms/OdmForm_000001/item-groups", json=data
-    )
+    response = api_client.post("odms/forms/OdmForm_000001/item-groups", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -1216,7 +1201,7 @@ def test_cannot_add_odm_vendor_element_to_an_odm_form_that_is_in_retired_status(
         "vendor_attributes": [],
         "change_description": "desc doesnt change",
     }
-    response = api_client.patch("concepts/odms/forms/OdmForm_000001", json=data)
+    response = api_client.patch("odms/forms/OdmForm_000001", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -1283,7 +1268,7 @@ def test_cannot_add_odm_vendor_attribute_to_an_odm_form_that_is_in_retired_statu
         "vendor_attributes": [{"uid": "odm_vendor_attribute1", "value": "value"}],
         "change_description": "desc doesnt change",
     }
-    response = api_client.patch("concepts/odms/forms/OdmForm_000001", json=data)
+    response = api_client.patch("odms/forms/OdmForm_000001", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -1352,7 +1337,7 @@ def test_cannot_add_odm_vendor_element_attribute_to_an_odm_form_that_is_in_retir
         "vendor_attributes": [],
         "change_description": "desc doesnt change",
     }
-    response = api_client.patch("concepts/odms/forms/OdmForm_000001", json=data)
+    response = api_client.patch("odms/forms/OdmForm_000001", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -1389,7 +1374,7 @@ def test_cannot_add_duplicate_translated_texts(api_client, text_type: str):
         ],
         "aliases": [],
     }
-    response = api_client.post("concepts/odms/forms", json=data)
+    response = api_client.post("odms/forms", json=data)
 
     assert_response_status_code(response, 400)
 

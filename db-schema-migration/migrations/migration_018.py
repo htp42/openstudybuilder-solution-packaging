@@ -1,4 +1,4 @@
-""" Schema migrations needed for release 2.4 to PROD"""
+"""Schema migrations needed for release 2.4 to PROD"""
 
 import os
 

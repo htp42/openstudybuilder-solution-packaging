@@ -11,12 +11,12 @@ from clinical_mdr_api.domains._utils import get_iso_lang_data
 from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import (
     StudyComponentEnum,
 )
-from clinical_mdr_api.models.concepts.odms.odm_form import OdmForm
-from clinical_mdr_api.models.concepts.odms.odm_item import OdmItem
-from clinical_mdr_api.models.concepts.odms.odm_item_group import OdmItemGroup
 from clinical_mdr_api.models.controlled_terminologies.ct_codelist_attributes import (
     CTCodelistAttributes,
 )
+from clinical_mdr_api.models.odms.form import OdmForm
+from clinical_mdr_api.models.odms.item import OdmItem
+from clinical_mdr_api.models.odms.item_group import OdmItemGroup
 from clinical_mdr_api.models.projects.project import Project
 from clinical_mdr_api.models.study_selections.study import (
     StudyDescriptionJsonModel,
@@ -27,12 +27,12 @@ from clinical_mdr_api.models.study_selections.study import (
     StudyVersionMetadataJsonModel,
 )
 from clinical_mdr_api.models.study_selections.study_visit import StudyVisit
-from clinical_mdr_api.services.concepts.odms.odm_forms import OdmFormService
-from clinical_mdr_api.services.concepts.odms.odm_item_groups import OdmItemGroupService
-from clinical_mdr_api.services.concepts.odms.odm_items import OdmItemService
 from clinical_mdr_api.services.controlled_terminologies.ct_codelist_attributes import (
     CTCodelistAttributesService,
 )
+from clinical_mdr_api.services.odms.forms import OdmFormService
+from clinical_mdr_api.services.odms.item_groups import OdmItemGroupService
+from clinical_mdr_api.services.odms.items import OdmItemService
 from clinical_mdr_api.services.projects.project import ProjectService
 from clinical_mdr_api.services.studies.study import StudyService
 from clinical_mdr_api.services.studies.study_visit import StudyVisitService
@@ -230,7 +230,7 @@ class ODMBuilder:
     @cached_property
     def odm_forms(self) -> list[OdmForm]:
         # TODO: add filtering by StudyUID when it gets implemented in database schema
-        result = OdmFormService().get_all_concepts()
+        result = OdmFormService().get_all_odms()
         return result.items
 
     def get_odm_form_defs(self) -> list[ctrxml.FormDef]:
@@ -279,7 +279,7 @@ class ODMBuilder:
         uids = [
             item_group.uid for form in self.odm_forms for item_group in form.item_groups
         ]
-        result = OdmItemGroupService().get_all_concepts(
+        result = OdmItemGroupService().get_all_odms(
             filter_by={"uid": {"v": uids, "op": "eq"}}
         )
         return result.items
@@ -338,7 +338,7 @@ class ODMBuilder:
         uids = [
             item.uid for item_group in self.odm_item_groups for item in item_group.items
         ]
-        result = OdmItemService().get_all_concepts(
+        result = OdmItemService().get_all_odms(
             filter_by={"uid": {"v": uids, "op": "eq"}}
         )
         return result.items

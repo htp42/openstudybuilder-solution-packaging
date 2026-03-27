@@ -116,29 +116,29 @@ Then('Activity is found in table', () => cy.contains('table[aria-label="SoA tabl
 
 Then('{int} Activity that exchanged the placeholder is found in table', (index) => cy.contains('table[aria-label="SoA table"] .bg-white', exchangedActivities[index - 1]).should('exist'))
 
-When('User search for non-existing activity', () => cy.contains('.v-input__control', 'Search Activities').type('xxx'))
+When('User search for non-existing activity', () => cy.contains('.v-input__control', 'Search').type('xxx'))
 
-When('User search for {int} activity on the list', (index) => cy.contains('.v-input__control', 'Search Activities').type(activity_list[index]))
+When('User search for {int} activity on the list', (index) => cy.contains('.v-input__control', 'Search').type(activity_list[index]))
 
-When('User search study activity placeholder', () => cy.contains('.v-input__control', 'Search Activities').type(activity_placeholder_name))
+When('User search study activity placeholder', () => cy.contains('.v-input__control', 'Search').type(activity_placeholder_name))
 
-When('User search {int} activity that exchanged the placeholder', (index) => cy.contains('.v-input__control', 'Search Activities').find('input').type(exchangedActivities[index - 1]))
+When('User search {int} activity that exchanged the placeholder', (index) => cy.contains('.v-input__control', 'Search').find('input').type(exchangedActivities[index - 1]))
 
-When('User search added activity in detailed SoA', () => cy.contains('.v-input__control', 'Search Activities').type(activity_activity))
+When('User search added activity in detailed SoA', () => cy.contains('.v-input__control', 'Search').type(activity_activity))
 
-When('User search study activity', () => cy.contains('.v-input__control', 'Search Activities').type(activityName))
+When('User search study activity', () => cy.contains('.v-input__control', 'Search').type(activityName))
 
-When('User search for new study activity', () => cy.contains('.v-input__control', 'Search Activities').type(new_activity_name))
+When('User search for new study activity', () => cy.contains('.v-input__control', 'Search').type(new_activity_name))
 
-When('User search study activity in lowercase', () => cy.contains('.v-input__control', 'Search Activities').type(activityName.toLowerCase()))
+When('User search study activity in lowercase', () => cy.contains('.v-input__control', 'Search').type(activityName.toLowerCase()))
 
-When('User search study activity by partial name', () => cy.contains('.v-input__control', 'Search Activities').type(activityName.slice(-3)))
+When('User search study activity by partial name', () => cy.contains('.v-input__control', 'Search').type(activityName.slice(-3)))
 
-When('User search study activity by subgroup', () => cy.contains('.v-input__control', 'Search Activities').type('API_SubGroup'))
+When('User search study activity by subgroup', () => cy.contains('.v-input__control', 'Search').type('API_SubGroup'))
 
-When('User search study activity by group', () => cy.contains('.v-input__control', 'Search Activities').type('API_Group'))
+When('User search study activity by group', () => cy.contains('.v-input__control', 'Search').type('API_Group'))
 
-When('User clears study activity search', () => cy.contains('.v-input__control', 'Search Activities').find('input').clear())
+When('User clears study activity search', () => cy.contains('.v-input__control', 'Search').find('input').clear())
 
 When('User expand table', () => cy.contains('.v-selection-control', 'Expand table').find('input').check())
 
@@ -185,7 +185,7 @@ Then('SoA table is available with Bulk actions, Export and Show version history'
     cy.get('.mb-4 button .mdi-history').should('be.visible')
 })
 
-Then('Search is available in SoA table', () => cy.contains('.v-label', 'Search Activities').parent().within(() => cy.get('input').should('exist')))
+Then('Search is available in SoA table', () => cy.contains('.v-label', 'Search').parent().within(() => cy.get('input').should('exist')))
 
 Then('Button for Expanding SoA table is available', () => cy.contains('.v-selection-control', 'Expand table').should('be.visible'))
 

@@ -1,16 +1,10 @@
-from neomodel import (
-    BooleanProperty,
-    One,
-    RelationshipFrom,
-    RelationshipTo,
-    StringProperty,
-    ZeroOrMore,
-)
+from neomodel import One, RelationshipFrom, RelationshipTo, ZeroOrMore
 
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import CTPackage
 from clinical_mdr_api.domain_repositories.models.generic import ClinicalMdrRel
 from clinical_mdr_api.domain_repositories.models.study import StudyValue
 from clinical_mdr_api.domain_repositories.models.study_selections import StudySelection
+from common.neomodel import BooleanProperty, StringProperty
 
 
 class StudyStandardVersion(StudySelection):

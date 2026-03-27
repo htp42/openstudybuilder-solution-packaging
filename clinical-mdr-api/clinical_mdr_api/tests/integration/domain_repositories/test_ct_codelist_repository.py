@@ -25,16 +25,14 @@ class TestCTCodelistRepository(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.db = inject_and_clear_db(cls.TEST_DB_NAME)
-        cls.db.cypher_query(
-            """
+        cls.db.cypher_query("""
         CREATE(:Library{name:"CDISC", is_editable:true})
         CREATE(:Library{name:"Sponsor1", is_editable:true})
         CREATE(sdtm_ct:CTCatalogue{name:"SDTM CT"})-[:CONTAINS_PACKAGE]->(:CTPackage{uid: "SDTM_PACKAGE_1",name:"SDTM_PACKAGE_1"})
         MERGE(sdtm_ct)-[:CONTAINS_PACKAGE]->(:CTPackage{uid: "SDTM_PACKAGE_2", name:"SDTM_PACKAGE_2"})
         CREATE(cdash_ct:CTCatalogue{name:"CDASH CT"})-[:CONTAINS_PACKAGE]->(:CTPackage{uid: "CDASH_PACKAGE_1",name:"CDASH_PACKAGE_1"})
         MERGE(cdash_ct)-[:CONTAINS_PACKAGE]->(:CTPackage{uid: "CDASH_PACKAGE_2", name:"CDASH_PACKAGE_2"})
-        """
-        )
+        """)
         cls.codelist_attributes_repo = CTCodelistAttributesRepository()
         cls.codelist_names_repo = CTCodelistNameRepository()
 

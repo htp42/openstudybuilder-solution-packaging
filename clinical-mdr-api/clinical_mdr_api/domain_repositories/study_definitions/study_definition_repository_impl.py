@@ -4,10 +4,10 @@ from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Any, Mapping, MutableSequence, Sequence, cast, overload
 
-from neomodel import NodeSet
+from neomodel import db
 from neomodel.exceptions import DoesNotExist
-from neomodel.sync_.core import NodeMeta, db
 from neomodel.sync_.match import Collect, Last, Path
+from neomodel.sync_.node import NodeMeta
 
 from clinical_mdr_api import utils
 from clinical_mdr_api.domain_repositories._utils.helpers import (
@@ -70,6 +70,7 @@ from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import 
     StudyVersionMetadataVO,
 )
 from clinical_mdr_api.models.study_selections.study import (
+    StudyPreferredTimeUnit,
     StudySoaPreferencesInput,
     StudySubpartAuditTrail,
 )
@@ -84,6 +85,7 @@ from clinical_mdr_api.services._utils import calculate_diffs
 from clinical_mdr_api.services.user_info import UserInfoService
 from common import exceptions
 from common.config import settings
+from common.telemetry import trace_calls
 from common.utils import convert_to_datetime
 
 MAINTAIN_RELATIONSHIPS_FOR_NEW_STUDY_VALUE = {
@@ -973,11 +975,15 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                 latest_locked.start_date = (
                     current_snapshot.current_metadata.version_timestamp
                 )
-                latest_locked.author_id = self.audit_info.author_id
-                latest_locked.change_description = (
-                    current_snapshot.current_metadata.version_description
+                if self.audit_info.author_id:
+                    latest_locked.author_id = self.audit_info.author_id
+                if current_snapshot.current_metadata.version_description:
+                    latest_locked.change_description = (
+                        current_snapshot.current_metadata.version_description
+                    )
+                latest_locked.version = str(
+                    len(current_snapshot.locked_metadata_versions)
                 )
-                latest_locked.version = len(current_snapshot.locked_metadata_versions)
                 latest_locked.save()
                 root.latest_locked.reconnect(
                     old_node=latest_locked.end_node(), new_node=expected_latest_value
@@ -1014,7 +1020,8 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
             latest_draft_relationship.start_date = (
                 current_snapshot.current_metadata.version_timestamp
             )
-            latest_draft_relationship.author_id = self.audit_info.author_id
+            if self.audit_info.author_id:
+                latest_draft_relationship.author_id = self.audit_info.author_id
             latest_draft_relationship.end_date = None
             latest_draft_relationship.save()
             root.latest_draft.reconnect(
@@ -1569,12 +1576,10 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                             )
                         )
                         if study_array_field_node is None or to_delete:
-                            study_array_field_node = StudyArrayField.create(
-                                {
-                                    "value": study_array_field_value,
-                                    "field_name": study_array_field_name,
-                                }
-                            )[0]
+                            study_array_field_node = StudyArrayField(
+                                value=study_array_field_value,
+                                field_name=study_array_field_name,
+                            ).save()
                         # disconnect any existing has_term or has_dictionary_term relationships
                         if config_item.is_dictionary_term:
                             for rel in study_array_field_node.has_dictionary_type.all():
@@ -1609,9 +1614,9 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                             )
                         )
                         if study_array_field_node is None or to_delete:
-                            study_array_field_node = StudyArrayField.create(
-                                {"value": [], "field_name": study_array_field_name}
-                            )[0]
+                            study_array_field_node = StudyArrayField(
+                                value=[], field_name=study_array_field_name
+                            ).save()
                         # disconnect any existing has_type relationships
                         for rel in study_array_field_node.has_type.all():
                             study_array_field_node.has_type.disconnect(rel)
@@ -1991,11 +1996,13 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
     def _study_metadata_snapshot_from_cypher_res(
         cls, metadata_section: dict[Any, Any]
     ) -> StudyDefinitionSnapshot.StudyMetadataSnapshot: ...
+
     @overload
     @classmethod
     def _study_metadata_snapshot_from_cypher_res(
         cls, metadata_section: None
     ) -> None: ...
+
     @classmethod
     def _study_metadata_snapshot_from_cypher_res(
         cls, metadata_section: dict[Any, Any] | None
@@ -2132,8 +2139,10 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
             audit_node = Delete()
         else:
             audit_node = Edit()
-        audit_node.status = change_status
-        audit_node.author_id = author_id
+        if change_status:
+            audit_node.status = change_status
+        if author_id:
+            audit_node.author_id = author_id
         audit_node.date = date
         audit_node.save()
 
@@ -2609,8 +2618,10 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
             audit_node = Delete()
         else:
             audit_node = Edit()
-        audit_node.status = change_status
-        audit_node.author_id = author_id
+        if change_status:
+            audit_node.status = change_status
+        if author_id:
+            audit_node.author_id = author_id
         audit_node.date = date
         audit_node.save()
 
@@ -2627,7 +2638,7 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
         study_uid: str,
         for_protocol_soa: bool = False,
         study_value_version: str | None = None,
-    ) -> NodeSet:
+    ) -> list[StudyTimeField]:
         filters = {
             "field_name": (
                 settings.study_field_soa_preferred_time_unit_name
@@ -2649,7 +2660,7 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
                     "has_time_field__latest_value__uid": study_uid,
                 }
             )
-        nodes = StudyTimeField.nodes.fetch_relations(
+        nodes = StudyTimeField.nodes.traverse(
             "has_unit_definition__has_latest_value",
             "has_after__audit_trail",
         ).filter(**filters)
@@ -2657,7 +2668,7 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
 
     def post_preferred_time_unit(
         self, study_uid: str, unit_definition_uid: str, for_protocol_soa: bool = False
-    ) -> NodeSet:
+    ) -> list[StudyPreferredTimeUnit]:
         nodes = self.get_preferred_time_unit(
             study_uid=study_uid, for_protocol_soa=for_protocol_soa
         )
@@ -2670,16 +2681,14 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
         study_root = StudyRoot.nodes.get(uid=study_uid)
         latest_study_value = study_root.latest_value.single()
         unit_definition = UnitDefinitionRoot.nodes.get(uid=unit_definition_uid)
-        preferred_time_field_sf = StudyTimeField.create(
-            {
-                "value": unit_definition_uid,
-                "field_name": (
-                    settings.study_field_soa_preferred_time_unit_name
-                    if for_protocol_soa
-                    else settings.study_field_preferred_time_unit_name
-                ),
-            }
-        )[0]
+        preferred_time_field_sf = StudyTimeField(
+            value=unit_definition_uid,
+            field_name=(
+                settings.study_field_soa_preferred_time_unit_name
+                if for_protocol_soa
+                else settings.study_field_preferred_time_unit_name
+            ),
+        ).save()
         preferred_time_field_sf.has_unit_definition.connect(unit_definition)
         latest_study_value.has_time_field.connect(preferred_time_field_sf)
 
@@ -2697,38 +2706,36 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
 
     def edit_preferred_time_unit(
         self, study_uid: str, unit_definition_uid: str, for_protocol_soa: bool = False
-    ) -> NodeSet:
+    ) -> list[StudyPreferredTimeUnit]:
         # getting previous preferred time unit study field
-        previous_time_field = self.get_preferred_time_unit(
+        previous_time_fields = self.get_preferred_time_unit(
             study_uid=study_uid, for_protocol_soa=for_protocol_soa
         )
 
         exceptions.BusinessLogicException.raise_if(
-            len(previous_time_field) > 1,
+            len(previous_time_fields) > 1,
             msg="Returned more than one previous preferred StudyTimeField nodes",
         )
         exceptions.BusinessLogicException.raise_if(
-            len(previous_time_field) == 0,
+            len(previous_time_fields) == 0,
             msg="The previous preferred StudyTimeField node was not found",
         )
 
-        previous_time_field = previous_time_field[0]
+        previous_time_field = previous_time_fields[0]
 
         study_root = StudyRoot.nodes.get(uid=study_uid)
         latest_study_value = study_root.latest_value.single()
         unit_definition = UnitDefinitionRoot.nodes.get(uid=unit_definition_uid)
 
         # creating (soa_)preferred_time_unit StudyTimeField node
-        preferred_time_field_sf = StudyTimeField.create(
-            {
-                "value": unit_definition_uid,
-                "field_name": (
-                    settings.study_field_soa_preferred_time_unit_name
-                    if for_protocol_soa
-                    else settings.study_field_preferred_time_unit_name
-                ),
-            }
-        )[0]
+        preferred_time_field_sf = StudyTimeField(
+            value=unit_definition_uid,
+            field_name=(
+                settings.study_field_soa_preferred_time_unit_name
+                if for_protocol_soa
+                else settings.study_field_preferred_time_unit_name
+            ),
+        ).save()
 
         # connecting (soa_)preferred_time_unit StudyTimeField node to the UnitDefinitionRoot node
         preferred_time_field_sf.has_unit_definition.connect(unit_definition)
@@ -2805,11 +2812,46 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
 
         return len(result) > 0 and len(result[0]) > 0
 
+    @staticmethod
+    @trace_calls(args=[0, 1], kwargs=["study_uid", "study_value_version"])
+    def get_study_id(
+        study_uid: str, study_value_version: str | None = None
+    ) -> str | None:
+        """Efficiently retrieves the Study ID for a given Study uid and version."""
+
+        if study_value_version:
+            query = [
+                "MATCH (study_root:StudyRoot {uid: $uid})-[has_version:HAS_VERSION]->(study_value:StudyValue)",
+                "WHERE NOT EXISTS((study_value)<-[:BEFORE]-(:Delete)) AND has_version.version=$version",
+            ]
+        else:
+            query = [
+                "MATCH (study_root:StudyRoot {uid: $uid})-[:LATEST]->(study_value:StudyValue)",
+                "WHERE NOT EXISTS((study_value)<-[:BEFORE]-(:Delete))",
+            ]
+
+        query.append("RETURN study_value")
+
+        results, _ = db.cypher_query(
+            "\n".join(query), {"uid": study_uid, "version": study_value_version}
+        )
+
+        if len(results):
+            study_value = results[0][0]
+
+            study_id_prefix = study_value.get("study_id_prefix")
+            study_number = study_value.get("study_number")
+
+            if study_number and study_id_prefix:
+                return f"{study_id_prefix}-{study_number}"
+
+        return None
+
     def get_latest_released_version_from_specific_datetime(
         self, study_uid: str, specified_datetime: str
     ) -> str | None:
         version_relationships = (
-            StudyValue.nodes.fetch_relations("has_version")
+            StudyValue.nodes.traverse("has_version")
             .filter(
                 **{
                     "has_version|end_date__lte": datetime.fromisoformat(
@@ -2995,7 +3037,7 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
 
         filters["field_name__in"] = field_names
         nodes = (
-            StudyBooleanField.nodes.fetch_relations(
+            StudyBooleanField.nodes.traverse(
                 "has_after__audit_trail",
             )
             .filter(**filters)
@@ -3017,7 +3059,7 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
         latest_study_value = study_root.latest_value.single()
 
         for name, value in soa_preferences.model_dump(by_alias=True).items():
-            field_sf = StudyBooleanField.create({"field_name": name, "value": value})[0]
+            field_sf = StudyBooleanField(field_name=name, value=value).save()
             latest_study_value.has_boolean_field.connect(field_sf)
 
             self._generate_study_field_audit_node(
@@ -3055,7 +3097,7 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
         _nodes = {node.field_name: node for node in nodes}
 
         for name, value in prefs.items():
-            field_sf = StudyBooleanField.create({"field_name": name, "value": value})[0]
+            field_sf = StudyBooleanField(field_name=name, value=value).save()
             latest_study_value.has_boolean_field.connect(field_sf)
 
             self._generate_study_field_audit_node(
@@ -3092,7 +3134,7 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
 
         try:
             return (
-                StudyArrayField.nodes.fetch_relations("has_after__audit_trail")
+                StudyArrayField.nodes.traverse("has_after__audit_trail")
                 .filter(**filters)
                 .get()[0]
             )
@@ -3123,7 +3165,7 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
 
         # Check if uid is already in the array
         exceptions.AlreadyExistsException.raise_if(
-            previous_study_array_field and uid in previous_study_array_field.value,
+            previous_study_array_field and uid in previous_study_array_field.value,  # type: ignore[operator]
             msg=f"StudyVisit '{uid}' is already present in SoA split UIDs for Study '{study_uid}'.",
         )
 
@@ -3170,15 +3212,13 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
             latest_study_value.has_array_field.disconnect(previous_study_array_field)
 
         # Create new StudyArrayField with the uid added
-        uids = (
-            set(previous_study_array_field.value)
-            if previous_study_array_field
-            else set()
-        )
+        uids: set[str] = set()
+        if previous_study_array_field:
+            uids = set(previous_study_array_field.value)  # type: ignore[call-overload]
         uids |= {uid}
-        new_study_array_field = StudyArrayField.create(
-            {"field_name": _field_name, "value": list(uids)}
-        )[0]
+        new_study_array_field = StudyArrayField(
+            field_name=_field_name, value=list(uids)
+        ).save()
         latest_study_value.has_array_field.connect(new_study_array_field)
 
         # Extend audit trail
@@ -3215,7 +3255,7 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
         # Check if uid is in the array
         exceptions.NotFoundException.raise_if_not(
             previous_study_array_field is not None
-            and uid in previous_study_array_field.value,
+            and uid in previous_study_array_field.value,  # type: ignore[operator]
             msg=f"StudyVisit '{uid}' is not in SoA split UIDs for Study '{study_uid}'.",
         )
 
@@ -3226,10 +3266,10 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
         latest_study_value.has_array_field.disconnect(previous_study_array_field)
 
         # Create new StudyArrayField if uids remain after removal
-        if new_uids := list(set(previous_study_array_field.value) - {uid}):
-            new_study_array_field = StudyArrayField.create(
-                {"field_name": _field_name, "value": new_uids}
-            )[0]
+        if new_uids := list(set(previous_study_array_field.value) - {uid}):  # type: ignore[arg-type]
+            new_study_array_field = StudyArrayField(
+                field_name=_field_name, value=new_uids
+            ).save()
             latest_study_value.has_array_field.connect(new_study_array_field)
         else:
             new_study_array_field = None
@@ -3261,7 +3301,7 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
 
         node: StudyArrayField
         for node, _, _, study_root, _, study_value, *_ in (
-            StudyArrayField.nodes.fetch_relations("has_after__audit_trail")
+            StudyArrayField.nodes.traverse("has_after__audit_trail")
             .filter(**filters)
             .all()
         ):

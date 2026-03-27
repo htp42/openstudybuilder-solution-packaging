@@ -19,7 +19,6 @@
               item-title="name"
               item-value="uid"
               :rules="[formRules.required]"
-              density="compact"
               clearable
             />
           </v-col>
@@ -33,7 +32,6 @@
               :items="filteredSubGroups"
               item-title="name"
               item-value="uid"
-              density="compact"
               :rules="[formRules.required]"
               clearable
               :disabled="
@@ -48,7 +46,6 @@
               v-model="form.name"
               :label="$t('ActivityForms.activity_name')"
               data-cy="requestedform-activity-name-field"
-              density="compact"
               clearable
               :rules="[formRules.required]"
             />
@@ -64,7 +61,6 @@
               v-model="form.abbreviation"
               :label="$t('ActivityFormsRequested.abbreviation')"
               data-cy="requestedform-abbreviation-field"
-              density="compact"
               clearable
             />
           </v-col>
@@ -75,7 +71,6 @@
               v-model="form.definition"
               :label="$t('ActivityFormsRequested.definition')"
               data-cy="requestedform-definition-field"
-              density="compact"
               clearable
               auto-grow
               rows="1"
@@ -88,7 +83,6 @@
               v-model="form.request_rationale"
               :label="$t('ActivityFormsRequested.rationale_for_request')"
               data-cy="requestedform-rationale-for-request-field"
-              density="compact"
               clearable
               auto-grow
               rows="1"
@@ -104,7 +98,6 @@
             <v-textarea
               v-model="form.change_description"
               data-cy="requestedform-change-description-field"
-              density="compact"
               clearable
               auto-grow
               rows="1"

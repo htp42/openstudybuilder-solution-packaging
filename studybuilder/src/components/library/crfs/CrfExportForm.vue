@@ -12,7 +12,6 @@
               class="mt-5"
               :label="$t('OdmViewer.format')"
               :items="formats"
-              density="compact"
               clearable
               :rules="[formRules.required]"
             />
@@ -20,7 +19,6 @@
           <v-col cols="2">
             <v-switch
               v-model="draft"
-              color="primary"
               class="mt-6"
               :label="$t('_global.draft')"
             />

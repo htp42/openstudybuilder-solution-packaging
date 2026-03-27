@@ -2,7 +2,7 @@ import logging
 
 from cachetools import TTLCache, cached
 from neo4j.exceptions import Forbidden
-from neomodel.sync_.core import db
+from neomodel import db
 from starlette_context import context
 
 from common.auth.models import Auth, User

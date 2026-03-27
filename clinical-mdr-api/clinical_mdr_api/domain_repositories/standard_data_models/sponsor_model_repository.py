@@ -1,11 +1,4 @@
 from neomodel import NodeSet, RelationshipDefinition
-from neomodel.sync_.match import (
-    Collect,
-    Last,
-    NodeNameResolver,
-    RawCypher,
-    RelationNameResolver,
-)
 
 from clinical_mdr_api.domain_repositories.library_item_repository import (
     LibraryItemRepositoryImplBase,
@@ -44,23 +37,8 @@ class SponsorModelRepository(  # type: ignore[misc]
     return_model = SponsorModel
 
     def get_neomodel_extension_query(self) -> NodeSet:
-        return DataModelIGRoot.nodes.fetch_relations(
-            "has_library",
-            "has_latest_sponsor_model_value__extends_version",
-        ).subquery(
-            DataModelIGRoot.nodes.fetch_relations("has_sponsor_model_version")
-            .intermediate_transform(
-                {"rel": {"source": RelationNameResolver("has_sponsor_model_version")}},
-                ordering=[
-                    RawCypher("toInteger(split(rel.version, '.')[0])"),
-                    RawCypher("toInteger(split(rel.version, '.')[1])"),
-                    "rel.end_date",
-                    "rel.start_date",
-                ],
-            )
-            .annotate(latest_version=Last(Collect("rel"))),
-            ["latest_version"],
-            initial_context=[NodeNameResolver("self")],
+        return DataModelIGRoot.nodes.traverse(
+            "has_sponsor_model_version__extends_version",
         )
 
     def generate_name(self, ig_uid: str, ig_version_number: str, version_number: str):

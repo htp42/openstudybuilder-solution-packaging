@@ -12,6 +12,7 @@ default_logging_config()
 
 configure_database(
     settings.neo4j_dsn,
+    soft_cardinality_check=settings.soft_cardinality_check,
     max_connection_lifetime=settings.neo4j_connection_lifetime,
     liveness_check_timeout=settings.neo4j_liveness_check_timeout,
 )
@@ -248,11 +249,19 @@ from clinical_mdr_api import routers
 
 # Include routers here
 app.include_router(routers.system_router, tags=["System"])
+app.include_router(
+    routers.preferences_router, prefix="/user-preferences", tags=["User Preferences"]
+)
 
 app.include_router(
     routers.feature_flags_router,
     prefix="/feature-flags",
     tags=["Feature Flags"],
+)
+app.include_router(
+    routers.data_completeness_tags_router,
+    prefix="/data-completeness-tags",
+    tags=["Data Completeness Tags"],
 )
 app.include_router(
     routers.notifications_router,
@@ -262,48 +271,44 @@ app.include_router(
 app.include_router(routers.iso_router, prefix="/iso", tags=["ISO Standards"])
 app.include_router(
     routers.odm_study_events_router,
-    prefix="/concepts/odms/study-events",
+    prefix="/odms/study-events",
     tags=["ODM Study Events"],
 )
-app.include_router(
-    routers.odm_forms_router, prefix="/concepts/odms/forms", tags=["ODM Forms"]
-)
+app.include_router(routers.odm_forms_router, prefix="/odms/forms", tags=["ODM Forms"])
 app.include_router(
     routers.odm_item_groups_router,
-    prefix="/concepts/odms/item-groups",
+    prefix="/odms/item-groups",
     tags=["ODM Item Groups"],
 )
-app.include_router(
-    routers.odm_item_router, prefix="/concepts/odms/items", tags=["ODM Items"]
-)
+app.include_router(routers.odm_item_router, prefix="/odms/items", tags=["ODM Items"])
 app.include_router(
     routers.odm_conditions_router,
-    prefix="/concepts/odms/conditions",
+    prefix="/odms/conditions",
     tags=["ODM Conditions"],
 )
 app.include_router(
     routers.odm_methods_router,
-    prefix="/concepts/odms/methods",
+    prefix="/odms/methods",
     tags=["ODM Methods"],
 )
 app.include_router(
     routers.odm_vendor_namespace_router,
-    prefix="/concepts/odms/vendor-namespaces",
+    prefix="/odms/vendor-namespaces",
     tags=["ODM Vendor Namespaces"],
 )
 app.include_router(
     routers.odm_vendor_attribute_router,
-    prefix="/concepts/odms/vendor-attributes",
+    prefix="/odms/vendor-attributes",
     tags=["ODM Vendor Attributes"],
 )
 app.include_router(
     routers.odm_vendor_element_router,
-    prefix="/concepts/odms/vendor-elements",
+    prefix="/odms/vendor-elements",
     tags=["ODM Vendor Elements"],
 )
 app.include_router(
     routers.odm_metadata_router,
-    prefix="/concepts/odms/metadata",
+    prefix="/odms/metadata",
     tags=["ODM Metadata"],
 )
 app.include_router(

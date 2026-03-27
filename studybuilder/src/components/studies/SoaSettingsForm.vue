@@ -16,7 +16,6 @@
           <v-radio-group
             v-model="preferredTimeUnit"
             class="ml-4"
-            color="primary"
             hide-details
             :disabled="!accessGuard.checkPermission($roles.STUDY_WRITE)"
           >
@@ -30,7 +29,6 @@
             :label="$t('ProtocolFlowchart.baseline_as_time_zero')"
             hide-details
             class="ml-6"
-            color="primary"
             :disabled="!accessGuard.checkPermission($roles.STUDY_WRITE)"
           />
         </v-row>

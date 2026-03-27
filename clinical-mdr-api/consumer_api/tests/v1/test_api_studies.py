@@ -6,6 +6,7 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 
+from clinical_mdr_api.services.data_completeness_tags import DataCompletenessTagService
 from clinical_mdr_api.services.studies.study import StudyService
 from clinical_mdr_api.services.studies.study_flowchart import StudyFlowchartService
 from clinical_mdr_api.tests.integration.utils.api import inject_base_data
@@ -33,6 +34,7 @@ STUDY_FIELDS_ALL = [
     "number",
     "acronym",
     "versions",
+    "data_completeness_tags",
 ]
 
 STUDY_FIELDS_NOT_NULL = [
@@ -473,6 +475,40 @@ def test_get_studies(api_client):
             assert any(
                 item["uid"] == study.uid for item in res["items"]
             ), f"Study {study.uid} not found in response"
+
+
+def test_get_studies_returns_data_completeness_tags(api_client):
+    """Verify that data_completeness_tags are properly returned for studies."""
+    # Create tags and assign them to a study
+    tag1 = TestUtils.create_data_completeness_tag(name="Consumer API Tag A")
+    tag2 = TestUtils.create_data_completeness_tag(name="Consumer API Tag B")
+
+    service = DataCompletenessTagService()
+    service.assign_tag_to_study(study_uid=studies[0].uid, tag_uid=tag1.uid)
+    service.assign_tag_to_study(study_uid=studies[0].uid, tag_uid=tag2.uid)
+
+    response = api_client.get(f"{BASE_URL}/studies?page_size=100")
+    assert_response_status_code(response, 200)
+    res = response.json()
+
+    # Find the study we assigned tags to
+    study_item = next((s for s in res["items"] if s["uid"] == studies[0].uid), None)
+    assert study_item is not None
+    assert "data_completeness_tags" in study_item
+    assert isinstance(study_item["data_completeness_tags"], list)
+    assert tag1.name in study_item["data_completeness_tags"]
+    assert tag2.name in study_item["data_completeness_tags"]
+
+    # Verify a study without tags returns an empty list
+    study_without_tags = next(
+        (s for s in res["items"] if s["uid"] == studies[1].uid), None
+    )
+    assert study_without_tags is not None
+    assert study_without_tags["data_completeness_tags"] == []
+
+    # Cleanup
+    service.remove_tag_from_study(study_uid=studies[0].uid, tag_uid=tag1.uid)
+    service.remove_tag_from_study(study_uid=studies[0].uid, tag_uid=tag2.uid)
 
 
 def test_get_studies_pagination_sorting(api_client):

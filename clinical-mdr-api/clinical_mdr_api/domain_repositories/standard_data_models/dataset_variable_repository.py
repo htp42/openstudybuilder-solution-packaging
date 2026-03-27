@@ -19,15 +19,10 @@ class DatasetVariableRepository(StandardDataModelRepository):
     return_model = DatasetVariableAPIModel
 
     # pylint: disable=unused-argument
-    def generic_match_clause(
-        self, versioning_relationship: str, uid: str | None = None
-    ):
+    def generic_match_clause(self, versioning_relationship: str):
         standard_data_model_label = self.root_class.__label__
         standard_data_model_value_label = self.value_class.__label__
-        uid_filter = ""
-        if uid:
-            uid_filter = f"{{uid: '{uid}'}}"
-        return f"""MATCH (standard_root:{standard_data_model_label} {uid_filter})-[:HAS_INSTANCE]->
+        return f"""MATCH (standard_root:{standard_data_model_label})-[:HAS_INSTANCE]->
                 (standard_value:{standard_data_model_value_label})<-[has_dataset_variable_rel:HAS_DATASET_VARIABLE]-
                 (dataset_instance:DatasetInstance)<-[:HAS_DATASET]-(data_model_ig_value:DataModelIGValue)
                 <-[:HAS_VERSION]-(data_model_ig_root:DataModelIGRoot)
@@ -54,7 +49,7 @@ class DatasetVariableRepository(StandardDataModelRepository):
         (
             filter_statements_from_standard,
             filter_query_parameters,
-        ) = super().create_query_filter_statement()
+        ) = super().create_query_filter_statement(**kwargs)
         filter_parameters = []
         if kwargs.get("dataset_scenario_uid"):
             filter_query_parameters["dataset_scenario_uid"] = kwargs.get(
@@ -107,15 +102,13 @@ class DatasetVariableRepository(StandardDataModelRepository):
 
     def specific_alias_clause(self) -> str:
         return """
-        WITH 
-            standard_root,
-            uid,
-            name,
-            description,
-            standard_value,
+            *,
+            standard_root.uid AS uid,
             has_dataset_variable_rel,
             dataset_root,
             dataset_instance,
+            standard_value.name AS name,
+            standard_value.description AS description,
             standard_value.label AS label,
             standard_value.title AS title,
             standard_value.core AS core,
@@ -129,9 +122,6 @@ class DatasetVariableRepository(StandardDataModelRepository):
             standard_value.described_value_domain AS described_value_domain,
             standard_value.value_list AS value_list,
             standard_value.analysis_variable_set AS analysis_variable_set,
-            apoc.coll.toSet([(standard_value)<-[:HAS_DATASET_VARIABLE]-
-                (:DatasetInstance)<-[:HAS_DATASET]-(data_model_ig_value:DataModelIGValue) 
-                | data_model_ig_value.name]) AS data_model_ig_names,
             {ordinal:toInteger(last(split(has_dataset_variable_rel.ordinal, "."))), root_ordinal:toInteger(head(split(has_dataset_variable_rel.ordinal, "."))), uid:dataset_root.uid} AS dataset,
             head([(standard_value)-[:IMPLEMENTS_VARIABLE]->(class_variable_value:VariableClassInstance)<-[:HAS_INSTANCE]-(class_variable_root) | {
             uid:class_variable_root.uid, name:class_variable_value.label }]) AS implements_variable,

@@ -10,8 +10,6 @@
           item-title="display_name"
           item-value="uid"
           disabled
-          variant="outlined"
-          density="compact"
           class="w-50"
         />
         <SelectActivityItemTermField
@@ -38,8 +36,6 @@
           item-title="display_name"
           item-value="uid"
           disabled
-          variant="outlined"
-          density="compact"
           class="w-50"
         />
         <SelectActivityItemTermField

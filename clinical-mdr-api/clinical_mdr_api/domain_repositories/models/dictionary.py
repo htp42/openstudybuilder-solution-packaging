@@ -1,4 +1,4 @@
-from neomodel import RelationshipFrom, RelationshipTo, StringProperty
+from neomodel import RelationshipFrom, RelationshipTo
 
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CodelistTermRelationship,
@@ -10,6 +10,7 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     VersionRoot,
     VersionValue,
 )
+from common.neomodel import StringProperty
 
 
 class DictionaryTermValue(VersionValue):

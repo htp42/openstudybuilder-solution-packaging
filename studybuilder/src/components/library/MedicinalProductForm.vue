@@ -14,8 +14,6 @@
             <v-text-field
               v-model="form.name"
               :label="$t('_global.name')"
-              density="compact"
-              variant="outlined"
               :rules="[formRules.required]"
             />
           </v-col>
@@ -25,11 +23,9 @@
             <v-autocomplete
               v-model="form.compound_uid"
               :label="$t('MedicinalProduct.compound')"
-              density="compact"
               :items="compounds"
               item-title="name"
               item-value="uid"
-              variant="outlined"
               :rules="[formRules.required]"
             />
           </v-col>
@@ -39,11 +35,9 @@
             <v-autocomplete
               v-model="form.pharmaceutical_product_uid"
               :label="$t('MedicinalProduct.pharmaceutical_product')"
-              density="compact"
               :items="pharmaceuticalProducts"
               :item-title="
-                (item) =>
-                  displayIngredients(item) + ', ' + displayDosageForms(item)
+                (item) => item.derived_name + ' / ' + displayDosageForms(item)
               "
               item-value="uid"
               variant="outlined"
@@ -51,10 +45,7 @@
               :filter-keys="['raw.searchable_text']"
             >
               <template #item="{ props, item }">
-                <v-list-item
-                  v-bind="props"
-                  :title="displayIngredients(item.raw)"
-                >
+                <v-list-item v-bind="props" :title="item.raw.derived_name">
                   <v-list-item-subtitle class="pa-2">
                     {{ displayDosageForms(item.raw) }}
                     {{ displayRoutesOfAdministration(item.raw) }}
@@ -69,11 +60,9 @@
             <v-autocomplete
               v-model="form.dose_frequency_uid"
               :label="$t('MedicinalProduct.frequency')"
-              density="compact"
               :items="frequencies"
               item-title="sponsor_preferred_name"
               item-value="term_uid"
-              variant="outlined"
             />
           </v-col>
         </v-row>
@@ -82,11 +71,9 @@
             <v-autocomplete
               v-model="form.delivery_device_uid"
               :label="$t('MedicinalProduct.delivery_device')"
-              density="compact"
               :items="devices"
               item-title="sponsor_preferred_name"
               item-value="term_uid"
-              variant="outlined"
             />
           </v-col>
         </v-row>
@@ -95,11 +82,9 @@
             <v-autocomplete
               v-model="form.dispenser_uid"
               :label="$t('MedicinalProduct.dispenser')"
-              density="compact"
               :items="dispensers"
               item-title="sponsor_preferred_name"
               item-value="term_uid"
-              variant="outlined"
             />
           </v-col>
         </v-row>
@@ -162,11 +147,8 @@ const notificationHub = inject('notificationHub')
 const formRules = inject('formRules')
 const { t } = useI18n()
 const { createNumericValues } = useNumericValues()
-const {
-  displayIngredients,
-  displayDosageForms,
-  displayRoutesOfAdministration,
-} = usePharmaceuticalProducts()
+const { displayDosageForms, displayRoutesOfAdministration } =
+  usePharmaceuticalProducts()
 const props = defineProps({
   medicinalProductUid: {
     type: String,
@@ -318,8 +300,7 @@ pharmaceuticalProductsApi
   .getFiltered({ page_size: 0, filters: { status: { v: [statuses.FINAL] } } })
   .then((resp) => {
     pharmaceuticalProducts.value = resp.data.items.map((item) => {
-      item.searchable_text =
-        displayDosageForms(item) + ' ' + displayIngredients(item)
+      item.searchable_text = displayDosageForms(item) + ' ' + item.derived_name
       return item
     })
   })

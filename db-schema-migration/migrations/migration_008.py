@@ -1,4 +1,4 @@
-""" Schema migrations needed for release 1.8 to PROD post August 2024."""
+"""Schema migrations needed for release 1.8 to PROD post August 2024."""
 
 import os
 

@@ -16,7 +16,6 @@
                 data-cy="sponsor-preffered-name"
                 :label="$t('CodelistSponsorValuesForm.pref_name')"
                 :rules="[formRules.required]"
-                density="compact"
                 clearable
               />
             </v-col>
@@ -26,7 +25,6 @@
               <v-switch
                 v-model="form.template_parameter"
                 :label="$t('CodelistSponsorValuesForm.tpl_parameter')"
-                color="primary"
               />
             </v-col>
           </v-row>

@@ -1,7 +1,7 @@
 <template>
   <v-card :color="color" density="compact" rounded="lg" border="sm" flat>
     <v-card-text class="d-flex align-center pa-2 text-primary">
-      <v-checkbox v-model="value" color="primary" :label="label" hide-details />
+      <v-checkbox v-model="value" :label="label" hide-details />
       <v-spacer />
       <v-tooltip v-if="help" v-model="showHelp" location="right">
         <template #activator="{ props }">

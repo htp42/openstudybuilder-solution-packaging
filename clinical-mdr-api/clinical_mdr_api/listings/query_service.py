@@ -428,9 +428,7 @@ class QueryService:
             query = MATCH_SPECIFIC_STUDY_VERSION
         else:
             query = MATCH_LATEST_STUDY
-        query = (
-            query
-            + """
+        query = query + """
         // Query to retrieve TV data from the Study Visit table
         // We are looking for the latest visit name, study day, and study week values associated with a specific study value version or all (latest) study versions.
         // The query filters by domain (TV), selecting the 'StudID', 'VisitNum', 'StudyDayValue' (or 'StudyWeekValue'), 'ArmCD', 'Arm', and any other fields we want to include.
@@ -459,7 +457,6 @@ class QueryService:
             toUpper(v.end_rule) AS TVENRL
         ORDER BY v.unique_visit_number;
         """
-        )
         result_array = db.cypher_query(
             query=query,
             params={
@@ -479,9 +476,7 @@ class QueryService:
             query = MATCH_SPECIFIC_STUDY_VERSION
         else:
             query = MATCH_LATEST_STUDY
-        query = (
-            query
-            + """
+        query = query + """
         MATCH (sv)-[:HAS_STUDY_VISIT]->(v:StudyVisit)
         OPTIONAL MATCH  (v)-->(nr:VisitNameRoot)-[:LATEST]->(nv:VisitNameValue)
         OPTIONAL MATCH  (v)-->(dr:StudyDayRoot)-[:LATEST]->(dv:StudyDayValue)
@@ -508,7 +503,6 @@ class QueryService:
             vtnv.name as VISIT_TYPE_NAME
         ORDER BY VISIT_NUM;
         """
-        )
         result_array = db.cypher_query(
             query=query,
             params={
@@ -528,9 +522,7 @@ class QueryService:
             query = MATCH_SPECIFIC_STUDY_VERSION
         else:
             query = MATCH_LATEST_STUDY
-        query = (
-            query
-            + """
+        query = query + """
         MATCH (sv)--(sact_schedule:StudyActivitySchedule)
         MATCH (sact_schedule)--(v:StudyVisit)--(sv)
         OPTIONAL MATCH (v)-[:HAS_VISIT_TYPE]-(:CTTermRoot)-[:HAS_NAME_ROOT]-(:CTTermNameRoot)-[:LATEST_FINAL]-(ctterm_name_value_visit_type:CTTermNameValue)
@@ -596,7 +588,6 @@ class QueryService:
             ASSMTYPE
         ORDER BY STUDYID_FLOWCHART, AVISITN, PARAMN;
         """
-        )
         result_array = db.cypher_query(
             query=query,
             params={
@@ -618,9 +609,7 @@ class QueryService:
             query = (
                 "MATCH (s_r:StudyRoot {uid: $study_uid})-[:LATEST]->(s_v:StudyValue)"
             )
-        query = (
-            query
-            + """
+        query = query + """
         MATCH (s_v)-[:HAS_STUDY_OBJECTIVE]-(s_obj:StudyObjective)
         // fetch objective data
         OPTIONAL MATCH (s_obj)-[:HAS_OBJECTIVE_LEVEL]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(obj_lev:CTTermNameValue)
@@ -684,7 +673,6 @@ class QueryService:
             activity_instance_tem_par_root_uid_collected AS RACTINST
         ORDER BY STUDYID_OBJ, OBJTV, ENDPNT, TMFRM
         """
-        )
         result_array = db.cypher_query(
             query=query,
             params={
@@ -704,9 +692,7 @@ class QueryService:
             query = MATCH_SPECIFIC_STUDY_VERSION
         else:
             query = MATCH_LATEST_STUDY
-        query = (
-            query
-            + """
+        query = query + """
         MATCH (sv)-[:HAS_STUDY_ELEMENT]->(se:StudyElement)
         CALL 
             {
@@ -767,7 +753,6 @@ class QueryService:
 
 
         """
-        )
         result_array = db.cypher_query(
             query=query,
             params={
@@ -787,9 +772,7 @@ class QueryService:
             query = MATCH_SPECIFIC_STUDY_VERSION
         else:
             query = MATCH_LATEST_STUDY
-        query = (
-            query
-            + """
+        query = query + """
         MATCH (sv)-->(sc:StudyCriteria)
         MATCH (sc)-->(cv:CriteriaValue)<-[:LATEST]-(cr:CriteriaRoot)<--(ctr:CriteriaTemplateRoot)-[:HAS_TYPE]->(ctx:CTTermContext)-[:HAS_SELECTED_TERM]->(tr:CTTermRoot)-->(atr:CTTermAttributesRoot)-[:LATEST]->(atv:CTTermAttributesValue)
         WHERE atv.concept_id = 'C25532' or atv.concept_id = 'C25370'
@@ -804,7 +787,6 @@ class QueryService:
                 '' AS TIVERS
         ORDER BY IETESTCD;
         """
-        )
         result_array = db.cypher_query(
             query=query,
             params={
@@ -824,9 +806,7 @@ class QueryService:
             query = MATCH_SPECIFIC_STUDY_VERSION
         else:
             query = MATCH_LATEST_STUDY
-        query = (
-            query
-            + f"""
+        query = query + f"""
         WITH sr, sv
         CALL {{
         WITH sr, sv
@@ -951,13 +931,13 @@ class QueryService:
         WITH sr, sv
         MATCH (sv)-[:HAS_STUDY_OBJECTIVE]->(so:StudyObjective)-[:HAS_OBJECTIVE_LEVEL]->(ctx:CTTermContext)-[:HAS_SELECTED_TERM]->(objlv)-->(octar:CTTermAttributesRoot)-[:LATEST_FINAL]->(octav:CTTermAttributesValue)
         MATCH (ctx)-[:HAS_SELECTED_CODELIST]->(clr:CTCodelistRoot)-[:HAS_TERM]-(cclt:CTCodelistTerm)-[:HAS_TERM_ROOT]->(objlv)
-        OPTIONAL MATCH (clr)<-[:PAIRED_CODE_CODELIST]-(nclr:CTCodelistRoot)-[:HAS_TERM]->(nclt:CTCodelistTerm)-[:HAS_TERM_ROOT]->(objlv)
+        MATCH (objlv)-[:HAS_ATTRIBUTES_ROOT]->(:CTTermAttributesRoot)-[:LATEST_FINAL]->(objav:CTTermAttributesValue)
         MATCH (so)-[:HAS_SELECTED_OBJECTIVE]->(obj)
         RETURN
         sv.study_id_prefix+'-'+sv.study_number AS STUDYID,
         'TS' AS DOMAIN,
         cclt.submission_value AS TSPARMCD,
-        nclt.submission_value AS TSPARM,
+        objav.preferred_term AS TSPARM,
         '' AS controlled_by,
         obj.name_plain AS TSVAL,
         '' AS TSVALNF,
@@ -968,7 +948,7 @@ class QueryService:
         WITH sr, sv
         MATCH (sv)-[:HAS_STUDY_ENDPOINT]->(send)-[:HAS_ENDPOINT_LEVEL]->(ctx:CTTermContext)-[:HAS_SELECTED_TERM]->(endplv)-->(ectar:CTTermAttributesRoot)-[:LATEST_FINAL]->(ectav:CTTermAttributesValue) 
         MATCH (ctx)-[:HAS_SELECTED_CODELIST]->(clr:CTCodelistRoot)-[:HAS_TERM]-(cclt:CTCodelistTerm)-[:HAS_TERM_ROOT]->(endplv)
-        OPTIONAL MATCH (clr)<-[:PAIRED_CODE_CODELIST]-(nclr:CTCodelistRoot)-[:HAS_TERM]->(nclt:CTCodelistTerm)-[:HAS_TERM_ROOT]->(endplv)
+        MATCH (endplv)-[:HAS_ATTRIBUTES_ROOT]->(:CTTermAttributesRoot)-[:LATEST_FINAL]->(ebjav:CTTermAttributesValue)
         MATCH (send)-[:HAS_SELECTED_TIMEFRAME]->(tf:TimeframeValue)
         MATCH (send)-[:HAS_SELECTED_ENDPOINT]->(endp:EndpointValue)
         OPTIONAL MATCH (send)-[:HAS_ENDPOINT_SUB_LEVEL]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(end_sublev:CTTermNameValue)
@@ -994,7 +974,7 @@ class QueryService:
         DISTINCT sv.study_id_prefix+'-'+sv.study_number AS STUDYID,
         'TS' AS DOMAIN,
         cclt.submission_value AS TSPARMCD,
-        nclt.submission_value AS TSPARM,
+        ebjav.preferred_term AS TSPARM,
         '' AS controlled_by,
         endp.name_plain + unit_str +' Time frame: ' + tf.name_plain + '.'AS TSVAL,
         '' AS TSVALNF,
@@ -1146,7 +1126,6 @@ class QueryService:
         RETURN *
         ORDER BY TSPARMCD
         """
-        )
         result_array = db.cypher_query(
             query=query,
             params={
@@ -1166,9 +1145,7 @@ class QueryService:
             query = MATCH_SPECIFIC_STUDY_VERSION
         else:
             query = MATCH_LATEST_STUDY
-        query = (
-            query
-            + """
+        query = query + """
         MATCH (sv)-[:HAS_STUDY_ELEMENT]->(se:StudyElement)
         RETURN 
             toUpper(sv.study_id_prefix + '-' + sv.study_number) AS STUDYID,
@@ -1181,7 +1158,6 @@ class QueryService:
             se.planned_duration AS TEDUR
             ORDER BY se.order
         """
-        )
         result_array = db.cypher_query(
             query=query,
             params={
@@ -1200,9 +1176,7 @@ class QueryService:
             query = MATCH_SPECIFIC_STUDY_VERSION
         else:
             query = MATCH_LATEST_STUDY
-        query = (
-            query
-            + """
+        query = query + """
         MATCH (sv)-[:HAS_STUDY_DISEASE_MILESTONE]->(sdm:StudyDiseaseMilestone)
         MATCH (sdm)-[:HAS_DISEASE_MILESTONE_TYPE]-(:CTTermContext)-[:HAS_SELECTED_TERM]->(tr:CTTermRoot)-[:HAS_NAME_ROOT]-(:CTTermNameRoot)-[:LATEST]-(sdm_term:CTTermNameValue)
         MATCH (tr)-[HAS_ATTRIBUTES_ROOT]->(CTTermAttributesRoot)-[LATEST]->(ctav:CTTermAttributesValue)
@@ -1215,7 +1189,6 @@ class QueryService:
                 when false then 'N'
             END AS TMRPT
         """
-        )
         result_array = db.cypher_query(
             query=query,
             params={

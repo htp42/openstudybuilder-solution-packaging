@@ -1109,8 +1109,7 @@ class SponsorModels(BaseImporter):
             with open(self.logfile_name, "w") as f:
                 f.write("Sponsor Model Import Issues\n")
 
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(self.async_run())
+        asyncio.run(self.async_run())
         self.log.info("Done importing sponsor models")
 
 

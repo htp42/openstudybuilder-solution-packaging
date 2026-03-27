@@ -1,17 +1,11 @@
-from neomodel import (
-    BooleanProperty,
-    One,
-    RelationshipFrom,
-    RelationshipTo,
-    StringProperty,
-    ZeroOrMore,
-)
+from neomodel import One, RelationshipFrom, RelationshipTo, ZeroOrMore
 
 from clinical_mdr_api.domain_repositories.models.generic import (
     ClinicalMdrNodeWithUID,
     ClinicalMdrRel,
     ZonedDateTimeProperty,
 )
+from common.neomodel import BooleanProperty, StringProperty
 
 
 class CommentTopic(ClinicalMdrNodeWithUID):

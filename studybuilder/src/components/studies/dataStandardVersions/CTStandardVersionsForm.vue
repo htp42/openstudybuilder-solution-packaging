@@ -10,11 +10,7 @@
   >
     <template #body>
       <v-form ref="formRef">
-        <v-radio-group
-          v-if="!standardVersion"
-          v-model="creationMode"
-          color="primary"
-        >
+        <v-radio-group v-if="!standardVersion" v-model="creationMode">
           <v-radio
             :label="$t('CTStandardVersionsForm.mode_create')"
             value="create"
@@ -35,9 +31,6 @@
           data-cy="sponsor-ct-catalogue-dropdown"
           return-object
           clearable
-          variant="outlined"
-          density="compact"
-          rounded="lg"
           color="nnTrueBlue"
           @update:model-value="fetchPackages"
         />
@@ -50,21 +43,15 @@
           data-cy="sponsor-ct-package-dropdown"
           return-object
           clearable
-          variant="outlined"
-          density="compact"
-          rounded="lg"
           :disabled="selectedCatalogue === null"
         />
         <label class="nn-label">{{ $t('_global.description') }}</label>
         <v-textarea
           v-model="form.description"
           data-cy="description-field"
-          variant="outlined"
-          density="compact"
           clearable
           rows="1"
           auto-grow
-          rounded="lg"
         />
       </v-form>
     </template>

@@ -24,7 +24,6 @@
             v-if="referencedSoAGroups.length > 0"
             v-model="referencedSoAGroups"
             :label="$t('StudyFootnoteEditForm.ref_soa_groups')"
-            density="compact"
             disabled
             readonly
           />
@@ -36,7 +35,6 @@
             v-if="referencedActivities.length > 0"
             v-model="referencedActivities"
             :label="$t('StudyFootnoteEditForm.ref_activities')"
-            density="compact"
             disabled
             readonly
           />
@@ -48,7 +46,6 @@
             v-if="referencedEpochsAndVisits.length > 0"
             v-model="referencedEpochsAndVisits"
             :label="$t('StudyFootnoteEditForm.ref_epochs_visits')"
-            density="compact"
             disabled
             readonly
           />
@@ -60,7 +57,6 @@
             v-if="referencedSchedules.length > 0"
             v-model="referencedSchedules"
             :label="$t('StudyFootnoteEditForm.ref_schedules')"
-            density="compact"
             disabled
             readonly
           />

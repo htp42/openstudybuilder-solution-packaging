@@ -7,8 +7,8 @@ from typing import Any
 from pydantic import ValidationInfo
 
 from clinical_mdr_api.domains._utils import get_iso_lang_data
-from clinical_mdr_api.domains.concepts.utils import EN_LANGUAGE, ENG_LANGUAGE
 from clinical_mdr_api.domains.enums import OdmTranslatedTextTypeEnum
+from clinical_mdr_api.domains.odms.utils import EN_LANGUAGE, ENG_LANGUAGE
 from common.exceptions import ValidationException
 
 FLOAT_REGEX = "^[0-9]+\\.?[0-9]*$"

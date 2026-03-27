@@ -201,6 +201,10 @@
           <td>{{ attributes.nci_preferred_name }}</td>
         </tr>
         <tr>
+          <td>{{ $t('CodeListDetail.type') }}</td>
+          <td>{{ attributes.codelist_type }}</td>
+        </tr>
+        <tr>
           <td>{{ $t('CodeListDetail.extensible') }}</td>
           <td>{{ $filters.yesno(attributes.extensible) }}</td>
         </tr>

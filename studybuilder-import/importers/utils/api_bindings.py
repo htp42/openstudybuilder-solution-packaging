@@ -2,7 +2,6 @@ import asyncio
 import inspect
 import json
 import logging
-import math
 import sys
 import time
 from typing import Sequence
@@ -76,7 +75,7 @@ CODELIST_NAME_MAP = {
 }
 
 # Unit subsets
-UNIT_SUBSET_AGE = "Age Unit"
+UNIT_SUBSET_AGE = "AGEU"
 UNIT_SUBSET_DOSE = "Dose Unit"
 UNIT_SUBSET_STUDY_TIME = "Study Time"
 UNIT_SUBSET_TIME = "Time Unit"
@@ -378,33 +377,50 @@ class ApiBinding:
     def get_all_from_api_paged(
         self, path, params=None, items_only=True, page_size=1000
     ):
-        page_number = 1
-        page_params = {
-            "page_number": page_number,
-            "page_size": page_size,
-            "total_count": True,
-        }
+        page_params = {"page_size": page_size}
         if params is not None:
             page_params.update(params)
-        self.log.debug(f"Fetching {path}, page size: {page_size}")
-        data = self.get_all_from_api(path, params=page_params, items_only=False)
-        all_items = data["items"]
-        count = data["total"]
 
-        nbr_pages = math.ceil(count / page_size)
-        # Get remaining pages
-        page_params["total_count"] = False
-        while page_size * page_number < count:
-            page_number += 1
-            page_params["page_number"] = page_number
-            self.log.debug(f"Fetching {path}, page {page_number} of {nbr_pages}")
-            additional_data = self.get_all_from_api(
-                path, params=page_params, items_only=True
+        effective_page_size = max(1, int(page_params.get("page_size", page_size)))
+
+        self.log.debug("Fetching first page with total count")
+        self.log.debug(f"Fetching {path}, page 1")
+        first_page_params = {
+            **page_params,
+            "page_number": 1,
+            "total_count": True,
+        }
+        data_with_count = self.get_all_from_api(
+            path, params=first_page_params, items_only=False
+        )
+        if data_with_count is None:
+            return None
+
+        page_items = data_with_count.get("items", [])
+        all_items = list(page_items)
+        page_number = 2
+
+        while len(page_items) == effective_page_size:
+            request_params = {
+                **page_params,
+                "page_number": page_number,
+                "total_count": False,
+            }
+            self.log.debug(f"Fetching {path}, page {page_number}")
+            page_items = self.get_all_from_api(
+                path, params=request_params, items_only=True
             )
-            all_items.extend(additional_data)
-        if items_only:
-            return all_items
-        return data
+
+            if page_items is None:
+                return None
+
+            all_items.extend(page_items)
+            page_number += 1
+
+        if not items_only:
+            data_with_count["items"] = all_items
+            return data_with_count
+        return all_items
 
     def get_all_identifiers(self, responses: list, identifier: str, value: str = None):
         if value is None:
@@ -566,47 +582,29 @@ class ApiBinding:
         return all_codelist_uids
 
     def get_all_activity_objects(self, object_type, filters=None):
-        page_number = 1
+        page_number = 0
         page_size = 100
-        total_count = True
-        params = {
-            "page_number": page_number,
-            "page_size": page_size,
-            "total_count": total_count,
-        }
-        if filters:
-            params["filters"] = filters
-        self.log.debug(
-            f"Getting {object_type} page_number:{page_number}, page_size:{page_size}"
-        )
-        all_activities_initial = self.get_all_from_api(
-            f"/concepts/activities/{object_type}", params=params, items_only=False
-        )
-        if all_activities_initial:
-            all_activity_objects = all_activities_initial["items"]
-            count = all_activities_initial["total"]
-        else:
-            all_activity_objects = []
-            count = 0
-
-        while page_size * page_number < count:
+        more = True
+        all_activity_objects = []
+        while more:
             page_number += 1
-            total_count = False
             params = {
                 "page_number": page_number,
                 "page_size": page_size,
-                "total_count": total_count,
+                "total_count": False,
             }
             if filters:
                 params["filters"] = filters
             self.log.debug(
-                f"Getting {object_type} page_number:{page_number}, page_size:{page_size}, total:{count}"
+                f"Getting {object_type} page_number:{page_number}, page_size:{page_size}"
             )
             items = self.get_all_from_api(
                 f"/concepts/activities/{object_type}", params=params, items_only=True
             )
             if items:
                 all_activity_objects += items
+            if len(items) < page_size:
+                more = False
         return all_activity_objects
 
     def get_study_objectives_for_study(self, study_uid):

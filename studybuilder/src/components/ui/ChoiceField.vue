@@ -21,7 +21,7 @@
       >
         <div class="d-flex align-start">
           <div class="mr-2">
-            <v-radio :value="choice.value" density="compact" />
+            <v-radio :value="choice.value" />
           </div>
           <div class="pt-1">
             <div class="text-nnTrueBlue mb-2 font-weight-bold title">

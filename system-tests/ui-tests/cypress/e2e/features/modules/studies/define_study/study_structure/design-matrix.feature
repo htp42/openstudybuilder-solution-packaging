@@ -40,7 +40,6 @@ Feature: Studies - Define Study - Study Structure - Design Matrix
         Then The table contain only selected column
 
     Scenario: [Assign Elements] User must be able to assign study elements to epochs
-        And The homepage is opened
         And User sets row page to 10 in the settings menu
         Given The test study '/study_structure/design_matrix' page is opened
         And User waits for the table
@@ -53,7 +52,6 @@ Feature: Studies - Define Study - Study Structure - Design Matrix
         Then The pop up displays 'Design Matrix updated' 
 
     Scenario: [Transition rules] User must be able to set transition rules
-        And The homepage is opened
         And User sets row page to 10 in the settings menu
         Given The test study '/study_structure/design_matrix' page is opened
         And User waits for the table
@@ -68,7 +66,6 @@ Feature: Studies - Define Study - Study Structure - Design Matrix
         And Transition rule is visible in the table for epoch 'Run-in'
         
     Scenario: [Transition rules] User must be able to toggle transition rule on and off
-        And The homepage is opened
         And User sets row page to 10 in the settings menu
         Given The test study '/study_structure/design_matrix' page is opened
         And User waits for the table
@@ -84,7 +81,6 @@ Feature: Studies - Define Study - Study Structure - Design Matrix
         And The transition rule is visible in the correct table column
 
     Scenario: [Transition rules] User must be able to see warning if transition rule exceeds 200 characters
-        And The homepage is opened
         And User sets row page to 10 in the settings menu
         Given The test study '/study_structure/design_matrix' page is opened
         And User waits for the table

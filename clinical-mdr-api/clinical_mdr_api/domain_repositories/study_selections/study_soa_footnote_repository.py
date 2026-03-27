@@ -52,9 +52,7 @@ class StudySoAFootnoteRepository:
     def with_query(self, full_query: bool = True):
         query = []
         # StudyActivity part
-        query.append(
-            dedent(
-                """WITH DISTINCT sr, sf, sa,
+        query.append(dedent("""WITH DISTINCT sr, sf, sa,
             [(sf)-[:REFERENCES_STUDY_ACTIVITY]->(study_activity:StudyActivity)<-[:HAS_STUDY_ACTIVITY]-(sv)
                 WHERE NOT (study_activity)-[:BEFORE]-() | 
                 {
@@ -70,9 +68,7 @@ class StudySoAFootnoteRepository:
                     study_activity_order: study_activity.order,
                     study_activity_schedule_order: 0, // 0 as schedule order, because StudyActivity appears in the same row in SoA as schedule but it should take priority in footnote number assignment
                     type: 'StudyActivity'
-                """
-            )
-        )
+                """))
         if full_query:
             query.append(
                 dedent(
@@ -276,9 +272,7 @@ class StudySoAFootnoteRepository:
         )
         # Latest Footnote part
         if full_query:
-            query.append(
-                dedent(
-                    """CALL {
+            query.append(dedent("""CALL {
                 WITH fr, fv
                 OPTIONAL MATCH (latest_footnote_value:FootnoteValue)<-[ver:HAS_VERSION]-(fr:FootnoteRoot)<-[:CONTAINS_SYNTAX_INSTANCE]-(library:Library)
                 OPTIONAL MATCH (ftr:FootnoteTemplateRoot)-[:HAS_FOOTNOTE]->(fr)
@@ -287,21 +281,15 @@ class StudySoAFootnoteRepository:
                     {uid:fr.uid, version: ver.version, name_plain:fv.name_plain, library_name: library.name, template_uid: ftr.uid} as latest_footnote
                 ORDER BY ver.start_date DESC
                 LIMIT 1}
-                """
-                )
-            )
+                """))
         # Footnote template part
-        query.append(
-            dedent(
-                """CALL{
+        query.append(dedent("""CALL{
                 WITH sf
                 OPTIONAL MATCH (sf)-[:HAS_SELECTED_FOOTNOTE_TEMPLATE]->(ftv:FootnoteTemplateValue)<-[ver:HAS_VERSION]-(ftr:FootnoteTemplateRoot)<-[:CONTAINS_SYNTAX_TEMPLATE]-(library:Library)
                 WHERE ver.status = 'Final'
                 RETURN {
                     uid:ftr.uid, name: ftv.name, name_plain: ftv.name_plain
-                """
-            )
-        )
+                """))
         if full_query:
             query.append(
                 dedent(
@@ -312,9 +300,7 @@ class StudySoAFootnoteRepository:
             dedent("} as footnote_template ORDER BY ver.start_date DESC LIMIT 1} ")
         )
         # Main Return part
-        query.append(
-            dedent(
-                """RETURN DISTINCT
+        query.append(dedent("""RETURN DISTINCT
                 sr.uid AS study_uid,
                 sf.uid AS uid,
                 footnote,
@@ -335,23 +321,17 @@ class StudySoAFootnoteRepository:
                         '^study_activity_order',
                         '^study_activity_schedule_order'
                     ])  AS referenced_items
-                """
-            )
-        )
+                """))
         # Extra return part
         if full_query:
-            query.append(
-                dedent(
-                    """,latest_footnote,
+            query.append(dedent(""",latest_footnote,
                     sf.accepted_version as accepted_version,
                     sa.author_id AS author_id,
                     sa.date AS modified_date,
                     end_date,
                     labels(sa) AS change_type,
                     coalesce(head([(user:User)-[*0]-() WHERE user.user_id=sa.author_id | user.username]), sa.author_id) AS author_username
-                    """
-                )
-            )
+                    """))
         return "\n".join(query)
 
     def order_by_soa_order(self):
@@ -571,7 +551,7 @@ class StudySoAFootnoteRepository:
         # link to selected footnote with specified version
         elif soa_footnote_vo.footnote_uid and soa_footnote_vo.footnote_version:
             selected_footnote = (
-                FootnoteValue.nodes.fetch_relations("has_version")
+                FootnoteValue.nodes.traverse("has_version")
                 .filter(
                     **{
                         "has_version__uid": soa_footnote_vo.footnote_uid,
@@ -596,7 +576,7 @@ class StudySoAFootnoteRepository:
             and soa_footnote_vo.footnote_template_version
         ):
             selected_footnote_template = (
-                FootnoteTemplateValue.nodes.fetch_relations("has_version")
+                FootnoteTemplateValue.nodes.traverse("has_version")
                 .filter(
                     **{
                         "has_version__uid": soa_footnote_vo.footnote_template_uid,

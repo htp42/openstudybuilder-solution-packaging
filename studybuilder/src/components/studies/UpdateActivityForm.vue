@@ -65,10 +65,7 @@
               item-title="activity_group_name"
               item-value="activity_group_uid"
               class="mt-n1 ml-n4"
-              rounded="lg"
-              variant="outlined"
               color="nnBaseBlue"
-              density="compact"
               autocomplete="off"
               clearable
               :rules="[formRules.required]"
@@ -104,11 +101,8 @@
               item-title="activity_subgroup_name"
               item-value="activity_subgroup_uid"
               class="mt-n1 ml-n4"
-              rounded="lg"
               width="300px"
-              variant="outlined"
               color="nnBaseBlue"
-              density="compact"
               autocomplete="off"
               clearable
               :rules="[formRules.required]"

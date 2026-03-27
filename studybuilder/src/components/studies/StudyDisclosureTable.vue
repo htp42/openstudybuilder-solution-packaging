@@ -8,10 +8,8 @@
           :label="$t('_global.select')"
           item-title="title"
           item-value="value"
-          density="compact"
           data-cy="select-specification"
           multiple
-          variant="outlined"
           color="nnBaseBlue"
           bg-color="nnWhite"
           hide-details

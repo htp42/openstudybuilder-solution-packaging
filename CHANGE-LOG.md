@@ -1,5 +1,77 @@
 # OpenStudyBuilder (OSB) Commits changelog
 
+## V 2.7
+
+New Features and Enhancements
+============
+
+### Fixes and Enhancements
+
+- General UI alignments have been implemented across the application. No new functionality, only visual updates.
+- This release introduces several improvements across the CRF Builder, CRF Viewer, and Library modules, focusing on data accuracy, usability, and standards alignment.
+- On Studies, Manage Study, Study menu on Protocol Versions tab the distinct protocol document main versions are listed. This now include a column for the original first study definition version related to each protocol document version as well as the latest version. The modified dates and by columns are removed, as they do not reflect the protocol document version, and they are available on the study status tab for the study definition versions.
+- Consumer API - Improved handling of null and list values in 'GET /studies/audit-trail' endpoint
+
+### New Feature
+
+- Under Administration tab, a new Data Completeness Tag page is added where system administrator can fill which data sections of a given Study are completed. Data Completeness Tags are visible in the main 'Study List' table as a new column.
+
+### Performance Improvements 
+- Faster loading of StudyVisit tables (main and audit-trail tables)
+- Introduced a leaner StudyVisitLite data model with faster retrieval
+- Faster building of SoA tables and faster reconstruction of protocol SoA from snapshots (in case of locked/released study versions)
+- Fixed performance pitfall when SoA was requested in DOCX format
+- Improved handling of null and list values in 'GET /studies/audit-trail' endpoint
+
+### End-to-End Automated test enhancements
+
+- Various code improvements to ensure easier maintenance and overall tests stability.
+- Library > Concepts > Activities: Moved generic checks on table level (table structure, search, filtering, pagination) to separate feature files.
+- Library > Data Collection Standards: Adjusted tests to the change in the odm endpoint used for creation and updates of CRFs.
+
+Solved Bugs
+============
+
+### Library
+
+ **Data Collection Standards > CRF Builder > CRF Tree** 
+
+- Binding a new Item remove the vendor extension
+
+### Reports
+
+ **Activity Library Dashboard > ReadMe** 
+
+- Fix laboratory_data_specification issues
+
+### Studies
+
+ **Define Study > Data Specifications** 
+
+- Error message for instance relationship
+
+ **Define Study > Registry Identifiers** 
+
+- Metadata is always displayed in the latest version
+
+ **Define Study > Study Activities** 
+
+- Add End User SoA footnotes is not working
+- Empty list of available studies to select activity from
+
+ **Define Study > Study Activities > Schedule of Activities** 
+
+- Shaking Detailed SoA view
+
+ **Define Study > Study Criteria** 
+
+- Not possible to add criteria from other study
+
+ **Study List** 
+
+- Duplicated visits on cloning study
+
+
 ## V 2.6
 
 New Features and Enhancements

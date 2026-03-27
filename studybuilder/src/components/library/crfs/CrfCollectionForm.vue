@@ -16,7 +16,6 @@
               v-model="form.name"
               :label="$t('CRFCollections.name') + '*'"
               data-cy="crf-collection-name"
-              density="compact"
               clearable
               class="mt-3"
               :disabled="isDisabled"
@@ -30,7 +29,6 @@
               v-model="form.oid"
               :label="$t('CRFCollections.oid')"
               data-cy="crf-collection-oid"
-              density="compact"
               clearable
               :disabled="isDisabled"
             />

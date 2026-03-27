@@ -254,6 +254,7 @@ ERROR_400 = {
     "model": ErrorResponse,
     "description": "Bad Request",
 }
+ERROR_401 = {"model": ErrorResponse, "description": "Unauthorized"}
 ERROR_403 = {"model": ErrorResponse, "description": "Forbidden"}
 ERROR_404 = {"model": ErrorResponse, "description": "Entity not found"}
 ERROR_409 = {
@@ -263,12 +264,9 @@ ERROR_409 = {
 }
 
 
-SYNTAX_FILTERS = (
-    FILTERS
-    + """
+SYNTAX_FILTERS = FILTERS + """
 If any provided search term for a given field name is other than a string type, then equal operator will automatically be applied overriding any provided operator.
 """
-)
 
 
 # Alias for backward compatibility - use _parse_json_validator instead

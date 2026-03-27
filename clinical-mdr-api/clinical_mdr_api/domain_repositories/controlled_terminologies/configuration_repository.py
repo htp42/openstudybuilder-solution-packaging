@@ -4,7 +4,7 @@ from neomodel.sync_.match import (
     Collect,
     Last,
     NodeNameResolver,
-    Optional,
+    Path,
     RawCypher,
     RelationNameResolver,
 )
@@ -56,13 +56,15 @@ class CTConfigRepository(LibraryItemRepositoryImplBase):
         all_configurations = [
             CTConfigOGM.model_validate(sas_node)
             for sas_node in (
-                self.root_class.nodes.fetch_relations(
+                self.root_class.nodes.traverse(
                     "has_latest_value",
-                    Optional("has_latest_value__has_configured_codelist"),
-                    Optional("has_latest_value__has_configured_term"),
+                    Path(
+                        value="has_latest_value__has_configured_codelist", optional=True
+                    ),
+                    Path(value="has_latest_value__has_configured_term", optional=True),
                 )
                 .subquery(
-                    self.root_class.nodes.traverse_relations(has_version="has_version")
+                    self.root_class.nodes.traverse(has_version="has_version")
                     .intermediate_transform(
                         {
                             "has_version": {

@@ -20,7 +20,6 @@
                 <v-col>
                   <v-switch
                     v-model="form.mandatory"
-                    color="primary"
                     :label="$t('CRFReferencesForm.mandatory')"
                     true-value="Yes"
                     false-value="No"
@@ -31,7 +30,6 @@
                   <v-switch
                     v-if="element.uid && element.uid.includes('OdmForm')"
                     v-model="form.locked"
-                    color="primary"
                     :label="$t('CRFReferencesForm.locked')"
                     true-value="Yes"
                     false-value="No"

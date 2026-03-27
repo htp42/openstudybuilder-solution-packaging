@@ -14,17 +14,14 @@
             v-model="search"
             clearable
             clear-icon="mdi-close"
-            density="compact"
             prepend-inner-icon="mdi-magnify"
             :label="$t('_global.search')"
             single-line
             color="nnBaseBlue"
             hide-details
             style="min-width: 240px; max-width: 300px"
-            rounded="lg"
             class="searchFieldLabel ml-0"
             data-cy="search-field"
-            variant="outlined"
           />
           <slot name="afterSearch" />
         </div>
@@ -41,7 +38,6 @@
               class="mr-6"
               hide-details
               :title="$t('NNTableTooltips.select_rows')"
-              color="primary"
             />
           </div>
         </template>
@@ -57,8 +53,6 @@
           v-if="showColumnNamesToggleButton"
           v-model="showColumnNames"
           inline
-          density="compact"
-          color="primary"
           hide-details
         >
           <v-radio :label="$t('NNTable.column_labels')" :value="false" />
@@ -121,11 +115,9 @@
                   headersHasAction() ? headers[index + 1] : headers[index]
                 "
                 class="ml-n3 mr-n2 scale80"
-                density="compact"
                 :label="column.title"
                 inset
                 :disabled="disableColumnSwitch(column)"
-                color="nnBaseBlue"
                 hide-details
               />
             </v-list>
@@ -346,8 +338,6 @@
                     <v-select
                       :model-value="currentItemsPerPageValue"
                       :items="computedItemsPerPageOptions"
-                      variant="outlined"
-                      density="compact"
                       hide-details
                       :disabled="isDisabled"
                       @update:model-value="
@@ -748,7 +738,7 @@ let savedOptions = {}
 let savedFilters = '{}'
 
 const computedItemsPerPage = computed(() => {
-  return props.itemsPerPage ? props.itemsPerPage : appStore.userData.rows
+  return props.itemsPerPage ? props.itemsPerPage : appStore.rowsPerPage
 })
 const computedItemsPerPageOptions = computed(() => {
   return props.itemsPerPageOptions

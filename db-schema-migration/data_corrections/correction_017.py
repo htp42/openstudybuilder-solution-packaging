@@ -1,4 +1,4 @@
-"""PRD Data Corrections: Before Release 2.5"""
+"""PRD Data Corrections: Before Release 2.6"""
 
 import os
 
@@ -29,10 +29,9 @@ def main(run_label="correction"):
     rebuild_missing_protocol_soa_snapshots(DB_DRIVER, LOGGER, run_label)
     remove_soa_cell_relationships_without_released_study(DB_DRIVER, LOGGER, run_label)
     remove_study_action_with_broken_after(DB_DRIVER, LOGGER, run_label)
-    fix_not_coherent_in_time_library_selection(DB_DRIVER, LOGGER, run_label)
-    fix_studies_different_versions_with_the_same_start_date(
-        DB_DRIVER, LOGGER, run_label
-    )
+    # fix_studies_different_versions_with_the_same_start_date(
+    #     DB_DRIVER, LOGGER, run_label
+    # )
 
 
 @capture_changes(
@@ -282,81 +281,46 @@ def remove_study_action_with_broken_after(db_driver, log, run_label):
     return counters.contains_updates
 
 
-@capture_changes(
-    verify_func=correction_verification_017.test_fix_not_coherent_in_time_library_selection
-)
-def fix_not_coherent_in_time_library_selection(db_driver, log, run_label):
-    """
-    ### Problem description
-    Some StudyActivity nodes reference ActivityValue nodes that don't have valid HAS_VERSION
-    relationships at the time when the Create action was performed. This happens when the
-    ActivityValue version's start_date or end_date doesn't cover the Create action date.
-    Specifically, Activity_000317 version 7.0's HAS_VERSION relationship doesn't cover
-    the dates when some Create actions were performed.
-    ### Change description
-    - Fix version 7.0 of Activity_000317 by adjusting its HAS_VERSION start_date to cover
-      the earliest Create action date that references it
-    ### Nodes and relationships affected
-    - `HAS_VERSION` relationship for Activity_000317 version 7.0
-    """
-    log.info(
-        f"Run: {run_label}, Fixing not coherent in time library selection for Activity_000317 version 7.0"
-    )
-
-    # Find Create actions that reference Activity_000317 version 7.0 where the version is not valid
-    # Then adjust version 7.0's start_date to be before the earliest such Create date
-    query = """
-        MATCH (ar:ActivityRoot {uid: "Activity_000317"})-[hv:HAS_VERSION {version: "7.0"}]->(av:ActivityValue)
-            WHERE not hv.end_date = datetime('2024-12-17T15:18:50.527858001Z')
-        SET hv.end_date = datetime('2024-12-17T15:18:50.527858001Z')
-        RETURN count(hv) AS updated_count
-    """
-
-    _, summary = run_cypher_query(db_driver, query)
-    counters = summary.counters
-    print_counters_table(counters)
-    return counters.contains_updates
-
-
-@capture_changes(
-    verify_func=correction_verification_017.test_fix_studies_different_versions_with_the_same_start_date
-)
-def fix_studies_different_versions_with_the_same_start_date(db_driver, log, run_label):
-    """
-    ### Problem description
-    Some StudyRoot nodes have different versions with the same start_date, which violates
-    the constraint that no version should have a start_date greater than or equal to the
-    latest version's start_date. This happens when a previous version has the same start_date
-    as the latest version.
-    ### Change description
-    - For each StudyRoot, find versions with start_date >= the latest version's start_date
-    - Subtract 1 millisecond from those previous versions' start_date to make them earlier
-    - This ensures proper chronological ordering of versions
-    ### Nodes and relationships affected
-    - `HAS_VERSION` relationships for StudyRoot nodes
-    """
-    log.info(
-        f"Run: {run_label}, Fixing studies with different versions having the same start_date"
-    )
-
-    # Find StudyRoot nodes where a previous version has start_date >= latest version's start_date
-    # Subtract 1 millisecond from the previous version's start_date
-    query = """
-        MATCH (root:StudyRoot)-[:LATEST]->(latest)
-        MATCH (root)-[v_latest:HAS_VERSION|LATEST_DRAFT|LATEST_FINAL|LATEST_LOCKED|LATEST_RETIRED|LATEST_RELEASED]->(latest)
-        WITH root, latest, v_latest.start_date as latest_start_date
-        MATCH (root)-[v_prev:HAS_VERSION|LATEST_DRAFT|LATEST_FINAL|LATEST_LOCKED|LATEST_RETIRED|LATEST_RELEASED]->(prev_value)
-        WHERE prev_value <> latest 
-          AND v_prev.start_date >= latest_start_date
-          AND v_prev.start_date IS NOT NULL
-        SET v_prev.start_date = v_prev.start_date - duration({milliseconds: 1})
-        RETURN count(v_prev) AS updated_count
-    """
-
-    _, summary = run_cypher_query(db_driver, query)
-    counters = summary.counters
-    print_counters_table(counters)
-    return counters.contains_updates
+# Commented out for this batch. This will have to be updated, adjusting only start_date can create new gaps in the version history
+# @capture_changes(
+#     verify_func=correction_verification_017.test_fix_studies_different_versions_with_the_same_start_date
+# )
+# def fix_studies_different_versions_with_the_same_start_date(db_driver, log, run_label):
+#     """
+#     ### Problem description
+#     Some StudyRoot nodes have different versions with the same start_date, which violates
+#     the constraint that no version should have a start_date greater than or equal to the
+#     latest version's start_date. This happens when a previous version has the same start_date
+#     as the latest version.
+#     ### Change description
+#     - For each StudyRoot, find versions with start_date >= the latest version's start_date
+#     - Subtract 1 millisecond from those previous versions' start_date to make them earlier
+#     - This ensures proper chronological ordering of versions
+#     ### Nodes and relationships affected
+#     - `HAS_VERSION` relationships for StudyRoot nodes
+#     """
+#     log.info(
+#         f"Run: {run_label}, Fixing studies with different versions having the same start_date"
+#     )
+#
+#     # Find StudyRoot nodes where a previous version has start_date >= latest version's start_date
+#     # Subtract 1 millisecond from the previous version's start_date
+#     query = """
+#         MATCH (root:StudyRoot)-[:LATEST]->(latest)
+#         MATCH (root)-[v_latest:HAS_VERSION|LATEST_DRAFT|LATEST_FINAL|LATEST_LOCKED|LATEST_RETIRED|LATEST_RELEASED]->(latest)
+#         WITH root, latest, v_latest.start_date as latest_start_date
+#         MATCH (root)-[v_prev:HAS_VERSION|LATEST_DRAFT|LATEST_FINAL|LATEST_LOCKED|LATEST_RETIRED|LATEST_RELEASED]->(prev_value)
+#         WHERE prev_value <> latest
+#           AND v_prev.start_date >= latest_start_date
+#           AND v_prev.start_date IS NOT NULL
+#         SET v_prev.start_date = v_prev.start_date - duration({milliseconds: 1})
+#         RETURN count(v_prev) AS updated_count
+#     """
+#
+#     _, summary = run_cypher_query(db_driver, query)
+#     counters = summary.counters
+#     print_counters_table(counters)
+#     return counters.contains_updates
 
 
 @capture_changes(

@@ -76,11 +76,12 @@ def test_data():
             label=label,
             data_model_uid=data_model_uid,
             data_model_catalogue_name=data_model_catalogue_name,
+            data_model_name=data_model_name,
         )
-        for label, data_model_uid in [
-            ("DatasetClass A", data_models[0].uid),
-            ("DatasetClass B", data_models[1].uid),
-            ("DatasetClass C", data_models[2].uid),
+        for label, data_model_uid, data_model_name in [
+            ("DatasetClass A", data_models[0].uid, data_models[0].name),
+            ("DatasetClass B", data_models[1].uid, data_models[1].name),
+            ("DatasetClass C", data_models[2].uid, data_models[2].name),
         ]
     ]
     data_model_ig = TestUtils.create_data_model_ig(

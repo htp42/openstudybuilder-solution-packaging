@@ -19,7 +19,6 @@
               item-title="type_name"
               item-value="type"
               clearable
-              density="compact"
             />
           </v-col>
         </v-row>
@@ -34,7 +33,6 @@
               :rules="[formRules.required]"
               clearable
               class="required"
-              density="compact"
             />
           </v-col>
         </v-row>
@@ -46,7 +44,6 @@
               :rules="[formRules.required, formRules.max(form.name, 200)]"
               clearable
               class="required"
-              density="compact"
             />
           </v-col>
         </v-row>
@@ -58,7 +55,6 @@
               :rules="[formRules.required, formRules.max(form.short_name, 20)]"
               clearable
               class="required"
-              density="compact"
             />
           </v-col>
         </v-row>
@@ -74,7 +70,6 @@
               :label="$t('StudyElements.el_start_rule')"
               rows="1"
               auto-grow
-              density="compact"
             />
           </v-col>
         </v-row>
@@ -86,7 +81,6 @@
               :label="$t('StudyElements.el_end_rule')"
               rows="1"
               auto-grow
-              density="compact"
             />
           </v-col>
         </v-row>
@@ -96,7 +90,6 @@
               v-model="form.description"
               :label="$t('_global.description')"
               clearable
-              density="compact"
             />
           </v-col>
         </v-row>

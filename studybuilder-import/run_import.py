@@ -8,6 +8,7 @@ from importers.run_import_dictionaries import Dictionaries
 from importers.run_import_e2e import MockdataJsonE2E
 from importers.run_import_mockdata import Mockdata
 from importers.run_import_mockdatajson import MockdataJson
+from importers.run_import_response_codelists import ResponseCodelists
 from importers.run_import_sponsormodels import SponsorModels
 from importers.run_import_standardcodelistfinish import StandardCodelistFinish
 from importers.run_import_standardcodelistterms1 import StandardCodelistTerms1
@@ -76,6 +77,10 @@ def main():
     # Import E2E specific data from json
     mockdatae2e = MockdataJsonE2E(metrics_inst=metr)
     mockdatae2e.run()
+
+    # Import response codelists
+    response_codelists = ResponseCodelists(metrics_inst=metr)
+    response_codelists.run()
 
     # Display metrics
     metr.print_sorted_by_key()

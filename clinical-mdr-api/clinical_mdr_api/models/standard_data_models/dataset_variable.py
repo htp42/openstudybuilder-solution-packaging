@@ -74,12 +74,6 @@ class DatasetVariable(BaseModel):
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
     dataset: Annotated[SimpleDatasetForDatasetVariable, Field()]
-    data_model_ig_names: Annotated[
-        list[str],
-        Field(
-            description="Versions of associated data model implementation guides",
-        ),
-    ]
     implements_variable: Annotated[
         SimpleImplementsVariable | None, Field(json_schema_extra={"nullable": True})
     ] = None
@@ -94,7 +88,7 @@ class DatasetVariable(BaseModel):
     @classmethod
     def from_repository_output(cls, input_dict: dict[str, Any]):
         return cls(
-            uid=input_dict["uid"],
+            uid=input_dict.get("standard_root").get("uid"),
             label=input_dict.get("standard_value").get("label"),
             title=input_dict.get("standard_value").get("title"),
             description=input_dict.get("standard_value").get("description"),
@@ -109,7 +103,6 @@ class DatasetVariable(BaseModel):
             described_value_domain=input_dict.get("described_value_domain"),
             value_list=input_dict.get("value_list") or [],
             analysis_variable_set=input_dict.get("analysis_variable_set"),
-            data_model_ig_names=input_dict["data_model_ig_names"],
             dataset=SimpleDatasetForDatasetVariable(
                 uid=input_dict.get("dataset").get("uid"),
                 ordinal=input_dict.get("dataset").get("ordinal"),

@@ -91,6 +91,7 @@ class FormulationEditInput(PatchInputModel):
 
 class PharmaceuticalProduct(VersionProperties):
     uid: Annotated[str, Field()]
+    derived_name: Annotated[str, Field()] = ""
 
     external_id: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
@@ -145,8 +146,69 @@ class PharmaceuticalProduct(VersionProperties):
             if term is not None:
                 admin_route_terms.append(term)
 
+        formulations = sorted(
+            [
+                Formulation(
+                    external_id=formulation.external_id,
+                    ingredients=sorted(
+                        [
+                            Ingredient(
+                                external_id=ingredient.external_id,
+                                formulation_name=ingredient.formulation_name,
+                                active_substance=SimpleActiveSubstance.from_concept_uid(
+                                    uid=ingredient.active_substance_uid,
+                                    find_by_uid=find_active_substance_by_uid,
+                                    find_dictionary_term_by_uid=find_dictionary_term_by_uid,
+                                    find_substance_term_by_uid=find_substance_term_by_uid,
+                                ),
+                                strength=(
+                                    SimpleNumericValueWithUnit.from_concept_uid(
+                                        uid=ingredient.strength_uid,
+                                        find_unit_by_uid=find_unit_by_uid,
+                                        find_numeric_value_by_uid=find_numeric_value_by_uid,
+                                    )
+                                    if ingredient.strength_uid
+                                    else None
+                                ),
+                                half_life=(
+                                    SimpleNumericValueWithUnit.from_concept_uid(
+                                        uid=ingredient.half_life_uid,
+                                        find_unit_by_uid=find_unit_by_uid,
+                                        find_numeric_value_by_uid=find_numeric_value_by_uid,
+                                    )
+                                    if ingredient.half_life_uid
+                                    else None
+                                ),
+                                lag_times=sorted(
+                                    [
+                                        SimpleLagTime.from_concept_uid(
+                                            uid=uid,
+                                            find_unit_by_uid=find_unit_by_uid,
+                                            find_lag_time_by_uid=find_lag_time_by_uid,
+                                            find_term_by_uid=find_term_by_uid,
+                                        )
+                                        for uid in ingredient.lag_time_uids
+                                    ],
+                                    key=lambda item: item.value,
+                                ),
+                            )
+                            for ingredient in formulation.ingredients
+                        ],
+                        key=lambda item: (
+                            item.active_substance.analyte_number
+                            if item.active_substance.analyte_number
+                            else item.active_substance.uid
+                        ),
+                    ),
+                )
+                for formulation in pharmaceutical_product_ar.concept_vo.formulations
+            ],
+            key=lambda item: item.external_id if item.external_id else "",
+        )
+
         return cls(
             uid=pharmaceutical_product_ar.uid,
+            derived_name=cls._compute_derived_name(formulations),
             external_id=pharmaceutical_product_ar.concept_vo.external_id,
             dosage_forms=sorted(
                 dosage_form_terms,
@@ -156,65 +218,7 @@ class PharmaceuticalProduct(VersionProperties):
                 admin_route_terms,
                 key=lambda item: item.term_name if item.term_name else "",
             ),
-            formulations=sorted(
-                [
-                    Formulation(
-                        external_id=formulation.external_id,
-                        ingredients=sorted(
-                            [
-                                Ingredient(
-                                    external_id=ingredient.external_id,
-                                    formulation_name=ingredient.formulation_name,
-                                    active_substance=SimpleActiveSubstance.from_concept_uid(
-                                        uid=ingredient.active_substance_uid,
-                                        find_by_uid=find_active_substance_by_uid,
-                                        find_dictionary_term_by_uid=find_dictionary_term_by_uid,
-                                        find_substance_term_by_uid=find_substance_term_by_uid,
-                                    ),
-                                    strength=(
-                                        SimpleNumericValueWithUnit.from_concept_uid(
-                                            uid=ingredient.strength_uid,
-                                            find_unit_by_uid=find_unit_by_uid,
-                                            find_numeric_value_by_uid=find_numeric_value_by_uid,
-                                        )
-                                        if ingredient.strength_uid
-                                        else None
-                                    ),
-                                    half_life=(
-                                        SimpleNumericValueWithUnit.from_concept_uid(
-                                            uid=ingredient.half_life_uid,
-                                            find_unit_by_uid=find_unit_by_uid,
-                                            find_numeric_value_by_uid=find_numeric_value_by_uid,
-                                        )
-                                        if ingredient.half_life_uid
-                                        else None
-                                    ),
-                                    lag_times=sorted(
-                                        [
-                                            SimpleLagTime.from_concept_uid(
-                                                uid=uid,
-                                                find_unit_by_uid=find_unit_by_uid,
-                                                find_lag_time_by_uid=find_lag_time_by_uid,
-                                                find_term_by_uid=find_term_by_uid,
-                                            )
-                                            for uid in ingredient.lag_time_uids
-                                        ],
-                                        key=lambda item: item.value,
-                                    ),
-                                )
-                                for ingredient in formulation.ingredients
-                            ],
-                            key=lambda item: (
-                                item.active_substance.analyte_number
-                                if item.active_substance.analyte_number
-                                else item.active_substance.uid
-                            ),
-                        ),
-                    )
-                    for formulation in pharmaceutical_product_ar.concept_vo.formulations
-                ],
-                key=lambda item: item.external_id if item.external_id else "",
-            ),
+            formulations=formulations,
             library_name=Library.from_library_vo(
                 pharmaceutical_product_ar.library
             ).name,
@@ -228,6 +232,35 @@ class PharmaceuticalProduct(VersionProperties):
                 [_.value for _ in pharmaceutical_product_ar.get_possible_actions()]
             ),
         )
+
+    @staticmethod
+    def _compute_derived_name(formulations: list["Formulation"]) -> str:
+        parts = []
+        for formulation in formulations:
+            for ingredient in formulation.ingredients:
+                sub = ingredient.active_substance
+                ingredient_name = (
+                    (
+                        sub.inn
+                        or sub.long_number
+                        or sub.short_number
+                        or (sub.unii.substance_unii if sub.unii else None)
+                        or sub.analyte_number
+                        or "?"
+                    )
+                    if sub
+                    else "?"
+                )
+                form_name = (
+                    ingredient.formulation_name if ingredient.formulation_name else ""
+                )
+                part = f"{ingredient_name.strip()} {form_name.strip()}"
+                if ingredient.strength:
+                    value = ingredient.strength.value
+                    value_str = str(int(value)) if value == int(value) else str(value)
+                    part += f" ({value_str} {ingredient.strength.unit_label})"
+                parts.append(part)
+        return ", ".join(parts).strip()
 
 
 class SimplePharmaceuticalProduct(BaseModel):

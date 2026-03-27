@@ -14,7 +14,6 @@
             <v-text-field
               v-model="form.dictionary_id"
               :label="`${dictionaryName} ID`"
-              density="compact"
               clearable
               :rules="[formRules.required]"
             />
@@ -25,7 +24,6 @@
             <v-text-field
               v-model="form.name"
               :label="$t('_global.name')"
-              density="compact"
               clearable
               :rules="[formRules.required]"
               @blur="setLowerCase"
@@ -37,7 +35,6 @@
             <v-text-field
               v-model="form.name_sentence_case"
               :label="$t('DictionaryTermForm.lower_case_name')"
-              density="compact"
               clearable
               :rules="[formRules.required]"
             />
@@ -48,7 +45,6 @@
             <v-text-field
               v-model="form.abbreviation"
               :label="$t('DictionaryTermForm.abbreviation')"
-              density="compact"
               clearable
             />
           </v-col>
@@ -58,7 +54,6 @@
             <v-textarea
               v-model="form.definition"
               :label="$t('DictionaryTermForm.definition')"
-              density="compact"
               clearable
               rows="1"
               auto-grow
@@ -70,7 +65,6 @@
             <v-textarea
               v-model="form.change_description"
               :label="$t('_global.change_description')"
-              density="compact"
               clearable
               rows="1"
               auto-grow

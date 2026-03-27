@@ -16,7 +16,6 @@
               :rules="[formRules.required, formRules.max(form.name, 200)]"
               clearable
               class="required"
-              density="compact"
             />
           </v-col>
         </v-row>
@@ -28,7 +27,6 @@
               :rules="[formRules.required]"
               clearable
               class="required"
-              density="compact"
             />
           </v-col>
         </v-row>

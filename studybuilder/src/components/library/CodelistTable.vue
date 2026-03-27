@@ -42,14 +42,11 @@
         :items="termsStore.terms"
         item-title="sponsor_preferred_name"
         item-value="term_uid"
-        density="compact"
         class="max-width-400 mt-6"
-        variant="outlined"
         bg-color="nnWhite"
         clear-icon="mdi-close"
         single-line
         clearable
-        rounded="lg"
         return-object
         multiple
         :loading="loading"
@@ -100,13 +97,10 @@
         v-model="termsFilterOperator"
         data-cy="search-with-terms-operator-field"
         :items="operators"
-        rounded="lg"
-        variant="outlined"
         bg-color="nnWhite"
         single-line
         :label="$t('_global.operator')"
         class="ml-1 terms-operator mt-6 mr-2"
-        density="compact"
       />
     </template>
     <template #beforeToolbar>

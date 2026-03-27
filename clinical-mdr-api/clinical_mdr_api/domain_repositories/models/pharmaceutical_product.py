@@ -1,4 +1,4 @@
-from neomodel import One, RelationshipTo, StringProperty, ZeroOrMore, ZeroOrOne
+from neomodel import One, RelationshipTo, ZeroOrMore, ZeroOrOne
 
 from clinical_mdr_api.domain_repositories.models.active_substance import (
     ActiveSubstanceRoot,
@@ -17,6 +17,7 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     ClinicalMdrRel,
     VersionRelationship,
 )
+from common.neomodel import StringProperty
 
 
 class Ingredient(ClinicalMdrNode):

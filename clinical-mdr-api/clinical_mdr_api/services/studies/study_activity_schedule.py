@@ -74,7 +74,7 @@ class StudyActivityScheduleService(StudySelectionMixin):
         return [
             StudyActivitySchedule.model_validate(sas_node)
             for sas_node in ListDistinct(
-                StudyActivityScheduleNeoModel.nodes.fetch_relations(
+                StudyActivityScheduleNeoModel.nodes.traverse(
                     "has_after__audit_trail",
                     "study_visit__has_visit_name__has_latest_value",
                     "study_activity__has_selected_activity",

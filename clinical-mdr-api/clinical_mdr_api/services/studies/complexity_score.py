@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from neomodel.sync_.core import db
+from neomodel import db
 
 from clinical_mdr_api.models.complexity_score import (
     ActivityBurden,

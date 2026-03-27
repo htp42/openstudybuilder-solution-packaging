@@ -45,21 +45,21 @@ version: "1.0"
 } AS final_properties
 MERGE (library:Library {name:"Sponsor", is_editable:true})
 
-MERGE (odm_translated_text1:OdmTranslatedText {text_type: "Description", language: "en", text: "Description1"})
-MERGE (odm_translated_text2:OdmTranslatedText {text_type: "osb:CompletionInstructions", language: "en", text: "Completion Instructions1"})
-MERGE (odm_translated_text3:OdmTranslatedText {text_type: "osb:DesignNotes", language: "en", text: "Design Notes1"})
-MERGE (odm_translated_text4:OdmTranslatedText {text_type: "osb:DisplayText", language: "en", text: "Display Text1"})
+MERGE (odm_translated_text1:Odm:OdmTranslatedText {text_type: "Description", language: "en", text: "Description1"})
+MERGE (odm_translated_text2:Odm:OdmTranslatedText {text_type: "osb:CompletionInstructions", language: "en", text: "Completion Instructions1"})
+MERGE (odm_translated_text3:Odm:OdmTranslatedText {text_type: "osb:DesignNotes", language: "en", text: "Design Notes1"})
+MERGE (odm_translated_text4:Odm:OdmTranslatedText {text_type: "osb:DisplayText", language: "en", text: "Display Text1"})
 MERGE (odm_formal_expression1:OdmFormalExpression {context: "context1", expression: "expression1"})
 
-MERGE (library)-[:CONTAINS_CONCEPT]->(odm_condition_root1:ConceptRoot:OdmConditionRoot {uid: "odm_condition1"})
-MERGE (odm_condition_value1:ConceptValue:OdmConditionValue {oid: "oid1", name: "name1"})
+MERGE (library)-[:CONTAINS_ODM]->(odm_condition_root1:Odm:OdmRoot:OdmConditionRoot {uid: "odm_condition1"})
+MERGE (odm_condition_value1:Odm:OdmValue:OdmConditionValue {oid: "oid1", name: "name1"})
 MERGE (odm_condition_root1)-[ld1:LATEST_FINAL]->(odm_condition_value1)
 MERGE (odm_condition_root1)-[l1:LATEST]->(odm_condition_value1)
 MERGE (odm_condition_root1)-[hv1:HAS_VERSION]->(odm_condition_value1)
 SET hv1 = final_properties
 
-MERGE (library)-[:CONTAINS_CONCEPT]->(odm_condition_root2:ConceptRoot:OdmConditionRoot {uid: "odm_condition2"})
-MERGE (odm_condition_value2:ConceptValue:OdmConditionValue {oid: "oid2", name: "name2"})
+MERGE (library)-[:CONTAINS_ODM]->(odm_condition_root2:Odm:OdmRoot:OdmConditionRoot {uid: "odm_condition2"})
+MERGE (odm_condition_value2:Odm:OdmValue:OdmConditionValue {oid: "oid2", name: "name2"})
 MERGE (odm_condition_root2)-[ld2:LATEST_FINAL]->(odm_condition_value2)
 MERGE (odm_condition_root2)-[l2:LATEST]->(odm_condition_value2)
 MERGE (odm_condition_root2)-[hv2:HAS_VERSION]->(odm_condition_value2)
@@ -88,20 +88,20 @@ version: "1.0"
 } AS final_properties
 MERGE (library:Library {name:"Sponsor", is_editable:true})
 
-MERGE (odm_translated_text1:OdmTranslatedText {text_type: "Description", language: "en", text: "Description1"})
-MERGE (odm_translated_text2:OdmTranslatedText {text_type: "osb:CompletionInstructions", language: "en", text: "Completion Instructions1"})
-MERGE (odm_translated_text3:OdmTranslatedText {text_type: "osb:DesignNotes", language: "en", text: "Design Notes1"})
-MERGE (odm_translated_text4:OdmTranslatedText {text_type: "osb:DisplayText", language: "en", text: "Display Text1"})
+MERGE (odm_translated_text1:Odm:OdmTranslatedText {text_type: "Description", language: "en", text: "Description1"})
+MERGE (odm_translated_text2:Odm:OdmTranslatedText {text_type: "osb:CompletionInstructions", language: "en", text: "Completion Instructions1"})
+MERGE (odm_translated_text3:Odm:OdmTranslatedText {text_type: "osb:DesignNotes", language: "en", text: "Design Notes1"})
+MERGE (odm_translated_text4:Odm:OdmTranslatedText {text_type: "osb:DisplayText", language: "en", text: "Display Text1"})
 
-MERGE (library)-[:CONTAINS_CONCEPT]->(odm_method_root1:ConceptRoot:OdmMethodRoot {uid: "odm_method1"})
-MERGE (odm_method_value1:ConceptValue:OdmMethodValue {oid: "oid1", name: "name1", method_type: "type1"})
+MERGE (library)-[:CONTAINS_ODM]->(odm_method_root1:Odm:OdmRoot:OdmMethodRoot {uid: "odm_method1"})
+MERGE (odm_method_value1:Odm:OdmValue:OdmMethodValue {oid: "oid1", name: "name1", method_type: "type1"})
 MERGE (odm_method_root1)-[ld1:LATEST_FINAL]->(odm_method_value1)
 MERGE (odm_method_root1)-[l1:LATEST]->(odm_method_value1)
 MERGE (odm_method_root1)-[hv1:HAS_VERSION]->(odm_method_value1)
 SET hv1 = final_properties
 
-MERGE (library)-[:CONTAINS_CONCEPT]->(odm_method_root2:ConceptRoot:OdmMethodRoot {uid: "odm_method2"})
-MERGE (odm_method_value2:ConceptValue:OdmMethodValue {oid: "oid2", name: "name2", method_type: "type2"})
+MERGE (library)-[:CONTAINS_ODM]->(odm_method_root2:Odm:OdmRoot:OdmMethodRoot {uid: "odm_method2"})
+MERGE (odm_method_value2:Odm:OdmValue:OdmMethodValue {oid: "oid2", name: "name2", method_type: "type2"})
 MERGE (odm_method_root2)-[ld2:LATEST_FINAL]->(odm_method_value2)
 MERGE (odm_method_root2)-[l2:LATEST]->(odm_method_value2)
 MERGE (odm_method_root2)-[hv2:HAS_VERSION]->(odm_method_value2)
@@ -289,14 +289,14 @@ version: "1.0"
 
 MERGE (library:Library {name:"Sponsor", is_editable:true})
 
-MERGE (odm_translated_text1:OdmTranslatedText {text_type: "Description", language: "eng", text: "Description1"})
-MERGE (odm_translated_text2:OdmTranslatedText {text_type: "osb:DesignNotes", language: "eng", text: "Design Notes1"})
-MERGE (odm_translated_text3:OdmTranslatedText {text_type: "osb:CompletionInstructions", language: "eng", text: "Completion Instructions1"})
-MERGE (odm_translated_text4:OdmTranslatedText {text_type: "osb:DisplayText", language: "eng", text: "Display Text1"})
+MERGE (odm_translated_text1:Odm:OdmTranslatedText {text_type: "Description", language: "eng", text: "Description1"})
+MERGE (odm_translated_text2:Odm:OdmTranslatedText {text_type: "osb:DesignNotes", language: "eng", text: "Design Notes1"})
+MERGE (odm_translated_text3:Odm:OdmTranslatedText {text_type: "osb:CompletionInstructions", language: "eng", text: "Completion Instructions1"})
+MERGE (odm_translated_text4:Odm:OdmTranslatedText {text_type: "osb:DisplayText", language: "eng", text: "Display Text1"})
 
-MERGE (item_group_root1:ConceptRoot:OdmItemGroupRoot {uid: "odm_item_group1"})
-MERGE (item_group_value1:ConceptValue:OdmItemGroupValue {oid: "oid1", name: "name1", repeating: false, is_reference_data: false, sas_dataset_name: "sas_dataset_name1", origin: "origin1", purpose: "purpose1", comment: "comment1"})
-MERGE (library)-[r0:CONTAINS_CONCEPT]->(item_group_root1)
+MERGE (item_group_root1:Odm:OdmRoot:OdmItemGroupRoot {uid: "odm_item_group1"})
+MERGE (item_group_value1:Odm:OdmValue:OdmItemGroupValue {oid: "oid1", name: "name1", repeating: false, is_reference_data: false, sas_dataset_name: "sas_dataset_name1", origin: "origin1", purpose: "purpose1", comment: "comment1"})
+MERGE (library)-[r0:CONTAINS_ODM]->(item_group_root1)
 MERGE (item_group_root1)-[r1:LATEST_FINAL]->(item_group_value1)
 MERGE (item_group_root1)-[hv2:HAS_VERSION]->(item_group_value1)
 MERGE (item_group_root1)-[:LATEST]->(item_group_value1)
@@ -306,9 +306,9 @@ MERGE (item_group_value1)-[:HAS_TRANSLATED_TEXT]->(odm_translated_text3)
 MERGE (item_group_value1)-[:HAS_TRANSLATED_TEXT]->(odm_translated_text4)
 SET hv2 = final_properties
 
-MERGE (item_group_root2:ConceptRoot:OdmItemGroupRoot {uid: "odm_item_group2"})
-MERGE (item_group_value2:ConceptValue:OdmItemGroupValue {oid: "oid2", name: "name2", repeating: false, is_reference_data: true, sas_dataset_name: "sas_dataset_name2", origin: "origin2", purpose: "purpose2", comment: "comment2"})
-MERGE (library)-[:CONTAINS_CONCEPT]->(item_group_root2)
+MERGE (item_group_root2:Odm:OdmRoot:OdmItemGroupRoot {uid: "odm_item_group2"})
+MERGE (item_group_value2:Odm:OdmValue:OdmItemGroupValue {oid: "oid2", name: "name2", repeating: false, is_reference_data: true, sas_dataset_name: "sas_dataset_name2", origin: "origin2", purpose: "purpose2", comment: "comment2"})
+MERGE (library)-[:CONTAINS_ODM]->(item_group_root2)
 MERGE (item_group_root2)-[r2:LATEST_FINAL]->(item_group_value2)
 MERGE (item_group_root2)-[hv3:HAS_VERSION]->(item_group_value2)
 MERGE (item_group_root2)-[:LATEST]->(item_group_value2)
@@ -387,15 +387,15 @@ version: "1.0"
 
 MERGE (library:Library {name:"Sponsor", is_editable:true})
 
-MERGE (odm_translated_text1:OdmTranslatedText {text_type: "Description", language: "en", text: "Description1"})
-MERGE (odm_translated_text2:OdmTranslatedText {text_type: "osb:CompletionInstructions", language: "en", text: "Completion Instructions1"})
-MERGE (odm_translated_text3:OdmTranslatedText {text_type: "osb:DesignNotes", language: "en", text: "Design Notes1"})
-MERGE (odm_translated_text4:OdmTranslatedText {text_type: "osb:DisplayText", language: "en", text: "Display Text1"})
-MERGE (odm_translated_text5:OdmTranslatedText {text_type: "Question", language: "en", text: "Question1"})
+MERGE (odm_translated_text1:Odm:OdmTranslatedText {text_type: "Description", language: "en", text: "Description1"})
+MERGE (odm_translated_text2:Odm:OdmTranslatedText {text_type: "osb:CompletionInstructions", language: "en", text: "Completion Instructions1"})
+MERGE (odm_translated_text3:Odm:OdmTranslatedText {text_type: "osb:DesignNotes", language: "en", text: "Design Notes1"})
+MERGE (odm_translated_text4:Odm:OdmTranslatedText {text_type: "osb:DisplayText", language: "en", text: "Display Text1"})
+MERGE (odm_translated_text5:Odm:OdmTranslatedText {text_type: "Question", language: "en", text: "Question1"})
 
-MERGE (item_root1:ConceptRoot:OdmItemRoot {uid: "odm_item1"})
-MERGE (item_value1:ConceptValue:OdmItemValue {oid: "oid1", name: "name1", datatype: "string", length: 1, significant_digits: 1, sas_field_name: "sasfieldname1", sds_var_name: "sdsvarname1", origin: "origin1", comment: "comment1"})
-MERGE (library)-[:CONTAINS_CONCEPT]->(item_root1)
+MERGE (item_root1:Odm:OdmRoot:OdmItemRoot {uid: "odm_item1"})
+MERGE (item_value1:Odm:OdmValue:OdmItemValue {oid: "oid1", name: "name1", datatype: "string", length: 1, significant_digits: 1, sas_field_name: "sasfieldname1", sds_var_name: "sdsvarname1", origin: "origin1", comment: "comment1"})
+MERGE (library)-[:CONTAINS_ODM]->(item_root1)
 MERGE (item_root1)-[r1:LATEST_FINAL]->(item_value1)
 MERGE (item_root1)-[hv2:HAS_VERSION]->(item_value1)
 MERGE (item_root1)-[:LATEST]->(item_value1)
@@ -406,9 +406,9 @@ MERGE (item_value1)-[:HAS_TRANSLATED_TEXT]->(odm_translated_text4)
 MERGE (item_value1)-[:HAS_TRANSLATED_TEXT]->(odm_translated_text5)
 SET hv2 = final_properties
 
-MERGE (item_root2:ConceptRoot:OdmItemRoot {uid: "odm_item2"})
-MERGE (item_value2:ConceptValue:OdmItemValue {oid: "oid2", name: "name2", datatype: "datatype2", length: 2, significant_digits: 2, sas_field_name: "sasfieldname2", sds_var_name: "sdsvarname2", origin: "origin2", comment: "comment2"})
-MERGE (library)-[:CONTAINS_CONCEPT]->(item_root2)
+MERGE (item_root2:Odm:OdmRoot:OdmItemRoot {uid: "odm_item2"})
+MERGE (item_value2:Odm:OdmValue:OdmItemValue {oid: "oid2", name: "name2", datatype: "datatype2", length: 2, significant_digits: 2, sas_field_name: "sasfieldname2", sds_var_name: "sdsvarname2", origin: "origin2", comment: "comment2"})
+MERGE (library)-[:CONTAINS_ODM]->(item_root2)
 MERGE (item_root2)-[r2:LATEST_FINAL]->(item_value2)
 MERGE (item_root2)-[hv3:HAS_VERSION]->(item_value2)
 MERGE (item_root2)-[:LATEST]->(item_value2)
@@ -430,15 +430,15 @@ version: "1.0"
 } AS final_properties
 MERGE (library:Library {name:"Sponsor", is_editable:true})
 
-MERGE (odm_translated_text1:OdmTranslatedText {text_type: "Description", language: "en", text: "Description1"})
-MERGE (odm_translated_text2:OdmTranslatedText {text_type: "osb:CompletionInstructions", language: "en", text: "Completion Instructions1"})
-MERGE (odm_translated_text3:OdmTranslatedText {text_type: "osb:DesignNotes", language: "en", text: "Design Notes1"})
-MERGE (odm_translated_text4:OdmTranslatedText {text_type: "osb:DisplayText", language: "en", text: "Display Text1"})
-MERGE (odm_alias1:OdmAlias {context: "context1", name: "name1"})
+MERGE (odm_translated_text1:Odm:OdmTranslatedText {text_type: "Description", language: "en", text: "Description1"})
+MERGE (odm_translated_text2:Odm:OdmTranslatedText {text_type: "osb:CompletionInstructions", language: "en", text: "Completion Instructions1"})
+MERGE (odm_translated_text3:Odm:OdmTranslatedText {text_type: "osb:DesignNotes", language: "en", text: "Design Notes1"})
+MERGE (odm_translated_text4:Odm:OdmTranslatedText {text_type: "osb:DisplayText", language: "en", text: "Display Text1"})
+MERGE (odm_alias1:Odm:OdmAlias {context: "context1", name: "name1"})
 
-MERGE (odm_form_root1:ConceptRoot:OdmFormRoot {uid: "odm_form1"})
-MERGE (odm_form_value1:ConceptValue:OdmFormValue {oid: "oid1", name: "name1", repeating: true})
-MERGE (library)-[:CONTAINS_CONCEPT]->(odm_form_root1)
+MERGE (odm_form_root1:Odm:OdmRoot:OdmFormRoot {uid: "odm_form1"})
+MERGE (odm_form_value1:Odm:OdmValue:OdmFormValue {oid: "oid1", name: "name1", repeating: true})
+MERGE (library)-[:CONTAINS_ODM]->(odm_form_root1)
 MERGE (odm_form_root1)-[r1:LATEST_FINAL]->(odm_form_value1)
 MERGE (odm_form_root1)-[hv2:HAS_VERSION]->(odm_form_value1)
 MERGE (odm_form_root1)-[:LATEST]->(odm_form_value1)
@@ -449,9 +449,9 @@ MERGE (odm_form_value1)-[:HAS_TRANSLATED_TEXT]->(odm_translated_text4)
 MERGE (odm_form_value1)-[:HAS_ALIAS]->(odm_alias1)
 SET hv2 = final_properties
 
-MERGE (odm_form_root2:ConceptRoot:OdmFormRoot {uid: "odm_form2"})
-MERGE (odm_form_value2:ConceptValue:OdmFormValue {oid: "oid2", name: "name2", repeating: true})
-MERGE (library)-[:CONTAINS_CONCEPT]->(odm_form_root2)
+MERGE (odm_form_root2:Odm:OdmRoot:OdmFormRoot {uid: "odm_form2"})
+MERGE (odm_form_value2:Odm:OdmValue:OdmFormValue {oid: "oid2", name: "name2", repeating: true})
+MERGE (library)-[:CONTAINS_ODM]->(odm_form_root2)
 MERGE (odm_form_root2)-[r2:LATEST_FINAL]->(odm_form_value2)
 MERGE (odm_form_root2)-[hv3:HAS_VERSION]->(odm_form_value2)
 MERGE (odm_form_root2)-[:LATEST]->(odm_form_value2)
@@ -474,9 +474,9 @@ version: "1.0"
 
 MERGE (library:Library {name:"Sponsor", is_editable:true})
 
-MERGE (StudyEventRoot:ConceptRoot:OdmStudyEventRoot {uid: "odm_study_event1"})
-MERGE (StudyEventValue:ConceptValue:OdmStudyEventValue {oid: "oid1", name: "name1", effective_date: date(), retired_date: date(), description: "description", display_in_tree: true})
-MERGE (library)-[:CONTAINS_CONCEPT]->(StudyEventRoot)
+MERGE (StudyEventRoot:Odm:OdmRoot:OdmStudyEventRoot {uid: "odm_study_event1"})
+MERGE (StudyEventValue:Odm:OdmValue:OdmStudyEventValue {oid: "oid1", name: "name1", effective_date: date(), retired_date: date(), description: "description", display_in_tree: true})
+MERGE (library)-[:CONTAINS_ODM]->(StudyEventRoot)
 MERGE (StudyEventRoot)-[r1:LATEST_FINAL]->(StudyEventValue)
 MERGE (StudyEventRoot)-[r2:LATEST]->(StudyEventValue)
 MERGE (StudyEventRoot)-[hv:HAS_VERSION]->(StudyEventValue)
@@ -504,7 +504,7 @@ MERGE (Catalogue:CTCatalogue {name:"SDTM CT"})
 MERGE (Library)-[:CONTAINS_CATALOUGE]->(Catalogue)
 
 WITH *
-MERGE (odm_alias1:OdmAlias {context: "context1", name: "name1"})
+MERGE (odm_alias1:Odm:OdmAlias {context: "context1", name: "name1"})
 WITH *
 MATCH (:OdmFormRoot {uid: "odm_form1"})-[:LATEST]-(ofv:OdmFormValue)
 MATCH (:OdmItemGroupRoot {uid: "odm_item_group1"})-[:LATEST]-(oigv:OdmItemGroupValue)
@@ -586,17 +586,17 @@ version: "1.0"
 } AS final_properties
 MERGE (library:Library {name:"Sponsor", is_editable:true})
 
-MERGE (odm_vendor_namespace_root1:ConceptRoot:OdmVendorNamespaceRoot {uid: "odm_vendor_namespace1"})
-MERGE (odm_vendor_namespace_value1:ConceptValue:OdmVendorNamespaceValue {name: "nameOne", prefix: "prefix", url: "url1"})
-MERGE (library)-[:CONTAINS_CONCEPT]->(odm_vendor_namespace_root1)
+MERGE (odm_vendor_namespace_root1:Odm:OdmRoot:OdmVendorNamespaceRoot {uid: "odm_vendor_namespace1"})
+MERGE (odm_vendor_namespace_value1:Odm:OdmValue:OdmVendorNamespaceValue {name: "nameOne", prefix: "prefix", url: "url1"})
+MERGE (library)-[:CONTAINS_ODM]->(odm_vendor_namespace_root1)
 MERGE (odm_vendor_namespace_root1)-[r1:LATEST_FINAL]->(odm_vendor_namespace_value1)
 MERGE (odm_vendor_namespace_root1)-[:LATEST]->(odm_vendor_namespace_value1)
 MERGE (odm_vendor_namespace_root1)-[hv1:HAS_VERSION]->(odm_vendor_namespace_value1)
 SET hv1 = final_properties
 
-MERGE (odm_vendor_namespace_root2:ConceptRoot:OdmVendorNamespaceRoot {uid: "odm_vendor_namespace2"})
-MERGE (odm_vendor_namespace_value2:ConceptValue:OdmVendorNamespaceValue {name: "OSB", prefix: "osb", url: "url2"})
-MERGE (library)-[:CONTAINS_CONCEPT]->(odm_vendor_namespace_root2)
+MERGE (odm_vendor_namespace_root2:Odm:OdmRoot:OdmVendorNamespaceRoot {uid: "odm_vendor_namespace2"})
+MERGE (odm_vendor_namespace_value2:Odm:OdmValue:OdmVendorNamespaceValue {name: "OSB", prefix: "osb", url: "url2"})
+MERGE (library)-[:CONTAINS_ODM]->(odm_vendor_namespace_root2)
 MERGE (odm_vendor_namespace_root2)-[r2:LATEST_FINAL]->(odm_vendor_namespace_value2)
 MERGE (odm_vendor_namespace_root2)-[:LATEST]->(odm_vendor_namespace_value2)
 MERGE (odm_vendor_namespace_root2)-[hv2:HAS_VERSION]->(odm_vendor_namespace_value2)
@@ -614,39 +614,39 @@ version: "1.0"
 MERGE (library:Library {name:"Sponsor", is_editable:true})
 
 WITH *
-MATCH (odm_vendor_namespace_root1:ConceptRoot:OdmVendorNamespaceRoot {uid: "odm_vendor_namespace1"})-[:LATEST]->(odm_vendor_namespace_value1:OdmVendorNamespaceValue)
-MATCH (odm_vendor_namespace_root2:ConceptRoot:OdmVendorNamespaceRoot {uid: "odm_vendor_namespace2"})-[:LATEST]->(odm_vendor_namespace_value2:OdmVendorNamespaceValue)
+MATCH (odm_vendor_namespace_root1:Odm:OdmRoot:OdmVendorNamespaceRoot {uid: "odm_vendor_namespace1"})-[:LATEST]->(odm_vendor_namespace_value1:OdmVendorNamespaceValue)
+MATCH (odm_vendor_namespace_root2:Odm:OdmRoot:OdmVendorNamespaceRoot {uid: "odm_vendor_namespace2"})-[:LATEST]->(odm_vendor_namespace_value2:OdmVendorNamespaceValue)
 
-MERGE (odm_vendor_element_root1:ConceptRoot:OdmVendorElementRoot {uid: "odm_vendor_element1"})
-MERGE (odm_vendor_element_value1:ConceptValue:OdmVendorElementValue {name: "NameOne", compatible_types: '["FormDef","ItemGroupDef","ItemDef"]'})
-MERGE (library)-[:CONTAINS_CONCEPT]->(odm_vendor_element_root1)
+MERGE (odm_vendor_element_root1:Odm:OdmRoot:OdmVendorElementRoot {uid: "odm_vendor_element1"})
+MERGE (odm_vendor_element_value1:Odm:OdmValue:OdmVendorElementValue {name: "NameOne", compatible_types: '["FormDef","ItemGroupDef","ItemDef"]'})
+MERGE (library)-[:CONTAINS_ODM]->(odm_vendor_element_root1)
 MERGE (odm_vendor_element_root1)-[r1:LATEST_FINAL]->(odm_vendor_element_value1)
 MERGE (odm_vendor_element_root1)-[hv1:HAS_VERSION]->(odm_vendor_element_value1)
 MERGE (odm_vendor_element_root1)-[:LATEST]->(odm_vendor_element_value1)
 MERGE (odm_vendor_namespace_value1)-[:HAS_VENDOR_ELEMENT]->(odm_vendor_element_value1)
 SET hv1 = final_properties
 
-MERGE (odm_vendor_element_root2:ConceptRoot:OdmVendorElementRoot {uid: "odm_vendor_element2"})
-MERGE (odm_vendor_element_value2:ConceptValue:OdmVendorElementValue {name: "NameTwo", compatible_types: '["FormDef","ItemGroupDef","ItemDef"]'})
-MERGE (library)-[:CONTAINS_CONCEPT]->(odm_vendor_element_root2)
+MERGE (odm_vendor_element_root2:Odm:OdmRoot:OdmVendorElementRoot {uid: "odm_vendor_element2"})
+MERGE (odm_vendor_element_value2:Odm:OdmValue:OdmVendorElementValue {name: "NameTwo", compatible_types: '["FormDef","ItemGroupDef","ItemDef"]'})
+MERGE (library)-[:CONTAINS_ODM]->(odm_vendor_element_root2)
 MERGE (odm_vendor_element_root2)-[r2:LATEST_FINAL]->(odm_vendor_element_value2)
 MERGE (odm_vendor_element_root2)-[hv2:HAS_VERSION]->(odm_vendor_element_value2)
 MERGE (odm_vendor_element_root2)-[:LATEST]->(odm_vendor_element_value2)
 MERGE (odm_vendor_namespace_value2)-[:HAS_VENDOR_ELEMENT]->(odm_vendor_element_value2)
 SET hv2 = final_properties
 
-MERGE (odm_vendor_element_root3:ConceptRoot:OdmVendorElementRoot {uid: "odm_vendor_element3"})
-MERGE (odm_vendor_element_value3:ConceptValue:OdmVendorElementValue {name: "NameThree", compatible_types: '["FormDef","ItemGroupDef","ItemDef"]'})
-MERGE (library)-[:CONTAINS_CONCEPT]->(odm_vendor_element_root3)
+MERGE (odm_vendor_element_root3:Odm:OdmRoot:OdmVendorElementRoot {uid: "odm_vendor_element3"})
+MERGE (odm_vendor_element_value3:Odm:OdmValue:OdmVendorElementValue {name: "NameThree", compatible_types: '["FormDef","ItemGroupDef","ItemDef"]'})
+MERGE (library)-[:CONTAINS_ODM]->(odm_vendor_element_root3)
 MERGE (odm_vendor_element_root3)-[r3:LATEST_FINAL]->(odm_vendor_element_value3)
 MERGE (odm_vendor_element_root3)-[hv3:HAS_VERSION]->(odm_vendor_element_value3)
 MERGE (odm_vendor_element_root3)-[:LATEST]->(odm_vendor_element_value3)
 MERGE (odm_vendor_namespace_value3)-[:HAS_VENDOR_ELEMENT]->(odm_vendor_element_value3)
 SET hv3 = final_properties
 
-MERGE (odm_vendor_element_root4:ConceptRoot:OdmVendorElementRoot {uid: "odm_vendor_element4"})
-MERGE (odm_vendor_element_value4:ConceptValue:OdmVendorElementValue {name: "NameThree", compatible_types: '["NonCompatibleVendor"]'})
-MERGE (library)-[:CONTAINS_CONCEPT]->(odm_vendor_element_root4)
+MERGE (odm_vendor_element_root4:Odm:OdmRoot:OdmVendorElementRoot {uid: "odm_vendor_element4"})
+MERGE (odm_vendor_element_value4:Odm:OdmValue:OdmVendorElementValue {name: "NameThree", compatible_types: '["NonCompatibleVendor"]'})
+MERGE (library)-[:CONTAINS_ODM]->(odm_vendor_element_root4)
 MERGE (odm_vendor_element_root4)-[r4:LATEST_FINAL]->(odm_vendor_element_value4)
 MERGE (odm_vendor_element_root4)-[hv4:HAS_VERSION]->(odm_vendor_element_value4)
 MERGE (odm_vendor_element_root4)-[:LATEST]->(odm_vendor_element_value4)
@@ -665,58 +665,58 @@ version: "1.0"
 MERGE (library:Library {name:"Sponsor", is_editable:true})
 
 WITH *
-MATCH (odm_vendor_namespace_root:ConceptRoot:OdmVendorNamespaceRoot {uid: "odm_vendor_namespace1"})-[:LATEST]->(odm_vendor_namespace_value:OdmVendorNamespaceValue)
+MATCH (odm_vendor_namespace_root:Odm:OdmRoot:OdmVendorNamespaceRoot {uid: "odm_vendor_namespace1"})-[:LATEST]->(odm_vendor_namespace_value:OdmVendorNamespaceValue)
 MATCH (odm_vendor_element_root1:OdmVendorElementRoot {uid:"odm_vendor_element1"})-[:LATEST]->(odm_vendor_element_value1:OdmVendorElementValue)
 MATCH (odm_vendor_element_root3:OdmVendorElementRoot {uid:"odm_vendor_element3"})-[:LATEST]->(odm_vendor_element_value3:OdmVendorElementValue)
 
-MERGE (odm_vendor_attribute_root1:ConceptRoot:OdmVendorAttributeRoot {uid: "odm_vendor_attribute1"})
-MERGE (odm_vendor_attribute_value1:ConceptValue:OdmVendorAttributeValue {name: "nameOne", data_type: "string", value_regex: "^[a-zA-Z]+$"})
-MERGE (library)-[:CONTAINS_CONCEPT]->(odm_vendor_attribute_root1)
+MERGE (odm_vendor_attribute_root1:Odm:OdmRoot:OdmVendorAttributeRoot {uid: "odm_vendor_attribute1"})
+MERGE (odm_vendor_attribute_value1:Odm:OdmValue:OdmVendorAttributeValue {name: "nameOne", data_type: "string", value_regex: "^[a-zA-Z]+$"})
+MERGE (library)-[:CONTAINS_ODM]->(odm_vendor_attribute_root1)
 MERGE (odm_vendor_attribute_root1)-[r1:LATEST_FINAL]->(odm_vendor_attribute_value1)
 MERGE (odm_vendor_attribute_root1)-[hv1:HAS_VERSION]->(odm_vendor_attribute_value1)
 MERGE (odm_vendor_attribute_root1)-[:LATEST]->(odm_vendor_attribute_value1)
 MERGE (odm_vendor_element_value1)-[:HAS_VENDOR_ATTRIBUTE {value: "value1"}]->(odm_vendor_attribute_value1)
 SET hv1 = final_properties
 
-MERGE (odm_vendor_attribute_root2:ConceptRoot:OdmVendorAttributeRoot {uid: "odm_vendor_attribute2"})
-MERGE (odm_vendor_attribute_value2:ConceptValue:OdmVendorAttributeValue {name: "nameTwo", data_type: "string"})
-MERGE (library)-[:CONTAINS_CONCEPT]->(odm_vendor_attribute_root2)
+MERGE (odm_vendor_attribute_root2:Odm:OdmRoot:OdmVendorAttributeRoot {uid: "odm_vendor_attribute2"})
+MERGE (odm_vendor_attribute_value2:Odm:OdmValue:OdmVendorAttributeValue {name: "nameTwo", data_type: "string"})
+MERGE (library)-[:CONTAINS_ODM]->(odm_vendor_attribute_root2)
 MERGE (odm_vendor_attribute_root2)-[r2:LATEST_FINAL]->(odm_vendor_attribute_value2)
 MERGE (odm_vendor_attribute_root2)-[hv2:HAS_VERSION]->(odm_vendor_attribute_value2)
 MERGE (odm_vendor_attribute_root2)-[:LATEST]->(odm_vendor_attribute_value2)
 MERGE (odm_vendor_element_value1)-[:HAS_VENDOR_ATTRIBUTE {value: "value2"}]->(odm_vendor_attribute_value2)
 SET hv2 = final_properties
 
-MERGE (odm_vendor_attribute_root3:ConceptRoot:OdmVendorAttributeRoot {uid: "odm_vendor_attribute3"})
-MERGE (odm_vendor_attribute_value3:ConceptValue:OdmVendorAttributeValue {name: "nameThree", compatible_types: '["FormDef","ItemGroupDef","ItemDef","ItemGroupRef","ItemRef"]', data_type: "string", value_regex: "^[a-zA-Z]+$"})
-MERGE (library)-[:CONTAINS_CONCEPT]->(odm_vendor_attribute_root3)
+MERGE (odm_vendor_attribute_root3:Odm:OdmRoot:OdmVendorAttributeRoot {uid: "odm_vendor_attribute3"})
+MERGE (odm_vendor_attribute_value3:Odm:OdmValue:OdmVendorAttributeValue {name: "nameThree", compatible_types: '["FormDef","ItemGroupDef","ItemDef","ItemGroupRef","ItemRef"]', data_type: "string", value_regex: "^[a-zA-Z]+$"})
+MERGE (library)-[:CONTAINS_ODM]->(odm_vendor_attribute_root3)
 MERGE (odm_vendor_attribute_root3)-[r4:LATEST_FINAL]->(odm_vendor_attribute_value3)
 MERGE (odm_vendor_attribute_root3)-[hv4:HAS_VERSION]->(odm_vendor_attribute_value3)
 MERGE (odm_vendor_attribute_root3)-[:LATEST]->(odm_vendor_attribute_value3)
 MERGE (odm_vendor_namespace_value)-[:HAS_VENDOR_ATTRIBUTE {value: "value3"}]->(odm_vendor_attribute_value3)
 SET hv4 = final_properties
 
-MERGE (odm_vendor_attribute_root4:ConceptRoot:OdmVendorAttributeRoot {uid: "odm_vendor_attribute4"})
-MERGE (odm_vendor_attribute_value4:ConceptValue:OdmVendorAttributeValue {name: "nameFour", compatible_types: '["FormDef","ItemGroupDef","ItemDef","ItemGroupRef","ItemRef"]', data_type: "string"})
-MERGE (library)-[:CONTAINS_CONCEPT]->(odm_vendor_attribute_root4)
+MERGE (odm_vendor_attribute_root4:Odm:OdmRoot:OdmVendorAttributeRoot {uid: "odm_vendor_attribute4"})
+MERGE (odm_vendor_attribute_value4:Odm:OdmValue:OdmVendorAttributeValue {name: "nameFour", compatible_types: '["FormDef","ItemGroupDef","ItemDef","ItemGroupRef","ItemRef"]', data_type: "string"})
+MERGE (library)-[:CONTAINS_ODM]->(odm_vendor_attribute_root4)
 MERGE (odm_vendor_attribute_root4)-[r5:LATEST_FINAL]->(odm_vendor_attribute_value4)
 MERGE (odm_vendor_attribute_root4)-[hv5:HAS_VERSION]->(odm_vendor_attribute_value4)
 MERGE (odm_vendor_attribute_root4)-[:LATEST]->(odm_vendor_attribute_value4)
 MERGE (odm_vendor_namespace_value)-[:HAS_VENDOR_ATTRIBUTE {value: "value4"}]->(odm_vendor_attribute_value4)
 SET hv5 = final_properties
 
-MERGE (odm_vendor_attribute_root5:ConceptRoot:OdmVendorAttributeRoot {uid: "odm_vendor_attribute5"})
-MERGE (odm_vendor_attribute_value5:ConceptValue:OdmVendorAttributeValue {name: "nameFive", compatible_types: '["NonCompatibleVendor"]', data_type: "string"})
-MERGE (library)-[:CONTAINS_CONCEPT]->(odm_vendor_attribute_root5)
+MERGE (odm_vendor_attribute_root5:Odm:OdmRoot:OdmVendorAttributeRoot {uid: "odm_vendor_attribute5"})
+MERGE (odm_vendor_attribute_value5:Odm:OdmValue:OdmVendorAttributeValue {name: "nameFive", compatible_types: '["NonCompatibleVendor"]', data_type: "string"})
+MERGE (library)-[:CONTAINS_ODM]->(odm_vendor_attribute_root5)
 MERGE (odm_vendor_attribute_root5)-[r6:LATEST_FINAL]->(odm_vendor_attribute_value5)
 MERGE (odm_vendor_attribute_root5)-[hv6:HAS_VERSION]->(odm_vendor_attribute_value5)
 MERGE (odm_vendor_attribute_root5)-[:LATEST]->(odm_vendor_attribute_value5)
 MERGE (odm_vendor_namespace_value)-[:HAS_VENDOR_ATTRIBUTE {value: "value5"}]->(odm_vendor_attribute_value5)
 SET hv6 = final_properties
 
-MERGE (odm_vendor_attribute_root7:ConceptRoot:OdmVendorAttributeRoot {uid: "odm_vendor_attribute7"})
-MERGE (odm_vendor_attribute_value7:ConceptValue:OdmVendorAttributeValue {name: "nameSeven", data_type: "string"})
-MERGE (library)-[:CONTAINS_CONCEPT]->(odm_vendor_attribute_root7)
+MERGE (odm_vendor_attribute_root7:Odm:OdmRoot:OdmVendorAttributeRoot {uid: "odm_vendor_attribute7"})
+MERGE (odm_vendor_attribute_value7:Odm:OdmValue:OdmVendorAttributeValue {name: "nameSeven", data_type: "string"})
+MERGE (library)-[:CONTAINS_ODM]->(odm_vendor_attribute_root7)
 MERGE (odm_vendor_attribute_root7)-[r7:LATEST_FINAL]->(odm_vendor_attribute_value7)
 MERGE (odm_vendor_attribute_root7)-[hv7:HAS_VERSION]->(odm_vendor_attribute_value7)
 MERGE (odm_vendor_attribute_root7)-[:LATEST]->(odm_vendor_attribute_value7)
@@ -1331,7 +1331,7 @@ MERGE (activity_instance_root1)-[hv3a:HAS_VERSION]->(activity_instance_value1:Co
 ActivityInstanceValue:FindingValue:NumericFindingValue {
 name:"name1"})
 MERGE (activity_instance_value1)-[:HAS_ACTIVITY]->(activity_grouping)
-SET activity_instance_value1=new_activity_instance_value1
+SET activity_instance_value1=properties(new_activity_instance_value1)
 SET activity_instance_value1.molecular_weight = 0.0
 SET activity_instance_value1.name="name1"
 SET hv3a = final_properties
@@ -2793,8 +2793,8 @@ MERGE (sr)-[ld:LATEST_DRAFT]->(sv)
 set hv.status = "DRAFT"
 set hv.start_date = datetime()
 set hv.author_id = "unknown-user"
-set hv2 = hv
-set ld = hv
+set hv2 = properties(hv)
+set ld = properties(hv)
 
 MERGE (ot:ObjectiveTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot {uid:"ObjectiveTemplate_000001", sequence_id: "O1"})-[relt:LATEST_FINAL]->(otv:ObjectiveTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue {name :"objective_1", name_plain : "objective_1"})
 MERGE (or:ObjectiveRoot:SyntaxInstanceRoot:SyntaxIndexingInstanceRoot)-[rel:LATEST_FINAL]->(ov:ObjectiveValue:SyntaxInstanceValue:SyntaxIndexingInstanceValue {name : "objective_1", name_plain : "objective_1"})
@@ -2890,7 +2890,7 @@ MERGE (sr)-[ld:LATEST_DRAFT]->(sv)
 set hv.status = "DRAFT"
 set hv.start_date = datetime()
 set hv.author_id = "unknown-user"
-set ld = hv
+set ld = properties(hv)
 
 MERGE (ot:ObjectiveTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot {uid:"ObjectiveTemplate_000001", sequence_id: "O1"})-[relt:LATEST_FINAL]->(otv:ObjectiveTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue {name : "objective_1", name_plain : "objective_1"})
 MERGE (or:ObjectiveRoot:SyntaxInstanceRoot:SyntaxIndexingInstanceRoot)-[rel:LATEST_FINAL]->(ov:ObjectiveValue:SyntaxInstanceValue:SyntaxIndexingInstanceValue {name : "objective_1", name_plain : "objective_1"})
@@ -2975,7 +2975,7 @@ MERGE (sr)-[ld:LATEST_DRAFT]->(sv)
 set hv.status = "DRAFT"
 set hv.start_date = datetime()
 set hv.author_id = "unknown-user"
-set ld = hv
+set ld = properties(hv)
 
 // Compound
 CREATE (cr:ConceptRoot:CompoundRoot:TemplateParameterTermRoot {uid : "TemplateParameter_000001"})
@@ -3371,7 +3371,7 @@ MERGE (sr)-[ld:LATEST_DRAFT]->(sv)
 set hv.status = "DRAFT"
 set hv.start_date = datetime()
 set hv.author_id = "unknown-user"
-set ld = hv
+set ld = properties(hv)
 
 
 MERGE (ot:ObjectiveTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot {uid:"ObjectiveTemplate_000001", sequence_id: "O1"})-[relt:LATEST_FINAL]->(otv:ObjectiveTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue {name : "objective_1", name_plain : "objective_1"})
@@ -3479,7 +3479,7 @@ MERGE (sr)-[ld:LATEST_DRAFT]->(sv)
 set hv.status = "DRAFT"
 set hv.start_date = datetime()
 set hv.author_id = "unknown-user"
-set ld = hv
+set ld = properties(hv)
 
 MERGE (ot:ObjectiveTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot {uid:"ObjectiveTemplate_000001", sequence_id: "O1"})-[relt:LATEST_FINAL]->(otv:ObjectiveTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue {name : "objective_1", name_plain : "objective_1"})
 MERGE (or:ObjectiveRoot:SyntaxInstanceRoot:SyntaxIndexingInstanceRoot)-[rel:LATEST_FINAL]->(ov:ObjectiveValue:SyntaxInstanceValue:SyntaxIndexingInstanceValue {name : "objective_1", name_plain : "objective_1"})

@@ -1,4 +1,4 @@
-ARG PYTHON_IMAGE=python:3.13.0-slim
+ARG PYTHON_IMAGE=python:3.14-slim
 
 FROM $PYTHON_IMAGE
 

@@ -1,13 +1,11 @@
 <template>
-  <div class="px-4">
+  <div class="px-4 h-100">
     <div class="page-title d-flex align-center">
       {{ $t('IchM11Page.title') }}
-      <v-spacer />
     </div>
-    <v-card class="pa-6">
+    <v-card class="pa-6 h-100">
       <v-row>
-        <v-col cols="5"></v-col>
-        <v-col>
+        <v-col class="d-flex justify-center" cols="12">
           <v-progress-circular
             v-if="loading"
             class="ml-6 mt-12"
@@ -17,8 +15,7 @@
           />
         </v-col>
       </v-row>
-
-      <iframe v-show="!loading" />
+      <iframe v-show="!loading" :title="$t('IchM11Page.title')" />
     </v-card>
   </div>
 </template>
@@ -49,6 +46,6 @@ onMounted(() => {
 <style>
 .frame {
   width: 100%;
-  min-height: 1000px;
+  height: 100%;
 }
 </style>

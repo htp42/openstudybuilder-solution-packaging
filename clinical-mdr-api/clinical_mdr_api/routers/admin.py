@@ -10,9 +10,14 @@ from clinical_mdr_api.models.complexity_score import (
     BurdenIdInput,
     BurdenInput,
 )
+from clinical_mdr_api.models.preferences import (
+    GlobalPreferencesPatchInput,
+    PreferencesResponse,
+)
 from clinical_mdr_api.models.user import UserInfo, UserInfoPatchInput
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services._meta_repository import MetaRepository
+from clinical_mdr_api.services.preferences import PreferencesService
 from clinical_mdr_api.services.studies.complexity_score import ComplexityScoreService
 from common import exceptions
 from common.auth import rbac
@@ -242,3 +247,36 @@ def update_complexity_activity_burden(
 ) -> ActivityBurden:
     service = ComplexityScoreService()
     return service.update_activity_burden(activity_subgroup_id, burden)
+
+
+@router.get(
+    "/global-preferences",
+    dependencies=[security, rbac.ADMIN_READ],
+    summary="Returns global preferences",
+    status_code=200,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        404: _generic_descriptions.ERROR_404,
+    },
+)
+def get_global_preferences() -> PreferencesResponse:
+    service = PreferencesService()
+    return service.get_global_preferences()
+
+
+@router.patch(
+    "/global-preferences",
+    dependencies=[security, rbac.ADMIN_WRITE],
+    summary="Update global preferences",
+    description="Update one or more global preference settings",
+    status_code=200,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        404: _generic_descriptions.ERROR_404,
+    },
+)
+def patch_global_preferences(
+    payload: GlobalPreferencesPatchInput,
+) -> PreferencesResponse:
+    service = PreferencesService()
+    return service.update_global_preferences(payload)

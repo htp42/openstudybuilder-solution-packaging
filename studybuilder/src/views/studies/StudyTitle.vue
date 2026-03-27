@@ -6,16 +6,6 @@
         :help-text="$t('_help.StudyTitleView.general')"
         :items="helpItems"
       />
-    </div>
-    <v-alert
-      v-if="selectedStudy.study_parent_part"
-      color="nnLightBlue200"
-      icon="mdi-information-outline"
-      class="text-nnTrueBlue mx-4 my-2"
-    >
-      {{ $t('_global.sub_study_edit_warning') }}
-    </v-alert>
-    <div class="d-flex">
       <v-spacer />
       <v-btn
         class="ml-2"
@@ -26,8 +16,8 @@
         :data-cy="$t('StudyTitleView.edit_title')"
         :disabled="
           !checkPermission($roles.STUDY_WRITE) ||
-          selectedStudyVersion !== null ||
-          Boolean(selectedStudy.study_parent_part)
+          studiesGeneralStore.selectedStudyVersion !== null ||
+          Boolean(studiesGeneralStore.selectedStudy.study_parent_part)
         "
         @click.stop="openForm"
       >
@@ -37,16 +27,49 @@
         </v-tooltip>
       </v-btn>
     </div>
-    <v-sheet elevation="0" class="pa-4 title" rounded>
-      {{ $t('StudyTitleView.title') }}<br />
-      <span data-cy="study-title-field" class="text-body-1 mb-3">{{
-        description.study_title
-      }}</span
-      ><br /><br />
-      {{ $t('StudyTitleView.short_title') }}<br />
-      <span data-cy="study-title-field" class="text-body-1">{{
-        description.study_short_title
-      }}</span>
+    <v-alert
+      v-if="studiesGeneralStore.selectedStudy.study_parent_part"
+      color="nnLightBlue200"
+      icon="mdi-information-outline"
+      class="text-nnTrueBlue my-2 sub-study-alert"
+    >
+      {{ $t('_global.sub_study_edit_warning') }}
+    </v-alert>
+    <v-sheet elevation="0" class="pa-6" rounded="lg">
+      <v-divider class="mb-4" />
+      <v-progress-linear
+        v-if="loading"
+        indeterminate
+        color="nnBaseBlue"
+        class="mb-4 description-loading"
+      />
+      <v-row>
+        <v-col cols="12" md="6" class="title-col">
+          <div class="h-100">
+            <div class="label mb-2">
+              {{ $t('StudyTitleView.title') }}
+            </div>
+            <div data-cy="study-title-field" class="text-body-1 value">
+              {{ description.study_title }}
+            </div>
+          </div>
+        </v-col>
+        <v-col cols="12" md="6" class="title-col">
+          <div class="h-100">
+            <div class="label mb-2">
+              {{ $t('StudyTitleView.short_title') }}
+            </div>
+            <div data-cy="study-title-field" class="text-body-1 value">
+              {{ description.study_short_title }}
+            </div>
+          </div>
+        </v-col>
+      </v-row>
+      <v-divider class="mt-4" />
+      <div class="d-flex align-center mt-2 caption-row text-medium-emphasis">
+        <v-icon size="18" class="mr-1">mdi-information-outline</v-icon>
+        {{ $t('_help.StudyTitleView.general') }}
+      </div>
     </v-sheet>
     <v-dialog
       v-model="showForm"
@@ -62,14 +85,17 @@
       />
     </v-dialog>
     <CommentThreadList
-      :topic-path="'/studies/' + selectedStudy.uid + '/study_title'"
+      :topic-path="
+        '/studies/' + studiesGeneralStore.selectedStudy.uid + '/study_title'
+      "
       :is-transparent="true"
+      class="mt-4"
     />
   </div>
 </template>
 
-<script>
-import { computed } from 'vue'
+<script setup>
+import { onMounted, ref } from 'vue'
 import study from '@/api/study'
 import StudyTitleForm from '@/components/studies/StudyTitleForm.vue'
 import HelpButtonWithPanels from '@/components/tools/HelpButtonWithPanels.vue'
@@ -77,55 +103,81 @@ import CommentThreadList from '@/components/tools/CommentThreadList.vue'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 import { useAccessGuard } from '@/composables/accessGuard'
 
-export default {
-  components: {
-    StudyTitleForm,
-    HelpButtonWithPanels,
-    CommentThreadList,
-  },
-  setup() {
-    const studiesGeneralStore = useStudiesGeneralStore()
-    return {
-      selectedStudy: computed(() => studiesGeneralStore.selectedStudy),
-      selectedStudyVersion: computed(
-        () => studiesGeneralStore.selectedStudyVersion
-      ),
-      studyId: studiesGeneralStore.studyId,
-      ...useAccessGuard(),
-    }
-  },
-  data() {
-    return {
-      description: {},
-      showForm: false,
-      helpItems: ['StudyTitleView.title'],
-    }
-  },
-  mounted() {
-    this.fetchStudyDescription()
-  },
-  methods: {
-    fetchStudyDescription() {
-      let studyUid = ''
-      if (this.selectedStudy.study_parent_part) {
-        studyUid = this.selectedStudy.study_parent_part.uid
-      } else {
-        studyUid = this.selectedStudy.uid
-      }
-      study.getStudyDescriptionMetadata(studyUid).then((resp) => {
-        this.description = resp.data.current_metadata.study_description
-      })
-    },
-    openForm() {
-      this.fetchStudyDescription()
-      this.showForm = true
-    },
-  },
+const studiesGeneralStore = useStudiesGeneralStore()
+
+const studyId = studiesGeneralStore.studyId
+const { checkPermission } = useAccessGuard()
+
+const description = ref({})
+const loading = ref(false)
+const showForm = ref(false)
+const helpItems = ['StudyTitleView.title']
+
+function fetchStudyDescription() {
+  loading.value = true
+  let studyUid = ''
+  if (studiesGeneralStore.selectedStudy.study_parent_part) {
+    studyUid = studiesGeneralStore.selectedStudy.study_parent_part.uid
+  } else {
+    studyUid = studiesGeneralStore.selectedStudy.uid
+  }
+  study
+    .getStudyDescriptionMetadata(studyUid)
+    .then((resp) => {
+      description.value = resp.data.current_metadata.study_description
+    })
+    .finally(() => {
+      loading.value = false
+    })
 }
+
+function openForm() {
+  showForm.value = true
+}
+
+onMounted(() => {
+  fetchStudyDescription()
+})
 </script>
 
 <style scoped>
-.title {
-  min-height: 200px !important;
+.label {
+  font-size: 20px;
+  font-weight: 600;
+  color: rgb(var(--v-theme-nnTrueBlue));
+}
+
+.value {
+  line-height: 1.5;
+  font-weight: 500;
+  color: rgb(var(--v-theme-nnTrueBlue));
+}
+
+.caption-row {
+  font-size: 13px;
+}
+
+.sub-study-alert {
+  width: fit-content;
+  max-width: 100%;
+}
+
+.description-loading {
+  width: 80%;
+  margin: 0 auto;
+}
+
+.title-col {
+  position: relative;
+}
+
+.title-col::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 80%;
+  border-left: 1px solid rgb(var(--v-theme-greyBackground));
 }
 </style>

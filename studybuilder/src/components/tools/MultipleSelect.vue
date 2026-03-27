@@ -6,12 +6,9 @@
     multiple
     data-cy="autocomplete-input-field"
     clearable
-    variant="outlined"
     bg-color="white"
     color="nnBaseBlue"
     base-color="nnBaseBlue"
-    rounded="lg"
-    density="compact"
     autocomplete="off"
     hide-no-data
     @change="search = ''"

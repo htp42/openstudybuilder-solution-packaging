@@ -25,7 +25,6 @@
                 :label="$t('CRFItems.name') + '*'"
                 data-cy="item-name"
                 :rules="[formRules.required]"
-                density="compact"
                 :clearable="!isReadOnly"
                 :readonly="isReadOnly"
               />
@@ -35,7 +34,6 @@
                 v-model="form.oid"
                 :label="$t('CRFItems.oid')"
                 data-cy="item-oid"
-                density="compact"
                 :clearable="!isReadOnly"
                 :readonly="isReadOnly"
               />
@@ -49,7 +47,6 @@
                 item-title="submission_value"
                 item-value="submission_value"
                 :rules="[formRules.required]"
-                density="compact"
                 :clearable="!isReadOnly"
                 :readonly="isReadOnly"
                 @update:model-value="checkIfNumeric()"
@@ -62,7 +59,6 @@
                 v-model="form.length"
                 :label="$t('CRFItems.length')"
                 data-cy="item-length"
-                density="compact"
                 :rules="[lengthRequired]"
                 :clearable="!isReadOnly"
                 class="mt-3"
@@ -75,7 +71,6 @@
                 v-model="form.significant_digits"
                 :label="$t('CRFItems.significant_digits')"
                 data-cy="item-significant-digits"
-                density="compact"
                 :rules="[significantDigitsRequired]"
                 :clearable="!isReadOnly"
                 class="mt-3"
@@ -95,7 +90,6 @@
                 v-model="form.sas_field_name"
                 :label="$t('CRFItems.sas_name')"
                 data-cy="item-sas-name"
-                density="compact"
                 :clearable="!isReadOnly"
                 :readonly="isReadOnly"
               />
@@ -105,7 +99,6 @@
                 v-model="form.sds_var_name"
                 :label="$t('CRFItems.sds_name')"
                 data-cy="item-sds-name"
-                density="compact"
                 :clearable="!isReadOnly"
                 :readonly="isReadOnly"
               />
@@ -120,7 +113,6 @@
                 :items="origins"
                 item-title="nci_preferred_name"
                 item-value="nci_preferred_name"
-                density="compact"
                 :clearable="!isReadOnly"
                 :readonly="isReadOnly"
               />
@@ -130,7 +122,6 @@
                 v-model="form.comment"
                 :label="$t('CRFItems.comment')"
                 data-cy="item-comment"
-                density="compact"
                 :clearable="!isReadOnly"
                 :readonly="isReadOnly"
               />
@@ -238,7 +229,6 @@
                   <v-text-field
                     v-model="item.display_text"
                     :readonly="isReadOnly"
-                    density="compact"
                   />
                 </td>
                 <td>
@@ -325,7 +315,6 @@
               :items="units"
               :label="$t('CRFItems.unit_name')"
               data-cy="item-unit-name"
-              density="compact"
               class="mt-3"
               item-title="name"
               item-value="name"
@@ -1108,10 +1097,11 @@ async function submit() {
     if (isEdit()) {
       await crfs
         .updateItem(form.value, props.selectedItem.uid)
-        .then(async () => {
+        .then(async (resp) => {
           notificationHub.add({
             msg: t('CRFItems.item_updated'),
           })
+          emit('updateItem', resp.data)
           close()
         })
     } else {

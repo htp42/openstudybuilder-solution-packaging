@@ -246,17 +246,14 @@
         <xsl:apply-templates select="/ODM/Study/MetaDataVersion/FormDef" />
 
         <div class="row"> <!-- Legend -->
-          <div class="col-3 text-right">
+          <div class="col-4 text-right">
             <span class="greenItem">Green label</span> are optional (otherwise <span class="blackItem">Black label</span>)
           </div>
-          <div class="col-3 text-center">
+          <div class="col-4 text-center">
             <span class="material-symbols-outlined">lock</span> Lock
           </div>
-          <div class="col-3 text-center">
+          <div class="col-4 text-left">
             <em>*</em> Data Entry Required
-          </div>
-          <div class="col-3 text-left">
-            <span class="material-symbols-outlined">account_tree</span> Source Data Verification (SDV)
           </div>
         </div>
       </body>
@@ -323,7 +320,6 @@
               <xsl:when test="./Question">
                 <xsl:apply-templates select="Question">
                   <xsl:with-param name="lockItem" select="'No'" />
-                  <xsl:with-param name="sdvItem" select="'No'" />
                   <xsl:with-param name="mandatoryItem" select="$mandatory" />
                 </xsl:apply-templates>
               </xsl:when>
@@ -369,9 +365,6 @@
             <xsl:if test="./@osb:locked = 'Yes'">
               <span class="material-symbols-outlined">lock</span>
             </xsl:if>
-            <xsl:if test="./@osb:sdv = 'Yes'">
-              <span class="material-symbols-outlined">account_tree</span>
-            </xsl:if>
           </div>
           <div class="col-sm-3 {$labelColor} border text-left"> <!-- Item label column -->
             <span style="margin-left:{ $indentLevel * 2 }em;">
@@ -385,7 +378,6 @@
               <xsl:when test="./Question">
                 <xsl:apply-templates select="Question">
                   <xsl:with-param name="lockItem" select="//ItemGroupDef/ItemRef[@ItemOID = current()/@OID]/@osb:locked" />
-                  <xsl:with-param name="sdvItem" select="//ItemGroupDef/ItemRef[@ItemOID = current()/@OID]/@osb:sdv" />
                   <xsl:with-param name="mandatoryItem" select="//ItemGroupDef/ItemRef[@ItemOID = current()/@OID]/@Mandatory" />
                 </xsl:apply-templates>
               </xsl:when>
@@ -393,8 +385,7 @@
                 <xsl:value-of select="@Name" />
               </xsl:otherwise>
             </xsl:choose>
-            <div class="oidinfo oid collapse">[OID=<xsl:value-of select="@OID" />, Version=<xsl:value-of
-            select="@osb:version" />]</div>
+            <div class="oidinfo oid collapse">[OID=<xsl:value-of select="@OID" />, Version=<xsl:value-of select="@osb:version" />, Datatype=<xsl:value-of select="@DataType" />, Lenght=<xsl:value-of select="@Length" />]</div>
 
             <xsl:for-each select="./osb:ActivityInstance">
               <xsl:call-template name="VendorExtensionActIns">
@@ -477,8 +468,7 @@
                       select="//BasicDefinitions/MeasurementUnit[@OID = current()/@MeasurementUnitOID]/Symbol" />
                       &#160; <span class="oidinfo oid collapse"> [OID=<xsl:value-of select="@MeasurementUnitOID" />,
                       Version=<xsl:value-of
-                      select="//BasicDefinitions/MeasurementUnit[@OID = current()/@MeasurementUnitOID]/@osb:version" />
-                      ]</span>
+                      select="//BasicDefinitions/MeasurementUnit[@OID = current()/@MeasurementUnitOID]/@osb:version" />]</span>
                       <br />
                     </xsl:for-each>
                   </div>
@@ -528,7 +518,7 @@
                                     </xsl:call-template>
                                   </xsl:for-each>
                                   <span class="oidinfo oid collapse">
-                                    [OID=<xsl:value-of select="@osb:OID" />, Version=<xsl:value-of select="@osb:version" />
+                                    [OID=<xsl:value-of select="@osb:OID" />, Version=<xsl:value-of select="@osb:version" />, Datatype=string]
                                   </span>
                                 </span>
                               </div>
@@ -540,7 +530,7 @@
                                 <span class="oidinfo oid collapse">[OID=<xsl:value-of select="@osb:OID" />]</span>
                               </span>
                             </xsl:for-each>
-                            <span class="oidinfo oid collapse">[OID=<xsl:value-of select="@CodeListOID" />, Version=<xsl:value-of select="//CodeList[@OID = current()/@CodeListOID]/@osb:version" />]</span>
+                            <span class="oidinfo oid collapse">[OID=<xsl:value-of select="@CodeListOID" />, Version=<xsl:value-of select="//CodeList[@OID = current()/@CodeListOID]/@osb:version" />, Datatype=<xsl:value-of select="//CodeList[@OID = current()/@CodeListOID]/@DataType" />]</span>
                             <xsl:value-of select="../CodeList[@OID = current()/@CodeListOID]" />
 
                             <xsl:choose>
@@ -848,19 +838,11 @@
 
           <xsl:template match="Question">
             <xsl:param name="lockItem" />
-            <xsl:param name="sdvItem" />
             <xsl:param name="mandatoryItem" />
             <xsl:value-of disable-output-escaping="yes" select="TranslatedText" />
             <xsl:choose>
-              <xsl:when test="($lockItem = 'Yes') and ($sdvItem = 'Yes')">
-                <span class="material-symbols-outlined">lock</span>&#160;<span
-                class="material-symbols-outlined">account_tree</span>
-              </xsl:when>
               <xsl:when test="$lockItem = 'Yes'">
                 <span class="material-symbols-outlined">lock</span>
-              </xsl:when>
-              <xsl:when test="$sdvItem = 'Yes'">
-                <span class="material-symbols-outlined">account_tree</span>
               </xsl:when>
               <xsl:otherwise> </xsl:otherwise>
             </xsl:choose>

@@ -8,8 +8,6 @@
         :item-title="(item) => item?.name || $t('CRFTree.show_all')"
         :item-value="(item) => item?.uid || null"
         class="ms-4 mt-4"
-        variant="outlined"
-        density="compact"
         prepend-inner-icon="mdi-filter"
         hide-details
       >
@@ -28,7 +26,6 @@
       <v-switch
         v-model="sortMode"
         class="ml-6 mt-4"
-        color="primary"
         :label="$t('CRFTree.reorder')"
         :disabled="expanded.length === 0"
       />

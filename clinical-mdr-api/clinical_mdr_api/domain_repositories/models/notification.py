@@ -1,9 +1,8 @@
-from neomodel import IntegerProperty, StringProperty
-
 from clinical_mdr_api.domain_repositories.models.generic import (
     ClinicalMdrNode,
     ZonedDateTimeProperty,
 )
+from common.neomodel import IntegerProperty, StringProperty
 
 
 class Notification(ClinicalMdrNode):

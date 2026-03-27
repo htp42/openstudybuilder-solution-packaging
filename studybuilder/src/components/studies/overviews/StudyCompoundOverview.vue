@@ -221,14 +221,18 @@ function getPharmaProductIngredients(pharmaProduct) {
       return {
         id: `${pharmaProduct.uid}-ingredient-${ingredient.active_substance.long_number}`,
         title: getIngredientName(ingredient),
-        halfLife: `${ingredient.half_life?.value} ${ingredient.half_life?.unit_label}`,
+        halfLife: ingredient.half_life
+          ? `${ingredient.half_life.value} ${ingredient.half_life.unit_label}`
+          : '-',
         lagTimes: ingredient.lag_times
           .map(
             (lag_time) =>
               `${lag_time?.value} ${lag_time?.unit_label} (${lag_time?.sdtm_domain_label})`
           )
           .join(', '),
-        strength: `${ingredient.strength?.value} ${ingredient.strength?.unit_label}`,
+        strength: ingredient.strength
+          ? `${ingredient.strength.value} ${ingredient.strength.unit_label}`
+          : '-',
       }
     })
   })

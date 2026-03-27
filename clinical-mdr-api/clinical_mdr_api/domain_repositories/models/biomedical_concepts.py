@@ -1,13 +1,4 @@
-from neomodel import (
-    BooleanProperty,
-    IntegerProperty,
-    One,
-    OneOrMore,
-    RelationshipFrom,
-    RelationshipTo,
-    StringProperty,
-    ZeroOrOne,
-)
+from neomodel import One, OneOrMore, RelationshipFrom, RelationshipTo, ZeroOrOne
 
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTCodelistRoot,
@@ -23,6 +14,7 @@ from clinical_mdr_api.domain_repositories.models.standard_data_model import (
     DatasetClass,
     VariableClass,
 )
+from common.neomodel import BooleanProperty, IntegerProperty, StringProperty
 
 
 class ActivityItemClassRel(ClinicalMdrRel):

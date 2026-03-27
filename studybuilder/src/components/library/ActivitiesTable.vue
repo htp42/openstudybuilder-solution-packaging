@@ -162,7 +162,14 @@
         <StatusChip :status="item.status" />
       </template>
       <template #[`item.start_date`]="{ item }">
-        {{ $filters.date(item.start_date) }}
+        <v-tooltip location="top">
+          <template #activator="{ props }">
+            <span v-bind="props">{{
+              $filters.dateRelative(item.start_date)
+            }}</span>
+          </template>
+          {{ $filters.date(item.start_date) }}
+        </v-tooltip>
       </template>
       <template #[`item.used_by_studies`]="{ item }">
         {{ item.used_by_studies.join(', ') }}
@@ -467,8 +474,14 @@
           v-model="showFinalised"
           :label="$t('ActivityTable.show_only_handled')"
           hide-details
-          color="primary"
           @update:model-value="tableRef.filterTable()"
+        />
+        <v-switch
+          v-if="source === 'activities'"
+          v-model="onlyArchivedLibrary"
+          :label="$t('ActivityTable.archived_library')"
+          hide-details
+          @update:model-value="updateArchivedView()"
         />
       </template>
       <template #actions="">
@@ -913,6 +926,7 @@ const activeItem = ref(null)
 const showFinalised = ref(false)
 const selectedStatusTab = ref('final') // Default to 'final' tab
 const isStatusLoading = ref(false)
+const onlyArchivedLibrary = ref(false)
 
 const statusTabs = [
   { value: 'all', label: 'All' },
@@ -995,6 +1009,29 @@ const showStatusTabs = computed(() => {
     'activity-instances',
   ].includes(props.source)
 })
+
+function normalizeFiltersObject(filters) {
+  if (_isEmpty(filters)) {
+    return {}
+  }
+
+  if (typeof filters === 'string') {
+    try {
+      const parsedFilters = JSON.parse(filters)
+      return parsedFilters && typeof parsedFilters === 'object'
+        ? parsedFilters
+        : {}
+    } catch {
+      return {}
+    }
+  }
+
+  if (typeof filters === 'object') {
+    return filters
+  }
+
+  return {}
+}
 
 function getActivitySubgroupUID(item) {
   if (item.activity_subgroup?.uid) {
@@ -1137,162 +1174,172 @@ function onStatusTabChange() {
 }
 
 function fetchActivities(filters, options, filtersUpdated) {
-  if (filters !== undefined) {
-    savedFilters.value = filters
-  }
-  const params = filteringParameters.prepareParameters(
-    options,
-    filters,
-    filtersUpdated
-  )
-  if (options.sortBy[0] && options.sortBy[0].key === 'activity_group.name') {
-    params.sort_by = JSON.stringify({
-      'activity_groupings[0].activity_group_name':
-        options.sortBy[0].order === 'desc' ? false : true,
-    })
-  } else if (
-    options.sortBy[0] &&
-    options.sortBy[0].key === 'activity_subgroup.name'
-  ) {
-    params.sort_by = JSON.stringify({
-      'activity_groupings[0].activity_subgroup_name':
-        options.sortBy[0].order === 'desc' ? false : true,
-    })
-  }
-  params.filters = {}
-  if (props.requested) {
-    params.library_name = libConstants.LIBRARY_REQUESTED
-  }
-  if (
-    (savedFilters.value &&
+  try {
+    if (filters !== undefined) {
+      savedFilters.value = filters
+    }
+    const params = filteringParameters.prepareParameters(
+      options,
+      filters,
+      filtersUpdated
+    )
+    if (options.sortBy[0] && options.sortBy[0].key === 'activity_group.name') {
+      params.sort_by = JSON.stringify({
+        'activity_groupings[0].activity_group_name':
+          options.sortBy[0].order === 'desc' ? false : true,
+      })
+    } else if (
+      options.sortBy[0] &&
+      options.sortBy[0].key === 'activity_subgroup.name'
+    ) {
+      params.sort_by = JSON.stringify({
+        'activity_groupings[0].activity_subgroup_name':
+          options.sortBy[0].order === 'desc' ? false : true,
+      })
+    }
+    params.filters = {}
+    if (props.requested) {
+      params.library_name = libConstants.LIBRARY_REQUESTED
+    }
+    if (
+      (savedFilters.value &&
+        savedFilters.value !== undefined &&
+        savedFilters.value !== '{}' &&
+        props.source === 'activities') ||
+      props.source === 'activity-instances'
+    ) {
+      const filtersObj = JSON.parse(savedFilters.value)
+      if (filtersObj['activity_group.name']) {
+        params.activity_group_names = []
+        filtersObj['activity_group.name'].v.forEach((value) => {
+          params.activity_group_names.push(value)
+        })
+        delete filtersObj['activity_group.name']
+      }
+      if (filtersObj['activity_subgroup.name']) {
+        params.activity_subgroup_names = []
+        filtersObj['activity_subgroup.name'].v.forEach((value) => {
+          params.activity_subgroup_names.push(value)
+        })
+        delete filtersObj['activity_subgroup.name']
+      }
+      if (filtersObj.name) {
+        let param =
+          props.source === 'activity-instances' ? 'names' : 'activity_names'
+        params[param] = []
+        filtersObj.name.v.forEach((value) => {
+          params[param].push(value)
+        })
+        delete filtersObj.name
+      }
+      if (filtersObj['activities.name']) {
+        params.activity_names = []
+        filtersObj['activities.name'].v.forEach((value) => {
+          params.activity_names.push(value)
+        })
+        delete filtersObj['activities.name']
+      }
+      if (filtersObj.specimen) {
+        params.specimen_names = []
+        filtersObj.specimen.v.forEach((value) => {
+          params.specimen_names.push(value)
+        })
+        delete filtersObj.specimen
+      }
+      if (
+        Object.keys(filtersObj).length !== 0 &&
+        filtersObj.constructor === Object
+      ) {
+        params.filters = JSON.stringify(filtersObj)
+      }
+    } else if (
       savedFilters.value !== undefined &&
       savedFilters.value !== '{}' &&
-      props.source === 'activities') ||
-    props.source === 'activity-instances'
-  ) {
-    const filtersObj = JSON.parse(savedFilters.value)
-    if (filtersObj['activity_group.name']) {
-      params.activity_group_names = []
-      filtersObj['activity_group.name'].v.forEach((value) => {
-        params.activity_group_names.push(value)
-      })
-      delete filtersObj['activity_group.name']
-    }
-    if (filtersObj['activity_subgroup.name']) {
-      params.activity_subgroup_names = []
-      filtersObj['activity_subgroup.name'].v.forEach((value) => {
-        params.activity_subgroup_names.push(value)
-      })
-      delete filtersObj['activity_subgroup.name']
-    }
-    if (filtersObj.name) {
-      let param =
-        props.source === 'activity-instances' ? 'names' : 'activity_names'
-      params[param] = []
-      filtersObj.name.v.forEach((value) => {
-        params[param].push(value)
-      })
-      delete filtersObj.name
-    }
-    if (filtersObj['activities.name']) {
-      params.activity_names = []
-      filtersObj['activities.name'].v.forEach((value) => {
-        params.activity_names.push(value)
-      })
-      delete filtersObj['activities.name']
-    }
-    if (filtersObj.specimen) {
-      params.specimen_names = []
-      filtersObj.specimen.v.forEach((value) => {
-        params.specimen_names.push(value)
-      })
-      delete filtersObj.specimen
-    }
-    if (
-      Object.keys(filtersObj).length !== 0 &&
-      filtersObj.constructor === Object
+      props.source === 'activity-sub-groups'
     ) {
-      params.filters = JSON.stringify(filtersObj)
-    }
-  } else if (
-    savedFilters.value !== undefined &&
-    savedFilters.value !== '{}' &&
-    props.source === 'activity-sub-groups'
-  ) {
-    const filtersObj = JSON.parse(savedFilters.value)
-    if (filtersObj.activity_groups) {
-      params.activity_group_names = []
-      filtersObj.activity_groups.v.forEach((value) => {
-        params.activity_group_names.push(value)
-      })
-      delete filtersObj.activity_groups
-    }
-    if (
-      Object.keys(filtersObj).length !== 0 &&
-      filtersObj.constructor === Object
+      const filtersObj = JSON.parse(savedFilters.value)
+      if (filtersObj.activity_groups) {
+        params.activity_group_names = []
+        filtersObj.activity_groups.v.forEach((value) => {
+          params.activity_group_names.push(value)
+        })
+        delete filtersObj.activity_groups
+      }
+      if (
+        Object.keys(filtersObj).length !== 0 &&
+        filtersObj.constructor === Object
+      ) {
+        params.filters = JSON.stringify(filtersObj)
+      }
+    } else if (
+      savedFilters.value !== undefined &&
+      savedFilters.value !== '{}'
     ) {
-      params.filters = JSON.stringify(filtersObj)
+      params.filters = savedFilters.value
     }
-  } else if (savedFilters.value !== undefined && savedFilters.value !== '{}') {
-    params.filters = savedFilters.value
-  }
 
-  // Apply status filtering based on selected tab
-  if (!props.requested && showStatusTabs.value) {
-    let statusFilter = {}
+    // Apply status filtering based on selected tab
+    if (!props.requested && showStatusTabs.value) {
+      let statusFilter = {}
 
-    if (selectedStatusTab.value === 'final') {
-      // Show only Final status
-      statusFilter = { status: { v: [statuses.FINAL] } }
-    } else if (selectedStatusTab.value === 'retired') {
-      statusFilter = { status: { v: [statuses.RETIRED] } }
-    } else if (selectedStatusTab.value === 'draft') {
-      statusFilter = { status: { v: [statuses.DRAFT] } }
-    }
-    // 'all' tab doesn't apply any status filter
+      if (selectedStatusTab.value === 'final') {
+        // Show only Final status
+        statusFilter = { status: { v: [statuses.FINAL] } }
+      } else if (selectedStatusTab.value === 'retired') {
+        statusFilter = { status: { v: [statuses.RETIRED] } }
+      } else if (selectedStatusTab.value === 'draft') {
+        statusFilter = { status: { v: [statuses.DRAFT] } }
+      }
+      // 'all' tab doesn't apply any status filter
 
-    if (selectedStatusTab.value !== 'all') {
-      if (_isEmpty(params.filters)) {
-        params.filters = statusFilter
-      } else {
-        const filtersObj =
-          typeof params.filters === 'string'
-            ? JSON.parse(params.filters)
-            : params.filters
-        Object.assign(filtersObj, statusFilter)
-        params.filters = filtersObj
+      if (selectedStatusTab.value !== 'all') {
+        if (_isEmpty(params.filters)) {
+          params.filters = statusFilter
+        } else {
+          const filtersObj = normalizeFiltersObject(params.filters)
+          Object.assign(filtersObj, statusFilter)
+          params.filters = filtersObj
+        }
       }
     }
-  }
 
-  if (props.requested) {
-    if (_isEmpty(params.filters)) {
-      params.filters = {
-        is_finalized: { v: [showFinalised.value] },
-        is_request_final: { v: [true] },
-      }
-    } else {
-      const filtersObj = JSON.parse(params.filters)
+    if (props.requested) {
+      const filtersObj = normalizeFiltersObject(params.filters)
       filtersObj.is_finalized = { v: [showFinalised.value] }
       filtersObj.is_request_final = { v: [true] }
       params.filters = filtersObj
     }
-  }
 
-  // Ensure filters are stringified if they're objects
-  if (params.filters && typeof params.filters === 'object') {
-    params.filters = JSON.stringify(params.filters)
-  }
+    if (props.source === 'activities') {
+      const filtersObj = normalizeFiltersObject(params.filters)
+      if (!filtersObj.library_name) {
+        filtersObj.library_name = {
+          v: [libConstants.LIBRARY_ARCHIVED],
+          op: onlyArchivedLibrary.value ? 'eq' : 'ne',
+        }
+      }
+      params.filters = filtersObj
+    }
 
-  const source =
-    props.source !== 'activities-by-grouping' ? props.source : 'activity-groups'
-  activitiesApi.get(params, source).then((resp) => {
-    activities.value = transformItems(resp.data.items)
-    total.value = resp.data.total
-    isStatusLoading.value = false
-  })
-  if (groupFormRef.value) {
-    groupFormRef.value.getGroups()
+    // Ensure filters are stringified if they're objects
+    if (params.filters && typeof params.filters === 'object') {
+      params.filters = JSON.stringify(params.filters)
+    }
+
+    const source =
+      props.source !== 'activities-by-grouping'
+        ? props.source
+        : 'activity-groups'
+    activitiesApi.get(params, source).then((resp) => {
+      activities.value = transformItems(resp.data.items)
+      total.value = resp.data.total
+      isStatusLoading.value = false
+    })
+    if (groupFormRef.value) {
+      groupFormRef.value.getGroups()
+    }
+  } catch (error) {
+    console.error('Error fetching activities:', error)
   }
 }
 
@@ -1577,6 +1624,15 @@ function getSubgroupActivities(items) {
         subgroup.activitiesLoading = false
       })
   }
+}
+
+function updateArchivedView() {
+  if (onlyArchivedLibrary.value) {
+    selectedStatusTab.value = 'retired'
+  } else {
+    selectedStatusTab.value = 'final'
+  }
+  tableRef.value.filterTable()
 }
 
 function closeForm() {

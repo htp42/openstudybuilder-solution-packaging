@@ -37,8 +37,7 @@ class TestData:
         self.visits = []
         for i in range(9):
             self.visits.append(
-                # pylint: disable=repeated-keyword # False-positive:  multiple values for 'time_value'
-                TestUtils.create_study_visit(
+                TestUtils.create_study_visit(  # pylint: disable=repeated-keyword
                     study_uid=self.study.uid,
                     study_epoch_uid=self.epochs[int(i / 3)].uid,
                     time_value=i * 7,

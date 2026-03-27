@@ -1,10 +1,4 @@
-from neomodel import (
-    RelationshipFrom,
-    RelationshipTo,
-    StringProperty,
-    ZeroOrMore,
-    ZeroOrOne,
-)
+from neomodel import RelationshipFrom, RelationshipTo, ZeroOrMore, ZeroOrOne
 
 from clinical_mdr_api.domain_repositories.models.generic import (
     ClinicalMdrNode,
@@ -48,6 +42,7 @@ from clinical_mdr_api.domain_repositories.models.study_selections import (
     StudySoAGroup,
     StudyVersion,
 )
+from common.neomodel import StringProperty
 
 
 class StudyValue(ClinicalMdrNode, AuditTrailMixin):

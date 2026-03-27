@@ -63,9 +63,6 @@
               item-title="sponsor_preferred_name"
               item-value="term_uid"
               data-cy="change-reason"
-              variant="outlined"
-              density="compact"
-              rounded="lg"
               :rules="[formRules.required]"
               @update:model-value="updateVersions"
             />
@@ -112,12 +109,10 @@
             <v-textarea
               v-model="form.other_reason_for_unlocking"
               :label="dialogLabels.desc"
-              variant="outlined"
               data-cy="unlock-reason"
               auto-grow
               persistent-hint
               :placeholder="dialogLabels.descPlaceholder"
-              rounded="lg"
               width="60%"
             />
           </v-col>
@@ -130,14 +125,12 @@
             <v-textarea
               v-model="form.other_reason_for_locking_releasing"
               :label="$t('Study.other_reason_for_locking_releasing')"
-              variant="outlined"
               class="mb-n4"
               data-cy="lock-release-other-reason"
               auto-grow
               persistent-hint
               :rules="[formRules.required]"
               :placeholder="$t('StudyStatusForm.other_reason_lock_desc')"
-              rounded="lg"
               width="60%"
             />
           </v-col>
@@ -147,12 +140,10 @@
             <v-textarea
               v-model="form.change_description"
               :label="dialogLabels.desc"
-              variant="outlined"
               data-cy="lock-release-description"
               auto-grow
               persistent-hint
               :placeholder="dialogLabels.descPlaceholder"
-              rounded="lg"
               width="60%"
             />
           </v-col>

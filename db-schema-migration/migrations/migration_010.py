@@ -1,4 +1,4 @@
-""" Schema migrations needed for release 1.11.0 to PROD post December 2024."""
+"""Schema migrations needed for release 1.11.0 to PROD post December 2024."""
 
 import asyncio
 import os

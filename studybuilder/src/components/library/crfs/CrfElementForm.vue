@@ -14,7 +14,6 @@
             <v-text-field
               v-model="form.name"
               :label="$t('CRFExtensions.ele_name')"
-              density="compact"
               clearable
               :rules="[formRules.required]"
             />
@@ -24,7 +23,6 @@
               v-model="form.compatible_types"
               :label="$t('CRFExtensions.compatible_types')"
               :items="compatibleTypes"
-              density="compact"
               multiple
               clearable
             />
@@ -39,7 +37,6 @@
               return-object
               item-title="name"
               item-value="uid"
-              density="compact"
               clearable
               @update:model-value="addExistingAttribute"
             />
@@ -65,7 +62,6 @@
               v-model="attr.name"
               :disabled="editItem.uid !== undefined"
               :label="$t('CRFExtensions.attr_name')"
-              density="compact"
               clearable
             />
           </v-col>
@@ -77,7 +73,6 @@
               :items="dataTypes"
               item-title="submission_value"
               item-value="submission_value"
-              density="compact"
               clearable
             />
           </v-col>

@@ -3027,6 +3027,7 @@ def test_get_studies_list(api_client):
         "version_number",
         "latest_locked_version",
         "latest_released_version",
+        "data_completeness_tags",
     ]
     STUDY_SIMPLE_FIELDS_NOT_NULL = [
         "uid",
@@ -3218,3 +3219,34 @@ def test_concurrent_study_locking_does_not_create_duplicate_sponsor_ct_packages(
     assert len(package_names_today) == len(
         set(package_names_today)
     ), f"Duplicate sponsor packages found: {package_names_today}"
+
+
+def test_cannot_create_study_with_already_existing_study_acronym(api_client):
+    response = api_client.post(
+        "/studies",
+        json={
+            "project_number": "123",
+            "study_number": None,
+            "study_acronym": "study_root",
+            "description": None,
+        },
+    )
+    assert_response_status_code(response, 409)
+    res = response.json()
+    assert res["type"] == "AlreadyExistsException"
+    assert res["message"] == "Study with Study Acronym 'study_root' already exists."
+
+
+def test_cannot_update_study_to_an_already_existing_study_acronym(api_client):
+    response = api_client.patch(
+        f"/studies/{study.uid}",
+        json={
+            "current_metadata": {
+                "identification_metadata": {"study_acronym": "study_root"}
+            }
+        },
+    )
+    assert_response_status_code(response, 409)
+    res = response.json()
+    assert res["type"] == "AlreadyExistsException"
+    assert res["message"] == "Study with Study Acronym 'study_root' already exists."

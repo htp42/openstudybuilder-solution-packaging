@@ -13,12 +13,7 @@
         <v-card-title>
           {{ $t('StudyActivityInstances.activity_selected') }}
         </v-card-title>
-        <v-text-field
-          :model-value="getActivityPath"
-          density="compact"
-          readonly
-          disabled
-        />
+        <v-text-field :model-value="getActivityPath" readonly disabled />
         <v-alert
           v-if="selected.length > 1"
           density="compact"
@@ -44,12 +39,7 @@
             </div>
           </template>
           <template #[`item.important`]="{ item }">
-            <v-checkbox
-              v-model="importantMap[item.uid]"
-              hide-details
-              density="compact"
-              color="primary"
-            >
+            <v-checkbox v-model="importantMap[item.uid]" hide-details>
               <template v-if="importantMap[item.uid]" #label>
                 {{ $t('_global.yes') }}
               </template>
@@ -62,8 +52,6 @@
               :loading="loadingBaselineVisits"
               item-value="uid"
               item-title="visit_name"
-              density="compact"
-              variant="outlined"
               multiple
               class="compact-select"
             />
@@ -74,8 +62,6 @@
               :items="studyDataSuppliers"
               item-value="study_data_supplier_uid"
               item-title="name"
-              density="compact"
-              variant="outlined"
               clearable
               class="compact-select"
               :menu-props="{ width: '280px' }"
@@ -88,8 +74,6 @@
               :items="originTypes"
               item-value="term_uid"
               item-title="sponsor_preferred_name"
-              density="compact"
-              variant="outlined"
               clearable
               class="compact-select"
               :menu-props="{ width: '280px' }"
@@ -101,8 +85,6 @@
               :items="originSources"
               item-value="term_uid"
               item-title="sponsor_preferred_name"
-              density="compact"
-              variant="outlined"
               clearable
               class="compact-select"
               :menu-props="{ width: '280px' }"
@@ -366,6 +348,7 @@ async function getAvailableInstances() {
         filters: {
           'activity.uid': { v: [props.editedActivity.activity.uid], op: 'co' },
         },
+        page_size: -1,
       }
       study
         .getStudyActivityInstances(selectedStudy.value.uid, par)

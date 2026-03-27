@@ -101,7 +101,14 @@
       </div>
     </template>
     <template #[`item.modified_date`]="{ item }">
-      {{ $filters.date(item.modified_date) }}
+      <v-tooltip location="top">
+        <template #activator="{ props }">
+          <span v-bind="props">{{
+            $filters.dateRelative(item.modified_date)
+          }}</span>
+        </template>
+        {{ $filters.date(item.modified_date) }}
+      </v-tooltip>
     </template>
     <template #[`item.protocol_version`]="{ item }">
       {{ getProtocolVersion(item) }}
@@ -243,7 +250,7 @@ async function selectStudyVersion(studyVersion) {
   resp = await api.getStudy(
     studiesGeneralStore.selectedStudy.uid,
     true,
-    studyVersion.metadata_version
+    studyVersion.metadata_version ? studyVersion.metadata_version : '0'
   )
   await studiesGeneralStore.selectStudy(resp.data, true)
   studyVersion.loading = false

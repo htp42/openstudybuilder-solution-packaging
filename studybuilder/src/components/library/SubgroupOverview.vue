@@ -44,6 +44,7 @@
             </h3>
           </div>
           <NNTable
+            key="groupsTable"
             :headers="groupsHeaders"
             :items="groups"
             :items-length="groupsTotal"
@@ -100,6 +101,7 @@
           </div>
           <NNTable
             ref="activitiesTableRef"
+            key="activitiesTable"
             :headers="activitiesHeaders"
             :items="activities"
             :items-length="activitiesTotal"
@@ -133,6 +135,13 @@
               >
                 {{ item.name }}
               </router-link>
+            </template>
+            <template #[`item.requested`]="{ item }">
+              {{
+                $filters.yesno(
+                  item.library_name === libraryConstants.LIBRARY_REQUESTED
+                )
+              }}
             </template>
             <template #[`item.status`]="{ item }">
               <StatusChip :status="item.status" />
@@ -174,6 +183,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
 import activitiesApi from '@/api/activities'
+import libraryConstants from '@/constants/libraries'
 
 import BaseActivityOverview from './BaseActivityOverview.vue'
 import StatusChip from '@/components/tools/StatusChip.vue'
@@ -256,6 +266,7 @@ const groupsHeaders = [
 // Headers for activities table
 const activitiesHeaders = [
   { title: t('_global.name'), key: 'name', align: 'start', sortable: true },
+  { title: t('SubgroupOverview.requested'), key: 'requested', sortable: true },
   {
     title: t('_global.version'),
     key: 'version',

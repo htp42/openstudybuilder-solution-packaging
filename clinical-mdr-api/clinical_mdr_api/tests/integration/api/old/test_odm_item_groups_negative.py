@@ -119,7 +119,7 @@ def test_create_a_new_odm_item_group(api_client):
         "aliases": [{"context": "context1", "name": "name1"}],
         "sdtm_domain_uids": ["domain001"],
     }
-    response = api_client.post("concepts/odms/item-groups", json=data)
+    response = api_client.post("odms/item-groups", json=data)
 
     assert_response_status_code(response, 201)
 
@@ -266,9 +266,7 @@ def test_cannot_add_odm_vendor_attribute_with_an_invalid_value_to_an_odm_item_gr
         "vendor_attributes": [{"uid": "odm_vendor_attribute3", "value": "3423"}],
         "change_description": "desc doesnt change",
     }
-    response = api_client.patch(
-        "concepts/odms/item-groups/OdmItemGroup_000001", json=data
-    )
+    response = api_client.patch("odms/item-groups/OdmItemGroup_000001", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -345,21 +343,16 @@ def test_cannot_add_a_non_compatible_odm_vendor_attribute_to_an_odm_item_group(
         "vendor_attributes": [{"uid": "odm_vendor_attribute5", "value": "value"}],
         "change_description": "desc doesnt change",
     }
-    response = api_client.patch(
-        "concepts/odms/item-groups/OdmItemGroup_000001", json=data
-    )
+    response = api_client.patch("odms/item-groups/OdmItemGroup_000001", json=data)
 
     assert_response_status_code(response, 400)
 
     res = response.json()
 
     assert res["type"] == "BusinessLogicException"
-    assert (
-        res["message"]
-        == """Trying to add non-compatible ODM Vendor:
+    assert res["message"] == """Trying to add non-compatible ODM Vendor:
 
 {'odm_vendor_attribute5': ['NonCompatibleVendor']}"""
-    )
 
 
 def test_cannot_add_a_non_compatible_odm_vendor_element_to_an_odm_item_group(
@@ -424,28 +417,23 @@ def test_cannot_add_a_non_compatible_odm_vendor_element_to_an_odm_item_group(
         "vendor_attributes": [{"uid": "odm_vendor_attribute3", "value": "3423"}],
         "change_description": "desc doesnt change",
     }
-    response = api_client.patch(
-        "concepts/odms/item-groups/OdmItemGroup_000001", json=data
-    )
+    response = api_client.patch("odms/item-groups/OdmItemGroup_000001", json=data)
 
     assert_response_status_code(response, 400)
 
     res = response.json()
 
     assert res["type"] == "BusinessLogicException"
-    assert (
-        res["message"]
-        == """Trying to add non-compatible ODM Vendor:
+    assert res["message"] == """Trying to add non-compatible ODM Vendor:
 
 {'odm_vendor_element4': ['NonCompatibleVendor']}"""
-    )
 
 
 def test_cannot_add_odm_item_that_is_already_connected_to_an_odm_item_group(
     api_client,
 ):
     response = api_client.post(
-        "concepts/odms/item-groups",
+        "odms/item-groups",
         json={
             "library_name": "Sponsor",
             "name": "name2",
@@ -478,15 +466,11 @@ def test_cannot_add_odm_item_that_is_already_connected_to_an_odm_item_group(
             "vendor": {"attributes": []},
         }
     ]
-    response = api_client.post(
-        "concepts/odms/item-groups/OdmItemGroup_000002/items", json=data
-    )
+    response = api_client.post("odms/item-groups/OdmItemGroup_000002/items", json=data)
 
     assert_response_status_code(response, 201)
 
-    response = api_client.post(
-        "concepts/odms/item-groups/OdmItemGroup_000001/items", json=data
-    )
+    response = api_client.post("odms/item-groups/OdmItemGroup_000001/items", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -516,21 +500,16 @@ def test_cannot_add_odm_item_with_non_compatible_odm_vendor_attribute_to_a_speci
             "vendor": {"attributes": [{"uid": "odm_vendor_attribute5", "value": "No"}]},
         }
     ]
-    response = api_client.post(
-        "concepts/odms/item-groups/OdmItemGroup_000001/items", json=data
-    )
+    response = api_client.post("odms/item-groups/OdmItemGroup_000001/items", json=data)
 
     assert_response_status_code(response, 400)
 
     res = response.json()
 
     assert res["type"] == "BusinessLogicException"
-    assert (
-        res["message"]
-        == """Trying to add non-compatible ODM Vendor:
+    assert res["message"] == """Trying to add non-compatible ODM Vendor:
 
 {'odm_vendor_attribute5': ['NonCompatibleVendor']}"""
-    )
 
 
 def test_cannot_add_odm_vendor_element_attribute_with_an_invalid_value_to_an_odm_item_group(
@@ -595,9 +574,7 @@ def test_cannot_add_odm_vendor_element_attribute_with_an_invalid_value_to_an_odm
         "vendor_attributes": [{"uid": "odm_vendor_attribute1", "value": "3423"}],
         "change_description": "desc doesnt change",
     }
-    response = api_client.patch(
-        "concepts/odms/item-groups/OdmItemGroup_000001", json=data
-    )
+    response = api_client.patch("odms/item-groups/OdmItemGroup_000001", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -674,9 +651,7 @@ def test_add_odm_vendor_element_to_an_odm_item_group(api_client):
         "vendor_attributes": [],
         "change_description": "desc doesnt change",
     }
-    response = api_client.patch(
-        "concepts/odms/item-groups/OdmItemGroup_000001", json=data
-    )
+    response = api_client.patch("odms/item-groups/OdmItemGroup_000001", json=data)
 
     assert_response_status_code(response, 200)
 
@@ -828,7 +803,7 @@ def test_cannot_create_a_new_odm_item_group_with_same_properties(api_client):
         "aliases": [{"context": "context1", "name": "name1"}],
         "sdtm_domain_uids": ["domain001"],
     }
-    response = api_client.post("concepts/odms/item-groups", json=data)
+    response = api_client.post("odms/item-groups", json=data)
 
     assert_response_status_code(response, 409)
 
@@ -858,7 +833,7 @@ def test_cannot_create_an_odm_item_group_connected_to_non_existent_sdtm_domain(
         "aliases": [],
         "sdtm_domain_uids": ["wrong_uid"],
     }
-    response = api_client.post("concepts/odms/item-groups", json=data)
+    response = api_client.post("odms/item-groups", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -892,7 +867,7 @@ def test_cannot_create_a_new_odm_item_group_without_an_english_description(api_c
         "aliases": [],
         "sdtm_domain_uids": [],
     }
-    response = api_client.post("concepts/odms/item-groups", json=data)
+    response = api_client.post("odms/item-groups", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -906,7 +881,7 @@ def test_cannot_create_a_new_odm_item_group_without_an_english_description(api_c
 
 
 def test_getting_error_for_retrieving_non_existent_odm_item_group(api_client):
-    response = api_client.get("concepts/odms/item-groups/OdmItemGroup_000003")
+    response = api_client.get("odms/item-groups/OdmItemGroup_000003")
 
     assert_response_status_code(response, 404)
 
@@ -920,9 +895,7 @@ def test_getting_error_for_retrieving_non_existent_odm_item_group(api_client):
 
 
 def test_cannot_inactivate_an_odm_item_group_that_is_in_draft_status(api_client):
-    response = api_client.delete(
-        "concepts/odms/item-groups/OdmItemGroup_000001/activations"
-    )
+    response = api_client.delete("odms/item-groups/OdmItemGroup_000001/activations")
 
     assert_response_status_code(response, 400)
 
@@ -933,9 +906,7 @@ def test_cannot_inactivate_an_odm_item_group_that_is_in_draft_status(api_client)
 
 
 def test_cannot_reactivate_an_odm_item_group_that_is_not_retired(api_client):
-    response = api_client.post(
-        "concepts/odms/item-groups/OdmItemGroup_000001/activations"
-    )
+    response = api_client.post("odms/item-groups/OdmItemGroup_000001/activations")
 
     assert_response_status_code(response, 400)
 
@@ -1009,9 +980,7 @@ def test_cannot_override_odm_vendor_element_that_has_attributes_connected_this_o
         "vendor_attributes": [],
         "change_description": "desc doesnt change",
     }
-    response = api_client.patch(
-        "concepts/odms/item-groups/OdmItemGroup_000001", json=data
-    )
+    response = api_client.patch("odms/item-groups/OdmItemGroup_000001", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -1086,9 +1055,7 @@ def test_cannot_add_odm_vendor_element_attribute_to_an_odm_item_group_as_an_odm_
         "vendor_attributes": [{"uid": "odm_vendor_attribute1", "value": "value"}],
         "change_description": "desc doesnt change",
     }
-    response = api_client.patch(
-        "concepts/odms/item-groups/OdmItemGroup_000001", json=data
-    )
+    response = api_client.patch("odms/item-groups/OdmItemGroup_000001", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -1165,9 +1132,7 @@ def test_cannot_add_odm_vendor_attribute_to_an_odm_item_group_as_an_odm_vendor_e
         "vendor_attributes": [],
         "change_description": "desc doesnt change",
     }
-    response = api_client.patch(
-        "concepts/odms/item-groups/OdmItemGroup_000001", json=data
-    )
+    response = api_client.patch("odms/item-groups/OdmItemGroup_000001", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -1200,9 +1165,7 @@ def test_cannot_add_odm_item_with_an_invalid_value_to_to_an_odm_item_group(api_c
             },
         }
     ]
-    response = api_client.post(
-        "concepts/odms/item-groups/OdmItemGroup_000001/items", json=data
-    )
+    response = api_client.post("odms/item-groups/OdmItemGroup_000001/items", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -1218,9 +1181,7 @@ def test_cannot_add_odm_item_with_an_invalid_value_to_to_an_odm_item_group(api_c
 
 
 def test_approve_odm_item_group(api_client):
-    response = api_client.post(
-        "concepts/odms/item-groups/OdmItemGroup_000001/approvals"
-    )
+    response = api_client.post("odms/item-groups/OdmItemGroup_000001/approvals")
 
     assert_response_status_code(response, 201)
 
@@ -1317,9 +1278,7 @@ def test_approve_odm_item_group(api_client):
 
 
 def test_inactivate_odm_item_group(api_client):
-    response = api_client.delete(
-        "concepts/odms/item-groups/OdmItemGroup_000001/activations"
-    )
+    response = api_client.delete("odms/item-groups/OdmItemGroup_000001/activations")
 
     assert_response_status_code(response, 200)
 
@@ -1435,9 +1394,7 @@ def test_cannot_add_odm_item_to_an_odm_item_group_that_is_in_retired_status(
             "vendor": {"attributes": []},
         }
     ]
-    response = api_client.post(
-        "concepts/odms/item-groups/OdmItemGroup_000001/items", json=data
-    )
+    response = api_client.post("odms/item-groups/OdmItemGroup_000001/items", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -1509,9 +1466,7 @@ def test_cannot_add_odm_vendor_element_to_an_odm_item_group_that_is_in_retired_s
         "vendor_attributes": [],
         "change_description": "desc doesnt change",
     }
-    response = api_client.patch(
-        "concepts/odms/item-groups/OdmItemGroup_000001", json=data
-    )
+    response = api_client.patch("odms/item-groups/OdmItemGroup_000001", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -1583,9 +1538,7 @@ def test_cannot_add_odm_vendor_attribute_to_an_odm_item_group_that_is_in_retired
         "vendor_attributes": [{"uid": "odm_vendor_attribute1", "value": "value"}],
         "change_description": "desc doesnt change",
     }
-    response = api_client.patch(
-        "concepts/odms/item-groups/OdmItemGroup_000001", json=data
-    )
+    response = api_client.patch("odms/item-groups/OdmItemGroup_000001", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -1659,9 +1612,7 @@ def test_cannot_add_odm_vendor_element_attribute_to_an_odm_item_group_that_is_in
         "vendor_attributes": [],
         "change_description": "desc doesnt change",
     }
-    response = api_client.patch(
-        "concepts/odms/item-groups/OdmItemGroup_000001", json=data
-    )
+    response = api_client.patch("odms/item-groups/OdmItemGroup_000001", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -1703,7 +1654,7 @@ def test_cannot_add_duplicate_translated_texts(api_client, text_type: str):
         "aliases": [],
         "sdtm_domain_uids": [],
     }
-    response = api_client.post("concepts/odms/item-groups", json=data)
+    response = api_client.post("odms/item-groups", json=data)
 
     assert_response_status_code(response, 400)
 

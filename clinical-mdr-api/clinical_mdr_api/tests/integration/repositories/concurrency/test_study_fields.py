@@ -123,6 +123,7 @@ class StudyFieldsConcurrencyTest(unittest.TestCase):
                 study_title_exists_callback=lambda _, study_number: False,
                 study_short_title_exists_callback=lambda _, study_number: False,
                 study_number_exists_callback=lambda x, y: False,
+                study_acronym_exists_callback=lambda x, y: False,
                 author_id="unknown-user",
             )
 

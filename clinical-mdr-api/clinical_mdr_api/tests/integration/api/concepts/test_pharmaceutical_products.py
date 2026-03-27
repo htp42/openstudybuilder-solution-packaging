@@ -210,6 +210,7 @@ def test_data():
 
 PHARMACEUTICAL_PRODUCT_FIELDS_ALL = [
     "uid",
+    "derived_name",
     "library_name",
     "start_date",
     "end_date",
@@ -226,6 +227,7 @@ PHARMACEUTICAL_PRODUCT_FIELDS_ALL = [
 
 PHARMACEUTICAL_PRODUCT_FIELDS_NOT_NULL = [
     "uid",
+    "derived_name",
     "start_date",
     "library_name",
     "dosage_forms",
@@ -249,6 +251,9 @@ def test_get_pharmaceutical_product(api_client):
 
     assert res["uid"] == pharmaceutical_products_all[0].uid
     assert res["external_id"] == "external_id_a"
+    # derived_name should contain ingredient names with formulation names and strengths
+    assert "inn A formulation-name-a (5 mg/mL)" in res["derived_name"]
+    assert "formulation-name-b (5 mg/mL)" in res["derived_name"]
     assert res["routes_of_administration"][0]["term_uid"] == ct_term_roa.term_uid
     assert (
         res["routes_of_administration"][0]["term_name"]
@@ -287,6 +292,41 @@ def test_get_pharmaceutical_product(api_client):
 
     TestUtils.assert_timestamp_is_in_utc_zone(res["start_date"])
     TestUtils.assert_timestamp_is_newer_than(res["start_date"], 60)
+
+
+def test_get_pharmaceutical_product_derived_name_without_formulations(api_client):
+    """Products without formulations should have an empty derived_name."""
+    response = api_client.get(
+        f"/concepts/pharmaceutical-products/{pharmaceutical_products_all[2].uid}"
+    )
+    res = response.json()
+    assert_response_status_code(response, 200)
+    assert res["derived_name"] == ""
+
+
+def test_get_pharmaceutical_product_derived_name_fallback(api_client):
+    """derived_name should use the active substance inn when available."""
+    as_with_known_inn = TestUtils.create_active_substance(
+        inn="test-known-inn",
+    )
+    formulation = {
+        "external_id": "formulation-derived-test",
+        "ingredients": [
+            {
+                "active_substance_uid": as_with_known_inn.uid,
+                "strength_uid": strength.uid,
+            },
+        ],
+    }
+    pp = TestUtils.create_pharmaceutical_product(formulations=[formulation])
+    response = api_client.get(f"/concepts/pharmaceutical-products/{pp.uid}")
+    res = response.json()
+    assert_response_status_code(response, 200)
+    assert "test-known-inn" in res["derived_name"]
+    assert "(5 mg/mL)" in res["derived_name"]
+
+    # Cleanup
+    api_client.delete(f"/concepts/pharmaceutical-products/{pp.uid}")
 
 
 def test_get_pharmaceutical_products_versions(api_client):
@@ -712,6 +752,79 @@ def test_get_pharmaceutical_products(
 
 
 @pytest.mark.parametrize(
+    "sort_by",
+    [
+        pytest.param('{"dosage_form": true}'),
+        pytest.param('{"dosage_form": false}'),
+        pytest.param('{"dosage_forms": true}'),
+        pytest.param('{"route_of_administration": true}'),
+        pytest.param('{"route_of_administration": false}'),
+        pytest.param('{"routes_of_administration": true}'),
+        pytest.param('{"derived_name": true}'),
+        pytest.param('{"derived_name": false}'),
+    ],
+)
+def test_get_pharmaceutical_products_sort_by_related_fields(api_client, sort_by):
+    """Sorting by dosage_form, route_of_administration, and derived_name should not error."""
+    url = f"/concepts/pharmaceutical-products?page_number=1&page_size=10&total_count=true&sort_by={sort_by}"
+    response = api_client.get(url)
+    res = response.json()
+
+    assert_response_status_code(response, 200)
+    assert len(res["items"]) == 10
+    assert res["total"] == len(pharmaceutical_products_all)
+
+
+@pytest.mark.parametrize(
+    "sort_by, sort_field, response_key",
+    [
+        pytest.param('{"derived_name": true}', "derived_name", "derived_name"),
+        pytest.param('{"derived_name": false}', "derived_name", "derived_name"),
+        pytest.param('{"dosage_form": true}', "dosage_form", "dosage_forms"),
+        pytest.param('{"dosage_form": false}', "dosage_form", "dosage_forms"),
+        pytest.param(
+            '{"route_of_administration": true}',
+            "route_of_administration",
+            "routes_of_administration",
+        ),
+        pytest.param(
+            '{"route_of_administration": false}',
+            "route_of_administration",
+            "routes_of_administration",
+        ),
+    ],
+)
+def test_get_pharmaceutical_products_sort_by_related_field_order(
+    api_client, sort_by, sort_field, response_key
+):
+    """Verify that sorting by related fields actually produces ordered results."""
+    sort_by_dict = json.loads(sort_by)
+    ascending = sort_by_dict[sort_field]
+
+    response = api_client.get(
+        f"/concepts/pharmaceutical-products?page_number=1&page_size=100&sort_by={sort_by}"
+    )
+    res = response.json()
+    assert_response_status_code(response, 200)
+
+    # Build comparable sort values from response data
+    if response_key == "derived_name":
+        sort_values = [item[response_key] for item in res["items"]]
+    else:
+        # For list-of-term fields (dosage_forms, routes_of_administration),
+        # concatenate term names to mirror the _search_* Cypher alias.
+        sort_values = [
+            " ".join(term["term_name"] or "" for term in (item[response_key] or []))
+            for item in res["items"]
+        ]
+
+    expected = sorted(
+        sort_values, key=lambda x: (x is None, x.lower()), reverse=not ascending
+    )
+    assert sort_values == expected
+
+
+@pytest.mark.parametrize(
     "export_format",
     [
         pytest.param("text/csv"),
@@ -729,8 +842,12 @@ def test_get_pharmaceutical_products_csv_xml_excel(api_client, export_format):
 @pytest.mark.parametrize(
     "filter_by, expected_matched_field, expected_result_prefix",
     [
-        pytest.param('{"*": {"v": ["aaa"]}}', "external_id", "external_id_AAA"),
-        pytest.param('{"*": {"v": ["bBb"]}}', "external_id", "external_id_BBB"),
+        pytest.param(
+            '{"*": {"v": ["external_id_aaa"]}}', "external_id", "external_id_AAA"
+        ),
+        pytest.param(
+            '{"*": {"v": ["external_id_bbb"]}}', "external_id", "external_id_BBB"
+        ),
         pytest.param(
             '{"*": {"v": ["unknown-user"], "op": "co"}}',
             "author_username",
@@ -884,6 +1001,9 @@ def test_create_and_delete_pharmaceutical_product(api_client):
     assert res["version"] == "0.1"
     assert res["status"] == "Draft"
     assert list(res["possible_actions"]) == ["approve", "delete", "edit"]
+    # Verify derived_name for freshly created product
+    assert "inn A formulation-name-a (5 mg/mL)" in res["derived_name"]
+    assert "formulation-name-b (5 mg/mL)" in res["derived_name"]
 
     TestUtils.assert_timestamp_is_in_utc_zone(res["start_date"])
     TestUtils.assert_timestamp_is_newer_than(res["start_date"], 60)

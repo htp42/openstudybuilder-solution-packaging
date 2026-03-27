@@ -30,7 +30,6 @@
               :rules="[
                 (value) => formRules.requiredIfNotNA(value, notApplicable),
               ]"
-              density="compact"
               clearable
               class="required"
             />
@@ -67,7 +66,6 @@
               item-value="uid"
               return-object
               :rules="[formRules.required]"
-              density="compact"
               clearable
               class="required"
             />
@@ -82,7 +80,6 @@
               item-value="uid"
               return-object
               :rules="[formRules.required]"
-              density="compact"
               readonly
               disabled
               class="required"
@@ -98,9 +95,7 @@
                     :model-value="preferedSynonym"
                     :label="$t('StudyCompoundForm.preferred_alias')"
                     data-cy="preffered-alias"
-                    density="compact"
                     disabled
-                    variant="filled"
                     hide-details
                   />
                 </v-col>
@@ -109,9 +104,7 @@
                     :model-value="otherSynonyms"
                     :label="$t('StudyCompoundForm.other_aliases')"
                     data-cy="other-aliases"
-                    density="compact"
                     disabled
-                    variant="filled"
                     hide-details
                   />
                 </v-col>
@@ -134,11 +127,9 @@
                     "
                     :label="$t('StudyCompoundForm.compound_definition')"
                     data-cy="compound-definition"
-                    density="compact"
                     auto-grow
                     rows="1"
                     disabled
-                    variant="filled"
                     hide-details
                   />
                 </v-col>
@@ -158,7 +149,6 @@
               item-value="uid"
               return-object
               :rules="[formRules.required]"
-              density="compact"
               clearable
               class="required"
             />
@@ -174,9 +164,7 @@
                     :model-value="form.medicinalProduct.dispenser.name"
                     :label="$t('StudyCompoundForm.dispensed_in')"
                     data-cy="dispensed-in"
-                    density="compact"
                     disabled
-                    variant="filled"
                     hide-details
                   />
                 </v-col>
@@ -185,9 +173,7 @@
                     :model-value="form.medicinalProduct.delivery_device.name"
                     :label="$t('StudyCompoundForm.device')"
                     data-cy="device"
-                    density="compact"
                     disabled
-                    variant="filled"
                     hide-details
                   />
                 </v-col>
@@ -211,9 +197,7 @@
                     "
                     :label="$t('ActiveSubstance.inn')"
                     data-cy="active-substance"
-                    density="compact"
                     disabled
-                    variant="filled"
                     hide-details
                   />
                 </v-col>
@@ -226,9 +210,7 @@
                     "
                     :label="$t('ActiveSubstance.analyte_number')"
                     data-cy="analyte-number"
-                    density="compact"
                     disabled
-                    variant="filled"
                     hide-details
                   />
                 </v-col>
@@ -241,9 +223,7 @@
                     "
                     :label="$t('ActiveSubstance.long_number')"
                     data-cy="long-number"
-                    density="compact"
                     disabled
-                    variant="filled"
                     hide-details
                   />
                 </v-col>
@@ -256,9 +236,7 @@
                     "
                     :label="$t('ActiveSubstance.short_number')"
                     data-cy="short-number"
-                    density="compact"
                     disabled
-                    variant="filled"
                     hide-details
                   />
                 </v-col>
@@ -274,9 +252,7 @@
                     "
                     :label="$t('CompoundAliasForm.substance')"
                     data-cy="substance"
-                    density="compact"
                     disabled
-                    variant="filled"
                     hide-details
                   />
                 </v-col>
@@ -285,9 +261,7 @@
                     :model-value="getPclassLabel(activeSubstance)"
                     :label="$t('CompoundAliasForm.pharmacological_class')"
                     data-cy="pharmacological-class"
-                    density="compact"
                     disabled
-                    variant="filled"
                     hide-details
                   />
                 </v-col>
@@ -307,7 +281,6 @@
               data-cy="other-information"
               auto-grow
               rows="1"
-              density="compact"
               clearable
             />
           </v-col>
@@ -441,18 +414,24 @@ watch(
           uid: val.compound.uid,
           name: val.compound.name,
         }
-        let filters = {
-          compound_uid: { v: [val.compound.uid] },
-          status: { v: [statuses.FINAL] },
+        let params = {
+          filters: {
+            compound_uid: { v: [val.compound.uid] },
+            status: { v: [statuses.FINAL] },
+          },
+          page_size: 0,
         }
-        compoundAliasesApi.getFiltered({ filters }).then((resp) => {
+        compoundAliasesApi.getFiltered(params).then((resp) => {
           compoundAliases.value = resp.data.items
         })
-        filters = {
-          'compound.uid': { v: [val.compound.uid] },
-          status: { v: [statuses.FINAL] },
+        params = {
+          filters: {
+            'compound.uid': { v: [val.compound.uid] },
+            status: { v: [statuses.FINAL] },
+          },
+          page_size: 0,
         }
-        medicinalProductsApi.getFiltered({ filters }).then((resp) => {
+        medicinalProductsApi.getFiltered(params).then((resp) => {
           medicinalProducts.value = resp.data.items.map((item) => {
             item.name = item.name + ' (' + item.dose_frequency?.name + ')'
             return item
@@ -518,19 +497,25 @@ watch(
         form.value.compound_alias = null
       }
       form.value.medicinalProduct = null
-      let filters = {
-        compound_uid: { v: [newValue.uid] },
-        status: { v: [statuses.FINAL] },
+      let params = {
+        filters: {
+          compound_uid: { v: [newValue.uid] },
+          status: { v: [statuses.FINAL] },
+        },
+        page_size: 0,
       }
-      compoundAliasesApi.getFiltered({ filters }).then((resp) => {
+      compoundAliasesApi.getFiltered(params).then((resp) => {
         compoundAliases.value = resp.data.items
         showAlerts.value = true
       })
-      filters = {
-        'compound.uid': { v: [newValue.uid] },
-        status: { v: [statuses.FINAL] },
+      params = {
+        filters: {
+          'compound.uid': { v: [newValue.uid] },
+          status: { v: [statuses.FINAL] },
+        },
+        page_size: 0,
       }
-      medicinalProductsApi.getFiltered({ filters }).then((resp) => {
+      medicinalProductsApi.getFiltered(params).then((resp) => {
         medicinalProducts.value = resp.data.items.map((item) => {
           item.name = `${item.name} (${item.dose_frequency ? item.dose_frequency.name : ''})`
           return item
@@ -568,10 +553,13 @@ watch(
 )
 
 onMounted(() => {
-  const filters = {
-    status: { v: [statuses.FINAL] },
+  const params = {
+    filters: {
+      status: { v: [statuses.FINAL] },
+    },
+    page_size: 0,
   }
-  compoundsSimple.getFiltered({ filters }).then((resp) => {
+  compoundsSimple.getFiltered(params).then((resp) => {
     compounds.value = resp.data.items
   })
   terms.getTermsByCodelist('typeOfTreatment').then((resp) => {

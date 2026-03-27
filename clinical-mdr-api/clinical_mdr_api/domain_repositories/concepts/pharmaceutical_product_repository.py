@@ -54,6 +54,38 @@ class PharmaceuticalProductRepository(ConceptGenericRepository):
     value_class = PharmaceuticalProductValue
     return_model = PharmaceuticalProduct
 
+    # Flat string aliases for wildcard filtering across linked entities
+    wildcard_properties_list: list[str] = [
+        "uid",
+        "external_id",
+        "name",
+        "library_name",
+        "status",
+        "version",
+        "author_username",
+        "_search_derived_pp_name",
+        "_search_dosage_form_names",
+        "_search_route_of_admin_names",
+        "_search_active_substance_inns",
+        "_search_active_substance_long_numbers",
+        "_search_active_substance_short_numbers",
+        "_search_active_substance_analyte_numbers",
+        "_search_active_substance_external_ids",
+    ]
+
+    # Mapping of sort/filter field names to sortable Cypher aliases
+    _SORT_KEY_MAP = {
+        "dosage_form": "_search_dosage_form_names",
+        "dosage_forms": "_search_dosage_form_names",
+        "route_of_administration": "_search_route_of_admin_names",
+        "routes_of_administration": "_search_route_of_admin_names",
+        "derived_name": "_search_derived_pp_name",
+    }
+
+    @classmethod
+    def format_filter_sort_keys(cls, key: str) -> str:
+        return cls._SORT_KEY_MAP.get(key, key)
+
     def _create_new_value_node(self, ar: _AggregateRootType) -> VersionValue:
         value_node = super()._create_new_value_node(ar=ar)
         value_node.save()
@@ -353,5 +385,18 @@ class PharmaceuticalProductRepository(ConceptGenericRepository):
                 [(concept_value)-[:HAS_FORMULATION]->(formulation:IngredientFormulation)-[:HAS_INGREDIENT]->(ingredient:Ingredient)-[ingr_substance_rel:HAS_SUBSTANCE]->(active_substance:ActiveSubstanceRoot) | {active_substance:active_substance, ingr_substance_rel:ingr_substance_rel}] as ingredient_substances,
                 [(concept_value)-[:HAS_FORMULATION]->(formulation:IngredientFormulation)-[:HAS_INGREDIENT]->(ingredient:Ingredient)-[ingr_strength_rel:HAS_STRENGTH_VALUE]->(strength:NumericValueWithUnitRoot) | {strength:strength, ingr_strength_rel:ingr_strength_rel}] as ingredient_strengths,
                 [(concept_value)-[:HAS_FORMULATION]->(formulation:IngredientFormulation)-[:HAS_INGREDIENT]->(ingredient:Ingredient)-[ingr_half_life_rel:HAS_HALF_LIFE]->(half_life:NumericValueWithUnitRoot) | {half_life:half_life, ingr_half_life_rel:ingr_half_life_rel}] as ingredient_half_lives,
-                [(concept_value)-[:HAS_FORMULATION]->(formulation:IngredientFormulation)-[:HAS_INGREDIENT]->(ingredient:Ingredient)-[ingr_lag_time_rel:HAS_LAG_TIME]->(lag_time:LagTimeRoot) | {lag_time:lag_time, ingr_lag_time_rel:ingr_lag_time_rel}] as ingredient_lag_times
+                [(concept_value)-[:HAS_FORMULATION]->(formulation:IngredientFormulation)-[:HAS_INGREDIENT]->(ingredient:Ingredient)-[ingr_lag_time_rel:HAS_LAG_TIME]->(lag_time:LagTimeRoot) | {lag_time:lag_time, ingr_lag_time_rel:ingr_lag_time_rel}] as ingredient_lag_times,
+
+                // Flat string aliases for wildcard filtering across linked entities
+                reduce(s='', x IN [(concept_value)-[:HAS_FORMULATION]->(:IngredientFormulation)-[:HAS_INGREDIENT]->(pp_ingr:Ingredient)-[:HAS_SUBSTANCE]->(pp_as:ActiveSubstanceRoot)-[:LATEST]->(pp_as_val:ActiveSubstanceValue) 
+                        | coalesce(pp_as_val.inn, pp_as_val.long_number, pp_as_val.short_number, pp_as_val.analyte_number, '?') + ' ' 
+                        + coalesce(pp_ingr.formulation_name, '') 
+                        + coalesce(' (' + head([(pp_ingr)-[:HAS_STRENGTH_VALUE]->(pp_str:NumericValueWithUnitRoot)-[:LATEST]->(pp_str_val:NumericValueWithUnitValue)-[:HAS_UNIT_DEFINITION]->(pp_unit:UnitDefinitionRoot)-[:LATEST]->(pp_unit_val:UnitDefinitionValue) | CASE WHEN pp_str_val.value = toInteger(pp_str_val.value) THEN toString(toInteger(pp_str_val.value)) ELSE toString(pp_str_val.value) END + ' ' + pp_unit_val.name]) + ')', '')] | s + CASE WHEN s = '' THEN '' ELSE ', ' END + x) AS _search_derived_pp_name,
+                reduce(s='', x IN [(concept_value)-[:HAS_DOSAGE_FORM]->(df_ctx2:CTTermContext)-[:HAS_SELECTED_TERM]->(df2:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(df2_val:CTTermNameValue) | df2_val.name] | s + ' ' + coalesce(x, '')) AS _search_dosage_form_names,
+                reduce(s='', x IN [(concept_value)-[:HAS_ROUTE_OF_ADMINISTRATION]->(roa_ctx2:CTTermContext)-[:HAS_SELECTED_TERM]->(roa2:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(roa2_val:CTTermNameValue) | roa2_val.name] | s + ' ' + coalesce(x, '')) AS _search_route_of_admin_names,
+                reduce(s='', x IN [(concept_value)-[:HAS_FORMULATION]->(:IngredientFormulation)-[:HAS_INGREDIENT]->(:Ingredient)-[:HAS_SUBSTANCE]->(as3:ActiveSubstanceRoot)-[:LATEST]->(as3_val:ActiveSubstanceValue) | as3_val.inn] | s + ' ' + coalesce(x, '')) AS _search_active_substance_inns,
+                reduce(s='', x IN [(concept_value)-[:HAS_FORMULATION]->(:IngredientFormulation)-[:HAS_INGREDIENT]->(:Ingredient)-[:HAS_SUBSTANCE]->(as4:ActiveSubstanceRoot)-[:LATEST]->(as4_val:ActiveSubstanceValue) | as4_val.short_number] | s + ' ' + coalesce(x, '')) AS _search_active_substance_short_numbers,
+                reduce(s='', x IN [(concept_value)-[:HAS_FORMULATION]->(:IngredientFormulation)-[:HAS_INGREDIENT]->(:Ingredient)-[:HAS_SUBSTANCE]->(as4:ActiveSubstanceRoot)-[:LATEST]->(as4_val:ActiveSubstanceValue) | as4_val.long_number] | s + ' ' + coalesce(x, '')) AS _search_active_substance_long_numbers,
+                reduce(s='', x IN [(concept_value)-[:HAS_FORMULATION]->(:IngredientFormulation)-[:HAS_INGREDIENT]->(:Ingredient)-[:HAS_SUBSTANCE]->(as5:ActiveSubstanceRoot)-[:LATEST]->(as5_val:ActiveSubstanceValue) | as5_val.analyte_number] | s + ' ' + coalesce(x, '')) AS _search_active_substance_analyte_numbers,
+                reduce(s='', x IN [(concept_value)-[:HAS_FORMULATION]->(:IngredientFormulation)-[:HAS_INGREDIENT]->(:Ingredient)-[:HAS_SUBSTANCE]->(as6:ActiveSubstanceRoot)-[:LATEST]->(as6_val:ActiveSubstanceValue) | as6_val.external_id] | s + ' ' + coalesce(x, '')) AS _search_active_substance_external_ids
                 """

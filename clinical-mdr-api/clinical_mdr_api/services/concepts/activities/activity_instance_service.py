@@ -11,6 +11,7 @@ from clinical_mdr_api.domains.concepts.activities.activity_instance import (
 )
 from clinical_mdr_api.domains.concepts.activities.activity_item import (
     ActivityItemVO,
+    CTCodelistItem,
     CTTermItem,
 )
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryVO
@@ -83,6 +84,11 @@ class ActivityInstanceService(ConceptGenericService[ActivityInstanceAR]):
                         is_adam_param_specific=item.is_adam_param_specific,
                         activity_item_class_uid=item.activity_item_class_uid,
                         activity_item_class_name=None,
+                        ct_codelist=(
+                            CTCodelistItem(uid=item.ct_codelist_uid)
+                            if item.ct_codelist_uid
+                            else None
+                        ),
                         ct_terms=ct_terms,
                         unit_definitions=unit_definitions,
                         text_value=item.text_value,
@@ -270,6 +276,11 @@ class ActivityInstanceService(ConceptGenericService[ActivityInstanceAR]):
                             is_adam_param_specific=activity_item.is_adam_param_specific,
                             activity_item_class_uid=activity_item.activity_item_class_uid,
                             activity_item_class_name=None,
+                            ct_codelist=(
+                                CTCodelistItem(uid=activity_item.ct_codelist_uid)
+                                if activity_item.ct_codelist_uid
+                                else None
+                            ),
                             ct_terms=ct_terms,
                             unit_definitions=unit_definitions,
                             text_value=activity_item.text_value,

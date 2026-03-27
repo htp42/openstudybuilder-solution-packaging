@@ -200,7 +200,7 @@
                 </xsl:call-template>
               </xsl:for-each>
               <xsl:comment>[if !mso]&gt;&lt;!</xsl:comment>
-              <div class="oidinfo oid collapse d-print-none">[OID=<xsl:value-of select="@OID" />, Version=<xsl:value-of select="@osb:version" />]</div>
+              <div class="oidinfo oid collapse d-print-none">[OID=<xsl:value-of select="@OID" />, Version=<xsl:value-of select="@osb:version" />, Datatype=<xsl:value-of select="@DataType" />]</div>
               <xsl:comment>&lt;![endif]</xsl:comment>
             </td>
             <td style="border: 1px solid #fff; padding: 2px; width:30%;">
@@ -221,7 +221,7 @@
                     </span>
                   </div>
                   <xsl:comment>[if !mso]&gt;&lt;!</xsl:comment>
-                  <div class="oidinfo oid collapse d-print-none">[OID=<xsl:value-of select="@OID" />, Version=<xsl:value-of select="@osb:version" />]</div>
+                  <div class="oidinfo oid collapse d-print-none">[OID=<xsl:value-of select="@OID" />, Version=<xsl:value-of select="@osb:version" />, Datatype=string]</div>
                   <xsl:comment>&lt;![endif]</xsl:comment>
                 </xsl:for-each>
                 <xsl:for-each select="//CodeList[@OID = current()/@CodeListOID]/EnumeratedItem">
@@ -244,7 +244,7 @@
                   <xsl:comment>&lt;![endif]</xsl:comment>
                 </xsl:for-each>
                 <xsl:comment>[if !mso]&gt;&lt;!</xsl:comment>
-                <div class="oidinfo oid collapse d-print-none">[OID=<xsl:value-of select="@CodeListOID" />, Version=<xsl:value-of select="//CodeList[@OID = current()/@CodeListOID]/@osb:version" />]</div>
+                <div class="oidinfo oid collapse d-print-none">[OID=<xsl:value-of select="@CodeListOID" />, Version=<xsl:value-of select="//CodeList[@OID = current()/@CodeListOID]/@osb:version" />, Datatype=<xsl:value-of select="//CodeList[@OID = current()/@CodeListOID]/@DataType" />]</div>
                 <xsl:comment>&lt;![endif]</xsl:comment>
               </xsl:for-each>
               <xsl:for-each select="./Alias[@Context = 'wordFormat']">

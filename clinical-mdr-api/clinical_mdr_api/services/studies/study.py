@@ -5,10 +5,13 @@ from datetime import date, datetime, timezone
 from string import ascii_lowercase
 from typing import Any, Callable, Collection, Iterable
 
-from neomodel import NodeSet, db  # type: ignore
+from neomodel import db
 from opencensus.trace import execution_context
 
-from clinical_mdr_api.domain_repositories.models.study_field import StudyArrayField
+from clinical_mdr_api.domain_repositories.models.study_field import (
+    StudyArrayField,
+    StudyBooleanField,
+)
 from clinical_mdr_api.domain_repositories.study_definitions.study_definition_repository_impl import (
     StudyDefinitionRepositoryImpl,
 )
@@ -980,9 +983,25 @@ class StudyService:
             self._close_all_repos()
 
     def get_studies_list(
-        self, minimal_response=True, deleted=False
+        self,
+        minimal_response: bool = True,
+        has_study_objective: bool | None = None,
+        has_study_footnote: bool | None = None,
+        has_study_endpoint: bool | None = None,
+        has_study_criteria: bool | None = None,
+        has_study_activity: bool | None = None,
+        has_study_activity_instruction: bool | None = None,
+        deleted: bool = False,
     ) -> list[StudySimple | StudyMinimal]:
-        items = self._repos.study_definition_repository.get_studies_list(deleted)
+        items = self._repos.study_definition_repository.get_studies_list(
+            has_study_objective,
+            has_study_footnote,
+            has_study_endpoint,
+            has_study_criteria,
+            has_study_activity,
+            has_study_activity_instruction,
+            deleted,
+        )
 
         if minimal_response:
             return [StudyMinimal.from_input(item) for item in items]
@@ -1068,7 +1087,7 @@ class StudyService:
         page_number: int = 1,
         page_size: int = 0,
         total_count: bool = False,
-        only_latest_major_protcol_version: bool = False,
+        only_latest_major_protocol_version: bool = False,
     ) -> GenericFilteringReturn[StudyVersionHistory]:
         try:
             all_items, total = (
@@ -1077,7 +1096,7 @@ class StudyService:
                     page_number=page_number,
                     page_size=page_size,
                     total_count=total_count,
-                    only_latest_major_protcol_version=only_latest_major_protcol_version,
+                    only_latest_major_protocol_version=only_latest_major_protocol_version,
                 )
             )
 
@@ -1390,6 +1409,7 @@ class StudyService:
                 study_title_exists_callback=self._repos.study_title_repository.study_title_exists,
                 study_short_title_exists_callback=self._repos.study_title_repository.study_short_title_exists,
                 study_number_exists_callback=self._repos.study_definition_repository.study_number_exists,
+                study_acronym_exists_callback=self._repos.study_definition_repository.study_acronym_exists,
                 initial_id_metadata=StudyIdentificationMetadataVO.from_input_values(
                     project_number=project_number,
                     study_number=study_number,
@@ -2090,6 +2110,7 @@ class StudyService:
                 new_id_metadata=new_id_metadata,
                 project_exists_callback=self._repos.project_repository.project_number_exists,
                 study_number_exists_callback=self._repos.study_definition_repository.study_number_exists,
+                study_acronym_exists_callback=self._repos.study_definition_repository.study_acronym_exists,
                 new_high_level_study_design=new_high_level_study_design,
                 study_type_exists_callback=self._repos.ct_term_name_repository.term_exists,
                 trial_type_exists_callback=self._repos.ct_term_name_repository.term_exists,
@@ -2279,6 +2300,21 @@ class StudyService:
 
             raise NotFoundException("Study", study_uid)
 
+    def get_study_id(
+        self, study_uid: str, study_value_version: str | None = None
+    ) -> str:
+        study_id = self._repos.study_definition_repository.get_study_id(
+            study_uid, study_value_version
+        )
+        NotFoundException.raise_if_not(
+            study_id,
+            "Study",
+            study_uid,
+            msg=f"Study with UID '{study_uid}' and version '{study_value_version}' was not found,"
+            " or either study_id_prefix or study_number is not defined.",
+        )
+        return study_id
+
     def _check_if_unit_definition_exists(self, unit_definition_uid: str):
         NotFoundException.raise_if_not(
             self._repos.unit_definition_repository.final_concept_exists(
@@ -2290,7 +2326,7 @@ class StudyService:
 
     def _check_repository_output(
         self,
-        nodes: NodeSet,
+        nodes: list[StudyPreferredTimeUnit],
         study_uid: str,
         for_protocol_soa: bool = False,
     ):
@@ -2553,7 +2589,7 @@ class StudyService:
 
     @staticmethod
     def _study_fields_to_study_soa_preferences(
-        study_uid: str, nodes: NodeSet
+        study_uid: str, nodes: list[StudyBooleanField]
     ) -> StudySoaPreferences:
         """Converts a set of StudyField nodes to a StudySoaPreferences"""
 

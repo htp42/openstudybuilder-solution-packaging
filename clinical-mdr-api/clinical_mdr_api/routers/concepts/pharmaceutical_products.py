@@ -58,10 +58,10 @@ Possible errors:
     {
         "defaults": [
             "uid",
+            "derived_name",
             "external_id",
             "dosage_forms=dosage_forms.term_name",
             "routes_of_administration=routes_of_administration.term_name",
-            "formulations",
             "start_date",
             "version",
             "status",

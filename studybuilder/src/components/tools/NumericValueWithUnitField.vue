@@ -8,8 +8,6 @@
         type="number"
         hide-details="auto"
         :disabled="disabled"
-        density="compact"
-        variant="outlined"
         @update:model-value="update"
       />
       <v-autocomplete
@@ -19,10 +17,8 @@
         :items="units"
         item-title="name"
         item-value="uid"
-        density="compact"
         clearable
         hide-details="auto"
-        variant="outlined"
         :disabled="disabled"
         @update:model-value="update"
       />

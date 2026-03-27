@@ -13,7 +13,6 @@
             <v-textarea
               v-model="form.reason_for_rejecting"
               :label="$t('ActivityFormsRequested.rejecting_reason')"
-              density="compact"
               clearable
               auto-grow
               rows="3"
@@ -29,7 +28,6 @@
             <v-text-field
               v-model="form.contact_person"
               :label="$t('ActivityFormsRequested.contact')"
-              density="compact"
               clearable
               :rules="[formRules.required, (value) => formRules.max(value, 5)]"
             />

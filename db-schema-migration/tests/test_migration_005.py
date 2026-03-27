@@ -52,11 +52,9 @@ def test_ct_config_values(migration):
 
 
 def test_fix_study_epoch_order(migration):
-    studies, _ = db.cypher_query(
-        """
+    studies, _ = db.cypher_query("""
         MATCH (study_root:StudyRoot) return study_root.uid
-        """
-    )
+        """)
     for study in studies:
         study_uid = study[0]
         logger.info(
@@ -71,15 +69,13 @@ def test_fix_study_epoch_order(migration):
 
 
 def test_link_variables_with_value_terms(migration):
-    incomplete_links, _ = db.cypher_query(
-        """
+    incomplete_links, _ = db.cypher_query("""
             MATCH (v:DatasetVariable)-->(dvi:DatasetVariableInstance WHERE dvi.value_list IS NOT NULL)
             OPTIONAL MATCH (dvi)-[:REFERENCES_TERM]->(term)
             WITH v, dvi, size(dvi.value_list) AS value_list_size, count(DISTINCT term) AS term_rel_number
             WHERE value_list_size <> term_rel_number
             RETURN v.uid AS variable_uid, dvi.value_list AS value_list, value_list_size, term_rel_number
-        """
-    )
+        """)
 
     assert incomplete_links == []
 
@@ -159,11 +155,9 @@ def test_study_activity_group_is_linked_to_real_study_root_audit_trail_node(migr
 
 
 def test_migrate_study_activity_instances(migration):
-    studies, _ = db.cypher_query(
-        """
+    studies, _ = db.cypher_query("""
         MATCH (study_root:StudyRoot) return study_root.uid
-        """
-    )
+        """)
     for study in studies:
         study_uid = study[0]
         logger.info(
@@ -226,9 +220,11 @@ def test_migrate_study_activity_instances(migration):
                     study_activity_instance["study_activity_group"][
                         "activity_group_uid"
                     ],
-                    study_activity_instance["activity_instance"]["uid"]
-                    if study_activity_instance["activity_instance"]
-                    else None,
+                    (
+                        study_activity_instance["activity_instance"]["uid"]
+                        if study_activity_instance["activity_instance"]
+                        else None
+                    ),
                 )
                 vals = list(study_activity_instance_dict.values())
             assert len(set(vals)) == len(
@@ -237,11 +233,9 @@ def test_migrate_study_activity_instances(migration):
 
 
 def test_remove_duplicated_study_activity_schedules(migration):
-    studies, _ = db.cypher_query(
-        """
+    studies, _ = db.cypher_query("""
         MATCH (study_root:StudyRoot) return study_root.uid
-        """
-    )
+        """)
     for study in studies:
         study_uid = study[0]
         logger.info(
@@ -283,31 +277,25 @@ def test_remove_duplicated_study_activity_schedules(migration):
 
 
 def test_migrate_week_in_study(migration):
-    study_duration_weeks_count = db.cypher_query(
-        """
+    study_duration_weeks_count = db.cypher_query("""
         MATCH (:StudyVisit)-[hsdw:HAS_STUDY_DURATION_WEEKS]->
         (:ConceptRoot:NumericValueRoot:SimpleConceptRoot:StudyDurationWeeksRoot:TemplateParameterTermRoot)-[:HAS_VERSION]->
         (:ConceptValue:NumericValue:SimpleConceptValue:StudyDurationWeeksValue:TemplateParameterTermValue)
         RETURN COUNT(DISTINCT hsdw)
-        """
-    )
-    week_in_study_count = db.cypher_query(
-        """
+        """)
+    week_in_study_count = db.cypher_query("""
         MATCH (:StudyVisit)-[hwis:HAS_WEEK_IN_STUDY]->
         (:ConceptRoot:NumericValueRoot:SimpleConceptRoot:WeekInStudyRoot:TemplateParameterTermRoot)
         RETURN COUNT(DISTINCT hwis)
-        """
-    )
+        """)
     assert (
         study_duration_weeks_count[0] == week_in_study_count[0]
     ), "Not all StudyVisit nodes that have a HAS_STUDY_DURATION_WEEKS relationship have a HAS_WEEK_IN_STUDY relationship"
 
-    week_in_study_value_nodes = db.cypher_query(
-        """
+    week_in_study_value_nodes = db.cypher_query("""
         MATCH (n:WeekInStudyValue)
         RETURN n.name, n.name_sentence_case
-        """
-    )[0]
+        """)[0]
 
     for node in week_in_study_value_nodes:
         assert node[0].startswith("Week "), f"{node[0]} doesn't start with Week"
@@ -317,26 +305,22 @@ def test_migrate_week_in_study(migration):
 
 
 def test_migrate_soa_preferred_time_unit(migration):
-    studies_without_soa_preferred_time_unit_count = db.cypher_query(
-        """
+    studies_without_soa_preferred_time_unit_count = db.cypher_query("""
         MATCH (sr:StudyRoot)-[:LATEST]->(sv:StudyValue)
         WHERE NOT (sv)-[:HAS_TIME_FIELD]->(:StudyTimeField {field_name: "soa_preferred_time_unit"})
         
         RETURN COUNT(sr)
-        """
-    )
+        """)
     assert (
         studies_without_soa_preferred_time_unit_count[0][0][0] == 0
     ), "Some Studies are not connected to a StudyTimeField for soa_preferred_time_unit"
 
-    studies_without_preferred_time_unit_count = db.cypher_query(
-        """
+    studies_without_preferred_time_unit_count = db.cypher_query("""
         MATCH (sr:StudyRoot)-[:LATEST]->(sv:StudyValue)
         WHERE NOT (sv)-[:HAS_TIME_FIELD]->(:StudyTimeField {field_name: "preferred_time_unit"})
 
         RETURN COUNT(sr)
-        """
-    )
+        """)
     assert (
         studies_without_preferred_time_unit_count[0][0][0] == 0
     ), "Some Studies are not connected to a StudyTimeField for preferred_time_unit"
@@ -365,13 +349,11 @@ def test_migrate_study_activity_grouping_and_audit_trail_duplicates_subgroup(mig
 
 
 def _migrate_study_activity_grouping_and_audit_trail_edit(migration, study_node):
-    incomplete_edit_actions = db.cypher_query(
-        f"""
+    incomplete_edit_actions = db.cypher_query(f"""
         MATCH (sn:{study_node})<-[:BEFORE]-(edit:Edit)
         WHERE NOT (edit)-[:AFTER]->()
         RETURN COUNT(edit)
-        """
-    )
+        """)
     assert (
         incomplete_edit_actions[0][0][0] == 0
     ), f"Some Edit StudyActions for {study_node} nodes do not have an AFTER relationship"
@@ -392,13 +374,11 @@ def test_migrate_study_activity_grouping_and_audit_trail_edit_subgroup(migration
 def _migrate_study_activity_grouping_and_audit_trail_redundant_edits(
     migration, study_node
 ):
-    incomplete_edit_actions = db.cypher_query(
-        f"""
+    incomplete_edit_actions = db.cypher_query(f"""
         MATCH (s:{study_node})-[:AFTER|BEFORE]-(study_action)
         WHERE (s)-[:AFTER]-(study_action) and (s)-[:BEFORE]-(study_action)
         RETURN COUNT(s)
-        """
-    )
+        """)
     assert (
         incomplete_edit_actions[0][0][0] == 0
     ), f"Some StudyActions for {study_node} are redundant as their BEFORE and AFTER link to the same node"
@@ -421,60 +401,50 @@ def test_migrate_study_activity_grouping_and_audit_trail_redundant_edits_subgrou
 
 
 def test_migrate_nullify_unit_definition_name_sentence_case(migration):
-    rs = db.cypher_query(
-        """
+    rs = db.cypher_query("""
         MATCH (uv:UnitDefinitionValue)
         WHERE uv.name_sentence_case IS NOT NULL
         RETURN COUNT(uv)
-        """
-    )
+        """)
     assert (
         rs[0][0][0] == 0
     ), f"{rs[0][0][0]} UnitDefinitionValue.name_sentence_case are not null"
 
-    rs = db.cypher_query(
-        """
+    rs = db.cypher_query("""
         MATCH (uv:UnitDefinitionValue)--(ur:UnitDefinitionRoot:TemplateParameterTermRoot)--(i:SyntaxInstanceValue)
         WHERE i.name CONTAINS uv.name_sentence_case
         RETURN COUNT(ur)
-        """
-    )
+        """)
     assert (
         rs[0][0][0] == 0
     ), f"{rs[0][0][0]} SyntaxInstanceValue.name contains UnitDefinitionValue.name_sentence_case should contain UnitDefinitionValue.name instead"
 
-    rs = db.cypher_query(
-        """
+    rs = db.cypher_query("""
         MATCH (uv:UnitDefinitionValue)--(ur:UnitDefinitionRoot:TemplateParameterTermRoot)--(i:SyntaxInstanceValue)
         WHERE i.name_plain CONTAINS uv.name_sentence_case
         RETURN COUNT(ur)
-        """
-    )
+        """)
     assert (
         rs[0][0][0] == 0
     ), f"{rs[0][0][0]} SyntaxInstanceValue.name_plain contains UnitDefinitionValue.name_sentence_case should contain UnitDefinitionValue.name instead"
 
 
 def test_migrate_missing_activity_item_class(migration):
-    rs = db.cypher_query(
-        """
+    rs = db.cypher_query("""
         MATCH (ai:ActivityItem) WHERE NOT (ai)<-[:HAS_ACTIVITY_ITEM]-()
         RETURN COUNT(ai)
-        """
-    )
+        """)
     assert (
         rs[0][0][0] == 0
     ), f"{rs[0][0][0]} ActivityItem nodes are missing a relationship to an ActivityItemClassRoot node"
 
 
 def test_migrate_remove_invalid_activity_instances(migration):
-    rs = db.cypher_query(
-        """
+    rs = db.cypher_query("""
         MATCH (aiv:ActivityInstanceValue) WHERE NOT (aiv)-[:HAS_ACTIVITY]->(:ActivityGrouping) 
         MATCH (aiv)<-[]-(air:ActivityInstanceRoot)-[:CONTAINS_CONCEPT]-(:Library {name: "Sponsor"})
         RETURN COUNT(DISTINCT aiv)
-        """
-    )
+        """)
     assert (
         rs[0][0][0] == 0
     ), f"{rs[0][0][0]} ActivityInstanceValue nodes are missing a relationship to an ActivityGrouping node"

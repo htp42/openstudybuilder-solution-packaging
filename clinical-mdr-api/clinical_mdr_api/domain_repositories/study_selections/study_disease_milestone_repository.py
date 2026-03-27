@@ -1,7 +1,7 @@
 from typing import Any, TypeVar
 
 from neomodel import Q, db
-from neomodel.sync_.match import NodeNameResolver, Optional
+from neomodel.sync_.match import NodeNameResolver, Path
 
 from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_codelist_attributes_repository import (
     CTCodelistAttributesRepository,
@@ -91,7 +91,7 @@ class StudyDiseaseMilestoneRepository:
         start: int = (page_number - 1) * page_size
         end: int = start + page_size
         nodes = ListDistinct(
-            StudyDiseaseMilestone.nodes.fetch_relations(
+            StudyDiseaseMilestone.nodes.traverse(
                 "has_after__audit_trail",
                 "has_disease_milestone_type__has_selected_term__has_name_root__latest_final",
                 "has_disease_milestone_type__has_selected_term__has_attributes_root__latest_final",
@@ -136,7 +136,7 @@ class StudyDiseaseMilestoneRepository:
         all_disease_milestones = [
             StudyDiseaseMilestoneOGM.model_validate(sas_node)
             for sas_node in ListDistinct(
-                StudyDiseaseMilestone.nodes.fetch_relations(
+                StudyDiseaseMilestone.nodes.traverse(
                     "has_after__audit_trail",
                     "has_disease_milestone_type__has_selected_term__has_name_root__latest_final",
                     "has_disease_milestone_type__has_selected_term__has_attributes_root__latest_final",
@@ -150,7 +150,7 @@ class StudyDiseaseMilestoneRepository:
 
     def find_by_uid(self, uid: str) -> StudyDiseaseMilestoneVO:
         disease_milestone_node = ListDistinct(
-            StudyDiseaseMilestone.nodes.fetch_relations(
+            StudyDiseaseMilestone.nodes.traverse(
                 "has_after__audit_trail",
                 "study_value__latest_value",
                 "has_disease_milestone_type__has_selected_term__has_name_root__latest_final",
@@ -176,11 +176,11 @@ class StudyDiseaseMilestoneRepository:
             [
                 StudyDiseaseMilestoneOGMVer.model_validate(se_node)
                 for se_node in ListDistinct(
-                    StudyDiseaseMilestone.nodes.fetch_relations(
+                    StudyDiseaseMilestone.nodes.traverse(
                         "has_after__audit_trail",
                         "has_disease_milestone_type__has_selected_term__has_name_root__latest_final",
                         "has_disease_milestone_type__has_selected_term__has_attributes_root__latest_final",
-                        Optional("has_before"),
+                        Path(value="has_before", optional=True),
                     )
                     .filter(uid=uid, has_after__audit_trail__uid=study_uid)
                     .resolve_subgraph()
@@ -195,11 +195,11 @@ class StudyDiseaseMilestoneRepository:
             [
                 StudyDiseaseMilestoneOGMVer.model_validate(se_node)
                 for se_node in (
-                    StudyDiseaseMilestone.nodes.fetch_relations(
+                    StudyDiseaseMilestone.nodes.traverse(
                         "has_after__audit_trail",
                         "has_disease_milestone_type__has_selected_term__has_name_root__latest_final",
                         "has_disease_milestone_type__has_selected_term__has_attributes_root__latest_final",
-                        Optional("has_before"),
+                        Path(value="has_before", optional=True),
                     )
                     .filter(has_after__audit_trail__uid=study_uid)
                     .order_by("order")
@@ -327,7 +327,7 @@ class StudyDiseaseMilestoneRepository:
         if "__" in field_path:
             path, prop = field_path.rsplit("__", 1)
             source = NodeNameResolver(path)
-            nodeset = nodeset.fetch_relations(path)
+            nodeset = nodeset.traverse(path)
         else:
             # FIXME: we need a proper way to resolve the variable name (NodeNameResolver
             # does not support 'self'...)

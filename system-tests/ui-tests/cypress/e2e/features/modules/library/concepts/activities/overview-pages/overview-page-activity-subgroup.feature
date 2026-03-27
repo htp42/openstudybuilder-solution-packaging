@@ -43,6 +43,7 @@ Feature: Library - Concepts - Activities - Activity Subgroup Overview Page
         And The 'Activities' table is displaying correct columns
         |  header     |
         |  Name       |
+        |  Requested  |
         |  Version    |
         |  Status     |
         And The linked group is found in the Groups table with status 'Final' and version '1.0'

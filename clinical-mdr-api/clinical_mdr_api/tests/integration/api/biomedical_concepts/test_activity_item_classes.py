@@ -115,6 +115,7 @@ def test_data():
     dataset_class = TestUtils.create_dataset_class(
         data_model_uid=data_model.uid,
         data_model_catalogue_name=data_model_catalogue_name,
+        data_model_name=data_model.name,
     )
     variable_class = TestUtils.create_variable_class(
         dataset_class_uid=dataset_class.uid,

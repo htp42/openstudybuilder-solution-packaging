@@ -44,16 +44,14 @@ class TestCTTermRepository(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         inject_and_clear_db(cls.TEST_DB_NAME)
-        db.cypher_query(
-            """
+        db.cypher_query("""
         CREATE(:Library{name:"CDISC", is_editable:true})
         CREATE(:Library{name:"Sponsor", is_editable:true})
         CREATE(sdtm_ct:CTCatalogue{name:"SDTM CT"})-[:CONTAINS_PACKAGE]->(:CTPackage{uid: "SDTM_PACKAGE_1",name:"SDTM_PACKAGE_1"})
         MERGE(sdtm_ct)-[:CONTAINS_PACKAGE]->(:CTPackage{uid: "SDTM_PACKAGE_2", name:"SDTM_PACKAGE_2"})
         CREATE(cdash_ct:CTCatalogue{name:"CDASH CT"})-[:CONTAINS_PACKAGE]->(:CTPackage{uid: "CDASH_PACKAGE_1",name:"CDASH_PACKAGE_1"})
         MERGE(cdash_ct)-[:CONTAINS_PACKAGE]->(:CTPackage{uid: "CDASH_PACKAGE_2", name:"CDASH_PACKAGE_2"})
-        """
-        )
+        """)
         cls.term_aggregated_repo = CTTermAggregatedRepository()
         cls.term_attributes_repo = CTTermAttributesRepository()
         cls.term_names_repo = CTTermNameRepository()

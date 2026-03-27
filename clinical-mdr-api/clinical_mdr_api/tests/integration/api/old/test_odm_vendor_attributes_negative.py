@@ -41,7 +41,7 @@ def test_create_a_new_odm_vendor_attribute_of_vendor_namespace(api_client):
         "value_regex": None,
         "vendor_namespace_uid": "odm_vendor_namespace1",
     }
-    response = api_client.post("concepts/odms/vendor-attributes", json=data)
+    response = api_client.post("odms/vendor-attributes", json=data)
 
     assert_response_status_code(response, 201)
 
@@ -80,7 +80,7 @@ def test_create_a_new_odm_vendor_attribute_of_vendor_element(api_client):
         "value_regex": None,
         "vendor_element_uid": "odm_vendor_element1",
     }
-    response = api_client.post("concepts/odms/vendor-attributes", json=data)
+    response = api_client.post("odms/vendor-attributes", json=data)
 
     assert_response_status_code(response, 201)
 
@@ -110,9 +110,7 @@ def test_create_a_new_odm_vendor_attribute_of_vendor_element(api_client):
 
 
 def test_getting_error_for_retrieving_non_existent_odm_vendor_attribute(api_client):
-    response = api_client.get(
-        "concepts/odms/vendor-attributes/OdmVendorAttribute_000003"
-    )
+    response = api_client.get("odms/vendor-attributes/OdmVendorAttribute_000003")
 
     assert_response_status_code(response, 404)
 
@@ -136,7 +134,7 @@ def test_cannot_create_a_new_odm_vendor_attribute_belonging_to_odm_vendor_namesp
         "value_regex": None,
         "vendor_namespace_uid": "odm_vendor_namespace1",
     }
-    response = api_client.post("concepts/odms/vendor-attributes", json=data)
+    response = api_client.post("odms/vendor-attributes", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -160,7 +158,7 @@ def test_cannot_create_a_new_odm_vendor_attribute_without_first_char_lowercase(
         "value_regex": None,
         "vendor_namespace_uid": "odm_vendor_namespace1",
     }
-    response = api_client.post("concepts/odms/vendor-attributes", json=data)
+    response = api_client.post("odms/vendor-attributes", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -193,7 +191,7 @@ def test_cannot_create_a_new_odm_vendor_attribute_belonging_to_odm_vendor_elemen
         "value_regex": None,
         "vendor_element_uid": "odm_vendor_element1",
     }
-    response = api_client.post("concepts/odms/vendor-attributes", json=data)
+    response = api_client.post("odms/vendor-attributes", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -215,7 +213,7 @@ def test_cannot_create_a_new_odm_vendor_attribute_with_invalid_regex(api_client)
         "value_regex": "(*'*(!'",
         "vendor_namespace_uid": "odm_vendor_namespace1",
     }
-    response = api_client.post("concepts/odms/vendor-attributes", json=data)
+    response = api_client.post("odms/vendor-attributes", json=data)
 
     assert_response_status_code(response, 400)
 
@@ -241,7 +239,7 @@ def test_cannot_create_a_new_odm_vendor_attribute_of_vendor_namespace_with_exist
         "data_type": "string",
         "vendor_namespace_uid": "odm_vendor_namespace1",
     }
-    response = api_client.post("concepts/odms/vendor-attributes", json=data)
+    response = api_client.post("odms/vendor-attributes", json=data)
 
     assert_response_status_code(response, 409)
 
@@ -261,7 +259,7 @@ def test_cannot_create_a_new_odm_vendor_attribute_of_vendor_element_with_existin
         "data_type": "string",
         "vendor_element_uid": "odm_vendor_element1",
     }
-    response = api_client.post("concepts/odms/vendor-attributes", json=data)
+    response = api_client.post("odms/vendor-attributes", json=data)
 
     assert_response_status_code(response, 409)
 
@@ -273,7 +271,7 @@ def test_cannot_create_a_new_odm_vendor_attribute_of_vendor_element_with_existin
 
 def test_cannot_inactivate_an_odm_vendor_attribute_that_is_in_draft_status(api_client):
     response = api_client.delete(
-        "concepts/odms/vendor-attributes/OdmVendorAttribute_000001/activations"
+        "odms/vendor-attributes/OdmVendorAttribute_000001/activations"
     )
 
     assert_response_status_code(response, 400)
@@ -286,7 +284,7 @@ def test_cannot_inactivate_an_odm_vendor_attribute_that_is_in_draft_status(api_c
 
 def test_cannot_reactivate_an_odm_vendor_attribute_that_is_not_retired(api_client):
     response = api_client.post(
-        "concepts/odms/vendor-attributes/OdmVendorAttribute_000001/activations"
+        "odms/vendor-attributes/OdmVendorAttribute_000001/activations"
     )
 
     assert_response_status_code(response, 400)

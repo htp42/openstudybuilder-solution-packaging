@@ -3,6 +3,7 @@ import { inject } from 'vue'
 
 import { i18n } from '@/plugins/i18n'
 import generalUtils from '@/utils/generalUtils'
+import preferencesApi from '@/api/preferences'
 import { useStudiesGeneralStore } from './studies-general'
 
 // Dynamically load extension menu items
@@ -31,11 +32,13 @@ const studyId = getStudyUid()
 
 export const useAppStore = defineStore('app', {
   state: () => ({
+    rowsPerPage: 10,
+    studyNumberLength: 4,
     drawer: true,
+    sidebarAutoMinimize: false,
     section: '',
     breadcrumbs: [],
     helpPath: '',
-    userData: {},
     studyUid: 'none',
     menuItems: {
       Library: {
@@ -271,6 +274,10 @@ export const useAppStore = defineStore('app', {
               {
                 title: i18n.t('Sidebar.library.sdtm'),
                 url: { name: 'Sdtm' },
+              },
+              {
+                title: i18n.t('Sidebar.library.sdtm_sponsor'),
+                url: { name: 'SponsorSdtm' },
               },
               {
                 title: i18n.t('Sidebar.library.adam'),
@@ -616,6 +623,11 @@ export const useAppStore = defineStore('app', {
         url: '/admin',
         items: [
           {
+            title: i18n.t('Sidebar.admin.global_preferences'),
+            url: { name: 'GlobalPreferences' },
+            icon: 'mdi-tune',
+          },
+          {
             title: i18n.t('Sidebar.admin.feature_flags'),
             url: { name: 'FeatureFlags' },
             icon: 'mdi-eye-check-outline',
@@ -624,6 +636,11 @@ export const useAppStore = defineStore('app', {
             title: i18n.t('Sidebar.admin.announcements'),
             url: { name: 'SystemAnnouncements' },
             icon: 'mdi-information-outline',
+          },
+          {
+            title: i18n.t('Sidebar.admin.data_completeness_tags'),
+            url: { name: 'DataCompletenessTags' },
+            icon: 'mdi-progress-check',
           },
           {
             title: i18n.t('Sidebar.admin.complexity_burdens'),
@@ -719,27 +736,36 @@ export const useAppStore = defineStore('app', {
     setBreadcrumbs(breadcrumbs) {
       this.breadcrumbs = breadcrumbs
     },
-    initialize() {
+    async initialize() {
       const studiesGeneralStore = useStudiesGeneralStore()
       const section = localStorage.getItem('section')
       const breadcrumbs = localStorage.getItem('breadcrumbs')
-      const userData = localStorage.getItem('userData')
 
       // Load extension menu items
       this.loadExtensionMenuItems()
 
+      // Load session state from localStorage
       if (section) {
         this.section = section
       }
       if (breadcrumbs) {
         this.setBreadcrumbs(JSON.parse(breadcrumbs))
       }
-      if (userData) {
-        this.userData = JSON.parse(userData)
-      } else {
-        this.userData = { darkTheme: false, rows: 10, studyNumberLength: 4 }
-      }
+
       studiesGeneralStore.initialize()
+
+      // Load user preferences from API
+      try {
+        const resp = await preferencesApi.getUserPreferences()
+        this.applyPreferences(resp.data.preferences)
+      } catch (error) {
+        console.error('Failed to load preferences:', error)
+        // Use hardcoded defaults if API is unavailable
+        this.rowsPerPage = 10
+        this.studyNumberLength = 4
+        this.drawer = true
+        this.sidebarAutoMinimize = false
+      }
     },
     appendToBreadcrumbs(item) {
       this.breadcrumbs.push(item)
@@ -785,9 +811,16 @@ export const useAppStore = defineStore('app', {
       localStorage.removeItem('section')
       localStorage.removeItem('breadcrumbs')
     },
-    saveUserData(data) {
-      this.userData = data
-      localStorage.setItem('userData', JSON.stringify(data))
+    applyPreferences(preferences) {
+      this.rowsPerPage = preferences.rows_per_page || 10
+      this.drawer =
+        preferences.sidebar_visible === undefined
+          ? true
+          : preferences.sidebar_visible
+      this.sidebarAutoMinimize = preferences.sidebar_auto_minimize || false
+      if (preferences.language) {
+        i18n.locale.value = preferences.language
+      }
     },
     setSystemAnnouncement(content) {
       this.systemAnnouncement = content

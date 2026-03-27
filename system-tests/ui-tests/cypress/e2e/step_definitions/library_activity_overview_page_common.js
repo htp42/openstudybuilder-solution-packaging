@@ -166,7 +166,7 @@ Then('The status displayed on the summary has value {string} and version is {str
 })
 
 When('Version {string} is selected from the Version dropdown list', (version) => {
-    cy.contains('.summary-label', 'Version').parent().within(() => cy.get('[role="combobox"]').click())
+    cy.contains('.summary-label', 'Version').parent().within(() => cy.get('.v-field__input').click())
     cy.get('.v-list-item').contains(version).click();
 })
 

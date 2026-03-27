@@ -76,11 +76,12 @@ def test_data():
             label=label,
             data_model_uid=data_model_uid,
             data_model_catalogue_name=data_model_catalogue_name,
+            data_model_name=data_model_name,
         )
-        for label, data_model_uid in [
-            ("DatasetClass A", data_models[0].uid),
-            ("DatasetClass B", data_models[1].uid),
-            ("DatasetClass C", data_models[2].uid),
+        for label, data_model_uid, data_model_name in [
+            ("DatasetClass A", data_models[0].uid, data_models[0].name),
+            ("DatasetClass B", data_models[1].uid, data_models[1].name),
+            ("DatasetClass C", data_models[2].uid, data_models[2].name),
         ]
     ]
     data_model_ig = TestUtils.create_data_model_ig(
@@ -217,17 +218,15 @@ CLASS_VARIABLE_FIELDS_ALL = [
     "role",
     "catalogue_name",
     "dataset_class",
-    "dataset_variable_name",
     "referenced_codelists",
-    "has_mapping_target",
+    "has_mapping_targets",
     "core",
     "described_value_domain",
     "notes",
     "usage_restrictions",
     "examples",
     "completion_instructions",
-    "data_model_names",
-    "qualifies_variable",
+    "qualifies_variables",
 ]
 
 CLASS_VARIABLE_FIELDS_NOT_NULL = [
@@ -235,7 +234,6 @@ CLASS_VARIABLE_FIELDS_NOT_NULL = [
     "label",
     "catalogue_name",
     "dataset_class",
-    "data_model_names",
 ]
 
 
@@ -262,8 +260,6 @@ def test_get_class_variable(api_client):
     assert res["description"] == "VariableClass A desc"
     assert res["catalogue_name"] == data_model_catalogue_name
     assert res["dataset_class"]["dataset_class_name"] == dataset_classes[0].label
-    assert res["dataset_variable_name"] == dataset_variable.label
-    assert res["data_model_names"] == [data_models[0].name]
 
 
 def test_get_class_variables_pagination(api_client):
@@ -306,7 +302,8 @@ def test_get_class_variables_pagination(api_client):
         [
             class_variable
             for class_variable in class_variables
-            if data_models[2].name in class_variable.data_model_names
+            if class_variable.dataset_class.dataset_class_name
+            == dataset_classes[2].label
         ]
     ) == len(results_paginated_merged)
 
@@ -361,7 +358,8 @@ def test_get_class_variables(
             [
                 class_variable
                 for class_variable in class_variables
-                if data_models[2].name in class_variable.data_model_names
+                if class_variable.dataset_class.dataset_class_name
+                == dataset_classes[2].label
             ]
         )
         if total_count
@@ -462,11 +460,6 @@ def test_filtering_wildcard(
             "catalogue_name",
             "DataModelCatalogue name",
         ),
-        pytest.param(
-            '{"data_model_names": {"v": ["DataModel B"]}}',
-            "data_model_names",
-            ["DataModel B"],
-        ),
     ],
 )
 def test_filtering_exact(
@@ -518,7 +511,6 @@ def test_filtering_exact(
         pytest.param("label"),
         pytest.param("description"),
         pytest.param("role"),
-        pytest.param("dataset_variable_name"),
         pytest.param("catalogue_name"),
         pytest.param("dataset_class.dataset_class_name"),
     ],
@@ -547,7 +539,7 @@ def test_headers(api_client, field_name):
     for class_variable in [
         class_var
         for class_var in class_variables
-        if data_models[2].name in class_var.data_model_names
+        if class_var.dataset_class.dataset_class_name == dataset_classes[2].label
     ]:
         if nested_path:
             for prop in nested_path:

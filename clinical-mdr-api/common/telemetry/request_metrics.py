@@ -5,8 +5,8 @@ import time
 from functools import wraps
 from typing import Mapping
 
-import neomodel
 import opencensus.trace
+from neomodel.sync_.database import Database as NeomodelDatabase
 from pydantic import BaseModel, Field
 from starlette.datastructures import MutableHeaders
 from starlette.responses import Response
@@ -130,7 +130,7 @@ def cypher_tracing(query: str, params: Mapping):
 
 
 def patch_neomodel_database():
-    """Monkey-patch neomodel.core.db singleton to trace Cypher queries"""
+    """Monkey-patch neomodel db singleton to trace Cypher queries"""
 
     def wrap(func):
         @wraps(func)
@@ -158,8 +158,6 @@ def patch_neomodel_database():
 
         return _run_cypher_query
 
-    log.info("Patching neomodel.util.Database")
+    log.info("Patching neomodel.sync_.database.Database")
 
-    neomodel.sync_.core.Database._run_cypher_query = wrap(
-        neomodel.sync_.core.Database._run_cypher_query
-    )
+    NeomodelDatabase._run_cypher_query = wrap(NeomodelDatabase._run_cypher_query)  # type: ignore[method-assign]

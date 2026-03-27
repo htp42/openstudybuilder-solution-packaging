@@ -598,7 +598,7 @@ def test_get_snapshot_history(api_client):
     # snapshot history excluding versions without protocol header version
     response = api_client.get(
         f"/studies/{study_with_history.uid}/snapshot-history",
-        params={"only_latest_major_protcol_version": True, "total_count": True},
+        params={"only_latest_major_protocol_version": True, "total_count": True},
     )
     assert_response_status_code(response, 200)
     res = response.json()
@@ -609,6 +609,7 @@ def test_get_snapshot_history(api_client):
     assert res[0]["reason_for_lock_name"] == reason_for_lock.sponsor_preferred_name
     assert res[0]["reason_for_unlock_name"] == reason_for_unlock.sponsor_preferred_name
     assert res[0]["metadata_version"] == "3"
+    assert res[0]["original_metadata_version"] == "3"
     assert res[0]["protocol_header_major_version"] == 2
     assert res[0]["protocol_header_minor_version"] == 0
     assert res[0]["description"] == "Lock 3"
@@ -620,6 +621,7 @@ def test_get_snapshot_history(api_client):
     assert res[1]["reason_for_lock_name"] == final_protocol_term.sponsor_preferred_name
     assert res[1]["reason_for_unlock_name"] == reason_for_unlock.sponsor_preferred_name
     assert res[1]["metadata_version"] == "2"
+    assert res[1]["original_metadata_version"] == "2"
     assert res[1]["protocol_header_major_version"] == 1
     assert res[1]["protocol_header_minor_version"] == 0
     assert res[1]["description"] == "Lock 2"
@@ -627,6 +629,45 @@ def test_get_snapshot_history(api_client):
     assert res[1]["other_reason_for_locking_releasing"] == "Lock other reason"
     assert res[1]["modified_date"] is not None
     assert res[1]["modified_by"] is not None
+
+    # Unlock and re-lock with same major protocol version to test original_metadata_version
+    response = api_client.post(
+        f"/studies/{study_with_history.uid}/unlocks",
+        json={
+            "reason_for_change_uid": reason_for_unlock.term_uid,
+        },
+    )
+    assert_response_status_code(response, 201)
+
+    response = api_client.post(
+        f"/studies/{study_with_history.uid}/locks",
+        json={
+            "change_description": "Lock 4 same major version",
+            "reason_for_change_uid": reason_for_lock.term_uid,
+            "protocol_header_major_version": 2,
+            "protocol_header_minor_version": 0,
+        },
+    )
+    assert_response_status_code(response, 201)
+
+    # Now phv 2.0 has two entries: metadata_version "4" (latest) and "3" (original)
+    response = api_client.get(
+        f"/studies/{study_with_history.uid}/snapshot-history",
+        params={"only_latest_major_protocol_version": True, "total_count": True},
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert res["total"] == 2
+    res = res["items"]
+    assert len(res) == 2
+    assert res[0]["metadata_version"] == "4"
+    assert res[0]["original_metadata_version"] == "3"
+    assert res[0]["protocol_header_major_version"] == 2
+    assert res[0]["protocol_header_minor_version"] == 0
+    assert res[1]["metadata_version"] == "2"
+    assert res[1]["original_metadata_version"] == "2"
+    assert res[1]["protocol_header_major_version"] == 1
+    assert res[1]["protocol_header_minor_version"] == 0
 
 
 @pytest.mark.order("last")

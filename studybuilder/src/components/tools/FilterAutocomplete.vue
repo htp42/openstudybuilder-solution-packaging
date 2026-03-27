@@ -13,12 +13,9 @@
             data-cy="filter-field"
             readonly
             class="filterAutocompleteLabel ml-1"
-            density="compact"
-            rounded="lg"
             hide-details
             single-line
             clearable
-            variant="outlined"
             bg-color="nnWhite"
             v-bind="props"
           />
@@ -36,13 +33,10 @@
         v-else
         ref="select"
         v-model="data"
-        density="compact"
         clearable
         multiple
-        variant="outlined"
         :label="item.title"
         data-cy="filter-field"
-        rounded="lg"
         color="nnBaseBlue"
         bg-color="nnWhite"
         :items="items"
@@ -80,7 +74,7 @@
           <v-row @keydown.stop>
             <v-text-field
               v-model="searchString"
-              class="pl-6"
+              class="pl-6 mt-3"
               :placeholder="$t('FilterAutocomplete.search')"
             />
             <v-btn

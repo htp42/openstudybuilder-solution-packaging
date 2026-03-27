@@ -1,8 +1,8 @@
 from typing import Literal, overload
 
-from clinical_mdr_api.domains.concepts.utils import EN_LANGUAGE, ENG_LANGUAGE
 from clinical_mdr_api.domains.iso_languages import LANGUAGES_INDEXED_BY
 from clinical_mdr_api.domains.libraries.parameter_term import ParameterTermEntryVO
+from clinical_mdr_api.domains.odms.utils import EN_LANGUAGE, ENG_LANGUAGE
 from common import exceptions
 
 

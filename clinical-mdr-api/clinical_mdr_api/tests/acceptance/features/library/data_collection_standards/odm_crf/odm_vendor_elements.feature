@@ -6,7 +6,7 @@ Feature: Manage ODM Vendor Elements in OpenStudyBuilder API
         Given The test user can call the OpenStudyBuilder API
 
     Scenario: User must be able to get an empty list of ODM vendor elements
-        When the user calls the API endpoint 'concepts/odms/vendor-elements'
+        When the user calls the API endpoint 'odms/vendor-elements'
         Then the response must include an empty list of ODM vendor elements
         And the response status code must be 200
     Test Coverage:
@@ -22,7 +22,7 @@ Feature: Manage ODM Vendor Elements in OpenStudyBuilder API
         | /tests/integration/api/old/test_odm_vendor_elements.py | @TestID: test_creating_a_new_odm_vendor_element |
 
     Scenario: User must be able to get a non-empty list of ODM vendor elements
-        When the user calls the API endpoint 'concepts/odms/vendor-elements' to get a non-empty list of ODM vendor elements
+        When the user calls the API endpoint 'odms/vendor-elements' to get a non-empty list of ODM vendor elements
         Then the response must include ODM vendor elements
         And the response status code must be 200
     Test Coverage:
@@ -30,7 +30,7 @@ Feature: Manage ODM Vendor Elements in OpenStudyBuilder API
         | /tests/integration/api/old/test_odm_vendor_elements.py | @TestID: test_getting_non_empty_list_of_odm_vendor_elements |
 
     Scenario: User must be able to get a specific ODM vendor element
-        When the user calls the API endpoint 'concepts/odms/vendor-elements/' to get a specific ODM vendor element
+        When the user calls the API endpoint 'odms/vendor-elements/' to get a specific ODM vendor element
         Then the response must include the details of ODM vendor element
         And the response status code must be 200
     Test Coverage:
@@ -53,7 +53,7 @@ Feature: Manage ODM Vendor Elements in OpenStudyBuilder API
         | /tests/integration/api/old/test_odm_vendor_elements.py | @TestID: test_deleting_a_specific_odm_vendor_element |
 
     Scenario: User must receive an error for retrieving a non-existent ODM vendor element
-        When the user calls the API endpoint 'concepts/odms/vendor-elements/' for retrieving a non-existent ODM vendor element
+        When the user calls the API endpoint 'odms/vendor-elements/' for retrieving a non-existent ODM vendor element
         Then the response status code must be 404
         And the response must indicate the ODM vendor element does not exist
     Test Coverage:
@@ -109,7 +109,7 @@ Feature: Manage ODM Vendor Elements in OpenStudyBuilder API
         | /tests/integration/api/old/test_odm_vendor_elements.py | @TestID: test_create_a_new_odm_vendor_attribute_with_relation_to_odm_vendor_element |
 
     Scenario: User must be able to get the active relationships of a specific ODM vendor element
-        When the user calls the API endpoint 'concepts/odms/vendor-elements/uid/relationships'
+        When the user calls the API endpoint 'odms/vendor-elements/uid/relationships'
         Then the response must include the active relationships of the ODM vendor element
         And the response status code must be 200
     Test Coverage:

@@ -221,7 +221,7 @@ class Mockdata(BaseImporter):
             # get the values correctly with the conjections
             parameter_values = []
             types = []
-            for temp_type in re.findall("\[.*?\]", template["name"]):
+            for temp_type in re.findall(r"\[.*?\]", template["name"]):
                 types.append(temp_type.replace("[", "").replace("]", ""))
 
             # first value

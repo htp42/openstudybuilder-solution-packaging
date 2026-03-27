@@ -5,9 +5,6 @@
     "duration_time": 0.0,
     "duration_time_unit": "UnitDefinition_000356",
     "end_rule": null,
-    "epoch_allocation_name": "Current Visit",
-    "epoch_allocation_uid": "CTTerm_000190",
-    "epoch_uid": "C48262_SCREENING",
     "is_global_anchor_visit": true,
     "legacy_name": null,
     "legacy_subname": null,
@@ -37,8 +34,6 @@
     "study_uid": "Study_000002",
     "study_week_label": "Week 1",
     "study_week_number": 1,
-    "time_reference_name": "Global anchor visit",
-    "time_reference_uid": "CTTerm_000122",
     "time_unit_name": "days",
     "time_unit_uid": "UnitDefinition_000356",
     "time_value": 0,
@@ -46,8 +41,6 @@
     "unique_visit_number": 100,
     "author_username": "unknown-user@example.com",
     "visit_class": "SINGLE_VISIT",
-    "visit_contact_mode_name": "On Site Visit",
-    "visit_contact_mode_uid": "CTTerm_000080",
     "visit_name": "Visit 1",
     "visit_number": 1,
     "visit_short_name": "V1",
@@ -56,10 +49,26 @@
     "visit_sublabel_reference": null,
     "visit_subname": "Visit 1",
     "visit_subnumber": 0,
-    "visit_type_name": "Screening",
-    "visit_type_uid": "CTTerm_000175",
     "visit_window_unit_name": "days",
-    "visit_window_unit_uid": "UnitDefinition_000356"
+    "visit_window_unit_uid": "UnitDefinition_000356",
+    "study_epoch": {
+      "term_uid": "C48262_SCREENING"
+    },
+    "epoch_allocation": {
+      "term_uid": "CTTerm_000190"
+    },
+    "time_reference": {
+      "term_uid": "CTTerm_000122",
+      "sponsor_preferred_name": "Global anchor visit"
+    },
+    "visit_contact_mode": {
+      "term_uid": "CTTerm_000080",
+      "sponsor_preferred_name": "On Site Visit"
+    },
+    "visit_type": {
+      "term_uid": "CTTerm_000175",
+      "sponsor_preferred_name": "Screening"
+    }
   },
   {
     "consecutive_visit_group": null,
@@ -67,9 +76,6 @@
     "duration_time": 604800.0,
     "duration_time_unit": "UnitDefinition_000356",
     "end_rule": null,
-    "epoch_allocation_name": "Previous Visit",
-    "epoch_allocation_uid": "CTTerm_000189",
-    "epoch_uid": "CTTerm_000273",
     "is_global_anchor_visit": false,
     "legacy_name": null,
     "legacy_subname": null,
@@ -99,8 +105,6 @@
     "study_uid": "Study_000002",
     "study_week_label": "Week 2",
     "study_week_number": 2,
-    "time_reference_name": "Global anchor visit",
-    "time_reference_uid": "CTTerm_000122",
     "time_unit_name": "days",
     "time_unit_uid": "UnitDefinition_000356",
     "time_value": 7,
@@ -108,8 +112,6 @@
     "unique_visit_number": 200,
     "author_username": "unknown-user@example.com",
     "visit_class": "SINGLE_VISIT",
-    "visit_contact_mode_name": "On Site Visit",
-    "visit_contact_mode_uid": "CTTerm_000080",
     "visit_name": "Visit 2",
     "visit_number": 2,
     "visit_short_name": "V2",
@@ -118,10 +120,26 @@
     "visit_sublabel_reference": null,
     "visit_subname": "Visit 2",
     "visit_subnumber": 0,
-    "visit_type_name": "Treatment",
-    "visit_type_uid": "CTTerm_000181",
     "visit_window_unit_name": "days",
-    "visit_window_unit_uid": "UnitDefinition_000356"
+    "visit_window_unit_uid": "UnitDefinition_000356",
+    "study_epoch": {
+      "term_uid": "CTTerm_000273"
+    },
+    "epoch_allocation": {
+      "term_uid": "CTTerm_000189"
+    },
+    "time_reference": {
+      "term_uid": "CTTerm_000122",
+      "sponsor_preferred_name": "Global anchor visit"
+    },
+    "visit_contact_mode": {
+      "term_uid": "CTTerm_000080",
+      "sponsor_preferred_name": "On Site Visit"
+    },
+    "visit_type": {
+      "term_uid": "CTTerm_000181",
+      "sponsor_preferred_name": "Treatment"
+    }
   },
   {
     "consecutive_visit_group": null,
@@ -129,9 +147,6 @@
     "duration_time": 1209600.0,
     "duration_time_unit": "UnitDefinition_000356",
     "end_rule": null,
-    "epoch_allocation_name": "Current Visit",
-    "epoch_allocation_uid": "CTTerm_000190",
-    "epoch_uid": "C42872_WASHOUT",
     "is_global_anchor_visit": false,
     "legacy_name": null,
     "legacy_subname": null,
@@ -161,8 +176,6 @@
     "study_uid": "Study_000002",
     "study_week_label": "Week 3",
     "study_week_number": 3,
-    "time_reference_name": "Global anchor visit",
-    "time_reference_uid": "CTTerm_000122",
     "time_unit_name": "days",
     "time_unit_uid": "UnitDefinition_000356",
     "time_value": 14,
@@ -170,8 +183,6 @@
     "unique_visit_number": 300,
     "author_username": "unknown-user@example.com",
     "visit_class": "SINGLE_VISIT",
-    "visit_contact_mode_name": "On Site Visit",
-    "visit_contact_mode_uid": "CTTerm_000080",
     "visit_name": "Visit 3",
     "visit_number": 3,
     "visit_short_name": "V3",
@@ -180,10 +191,26 @@
     "visit_sublabel_reference": null,
     "visit_subname": "Visit 3",
     "visit_subnumber": 0,
-    "visit_type_name": "Washout",
-    "visit_type_uid": "CTTerm_000182",
     "visit_window_unit_name": "days",
-    "visit_window_unit_uid": "UnitDefinition_000356"
+    "visit_window_unit_uid": "UnitDefinition_000356",
+    "study_epoch": {
+      "term_uid": "C42872_WASHOUT"
+    },
+    "epoch_allocation": {
+      "term_uid": "CTTerm_000190"
+    },
+    "time_reference": {
+      "term_uid": "CTTerm_000122",
+      "sponsor_preferred_name": "Global anchor visit"
+    },
+    "visit_contact_mode": {
+      "term_uid": "CTTerm_000080",
+      "sponsor_preferred_name": "On Site Visit"
+    },
+    "visit_type": {
+      "term_uid": "CTTerm_000182",
+      "sponsor_preferred_name": "Washout"
+    }
   },
   {
     "consecutive_visit_group": null,
@@ -191,9 +218,6 @@
     "duration_time": 1814400.0,
     "duration_time_unit": "UnitDefinition_000356",
     "end_rule": null,
-    "epoch_allocation_name": "Current Visit",
-    "epoch_allocation_uid": "CTTerm_000190",
-    "epoch_uid": "CTTerm_000272",
     "is_global_anchor_visit": false,
     "legacy_name": null,
     "legacy_subname": null,
@@ -223,8 +247,6 @@
     "study_uid": "Study_000002",
     "study_week_label": "Week 4",
     "study_week_number": 4,
-    "time_reference_name": "Global anchor visit",
-    "time_reference_uid": "CTTerm_000122",
     "time_unit_name": "days",
     "time_unit_uid": "UnitDefinition_000356",
     "time_value": 21,
@@ -232,8 +254,6 @@
     "unique_visit_number": 400,
     "author_username": "unknown-user@example.com",
     "visit_class": "SINGLE_VISIT",
-    "visit_contact_mode_name": "On Site Visit",
-    "visit_contact_mode_uid": "CTTerm_000080",
     "visit_name": "Visit 4",
     "visit_number": 4,
     "visit_short_name": "V4",
@@ -242,10 +262,26 @@
     "visit_sublabel_reference": null,
     "visit_subname": "Visit 4",
     "visit_subnumber": 0,
-    "visit_type_name": "Treatment",
-    "visit_type_uid": "CTTerm_000181",
     "visit_window_unit_name": "days",
-    "visit_window_unit_uid": "UnitDefinition_000356"
+    "visit_window_unit_uid": "UnitDefinition_000356",
+    "study_epoch": {
+      "term_uid": "CTTerm_000272"
+    },
+    "epoch_allocation": {
+      "term_uid": "CTTerm_000190"
+    },
+    "time_reference": {
+      "term_uid": "CTTerm_000122",
+      "sponsor_preferred_name": "Global anchor visit"
+    },
+    "visit_contact_mode": {
+      "term_uid": "CTTerm_000080",
+      "sponsor_preferred_name": "On Site Visit"
+    },
+    "visit_type": {
+      "term_uid": "CTTerm_000181",
+      "sponsor_preferred_name": "Treatment"
+    }
   },
   {
     "consecutive_visit_group": null,
@@ -253,9 +289,6 @@
     "duration_time": 2419200.0,
     "duration_time_unit": "UnitDefinition_000356",
     "end_rule": null,
-    "epoch_allocation_name": "Current Visit",
-    "epoch_allocation_uid": "CTTerm_000190",
-    "epoch_uid": "C99158_FOLLOW-UP",
     "is_global_anchor_visit": false,
     "legacy_name": null,
     "legacy_subname": null,
@@ -285,8 +318,6 @@
     "study_uid": "Study_000002",
     "study_week_label": "Week 5",
     "study_week_number": 5,
-    "time_reference_name": "Global anchor visit",
-    "time_reference_uid": "CTTerm_000122",
     "time_unit_name": "days",
     "time_unit_uid": "UnitDefinition_000356",
     "time_value": 28,
@@ -294,8 +325,6 @@
     "unique_visit_number": 500,
     "author_username": "unknown-user@example.com",
     "visit_class": "SINGLE_VISIT",
-    "visit_contact_mode_name": "On Site Visit",
-    "visit_contact_mode_uid": "CTTerm_000080",
     "visit_name": "Visit 5",
     "visit_number": 5,
     "visit_short_name": "V5",
@@ -304,9 +333,25 @@
     "visit_sublabel_reference": null,
     "visit_subname": "Visit 5",
     "visit_subnumber": 0,
-    "visit_type_name": "Follow-up",
-    "visit_type_uid": "CTTerm_000169",
     "visit_window_unit_name": "days",
-    "visit_window_unit_uid": "UnitDefinition_000356"
+    "visit_window_unit_uid": "UnitDefinition_000356",
+    "study_epoch": {
+      "term_uid": "C99158_FOLLOW-UP"
+    },
+    "epoch_allocation": {
+      "term_uid": "CTTerm_000190"
+    },
+    "time_reference": {
+      "term_uid": "CTTerm_000122",
+      "sponsor_preferred_name": "Global anchor visit"
+    },
+    "visit_contact_mode": {
+      "term_uid": "CTTerm_000080",
+      "sponsor_preferred_name": "On Site Visit"
+    },
+    "visit_type": {
+      "term_uid": "CTTerm_000169",
+      "sponsor_preferred_name": "Follow-up"
+    }
   }
 ]

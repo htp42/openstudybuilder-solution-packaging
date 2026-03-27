@@ -696,7 +696,8 @@ class MockdataJson(BaseImporter):
             # print(item["epoch_subtype_name"], new["epoch_subtype_name"], item["description"], new["description"])
             if (
                 item["description"] == new["description"]
-                and item["visit_type_name"] == new["visit_type_name"]
+                and item["visit_type"]["sponsor_preferred_name"]
+                == new["visit_type"]["sponsor_preferred_name"]
                 and item["time_value"] == new["time_value"]
                 and item["time_unit_name"] == new["time_unit_name"]
             ):
@@ -1612,7 +1613,7 @@ class MockdataJson(BaseImporter):
             # Build map: visit_type_name -> visit that defines it
             visit_type_to_visit = {}
             for v in visits:
-                vtype = v.get("visit_type_name")
+                vtype = v.get("visit_type", {}).get("sponsor_preferred_name")
                 if vtype:
                     visit_type_to_visit[vtype] = v
 
@@ -1620,9 +1621,7 @@ class MockdataJson(BaseImporter):
             # A visit depends on the visit whose visit_type matches its time_reference
             def get_dependencies(visit):
                 deps = []
-                time_ref = visit.get("time_reference_name")
-                if time_ref is None and visit.get("time_reference") is not None:
-                    time_ref = visit["time_reference"].get("sponsor_preferred_name")
+                time_ref = visit.get("time_reference", {}).get("sponsor_preferred_name")
 
                 if time_ref and time_ref in visit_type_to_visit:
                     dep_visit = visit_type_to_visit[time_ref]
@@ -1678,10 +1677,10 @@ class MockdataJson(BaseImporter):
         imported = dependency_sort_visits(imported)
 
         for imported_visit in imported:
-            data = dict(import_templates.study_visit)
+            data = copy.deepcopy(import_templates.study_visit)
             if self._check_for_duplicate_visit(imported_visit, study_visits):
                 self.log.info(
-                    f"Study visit of type '{imported_visit['visit_type_name']}' with timing '{imported_visit['time_value']} {imported_visit['time_unit_name']}' and description '{imported_visit['description']}' already exists, skipping"
+                    f"Study visit of type '{imported_visit['visit_type']['sponsor_preferred_name']}' with timing '{imported_visit['time_value']} {imported_visit['time_unit_name']}' and description '{imported_visit['description']}' already exists, skipping"
                 )
                 continue
             # else:
@@ -1716,13 +1715,13 @@ class MockdataJson(BaseImporter):
                 )
                 continue
 
-            visit_type = imported_visit["visit_type_name"]
-            data["visit_type_uid"] = self.lookup_ct_term_uid(
-                CODELIST_VISIT_TYPE, visit_type
-            )
-            if data["visit_type_uid"] is not None:
+            visit_type = imported_visit["visit_type"]["sponsor_preferred_name"]
+            data["visit_type"] = {
+                "term_uid": self.lookup_ct_term_uid(CODELIST_VISIT_TYPE, visit_type)
+            }
+            if data["visit_type"]["term_uid"] is not None:
                 self.log.info(
-                    f"Found visit type {visit_type} with uid {data['visit_type_uid']}"
+                    f"Found visit type {visit_type} with uid {data['visit_type']['term_uid']}"
                 )
             else:
                 self.log.error(
@@ -1730,10 +1729,7 @@ class MockdataJson(BaseImporter):
                 )
                 continue
 
-            if "time_reference_name" in imported_visit:
-                timeref = imported_visit["time_reference_name"]
-            else:
-                timeref = imported_visit["time_reference"]["sponsor_preferred_name"]
+            timeref = imported_visit["time_reference"]["sponsor_preferred_name"]
 
             # Global anchor visit must have time_reference="Global anchor visit"
             # Override source data if necessary
@@ -1748,14 +1744,16 @@ class MockdataJson(BaseImporter):
                 data["time_value"] = 0
 
             if timeref is None:
-                data["time_reference_uid"] = None
+                data["time_reference"] = {"term_uid": None}
             else:
-                data["time_reference_uid"] = self.lookup_ct_term_uid(
-                    CODELIST_TIMEPOINT_REFERENCE, timeref
-                )
-                if data["time_reference_uid"] is not None:
+                data["time_reference"] = {
+                    "term_uid": self.lookup_ct_term_uid(
+                        CODELIST_TIMEPOINT_REFERENCE, timeref
+                    )
+                }
+                if data["time_reference"]["term_uid"] is not None:
                     self.log.info(
-                        f"Found time ref {timeref} with uid {data['time_reference_uid']}"
+                        f"Found time ref {timeref} with uid {data['time_reference']['term_uid']}"
                     )
                 else:
                     self.log.error(
@@ -1797,18 +1795,15 @@ class MockdataJson(BaseImporter):
                     )
                     continue
 
-            if "visit_contact_mode_name" in imported_visit:
-                contmode = imported_visit["visit_contact_mode_name"]
-            else:
-                contmode = imported_visit["visit_contact_mode"][
-                    "sponsor_preferred_name"
-                ]
-            data["visit_contact_mode_uid"] = self.lookup_ct_term_uid(
-                CODELIST_VISIT_CONTACT_MODE, contmode
-            )
-            if data["visit_contact_mode_uid"] is not None:
+            contmode = imported_visit["visit_contact_mode"]["sponsor_preferred_name"]
+            data["visit_contact_mode"] = {
+                "term_uid": self.lookup_ct_term_uid(
+                    CODELIST_VISIT_CONTACT_MODE, contmode
+                )
+            }
+            if data["visit_contact_mode"]["term_uid"] is not None:
                 self.log.info(
-                    f"Found visit contact mode {contmode} with uid {data['visit_contact_mode_uid']}"
+                    f"Found visit contact mode {contmode} with uid {data['visit_contact_mode']['term_uid']}"
                 )
             else:
                 self.log.error(
@@ -1825,11 +1820,20 @@ class MockdataJson(BaseImporter):
                 )
                 data["visit_sublabel_reference"] = ref_uid
 
-            # Remove any remaining "string" values
+            # Remove any remaining "string" values and drop nested dicts with all-None values
+            keys_to_delete = []
             for key, item in data.items():
                 if item == "string":
                     # print(f"Cleaning {key}")
                     data[key] = None
+                elif isinstance(item, dict):
+                    for subkey, subitem in item.items():
+                        if subitem == "string":
+                            data[key][subkey] = None
+                    if all(v is None for v in data[key].values()):
+                        keys_to_delete.append(key)
+            for key in keys_to_delete:
+                del data[key]
             # print(json.dumps(data, indent=2))
 
             if imported_visit["visit_class"] != "MANUALLY_DEFINED_VISIT":

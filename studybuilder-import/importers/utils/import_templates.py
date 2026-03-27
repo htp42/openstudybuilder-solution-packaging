@@ -322,8 +322,8 @@ study_epoch = {
 
 study_visit = {
     "study_epoch_uid": "string",
-    "visit_type_uid": "string",
-    "time_reference_uid": "string",
+    "visit_type": {"term_uid": "string"},
+    "time_reference": {"term_uid": "string"},
     "time_value": 0,
     "time_unit_uid": "string",
     "visit_sublabel_codelist_uid": "string",
@@ -336,8 +336,7 @@ study_visit = {
     "description": "string",
     "start_rule": "string",
     "end_rule": "string",
-    "visit_contact_mode_uid": "string",
-    "epoch_allocation_uid": "string",
+    "visit_contact_mode": {"term_uid": "string"},
     "visit_class": "string",
     "visit_subclass": "string",
     "is_global_anchor_visit": False,
@@ -649,6 +648,7 @@ compound_alias = {
 }
 
 compound = {
+    "external_id": "string",
     "name": "string",
     "name_sentence_case": "string",
     "definition": "string",
@@ -692,17 +692,17 @@ pharmaceutical_product = {
 }
 
 formulation = {
-    "external_id": "string",
+    "external_id": None,
     "name": "string",
     "ingredients": [],
 }
 
 ingredient = {
     "active_substance_uid": "string",
-    "formulation_name": "string",
-    "external_id": "string",
-    "strength_uid": "string",
-    "half_life_uid": "string",
+    "formulation_name": None,
+    "external_id": None,
+    "strength_uid": None,
+    "half_life_uid": None,
     "lag_time_uids": [],
 }
 

@@ -23,7 +23,6 @@
             :label="$t('NNTable.reorder_content')"
             hide-details
             class="mr-6"
-            color="primary"
             :disabled="!accessGuard.checkPermission($roles.STUDY_WRITE)"
           />
         </div>
@@ -62,7 +61,14 @@
         </router-link>
       </template>
       <template #[`item.start_date`]="{ item }">
-        {{ $filters.date(item.start_date) }}
+        <v-tooltip location="top">
+          <template #activator="{ props }">
+            <span v-bind="props">{{
+              $filters.dateRelative(item.start_date)
+            }}</span>
+          </template>
+          {{ $filters.date(item.start_date) }}
+        </v-tooltip>
       </template>
       <template #[`item.arm_connected_branch_arms`]="{ item }">
         {{ item.arm_connected_branch_arms?.length }}

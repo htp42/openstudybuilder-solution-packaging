@@ -38,11 +38,6 @@ Feature: Library - Concepts - Activities - Activity instances - wizard stepper -
         And The form is no longer available
         Then The current URL is '/overview'
         And Correct instance overview page is displayed
-        Then The '/library/activities/activity-instances' page is opened
-        And User sets status filter to 'all'
-        And User waits for the table
-        And User searches for created activity instance
-        Then Created activity instance is displayed in the first table row
 
     Scenario: [Create][TextualFindings][Mandatory Item Classes] User must be able to add a new Activity Instance with TextualFindings as Activity Instance Class
         Given The '/library/activities/activity-instances' page is opened

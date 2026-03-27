@@ -382,9 +382,7 @@ class ActivityGroupRepository(ConceptGenericRepository[ActivityGroupAR]):
                 MATCH (activity_group_root:ActivityGroupRoot {uid:$uid})-[:LATEST]->(activity_group_value:ActivityGroupValue)
                 """
 
-        query = (
-            match
-            + """
+        query = match + """
         // Find what activity values are linked to this group
         MATCH (activity_root:ActivityRoot)-[ahv:HAS_VERSION]->(activity_value:ActivityValue)-[:HAS_GROUPING]->
           (:ActivityGrouping)-[:HAS_SELECTED_GROUP]->(activity_group_value)
@@ -425,7 +423,6 @@ class ActivityGroupRepository(ConceptGenericRepository[ActivityGroupAR]):
         RETURN
             collect(activity) as activities
         """
-        )
         result_array, attribute_names = db.cypher_query(query=query, params=params)
         if len(result_array) == 0:
             return None

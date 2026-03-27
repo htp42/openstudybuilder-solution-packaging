@@ -9,7 +9,7 @@ from clinical_mdr_api.models.utils import BaseModel, PatchInputModel, PostInputM
 from common.config import settings
 
 if TYPE_CHECKING:
-    from clinical_mdr_api.models.study_selections.study_visit import StudyVisitBase
+    from clinical_mdr_api.models.study_selections.study_visit import StudyVisitLite
 
 
 class StudyEpochCreateInput(PostInputModel):
@@ -253,15 +253,13 @@ class StudyEpochTiny(BaseModel):
         SimpleCTTermNameWithConflictFlag, Field(description="Epoch CTTerm")
     ]
     epoch_name: Annotated[str | None, Field(description="CTTerm name of the Epoch")]
-    study_uid: Annotated[str, Field(description="Study uid")]
     uid: Annotated[str, Field(description="StudyEpoch uid")]
 
     @classmethod
-    def from_study_visit(cls, study_visit: "StudyVisitBase") -> Self:
+    def from_study_visit(cls, study_visit: "StudyVisitLite") -> Self:
         return cls(
-            epoch=study_visit.epoch_uid,
+            epoch=study_visit.study_epoch.term_uid,
             epoch_ctterm=study_visit.study_epoch,
             epoch_name=study_visit.study_epoch.sponsor_preferred_name,
-            study_uid=study_visit.study_uid,
             uid=study_visit.study_epoch_uid,
         )

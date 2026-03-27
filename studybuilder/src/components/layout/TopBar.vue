@@ -94,8 +94,8 @@
     <v-btn
       data-cy="topbar-admin-icon"
       icon="mdi-cog-outline"
-      :title="$t('Topbar.admin')"
-      @click="openSettingsBox"
+      :title="$t('_global.preferences')"
+      @click="preferencesDialog = true"
     />
     <v-menu location="bottom">
       <template #activator="{ props }">
@@ -217,13 +217,6 @@
     <v-dialog v-model="showAboutDialog" fullscreen>
       <AboutPage @close="showAboutDialog = false" />
     </v-dialog>
-    <v-dialog
-      v-model="settingsDialog"
-      max-width="800"
-      @keydown.esc="settingsDialog = false"
-    >
-      <SettingsDialog @close="settingsDialog = false" />
-    </v-dialog>
     <ConfirmDialog ref="confirm" :text-cols="5" :action-cols="6">
       <template #actions>
         <v-btn
@@ -250,6 +243,13 @@
         @selected="reloadPage"
       />
     </v-dialog>
+    <v-dialog
+      v-model="preferencesDialog"
+      max-width="650"
+      @keydown.esc="preferencesDialog = false"
+    >
+      <UserPreferences @close="preferencesDialog = false" />
+    </v-dialog>
   </v-app-bar>
 </template>
 
@@ -262,9 +262,9 @@ import { useAccessGuard } from '@/composables/accessGuard'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 import AboutPage from '@/components/layout/AboutPage.vue'
 import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
-import SettingsDialog from './SettingsDialog.vue'
 import StudyQuickSelectForm from '@/components/studies/StudyQuickSelectForm.vue'
 import { getAppEnv } from '@/utils/generalUtils'
+import UserPreferences from '@/views/user/UserPreferences.vue'
 
 const props = defineProps({
   hideAppBarNavIcon: {
@@ -318,7 +318,7 @@ const apps = [
 ]
 
 const showAboutDialog = ref(false)
-const settingsDialog = ref(false)
+const preferencesDialog = ref(false)
 const showSelectForm = ref(false)
 const confirm = ref()
 
@@ -345,9 +345,6 @@ function navigateToRoot() {
 }
 function openAboutBox() {
   showAboutDialog.value = true
-}
-function openSettingsBox() {
-  settingsDialog.value = true
 }
 function openSelectStudyDialog() {
   showSelectForm.value = true

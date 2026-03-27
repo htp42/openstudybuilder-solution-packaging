@@ -303,7 +303,7 @@ class StudySelectionElementRepository:
         """
 
         sdc_node = (
-            StudyElement.nodes.fetch_relations("has_design_cell", "has_after")
+            StudyElement.nodes.traverse("has_design_cell", "has_after")
             .filter(
                 study_value__latest_value__uid=study_uid,
                 uid=element_uid,
@@ -489,8 +489,7 @@ class StudySelectionElementRepository:
                     WITH DISTINCT all_sa
                     """
         specific_element_selections_audit_trail = db.cypher_query(
-            cypher
-            + """
+            cypher + """
             WITH DISTINCT all_sa
             OPTIONAL MATCH (all_sa)-[:HAS_ELEMENT_SUBTYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(at:CTTermRoot)
             WITH DISTINCT all_sa, at

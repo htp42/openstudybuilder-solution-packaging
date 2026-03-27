@@ -15,7 +15,6 @@
             :items="groups"
             item-title="name"
             item-value="uid"
-            density="compact"
             clearable
             :rules="[formRules.required]"
             @update:model-value="setSubGroups"
@@ -31,7 +30,6 @@
             :items="subGroups"
             item-title="name"
             item-value="uid"
-            density="compact"
             clearable
             multiple
             :rules="[formRules.required]"
@@ -55,7 +53,6 @@
                 :items="activities"
                 item-title="name"
                 return-object
-                density="compact"
                 clearable
                 multiple
                 :disabled="notApplicable"

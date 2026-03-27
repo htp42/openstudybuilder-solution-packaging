@@ -83,7 +83,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { useFeatureFlagsStore } from '@/stores/feature-flags'
 import RedirectHandler from '@/components/tools/RedirectHandler.vue'
@@ -110,11 +110,13 @@ const selectedItems = computed(() => {
   return []
 })
 
-onMounted(() => {
-  if (JSON.parse(localStorage.getItem('narrowMenu')) === true) {
-    mini.value = true
+watch(
+  () => appStore.sidebarAutoMinimize,
+  (val) => {
+    mini.value = val
+    refreshNeeded.value = true
   }
-})
+)
 
 function onMenuItemClick(event, item, subitem) {
   // Here we only update target, the actual redirection will be

@@ -10,14 +10,17 @@ from clinical_mdr_api.models.standard_data_models.sponsor_model_dataset_variable
     SponsorModelDatasetVariable,
     SponsorModelDatasetVariableInput,
 )
-from clinical_mdr_api.services.neomodel_ext_generic import NeomodelExtGenericService
+from clinical_mdr_api.services.standard_data_models.standard_data_model_service import (
+    StandardDataModelService,
+)
 
 
 class SponsorModelDatasetVariableService(
-    NeomodelExtGenericService[SponsorModelDatasetVariableAR]
+    StandardDataModelService,
 ):
     repository_interface = SponsorModelDatasetVariableRepository
     api_model_class = SponsorModelDatasetVariable
+    version_class = None
 
     def _transform_aggregate_root_to_pydantic_model(
         self, item_ar: SponsorModelDatasetVariableAR

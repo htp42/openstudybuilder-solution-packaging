@@ -22,7 +22,6 @@
             :label="$t('NNTable.reorder_content')"
             hide-details
             class="mr-6"
-            color="primary"
             :disabled="!accessGuard.checkPermission($roles.STUDY_WRITE)"
           />
         </div>
@@ -112,7 +111,14 @@
         <div v-html="sanitizeHTML(getBranchesDisplay(item))" />
       </template>
       <template #[`item.start_date`]="{ item }">
-        {{ $filters.date(item.start_date) }}
+        <v-tooltip location="top">
+          <template #activator="{ props }">
+            <span v-bind="props">{{
+              $filters.dateRelative(item.start_date)
+            }}</span>
+          </template>
+          {{ $filters.date(item.start_date) }}
+        </v-tooltip>
       </template>
       <template #[`item.actions`]="{ item }">
         <ActionsMenu :actions="actions" :item="item" />

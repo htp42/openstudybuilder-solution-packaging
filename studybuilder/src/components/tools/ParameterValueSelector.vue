@@ -109,12 +109,9 @@
               v-model="parameter.selectedSeparator"
               :label="$t('ParameterValueSelector.separator')"
               :items="separators"
-              variant="outlined"
               bg-color="white"
               color="nnBaseBlue"
               base-color="nnBaseBlue"
-              rounded="lg"
-              density="compact"
               class="mt-n5"
               clearable
               :rules="[formRules.required]"
@@ -142,7 +139,6 @@
                 :label="parameter.name"
                 :disabled="parameter.skip"
                 type="number"
-                density="compact"
                 :rules="
                   !loadParameterValuesFromTemplate
                     ? [
@@ -159,7 +155,6 @@
                 :label="parameter.name"
                 :disabled="parameters[index].skip"
                 :rows="1"
-                density="compact"
                 auto-grow
                 :rules="
                   !loadParameterValuesFromTemplate
@@ -195,7 +190,7 @@
             <v-col cols="2">
               <v-btn
                 icon
-                class="ml-n4"
+                class="ml-n4 mt-n1"
                 :title="$t('ParameterValueSelector.na_tooltip')"
                 variant="text"
                 @click="clearSelection(parameter)"
@@ -218,7 +213,6 @@
                 v-model="parameter.selectedSeparator"
                 :label="$t('ParameterValueSelector.separator')"
                 :items="separators"
-                density="compact"
                 clearable
                 :disabled="parameter.skip"
                 :rules="[formRules.required]"

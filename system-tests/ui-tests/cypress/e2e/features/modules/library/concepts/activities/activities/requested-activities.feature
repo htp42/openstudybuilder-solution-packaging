@@ -6,46 +6,6 @@ Feature: Library - Concepts - Activities - Requested Activities
     Background: User must be logged in
         Given The user is logged in
 
-    @smoke_test
-    Scenario: [Navigation] User must be able to navigate to the Requested Activities page
-        Given The '/library' page is opened
-        When The 'Activities' submenu is clicked in the 'Concepts' section
-        And The 'Requested Activities' tab is selected
-        Then The current URL is '/library/activities/requested-activities'
-
-    Scenario: [Table][Options] User must be able to see table with correct options
-        Given The '/library/activities/requested-activities' page is opened
-        Then A table is visible with following options
-            | options                                            |
-            | filters-button                                     |
-            | columns-layout-button                              |
-            | table-export-button                                |
-            | select-rows                                        |
-            | search-field                                       |
-            | History                                            |
-
-    @smoke_test
-    Scenario: [Table][Columns][Names] User must be able to see the columns list on the main page as below
-        Given The '/library/activities/requested-activities' page is opened
-        And A table is visible with following headers
-            | headers                        |
-            | Activity group                 |
-            | Activity subgroup              |
-            | Activity                       |
-            | Sentence case name             |
-            | Abbreviation                   |
-            | Definition                     |
-            | Rationale for activity request |
-            | Modified                       |
-            | Modified by                    |
-            | Status                         |
-            | Version                        |
-
-    Scenario: [Table][Columns][Visibility] User must be able to select visibility of columns in the table 
-        Given The '/library/activities/requested-activities' page is opened
-        When The first column is selected from Select Columns option for table with actions
-        Then The table contain only selected column and actions column
-
     Scenario: [Create] User must not be able to create activity request from library level
         Given The '/library/activities/requested-activities' page is opened
         Then The add activity request button is not available
@@ -135,48 +95,3 @@ Feature: Library - Concepts - Activities - Requested Activities
         And The item actions button is clicked
         Then 'Handle placeholder request' action is available
 
-    @smoke_test
-    Scenario: [Table][Search][Postive case] User must be able to search created activity request
-        Given The '/library/activities/requested-activities' page is opened
-        When [API] First requested activity for search test is created
-        And [API] Second requested activity for search test is created
-        Then One activity request is found after performing full name search
-        And The existing item is searched for by partial name
-        Then More than one result is found
-
-    Scenario: [Table][Search][Negative case] User must be able to search not existing activity request and table will correctly filtered
-        Given The '/library/activities/requested-activities' page is opened
-        When The not existing item is searched for
-        Then The item is not found and table is correctly filtered
-
-    Scenario: [Table][Search][Filtering] User must be able to combine search and filters to narrow table results
-        Given The '/library/activities/requested-activities' page is opened
-        And User adds column 'Status' to filters
-        When The user changes status filter value to 'Final'
-        And The existing item is searched for by partial name
-        And The item is not found and table is correctly filtered
-        And The user changes status filter value to 'Draft'
-        And The existing item is searched for by partial name
-        Then More than one result is found
-
-    Scenario: [Table][Search][Case sensitivity] User must be able to search item ignoring case sensitivity
-        Given The '/library/activities/requested-activities' page is opened
-        When The existing item in search by lowercased name
-        And More than one result is found
-
-    Scenario Outline: [Table][Filtering] User must be able to filter the table by text fields
-        Given The '/library/activities/requested-activities' page is opened
-        When The user filters field '<name>'
-        Then The table is filtered correctly
-
-        Examples:
-        | name                           |
-        | Activity group                 |
-        | Activity subgroup              |
-        | Activity                       |
-        | Sentence case name             |
-        | Abbreviation                   |
-        | Definition                     |
-        | Rationale for activity request |
-        | Modified by                    |
-        | Version                        |

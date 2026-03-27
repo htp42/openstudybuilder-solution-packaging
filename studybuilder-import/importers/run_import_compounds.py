@@ -274,8 +274,11 @@ class Compounds(BaseImporter):
 
             data = fill_template(row, import_templates.active_substance)
 
-            unii_uid = self.lookup_substance_uid(row["unii"]["substance_unii"])
-            data["unii_term_uid"] = unii_uid
+            if row.get("unii"):
+                unii_uid = self.lookup_substance_uid(row["unii"]["substance_unii"])
+                data["unii_term_uid"] = unii_uid
+            else:
+                del data["unii_term_uid"]
 
             payload = make_payload("/concepts/active-substances", data)
             # print("--- active substance to post")
@@ -414,13 +417,13 @@ class Compounds(BaseImporter):
                         )
                         if uid is not None:
                             ing_data["half_life_uid"] = uid
-                    if ingredient["strength"] is not None:
+                    if ingredient.get("strength") is not None:
                         uid = self.create_or_get_numeric_value(
                             ingredient["strength"], UNIT_SUBSET_DOSE
                         )
                         if uid is not None:
                             ing_data["strength_uid"] = uid
-                    for lagtime in ingredient["lag_times"]:
+                    for lagtime in ingredient.get("lag_times", []):
                         uid = self.create_or_get_lag_time(lagtime)
                         self.append_if_not_none(ing_data["lag_time_uids"], uid)
                     formul_data["ingredients"].append(ing_data)

@@ -1,6 +1,6 @@
 import logging
 from collections import defaultdict
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor  # pylint: disable=no-name-in-module
 from datetime import datetime
 from typing import Any, Iterable, Mapping, Sequence, TypeVar
 
@@ -37,7 +37,7 @@ from clinical_mdr_api.models.study_selections.study_selection import (
     StudySoAGroup,
 )
 from clinical_mdr_api.models.study_selections.study_soa_footnote import StudySoAFootnote
-from clinical_mdr_api.models.study_selections.study_visit import StudyVisit
+from clinical_mdr_api.models.study_selections.study_visit import StudyVisitLite
 from clinical_mdr_api.models.syntax_instances.footnote import Footnote
 from clinical_mdr_api.models.utils import BaseModel
 from clinical_mdr_api.services._utils import ensure_transaction
@@ -249,9 +249,9 @@ class StudyFlowchartService:
     @trace_calls
     def _get_study_visits(
         self, study_uid: str, study_value_version: str | None = None
-    ) -> list[StudyVisit]:
+    ) -> list[StudyVisitLite]:
         return StudyVisitService.get_all_visits(
-            study_uid, study_value_version=study_value_version
+            study_uid, study_value_version=study_value_version, lite=True
         ).items
 
     @trace_calls
@@ -386,16 +386,15 @@ class StudyFlowchartService:
     @staticmethod
     @trace_calls
     def _group_visits(
-        visits: Iterable[StudyVisit],
+        visits: Iterable[StudyVisitLite],
         collapse_visit_groups: bool = True,
-    ) -> dict[str, dict[str, list[StudyVisit]]]:
+    ) -> dict[str, dict[str, list[StudyVisitLite]]]:
         """
         Builds a graph of visits from nested dict of
         study_epoch_uid -> [ consecutive_visit_group | visit_uid ] -> [Visits]
         """
 
         grouped: dict[Any, Any] = {}
-        visits = sorted(visits, key=lambda v: v.order)
 
         for visit in visits:
             grouped.setdefault(visit.study_epoch_uid, {}).setdefault(
@@ -485,7 +484,7 @@ class StudyFlowchartService:
                 study_selection_activities, hide_soa_groups=hide_soa_groups
             )
 
-        visits: list[StudyVisit] = self._get_study_visits(
+        visits: list[StudyVisitLite] = self._get_study_visits(
             study_uid, study_value_version=study_value_version
         )
 
@@ -800,7 +799,7 @@ class StudyFlowchartService:
             activity_schedules_future.result()
         )
 
-        visits: dict[str, StudyVisit] = visits_future.result()
+        visits: dict[str, StudyVisitLite] = visits_future.result()
 
         # group visits in nested dict: study_epoch_uid -> [ consecutive_visit_group |  visit_uid ] -> [Visits]
         grouped_visits = self._group_visits(
@@ -860,7 +859,7 @@ class StudyFlowchartService:
     @trace_calls
     def _get_study_visits_dict_filtered(
         self, study_uid, study_value_version
-    ) -> dict[str, StudyVisit]:
+    ) -> dict[str, StudyVisitLite]:
         # get visits
         visits = self._get_study_visits(
             study_uid, study_value_version=study_value_version
@@ -1217,7 +1216,7 @@ class StudyFlowchartService:
         perv_study_epoch_uid = None
         for study_epoch_uid, _visit_groups in grouped_visits.items():
             for group in _visit_groups.values():
-                visit: StudyVisit = group[0]
+                visit: StudyVisitLite = group[0]
 
                 if layout == SoALayout.OPERATIONAL:
                     # Epoch
@@ -1248,7 +1247,7 @@ class StudyFlowchartService:
                 )
 
         # Add activity rows
-        visit_groups: list[list[StudyVisit]] = [
+        visit_groups: list[list[StudyVisitLite]] = [
             visit_group
             for epochs_group in grouped_visits.values()
             for visit_group in epochs_group.values()
@@ -1398,7 +1397,7 @@ class StudyFlowchartService:
     @trace_calls(args=[2, 3, 4], kwargs=["time_unit", "soa_preferences", "layout"])
     def _get_header_rows(
         cls,
-        grouped_visits: dict[str, dict[str, list[StudyVisit]]],
+        grouped_visits: dict[str, dict[str, list[StudyVisitLite]]],
         time_unit: str,
         soa_preferences: StudySoaPreferencesInput,
         layout: SoALayout,
@@ -1470,7 +1469,7 @@ class StudyFlowchartService:
         prev_milestone_cell: TableCell | None = None
         for study_epoch_uid, visit_groups in grouped_visits.items():
             for group in visit_groups.values():
-                visit: StudyVisit = group[0]
+                visit: StudyVisitLite = group[0]
 
                 # Open new Epoch column
                 if perv_study_epoch_uid != study_epoch_uid:
@@ -1497,14 +1496,14 @@ class StudyFlowchartService:
                 # Milestones
                 if milestones_row:
                     if visit.is_soa_milestone:
-                        if prev_visit_type_uid == visit.visit_type_uid:
+                        if prev_visit_type_uid == visit.visit_type.term_uid:
                             # Same visit_type, then merge with the previous cell in Milestone row
                             prev_milestone_cell.span += 1
                             milestones_row.cells.append(TableCell(span=0))
 
                         else:
                             # Different visit_type, new label in Milestones row
-                            prev_visit_type_uid = visit.visit_type_uid
+                            prev_visit_type_uid = visit.visit_type.term_uid
                             milestones_row.cells.append(
                                 prev_milestone_cell := TableCell(
                                     visit.visit_type.sponsor_preferred_name,
@@ -1560,8 +1559,8 @@ class StudyFlowchartService:
         return "study_week_number"
 
     @staticmethod
-    def _get_visit_name(visits_in_group: Sequence[StudyVisit]) -> str:
-        visit: StudyVisit = visits_in_group[0]
+    def _get_visit_name(visits_in_group: Sequence[StudyVisitLite]) -> str:
+        visit: StudyVisitLite = visits_in_group[0]
         visit_name = visit.consecutive_visit_group or visit.visit_short_name
 
         if len(visits_in_group) > 1 and "," in visit_name:
@@ -1573,15 +1572,17 @@ class StudyFlowchartService:
         return visit_name
 
     @staticmethod
-    def _get_visit_timing(visits: list[StudyVisit], visit_timing_property: str) -> str:
-        visit: StudyVisit = visits[0]
+    def _get_visit_timing(
+        visits: list[StudyVisitLite], visit_timing_property: str
+    ) -> str:
+        visit: StudyVisitLite = visits[0]
         num_visits_in_group = len(visits)
 
         # Single Visit
         if num_visits_in_group == 1:
             if (
-                getattr(visit, visit_timing_property) is not None
-                and visit.visit_class != VisitClass.SPECIAL_VISIT
+                visit.visit_class != VisitClass.SPECIAL_VISIT
+                and getattr(visit, visit_timing_property) is not None
             ):
                 return f"{getattr(visit, visit_timing_property):d}"
 
@@ -1599,7 +1600,10 @@ class StudyFlowchartService:
             # If there is a comma it means that group was made in the LIST grouping way
             if visit_name and "," in visit_name:
                 visit_timings = [
-                    f"{getattr(visit, visit_timing_property):d}" for visit in visits
+                    f"{getattr(visit, visit_timing_property):d}"
+                    for visit in visits
+                    if visit.visit_class != VisitClass.SPECIAL_VISIT
+                    and getattr(visit, visit_timing_property) is not None
                 ]
                 visit_timing = ",".join(visit_timings)
                 # insert line-breaks after certain commas when the cell text gets too long
@@ -1615,7 +1619,7 @@ class StudyFlowchartService:
         return ""
 
     @staticmethod
-    def _get_visit_window(visit: StudyVisit) -> str:
+    def _get_visit_window(visit: StudyVisitLite) -> str:
         if None not in (
             visit.min_visit_window_value,
             visit.max_visit_window_value,
@@ -1652,13 +1656,13 @@ class StudyFlowchartService:
             StudySelectionActivity | StudySelectionActivityInstance
         ],
         study_activity_schedules: Sequence[StudyActivitySchedule],
-        grouped_visits: dict[str, dict[str, list[StudyVisit]]],
+        grouped_visits: dict[str, dict[str, list[StudyVisitLite]]],
         layout: SoALayout,
     ) -> list[TableRow]:
         """Builds activity rows also adding various group header rows when required"""
 
         # Ordered StudyVisit.uids of visits to show (showing only the first visit of a consecutive_visit_group)
-        visit_groups: list[list[StudyVisit]] = [
+        visit_groups: list[list[StudyVisitLite]] = [
             visit_group
             for epochs_group in grouped_visits.values()
             for visit_group in epochs_group.values()
@@ -1911,7 +1915,7 @@ class StudyFlowchartService:
     @staticmethod
     def _append_activity_crosses(
         row: TableRow,
-        visit_groups: Iterable[list[StudyVisit]],
+        visit_groups: Iterable[list[StudyVisitLite]],
         study_activity_schedules_mapping: Mapping[
             tuple[str, str], StudyActivitySchedule
         ],
@@ -2646,7 +2650,7 @@ class StudyFlowchartService:
             msg=f"No SoA snapshot found for Study with uid '{study_uid}' and version '{study_value_version}'",
         )
 
-        study_visits_by_uid: Mapping[str, StudyVisit] = self._map_by_uid(
+        study_visits_by_uid: Mapping[str, StudyVisitLite] = self._map_by_uid(
             study_visits_future.result()
         )
 
@@ -2815,17 +2819,17 @@ class StudyFlowchartService:
             visits_in_group = [
                 study_visits_by_uid[ref.referenced_item.item_uid] for ref in refs
             ]
-            visit: StudyVisit = visits_in_group[0]
+            visit: StudyVisitLite = visits_in_group[0]
 
             if visit.is_soa_milestone:
-                if prev_visit_type_uid == visit.visit_type_uid:
+                if prev_visit_type_uid == visit.visit_type.term_uid:
                     # Same visit_type, then merge with the previous cell in Milestone row
                     prev_milestone_cell.span += 1
                     milestone_row.cells[col_idx].span = 0
 
                 else:
                     # Different visit_type, new label in Milestones row
-                    prev_visit_type_uid = visit.visit_type_uid
+                    prev_visit_type_uid = visit.visit_type.term_uid
                     milestone_row.cells[col_idx] = prev_milestone_cell = TableCell(
                         visit.visit_type.sponsor_preferred_name,
                         style="header1",

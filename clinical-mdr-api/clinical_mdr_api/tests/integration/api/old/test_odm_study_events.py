@@ -29,7 +29,7 @@ def test_data():
 
 
 def test_getting_empty_list_of_odm_study_events(api_client):
-    response = api_client.get("concepts/odms/study-events")
+    response = api_client.get("odms/study-events")
 
     assert_response_status_code(response, 200)
 
@@ -48,7 +48,7 @@ def test_creating_a_new_odm_study_event(api_client):
         "description": "description1",
         "display_in_tree": False,
     }
-    response = api_client.post("concepts/odms/study-events", json=data)
+    response = api_client.post("odms/study-events", json=data)
 
     assert_response_status_code(response, 201)
 
@@ -72,7 +72,7 @@ def test_creating_a_new_odm_study_event(api_client):
 
 
 def test_getting_non_empty_list_of_odm_study_events(api_client):
-    response = api_client.get("concepts/odms/study-events")
+    response = api_client.get("odms/study-events")
 
     assert_response_status_code(response, 200)
 
@@ -96,7 +96,7 @@ def test_getting_non_empty_list_of_odm_study_events(api_client):
 
 
 def test_getting_possible_header_values_of_odm_study_events(api_client):
-    response = api_client.get("concepts/odms/study-events/headers?field_name=name")
+    response = api_client.get("odms/study-events/headers?field_name=name")
 
     assert_response_status_code(response, 200)
 
@@ -106,7 +106,7 @@ def test_getting_possible_header_values_of_odm_study_events(api_client):
 
 
 def test_getting_a_specific_odm_study_event(api_client):
-    response = api_client.get("concepts/odms/study-events/OdmStudyEvent_000001")
+    response = api_client.get("odms/study-events/OdmStudyEvent_000001")
 
     assert_response_status_code(response, 200)
 
@@ -130,9 +130,7 @@ def test_getting_a_specific_odm_study_event(api_client):
 
 
 def test_getting_versions_of_a_specific_odm_study_event(api_client):
-    response = api_client.get(
-        "concepts/odms/study-events/OdmStudyEvent_000001/versions"
-    )
+    response = api_client.get("odms/study-events/OdmStudyEvent_000001/versions")
 
     assert_response_status_code(response, 200)
 
@@ -165,9 +163,7 @@ def test_updating_an_existing_odm_study_event(api_client):
         "display_in_tree": True,
         "change_description": "oid and display_in_tree changed",
     }
-    response = api_client.patch(
-        "concepts/odms/study-events/OdmStudyEvent_000001", json=data
-    )
+    response = api_client.patch("odms/study-events/OdmStudyEvent_000001", json=data)
 
     assert_response_status_code(response, 200)
 
@@ -191,9 +187,7 @@ def test_updating_an_existing_odm_study_event(api_client):
 
 
 def test_getting_a_specific_odm_study_event_in_specific_version(api_client):
-    response = api_client.get(
-        "concepts/odms/study-events/OdmStudyEvent_000001?version=0.1"
-    )
+    response = api_client.get("odms/study-events/OdmStudyEvent_000001?version=0.1")
 
     assert_response_status_code(response, 200)
 
@@ -227,7 +221,7 @@ def test_adding_odm_forms_to_a_specific_odm_study_event(api_client):
         }
     ]
     response = api_client.post(
-        "concepts/odms/study-events/OdmStudyEvent_000001/forms", json=data
+        "odms/study-events/OdmStudyEvent_000001/forms", json=data
     )
 
     assert_response_status_code(response, 201)
@@ -273,7 +267,7 @@ def test_overriding_odm_forms_from_a_specific_odm_study_event(api_client):
         }
     ]
     response = api_client.post(
-        "concepts/odms/study-events/OdmStudyEvent_000001/forms?override=true", json=data
+        "odms/study-events/OdmStudyEvent_000001/forms?override=true", json=data
     )
 
     assert_response_status_code(response, 201)
@@ -309,9 +303,7 @@ def test_overriding_odm_forms_from_a_specific_odm_study_event(api_client):
 
 
 def test_approving_an_odm_study_event(api_client):
-    response = api_client.post(
-        "concepts/odms/study-events/OdmStudyEvent_000001/approvals"
-    )
+    response = api_client.post("odms/study-events/OdmStudyEvent_000001/approvals")
 
     assert_response_status_code(response, 201)
 
@@ -346,9 +338,7 @@ def test_approving_an_odm_study_event(api_client):
 
 
 def test_inactivating_a_specific_odm_study_event(api_client):
-    response = api_client.delete(
-        "concepts/odms/study-events/OdmStudyEvent_000001/activations"
-    )
+    response = api_client.delete("odms/study-events/OdmStudyEvent_000001/activations")
 
     assert_response_status_code(response, 200)
 
@@ -383,9 +373,7 @@ def test_inactivating_a_specific_odm_study_event(api_client):
 
 
 def test_reactivating_a_specific_odm_study_event(api_client):
-    response = api_client.post(
-        "concepts/odms/study-events/OdmStudyEvent_000001/activations"
-    )
+    response = api_client.post("odms/study-events/OdmStudyEvent_000001/activations")
 
     assert_response_status_code(response, 200)
 
@@ -420,9 +408,7 @@ def test_reactivating_a_specific_odm_study_event(api_client):
 
 
 def test_creating_a_new_odm_study_event_version(api_client):
-    response = api_client.post(
-        "concepts/odms/study-events/OdmStudyEvent_000001/versions"
-    )
+    response = api_client.post("odms/study-events/OdmStudyEvent_000001/versions")
 
     assert_response_status_code(response, 201)
 
@@ -465,7 +451,7 @@ def test_create_a_new_odm_study_event_for_deleting_it(api_client):
         "retired_date": "2022-04-21",
         "description": "description1",
     }
-    response = api_client.post("concepts/odms/study-events", json=data)
+    response = api_client.post("odms/study-events", json=data)
 
     assert_response_status_code(response, 201)
 
@@ -489,15 +475,13 @@ def test_create_a_new_odm_study_event_for_deleting_it(api_client):
 
 
 def test_deleting_a_specific_odm_study_event(api_client):
-    response = api_client.delete("concepts/odms/study-events/OdmStudyEvent_000002")
+    response = api_client.delete("odms/study-events/OdmStudyEvent_000002")
 
     assert_response_status_code(response, 204)
 
 
 def test_getting_uids_of_a_specific_odm_study_events_active_relationships(api_client):
-    response = api_client.get(
-        "concepts/odms/study-events/OdmStudyEvent_000001/relationships"
-    )
+    response = api_client.get("odms/study-events/OdmStudyEvent_000001/relationships")
 
     assert_response_status_code(response, 200)
 

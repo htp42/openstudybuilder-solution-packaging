@@ -5,8 +5,8 @@
     :items="namespaces"
     item-value="uid"
     :items-length="total"
-    column-data-resource="concepts/odms/vendor-namespaces"
-    export-data-url="concepts/odms/vendor-namespaces"
+    column-data-resource="odms/vendor-namespaces"
+    export-data-url="odms/vendor-namespaces"
     export-object-label="CRFNamespaces"
     @filter="getNamespaces"
   >
@@ -28,6 +28,16 @@
     </template>
     <template #[`item.actions`]="{ item }">
       <ActionsMenu :actions="actions" :item="item" />
+    </template>
+    <template #[`item.start_date`]="{ item }">
+      <v-tooltip location="top">
+        <template #activator="{ props }">
+          <span v-bind="props">{{
+            $filters.dateRelative(item.start_date)
+          }}</span>
+        </template>
+        {{ $filters.date(item.start_date) }}
+      </v-tooltip>
     </template>
     <template #[`item.status`]="{ item }">
       <StatusChip :status="item.status" />
@@ -145,6 +155,8 @@ const headers = [
   { title: t('CRFExtensions.prefix'), key: 'prefix' },
   { title: t('CRFExtensions.url'), key: 'url' },
   { title: t('_global.status'), key: 'status' },
+  { title: t('_global.modified'), key: 'start_date' },
+  { title: t('_global.modified_by'), key: 'author_username' },
   { title: t('_global.version'), key: 'version' },
 ]
 const total = ref(0)

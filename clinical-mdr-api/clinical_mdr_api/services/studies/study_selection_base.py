@@ -887,7 +887,7 @@ class StudySelectionMixin:
                 ct_package: CTPackage = repos.ct_package_repository.find_by_uid(
                     matching_version.ct_package_uid
                 )
-                effective_date: datetime = ct_package.effective_date
+                effective_date = ct_package.effective_date
                 # Combine the date with the end of the day time
                 effective_datetime = datetime(
                     effective_date.year,

@@ -1,13 +1,4 @@
-from neomodel import (
-    BooleanProperty,
-    FloatProperty,
-    IntegerProperty,
-    RelationshipFrom,
-    RelationshipTo,
-    StringProperty,
-    ZeroOrMore,
-    ZeroOrOne,
-)
+from neomodel import RelationshipFrom, RelationshipTo, ZeroOrMore, ZeroOrOne
 
 from clinical_mdr_api.domain_repositories.models.concepts import (
     StudyDayRoot,
@@ -33,6 +24,12 @@ from clinical_mdr_api.domain_repositories.models.study_selections import (
     StudyActivitySchedule,
     StudySelection,
     StudySoAFootnote,
+)
+from common.neomodel import (
+    BooleanProperty,
+    FloatProperty,
+    IntegerProperty,
+    StringProperty,
 )
 
 

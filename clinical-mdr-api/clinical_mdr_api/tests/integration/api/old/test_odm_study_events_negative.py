@@ -37,7 +37,7 @@ def test_create_a_new_odm_study_event(api_client):
         "retired_date": "2022-04-21",
         "description": "description1",
     }
-    response = api_client.post("concepts/odms/study-events", json=data)
+    response = api_client.post("odms/study-events", json=data)
 
     assert_response_status_code(response, 201)
 
@@ -69,7 +69,7 @@ def test_cannot_create_a_new_odm_study_event_with_same_properties(api_client):
         "retired_date": "2022-04-21",
         "description": "description1",
     }
-    response = api_client.post("concepts/odms/study-events", json=data)
+    response = api_client.post("odms/study-events", json=data)
 
     assert_response_status_code(response, 409)
 
@@ -83,7 +83,7 @@ def test_cannot_create_a_new_odm_study_event_with_same_properties(api_client):
 
 
 def test_getting_error_for_retrieving_non_existent_odm_study_event(api_client):
-    response = api_client.get("concepts/odms/study-events/OdmStudyEvent_000002")
+    response = api_client.get("odms/study-events/OdmStudyEvent_000002")
 
     assert_response_status_code(response, 404)
 
@@ -97,9 +97,7 @@ def test_getting_error_for_retrieving_non_existent_odm_study_event(api_client):
 
 
 def test_cannot_inactivate_an_odm_study_event_that_is_in_draft_status(api_client):
-    response = api_client.delete(
-        "concepts/odms/study-events/OdmStudyEvent_000001/activations"
-    )
+    response = api_client.delete("odms/study-events/OdmStudyEvent_000001/activations")
 
     assert_response_status_code(response, 400)
 
@@ -110,9 +108,7 @@ def test_cannot_inactivate_an_odm_study_event_that_is_in_draft_status(api_client
 
 
 def test_cannot_reactivate_an_odm_study_event_that_is_not_retired(api_client):
-    response = api_client.post(
-        "concepts/odms/study-events/OdmStudyEvent_000001/activations"
-    )
+    response = api_client.post("odms/study-events/OdmStudyEvent_000001/activations")
 
     assert_response_status_code(response, 400)
 
@@ -123,9 +119,7 @@ def test_cannot_reactivate_an_odm_study_event_that_is_not_retired(api_client):
 
 
 def test_approve_odm_study_event(api_client):
-    response = api_client.post(
-        "concepts/odms/study-events/OdmStudyEvent_000001/approvals"
-    )
+    response = api_client.post("odms/study-events/OdmStudyEvent_000001/approvals")
 
     assert_response_status_code(response, 201)
 
@@ -149,9 +143,7 @@ def test_approve_odm_study_event(api_client):
 
 
 def test_inactivate_odm_study_event(api_client):
-    response = api_client.delete(
-        "concepts/odms/study-events/OdmStudyEvent_000001/activations"
-    )
+    response = api_client.delete("odms/study-events/OdmStudyEvent_000001/activations")
 
     assert_response_status_code(response, 200)
 
@@ -187,7 +179,7 @@ def test_cannot_add_odm_forms_to_an_odm_study_event_that_is_in_retired_status(
         }
     ]
     response = api_client.post(
-        "concepts/odms/study-events/OdmStudyEvent_000001/forms", json=data
+        "odms/study-events/OdmStudyEvent_000001/forms", json=data
     )
 
     assert_response_status_code(response, 400)

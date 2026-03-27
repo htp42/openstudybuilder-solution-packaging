@@ -5,8 +5,6 @@
     <v-select
       v-model="itemsPerPage"
       :items="tablesConstants.ITEMS_PER_PAGE_OPIONS"
-      variant="outlined"
-      density="compact"
       hide-details
       class="flex-grow-0 ml-2"
     />

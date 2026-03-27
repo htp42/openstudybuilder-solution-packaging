@@ -18,9 +18,6 @@
               data-cy="sponsor-ct-catalogue-dropdown"
               return-object
               clearable
-              variant="outlined"
-              density="compact"
-              rounded="lg"
               color="nnTrueBlue"
               @update:model-value="fetchPackages"
             />
@@ -30,9 +27,6 @@
               :items="packages"
               item-title="name"
               item-value="uid"
-              variant="outlined"
-              density="compact"
-              rounded="lg"
               :disabled="selectedCatalogue === null"
               :rules="[formRules.required]"
             />

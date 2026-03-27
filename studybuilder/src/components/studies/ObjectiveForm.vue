@@ -11,7 +11,7 @@
     @save="submit"
   >
     <template #[`step.creationMode`]>
-      <v-radio-group v-model="creationMode" color="primary">
+      <v-radio-group v-model="creationMode">
         <v-radio
           data-cy="objective-from-template"
           :label="$t('StudyObjectiveForm.template_mode')"
@@ -31,7 +31,11 @@
       <v-form ref="studiesFormRef">
         <v-row v-if="creationMode === 'select'">
           <v-col>
-            <StudySelectorField v-model="selectedStudies" :data="studies" />
+            <StudySelectorField
+              v-model="formSelectedStudy"
+              :data="studies"
+              :loading="studiesLoading"
+            />
           </v-col>
         </v-row>
       </v-form>
@@ -67,7 +71,7 @@
           :headers="objectiveHeaders"
           data-fetcher-name="getAllStudyObjectives"
           :extra-data-fetcher-filters="extraStudyObjectiveFilters"
-          :studies="selectedStudies"
+          :selected-study="formSelectedStudy"
           column-data-resource="study-objectives"
           @item-selected="selectStudyObjective"
         >
@@ -113,7 +117,6 @@
         <v-switch
           v-model="preInstanceMode"
           :label="$t('StudyObjectiveForm.show_pre_instances')"
-          color="primary"
           hide-details
           class="ml-4"
         />
@@ -217,7 +220,6 @@
             :items="studiesGeneralStore.objectiveLevels"
             item-title="sponsor_preferred_name"
             return-object
-            density="compact"
             clearable
             style="max-width: 400px"
           />
@@ -266,6 +268,7 @@ const preInstanceApi = templatePreInstances('objective')
 const creationMode = ref('template')
 const form = ref({})
 const templateForm = ref({})
+const studiesLoading = ref(false)
 const loadingParameters = ref(false)
 const parameters = ref([])
 const parameterTypes = ref([])
@@ -278,7 +281,7 @@ const templates = ref([])
 const total = ref(0)
 const stepper = ref()
 const paramSelector = ref()
-const selectedStudies = ref([])
+const formSelectedStudy = ref(null)
 const studiesFormRef = ref()
 const templateFormRef = ref()
 const objectiveFormRef = ref()
@@ -388,11 +391,18 @@ onMounted(() => {
   templateParameterTypes.getTypes().then((resp) => {
     parameterTypes.value = resp.data
   })
-  study.get({ has_study_objective: true, page_size: 0 }).then((resp) => {
-    studies.value = resp.data.items.filter(
-      (study) => study.uid !== studiesGeneralStore.selectedStudy.uid
-    )
-  })
+
+  studiesLoading.value = true
+  study
+    .getAllList({ has_study_objective: true })
+    .then((resp) => {
+      studies.value = resp.data.filter(
+        (study) => study.uid !== studiesGeneralStore.selectedStudy.uid
+      )
+    })
+    .finally(() => {
+      studiesLoading.value = false
+    })
 })
 
 function close() {
@@ -405,7 +415,7 @@ function close() {
   selectedStudyObjectives.value = []
   selectedTemplates.value = []
   apiEndpoint = preInstanceApi
-  selectedStudies.value = []
+  formSelectedStudy.value = null
   emit('close')
 }
 

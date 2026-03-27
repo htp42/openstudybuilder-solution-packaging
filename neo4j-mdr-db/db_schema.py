@@ -27,6 +27,8 @@ INDEXES = [
     ("StudyActivitySchedule", "uid"),
     ("StudyBranchArm", "uid"),
     ("StudyDiseaseMilestone", "uid"),
+    ("StudyVersion", "uid"),
+    ("StudyDefinitionDocument", "uid"),
     ("StudySoAFootnote", "uid"),
     ("OrderedStudySelectionDiseaseMilestone", "uid"),
     ("TemplateParameterTermValue", "name"),

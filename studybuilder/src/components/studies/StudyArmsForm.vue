@@ -19,7 +19,6 @@
               item-value="term_uid"
               data-cy="arm-type"
               clearable
-              density="compact"
             />
           </v-col>
         </v-row>
@@ -31,7 +30,6 @@
               data-cy="arm-name"
               :rules="[formRules.required, formRules.max(form.name, 200)]"
               clearable
-              density="compact"
             />
           </v-col>
         </v-row>
@@ -43,7 +41,6 @@
               data-cy="arm-label"
               :rules="[formRules.max(form.label, 40)]"
               clearable
-              density="compact"
             />
           </v-col>
         </v-row>
@@ -55,7 +52,6 @@
               data-cy="arm-short-name"
               :rules="[formRules.required, formRules.max(form.short_name, 20)]"
               clearable
-              density="compact"
             />
           </v-col>
         </v-row>
@@ -66,7 +62,6 @@
               :label="$t('StudyArmsForm.randomisation_group')"
               data-cy="arm-randomisation-group"
               clearable
-              density="compact"
               @blur="enableArmCode"
             />
           </v-col>
@@ -79,7 +74,6 @@
               data-cy="arm-code"
               :rules="[formRules.max(form.code, 20)]"
               clearable
-              density="compact"
               :disabled="!armCodeEnable && !isEdit()"
             />
           </v-col>
@@ -103,7 +97,6 @@
               :label="$t('StudyArmsForm.description')"
               data-cy="arm-description"
               clearable
-              density="compact"
             />
           </v-col>
         </v-row>
@@ -114,7 +107,6 @@
           data-cy="arm-connected-branches"
           clearable
           readonly
-          density="compact"
         />
       </v-form>
     </template>

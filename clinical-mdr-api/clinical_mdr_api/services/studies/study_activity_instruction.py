@@ -58,7 +58,7 @@ class StudyActivityInstructionService(StudySelectionMixin):
         filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[StudyActivityInstruction]:
-        query = StudyActivityInstructionNeoModel.nodes.fetch_relations(
+        query = StudyActivityInstructionNeoModel.nodes.traverse(
             "study_value__latest_value",
             "study_activity",
             "activity_instruction_value__activity_instruction_root",
@@ -100,7 +100,7 @@ class StudyActivityInstructionService(StudySelectionMixin):
         study_activity_instructions_ogm: list[StudyActivityInstruction] = [
             StudyActivityInstruction.model_validate(sai_node)
             for sai_node in ListDistinct(
-                StudyActivityInstructionNeoModel.nodes.fetch_relations(
+                StudyActivityInstructionNeoModel.nodes.traverse(
                     "study_activity",
                     "study_value__has_version",
                     "activity_instruction_value__activity_instruction_root",
@@ -136,7 +136,7 @@ class StudyActivityInstructionService(StudySelectionMixin):
         return [
             StudyActivityInstruction.model_validate(sas_node)
             for sas_node in ListDistinct(
-                StudyActivityInstructionNeoModel.nodes.fetch_relations(
+                StudyActivityInstructionNeoModel.nodes.traverse(
                     "study_activity",
                     "activity_instruction_value__activity_instruction_root",
                     "has_after__audit_trail",

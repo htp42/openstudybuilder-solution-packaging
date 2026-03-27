@@ -28,7 +28,7 @@ def test_data():
 
 
 def test_getting_empty_list_of_odm_vendor_namespaces(api_client):
-    response = api_client.get("concepts/odms/vendor-namespaces")
+    response = api_client.get("odms/vendor-namespaces")
 
     assert_response_status_code(response, 200)
 
@@ -44,7 +44,7 @@ def test_creating_a_new_odm_vendor_namespace(api_client):
         "prefix": "prefix",
         "url": "url1",
     }
-    response = api_client.post("concepts/odms/vendor-namespaces", json=data)
+    response = api_client.post("odms/vendor-namespaces", json=data)
 
     assert_response_status_code(response, 201)
 
@@ -66,7 +66,7 @@ def test_creating_a_new_odm_vendor_namespace(api_client):
 
 
 def test_getting_non_empty_list_of_odm_vendor_namespaces(api_client):
-    response = api_client.get("concepts/odms/vendor-namespaces")
+    response = api_client.get("odms/vendor-namespaces")
 
     assert_response_status_code(response, 200)
 
@@ -88,7 +88,7 @@ def test_getting_non_empty_list_of_odm_vendor_namespaces(api_client):
 
 
 def test_getting_possible_header_values_of_odm_vendor_namespaces(api_client):
-    response = api_client.get("concepts/odms/vendor-namespaces/headers?field_name=name")
+    response = api_client.get("odms/vendor-namespaces/headers?field_name=name")
 
     assert_response_status_code(response, 200)
 
@@ -98,9 +98,7 @@ def test_getting_possible_header_values_of_odm_vendor_namespaces(api_client):
 
 
 def test_getting_a_specific_odm_vendor_namespace(api_client):
-    response = api_client.get(
-        "concepts/odms/vendor-namespaces/OdmVendorNamespace_000001"
-    )
+    response = api_client.get("odms/vendor-namespaces/OdmVendorNamespace_000001")
 
     assert_response_status_code(response, 200)
 
@@ -123,7 +121,7 @@ def test_getting_a_specific_odm_vendor_namespace(api_client):
 
 def test_getting_versions_of_a_specific_odm_vendor_namespace(api_client):
     response = api_client.get(
-        "concepts/odms/vendor-namespaces/OdmVendorNamespace_000001/versions"
+        "odms/vendor-namespaces/OdmVendorNamespace_000001/versions"
     )
 
     assert_response_status_code(response, 200)
@@ -154,7 +152,7 @@ def test_updating_an_existing_odm_vendor_namespace(api_client):
         "change_description": "namespace changed to new url",
     }
     response = api_client.patch(
-        "concepts/odms/vendor-namespaces/OdmVendorNamespace_000001", json=data
+        "odms/vendor-namespaces/OdmVendorNamespace_000001", json=data
     )
 
     assert_response_status_code(response, 200)
@@ -178,7 +176,7 @@ def test_updating_an_existing_odm_vendor_namespace(api_client):
 
 def test_getting_a_specific_odm_vendor_namespace_in_specific_version(api_client):
     response = api_client.get(
-        "concepts/odms/vendor-namespaces/OdmVendorNamespace_000001?version=0.1"
+        "odms/vendor-namespaces/OdmVendorNamespace_000001?version=0.1"
     )
 
     assert_response_status_code(response, 200)
@@ -202,7 +200,7 @@ def test_getting_a_specific_odm_vendor_namespace_in_specific_version(api_client)
 
 def test_approving_an_odm_vendor_namespace(api_client):
     response = api_client.post(
-        "concepts/odms/vendor-namespaces/OdmVendorNamespace_000001/approvals"
+        "odms/vendor-namespaces/OdmVendorNamespace_000001/approvals"
     )
 
     assert_response_status_code(response, 201)
@@ -226,7 +224,7 @@ def test_approving_an_odm_vendor_namespace(api_client):
 
 def test_inactivating_a_specific_odm_vendor_namespace(api_client):
     response = api_client.delete(
-        "concepts/odms/vendor-namespaces/OdmVendorNamespace_000001/activations"
+        "odms/vendor-namespaces/OdmVendorNamespace_000001/activations"
     )
 
     assert_response_status_code(response, 200)
@@ -250,7 +248,7 @@ def test_inactivating_a_specific_odm_vendor_namespace(api_client):
 
 def test_reactivating_a_specific_odm_vendor_namespace(api_client):
     response = api_client.post(
-        "concepts/odms/vendor-namespaces/OdmVendorNamespace_000001/activations"
+        "odms/vendor-namespaces/OdmVendorNamespace_000001/activations"
     )
 
     assert_response_status_code(response, 200)
@@ -274,7 +272,7 @@ def test_reactivating_a_specific_odm_vendor_namespace(api_client):
 
 def test_creating_a_new_odm_vendor_namespace_version(api_client):
     response = api_client.post(
-        "concepts/odms/vendor-namespaces/OdmVendorNamespace_000001/versions"
+        "odms/vendor-namespaces/OdmVendorNamespace_000001/versions"
     )
 
     assert_response_status_code(response, 201)
@@ -303,7 +301,7 @@ def test_create_a_new_odm_vendor_namespace_for_deleting_it(api_client):
         "prefix": "prefixOne",
         "url": "namespace2",
     }
-    response = api_client.post("concepts/odms/vendor-namespaces", json=data)
+    response = api_client.post("odms/vendor-namespaces", json=data)
 
     assert_response_status_code(response, 201)
 
@@ -325,9 +323,7 @@ def test_create_a_new_odm_vendor_namespace_for_deleting_it(api_client):
 
 
 def test_deleting_a_specific_odm_vendor_namespace(api_client):
-    response = api_client.delete(
-        "concepts/odms/vendor-namespaces/OdmVendorNamespace_000002"
-    )
+    response = api_client.delete("odms/vendor-namespaces/OdmVendorNamespace_000002")
 
     assert_response_status_code(response, 204)
 
@@ -343,7 +339,7 @@ def test_create_a_new_odm_vendor_attribute_with_relation_to_odm_vendor_namespace
         "value_regex": None,
         "vendor_namespace_uid": "OdmVendorNamespace_000001",
     }
-    response = api_client.post("concepts/odms/vendor-attributes", json=data)
+    response = api_client.post("odms/vendor-attributes", json=data)
 
     assert_response_status_code(response, 201)
 
@@ -380,7 +376,7 @@ def test_create_a_new_odm_vendor_element1(api_client):
         "compatible_types": ["FormDef"],
         "vendor_namespace_uid": "OdmVendorNamespace_000001",
     }
-    response = api_client.post("concepts/odms/vendor-elements", json=data)
+    response = api_client.post("odms/vendor-elements", json=data)
 
     assert_response_status_code(response, 201)
 
@@ -412,7 +408,7 @@ def test_getting_uids_of_a_specific_odm_vendor_namespaces_active_relationships(
     api_client,
 ):
     response = api_client.get(
-        "concepts/odms/vendor-namespaces/OdmVendorNamespace_000001/relationships"
+        "odms/vendor-namespaces/OdmVendorNamespace_000001/relationships"
     )
 
     assert_response_status_code(response, 200)

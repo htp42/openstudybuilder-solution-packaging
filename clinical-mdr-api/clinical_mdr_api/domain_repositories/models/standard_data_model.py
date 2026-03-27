@@ -1,12 +1,8 @@
 from neomodel import (
-    ArrayProperty,
-    BooleanProperty,
-    IntegerProperty,
     One,
     OneOrMore,
     RelationshipFrom,
     RelationshipTo,
-    StringProperty,
     StructuredRel,
     ZeroOrOne,
 )
@@ -22,6 +18,12 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     VersionRelationship,
     VersionRoot,
     VersionValue,
+)
+from common.neomodel import (
+    ArrayProperty,
+    BooleanProperty,
+    IntegerProperty,
+    StringProperty,
 )
 
 
@@ -130,6 +132,10 @@ class HasDatasetRel(HasDatasetClassRel):
     pass
 
 
+class HasSponsorDatasetRel(ClinicalMdrRel):
+    ordinal = IntegerProperty()
+
+
 class DatasetClassInstance(VersionValue):
     description = StringProperty()
     label = StringProperty()
@@ -203,7 +209,7 @@ class SponsorModelDatasetInstance(VersionValue):
 
     is_instance_of = RelationshipFrom("Dataset", "HAS_INSTANCE", model=ClinicalMdrRel)
     has_dataset = RelationshipFrom(
-        SponsorModelValue, "HAS_DATASET", model=HasDatasetRel
+        SponsorModelValue, "HAS_DATASET", model=HasSponsorDatasetRel
     )
     has_key = RelationshipTo(
         "DatasetVariable",
@@ -335,6 +341,10 @@ class HasDatasetVariableRel(HasVariableClassRel):
     pass
 
 
+class HasSponsorDatasetVariableRel(HasDatasetVariableRel):
+    ordinal = IntegerProperty()  # type: ignore[assignment]
+
+
 class DatasetVariableInstance(VersionValue):
     description = StringProperty()
     title = StringProperty()
@@ -422,7 +432,9 @@ class SponsorModelDatasetVariableInstance(VersionValue):
     implemented_parent_dataset_class_uid = StringProperty()
 
     has_variable = RelationshipFrom(
-        SponsorModelDatasetInstance, "HAS_DATASET_VARIABLE", model=HasDatasetVariableRel
+        SponsorModelDatasetInstance,
+        "HAS_DATASET_VARIABLE",
+        model=HasSponsorDatasetVariableRel,
     )
     implements_variable_class = RelationshipTo(
         VariableClassInstance,

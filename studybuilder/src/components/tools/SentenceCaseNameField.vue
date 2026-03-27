@@ -6,7 +6,6 @@
           v-model="value"
           :label="$t('ActivityForms.name_sentence_case')"
           data-cy="sentence-case-name-field"
-          density="compact"
           clearable
           :rules="[
             formRules.required,

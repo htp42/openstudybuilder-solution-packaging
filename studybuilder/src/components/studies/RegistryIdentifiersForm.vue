@@ -24,7 +24,6 @@
                   v-model="form[identifier]"
                   :data-cy="$t(`RegistryIdentifiersForm.${identifier}`)"
                   :label="$t(`RegistryIdentifiersForm.${identifier}`)"
-                  density="compact"
                   clearable
                   :disabled="notApplicable"
                   autocomplete="off"

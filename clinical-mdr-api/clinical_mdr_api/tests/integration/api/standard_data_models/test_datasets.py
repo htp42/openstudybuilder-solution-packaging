@@ -74,6 +74,7 @@ def test_data():
                 description=f"DatasetClass desc-{index}",
                 data_model_catalogue_name=data_model_catalogue_name,
                 data_model_uid=data_model.uid,
+                data_model_name=data_model.name,
             )
         )
     # Create some datasets

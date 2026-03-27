@@ -8,7 +8,6 @@
         hide-details
         clearable
         class="search-input mr-6"
-        density="compact"
         @update:model-value="filterContent"
       />
       <v-btn size="small" variant="text" @click="toggleAllFolds">

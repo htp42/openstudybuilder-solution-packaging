@@ -1,13 +1,11 @@
 import datetime
+from typing import TYPE_CHECKING, Any
 
 import neo4j.time
 from neomodel import (
-    BooleanProperty,
     DateTimeProperty,
-    IntegerProperty,
     RelationshipFrom,
     RelationshipTo,
-    StringProperty,
     StructuredNode,
     StructuredRel,
     db,
@@ -20,17 +18,26 @@ from clinical_mdr_api.domain_repositories.models._utils import (
 from clinical_mdr_api.domains.enums import LibraryItemStatus
 from common.config import settings
 from common.exceptions import NotFoundException
+from common.neomodel import BooleanProperty, IntegerProperty, StringProperty
 from common.utils import convert_to_datetime
 
+if TYPE_CHECKING:
 
-class ZonedDateTimeProperty(DateTimeProperty):
-    @validator
-    def deflate(self, value: datetime.datetime):
-        return convert_to_tz_aware_datetime(value)
+    class ZonedDateTimeProperty(datetime.datetime):
+        def __init__(
+            self, *args: Any, **kwargs: Any  # pylint: disable=unused-argument
+        ) -> None: ...
 
-    @validator
-    def inflate(self, value: neo4j.time.DateTime):
-        return convert_to_datetime(value)
+else:
+
+    class ZonedDateTimeProperty(DateTimeProperty):
+        @validator
+        def deflate(self, value: datetime.datetime):
+            return convert_to_tz_aware_datetime(value)
+
+        @validator
+        def inflate(self, value: neo4j.time.DateTime):
+            return convert_to_datetime(value)
 
 
 class ClinicalMdrNode(StructuredNode):
@@ -64,7 +71,7 @@ class ClinicalMdrNodeWithUID(ClinicalMdrNode):
     """
 
     __abstract_node__ = True
-    uid = StringProperty(unique_index=True)
+    uid = StringProperty(unique_index=True)  # type: ignore[call-arg]
 
     def __hash__(self):
         return hash(self.uid)
@@ -78,18 +85,16 @@ class ClinicalMdrNodeWithUID(ClinicalMdrNode):
         object_name = cls.__name__.removesuffix("Root")
 
         digits = str(
-            db.cypher_query(
-                """
+            db.cypher_query("""
         MERGE (m:Counter{{counterId:'{LABEL}Counter'}})
         ON CREATE SET m:{LABEL}Counter, m.count=0
         WITH m
         CALL apoc.atomic.add(m,'count',1,1) yield oldValue, newValue
         WITH toInteger(newValue) as uid_number
         RETURN "{LABEL}_"+apoc.text.lpad(""+(uid_number), {number_of_digits}, "0")
-        """.format(
-                    LABEL=object_name, number_of_digits=settings.number_of_uid_digits
-                )
-            )[0][0][0]
+        """.format(LABEL=object_name, number_of_digits=settings.number_of_uid_digits))[
+                0
+            ][0][0]
         )
         return digits
 
@@ -144,17 +149,13 @@ class ClinicalMdrNodeWithUID(ClinicalMdrNode):
                 else type(self).__name__
             )
 
-            new_uid = db.cypher_query(
-                """
+            new_uid = db.cypher_query("""
             MERGE (m:Counter{{counterId:'{LABEL}Counter'}})
             ON CREATE SET m:{LABEL}Counter, m.count=1
             ON MATCH SET m.count = m.count + 1
             WITH m
             RETURN m.count as number
-            """.format(
-                    LABEL=object_name
-                )
-            )[0][0][0]
+            """.format(LABEL=object_name))[0][0][0]
             self.uid = (
                 str(object_name)
                 + "_"
@@ -208,8 +209,8 @@ class VersionRelationship(ClinicalMdrRel):
     `LATEST_DRAFT` or `LATEST_FINAL`.
     """
 
-    start_date: datetime.datetime = ZonedDateTimeProperty()
-    end_date: datetime.datetime | None = ZonedDateTimeProperty()
+    start_date: datetime.datetime = ZonedDateTimeProperty()  # type: ignore
+    end_date: datetime.datetime | None = ZonedDateTimeProperty()  # type: ignore
     change_description = StringProperty()
     version = StringProperty()
     status = StringProperty()
@@ -263,7 +264,7 @@ class VersionRoot(ClinicalMdrNodeWithUID):
     LIBRARY_REL_LABEL = "CONTAINS"
     PARAMETERS_LABEL = "HAS_PARAMETERS"
 
-    has_template = RelationshipTo("VersionRoot", "HAS_TEMPLATE", model=ClinicalMdrRel)
+    # has_template = RelationshipTo("VersionRoot", "HAS_TEMPLATE", model=ClinicalMdrRel)
 
     has_version = RelationshipTo(VersionValue, "HAS_VERSION", model=VersionRelationship)
     has_latest_value = RelationshipTo(VersionValue, "LATEST", model=ClinicalMdrRel)

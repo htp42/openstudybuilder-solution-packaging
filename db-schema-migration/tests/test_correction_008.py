@@ -1,4 +1,4 @@
-""" Data corrections for PROD September 2024."""
+"""Data corrections for PROD September 2024."""
 
 import os
 

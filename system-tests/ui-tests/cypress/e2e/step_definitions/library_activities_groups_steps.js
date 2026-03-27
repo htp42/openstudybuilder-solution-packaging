@@ -3,6 +3,8 @@ const { getShortUniqueId } = require("../../support/helper_functions");
 
 let activityGroupName, abbreviation = "ABB", definition = "DEF"
 
+Then('Activity group is present in first table row', () => cy.checkRowByIndex(0, 'Activity group', activityGroupName))
+
 When('User intercepts activity group request', () => cy.intercept('/api/concepts/activities/activity-groups?page_number=1&*').as('getData'))
 
 When('User waits for activity group request', () => cy.wait('@getData', {timeout: 20000}))

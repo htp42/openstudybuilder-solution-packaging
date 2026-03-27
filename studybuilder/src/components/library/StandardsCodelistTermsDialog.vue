@@ -60,7 +60,6 @@
         </v-expansion-panel>
       </v-expansion-panels>
       <NNTable
-        v-model:options="options"
         :headers="headers"
         :items="terms"
         :items-length="total"
@@ -85,108 +84,85 @@
   </v-card>
 </template>
 
-<script>
+<script setup>
+import { onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import controlledTerminology from '@/api/controlledTerminology'
-import terms from '@/api/controlledTerminology/terms'
+import codelistsApi from '@/api/controlledTerminology/codelists'
 import NNTable from '@/components/tools/NNTable.vue'
 import StatusChip from '@/components/tools/StatusChip.vue'
 import filteringParameters from '@/utils/filteringParameters'
 
-export default {
-  components: {
-    NNTable,
-    StatusChip,
+const props = defineProps({
+  codelistUid: {
+    type: String,
+    default: null,
   },
-  props: {
-    codelistUid: {
-      type: String,
-      default: null,
-    },
+})
+const emit = defineEmits(['close'])
+
+const router = useRouter()
+const { t } = useI18n()
+
+const codelistAttributes = ref({})
+const headers = [
+  { title: t('CtCatalogueTable.concept_id'), key: 'concept_id' },
+  {
+    title: t('CodelistTermsView.sponsor_name'),
+    key: 'sponsor_preferred_name',
   },
-  emits: ['close'],
-  data() {
-    return {
-      codelistNames: {},
-      codelistAttributes: {},
-      headers: [
-        { title: this.$t('CtCatalogueTable.concept_id'), key: '_concept_id' },
-        {
-          title: this.$t('CodelistTermsView.sponsor_name'),
-          key: 'name.sponsor_preferred_name',
-        },
-        {
-          title: this.$t('CodelistTermsView.code_submission_value'),
-          key: 'attributes.code_submission_value',
-        },
-        { title: 'Version', key: 'attributes.version' },
-        {
-          title: this.$t('CodelistTermsView.attr_status'),
-          key: 'attributes.status',
-        },
-      ],
-      options: {},
-      selectedTerm: {},
-      terms: [],
-      total: 0,
-      panel: 0,
+  {
+    title: t('CodelistTermsView.submission_value'),
+    key: 'submission_value',
+  },
+  {
+    title: t('CodelistTermsView.attr_status'),
+    key: 'attributes_status',
+  },
+]
+const terms = ref([])
+const total = ref(0)
+const panel = ref(0)
+
+watch(
+  () => props.codelistUid,
+  (value) => {
+    if (value) {
+      controlledTerminology.getCodelistAttributes(value).then((resp) => {
+        codelistAttributes.value = resp.data
+      })
+      fetchTerms()
     }
-  },
-  watch: {
-    codelistUid(value) {
-      if (value) {
-        controlledTerminology.getCodelistAttributes(value).then((resp) => {
-          this.codelistAttributes = resp.data
-        })
-        this.fetchTerms()
-      }
-    },
-    options: {
-      handler() {
-        this.fetchTerms()
-      },
-      deep: true,
-    },
-  },
-  mounted() {
-    controlledTerminology
-      .getCodelistAttributes(this.codelistUid)
-      .then((resp) => {
-        this.codelistAttributes = resp.data
-      })
-  },
-  methods: {
-    close() {
-      this.$emit('close')
-    },
-    openCodelistTerms() {
-      this.$router.push({
-        name: 'CodelistTerms',
-        params: { codelist_id: this.codelistUid, catalogue_name: 'All' },
-      })
-    },
-    fetchTerms(filters, sort, filtersUpdated) {
-      if (filtersUpdated) {
-        this.options.page = 1
-      }
-      const params = filteringParameters.prepareParameters(
-        this.options,
-        filters,
-        sort,
-        filtersUpdated
-      )
-      params.codelist_uid = this.codelistUid
-      terms.getAll(params).then((resp) => {
-        this.terms = resp.data.items
-        this.total = resp.data.total
-        for (const term of this.terms) {
-          if (term.attributes.concept_id === null) {
-            term._concept_id = term.term_uid
-          } else {
-            term._concept_id = term.attributes.concept_id
-          }
-        }
-      })
-    },
-  },
+  }
+)
+
+onMounted(() => {
+  controlledTerminology
+    .getCodelistAttributes(props.codelistUid)
+    .then((resp) => {
+      codelistAttributes.value = resp.data
+    })
+})
+
+function close() {
+  emit('close')
+}
+function openCodelistTerms() {
+  router.push({
+    name: 'CodelistTerms',
+    params: { codelist_id: props.codelistUid, catalogue_name: 'All' },
+  })
+}
+function fetchTerms(filters, options, filtersUpdated) {
+  const params = filteringParameters.prepareParameters(
+    options,
+    filters,
+    filtersUpdated
+  )
+  codelistsApi.getCodelistTerms(props.codelistUid, params).then((resp) => {
+    terms.value = resp.data.items
+    total.value = resp.data.total
+  })
 }
 </script>

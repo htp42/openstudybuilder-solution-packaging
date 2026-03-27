@@ -35,6 +35,16 @@
       <template #[`item.status`]="{ item }">
         <StatusChip :status="item.status" />
       </template>
+      <template #[`item.start_date`]="{ item }">
+        <v-tooltip location="top">
+          <template #activator="{ props }">
+            <span v-bind="props">{{
+              $filters.dateRelative(item.start_date)
+            }}</span>
+          </template>
+          {{ $filters.date(item.start_date) }}
+        </v-tooltip>
+      </template>
     </NNTable>
     <DataSupplierForm
       :open="showForm"

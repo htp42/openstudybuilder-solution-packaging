@@ -1,15 +1,6 @@
 from typing import Any
 
-from neomodel import (
-    ArrayProperty,
-    BooleanProperty,
-    IntegerProperty,
-    RelationshipFrom,
-    RelationshipTo,
-    StringProperty,
-    ZeroOrMore,
-    db,
-)
+from neomodel import RelationshipFrom, RelationshipTo, ZeroOrMore, db
 
 from clinical_mdr_api.domain_repositories.models.concepts import UnitDefinitionRoot
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
@@ -22,6 +13,12 @@ from clinical_mdr_api.domain_repositories.models.generic import (
 )
 from clinical_mdr_api.domain_repositories.models.project import Project
 from clinical_mdr_api.domain_repositories.models.study_selections import AuditTrailMixin
+from common.neomodel import (
+    ArrayProperty,
+    BooleanProperty,
+    IntegerProperty,
+    StringProperty,
+)
 
 
 class StudyField(ClinicalMdrNode, AuditTrailMixin):

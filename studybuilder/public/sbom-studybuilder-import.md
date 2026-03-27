@@ -1,21 +1,21 @@
 
 ## Installed packages
 
-| Package            | Version   | License                      |
-|--------------------|-----------|------------------------------|
-| aiohappyeyeballs   | 2.4.3     | [PSF-2.0](#aiohappyeyeballs) |
-| aiohttp            | 3.10.10   | [Apache 2](#aiohttp)         |
-| aiosignal          | 1.3.1     | [Apache 2.0](#aiosignal)     |
-| attrs              | 24.2.0    | [MIT](#attrs)                |
-| certifi            | 2024.8.30 | [MPL-2.0](#certifi)          |
-| charset-normalizer | 3.4.0     | [MIT](#charset-normalizer)   |
-| frozenlist         | 1.5.0     | [Apache 2](#frozenlist)      |
-| idna               | 3.10      | [see below](#idna)           |
-| multidict          | 6.1.0     | [Apache 2](#multidict)       |
-| propcache          | 0.2.0     | [Apache-2.0](#propcache)     |
-| requests           | 2.32.3    | [Apache-2.0](#requests)      |
-| urllib3            | 2.2.3     | [see below](#urllib3)        |
-| yarl               | 1.17.1    | [Apache-2.0](#yarl)          |
+| Package            | Version   | License                          |
+|--------------------|-----------|----------------------------------|
+| aiohappyeyeballs   | 2.6.1     | [PSF-2.0](#aiohappyeyeballs)     |
+| aiohttp            | 3.10.11   | [Apache 2](#aiohttp)             |
+| aiosignal          | 1.4.0     | [Apache 2.0](#aiosignal)         |
+| attrs              | 25.4.0    | [MIT](#attrs)                    |
+| certifi            | 2026.2.25 | [MPL-2.0](#certifi)              |
+| charset-normalizer | 3.4.4     | [MIT](#charset-normalizer)       |
+| frozenlist         | 1.8.0     | [Apache-2.0](#frozenlist)        |
+| idna               | 3.11      | [BSD-3-Clause](#idna)            |
+| multidict          | 6.7.1     | [Apache License 2.0](#multidict) |
+| propcache          | 0.4.1     | [Apache-2.0](#propcache)         |
+| requests           | 2.32.5    | [Apache-2.0](#requests)          |
+| urllib3            | 2.6.3     | [MIT](#urllib3)                  |
+| yarl               | 1.23.0    | [Apache-2.0](#yarl)              |
 
 
 ## Third-party package licenses
@@ -579,7 +579,7 @@
 
     MIT License
 
-    Copyright (c) 2019 TAHRI Ahmed R.
+    Copyright (c) 2025 TAHRI Ahmed R.
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -809,7 +809,7 @@
 
     BSD 3-Clause License
 
-    Copyright (c) 2013-2024, Kim Davies and contributors.
+    Copyright (c) 2013-2025, Kim Davies and contributors.
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without

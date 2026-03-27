@@ -15,11 +15,9 @@
             <v-autocomplete
               v-model="form.dosage_form_uid"
               :label="$t('PharmaceuticalProduct.dosage_form')"
-              density="compact"
               :items="dosageForms"
               item-title="sponsor_preferred_name"
               item-value="term_uid"
-              variant="outlined"
               :rules="[formRules.required]"
             />
           </v-col>
@@ -29,11 +27,9 @@
             <v-autocomplete
               v-model="form.route_of_administration_uid"
               :label="$t('PharmaceuticalProduct.route_of_administration')"
-              density="compact"
               :items="routesOfAdministration"
               item-title="sponsor_preferred_name"
               item-value="term_uid"
-              variant="outlined"
               :rules="[formRules.required]"
             />
           </v-col>

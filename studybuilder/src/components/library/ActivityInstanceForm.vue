@@ -42,11 +42,12 @@
           @filter="fetchActivities"
         >
           <template #[`item.selection`]="{ item }">
-            <v-radio-group v-model="selectedActivity" hide-details>
-              <v-radio
-                color="primary"
-                :value="getFullActivityUid(item)"
-              ></v-radio>
+            <v-radio-group
+              v-model="selectedActivity"
+              hide-details
+              @update:model-value="setSelectedActivityName"
+            >
+              <v-radio :value="getFullActivityUid(item)"></v-radio>
             </v-radio-group>
           </template>
           <template #[`item.activity_instances`]="{ item }">
@@ -65,8 +66,6 @@
             item-title="name"
             item-value="uid"
             return-object
-            variant="outlined"
-            density="compact"
             class="w-50"
             :loading="loadingActivityInstances"
             :disabled="activityInstanceUid !== null"
@@ -77,8 +76,6 @@
             v-model="step2Form.data_domain"
             :label="$t('ActivityInstanceForm.data_domain')"
             :items="dataDomains"
-            variant="outlined"
-            density="compact"
             class="ml-4 w-50"
             :rules="[formRules.required]"
             :disabled="
@@ -175,8 +172,6 @@
           <v-text-field
             v-model="step2Form.molecular_weight"
             :label="$t('ActivityInstanceForm.molecular_weight')"
-            variant="outlined"
-            density="compact"
             class="w-50"
             suffix="g/mol"
             :rules="[validateMolecularWeight]"
@@ -237,7 +232,6 @@
           <v-switch
             v-model="allowManualEdit"
             :label="$t('ActivityInstanceForm.allow_manual_edit')"
-            color="primary"
             class="ml-4"
             hide-details
             @update:model-value="onAllowManualEditChange"
@@ -247,9 +241,7 @@
           <v-text-field
             v-model="step3Form.name"
             :label="$t('ActivityInstancePreview.activity_instance_name')"
-            variant="outlined"
-            density="compact"
-            class="mr-4"
+            class="mr-4 w-50"
             :disabled="!allowManualEdit"
             :loading="loadingPreview"
             :rules="[formRules.required]"
@@ -257,9 +249,7 @@
           <v-text-field
             v-model="step3Form.name_sentence_case"
             :label="$t('ActivityInstancePreview.sentence_case_name')"
-            variant="outlined"
-            density="compact"
-            class="mr-4"
+            class="mr-4 w-50"
             :disabled="!allowManualEdit"
             :loading="loadingPreview"
             :rules="[
@@ -267,20 +257,12 @@
               (value) => formRules.sameAs(value, step3Form.name),
             ]"
           />
-          <v-text-field
-            v-model="step3Form.nci_concept_name"
-            :label="$t('ActivityInstancePreview.nci_preferred_name')"
-            variant="outlined"
-            density="compact"
-          />
         </div>
         <div class="d-flex w-50">
           <v-text-field
             v-model="step3Form.topic_code"
             :label="$t('ActivityInstancePreview.topic_code')"
-            variant="outlined"
-            density="compact"
-            class="mr-4"
+            class="mr-4 w-50"
             :disabled="
               !allowManualEdit ||
               (props.activityInstanceUid !== undefined &&
@@ -290,27 +272,31 @@
             :rules="[formRules.required]"
           />
           <v-text-field
+            v-if="showAdamParamCode"
             v-model="step3Form.adam_param_code"
             :label="$t('ActivityInstancePreview.adam_param_code')"
-            variant="outlined"
-            density="compact"
-            class="mr-4"
+            class="mr-4 w-50"
             :disabled="!allowManualEdit"
             :loading="loadingPreview"
             :rules="[formRules.required]"
           />
+        </div>
+        <div class="d-flex w-50">
+          <v-text-field
+            v-model="step3Form.nci_concept_name"
+            :label="$t('ActivityInstancePreview.nci_preferred_name')"
+            class="mr-4 w-50"
+          />
           <v-text-field
             v-model="step3Form.nci_concept_id"
             :label="$t('ActivityInstancePreview.nci_code')"
-            variant="outlined"
-            density="compact"
+            class="mr-4 w-50"
           />
         </div>
         <div class="d-flex">
           <v-checkbox
             v-model="step3Form.is_research_lab"
             :label="$t('ActivityInstanceForm.data_from_research_lab')"
-            color="primary"
             :disabled="activityInstanceUid !== null"
           >
             <template #append>
@@ -377,7 +363,6 @@
           <v-checkbox
             v-model="step4Form.is_required_for_activity"
             :label="$t('ActivityInstanceForm.required_for_activity')"
-            color="primary"
             class="mr-4"
           >
             <template #append>
@@ -392,7 +377,6 @@
           <v-checkbox
             v-model="step4Form.is_data_sharing"
             :label="$t('ActivityInstanceForm.data_sharing')"
-            color="primary"
             class="mr-4"
           >
             <template #append>
@@ -407,7 +391,6 @@
           <v-checkbox
             v-model="step4Form.is_default_selected_for_activity"
             :label="$t('ActivityInstanceForm.default_selected')"
-            color="primary"
             class="mr-4"
           >
             <template #append>
@@ -427,8 +410,6 @@
           <v-text-field
             v-model="step4Form.change_description"
             :rules="[formRules.required]"
-            variant="outlined"
-            density="compact"
             class="w-50"
           />
         </template>
@@ -485,6 +466,7 @@ const step2Form = ref({})
 const step3Form = ref({})
 const step4Form = ref({})
 const selectedActivity = ref(null)
+const selectedActivityName = ref(null)
 const stepper = ref()
 const totalActivities = ref(0)
 const testValue = ref(null)
@@ -502,14 +484,22 @@ const title = computed(() => {
     : t('ActivityInstanceForm.add_title')
 })
 
-const allowedInstanceClasses = ['NumericFindings']
+const allowedInstanceClasses = []
 if (
   featureFlagsStore.getFeatureFlag(
     'activity_instance_wizard_stepper_categoric_findings'
   ) === true
 ) {
-  allowedInstanceClasses.unshift('CategoricFindings')
+  allowedInstanceClasses.push('CategoricFindings')
 }
+if (
+  featureFlagsStore.getFeatureFlag(
+    'activity_instance_wizard_stepper_events'
+  ) === true
+) {
+  allowedInstanceClasses.push('Events')
+}
+allowedInstanceClasses.push('NumericFindings')
 if (
   featureFlagsStore.getFeatureFlag(
     'activity_instance_wizard_stepper_textual_findings'
@@ -536,14 +526,19 @@ const dataDomains = computed(() => {
   return Array.from(allValues.values())
 })
 
-const selectedActivityName = computed(() => {
-  if (!selectedActivity.value) return ''
-  const parts = selectedActivity.value.split('|')
-  return activities.value.find((item) => item.uid === parts[2]).name
-})
-
 const availableActivityItemClasses = ref([])
 const filteredActivityItemClasses = ref([])
+
+const setSelectedActivityName = () => {
+  if (selectedActivity.value) {
+    const parts = selectedActivity.value.split('|')
+    selectedActivityName.value = activities.value.find(
+      (item) => item.uid === parts[2]
+    ).name
+  } else {
+    selectedActivityName.value = null
+  }
+}
 
 // List of activity item classes that should not be proposed to end users
 const activityItemClassExceptions = computed(() => {
@@ -635,6 +630,10 @@ const showMolecularWeight = computed(() => {
     return false
   }
   return selectedUnitDimension.value.toLowerCase().includes('concentration')
+})
+
+const showAdamParamCode = computed(() => {
+  return step2Form.value.activity_instance_class?.name !== 'Events'
 })
 
 watch(showMolecularWeight, (value) => {
@@ -1249,7 +1248,7 @@ async function initiateDomainFromActivityItem(activityItem) {
 }
 
 async function initFromActivityInstance() {
-  const resp = await activitiesApi.getObject(
+  let resp = await activitiesApi.getObject(
     'activity-instances',
     props.activityInstanceUid
   )
@@ -1257,6 +1256,8 @@ async function initFromActivityInstance() {
   // FIXME: Can we have imported activity instances linked to multiple groupings?
   const grouping = activityInstance.value.activity_groupings[0]
   selectedActivity.value = `${grouping.activity_group.uid}|${grouping.activity_subgroup.uid}|${grouping.activity.uid}`
+  resp = await activitiesApi.getObject('activities', grouping.activity.uid)
+  selectedActivityName.value = resp.data.name
   step2Form.value.activity_instance_class = activityInstanceClasses.value.find(
     (item) => item.uid === activityInstance.value.activity_instance_class.uid
   )
@@ -1267,6 +1268,13 @@ async function initFromActivityInstance() {
   step3Form.value.topic_code = activityInstance.value.topic_code
   step3Form.value.adam_param_code = activityInstance.value.adam_param_code
   step3Form.value.nci_concept_id = activityInstance.value.nci_concept_id
+  step3Form.value.is_research_lab = activityInstance.value.is_research_lab
+
+  step4Form.value.is_required_for_activity =
+    activityInstance.value.is_required_for_activity
+  step4Form.value.is_data_sharing = activityInstance.value.is_data_sharing
+  step4Form.value.is_default_selected_for_activity =
+    activityInstance.value.is_default_selected_for_activity
 
   for (const activityItem of activityInstance.value.activity_items) {
     if (activityItem.activity_item_class.name === 'domain') {

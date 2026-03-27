@@ -31,7 +31,14 @@
       />
     </template>
     <template #[`item.start_date`]="{ item }">
-      {{ $filters.date(item.start_date) }}
+      <v-tooltip location="top">
+        <template #activator="{ props }">
+          <span v-bind="props">{{
+            $filters.dateRelative(item.start_date)
+          }}</span>
+        </template>
+        {{ $filters.date(item.start_date) }}
+      </v-tooltip>
     </template>
     <template #[`item.end_date`]="{ item }">
       {{
@@ -58,7 +65,6 @@
         v-model="showRemoved"
         :label="$t('CodelistTermsView.show_removed')"
         hide-details
-        color="primary"
         @update:model-value="fetchTerms()"
       />
     </template>

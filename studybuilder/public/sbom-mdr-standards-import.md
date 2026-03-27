@@ -1,22 +1,22 @@
 
 ## Installed packages
 
-| Package            | Version  | License                               |
-|--------------------|----------|---------------------------------------|
-| certifi            | 2026.1.4 | [MPL-2.0](#certifi)                   |
-| charset-normalizer | 3.4.4    | [MIT](#charset-normalizer)            |
-| et_xmlfile         | 2.0.0    | [MIT](#et_xmlfile)                    |
-| idna               | 3.11     | [BSD-3-Clause](#idna)                 |
-| iniconfig          | 2.3.0    | [MIT](#iniconfig)                     |
-| neo4j              | 5.28.3   | [Apache License, Version 2.0](#neo4j) |
-| openpyxl           | 3.1.5    | [MIT](#openpyxl)                      |
-| packaging          | 25.0     | [see below](#packaging)               |
-| pluggy             | 1.6.0    | [MIT](#pluggy)                        |
-| Pygments           | 2.19.2   | [BSD-2-Clause](#pygments)             |
-| pytest             | 8.4.2    | [MIT](#pytest)                        |
-| pytz               | 2025.2   | [MIT](#pytz)                          |
-| requests           | 2.32.5   | [Apache-2.0](#requests)               |
-| urllib3            | 2.6.3    | [MIT](#urllib3)                       |
+| Package            | Version   | License                                  |
+|--------------------|-----------|------------------------------------------|
+| certifi            | 2026.2.25 | [MPL-2.0](#certifi)                      |
+| charset-normalizer | 3.4.4     | [MIT](#charset-normalizer)               |
+| et_xmlfile         | 2.0.0     | [MIT](#et_xmlfile)                       |
+| idna               | 3.11      | [BSD-3-Clause](#idna)                    |
+| iniconfig          | 2.3.0     | [MIT](#iniconfig)                        |
+| neo4j              | 5.28.3    | [Apache License, Version 2.0](#neo4j)    |
+| openpyxl           | 3.1.5     | [MIT](#openpyxl)                         |
+| packaging          | 26.0      | [Apache-2.0 OR BSD-2-Clause](#packaging) |
+| pluggy             | 1.6.0     | [MIT](#pluggy)                           |
+| Pygments           | 2.19.2    | [BSD-2-Clause](#pygments)                |
+| pytest             | 8.4.2     | [MIT](#pytest)                           |
+| pytz               | 2025.2    | [MIT](#pytz)                             |
+| requests           | 2.32.5    | [Apache-2.0](#requests)                  |
+| urllib3            | 2.6.3     | [MIT](#urllib3)                          |
 
 
 ## Third-party package licenses

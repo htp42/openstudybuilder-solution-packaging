@@ -12,7 +12,7 @@ This repository contains the OpenStudyBuilder API providing read/write access to
 
 ## Setup python virtual environment
 
-* Make sure Python 3.13 is installed on your machine.
+* Make sure the correct Python 3 version is installed on your machine.
 * Install a recent [Pipenv](https://pipenv.pypa.io/en/latest/) version, e.g. 2023.3.20 or later.
 * Run `pipenv sync --dev` from root folder to install the required python libraries.
 

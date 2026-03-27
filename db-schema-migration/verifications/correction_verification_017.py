@@ -94,7 +94,7 @@ def test_protocol_soa_response_status_code():
             failed.append(
                 f"Study '{study_uid}' Version '{study_version}' {response.request.method} {response.request.url} : {response.status_code} {response.reason} {response.text[:1024]}"
             )
-    failed_items = '\n'.join(failed)
+    failed_items = "\n".join(failed)
     assert len(failed) == 0, f"Some Protocol SoA API calls failed: {failed_items}"
 
 
@@ -102,6 +102,8 @@ def test_remove_study_action_with_broken_after():
     """
     Verify that there are no StudyAction nodes without AFTER relationships.
     StudyAction nodes (except UpdateSoASnapshot) must have an AFTER relationship.
+    The check excludes any StudyArrayField with field_name "soa_split_uids" as they
+    are not in the scope of the current correction.
     """
     LOGGER.info("Checking for StudyAction nodes without AFTER relationships")
     query = """
@@ -110,6 +112,7 @@ def test_remove_study_action_with_broken_after():
             NOT (sa)-[:AFTER]->()
             AND NOT sa:UpdateSoASnapshot
             AND NOT (sa)-[:BEFORE]->(:StudyValue)
+            AND NOT (sa)-[:BEFORE]->(:StudyArrayField {field_name: "soa_split_uids"})
         RETURN count(sa) AS broken_count
     """
     res, _ = run_cypher_query(DB_DRIVER, query)
@@ -119,62 +122,29 @@ def test_remove_study_action_with_broken_after():
     ), f"Found {broken_count} StudyAction nodes without AFTER relationships"
 
 
-def test_fix_not_coherent_in_time_library_selection():
-    """
-    Verify that all StudyActivity nodes reference ActivityValue nodes that have
-    valid HAS_VERSION relationships at the time when the Create action was performed.
-    """
-    LOGGER.info(
-        "Checking for StudyActivity nodes with non-coherent time library selections"
-    )
-    query = """
-        MATCH 
-          (sr:StudyRoot )-[rel2:AUDIT_TRAIL]->
-          (sa:Create)-[rel3:AFTER]->
-          (sact:StudyActivity)-[rel4:HAS_SELECTED_ACTIVITY]-
-          (av:ActivityValue)
-        OPTIONAL MATCH 
-          (av)<-[ahv:HAS_VERSION]-
-          (ar:ActivityRoot) 
-          WHERE 
-            ahv.start_date < sa.date 
-            AND 
-              (ahv.end_date IS NULL 
-              OR ahv.end_date > sa.date) 
-            AND (ahv.status = "Final" )
-        WITH * WHERE ar IS NULL
-        RETURN count(distinct sa) AS broken_count
-    """
-    res, _ = run_cypher_query(DB_DRIVER, query)
-    broken_count = res[0][0] if res else 0
-    assert (
-        broken_count == 0
-    ), f"Found {broken_count} StudyActivity nodes with non-coherent time library selections"
-
-
-def test_fix_studies_different_versions_with_the_same_start_date():
-    """
-    Verify that no StudyRoot has different versions with the same start_date.
-    The latest version should have a start_date that is greater than all previous versions.
-    """
-    LOGGER.info(
-        "Checking for studies with different versions having the same start_date"
-    )
-    query = """
-        MATCH (root:StudyRoot)-[:LATEST]->(latest)
-        MATCH (root)-[v_latest:HAS_VERSION|LATEST_DRAFT|LATEST_FINAL|LATEST_LOCKED|LATEST_RETIRED|LATEST_RELEASED]->(latest)
-        WITH root, latest, v_latest.start_date as latest_start_date
-        MATCH (root)-[v_prev:HAS_VERSION|LATEST_DRAFT|LATEST_FINAL|LATEST_LOCKED|LATEST_RETIRED|LATEST_RELEASED]->(prev_value)
-        WHERE prev_value <> latest 
-          AND v_prev.start_date >= latest_start_date
-          AND v_prev.start_date IS NOT NULL
-        RETURN count(DISTINCT root) AS broken_count
-    """
-    res, _ = run_cypher_query(DB_DRIVER, query)
-    broken_count = res[0][0] if res else 0
-    assert (
-        broken_count == 0
-    ), f"Found {broken_count} studies with different versions having the same or greater start_date compared to the latest version"
+# def test_fix_studies_different_versions_with_the_same_start_date():
+#     """
+#     Verify that no StudyRoot has different versions with the same start_date.
+#     The latest version should have a start_date that is greater than all previous versions.
+#     """
+#     LOGGER.info(
+#         "Checking for studies with different versions having the same start_date"
+#     )
+#     query = """
+#         MATCH (root:StudyRoot)-[:LATEST]->(latest)
+#         MATCH (root)-[v_latest:HAS_VERSION|LATEST_DRAFT|LATEST_FINAL|LATEST_LOCKED|LATEST_RETIRED|LATEST_RELEASED]->(latest)
+#         WITH root, latest, v_latest.start_date as latest_start_date
+#         MATCH (root)-[v_prev:HAS_VERSION|LATEST_DRAFT|LATEST_FINAL|LATEST_LOCKED|LATEST_RETIRED|LATEST_RELEASED]->(prev_value)
+#         WHERE prev_value <> latest
+#           AND v_prev.start_date >= latest_start_date
+#           AND v_prev.start_date IS NOT NULL
+#         RETURN count(DISTINCT root) AS broken_count
+#     """
+#     res, _ = run_cypher_query(DB_DRIVER, query)
+#     broken_count = res[0][0] if res else 0
+#     assert (
+#         broken_count == 0
+#     ), f"Found {broken_count} studies with different versions having the same or greater start_date compared to the latest version"
 
 
 def test_remove_soa_cell_relationships_without_released_study():

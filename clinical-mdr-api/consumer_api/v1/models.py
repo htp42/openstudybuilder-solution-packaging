@@ -124,6 +124,10 @@ class Study(BaseModel):
         Field(description="Study acronym", json_schema_extra={"nullable": True}),
     ] = None
     versions: Annotated[list[StudyVersion], Field(description="Study versions")]
+    data_completeness_tags: list[str] = Field(
+        description="List of data completeness tag names assigned to the study.",
+        default_factory=list,
+    )
 
     @classmethod
     def from_input(cls, val: dict[str, Any]):
@@ -138,6 +142,7 @@ class Study(BaseModel):
                 Study.StudyVersion.from_input(version)
                 for version in val.get("versions", [])
             ],
+            data_completeness_tags=val.get("data_completeness_tags", []),
         )
 
 

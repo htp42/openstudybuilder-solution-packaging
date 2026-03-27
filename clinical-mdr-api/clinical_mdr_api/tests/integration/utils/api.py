@@ -8,7 +8,7 @@ from unittest import TestCase
 from urllib.parse import urljoin
 
 import neo4j.exceptions
-from neomodel.sync_.core import db
+from neomodel import db
 from requests.structures import CaseInsensitiveDict
 from starlette.testclient import TestClient
 

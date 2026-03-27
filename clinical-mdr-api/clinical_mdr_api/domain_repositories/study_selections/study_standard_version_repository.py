@@ -1,7 +1,7 @@
 from typing import Any, Sequence, TypeVar
 
 from neomodel import Q
-from neomodel.sync_.match import Optional
+from neomodel.sync_.match import Path
 
 from clinical_mdr_api.domain_repositories.generic_repository import (
     _manage_versioning_with_relations,
@@ -66,7 +66,7 @@ class StudyStandardVersionRepository:
         start: int = (page_number - 1) * page_size
         end: int = start + page_size
         nodes = ListDistinct(
-            StudyStandardVersion.nodes.fetch_relations(
+            StudyStandardVersion.nodes.traverse(
                 "has_after__audit_trail",
                 "has_ct_package",
             )
@@ -121,7 +121,7 @@ class StudyStandardVersionRepository:
         standard_versions = [
             StudyStandardVersionOGM.model_validate(sas_node)
             for sas_node in ListDistinct(
-                StudyStandardVersion.nodes.fetch_relations(
+                StudyStandardVersion.nodes.traverse(
                     "has_after__audit_trail",
                     "has_ct_package",
                 )
@@ -150,7 +150,7 @@ class StudyStandardVersionRepository:
                 "uid": study_standard_version_uid,
             }
         standard_version_node = ListDistinct(
-            StudyStandardVersion.nodes.fetch_relations(
+            StudyStandardVersion.nodes.traverse(
                 "has_after__audit_trail",
                 "has_ct_package",
             )
@@ -173,8 +173,10 @@ class StudyStandardVersionRepository:
         return sorted(
             [
                 StudyStandardVersionOGMVer.model_validate(se_node)
-                for se_node in StudyStandardVersion.nodes.fetch_relations(
-                    "has_after__audit_trail", "has_ct_package", Optional("has_before")
+                for se_node in StudyStandardVersion.nodes.traverse(
+                    "has_after__audit_trail",
+                    "has_ct_package",
+                    Path(value="has_before", optional=True),
                 )
                 .filter(uid=uid, has_after__audit_trail__uid=study_uid)
                 .resolve_subgraph()
@@ -188,8 +190,10 @@ class StudyStandardVersionRepository:
         return sorted(
             [
                 StudyStandardVersionOGMVer.model_validate(se_node)
-                for se_node in StudyStandardVersion.nodes.fetch_relations(
-                    "has_after__audit_trail", "has_ct_package", Optional("has_before")
+                for se_node in StudyStandardVersion.nodes.traverse(
+                    "has_after__audit_trail",
+                    "has_ct_package",
+                    Path(value="has_before", optional=True),
                 )
                 .filter(has_after__audit_trail__uid=study_uid)
                 .order_by("has_after__audit_trail.date")

@@ -1,5 +1,5 @@
 ARG NEO4J_IMAGE=neo4j:enterprise
-ARG PYTHON_IMAGE=python:3.13.0-slim
+ARG PYTHON_IMAGE=python:3.14-slim
 
 # --- Build stage ----
 # Runs on native platform to avoid QEMU emulation issues with Neo4j/Java/Python
@@ -22,6 +22,11 @@ RUN apt-get update \
     libpango-1.0-0 \
     libharfbuzz0b \
     libpangoft2-1.0-0 \
+    libffi-dev \
+    zlib1g-dev \
+    libxml2-dev \
+    libxslt-dev \
+    build-essential \
     jq \
     gcc \
     net-tools \ 

@@ -20,7 +20,6 @@
               item-title="sponsor_preferred_name"
               item-value="term_uid"
               return-object
-              density="compact"
               clearable
             />
           </v-col>
@@ -54,7 +53,6 @@
               item-title="sponsor_preferred_name"
               item-value="term_uid"
               return-object
-              density="compact"
               clearable
             />
           </v-col>
@@ -69,7 +67,6 @@
               item-title="sponsor_preferred_name"
               item-value="term_uid"
               return-object
-              density="compact"
               clearable
             />
           </v-col>
@@ -100,7 +97,6 @@
               item-title="sponsor_preferred_name"
               item-value="term_uid"
               return-object
-              density="compact"
               clearable
             />
           </v-col>
@@ -115,7 +111,6 @@
               :data-cy="$t('StudyInterventionTypeForm.strfactor')"
               :label="$t('StudyInterventionTypeForm.strfactor')"
               :disabled="notApplicable"
-              density="compact"
               clearable
             />
           </template>

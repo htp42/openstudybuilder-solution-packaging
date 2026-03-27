@@ -17,12 +17,10 @@ class TestUIDAssignment(unittest.TestCase):
 
     @db.transaction
     def get_all_nodes_by_label(self, label):
-        return db.cypher_query(
-            f"""
+        return db.cypher_query(f"""
         MATCH (n:{label})
         RETURN n.uid
-        """
-        )
+        """)
 
     @db.transaction
     def create_some_nodes_with_neomodel(self):

@@ -72,7 +72,6 @@ const $config = inject('$config')
 const { ENABLE_SCREEN_RECORDER } = $config
 
 const breadcrumbs = computed(() => appStore.breadcrumbs)
-const userData = computed(() => appStore.userData)
 const userInfo = computed(() => authStore.userInfo)
 const displayWelcomeMsg = computed(() => authStore.displayWelcomeMsg)
 const systemAnnouncement = computed(() => appStore.systemAnnouncement)
@@ -100,9 +99,7 @@ watch(
 
 onMounted(async () => {
   appStore.initialize()
-  theme.global.name.value = userData.value.darkTheme
-    ? 'dark'
-    : 'NNCustomLightTheme'
+  theme.change('NNCustomLightTheme')
   authStore.initialize()
   const resp = await notifications.getActive()
   if (resp.data.length) {

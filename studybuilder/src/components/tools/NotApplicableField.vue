@@ -1,13 +1,14 @@
 <template>
   <label v-if="label" class="v-label">{{ label }}</label>
-  <v-row class="align-center">
+  <v-row class="align-start">
     <v-col cols="10">
       <slot name="mainField" :not-applicable="notApplicable" />
     </v-col>
-    <v-col cols="2">
+    <v-col cols="2" class="d-flex align-start justify-end">
       <v-checkbox
         v-model="notApplicable"
         color="nnBaseBlue"
+        class="align-self-start"
         data-cy="not-applicable-checkbox"
         :label="naLabel"
         hide-details

@@ -14,7 +14,6 @@
             <v-text-field
               v-model="form.library_name"
               :label="$t('_global.library')"
-              density="compact"
               disabled
             />
           </v-col>
@@ -48,7 +47,6 @@
                     item-title="name"
                     item-value="uid"
                     :rules="[formRules.required]"
-                    density="compact"
                     clearable
                   />
                 </div>
@@ -62,7 +60,6 @@
                     :items="activitiesStore.activitySubGroups"
                     item-title="name"
                     item-value="uid"
-                    density="compact"
                     clearable
                     :rules="[formRules.required]"
                   />
@@ -87,7 +84,6 @@
               :label="$t('ActivityForms.activity_name')"
               data-cy="activityform-activity-name-field"
               :rules="[formRules.required]"
-              density="compact"
               clearable
             />
           </v-col>
@@ -102,7 +98,6 @@
               v-model="form.nci_concept_id"
               :label="$t('ActivityForms.nci_concept_id')"
               data-cy="activityform-nci-concept-id-field"
-              density="compact"
               clearable
             />
           </v-col>
@@ -139,7 +134,6 @@
             <v-checkbox
               v-model="form.is_data_collected"
               :label="$t('ActivityForms.is_data_collected')"
-              color="primary"
               data-cy="activityform-datacollection-checkbox"
             />
           </v-col>
@@ -147,7 +141,6 @@
             <v-checkbox
               v-model="form.is_multiple_selection_allowed"
               :label="$t('ActivityForms.multiple_instances')"
-              color="primary"
               data-cy="activityform-multipleselection-checkbox"
             />
           </v-col>
@@ -159,7 +152,6 @@
               :label="$t('ActivityForms.abbreviation')"
               data-cy="activityform-abbreviation-field"
               :error-messages="errors"
-              density="compact"
               clearable
             />
           </v-col>
@@ -170,7 +162,6 @@
               v-model="form.definition"
               :label="$t('ActivityForms.definition')"
               data-cy="activityform-definition-field"
-              density="compact"
               clearable
               auto-grow
               rows="1"
@@ -184,7 +175,6 @@
             }}</label>
             <v-textarea
               v-model="form.change_description"
-              density="compact"
               :rules="[formRules.required]"
               clearable
               auto-grow

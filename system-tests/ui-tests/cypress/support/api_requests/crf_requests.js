@@ -1,12 +1,12 @@
-const odmsStudyEventsUrl = '/concepts/odms/study-events'
-const odmsFormsUrl = '/concepts/odms/forms'
-const odmsItemUrl = '/concepts/odms/items'
-const odmItemGroupUrl = '/concepts/odms/item-groups'
-const odmLinkFormToCollectionUrl = (collectionUid) => `/concepts/odms/study-events/${collectionUid}/forms?override=true`
-const odmLinkGroupToFormUrl = (formUid) => `/concepts/odms/forms/${formUid}/item-groups?override=true`
-const odmLinkItemToGroupUrl = (itemGroupUid) => `/concepts/odms/item-groups/${itemGroupUid}/items?override=true`
-const odmApproveFormUrl = (formUid) => `/concepts/odms/forms/${formUid}/approvals`
-const odmApproveCollectionUrl = (collectionUid) => `/concepts/odms/study-events/${collectionUid}/approvals`
+const odmsStudyEventsUrl = '/odms/study-events'
+const odmsFormsUrl = '/odms/forms'
+const odmsItemUrl = '/odms/items'
+const odmItemGroupUrl = '/odms/item-groups'
+const odmLinkFormToCollectionUrl = (collectionUid) => `/odms/study-events/${collectionUid}/forms?override=true`
+const odmLinkGroupToFormUrl = (formUid) => `/odms/forms/${formUid}/item-groups?override=true`
+const odmLinkItemToGroupUrl = (itemGroupUid) => `/odms/item-groups/${itemGroupUid}/items?override=true`
+const odmApproveFormUrl = (formUid) => `/odms/forms/${formUid}/approvals`
+const odmApproveCollectionUrl = (collectionUid) => `/odms/study-events/${collectionUid}/approvals`
 
 Cypress.Commands.add('createCrfCollection', (name) => { return cy.sendPostRequest(odmsStudyEventsUrl, {name:`${name}`}) })
 

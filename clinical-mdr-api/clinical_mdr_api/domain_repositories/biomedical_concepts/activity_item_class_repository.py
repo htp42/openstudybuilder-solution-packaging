@@ -753,13 +753,10 @@ class ActivityItemClassRepository(ConceptGenericRepository[ActivityItemClassAR])
             query += "\n                SKIP $skip LIMIT $limit"
 
         # Build final query
-        final_query = (
-            query
-            + """
+        final_query = query + """
                 RETURN uid, name, adam_param_specific_enabled, is_additional_optional, is_default_linked, mandatory,
                        status, version, modified_date, modified_by
             """
-        )
 
         params: dict[str, Any] = {"uid": activity_item_class_uid}
         if version:

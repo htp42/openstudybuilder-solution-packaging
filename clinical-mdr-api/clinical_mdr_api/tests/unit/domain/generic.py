@@ -79,18 +79,16 @@ class ClinicalMdrNodeWithUID(ClinicalMdrNode):
         object_name = cls.__name__.removesuffix("Root")
 
         return str(
-            db.cypher_query(
-                """
+            db.cypher_query("""
         MERGE (m:Counter{{counterId:'{LABEL}Counter'}})
         ON CREATE SET m:{LABEL}Counter, m.count=0
         WITH m
         CALL apoc.atomic.add(m,'count',1,1) yield oldValue, newValue
         WITH newValue(newValue) as uid_number
         RETURN "{LABEL}_"+apoc.text.lpad(""+(uid_number), {number_of_digits}, "0")
-        """.format(
-                    LABEL=object_name, number_of_digits=settings.number_of_uid_digits
-                )
-            )[0][0][0]
+        """.format(LABEL=object_name, number_of_digits=settings.number_of_uid_digits))[
+                0
+            ][0][0]
         )
 
     @classmethod
@@ -144,17 +142,13 @@ class ClinicalMdrNodeWithUID(ClinicalMdrNode):
                 else type(self).__name__
             )
 
-            new_uid = db.cypher_query(
-                """
+            new_uid = db.cypher_query("""
             MERGE (m:Counter{{counterId:'{LABEL}Counter'}})
             ON CREATE SET m:{LABEL}Counter, m.count=1
             ON MATCH SET m.count = m.count + 1
             WITH m
             RETURN m.count as number
-            """.format(
-                    LABEL=object_name
-                )
-            )[0][0][0]
+            """.format(LABEL=object_name))[0][0][0]
             self.uid = (
                 str(object_name)
                 + "_"

@@ -20,7 +20,14 @@
       <NNParameterHighlighter :name="item.name" default-color="orange" />
     </template>
     <template #[`item.start_date`]="{ item }">
-      {{ $filters.date(item.start_date) }}
+      <v-tooltip location="top">
+        <template #activator="{ props }">
+          <span v-bind="props">{{
+            $filters.dateRelative(item.start_date)
+          }}</span>
+        </template>
+        {{ $filters.date(item.start_date) }}
+      </v-tooltip>
     </template>
     <template #[`item.status`]="{ item }">
       <StatusChip :status="item.status" />

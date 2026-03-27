@@ -110,7 +110,6 @@
                             selectedStudyVersion !== null
                           "
                           class="flex-grow-0"
-                          color="primary"
                           @change="
                             (event) =>
                               toggleSubgroupActivitiesSelection(
@@ -153,7 +152,6 @@
                               selectedStudyVersion !== null
                             "
                             class="flex-grow-0"
-                            color="primary"
                             @change="
                               (event) =>
                                 toggleActivitySelection(studyActivity, event)

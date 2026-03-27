@@ -15,17 +15,13 @@ import pytest
 from fastapi.testclient import TestClient
 
 from clinical_mdr_api.main import app
-from clinical_mdr_api.models.concepts.odms.odm_form import OdmForm
-from clinical_mdr_api.models.concepts.odms.odm_item import OdmItem
-from clinical_mdr_api.models.concepts.odms.odm_item_group import OdmItemGroup
-from clinical_mdr_api.models.concepts.odms.odm_study_event import OdmStudyEvent
-from clinical_mdr_api.models.concepts.odms.odm_vendor_attribute import (
-    OdmVendorAttribute,
-)
-from clinical_mdr_api.models.concepts.odms.odm_vendor_element import OdmVendorElement
-from clinical_mdr_api.models.concepts.odms.odm_vendor_namespace import (
-    OdmVendorNamespace,
-)
+from clinical_mdr_api.models.odms.form import OdmForm
+from clinical_mdr_api.models.odms.item import OdmItem
+from clinical_mdr_api.models.odms.item_group import OdmItemGroup
+from clinical_mdr_api.models.odms.study_event import OdmStudyEvent
+from clinical_mdr_api.models.odms.vendor_attribute import OdmVendorAttribute
+from clinical_mdr_api.models.odms.vendor_element import OdmVendorElement
+from clinical_mdr_api.models.odms.vendor_namespace import OdmVendorNamespace
 from clinical_mdr_api.tests.integration.utils.api import (
     inject_and_clear_db,
     inject_base_data,
@@ -44,7 +40,7 @@ vendor_namespace: OdmVendorNamespace
 vendor_elements: list[OdmVendorElement]
 vendor_attributes: list[OdmVendorAttribute]
 
-URL = "concepts/odms"
+URL = "odms"
 
 
 @pytest.fixture(scope="module")
@@ -185,9 +181,7 @@ def test_add_odm_forms_to_odm_study_event(api_client):
         },
     ]
 
-    response = api_client.post(
-        f"concepts/odms/study-events/{study_event.uid}/forms", json=data
-    )
+    response = api_client.post(f"odms/study-events/{study_event.uid}/forms", json=data)
     assert_response_status_code(response, 201)
     res = response.json()
     assert res["uid"] == "OdmStudyEvent_000001"
@@ -235,9 +229,7 @@ def test_add_odm_item_groups_odm_forms(api_client):
         },
     ]
 
-    response = api_client.post(
-        f"concepts/odms/forms/{forms[0].uid}/item-groups", json=data
-    )
+    response = api_client.post(f"odms/forms/{forms[0].uid}/item-groups", json=data)
     assert_response_status_code(response, 201)
     res = response.json()
     assert res["uid"] == "OdmForm_000001"
@@ -266,9 +258,7 @@ def test_add_odm_item_groups_odm_forms(api_client):
         },
     ]
 
-    response = api_client.post(
-        f"concepts/odms/forms/{forms[1].uid}/item-groups", json=data
-    )
+    response = api_client.post(f"odms/forms/{forms[1].uid}/item-groups", json=data)
     assert_response_status_code(response, 201)
     res = response.json()
     assert res["uid"] == "OdmForm_000002"
@@ -300,7 +290,7 @@ def test_add_odm_item_groups_odm_forms(api_client):
 
 def test_add_odm_items_to_odm_item_group(api_client):
     response = api_client.post(
-        f"concepts/odms/item-groups/{item_groups[0].uid}/items",
+        f"odms/item-groups/{item_groups[0].uid}/items",
         json=[
             {
                 "uid": items[0].uid,
@@ -340,7 +330,7 @@ def test_add_odm_items_to_odm_item_group(api_client):
     ]
 
     response = api_client.post(
-        f"concepts/odms/item-groups/{item_groups[1].uid}/items",
+        f"odms/item-groups/{item_groups[1].uid}/items",
         json=[
             {
                 "uid": items[1].uid,
@@ -381,9 +371,7 @@ def test_add_odm_items_to_odm_item_group(api_client):
 
 
 def test_approve_study_event_with_cascade_effect(api_client):
-    response = api_client.post(
-        f"concepts/odms/study-events/{study_event.uid}/approvals"
-    )
+    response = api_client.post(f"odms/study-events/{study_event.uid}/approvals")
     assert_response_status_code(response, 201)
     res = response.json()
     assert res["uid"] == "OdmStudyEvent_000001"
@@ -412,7 +400,7 @@ def test_approve_study_event_with_cascade_effect(api_client):
         },
     ]
 
-    response = api_client.get(f"concepts/odms/study-events/{study_event.uid}")
+    response = api_client.get(f"odms/study-events/{study_event.uid}")
     assert_response_status_code(response, 200)
     res = response.json()
     assert res["uid"] == "OdmStudyEvent_000001"
@@ -441,7 +429,7 @@ def test_approve_study_event_with_cascade_effect(api_client):
         },
     ]
 
-    response = api_client.get(f"concepts/odms/forms/{forms[0].uid}")
+    response = api_client.get(f"odms/forms/{forms[0].uid}")
     assert_response_status_code(response, 200)
     res = response.json()
     assert res["uid"] == "OdmForm_000001"
@@ -470,7 +458,7 @@ def test_approve_study_event_with_cascade_effect(api_client):
         },
     ]
 
-    response = api_client.get(f"concepts/odms/forms/{forms[1].uid}")
+    response = api_client.get(f"odms/forms/{forms[1].uid}")
     assert_response_status_code(response, 200)
     res = response.json()
     assert res["uid"] == "OdmForm_000002"
@@ -499,7 +487,7 @@ def test_approve_study_event_with_cascade_effect(api_client):
         },
     ]
 
-    response = api_client.get(f"concepts/odms/item-groups/{item_groups[0].uid}")
+    response = api_client.get(f"odms/item-groups/{item_groups[0].uid}")
     assert_response_status_code(response, 200)
     res = response.json()
     assert res["uid"] == "OdmItemGroup_000001"
@@ -523,7 +511,7 @@ def test_approve_study_event_with_cascade_effect(api_client):
         },
     ]
 
-    response = api_client.get(f"concepts/odms/item-groups/{item_groups[1].uid}")
+    response = api_client.get(f"odms/item-groups/{item_groups[1].uid}")
     assert_response_status_code(response, 200)
     res = response.json()
     assert res["uid"] == "OdmItemGroup_000002"
@@ -551,14 +539,14 @@ def test_approve_study_event_with_cascade_effect(api_client):
 def test_perseverance_of_final_versions_relationship_between_item_group_and_item(
     api_client,
 ):
-    response = api_client.post(f"concepts/odms/items/{items[0].uid}/versions")
+    response = api_client.post(f"odms/items/{items[0].uid}/versions")
     assert_response_status_code(response, 201)
     res = response.json()
     assert res["uid"] == "OdmItem_000001"
     assert res["status"] == "Draft"
     assert res["version"] == "1.1"
 
-    response = api_client.get(f"concepts/odms/item-groups/{item_groups[0].uid}")
+    response = api_client.get(f"odms/item-groups/{item_groups[0].uid}")
     assert_response_status_code(response, 200)
     res = response.json()
     assert res["uid"] == "OdmItemGroup_000001"
@@ -586,9 +574,7 @@ def test_perseverance_of_final_versions_relationship_between_item_group_and_item
 def test_perseverance_of_final_versions_relationship_between_form_and_item_group(
     api_client,
 ):
-    response = api_client.post(
-        f"concepts/odms/item-groups/{item_groups[0].uid}/versions"
-    )
+    response = api_client.post(f"odms/item-groups/{item_groups[0].uid}/versions")
     assert_response_status_code(response, 201)
     res = response.json()
     assert res["uid"] == "OdmItemGroup_000001"
@@ -612,7 +598,7 @@ def test_perseverance_of_final_versions_relationship_between_form_and_item_group
         },
     ]
 
-    response = api_client.get(f"concepts/odms/forms/{forms[0].uid}")
+    response = api_client.get(f"odms/forms/{forms[0].uid}")
     assert_response_status_code(response, 200)
     res = response.json()
     assert res["uid"] == "OdmForm_000001"
@@ -645,7 +631,7 @@ def test_perseverance_of_final_versions_relationship_between_form_and_item_group
 def test_perseverance_of_final_versions_relationship_between_study_event_and_form(
     api_client,
 ):
-    response = api_client.post(f"concepts/odms/forms/{forms[0].uid}/versions")
+    response = api_client.post(f"odms/forms/{forms[0].uid}/versions")
     assert_response_status_code(response, 201)
     res = response.json()
     assert res["uid"] == "OdmForm_000001"
@@ -674,7 +660,7 @@ def test_perseverance_of_final_versions_relationship_between_study_event_and_for
         },
     ]
 
-    response = api_client.get(f"concepts/odms/study-events/{study_event.uid}")
+    response = api_client.get(f"odms/study-events/{study_event.uid}")
     assert_response_status_code(response, 200)
     res = response.json()
     assert res["uid"] == "OdmStudyEvent_000001"
@@ -705,7 +691,7 @@ def test_perseverance_of_final_versions_relationship_between_study_event_and_for
 
 
 def test_latest_perseverance_of_relationship_based_on_latest_versions(api_client):
-    response = api_client.get(f"concepts/odms/study-events/{study_event.uid}")
+    response = api_client.get(f"odms/study-events/{study_event.uid}")
     assert_response_status_code(response, 200)
     res = response.json()
     assert res["uid"] == "OdmStudyEvent_000001"
@@ -734,7 +720,7 @@ def test_latest_perseverance_of_relationship_based_on_latest_versions(api_client
         },
     ]
 
-    response = api_client.get(f"concepts/odms/forms/{forms[0].uid}")
+    response = api_client.get(f"odms/forms/{forms[0].uid}")
     assert_response_status_code(response, 200)
     res = response.json()
     assert res["uid"] == "OdmForm_000001"
@@ -763,7 +749,7 @@ def test_latest_perseverance_of_relationship_based_on_latest_versions(api_client
         },
     ]
 
-    response = api_client.get(f"concepts/odms/item-groups/{item_groups[0].uid}")
+    response = api_client.get(f"odms/item-groups/{item_groups[0].uid}")
     assert_response_status_code(response, 200)
     res = response.json()
     assert res["uid"] == "OdmItemGroup_000001"
@@ -789,7 +775,7 @@ def test_latest_perseverance_of_relationship_based_on_latest_versions(api_client
 
 
 def test_latest_perseverance_of_relationship_based_on_specific_versions(api_client):
-    response = api_client.get(f"concepts/odms/study-events/{study_event.uid}")
+    response = api_client.get(f"odms/study-events/{study_event.uid}")
     assert_response_status_code(response, 200)
     res = response.json()
     assert res["uid"] == "OdmStudyEvent_000001"
@@ -818,7 +804,7 @@ def test_latest_perseverance_of_relationship_based_on_specific_versions(api_clie
         },
     ]
 
-    response = api_client.get(f"concepts/odms/forms/{forms[0].uid}?version=1.0")
+    response = api_client.get(f"odms/forms/{forms[0].uid}?version=1.0")
     assert_response_status_code(response, 200)
     res = response.json()
     assert res["uid"] == "OdmForm_000001"
@@ -847,9 +833,7 @@ def test_latest_perseverance_of_relationship_based_on_specific_versions(api_clie
         },
     ]
 
-    response = api_client.get(
-        f"concepts/odms/item-groups/{item_groups[0].uid}?version=1.0"
-    )
+    response = api_client.get(f"odms/item-groups/{item_groups[0].uid}?version=1.0")
     assert_response_status_code(response, 200)
     res = response.json()
     assert res["uid"] == "OdmItemGroup_000001"
@@ -876,7 +860,7 @@ def test_latest_perseverance_of_relationship_based_on_specific_versions(api_clie
 
 def test_add_odm_vendor_element_to_odm_form(api_client):
     response = api_client.patch(
-        f"concepts/odms/forms/{forms[0].uid}",
+        f"odms/forms/{forms[0].uid}",
         json={
             "name": forms[0].name,
             "oid": forms[0].oid,
@@ -896,7 +880,7 @@ def test_add_odm_vendor_element_to_odm_form(api_client):
         {"uid": "OdmVendorElement_000001", "name": "VEF", "value": "value1"}
     ]
 
-    response = api_client.get(f"concepts/odms/forms/{forms[0].uid}")
+    response = api_client.get(f"odms/forms/{forms[0].uid}")
     assert_response_status_code(response, 200)
     res = response.json()
     assert res["vendor_elements"] == [
@@ -904,7 +888,7 @@ def test_add_odm_vendor_element_to_odm_form(api_client):
     ]
 
     response = api_client.patch(
-        "concepts/odms/vendor-elements/OdmVendorElement_000001",
+        "odms/vendor-elements/OdmVendorElement_000001",
         json={
             "name": "VEFNew",
             "compatible_types": ["FormDef"],
@@ -913,7 +897,7 @@ def test_add_odm_vendor_element_to_odm_form(api_client):
     )
     assert_response_status_code(response, 200)
 
-    response = api_client.get(f"concepts/odms/forms/{forms[0].uid}")
+    response = api_client.get(f"odms/forms/{forms[0].uid}")
     assert_response_status_code(response, 200)
     res = response.json()
     assert res["vendor_elements"] == [
@@ -923,7 +907,7 @@ def test_add_odm_vendor_element_to_odm_form(api_client):
 
 def test_add_odm_vendor_element_to_odm_item_group(api_client):
     response = api_client.patch(
-        f"concepts/odms/item-groups/{item_groups[0].uid}",
+        f"odms/item-groups/{item_groups[0].uid}",
         json={
             "name": item_groups[0].name,
             "oid": item_groups[0].oid,
@@ -948,7 +932,7 @@ def test_add_odm_vendor_element_to_odm_item_group(api_client):
         {"uid": "OdmVendorElement_000002", "name": "VEIG", "value": "value1"}
     ]
 
-    response = api_client.get(f"concepts/odms/item-groups/{item_groups[0].uid}")
+    response = api_client.get(f"odms/item-groups/{item_groups[0].uid}")
     assert_response_status_code(response, 200)
     res = response.json()
     assert res["vendor_elements"] == [
@@ -956,7 +940,7 @@ def test_add_odm_vendor_element_to_odm_item_group(api_client):
     ]
 
     response = api_client.patch(
-        "concepts/odms/vendor-elements/OdmVendorElement_000002",
+        "odms/vendor-elements/OdmVendorElement_000002",
         json={
             "name": "VEIGNew",
             "compatible_types": ["ItemDef"],
@@ -965,7 +949,7 @@ def test_add_odm_vendor_element_to_odm_item_group(api_client):
     )
     assert_response_status_code(response, 200)
 
-    response = api_client.get(f"concepts/odms/item-groups/{item_groups[0].uid}")
+    response = api_client.get(f"odms/item-groups/{item_groups[0].uid}")
     assert_response_status_code(response, 200)
     res = response.json()
     assert res["vendor_elements"] == [
@@ -975,7 +959,7 @@ def test_add_odm_vendor_element_to_odm_item_group(api_client):
 
 def test_add_odm_vendor_element_to_odm_item(api_client):
     response = api_client.patch(
-        f"concepts/odms/items/{items[0].uid}",
+        f"odms/items/{items[0].uid}",
         json={
             "name": items[0].name,
             "oid": items[0].oid,
@@ -1004,7 +988,7 @@ def test_add_odm_vendor_element_to_odm_item(api_client):
         {"uid": "OdmVendorElement_000003", "name": "VEI", "value": "value1"}
     ]
 
-    response = api_client.get(f"concepts/odms/items/{items[0].uid}")
+    response = api_client.get(f"odms/items/{items[0].uid}")
     assert_response_status_code(response, 200)
     res = response.json()
     assert res["vendor_elements"] == [
@@ -1012,7 +996,7 @@ def test_add_odm_vendor_element_to_odm_item(api_client):
     ]
 
     response = api_client.patch(
-        "concepts/odms/vendor-elements/OdmVendorElement_000003",
+        "odms/vendor-elements/OdmVendorElement_000003",
         json={
             "name": "VEINew",
             "compatible_types": ["ItemDef"],
@@ -1021,7 +1005,7 @@ def test_add_odm_vendor_element_to_odm_item(api_client):
     )
     assert_response_status_code(response, 200)
 
-    response = api_client.get(f"concepts/odms/items/{items[0].uid}")
+    response = api_client.get(f"odms/items/{items[0].uid}")
     assert_response_status_code(response, 200)
     res = response.json()
     assert res["vendor_elements"] == [
@@ -1031,7 +1015,7 @@ def test_add_odm_vendor_element_to_odm_item(api_client):
 
 def test_add_odm_vendor_attribute_to_odm_form(api_client):
     response = api_client.patch(
-        f"concepts/odms/forms/{forms[0].uid}",
+        f"odms/forms/{forms[0].uid}",
         json={
             "name": forms[0].name,
             "oid": forms[0].oid,
@@ -1058,7 +1042,7 @@ def test_add_odm_vendor_attribute_to_odm_form(api_client):
         }
     ]
 
-    response = api_client.get(f"concepts/odms/forms/{forms[0].uid}")
+    response = api_client.get(f"odms/forms/{forms[0].uid}")
     assert_response_status_code(response, 200)
     res = response.json()
     assert res["vendor_attributes"] == [
@@ -1073,7 +1057,7 @@ def test_add_odm_vendor_attribute_to_odm_form(api_client):
     ]
 
     response = api_client.patch(
-        "concepts/odms/vendor-attributes/OdmVendorAttribute_000001",
+        "odms/vendor-attributes/OdmVendorAttribute_000001",
         json={
             "name": "vAFNew",
             "compatible_types": ["FormDef"],
@@ -1084,7 +1068,7 @@ def test_add_odm_vendor_attribute_to_odm_form(api_client):
     )
     assert_response_status_code(response, 200)
 
-    response = api_client.get(f"concepts/odms/forms/{forms[0].uid}")
+    response = api_client.get(f"odms/forms/{forms[0].uid}")
     assert_response_status_code(response, 200)
     res = response.json()
     assert res["vendor_attributes"] == [
@@ -1101,7 +1085,7 @@ def test_add_odm_vendor_attribute_to_odm_form(api_client):
 
 def test_add_odm_vendor_attribute_to_odm_item_group(api_client):
     response = api_client.patch(
-        f"concepts/odms/item-groups/{item_groups[0].uid}",
+        f"odms/item-groups/{item_groups[0].uid}",
         json={
             "name": item_groups[0].name,
             "oid": item_groups[0].oid,
@@ -1133,7 +1117,7 @@ def test_add_odm_vendor_attribute_to_odm_item_group(api_client):
         }
     ]
 
-    response = api_client.get(f"concepts/odms/item-groups/{item_groups[0].uid}")
+    response = api_client.get(f"odms/item-groups/{item_groups[0].uid}")
     assert_response_status_code(response, 200)
     res = response.json()
     assert res["vendor_attributes"] == [
@@ -1148,7 +1132,7 @@ def test_add_odm_vendor_attribute_to_odm_item_group(api_client):
     ]
 
     response = api_client.patch(
-        "concepts/odms/vendor-attributes/OdmVendorAttribute_000002",
+        "odms/vendor-attributes/OdmVendorAttribute_000002",
         json={
             "name": "vAIGNew",
             "compatible_types": ["ItemDef"],
@@ -1159,7 +1143,7 @@ def test_add_odm_vendor_attribute_to_odm_item_group(api_client):
     )
     assert_response_status_code(response, 200)
 
-    response = api_client.get(f"concepts/odms/item-groups/{item_groups[0].uid}")
+    response = api_client.get(f"odms/item-groups/{item_groups[0].uid}")
     assert_response_status_code(response, 200)
     res = response.json()
     assert res["vendor_attributes"] == [
@@ -1176,7 +1160,7 @@ def test_add_odm_vendor_attribute_to_odm_item_group(api_client):
 
 def test_add_odm_vendor_attribute_to_odm_item(api_client):
     response = api_client.patch(
-        f"concepts/odms/items/{items[0].uid}",
+        f"odms/items/{items[0].uid}",
         json={
             "name": items[0].name,
             "oid": items[0].oid,
@@ -1212,7 +1196,7 @@ def test_add_odm_vendor_attribute_to_odm_item(api_client):
         }
     ]
 
-    response = api_client.get(f"concepts/odms/items/{items[0].uid}")
+    response = api_client.get(f"odms/items/{items[0].uid}")
     assert_response_status_code(response, 200)
     res = response.json()
     assert res["vendor_attributes"] == [
@@ -1227,7 +1211,7 @@ def test_add_odm_vendor_attribute_to_odm_item(api_client):
     ]
 
     response = api_client.patch(
-        "concepts/odms/vendor-attributes/OdmVendorAttribute_000003",
+        "odms/vendor-attributes/OdmVendorAttribute_000003",
         json={
             "name": "vAINew",
             "compatible_types": ["ItemDef"],
@@ -1238,7 +1222,7 @@ def test_add_odm_vendor_attribute_to_odm_item(api_client):
     )
     assert_response_status_code(response, 200)
 
-    response = api_client.get(f"concepts/odms/items/{items[0].uid}")
+    response = api_client.get(f"odms/items/{items[0].uid}")
     assert_response_status_code(response, 200)
     res = response.json()
     assert res["vendor_attributes"] == [
@@ -1255,7 +1239,7 @@ def test_add_odm_vendor_attribute_to_odm_item(api_client):
 
 def test_odm_vendor_attribute_and_odm_vendor_element(api_client):
     response = api_client.patch(
-        f"concepts/odms/vendor-attributes/{vendor_attributes[3].uid}",
+        f"odms/vendor-attributes/{vendor_attributes[3].uid}",
         json={
             "name": "vAENew",
             "data_type": "string",
@@ -1267,7 +1251,7 @@ def test_odm_vendor_attribute_and_odm_vendor_element(api_client):
     )
     assert_response_status_code(response, 200)
 
-    response = api_client.get(f"concepts/odms/vendor-elements/{vendor_elements[3].uid}")
+    response = api_client.get(f"odms/vendor-elements/{vendor_elements[3].uid}")
     assert_response_status_code(response, 200)
     res = response.json()
     assert res["vendor_attributes"] == [

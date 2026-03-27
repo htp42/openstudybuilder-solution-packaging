@@ -165,10 +165,7 @@
                 item-title="activity_group_name"
                 item-value="activity_group_uid"
                 class="mt-2 mb-n2"
-                rounded="lg"
-                variant="outlined"
                 color="nnBaseBlue"
-                density="compact"
                 autocomplete="off"
                 clearable
                 @update:model-value="
@@ -283,11 +280,8 @@
                 item-title="activity_subgroup_name"
                 item-value="activity_subgroup_uid"
                 class="mt-2 mb-n2"
-                rounded="lg"
                 width="300px"
-                variant="outlined"
                 color="nnBaseBlue"
-                density="compact"
                 autocomplete="off"
                 clearable
                 :disabled="
@@ -442,6 +436,16 @@ function getGroups(activity) {
 }
 
 function getSubroups(activity) {
+  if (
+    getGroups(activity).some(
+      (group) =>
+        group.activity_group_name ===
+        activity.study_activity_group.activity_group_name
+    )
+  ) {
+    activity.activity_group_uid =
+      activity.study_activity_group.activity_group_uid
+  }
   let groupings = JSON.parse(
     JSON.stringify(activity.latest_activity.activity_groupings)
   )

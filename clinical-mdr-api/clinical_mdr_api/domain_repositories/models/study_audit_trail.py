@@ -1,6 +1,6 @@
 import datetime
 
-from neomodel import One, RelationshipFrom, RelationshipTo, StringProperty, ZeroOrOne
+from neomodel import One, RelationshipFrom, RelationshipTo, ZeroOrOne
 
 from clinical_mdr_api.domain_repositories.models.generic import (
     ClinicalMdrNode,
@@ -8,6 +8,7 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     ConjunctionRelation,
     ZonedDateTimeProperty,
 )
+from common.neomodel import StringProperty
 
 
 class StudyAction(ClinicalMdrNode):

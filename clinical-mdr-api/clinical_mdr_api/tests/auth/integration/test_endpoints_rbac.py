@@ -32,6 +32,12 @@ KNOWN_ROLES = {
 
 IRRELEVANT_ROLES = ["Some, Fake", "Testing", ""]
 
+ENDPOINTS_WITHOUT_ROLES = [
+    ("/user-preferences", "GET"),
+    ("/user-preferences", "PATCH"),
+    ("/user-preferences/{preference_key}", "DELETE"),
+]
+
 
 @pytest.fixture(scope="session")
 def mock_jwks_service():
@@ -73,6 +79,8 @@ def test_endpoints_rbac_wrong_roles(
     required_roles,
 ):
     """Ensure that http request with access-token having wrong roles fails"""
+    if (path, method) in ENDPOINTS_WITHOUT_ROLES:
+        pytest.skip(f"Endpoint {method} {path} does not require any roles")
 
     (
         path_parameters,
@@ -147,6 +155,8 @@ def test_endpoints_rbac_correct_roles(
     required_roles,
 ):
     """Ensure that endpoint requires specific roles in the access-token"""
+    if (path, method) in ENDPOINTS_WITHOUT_ROLES:
+        pytest.skip(f"Endpoint {method} {path} does not require any roles")
 
     (
         path_parameters,
@@ -218,6 +228,8 @@ def test_endpoints_rbac_no_roles(
     required_roles,
 ):
     """Ensure that endpoint requires at least one role in the access-token"""
+    if (path, method) in ENDPOINTS_WITHOUT_ROLES:
+        pytest.skip(f"Endpoint {method} {path} does not require any roles")
 
     (
         path_parameters,
@@ -257,6 +269,7 @@ def test_endpoints_rbac_no_roles(
             response.status_code,
             response.content.decode("utf-8"),
         )
+
     _assert_insufficient_roles_error(required_roles, [], response)
 
 

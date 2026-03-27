@@ -14,14 +14,20 @@ const requestInterceptors = {
     if (config.method === 'get' && config.url.indexOf('studies/') !== -1) {
       config.params = config.params || {}
 
-      if (config.params.specificStudyVersion !== undefined) {
-        config.params.study_value_version = config.params.specificStudyVersion
+      if (
+        config.params.specificStudyVersion !== undefined &&
+        config.params.specificStudyVersion !== null
+      ) {
+        if (Number(config.params.specificStudyVersion) !== 0) {
+          config.params.study_value_version = config.params.specificStudyVersion
+        }
         delete config.params.specificStudyVersion
       } else {
         config.params.study_value_version =
           studiesGeneralStore.selectedStudyVersion
       }
     }
+
     const globalConfig = useGlobalConfig()
     config.baseURL = globalConfig.API_BASE_URL
 

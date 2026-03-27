@@ -10,7 +10,7 @@ from neomodel import db
 
 from clinical_mdr_api.domains.enums import OdmTranslatedTextTypeEnum
 from clinical_mdr_api.main import app
-from clinical_mdr_api.models.concepts.odms.odm_common_models import (
+from clinical_mdr_api.models.odms.common_models import (
     OdmAliasModel,
     OdmFormalExpressionModel,
     OdmTranslatedTextModel,
@@ -88,7 +88,7 @@ def test_data():
 def test_get_aliases(
     api_client, value: str, expected_result_prefix: dict[str, str], rs_length: int
 ):
-    response = api_client.get(f"/concepts/odms/metadata/aliases?search={value}")
+    response = api_client.get(f"/odms/metadata/aliases?search={value}")
     data = response.json()
 
     assert_response_status_code(response, 200)
@@ -165,7 +165,7 @@ def test_get_aliases(
 def test_get_aliases_in_order(
     api_client, value: str, expected_order: dict[str, list[str]]
 ):
-    response = api_client.get(f"/concepts/odms/metadata/aliases?sort_by={value}")
+    response = api_client.get(f"/odms/metadata/aliases?sort_by={value}")
     data = response.json()
 
     assert_response_status_code(response, 200)
@@ -191,9 +191,7 @@ def test_get_aliases_in_order(
 def test_get_translated_texts(
     api_client, value: str, expected_result_prefix: dict[str, str], rs_length: int
 ):
-    response = api_client.get(
-        f"/concepts/odms/metadata/translated-texts?search={value}"
-    )
+    response = api_client.get(f"/odms/metadata/translated-texts?search={value}")
     data = response.json()
 
     assert_response_status_code(response, 200)
@@ -282,9 +280,7 @@ def test_get_translated_texts(
 def test_get_translated_texts_in_order(
     api_client, value: str, expected_order: dict[str, list[str]]
 ):
-    response = api_client.get(
-        f"/concepts/odms/metadata/translated-texts?sort_by={value}"
-    )
+    response = api_client.get(f"/odms/metadata/translated-texts?sort_by={value}")
     data = response.json()
 
     assert_response_status_code(response, 200)
@@ -310,9 +306,7 @@ def test_get_translated_texts_in_order(
 def test_get_formal_expressions(
     api_client, value: str, expected_result_prefix: dict[str, str], rs_length: int
 ):
-    response = api_client.get(
-        f"/concepts/odms/metadata/formal-expressions?search={value}"
-    )
+    response = api_client.get(f"/odms/metadata/formal-expressions?search={value}")
     data = response.json()
 
     assert_response_status_code(response, 200)
@@ -389,9 +383,7 @@ def test_get_formal_expressions(
 def test_get_formal_expressions_in_order(
     api_client, value: str, expected_order: dict[str, list[str]]
 ):
-    response = api_client.get(
-        f"/concepts/odms/metadata/formal-expressions?sort_by={value}"
-    )
+    response = api_client.get(f"/odms/metadata/formal-expressions?sort_by={value}")
     data = response.json()
 
     assert_response_status_code(response, 200)
@@ -414,21 +406,21 @@ def test_doesnt_return_aliases_that_are_only_connected_to_deleted_odms(api_clien
         "translated_texts": [],
         "aliases": [{"context": "connected to be deleted", "name": "deleted"}],
     }
-    response = api_client.post("concepts/odms/forms", json=data)
+    response = api_client.post("odms/forms", json=data)
     assert_response_status_code(response, 201)
     rs = response.json()
 
-    response = api_client.get("/concepts/odms/metadata/aliases?page_size=0")
+    response = api_client.get("/odms/metadata/aliases?page_size=0")
     assert_response_status_code(response, 200)
     data = response.json()
     assert any(item["context"] == "connected to be deleted" for item in data["items"])
     assert data["total"] == 5
     assert len(data["items"]) == 5
 
-    response = api_client.delete(f"concepts/odms/forms/{rs["uid"]}")
+    response = api_client.delete(f"odms/forms/{rs["uid"]}")
     assert_response_status_code(response, 204)
 
-    response = api_client.get("/concepts/odms/metadata/aliases?page_size=0")
+    response = api_client.get("/odms/metadata/aliases?page_size=0")
     assert_response_status_code(response, 200)
     data = response.json()
     assert all(item["context"] != "connected to be deleted" for item in data["items"])
@@ -469,21 +461,21 @@ def test_doesnt_return_translated_texts_that_are_only_connected_to_deleted_odms(
         ],
         "aliases": [],
     }
-    response = api_client.post("concepts/odms/forms", json=data)
+    response = api_client.post("odms/forms", json=data)
     assert_response_status_code(response, 201)
     rs = response.json()
 
-    response = api_client.get("/concepts/odms/metadata/translated-texts?page_size=0")
+    response = api_client.get("/odms/metadata/translated-texts?page_size=0")
     assert_response_status_code(response, 200)
     data = response.json()
     assert any(item["text"] == "connected to be deleted" for item in data["items"])
     assert data["total"] == 8
     assert len(data["items"]) == 8
 
-    response = api_client.delete(f"concepts/odms/forms/{rs["uid"]}")
+    response = api_client.delete(f"odms/forms/{rs["uid"]}")
     assert_response_status_code(response, 204)
 
-    response = api_client.get("/concepts/odms/metadata/translated-texts?page_size=0")
+    response = api_client.get("/odms/metadata/translated-texts?page_size=0")
     assert_response_status_code(response, 200)
     data = response.json()
     assert all(item["text"] != "connected to be deleted" for item in data["items"])
@@ -504,21 +496,21 @@ def test_doesnt_return_formal_expressions_that_are_only_connected_to_deleted_odm
         "translated_texts": [],
         "aliases": [],
     }
-    response = api_client.post("concepts/odms/conditions", json=data)
+    response = api_client.post("odms/conditions", json=data)
     assert_response_status_code(response, 201)
     rs = response.json()
 
-    response = api_client.get("/concepts/odms/metadata/formal-expressions?page_size=0")
+    response = api_client.get("/odms/metadata/formal-expressions?page_size=0")
     assert_response_status_code(response, 200)
     data = response.json()
     assert any(item["context"] == "connected to be deleted" for item in data["items"])
     assert data["total"] == 5
     assert len(data["items"]) == 5
 
-    response = api_client.delete(f"concepts/odms/conditions/{rs["uid"]}")
+    response = api_client.delete(f"odms/conditions/{rs["uid"]}")
     assert_response_status_code(response, 204)
 
-    response = api_client.get("/concepts/odms/metadata/formal-expressions?page_size=0")
+    response = api_client.get("/odms/metadata/formal-expressions?page_size=0")
     assert_response_status_code(response, 200)
     data = response.json()
     assert all(item["context"] != "connected to be deleted" for item in data["items"])
@@ -528,7 +520,7 @@ def test_doesnt_return_formal_expressions_that_are_only_connected_to_deleted_odm
 
 def test_doesnt_return_aliases_that_are_not_connected_to_latest_odms(api_client):
     response = api_client.post(
-        "concepts/odms/forms",
+        "odms/forms",
         json={
             "library_name": "Sponsor",
             "name": "to be updated1",
@@ -542,7 +534,7 @@ def test_doesnt_return_aliases_that_are_not_connected_to_latest_odms(api_client)
     assert_response_status_code(response, 201)
     rs = response.json()
 
-    response = api_client.get("/concepts/odms/metadata/aliases?page_size=0")
+    response = api_client.get("/odms/metadata/aliases?page_size=0")
     assert_response_status_code(response, 200)
     data = response.json()
     assert any(item["context"] == "connected to be renamed" for item in data["items"])
@@ -550,7 +542,7 @@ def test_doesnt_return_aliases_that_are_not_connected_to_latest_odms(api_client)
     assert len(data["items"]) == 5
 
     response = api_client.patch(
-        f"concepts/odms/forms/{rs["uid"]}",
+        f"odms/forms/{rs["uid"]}",
         json={
             "library_name": "Sponsor",
             "name": "to be updated1",
@@ -567,7 +559,7 @@ def test_doesnt_return_aliases_that_are_not_connected_to_latest_odms(api_client)
     )
     assert_response_status_code(response, 200)
 
-    response = api_client.get("/concepts/odms/metadata/aliases?page_size=0")
+    response = api_client.get("/odms/metadata/aliases?page_size=0")
     assert_response_status_code(response, 200)
     data = response.json()
     assert all(item["context"] != "connected to be renamed" for item in data["items"])
@@ -579,7 +571,7 @@ def test_doesnt_return_translated_texts_that_are_not_connected_to_latest_odms(
     api_client,
 ):
     response = api_client.post(
-        "concepts/odms/forms",
+        "odms/forms",
         json={
             "library_name": "Sponsor",
             "name": "to be updated2",
@@ -614,7 +606,7 @@ def test_doesnt_return_translated_texts_that_are_not_connected_to_latest_odms(
     assert_response_status_code(response, 201)
     rs = response.json()
 
-    response = api_client.get("/concepts/odms/metadata/translated-texts?page_size=0")
+    response = api_client.get("/odms/metadata/translated-texts?page_size=0")
     assert_response_status_code(response, 200)
     data = response.json()
     assert any(item["text"] == "connected to be renamed" for item in data["items"])
@@ -622,7 +614,7 @@ def test_doesnt_return_translated_texts_that_are_not_connected_to_latest_odms(
     assert len(data["items"]) == 8
 
     response = api_client.patch(
-        f"concepts/odms/forms/{rs["uid"]}",
+        f"odms/forms/{rs["uid"]}",
         json={
             "library_name": "Sponsor",
             "name": "to be updated2",
@@ -660,7 +652,7 @@ def test_doesnt_return_translated_texts_that_are_not_connected_to_latest_odms(
     )
     assert_response_status_code(response, 200)
 
-    response = api_client.get("/concepts/odms/metadata/translated-texts?page_size=0")
+    response = api_client.get("/odms/metadata/translated-texts?page_size=0")
     assert_response_status_code(response, 200)
     data = response.json()
     assert all(item["text"] != "connected to be renamed" for item in data["items"])
@@ -672,7 +664,7 @@ def test_doesnt_return_formal_expressions_that_are_not_connected_to_latest_odms(
     api_client,
 ):
     response = api_client.post(
-        "concepts/odms/conditions",
+        "odms/conditions",
         json={
             "library_name": "Sponsor",
             "name": "to be renamed1",
@@ -687,7 +679,7 @@ def test_doesnt_return_formal_expressions_that_are_not_connected_to_latest_odms(
     assert_response_status_code(response, 201)
     rs = response.json()
 
-    response = api_client.get("/concepts/odms/metadata/formal-expressions?page_size=0")
+    response = api_client.get("/odms/metadata/formal-expressions?page_size=0")
     assert_response_status_code(response, 200)
     data = response.json()
     assert any(item["context"] == "connected to be renamed" for item in data["items"])
@@ -695,7 +687,7 @@ def test_doesnt_return_formal_expressions_that_are_not_connected_to_latest_odms(
     assert len(data["items"]) == 5
 
     response = api_client.patch(
-        f"concepts/odms/conditions/{rs["uid"]}",
+        f"odms/conditions/{rs["uid"]}",
         json={
             "library_name": "Sponsor",
             "name": "to be renamed1",
@@ -708,7 +700,7 @@ def test_doesnt_return_formal_expressions_that_are_not_connected_to_latest_odms(
     )
     assert_response_status_code(response, 200)
 
-    response = api_client.get("/concepts/odms/metadata/formal-expressions?page_size=0")
+    response = api_client.get("/odms/metadata/formal-expressions?page_size=0")
     assert_response_status_code(response, 200)
     data = response.json()
     assert all(item["context"] != "connected to be renamed" for item in data["items"])

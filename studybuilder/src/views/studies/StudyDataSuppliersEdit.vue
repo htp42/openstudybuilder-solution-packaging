@@ -42,8 +42,6 @@
               :items="getFilteredSuppliers(typeName)"
               item-title="name"
               item-value="uid"
-              variant="outlined"
-              density="compact"
               class="flex-grow-1 mr-4"
               hide-details
             >

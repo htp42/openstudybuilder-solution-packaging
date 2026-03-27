@@ -170,8 +170,7 @@ class StudyActivityScheduleRepository(base.StudySelectionRepository):
             WITH DISTINCT all_sas
             """
         specific_schedules_audit_trail = db.cypher_query(
-            cypher
-            + """
+            cypher + """
             MATCH (all_sas)<-[:STUDY_VISIT_HAS_SCHEDULE]-(svi:StudyVisit)
             MATCH (all_sas)<-[:AFTER]-(asa:StudyAction)
             OPTIONAL MATCH (all_sas)<-[:STUDY_ACTIVITY_HAS_SCHEDULE]-(sa:StudyActivity)

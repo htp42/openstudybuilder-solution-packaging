@@ -9,6 +9,7 @@ from clinical_mdr_api.models.study_selections.study_visit import (
     StudyVisit,
     StudyVisitCreateInput,
     StudyVisitEditInput,
+    StudyVisitLite,
     StudyVisitVersion,
     VisitConsecutiveGroupInput,
 )
@@ -130,7 +131,10 @@ def get_all(
             description="Indicates whether the (visit_name, visit_short_name, unique_visit_number) properties are derived based on the study visit timeline and not from database values.",
         ),
     ] = False,
-) -> CustomPage[StudyVisit]:
+    lite: Annotated[
+        bool, Query(description=_generic_descriptions.HEADERS_QUERY_LITE)
+    ] = False,
+) -> CustomPage[StudyVisitLite | StudyVisit]:
     results = StudyVisitService.get_all_visits(
         study_uid=study_uid,
         sort_by=sort_by,
@@ -141,6 +145,7 @@ def get_all(
         filter_operator=FilterOperator.from_str(operator),
         study_value_version=study_value_version,
         derive_props_based_on_timeline=derive_props_based_on_timeline,
+        lite=lite,
     )
     return CustomPage(
         items=results.items, total=results.total, page=page_number, size=page_size

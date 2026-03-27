@@ -48,12 +48,10 @@ ActivityInstructionUID = Path(description="The unique id of the objective.")
         403: _generic_descriptions.ERROR_403,
         200: {
             "content": {
-                "text/csv": {
-                    "example": """
+                "text/csv": {"example": """
 "library","template","uid","objective","start_date","end_date","status","version","change_description","author_username"
 "Sponsor","First  [ComparatorIntervention]","826d80a7-0b6a-419d-8ef1-80aa241d7ac7",First Intervention,"2020-10-22T10:19:29+00:00",,"Draft","0.1","Initial version","NdSJ"
-"""
-                },
+"""},
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
             }
         },

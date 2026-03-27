@@ -11,7 +11,6 @@
         off-icon="mdi-dots-horizontal-circle-outline"
         hide-details
         class="ml-2"
-        color="primary"
       />
     </div>
   </div>

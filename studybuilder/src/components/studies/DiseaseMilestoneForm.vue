@@ -22,7 +22,6 @@
               :rules="[formRules.required]"
               clearable
               class="required"
-              density="compact"
             />
           </v-col>
         </v-row>
@@ -32,8 +31,6 @@
               v-model="form.repetition_indicator"
               :label="$t('DiseaseMilestone.repetition_indicator')"
               data-cy="repetition-indicator"
-              density="compact"
-              color="primary"
             />
           </v-col>
         </v-row>

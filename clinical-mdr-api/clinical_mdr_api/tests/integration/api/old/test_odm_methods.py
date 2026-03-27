@@ -29,7 +29,7 @@ def test_data():
 
 
 def test_getting_empty_list_of_odm_methods(api_client):
-    response = api_client.get("concepts/odms/methods")
+    response = api_client.get("odms/methods")
 
     assert_response_status_code(response, 200)
 
@@ -89,7 +89,7 @@ def test_creating_a_new_odm_method(api_client):
         ],
         "aliases": [{"context": "context1", "name": "name1"}],
     }
-    response = api_client.post("concepts/odms/methods", json=data)
+    response = api_client.post("odms/methods", json=data)
 
     assert_response_status_code(response, 201)
 
@@ -155,7 +155,7 @@ def test_creating_a_new_odm_method(api_client):
 
 
 def test_getting_non_empty_list_of_odm_methods(api_client):
-    response = api_client.get("concepts/odms/methods")
+    response = api_client.get("odms/methods")
 
     assert_response_status_code(response, 200)
 
@@ -221,7 +221,7 @@ def test_getting_non_empty_list_of_odm_methods(api_client):
 
 
 def test_getting_possible_header_values_of_odm_methods(api_client):
-    response = api_client.get("concepts/odms/methods/headers?field_name=name")
+    response = api_client.get("odms/methods/headers?field_name=name")
 
     assert_response_status_code(response, 200)
 
@@ -231,7 +231,7 @@ def test_getting_possible_header_values_of_odm_methods(api_client):
 
 
 def test_getting_a_specific_odm_method(api_client):
-    response = api_client.get("concepts/odms/methods/OdmMethod_000001")
+    response = api_client.get("odms/methods/OdmMethod_000001")
 
     assert_response_status_code(response, 200)
 
@@ -297,7 +297,7 @@ def test_getting_a_specific_odm_method(api_client):
 
 
 def test_getting_versions_of_a_specific_odm_method(api_client):
-    response = api_client.get("concepts/odms/methods/OdmMethod_000001/versions")
+    response = api_client.get("odms/methods/OdmMethod_000001/versions")
 
     assert_response_status_code(response, 200)
 
@@ -414,7 +414,7 @@ def test_updating_an_existing_odm_method(api_client):
         ],
         "aliases": [{"context": "context1", "name": "name1"}],
     }
-    response = api_client.patch("concepts/odms/methods/OdmMethod_000001", json=data)
+    response = api_client.patch("odms/methods/OdmMethod_000001", json=data)
 
     assert_response_status_code(response, 200)
 
@@ -480,7 +480,7 @@ def test_updating_an_existing_odm_method(api_client):
 
 
 def test_getting_a_specific_odm_method_in_specific_version(api_client):
-    response = api_client.get("concepts/odms/methods/OdmMethod_000001?version=0.1")
+    response = api_client.get("odms/methods/OdmMethod_000001?version=0.1")
 
     assert_response_status_code(response, 200)
 
@@ -546,7 +546,7 @@ def test_getting_a_specific_odm_method_in_specific_version(api_client):
 
 
 def test_approving_an_odm_method(api_client):
-    response = api_client.post("concepts/odms/methods/OdmMethod_000001/approvals")
+    response = api_client.post("odms/methods/OdmMethod_000001/approvals")
 
     assert_response_status_code(response, 201)
 
@@ -612,7 +612,7 @@ def test_approving_an_odm_method(api_client):
 
 
 def test_inactivating_a_specific_odm_method(api_client):
-    response = api_client.delete("concepts/odms/methods/OdmMethod_000001/activations")
+    response = api_client.delete("odms/methods/OdmMethod_000001/activations")
 
     assert_response_status_code(response, 200)
 
@@ -678,7 +678,7 @@ def test_inactivating_a_specific_odm_method(api_client):
 
 
 def test_reactivating_a_specific_odm_method(api_client):
-    response = api_client.post("concepts/odms/methods/OdmMethod_000001/activations")
+    response = api_client.post("odms/methods/OdmMethod_000001/activations")
 
     assert_response_status_code(response, 200)
 
@@ -744,7 +744,7 @@ def test_reactivating_a_specific_odm_method(api_client):
 
 
 def test_creating_a_new_odm_method_version(api_client):
-    response = api_client.post("concepts/odms/methods/OdmMethod_000001/versions")
+    response = api_client.post("odms/methods/OdmMethod_000001/versions")
 
     assert_response_status_code(response, 201)
 
@@ -825,7 +825,7 @@ def test_create_a_new_odm_method_for_deleting_it(api_client):
         ],
         "aliases": [],
     }
-    response = api_client.post("concepts/odms/methods", json=data)
+    response = api_client.post("odms/methods", json=data)
 
     assert_response_status_code(response, 201)
 
@@ -854,7 +854,7 @@ def test_create_a_new_odm_method_for_deleting_it(api_client):
 
 
 def test_deleting_a_specific_odm_method(api_client):
-    response = api_client.delete("concepts/odms/methods/OdmMethod_000002")
+    response = api_client.delete("odms/methods/OdmMethod_000002")
 
     assert_response_status_code(response, 204)
 
@@ -878,7 +878,7 @@ def test_creating_a_new_odm_method_with_relations(api_client):
         ],
         "aliases": [],
     }
-    response = api_client.post("concepts/odms/methods", json=data)
+    response = api_client.post("odms/methods", json=data)
 
     assert_response_status_code(response, 201)
 
@@ -932,7 +932,7 @@ def test_updating_an_existing_odm_method_with_relations(api_client):
         ],
         "aliases": [{"context": "context1", "name": "name1"}],
     }
-    response = api_client.patch("concepts/odms/methods/OdmMethod_000001", json=data)
+    response = api_client.patch("odms/methods/OdmMethod_000001", json=data)
 
     assert_response_status_code(response, 200)
 
@@ -967,7 +967,7 @@ def test_updating_an_existing_odm_method_with_relations(api_client):
 
 
 def test_getting_uids_of_a_specific_odm_methods_active_relationships(api_client):
-    response = api_client.get("concepts/odms/methods/OdmMethod_000001/relationships")
+    response = api_client.get("odms/methods/OdmMethod_000001/relationships")
 
     assert_response_status_code(response, 200)
 

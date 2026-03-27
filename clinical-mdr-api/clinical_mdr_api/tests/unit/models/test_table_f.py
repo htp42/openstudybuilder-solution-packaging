@@ -477,7 +477,7 @@ def compare_docx_table(
 
             if cell.footnotes:
                 # THEN footnote symbols match
-                symbols = parax0.runs[1].text.split("\u00A0")
+                symbols = parax0.runs[1].text.split("\u00a0")
                 assert (
                     symbols == cell.footnotes
                 ), f"footnote symbols don't match in {row_idx} column {col_idx}"

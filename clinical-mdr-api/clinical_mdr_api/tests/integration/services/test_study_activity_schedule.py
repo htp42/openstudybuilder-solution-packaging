@@ -71,8 +71,8 @@ def setup_and_teardown_db():
 def test_create_delete_schedule(setup_and_teardown_db):
     baseline = create_visit_with_update(
         study_epoch_uid=test_data.epoch1.uid,
-        visit_type_uid="VisitType_0001",
-        time_reference_uid="VisitSubType_0001",
+        visit_type={"term_uid": "VisitType_0001"},
+        time_reference={"term_uid": "VisitSubType_0001"},
         time_value=0,
         time_unit_uid=test_data.day_uid,
     )
@@ -95,15 +95,15 @@ def test_create_delete_schedule(setup_and_teardown_db):
 def test_batch_operations(setup_and_teardown_db):
     baseline = create_visit_with_update(
         study_epoch_uid=test_data.epoch1.uid,
-        visit_type_uid="VisitType_0001",
-        time_reference_uid="VisitSubType_0001",
+        visit_type={"term_uid": "VisitType_0001"},
+        time_reference={"term_uid": "VisitSubType_0001"},
         time_value=0,
         time_unit_uid=test_data.day_uid,
     )
     create_visit_with_update(
         study_epoch_uid=test_data.epoch1.uid,
-        visit_type_uid="VisitType_0003",
-        time_reference_uid="VisitSubType_0001",
+        visit_type={"term_uid": "VisitType_0003"},
+        time_reference={"term_uid": "VisitSubType_0001"},
         time_value=4,
         time_unit_uid=test_data.day_uid,
     )

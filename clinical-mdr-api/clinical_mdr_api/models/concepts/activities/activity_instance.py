@@ -9,7 +9,10 @@ from clinical_mdr_api.domains.concepts.activities.activity_group import Activity
 from clinical_mdr_api.domains.concepts.activities.activity_instance import (
     ActivityInstanceAR,
 )
-from clinical_mdr_api.domains.concepts.activities.activity_item import CTTermItem
+from clinical_mdr_api.domains.concepts.activities.activity_item import (
+    CTCodelistItem,
+    CTTermItem,
+)
 from clinical_mdr_api.domains.concepts.activities.activity_sub_group import (
     ActivitySubGroupAR,
 )
@@ -30,6 +33,7 @@ from clinical_mdr_api.models.concepts.activities.activity_item import (
     ActivityItem,
     ActivityItemCreateInput,
     CompactActivityItemClassForActivityItem,
+    CompactCodelist,
     CompactCTTerm,
     CompactUnitDefinition,
 )
@@ -147,12 +151,21 @@ class ActivityInstance(ActivityBase):
                 )
             ct_terms.sort(key=lambda x: x.uid or "")
 
+            if activity_item.ct_codelist is not None:
+                ct_codelist = CompactCodelist(
+                    uid=activity_item.ct_codelist.uid,
+                    name=activity_item.ct_codelist.name,
+                )
+            else:
+                ct_codelist = None
+
             activity_items.append(
                 ActivityItem(
                     activity_item_class=CompactActivityItemClassForActivityItem(
                         uid=activity_item.activity_item_class_uid,
                         name=activity_item.activity_item_class_name,
                     ),
+                    ct_codelist=ct_codelist,
                     ct_terms=ct_terms,
                     unit_definitions=unit_definitions,
                     is_adam_param_specific=activity_item.is_adam_param_specific,
@@ -450,6 +463,7 @@ class SimpleActivityItemClassForActivityInstance(BaseModel):
 class SimplifiedActivityItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+    ct_codelist: Annotated[CTCodelistItem | None, Field()] = None
     ct_terms: list[CTTermItem] = Field(default_factory=list)
     unit_definitions: list[CompactUnitDefinition] = Field(default_factory=list)
     activity_item_class: Annotated[SimpleActivityItemClassForActivityInstance, Field()]
@@ -505,8 +519,17 @@ class ActivityInstanceOverview(BaseModel):
                 aic_name = aic.get("name", "")
                 aic_order = aic.get("order", 0)
 
+            if ct_codelist := activity_item.get("ct_codelist"):
+                ct_codelist = CTCodelistItem(
+                    uid=ct_codelist.get("uid"),
+                    name=ct_codelist.get("name"),
+                )
+            else:
+                ct_codelist = None
+
             activity_items.append(
                 SimplifiedActivityItem(
+                    ct_codelist=ct_codelist,
                     ct_terms=terms,
                     unit_definitions=units,
                     activity_item_class=SimpleActivityItemClassForActivityInstance(

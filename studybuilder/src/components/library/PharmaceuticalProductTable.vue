@@ -24,21 +24,28 @@
         @click.stop="showForm = true"
       />
     </template>
-    <template #[`item.ingredients`]="{ item }">
+    <template #[`item.derived_name`]="{ item }">
       <router-link
         :to="{
           name: 'PharmaceuticalProductOverview',
           params: { id: item.uid },
         }"
       >
-        {{ item.ingredients }}
+        {{ item.derived_name }}
       </router-link>
     </template>
     <template #[`item.actions`]="{ item }">
       <ActionsMenu :actions="actions" :item="item" />
     </template>
     <template #[`item.start_date`]="{ item }">
-      {{ $filters.date(item.start_date) }}
+      <v-tooltip location="top">
+        <template #activator="{ props }">
+          <span v-bind="props">{{
+            $filters.dateRelative(item.start_date)
+          }}</span>
+        </template>
+        {{ $filters.date(item.start_date) }}
+      </v-tooltip>
     </template>
     <template #[`item.status`]="{ item }">
       <StatusChip :status="item.status" />
@@ -78,7 +85,6 @@
 import { computed, inject, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAccessGuard } from '@/composables/accessGuard'
-import { usePharmaceuticalProducts } from '@/composables/pharmaceuticalProducts'
 import ActionsMenu from '@/components/tools/ActionsMenu.vue'
 import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
 import HistoryTable from '@/components/tools/HistoryTable.vue'
@@ -96,7 +102,6 @@ const props = defineProps({
 })
 
 const { t } = useI18n()
-const { displayIngredients } = usePharmaceuticalProducts()
 const accessGuard = useAccessGuard()
 const notificationHub = inject('notificationHub')
 const roles = inject('roles')
@@ -174,7 +179,7 @@ const headers = [
   { title: '', key: 'actions', width: '5%' },
   {
     title: t('PharmaceuticalProduct.title'),
-    key: 'ingredients',
+    key: 'derived_name',
     noFilter: true,
   },
   {
@@ -305,7 +310,6 @@ function transformItems(items) {
       newItem.route_of_administration =
         item.routes_of_administration[0].term_name
     }
-    newItem.ingredients = displayIngredients(item)
     result.push(newItem)
   }
   return result

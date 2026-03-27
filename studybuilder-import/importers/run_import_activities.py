@@ -267,7 +267,16 @@ class Activities(BaseImporter):
         old_groupings = set(
             (item["activity_group_uid"], item["activity_subgroup_uid"]) for item in old
         )
-        return new_groupings == old_groupings
+        if new_groupings == old_groupings:
+            self.log.info("Groupings are equal")
+            return True
+        elif new_groupings <= old_groupings:
+            self.log.info(
+                "New groupings are a subset of old groupings, no changes needed"
+            )
+            return True
+        self.log.info("Groupings are not equal")
+        return False
 
     def _are_activities_equal(self, old, new):
         existing_groupings = old["activity_groupings"]
@@ -430,6 +439,21 @@ class Activities(BaseImporter):
                         "approve_path": ACTIVITIES_PATH,
                         "body": item_data,
                     }
+                    # Merge new groupings with existing groupings before patching.
+                    updated_groupings = []
+                    for grouping in existing["activity_groupings"]:
+                        updated_groupings.append(
+                            {
+                                "activity_group_uid": grouping["activity_group_uid"],
+                                "activity_subgroup_uid": grouping[
+                                    "activity_subgroup_uid"
+                                ],
+                            }
+                        )
+                    for grouping in item_data["activity_groupings"]:
+                        if grouping not in updated_groupings:
+                            updated_groupings.append(grouping)
+                    data["body"]["activity_groupings"] = updated_groupings
                     data["body"]["change_description"] = "Migration modification"
                     self.log.info(
                         f"Adding activity '{activity_name}' to groupings '{groupings}'"
@@ -1566,8 +1590,7 @@ class Activities(BaseImporter):
 
     def run(self):
         self.log.info("Importing activities")
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(self.async_run())
+        asyncio.run(self.async_run())
         self.log.info("Done importing activities")
 
 

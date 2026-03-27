@@ -1,11 +1,8 @@
 from neomodel import (
-    BooleanProperty,
-    IntegerProperty,
     One,
     OneOrMore,
     RelationshipFrom,
     RelationshipTo,
-    StringProperty,
     ZeroOrMore,
     ZeroOrOne,
 )
@@ -53,6 +50,7 @@ from clinical_mdr_api.domain_repositories.models.syntax import (
     ObjectiveValue,
     TimeframeValue,
 )
+from common.neomodel import BooleanProperty, IntegerProperty, StringProperty
 
 STUDY_VALUE_CLASS_NAME = ".study.StudyValue"
 STUDY_SOA_FOOTNOTE_CLASS_NAME = ".study.StudySoAFootnote"
@@ -635,7 +633,6 @@ class StudyBranchArm(StudySelection):
     description = StringProperty()
     randomization_group = StringProperty()
     number_of_subjects = IntegerProperty()
-    order = StringProperty()
 
     study_value = RelationshipFrom(
         STUDY_VALUE_CLASS_NAME,

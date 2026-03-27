@@ -6,7 +6,7 @@ Feature: Manage ODM Methods in OpenStudyBuilder API
         Given The test user can call the OpenStudyBuilder API
 
     Scenario: User must be able to get an empty list of ODM methods
-        When the user calls the API endpoint 'concepts/odms/methods'
+        When the user calls the API endpoint 'odms/methods'
         Then the response must include an empty list of ODM methods
         And the response status code must be 200
     Test Coverage:
@@ -22,7 +22,7 @@ Feature: Manage ODM Methods in OpenStudyBuilder API
         | /tests/integration/api/old/test_odm_methods.py   | @TestID: test_creating_a_new_odm_method |
 
     Scenario: User must be able to get a non-empty list of ODM methods
-        When the user calls the API endpoint 'concepts/odms/methods'
+        When the user calls the API endpoint 'odms/methods'
         Then the response must include the list of ODM methods that were created
         And the response status code must be 200
     Test Coverage:
@@ -30,7 +30,7 @@ Feature: Manage ODM Methods in OpenStudyBuilder API
         | /tests/integration/api/old/test_odm_methods.py   | @TestID: test_getting_non_empty_list_of_odm_methods |
 
     Scenario: User must be able to get a specific ODM method
-        When the user calls the API endpoint 'concepts/odms/methods/' to get a specific ODM method
+        When the user calls the API endpoint 'odms/methods/' to get a specific ODM method
         Then the response status code must be 200
         And the response must include the ODM method
     Test Coverage:
@@ -38,7 +38,7 @@ Feature: Manage ODM Methods in OpenStudyBuilder API
         | /tests/integration/api/old/test_odm_methods.py   | @TestID: test_getting_a_specific_odm_method |
 
     Scenario: User must be able to get possible header values of ODM methods
-        When the user calls the API endpoint 'concepts/odms/methods/headers?field_name=name'
+        When the user calls the API endpoint 'odms/methods/headers?field_name=name'
         Then the response status code must be 200
         And the response must include the list ["name1"]
     Test Coverage:
@@ -70,7 +70,7 @@ Feature: Manage ODM Methods in OpenStudyBuilder API
         | /tests/integration/api/old/test_odm_methods_negative.py | @TestID: test_cannot_create_a_new_odm_method_without_an_english_description |
 
     Scenario: User receives an error for retrieving a non-existent ODM method
-        When the user calls the API endpoint 'concepts/odms/methods/' for retrieving a non-existent ODM method
+        When the user calls the API endpoint 'odms/methods/' for retrieving a non-existent ODM method
         Then the response status code must be 404
         And the response must include the message like "OdmMethodAR with UID 'OdmMethod_000002' doesn't exist ..."
     Test Coverage:

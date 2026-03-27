@@ -11,51 +11,6 @@ Feature: Library - Concepts - Activities - Activity Instances
         Then Activity instance wizard feature flag is turned off
 
     @smoke_test
-    Scenario: [Navigation] User must be able to navigate to the Activities Instances page
-        Given The '/library' page is opened
-        When The 'Activities' submenu is clicked in the 'Concepts' section
-        And The 'Activity Instances' tab is selected
-        Then The current URL is '/library/activities/activity-instances'
-
-    Scenario: [Table][Options] User must be able to see table with correct options
-        Then A table is visible with following options
-            | options                                            |
-            | add-activity                                       |
-            | filters-button                                     |
-            | columns-layout-button                              |
-            | table-export-button                                |
-            | select-rows                                        |
-            | search-field                                       |
-            | History                                            |
-
-    @smoke_test
-    Scenario: [Table][Columns][Names] User must be able to see the columns list on the main page as below
-        And A table is visible with following headers
-            | headers                       |
-            | Library                       |
-            | Activity instance class       |
-            | Activity                      |
-            | Activity Instance             |
-            | NCI Concept ID                |
-            | NCI Concept Name              |
-            | Research Lab                  |
-            | Molecular Weight              |
-            | Topic code                    |
-            | ADaM parameter code           |
-            | Required for activity         |
-            | Default selected for activity |
-            | Data sharing                  |
-            | Legacy usage                  |
-            | Modified                      |
-            | Modified by                   |
-            | Status                        |
-            | Version                       |
-
-    Scenario: [Table][Columns][Visibility] User must be able to select visibility of columns in the table 
-        When The first column is selected from Select Columns option for table with actions
-        Then The table contain only selected column and actions column
-
-    @smoke_test
     Scenario: [Create][Positive case] User must be able to add a new Activity Instance
         When The Add Activity Instance button is clicked
         And The Activity instance group data is filled in

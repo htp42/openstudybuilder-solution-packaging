@@ -46,15 +46,12 @@ EndpointUID = Path(description="The unique id of the endpoint.")
         403: _generic_descriptions.ERROR_403,
         200: {
             "content": {
-                "text/csv": {
-                    "example": """
+                "text/csv": {"example": """
 "library","uid","objective","template","endpoint","start_date","end_date","status","version","change_description","author_username"
 "Sponsor","826d80a7-0b6a-419d-8ef1-80aa241d7ac7","Objective","First [ComparatorIntervention]","First Intervention","2020-10-22T10:19:29+00:00",,"Draft","0.1","Initial version","NdSJ"
-"""
-                },
+"""},
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
-                "text/xml": {
-                    "example": """
+                "text/xml": {"example": """
 <?xml version="1.0" encoding="UTF-8" ?>
 <root>
     <data type="list">
@@ -73,8 +70,7 @@ EndpointUID = Path(description="The unique id of the endpoint.")
         </item>
     </data>
 </root>
-"""
-                },
+"""},
             }
         },
     },
@@ -233,15 +229,12 @@ The returned versions are ordered by `start_date` descending (newest entries fir
         403: _generic_descriptions.ERROR_403,
         200: {
             "content": {
-                "text/csv": {
-                    "example": """
+                "text/csv": {"example": """
 "library","template","objective","uid","endpoint","start_date","end_date","status","version","change_description","author_username"
 "Sponsor","First [ComparatorIntervention]","Objective","826d80a7-0b6a-419d-8ef1-80aa241d7ac7","First Intervention","2020-10-22T10:19:29+00:00",,"Draft","0.1","Initial version","NdSJ"
-"""
-                },
+"""},
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
-                "text/xml": {
-                    "example": """
+                "text/xml": {"example": """
 <?xml version="1.0" encoding="UTF-8" ?>
 <root>
     <data type="list">
@@ -260,8 +253,7 @@ The returned versions are ordered by `start_date` descending (newest entries fir
         </item>
     </data>
 </root>
-"""
-                },
+"""},
             }
         },
         404: {
@@ -630,6 +622,6 @@ In that case, the same parameter (with the same values) is included multiple tim
     },
 )
 def get_parameters(
-    endpoint_uid: Annotated[str, EndpointUID]
+    endpoint_uid: Annotated[str, EndpointUID],
 ) -> list[TemplateParameter]:
     return EndpointService().get_parameters(endpoint_uid)

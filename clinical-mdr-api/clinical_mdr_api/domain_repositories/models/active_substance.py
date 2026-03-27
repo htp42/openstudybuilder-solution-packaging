@@ -1,4 +1,4 @@
-from neomodel import RelationshipTo, StringProperty, ZeroOrOne
+from neomodel import RelationshipTo, ZeroOrOne
 
 from clinical_mdr_api.domain_repositories.models.concepts import (
     ConceptRoot,
@@ -9,6 +9,7 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     ClinicalMdrRel,
     VersionRelationship,
 )
+from common.neomodel import StringProperty
 
 
 class ActiveSubstanceValue(ConceptValue):

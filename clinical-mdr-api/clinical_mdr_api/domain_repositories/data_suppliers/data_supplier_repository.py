@@ -117,7 +117,7 @@ class DataSupplierRepository(  # type: ignore[misc]
 
         if need_latest_version:
             return nodeset.subquery(
-                self.root_class.nodes.fetch_relations("has_version")
+                self.root_class.nodes.traverse("has_version")
                 .intermediate_transform(
                     {"rel": {"source": RelationNameResolver("has_version")}},
                     ordering=[

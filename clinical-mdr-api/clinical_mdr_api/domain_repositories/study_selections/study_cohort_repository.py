@@ -503,8 +503,7 @@ class StudySelectionCohortRepository:
                     WITH DISTINCT all_sc
                     """
         specific_cohort_selections_audit_trail = db.cypher_query(
-            cypher
-            + """
+            cypher + """
             WITH DISTINCT all_sc
             OPTIONAL MATCH (ats:StudyArm)-[:STUDY_ARM_HAS_COHORT]->(all_sc)
             WITH all_sc, ats  ORDER BY ats.order

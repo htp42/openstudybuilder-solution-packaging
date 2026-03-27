@@ -71,7 +71,6 @@
           :label="$t('HistoryTable.change_description')"
           data-cy="template-change-description"
           :rows="1"
-          density="compact"
           clearable
           auto-grow
           class="white pa-5"

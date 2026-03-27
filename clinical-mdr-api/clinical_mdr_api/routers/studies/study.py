@@ -7,6 +7,7 @@ from fastapi import APIRouter, Body, Path, Query, Request
 from fastapi.responses import HTMLResponse, StreamingResponse
 from pydantic import Field
 
+from clinical_mdr_api.models.data_completeness_tag import DataCompletenessTag
 from clinical_mdr_api.models.study_selections.study_selection import (
     CompactStudyArm,
     StudyActivityGroup,
@@ -96,6 +97,7 @@ from clinical_mdr_api.models.syntax_instances.criteria import (
 from clinical_mdr_api.models.utils import CustomPage, GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
+from clinical_mdr_api.services.data_completeness_tags import DataCompletenessTagService
 from clinical_mdr_api.services.studies.study import StudyService
 from clinical_mdr_api.services.studies.study_activity_group import (
     StudyActivityGroupService,
@@ -170,6 +172,7 @@ study_arm_uid_path = Path(description="The unique id of the study arm.")
 study_element_uid_path = Path(description="The unique id of the study element.")
 study_branch_arm_uid_path = Path(description="The unique id of the study branch arm.")
 study_cohort_uid_path = Path(description="The unique id of the study cohort.")
+data_completeness_tag_uid_path = Path(title="UID of the data completeness tag")
 PROJECT_NAME = Query(
     description="Optionally, the name of the project for which to return study selections.",
 )
@@ -6196,3 +6199,59 @@ def study_cohorts_batch_operations(
 ) -> list[StudySelectionCohortBatchOutput]:
     service = StudyCohortSelectionService()
     return service.handle_batch_operations(study_uid, operations)
+
+
+# API endpoints for study data completeness tags
+
+
+@router.get(
+    "/studies/{study_uid}/data-completeness-tags",
+    dependencies=[security, rbac.ADMIN_READ],
+    summary="Returns all data completeness tags assigned to the given study.",
+    status_code=200,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        404: _generic_descriptions.ERROR_404,
+    },
+)
+def get_study_data_completeness_tags(
+    study_uid: Annotated[str, studyUID],
+) -> list[DataCompletenessTag]:
+    service = DataCompletenessTagService()
+    return service.get_tags_for_study(study_uid)
+
+
+@router.post(
+    "/studies/{study_uid}/data-completeness-tags",
+    dependencies=[security, rbac.ADMIN_WRITE],
+    summary="Assigns a data completeness tag to the given study.",
+    status_code=201,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        404: _generic_descriptions.ERROR_404,
+    },
+)
+def assign_data_completeness_tag_to_study(
+    study_uid: Annotated[str, studyUID],
+    uid: Annotated[str, Body(title="UID of the data completeness tag", embed=True)],
+) -> DataCompletenessTag:
+    service = DataCompletenessTagService()
+    return service.assign_tag_to_study(study_uid, uid)
+
+
+@router.delete(
+    "/studies/{study_uid}/data-completeness-tags/{uid}",
+    dependencies=[security, rbac.ADMIN_WRITE],
+    summary="Removes a data completeness tag from the given study.",
+    status_code=204,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        404: _generic_descriptions.ERROR_404,
+    },
+)
+def remove_data_completeness_tag_from_study(
+    study_uid: Annotated[str, studyUID],
+    uid: Annotated[str, data_completeness_tag_uid_path],
+) -> None:
+    service = DataCompletenessTagService()
+    return service.remove_tag_from_study(study_uid, uid)

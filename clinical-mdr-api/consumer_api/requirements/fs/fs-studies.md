@@ -204,7 +204,7 @@ The endpoint must return audit trail entries in CSV format with the following co
 - `action`: Action performed (Create, Edit, Delete)
 - `entity_uid`: UID of the entity affected by the action
 - `entity_type`: Type (node labels) of the entity affected by the action. Multiple labels are separated by '|' character.
-- `changed_properties`: List of properties that were changed during the Edit action
+- `changed_properties`: List of properties that were changed during the Edit action separated by '|' character.
 - `author`: Hashed (MD5) value of the ID of a user that performed the action
 
 The response must have a media type of `text/csv`.

@@ -26,7 +26,8 @@ Feature: Library - Code Lists - CT Packages
 		Then The table contain only selected column and actions column
 
     Scenario: [Table][Pagination] User must be able to use table pagination
-        Given The '/library/ct_packages' page is opened
+		Given User sets row page to 5 in the settings menu
+        And The '/library/ct_packages' page is opened
         When The user switches pages of the table
         Then The table page presents correct data
 

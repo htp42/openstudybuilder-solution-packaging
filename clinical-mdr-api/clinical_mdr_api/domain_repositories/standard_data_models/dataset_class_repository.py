@@ -1,3 +1,5 @@
+from typing import Any
+
 from clinical_mdr_api.domain_repositories.models.standard_data_model import (
     DatasetClass,
     DatasetClassInstance,
@@ -8,6 +10,7 @@ from clinical_mdr_api.domain_repositories.standard_data_models.standard_data_mod
 from clinical_mdr_api.models.standard_data_models.dataset_class import (
     DatasetClass as DatasetClassAPIModel,
 )
+from common.exceptions import ValidationException
 
 
 class DatasetClassRepository(StandardDataModelRepository):
@@ -16,34 +19,57 @@ class DatasetClassRepository(StandardDataModelRepository):
     return_model = DatasetClassAPIModel
 
     # pylint: disable=unused-argument
-    def generic_match_clause(
-        self, versioning_relationship: str, uid: str | None = None
-    ):
+    def generic_match_clause(self, versioning_relationship: str):
         standard_data_model_label = self.root_class.__label__
         standard_data_model_value_label = self.value_class.__label__
-        uid_filter = ""
-        if uid:
-            uid_filter = f"{{uid: '{uid}'}}"
-        query = f"""MATCH (standard_root_row:{standard_data_model_label} {uid_filter})-[:HAS_INSTANCE]->
-                (standard_value_row:{standard_data_model_value_label})"""
-        if standard_data_model_label == "DatasetClass":
-            query += """<-[:HAS_DATASET_CLASS]-(dmv:DataModelValue)
-            WITH standard_root_row, standard_value_row, dmv ORDER BY dmv.effective_date
-            WITH COLLECT(standard_value_row) AS standard_value_row_collected, standard_root_row as standard_root
-            WITH standard_root, HEAD(standard_value_row_collected) as standard_value
+        query = f"""MATCH (standard_root:{standard_data_model_label})-[:HAS_INSTANCE]->
+                (standard_value:{standard_data_model_value_label})<-[hdc:HAS_DATASET_CLASS]-(data_model_value:DataModelValue)
             """
         return query
 
     def specific_alias_clause(self) -> str:
         return """
-        WITH *,
+            *,
+            standard_root.uid AS uid,
             standard_value.label AS label,
             standard_value.title AS title,
+            standard_value.description AS description,
+            {name: data_model_value.name, ordinal: hdc.ordinal} AS data_model,
+            toInteger(apoc.text.split(hdc.ordinal, "\\.")[0]) AS split_ordinal0,
+            toInteger(coalesce(apoc.text.split(hdc.ordinal, "\\.")[1], 0)) AS split_ordinal1,
             head([(standard_root)<-[:HAS_DATASET_CLASS]-(catalogue:DataModelCatalogue) | catalogue.name]) AS catalogue_name,
-            head([(standard_value)-[:HAS_PARENT_CLASS]->(parent_class:DatasetClassInstance) | parent_class.label]) AS parent_class,
-            [(standard_value)<-[has_dataset_class:HAS_DATASET_CLASS]-(data_model_value:DataModelValue) | {
-                data_model_name: data_model_value.name,
-                ordinal:has_dataset_class.ordinal
-            }
-            ] AS data_models
+            head([(standard_value)-[:HAS_PARENT_CLASS]->(parent_class:DatasetClassInstance) | parent_class.label]) AS parent_class_name
         """
+
+    def sort_by(self) -> dict[str, bool] | None:
+        return {
+            "split_ordinal0": True,
+            "split_ordinal1": True,
+        }
+
+    def create_query_filter_statement(self, **kwargs) -> tuple[str, dict[Any, Any]]:
+        (
+            filter_statements_from_standard,
+            filter_query_parameters,
+        ) = super().create_query_filter_statement(**kwargs)
+
+        if not kwargs.get("find_by_uid"):
+            ValidationException.raise_if(
+                not kwargs.get("data_model_name"),
+                msg="Please provide data_model_name parameter",
+            )
+
+            data_model_name = kwargs.get("data_model_name")
+
+            filter_by_data_model_name = "data_model_value.name = $data_model_name"
+
+            filter_query_parameters["data_model_name"] = data_model_name
+
+            if filter_statements_from_standard != "":
+                filter_statements_to_return = " AND ".join(
+                    [filter_statements_from_standard, filter_by_data_model_name]
+                )
+            else:
+                filter_statements_to_return = "WHERE " + filter_by_data_model_name
+            return filter_statements_to_return, filter_query_parameters
+        return filter_statements_from_standard, filter_query_parameters

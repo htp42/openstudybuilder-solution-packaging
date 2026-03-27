@@ -32,6 +32,9 @@ from clinical_mdr_api.domains.enums import (
     StudySourceVariableEnum,
     ValidationMode,
 )
+from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import (
+    StudyStatus,
+)
 from clinical_mdr_api.main import app
 from clinical_mdr_api.models.biomedical_concepts.activity_instance_class import (
     ActivityInstanceClass,
@@ -92,41 +95,6 @@ from clinical_mdr_api.models.concepts.medicinal_product import (
     MedicinalProduct,
     MedicinalProductCreateInput,
 )
-from clinical_mdr_api.models.concepts.odms.odm_common_models import (
-    OdmAliasModel,
-    OdmFormalExpressionModel,
-    OdmTranslatedTextModel,
-)
-from clinical_mdr_api.models.concepts.odms.odm_condition import (
-    OdmCondition,
-    OdmConditionPostInput,
-)
-from clinical_mdr_api.models.concepts.odms.odm_form import OdmForm, OdmFormPostInput
-from clinical_mdr_api.models.concepts.odms.odm_item import (
-    OdmItem,
-    OdmItemCodelist,
-    OdmItemPostInput,
-)
-from clinical_mdr_api.models.concepts.odms.odm_item_group import (
-    OdmItemGroup,
-    OdmItemGroupPostInput,
-)
-from clinical_mdr_api.models.concepts.odms.odm_study_event import (
-    OdmStudyEvent,
-    OdmStudyEventPostInput,
-)
-from clinical_mdr_api.models.concepts.odms.odm_vendor_attribute import (
-    OdmVendorAttribute,
-    OdmVendorAttributePostInput,
-)
-from clinical_mdr_api.models.concepts.odms.odm_vendor_element import (
-    OdmVendorElement,
-    OdmVendorElementPostInput,
-)
-from clinical_mdr_api.models.concepts.odms.odm_vendor_namespace import (
-    OdmVendorNamespace,
-    OdmVendorNamespacePostInput,
-)
 from clinical_mdr_api.models.concepts.pharmaceutical_product import (
     PharmaceuticalProduct,
     PharmaceuticalProductCreateInput,
@@ -149,6 +117,11 @@ from clinical_mdr_api.models.controlled_terminologies.ct_term import (
     CTTermCodelistInput,
     CTTermCreateInput,
     CTTermNameAndAttributes,
+    CTTermUidInput,
+)
+from clinical_mdr_api.models.data_completeness_tag import (
+    DataCompletenessTag,
+    DataCompletenessTagInput,
 )
 from clinical_mdr_api.models.data_suppliers.data_supplier import (
     DataSupplier,
@@ -167,6 +140,31 @@ from clinical_mdr_api.models.notification import (
     Notification,
     NotificationPostInput,
     NotificationType,
+)
+from clinical_mdr_api.models.odms.common_models import (
+    OdmAliasModel,
+    OdmFormalExpressionModel,
+    OdmTranslatedTextModel,
+)
+from clinical_mdr_api.models.odms.condition import OdmCondition, OdmConditionPostInput
+from clinical_mdr_api.models.odms.form import OdmForm, OdmFormPostInput
+from clinical_mdr_api.models.odms.item import OdmItem, OdmItemCodelist, OdmItemPostInput
+from clinical_mdr_api.models.odms.item_group import OdmItemGroup, OdmItemGroupPostInput
+from clinical_mdr_api.models.odms.study_event import (
+    OdmStudyEvent,
+    OdmStudyEventPostInput,
+)
+from clinical_mdr_api.models.odms.vendor_attribute import (
+    OdmVendorAttribute,
+    OdmVendorAttributePostInput,
+)
+from clinical_mdr_api.models.odms.vendor_element import (
+    OdmVendorElement,
+    OdmVendorElementPostInput,
+)
+from clinical_mdr_api.models.odms.vendor_namespace import (
+    OdmVendorNamespace,
+    OdmVendorNamespacePostInput,
 )
 from clinical_mdr_api.models.projects.project import Project, ProjectCreateInput
 from clinical_mdr_api.models.standard_data_models.data_model import DataModel
@@ -208,6 +206,7 @@ from clinical_mdr_api.models.study_selections.study import (
     Study,
     StudyCreateInput,
     StudyDescriptionJsonModel,
+    StudyIdentificationMetadataJsonModel,
     StudyMetadataJsonModel,
     StudyPatchRequestJsonModel,
     StudyPreferredTimeUnit,
@@ -377,22 +376,6 @@ from clinical_mdr_api.services.concepts.compound_service import CompoundService
 from clinical_mdr_api.services.concepts.medicinal_products_service import (
     MedicinalProductService,
 )
-from clinical_mdr_api.services.concepts.odms.odm_conditions import OdmConditionService
-from clinical_mdr_api.services.concepts.odms.odm_forms import OdmFormService
-from clinical_mdr_api.services.concepts.odms.odm_item_groups import OdmItemGroupService
-from clinical_mdr_api.services.concepts.odms.odm_items import OdmItemService
-from clinical_mdr_api.services.concepts.odms.odm_study_events import (
-    OdmStudyEventService,
-)
-from clinical_mdr_api.services.concepts.odms.odm_vendor_attributes import (
-    OdmVendorAttributeService,
-)
-from clinical_mdr_api.services.concepts.odms.odm_vendor_elements import (
-    OdmVendorElementService,
-)
-from clinical_mdr_api.services.concepts.odms.odm_vendor_namespaces import (
-    OdmVendorNamespaceService,
-)
 from clinical_mdr_api.services.concepts.pharmaceutical_products_service import (
     PharmaceuticalProductService,
 )
@@ -428,6 +411,7 @@ from clinical_mdr_api.services.controlled_terminologies.ct_term_attributes impor
 from clinical_mdr_api.services.controlled_terminologies.ct_term_name import (
     CTTermNameService,
 )
+from clinical_mdr_api.services.data_completeness_tags import DataCompletenessTagService
 from clinical_mdr_api.services.data_suppliers.data_supplier import DataSupplierService
 from clinical_mdr_api.services.dictionaries.dictionary_codelist_generic_service import (
     DictionaryCodelistGenericService as DictionaryCodelistService,
@@ -438,6 +422,14 @@ from clinical_mdr_api.services.dictionaries.dictionary_term_generic_service impo
 from clinical_mdr_api.services.feature_flags import FeatureFlagService
 from clinical_mdr_api.services.libraries import libraries as library_service
 from clinical_mdr_api.services.notifications import NotificationService
+from clinical_mdr_api.services.odms.conditions import OdmConditionService
+from clinical_mdr_api.services.odms.forms import OdmFormService
+from clinical_mdr_api.services.odms.item_groups import OdmItemGroupService
+from clinical_mdr_api.services.odms.items import OdmItemService
+from clinical_mdr_api.services.odms.study_events import OdmStudyEventService
+from clinical_mdr_api.services.odms.vendor_attributes import OdmVendorAttributeService
+from clinical_mdr_api.services.odms.vendor_elements import OdmVendorElementService
+from clinical_mdr_api.services.odms.vendor_namespaces import OdmVendorNamespaceService
 from clinical_mdr_api.services.projects.project import ProjectService
 from clinical_mdr_api.services.standard_data_models.data_model import DataModelService
 from clinical_mdr_api.services.standard_data_models.data_model_ig import (
@@ -631,6 +623,20 @@ CT_CODELIST_LIBRARY_SPONSOR = "Sponsor"
 CT_PACKAGE_NAME = f"SDTM CT {datetime.now().strftime('%Y-%m-%d')}"
 DICTIONARY_CODELIST_NAME = "UCUM"
 DICTIONARY_CODELIST_LIBRARY = "UCUM"
+
+
+def _resolve_ct_term(
+    nested: dict | CTTermUidInput | None,
+    flat_uid: str | None,
+) -> CTTermUidInput | None:
+    """Resolve a CT term field from either a nested object or a flat UID string."""
+    if nested is not None:
+        if isinstance(nested, dict):
+            return CTTermUidInput(**nested)
+        return nested
+    if flat_uid is not None:
+        return CTTermUidInput(term_uid=flat_uid)
+    return None
 
 
 class TestUtils:
@@ -836,6 +842,15 @@ class TestUtils:
         service: FeatureFlagService = FeatureFlagService()
         payload = FeatureFlagInput(name=name, enabled=enabled, description=description)
         return service.create_feature_flag(payload)
+
+    @classmethod
+    def create_data_completeness_tag(
+        cls,
+        name: str = "Data Completeness Tag Name",
+    ) -> DataCompletenessTag:
+        service: DataCompletenessTagService = DataCompletenessTagService()
+        payload = DataCompletenessTagInput(name=name)
+        return service.create_data_completeness_tag(payload)
 
     @classmethod
     def create_notification(
@@ -1127,12 +1142,10 @@ class TestUtils:
     ) -> Footnote:
         if not footnote_template_uid:
             # find the footnote type codelist
-            codelist_uid = db.cypher_query(
-                """
+            codelist_uid = db.cypher_query("""
                 MATCH (clr:CTCodelistRoot)-[:HAS_ATTRIBUTES_ROOT]->(:CTCodelistAttributesRoot)-[:LATEST]->(:CTCodelistAttributesValue {submission_value: 'FTNTTP'})
                 RETURN clr.uid
-                """
-            )[0][0][0]
+                """)[0][0][0]
 
             footnote_template_uid = cls.create_footnote_template(
                 name="test name",
@@ -1961,9 +1974,7 @@ class TestUtils:
 
     @classmethod
     def delete_study(cls, study_uid: str):
-        db.cypher_query(
-            f"MATCH (r:StudyRoot {{uid:'{study_uid}'}})-[]-(v:StudyValue) DETACH DELETE r, v"
-        )
+        StudyService().soft_delete(uid=study_uid)
 
     @classmethod
     def create_study_activity_schedule(
@@ -2037,12 +2048,20 @@ class TestUtils:
         cls,
         study_uid: str,
         study_epoch_uid: str,
-        visit_type_uid: str,
-        show_visit: bool,
-        visit_contact_mode_uid: str,
-        visit_class: VisitClass,
-        is_global_anchor_visit: bool,
+        # Flat UID params (for explicit callers)
+        visit_type_uid: str | None = None,
+        visit_contact_mode_uid: str | None = None,
         time_reference_uid: str | None = None,
+        epoch_allocation_uid: str | None = None,
+        # Nested CT term params (for **datadict unpacking)
+        visit_type: dict | CTTermUidInput | None = None,
+        visit_contact_mode: dict | CTTermUidInput | None = None,
+        time_reference: dict | CTTermUidInput | None = None,
+        epoch_allocation: dict | CTTermUidInput | None = None,
+        # Common params
+        show_visit: bool = True,
+        visit_class: VisitClass = "SINGLE_VISIT",  # type: ignore[assignment]
+        is_global_anchor_visit: bool = False,
         time_value: int | None = None,
         time_unit_uid: str | None = None,
         visit_sublabel_reference: str | None = None,
@@ -2052,14 +2071,21 @@ class TestUtils:
         description: str | None = None,
         start_rule: str | None = None,
         end_rule: str | None = None,
-        epoch_allocation_uid: str | None = None,
         visit_subclass: VisitSubclass | None = None,
     ) -> StudyVisit:
+        # Resolve CT term fields: prefer nested object, fall back to flat UID
+        _visit_type = _resolve_ct_term(visit_type, visit_type_uid)
+        _visit_contact_mode = _resolve_ct_term(
+            visit_contact_mode, visit_contact_mode_uid
+        )
+        _time_reference = _resolve_ct_term(time_reference, time_reference_uid)
+        _epoch_allocation = _resolve_ct_term(epoch_allocation, epoch_allocation_uid)
+
         service: StudyVisitService = StudyVisitService(study_uid=study_uid)
         study_visit_input: StudyVisitCreateInput = StudyVisitCreateInput(
             study_epoch_uid=study_epoch_uid,
-            visit_type_uid=visit_type_uid,
-            time_reference_uid=time_reference_uid,
+            visit_type=_visit_type,  # type: ignore[arg-type]
+            time_reference=_time_reference,
             time_value=time_value,
             time_unit_uid=time_unit_uid,
             visit_sublabel_reference=visit_sublabel_reference,
@@ -2070,8 +2096,8 @@ class TestUtils:
             description=description,
             start_rule=start_rule,
             end_rule=end_rule,
-            visit_contact_mode_uid=visit_contact_mode_uid,
-            epoch_allocation_uid=epoch_allocation_uid,
+            visit_contact_mode=_visit_contact_mode,  # type: ignore[arg-type]
+            epoch_allocation=_epoch_allocation,
             visit_class=visit_class,
             visit_subclass=visit_subclass,
             is_global_anchor_visit=is_global_anchor_visit,
@@ -2341,7 +2367,7 @@ class TestUtils:
             display_in_tree=display_in_tree,
         )
 
-        result: OdmStudyEvent = service.create(concept_input=payload)  # type: ignore[assignment]
+        result: OdmStudyEvent = service.create(odm_input=payload)  # type: ignore[assignment]
         if approve:
             service.approve(result.uid)
         return result
@@ -2375,7 +2401,7 @@ class TestUtils:
             aliases=aliases,
         )
 
-        result: OdmForm = service.create(concept_input=payload)  # type: ignore[assignment]
+        result: OdmForm = service.create(odm_input=payload)  # type: ignore[assignment]
         if approve:
             service.approve(result.uid)
         return result
@@ -2421,7 +2447,7 @@ class TestUtils:
             sdtm_domain_uids=sdtm_domain_uids,
         )
 
-        result: OdmItemGroup = service.create(concept_input=payload)  # type: ignore[assignment]
+        result: OdmItemGroup = service.create(odm_input=payload)  # type: ignore[assignment]
         if approve:
             service.approve(result.uid)
         return result
@@ -2477,7 +2503,7 @@ class TestUtils:
             terms=terms,
         )
 
-        result: OdmItem = service.create(concept_input=payload)
+        result: OdmItem = service.create(odm_input=payload)
         if approve:
             service.approve(result.uid)
         return result
@@ -2511,7 +2537,7 @@ class TestUtils:
             aliases=aliases,
         )
 
-        result: OdmCondition = service.create(concept_input=payload)  # type: ignore[assignment]
+        result: OdmCondition = service.create(odm_input=payload)  # type: ignore[assignment]
         if approve:
             service.approve(result.uid)
         return result
@@ -2534,7 +2560,7 @@ class TestUtils:
             url=url,
         )
 
-        result: OdmVendorNamespace = service.create(concept_input=payload)  # type: ignore[assignment]
+        result: OdmVendorNamespace = service.create(odm_input=payload)  # type: ignore[assignment]
         if approve:
             service.approve(result.uid)
         return result
@@ -2560,7 +2586,7 @@ class TestUtils:
             vendor_namespace_uid=vendor_namespace_uid,
         )
 
-        result: OdmVendorElement = service.create(concept_input=payload)  # type: ignore[assignment]
+        result: OdmVendorElement = service.create(odm_input=payload)  # type: ignore[assignment]
         if approve:
             service.approve(result.uid)
         return result
@@ -2592,7 +2618,7 @@ class TestUtils:
             vendor_element_uid=vendor_element_uid,
         )
 
-        result: OdmVendorAttribute = service.create(concept_input=payload)  # type: ignore[assignment]
+        result: OdmVendorAttribute = service.create(odm_input=payload)  # type: ignore[assignment]
         if approve:
             service.approve(result.uid)
         return result
@@ -2676,6 +2702,25 @@ class TestUtils:
                 study_parent_part_uid=study_parent_part_uid,
             )
         return service.create(payload)
+
+    @classmethod
+    def patch_study(
+        cls,
+        uid: str,
+        study_parent_part_uid: str | None = None,
+        dry: bool = False,
+        **kwargs,
+    ) -> Study:
+        study_service: StudyService = StudyService()
+
+        payload = StudyPatchRequestJsonModel(
+            study_parent_part_uid=study_parent_part_uid,
+            current_metadata=StudyMetadataJsonModel(
+                identification_metadata=StudyIdentificationMetadataJsonModel(**kwargs)
+            ),
+        )
+
+        return study_service.patch(uid=uid, dry=dry, study_patch_request=payload)
 
     @classmethod
     def create_study_standard_version(
@@ -3602,6 +3647,7 @@ class TestUtils:
     def create_dataset_class(
         cls,
         data_model_uid: str,
+        data_model_name: str,
         data_model_catalogue_name: str,
         label: str = "label",
         description: str = "description",
@@ -3641,7 +3687,9 @@ class TestUtils:
                 "library_name": library_name,
             },
         )
-        return DatasetClassService().get_by_uid(uid=dataset_class_uid)
+        return DatasetClassService().get_by_uid(
+            uid=dataset_class_uid, data_model_name=data_model_name
+        )
 
     @classmethod
     def create_dataset(
@@ -4297,30 +4345,51 @@ class TestUtils:
     def lock_study(cls, study_uid, reason_for_lock_term_uid: str) -> str:
         """locks a study version (giving it a study-title first), returns locked study version"""
 
+        cls.set_study_title(study_uid)
+
         study_service = StudyService()
-
-        study_service.patch(
-            uid=study_uid,
-            dry=False,
-            study_patch_request=StudyPatchRequestJsonModel(
-                current_metadata=StudyMetadataJsonModel(
-                    study_description=StudyDescriptionJsonModel(
-                        study_title=cls.random_str(prefix="Title ")
-                    )
-                )
-            ),
-        )
-
         study = study_service.lock(
             uid=study_uid,
             change_description=cls.random_str(prefix="v"),
             reason_for_lock_term_uid=reason_for_lock_term_uid,
         )
-        latest_study_version = str(
-            study.current_metadata.version_metadata.version_number
+        latest_study_version = study.current_metadata.version_metadata.version_number
+
+        return str(latest_study_version)
+
+    @classmethod
+    def release_study(cls, study_uid: str, reason_for_release_term_uid: str) -> str:
+        """releases a study version, returns released study version"""
+
+        cls.set_study_title(study_uid)
+
+        study_service = StudyService()
+
+        study_service.release(
+            uid=study_uid,
+            change_description=cls.random_str(prefix="release "),
+            reason_for_release_uid=reason_for_release_term_uid,
         )
 
-        return latest_study_version
+        study_history = study_service.get_study_snapshot_history(
+            study_uid=study_uid
+        ).items
+        release_history = sorted(
+            (
+                item
+                for item in study_history
+                if StudyStatus.RELEASED in item.study_status
+            ),
+            key=lambda item: item.modified_date,
+            reverse=True,
+        )
+
+        if not release_history:
+            raise RuntimeError(
+                f"No released study version was found in history of study {study_uid}"
+            )
+
+        return str(release_history[0].metadata_version)
 
     @classmethod
     def unlock_study(cls, study_uid, reason_for_unlock_term_uid: str):

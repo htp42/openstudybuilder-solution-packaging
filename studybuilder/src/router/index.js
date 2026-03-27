@@ -447,6 +447,14 @@ const routes = [
         },
       },
       {
+        path: 'sponsor-sdtm',
+        name: 'SponsorSdtm',
+        component: () => import('../views/library/SponsorSdtm.vue'),
+        meta: {
+          authRequired: true,
+        },
+      },
+      {
         path: 'cdash_standards',
         name: 'CdashStandards',
         component: () => import('../views/library/CdashStandards.vue'),
@@ -1078,8 +1086,19 @@ const routes = [
     path: '/administration',
     name: 'Administration',
     component: () => import('../components/layout/PassThrough.vue'),
-    redirect: { name: 'FeatureFlags' },
+    redirect: { name: 'GlobalPreferences' },
     children: [
+      {
+        path: 'global-preferences',
+        name: 'GlobalPreferences',
+        component: () =>
+          import('../views/administration/GlobalPreferences.vue'),
+        meta: {
+          resetBreadcrumbs: true,
+          authRequired: true,
+          requiredPermission: roles.ADMIN_READ,
+        },
+      },
       {
         path: 'featureflags',
         name: 'FeatureFlags',
@@ -1098,6 +1117,17 @@ const routes = [
         meta: {
           authRequired: true,
           section: 'Administration',
+          requiredPermission: roles.ADMIN_READ,
+        },
+      },
+      {
+        path: 'data-completeness-tags',
+        name: 'DataCompletenessTags',
+        component: () =>
+          import('../views/administration/DataCompletenessTags.vue'),
+        meta: {
+          resetBreadcrumbs: true,
+          authRequired: true,
           requiredPermission: roles.ADMIN_READ,
         },
       },
@@ -1289,10 +1319,13 @@ router.beforeEach(async (to, from, next) => {
     to.path !== '/oauth-callback'
   ) {
     appStore.setSection(to.matched[0].name)
-    if (section && ['Logout', 'Home'].indexOf(section) === -1) {
+    if (
+      section &&
+      ['Logout', 'Home', 'UserPreferences'].indexOf(section) === -1
+    ) {
       appStore.setSection(section)
       const currentRoute = router.resolve(to.path)
-      if (appStore.menuItems[section].items) {
+      if (appStore.menuItems[section] && appStore.menuItems[section].items) {
         for (const item of appStore.menuItems[section].items) {
           if (item.children) {
             let found = false
@@ -1323,7 +1356,7 @@ router.beforeEach(async (to, from, next) => {
     const basePath = '/' + to.path.split('/')[1]
     const baseRoute = router.resolve(basePath)
     const section = baseRoute.name
-    if (section && section !== 'Logout') {
+    if (section && section !== 'Logout' && appStore.menuItems[section]) {
       appStore.setSection(section)
       const currentRoute = router.resolve(to.path)
       for (const item of appStore.menuItems[section].items) {

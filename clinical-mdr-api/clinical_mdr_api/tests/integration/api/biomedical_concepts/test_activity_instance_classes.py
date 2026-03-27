@@ -71,6 +71,7 @@ def test_data():
     dataset_class = TestUtils.create_dataset_class(
         data_model_uid=data_model.uid,
         data_model_catalogue_name=data_model_catalogue,
+        data_model_name=data_model.name,
     )
 
     _data_domain_terms = [
@@ -510,6 +511,7 @@ def test_edit_activity_instance_class(api_client):
     dataset_class_2 = TestUtils.create_dataset_class(
         data_model_uid=data_model.uid,
         data_model_catalogue_name=data_model_catalogue,
+        data_model_name=data_model.name,
     )
     response = api_client.patch(
         f"/activity-instance-classes/{activity_instance_class.uid}/model-mappings",
@@ -636,6 +638,7 @@ def test_get_activity_instance_class_datasets(api_client):
     dataset_class_for_parent = TestUtils.create_dataset_class(
         data_model_uid=data_model.uid,
         data_model_catalogue_name=data_model_catalogue,
+        data_model_name=data_model.name,
     )
     dataset_for_parent = TestUtils.create_dataset(
         data_model_ig_uid=data_model_ig.uid,

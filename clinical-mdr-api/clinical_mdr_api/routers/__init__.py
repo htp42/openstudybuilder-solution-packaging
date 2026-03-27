@@ -40,32 +40,6 @@ from clinical_mdr_api.routers.concepts.numeric_values import (
 from clinical_mdr_api.routers.concepts.numeric_values_with_unit import (
     router as numeric_values_with_unit_router,
 )
-from clinical_mdr_api.routers.concepts.odms.odm_conditions import (
-    router as odm_conditions_router,
-)
-from clinical_mdr_api.routers.concepts.odms.odm_forms import router as odm_forms_router
-from clinical_mdr_api.routers.concepts.odms.odm_item_groups import (
-    router as odm_item_groups_router,
-)
-from clinical_mdr_api.routers.concepts.odms.odm_items import router as odm_item_router
-from clinical_mdr_api.routers.concepts.odms.odm_metadata import (
-    router as odm_metadata_router,
-)
-from clinical_mdr_api.routers.concepts.odms.odm_methods import (
-    router as odm_methods_router,
-)
-from clinical_mdr_api.routers.concepts.odms.odm_study_events import (
-    router as odm_study_events_router,
-)
-from clinical_mdr_api.routers.concepts.odms.odm_vendor_attributes import (
-    router as odm_vendor_attribute_router,
-)
-from clinical_mdr_api.routers.concepts.odms.odm_vendor_elements import (
-    router as odm_vendor_element_router,
-)
-from clinical_mdr_api.routers.concepts.odms.odm_vendor_namespaces import (
-    router as odm_vendor_namespace_router,
-)
 from clinical_mdr_api.routers.concepts.pharmaceutical_products import (
     router as pharmaceutical_products_router,
 )
@@ -105,6 +79,9 @@ from clinical_mdr_api.routers.controlled_terminologies.ct_terms import (
     router as ct_terms_router,
 )
 from clinical_mdr_api.routers.ctr_xml.ctr_xml import router as ctr_xml_router
+from clinical_mdr_api.routers.data_completeness_tags import (
+    router as data_completeness_tags_router,
+)
 from clinical_mdr_api.routers.data_suppliers.data_suppliers import (
     router as data_suppliers_router,
 )
@@ -131,6 +108,23 @@ from clinical_mdr_api.routers.listings.listings_study import (
     router as study_listing_router,
 )
 from clinical_mdr_api.routers.notifications import router as notifications_router
+from clinical_mdr_api.routers.odms.conditions import router as odm_conditions_router
+from clinical_mdr_api.routers.odms.forms import router as odm_forms_router
+from clinical_mdr_api.routers.odms.item_groups import router as odm_item_groups_router
+from clinical_mdr_api.routers.odms.items import router as odm_item_router
+from clinical_mdr_api.routers.odms.metadata import router as odm_metadata_router
+from clinical_mdr_api.routers.odms.methods import router as odm_methods_router
+from clinical_mdr_api.routers.odms.study_events import router as odm_study_events_router
+from clinical_mdr_api.routers.odms.vendor_attributes import (
+    router as odm_vendor_attribute_router,
+)
+from clinical_mdr_api.routers.odms.vendor_elements import (
+    router as odm_vendor_element_router,
+)
+from clinical_mdr_api.routers.odms.vendor_namespaces import (
+    router as odm_vendor_namespace_router,
+)
+from clinical_mdr_api.routers.preferences import router as preferences_router
 from clinical_mdr_api.routers.projects.projects import router as projects_router
 from clinical_mdr_api.routers.standard_data_models.data_model_igs import (
     router as data_model_igs_router,
@@ -265,8 +259,10 @@ from clinical_mdr_api.routers.template_parameters import (
 )
 
 __all__ = [
+    "data_completeness_tags_router",
     "feature_flags_router",
     "notifications_router",
+    "preferences_router",
     "activities_router",
     "active_substances_router",
     "pharmaceutical_products_router",

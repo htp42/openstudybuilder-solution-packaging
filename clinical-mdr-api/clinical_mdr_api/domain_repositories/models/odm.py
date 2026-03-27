@@ -1,32 +1,44 @@
 from neomodel import (
-    BooleanProperty,
     DateProperty,
-    IntegerProperty,
     JSONProperty,
     RelationshipFrom,
     RelationshipTo,
-    StringProperty,
     ZeroOrMore,
 )
 
 from clinical_mdr_api.domain_repositories.models.activities import ActivityItem
-from clinical_mdr_api.domain_repositories.models.concepts import (
-    ConceptRoot,
-    ConceptValue,
-    UnitDefinitionRoot,
-)
+from clinical_mdr_api.domain_repositories.models.concepts import UnitDefinitionRoot
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTCodelistRoot,
     CTTermContext,
 )
 from clinical_mdr_api.domain_repositories.models.generic import (
+    ClinicalMdrNode,
     ClinicalMdrRel,
+    Library,
     VersionRelationship,
+    VersionRoot,
     VersionValue,
 )
+from common.neomodel import BooleanProperty, IntegerProperty, StringProperty
 
 
-class OdmAlias(VersionValue):
+class Odm(ClinicalMdrNode): ...
+
+
+class OdmValue(Odm, VersionValue):
+    name = StringProperty()
+
+
+class OdmRoot(Odm, VersionRoot):
+    LIBRARY_REL_LABEL = "CONTAINS_ODM"
+
+    has_library = RelationshipFrom(
+        Library, "CONTAINS_ODM", cardinality=ZeroOrMore, model=ClinicalMdrRel
+    )
+
+
+class OdmAlias(Odm):
     name = StringProperty()
     context = StringProperty()
 
@@ -41,7 +53,7 @@ class OdmAlias(VersionValue):
     has_item = RelationshipFrom("OdmItemValue", "HAS_ALIAS", model=ClinicalMdrRel)
 
 
-class OdmTranslatedText(VersionValue):
+class OdmTranslatedText(Odm):
     text_type = StringProperty()
     language = StringProperty()
     text = StringProperty()
@@ -63,7 +75,7 @@ class OdmTranslatedText(VersionValue):
     )
 
 
-class OdmFormalExpression(VersionValue):
+class OdmFormalExpression(Odm):
     context = StringProperty()
     expression = StringProperty()
 
@@ -75,7 +87,7 @@ class OdmFormalExpression(VersionValue):
     )
 
 
-class OdmConditionValue(ConceptValue):
+class OdmConditionValue(OdmValue):
     oid = StringProperty()
     has_translated_text = RelationshipTo(
         OdmTranslatedText, "HAS_TRANSLATED_TEXT", model=ClinicalMdrRel
@@ -90,7 +102,7 @@ class OdmConditionValue(ConceptValue):
     )
 
 
-class OdmConditionRoot(ConceptRoot):
+class OdmConditionRoot(OdmRoot):
     has_version = RelationshipTo(
         OdmConditionValue, "HAS_VERSION", model=VersionRelationship
     )
@@ -106,7 +118,7 @@ class OdmConditionRoot(ConceptRoot):
     )
 
 
-class OdmMethodValue(ConceptValue):
+class OdmMethodValue(OdmValue):
     oid = StringProperty()
     method_type = StringProperty()
     has_translated_text = RelationshipTo(
@@ -122,7 +134,7 @@ class OdmMethodValue(ConceptValue):
     )
 
 
-class OdmMethodRoot(ConceptRoot):
+class OdmMethodRoot(OdmRoot):
     has_version = RelationshipTo(
         OdmMethodValue, "HAS_VERSION", model=VersionRelationship
     )
@@ -152,7 +164,7 @@ class OdmFormRefRelation(ClinicalMdrRel):
     collection_exception_condition_oid = StringProperty()
 
 
-class OdmFormValue(ConceptValue):
+class OdmFormValue(OdmValue):
     oid = StringProperty()
     repeating = BooleanProperty()
     sdtm_version = StringProperty()
@@ -185,7 +197,7 @@ class OdmFormValue(ConceptValue):
     )
 
 
-class OdmFormRoot(ConceptRoot):
+class OdmFormRoot(OdmRoot):
     has_version = RelationshipTo(OdmFormValue, "HAS_VERSION", model=VersionRelationship)
     has_latest_value = RelationshipTo(OdmFormValue, "LATEST", model=ClinicalMdrRel)
     latest_draft = RelationshipTo(OdmFormValue, "LATEST_DRAFT", model=ClinicalMdrRel)
@@ -207,7 +219,7 @@ class OdmItemRefRelation(ClinicalMdrRel):
     vendor = JSONProperty()
 
 
-class OdmItemGroupValue(ConceptValue):
+class OdmItemGroupValue(OdmValue):
     oid = StringProperty()
     repeating = BooleanProperty()
     is_reference_data = BooleanProperty()
@@ -247,7 +259,7 @@ class OdmItemGroupValue(ConceptValue):
     )
 
 
-class OdmItemGroupRoot(ConceptRoot):
+class OdmItemGroupRoot(OdmRoot):
     has_version = RelationshipTo(
         OdmItemGroupValue, "HAS_VERSION", model=VersionRelationship
     )
@@ -286,7 +298,7 @@ class OdmItemCodelistRelationship(ClinicalMdrRel):
     allows_multi_choice = BooleanProperty()
 
 
-class OdmItemValue(ConceptValue):
+class OdmItemValue(OdmValue):
     oid = StringProperty()
     prompt = StringProperty()
     datatype = StringProperty()
@@ -338,7 +350,7 @@ class OdmItemValue(ConceptValue):
     )
 
 
-class OdmItemRoot(ConceptRoot):
+class OdmItemRoot(OdmRoot):
     has_version = RelationshipTo(OdmItemValue, "HAS_VERSION", model=VersionRelationship)
     has_latest_value = RelationshipTo(OdmItemValue, "LATEST", model=ClinicalMdrRel)
     latest_draft = RelationshipTo(OdmItemValue, "LATEST_DRAFT", model=ClinicalMdrRel)
@@ -348,7 +360,7 @@ class OdmItemRoot(ConceptRoot):
     )
 
 
-class OdmStudyEventValue(ConceptValue):
+class OdmStudyEventValue(OdmValue):
     oid = StringProperty()
     effective_date = DateProperty()
     retired_date = DateProperty()
@@ -362,7 +374,7 @@ class OdmStudyEventValue(ConceptValue):
     form_ref = RelationshipTo(OdmFormValue, "FORM_REF", model=OdmFormRefRelation)
 
 
-class OdmStudyEventRoot(ConceptRoot):
+class OdmStudyEventRoot(OdmRoot):
     has_version = RelationshipTo(
         OdmStudyEventValue, "HAS_VERSION", model=VersionRelationship
     )
@@ -381,7 +393,7 @@ class OdmStudyEventRoot(ConceptRoot):
     )
 
 
-class OdmVendorNamespaceValue(ConceptValue):
+class OdmVendorNamespaceValue(OdmValue):
     prefix = StringProperty()
     url = StringProperty()
 
@@ -397,7 +409,7 @@ class OdmVendorNamespaceValue(ConceptValue):
     )
 
 
-class OdmVendorNamespaceRoot(ConceptRoot):
+class OdmVendorNamespaceRoot(OdmRoot):
     has_version = RelationshipTo(
         OdmVendorNamespaceValue, "HAS_VERSION", model=VersionRelationship
     )
@@ -415,7 +427,7 @@ class OdmVendorNamespaceRoot(ConceptRoot):
     )
 
 
-class OdmVendorAttributeValue(ConceptValue):
+class OdmVendorAttributeValue(OdmValue):
     compatible_types = JSONProperty()
     data_type = StringProperty()
     value_regex = StringProperty()
@@ -452,7 +464,7 @@ class OdmVendorAttributeValue(ConceptValue):
     )
 
 
-class OdmVendorAttributeRoot(ConceptRoot):
+class OdmVendorAttributeRoot(OdmRoot):
     has_version = RelationshipTo(
         OdmVendorAttributeValue, "HAS_VERSION", model=VersionRelationship
     )
@@ -470,7 +482,7 @@ class OdmVendorAttributeRoot(ConceptRoot):
     )
 
 
-class OdmVendorElementValue(ConceptValue):
+class OdmVendorElementValue(OdmValue):
     compatible_types = JSONProperty()
 
     has_root = RelationshipFrom(
@@ -494,7 +506,7 @@ class OdmVendorElementValue(ConceptValue):
     )
 
 
-class OdmVendorElementRoot(ConceptRoot):
+class OdmVendorElementRoot(OdmRoot):
     has_version = RelationshipTo(
         OdmVendorElementValue, "HAS_VERSION", model=VersionRelationship
     )

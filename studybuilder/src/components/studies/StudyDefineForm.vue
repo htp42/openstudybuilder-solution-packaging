@@ -20,12 +20,9 @@
               item-title="sponsor_preferred_name"
               item-value="term_uid"
               return-object
-              variant="outlined"
               bg-color="white"
               color="nnBaseBlue"
               base-color="nnBaseBlue"
-              rounded="lg"
-              density="compact"
               autocomplete="off"
               clearable
             />
@@ -54,12 +51,9 @@
               item-title="sponsor_preferred_name"
               item-value="term_uid"
               return-object
-              variant="outlined"
               bg-color="white"
               color="nnBaseBlue"
               base-color="nnBaseBlue"
-              rounded="lg"
-              density="compact"
               autocomplete="off"
               clearable
             />
@@ -75,12 +69,9 @@
               item-title="sponsor_preferred_name"
               item-value="term_uid"
               return-object
-              variant="outlined"
               bg-color="white"
               color="nnBaseBlue"
               base-color="nnBaseBlue"
-              rounded="lg"
-              density="compact"
               autocomplete="off"
               clearable
             />
@@ -109,12 +100,9 @@
               v-model="form.study_stop_rules"
               data-cy="stop-rule"
               :label="$t('StudyDefineForm.studystoprule')"
-              variant="outlined"
               bg-color="white"
               color="nnBaseBlue"
               base-color="nnBaseBlue"
-              rounded="lg"
-              density="compact"
               autocomplete="off"
               :disabled="stopRulesNone"
             />
@@ -122,12 +110,10 @@
           <v-col cols="2">
             <v-checkbox
               v-model="stopRulesNone"
-              variant="outlined"
               bg-color="white"
               color="nnBaseBlue"
               base-color="nnBaseBlue"
               rounded="lg"
-              density="compact"
               autocomplete="off"
               :label="$t('StudyDefineForm.none')"
               hide-details

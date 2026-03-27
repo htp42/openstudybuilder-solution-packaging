@@ -18,7 +18,6 @@
             item.footnote ? item.footnote.name_plain : item.template.name_plain
           "
           :value="item.uid"
-          density="compact"
         ></v-checkbox>
       </v-form>
     </template>

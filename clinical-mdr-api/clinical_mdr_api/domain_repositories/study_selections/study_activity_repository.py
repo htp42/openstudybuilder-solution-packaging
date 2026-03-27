@@ -569,3 +569,63 @@ class StudySelectionActivityRepository(
         # Our repository guidelines state that repos should have a close method
         # But nothing needs to be done in this one
         pass
+
+    def activity_with_same_groupings_exists(
+        self,
+        study_uid: str,
+        activity_name: str | None,
+        activity_subgroup_uid: str | None,
+        activity_group_uid: str | None,
+        exclude_study_selection_uid: str | None = None,
+    ) -> bool:
+        """Check if a StudyActivity with the same activity name and groupings
+        already exists in the study, optionally excluding a specific selection UID.
+        """
+        params: dict[str, Any] = {"study_uid": study_uid}
+        exclude_clause = ""
+        if exclude_study_selection_uid:
+            exclude_clause = "AND sa.uid <> $exclude_uid"
+            params["exclude_uid"] = exclude_study_selection_uid
+
+        # Build match clauses depending on whether groupings are provided
+        if activity_name is not None:
+            name_clause = "AND av.name = $activity_name"
+            params["activity_name"] = activity_name
+        else:
+            name_clause = "AND av.name IS NULL"
+
+        if activity_subgroup_uid is not None:
+            subgroup_clause = """AND EXISTS {
+                MATCH (sa)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]->(:StudyActivitySubGroup)
+                    -[:HAS_SELECTED_ACTIVITY_SUBGROUP]->(:ActivitySubGroupValue)<-[:HAS_VERSION]-(asg_root:ActivitySubGroupRoot)
+                WHERE asg_root.uid = $activity_subgroup_uid
+            }"""
+            params["activity_subgroup_uid"] = activity_subgroup_uid
+        else:
+            subgroup_clause = (
+                "AND NOT (sa)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]->()"
+            )
+
+        if activity_group_uid is not None:
+            group_clause = """AND EXISTS {
+                MATCH (sa)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(:StudyActivityGroup)
+                    -[:HAS_SELECTED_ACTIVITY_GROUP]->(:ActivityGroupValue)<-[:HAS_VERSION]-(ag_root:ActivityGroupRoot)
+                WHERE ag_root.uid = $activity_group_uid
+            }"""
+            params["activity_group_uid"] = activity_group_uid
+        else:
+            group_clause = "AND NOT (sa)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->()"
+
+        query = f"""
+            MATCH (:StudyRoot {{uid: $study_uid}})-[:LATEST]->(sv:StudyValue)-[:HAS_STUDY_ACTIVITY]->(sa:StudyActivity)
+                -[:HAS_SELECTED_ACTIVITY]->(av:ActivityValue)
+            WHERE NOT (sa)<-[]-(:Delete)
+                {exclude_clause}
+                {name_clause}
+                {subgroup_clause}
+                {group_clause}
+            RETURN sa.uid
+            LIMIT 1
+        """
+        result, _ = db.cypher_query(query, params)
+        return len(result) > 0

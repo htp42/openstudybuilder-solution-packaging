@@ -436,8 +436,7 @@ class StudySelectionObjectiveRepository:
             WITH DISTINCT all_so
             """
         specific_objective_selections_audit_trail = db.cypher_query(
-            cypher
-            + """
+            cypher + """
             MATCH (all_so)-[:HAS_SELECTED_OBJECTIVE]->(ov:ObjectiveValue)
 
             CALL {

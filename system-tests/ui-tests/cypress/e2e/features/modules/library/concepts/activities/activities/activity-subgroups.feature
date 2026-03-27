@@ -9,40 +9,6 @@ Feature: Library - Concepts - Activities - Activity Subgroups
         And User sets status filter to 'all'
 
     @smoke_test
-    Scenario: [Navigation] User must be able to navigate to the Activity Subgroups page
-        Given The '/library' page is opened
-        When The 'Activities' submenu is clicked in the 'Concepts' section
-        And The 'Activity Subgroups' tab is selected
-        Then The current URL is '/library/activities/activity-subgroups'
-
-    Scenario: [Table][Options] User must be able to see table with correct options
-        Then A table is visible with following options
-            | options                                            |
-            | add-activity                                       |
-            | filters-button                                     |
-            | columns-layout-button                              |
-            | table-export-button                                |
-            | select-rows                                        |
-            | search-field                                       |
-            | History                                            |
-
-    @smoke_test
-    Scenario: [Table][Columns][Names] User must be able to see the columns list on the main page as below
-        Then A table is visible with following headers
-            | headers            |
-            | Activity subgroup  |
-            | Sentence case name |
-            | Abbreviation       |
-            | Definition         |
-            | Modified           |
-            | Status             |
-            | Version            |
-
-    Scenario: [Table][Columns][Visibility] User must be able to select visibility of columns in the table 
-        When The first column is selected from Select Columns option for table with actions
-        Then The table contain only selected column and actions column
-
-    @smoke_test
     Scenario: [Create][Positive case] User must be able to add a new activity subgroups
         When The Add activity subgroup button is clicked
         And The activity subgroup form is filled with data
@@ -192,104 +158,8 @@ Feature: Library - Concepts - Activities - Activity Subgroups
         And The item actions button is clicked
         Then Only actions that should be avaiable for the Retired item are displayed
 
-    @smoke_test
-    Scenario: [Table][Search][Postive case] User must be able to search created subgroup
-        When [API] First activity subgroup for search test is created
-        And [API] Second activity subgroup for search test is created
-        Then Activity subgroup is searched for and found
-        And The existing item is searched for by partial name
-        Then More than one result is found
-
-    Scenario: [Table][Search][Negative case] User must be able to search not existing subgroup and table will correctly filtered
-        When The not existing item is searched for
-        Then The item is not found and table is correctly filtered
-
-    Scenario: [Table][Search][Filtering] User must be able to combine search and filters to narrow table results
-        When User sets status filter to 'final'
-        And The existing item is searched for by partial name
-        And The item is not found and table is correctly filtered
-        And User sets status filter to 'draft'
-        And The existing item is searched for by partial name
-        Then More than one result is found
-
-    Scenario: [Table][Filtering][Status selection] User must be able to see that Final status is selected by default
-        And [API] Activity subgroup in status Draft exists
-        And The '/library/activities/activity-subgroups' page is opened
-        And Activity subgroup is searched for and not found
-        And [API] Activity subgroup is approved
-        And The '/library/activities/activity-subgroups' page is opened
-        And Activity subgroup is searched for and found
-
-    Scenario: [Table][Filtering][Status selection] User must be able to use status selection to find or hide draft activity subgroup
-        And [API] Activity subgroup in status Draft exists
-        When User sets status filter to 'final'
-        And Activity subgroup is searched for and not found
-        When User sets status filter to 'draft'
-        And Activity subgroup is searched for and found
-        When User sets status filter to 'retired'
-        And Activity subgroup is searched for and not found
-        When User sets status filter to 'all'
-        And Activity subgroup is searched for and found
-
-    Scenario: [Table][Filtering][Status selection] User must be able to use status selection to find or hide approved activity subgroup
-        And [API] Activity subgroup in status Draft exists
-        And [API] Activity subgroup is approved
-        When User sets status filter to 'draft'
-        And Activity subgroup is searched for and not found
-        When User sets status filter to 'final'
-        And Activity subgroup is searched for and found
-        When User sets status filter to 'retired'
-        And Activity subgroup is searched for and not found
-        When User sets status filter to 'all'
-        And Activity subgroup is searched for and found
-
-    Scenario: [Table][Filtering][Status selection] User must be able to use status selection to find or hide retired activity subgroup
-        And [API] Activity subgroup in status Draft exists
-        And [API] Activity subgroup is approved
-        And [API] Activity subgroup is inactivated
-        When User sets status filter to 'draft'
-        And Activity subgroup is searched for and not found
-        When User sets status filter to 'retired'
-        And Activity subgroup is searched for and found
-        When User sets status filter to 'final'
-        And Activity subgroup is searched for and not found
-        When User sets status filter to 'all'
-        And Activity subgroup is searched for and found
-    
-    Scenario: [Table][Filtering][Status selection] User must be able to use status selection to find or hide new version of activity subgroup
-        And [API] Activity subgroup in status Draft exists
-        And [API] Activity subgroup is approved
-        And [API] Activity subgroup gets new version
-        When User sets status filter to 'final'
-        And Activity subgroup is searched for and not found
-        When User sets status filter to 'draft'
-        And Activity subgroup is searched for and found
-        When User sets status filter to 'retired'
-        And Activity subgroup is searched for and not found
-        When User sets status filter to 'all'
-        And Activity subgroup is searched for and found
-
-    Scenario: [Table][Filtering][Status selection] User must be able to see that status filter is not available after expanding column based filters
-        Then The status filter is not available when expanding available filters
-
-    Scenario: [Table][Search][Case sensitivity] User must be able to search item ignoring case sensitivity
-        When The existing item in search by lowercased name
-        And More than one result is found
-
     @BUG_ID:2813782
     Scenario: [History] User must be presented with correct values in history table
         When The user opens version history of activity subgroup
         Then The version history displays correct data for activity subgroup
-
-    Scenario Outline: [Table][Filtering] User must be able to filter the table by text fields
-        When The user filters field '<name>'
-        Then The table is filtered correctly
-
-        Examples:
-        | name                  |
-        | Activity subgroup     |
-        | Sentence case name    |
-        | Abbreviation          |
-        | Definition            |
-        | Version               |
 

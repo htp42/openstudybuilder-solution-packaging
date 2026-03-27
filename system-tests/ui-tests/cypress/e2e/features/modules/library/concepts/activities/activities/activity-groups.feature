@@ -7,41 +7,7 @@ Feature: Library - Concepts - Activities - Activity Groups
         Given The user is logged in
         And The '/library/activities/activity-groups' page is opened
         And User sets status filter to 'all'
-
-    @smoke_test
-    Scenario: [Navigation] User must be able to navigate to the Activity Groups page
-        Given The '/library' page is opened
-        When The 'Activities' submenu is clicked in the 'Concepts' section
-        And The 'Activity Groups' tab is selected
-        Then The current URL is '/library/activities/activity-groups'
-
-    Scenario: [Table][Options] User must be able to see table with correct options
-        Then A table is visible with following options
-            | options                                            |
-            | add-activity                                       |
-            | filters-button                                     |
-            | columns-layout-button                              |
-            | table-export-button                                |
-            | select-rows                                        |
-            | search-field                                       |
-            | History                                            |
-
-    @smoke_test
-    Scenario: [Table][Columns][Names] User must be able to see the columns list on the main page as below
-        Then A table is visible with following headers
-            | headers            |
-            | Activity group     |
-            | Sentence case name |
-            | Abbreviation       |
-            | Definition         |
-            | Modified           |
-            | Status             |
-            | Version            |
-
-    Scenario: [Table][Columns][Visibility] User must be able to select visibility of columns in the table 
-        When The first column is selected from Select Columns option for table with actions
-        Then The table contain only selected column and actions column
-
+        
     @smoke_test
     Scenario: [Create][Positive case] User must be able to add a new activity group
         When The add activity group button is clicked

@@ -9,10 +9,10 @@ When('The Final status is selected by default', () => cy.get('.v-btn--active[val
 When('The user filters field {string}', (fieldName) => {
     cy.longWaitForTable()
     cy.clickButton("filters-button", false)
-    cy.contains('[data-cy="filter-field"]', fieldName).click().then($filterField => {
-        $filterField.find('.mdi-calendar-outline').length > 0 ? filterByDate() : filterByText()
-    })
-    cy.wait(500)
+    cy.contains('[data-cy="filter-field"]', fieldName).click()
+    cy.intercept('**filters=**').as('filterRequest')
+    cy.get('.v-overlay__content .v-list').filter(':visible').find('.v-list-item').first().should('not.contain.text', 'No data available').click({ force: true })
+    cy.wait('@filterRequest') //wait for the first request
 })
 
 When('The user filters study list by field {string}', (fieldName) => {
@@ -51,14 +51,8 @@ Then('The table is filtered correctly', () => {
 When('The user adds status to filters', () => cy.addTableFilter('Status'))
 
 function filterByText() {
-    cy.get('.v-overlay__content .v-list').filter(':visible').should('not.contain', 'No data available')
-    cy.get('.v-overlay__content .v-list').filter(':visible').within(() => {
-        cy.get('.v-list-item-title').first().then((element) => {
-            cy.wrap(element).invoke('text').then(value => filterValue =  value.slice(0, 60))
-            cy.intercept('**filters=**').as('filterRequest')
-            cy.wrap(element).should('not.contain.text', 'No data available').click()
-        })
-    })
+    cy.intercept('**filters=**').as('filterRequest')
+    cy.get('.v-overlay__content .v-list').filter(':visible').find('.v-list-item').first().should('not.contain.text', 'No data available').click({ force: true })
     cy.wait('@filterRequest') //wait for the first request
 }
 

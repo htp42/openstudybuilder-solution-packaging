@@ -21,6 +21,7 @@ STUDY_FIELDS_ALL = [
     "acronym",
     "id_prefix",
     "number",
+    "data_completeness_tags",
 ]
 
 STUDY_FIELDS_NOT_NULL = [

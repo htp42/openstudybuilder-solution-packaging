@@ -614,7 +614,9 @@ class StudyActivityInstanceSelectionService(
             -[:HAS_STUDY_ACTIVITY_INSTANCE]->(:StudyActivityInstance)
             -[:HAS_SELECTED_ACTIVITY_INSTANCE]->(:ActivityInstanceValue)
             -[:CONTAINS_ACTIVITY_ITEM]->(:ActivityItem)
-            <-[:LINKS_TO_ACTIVITY_ITEM]-(ofv:OdmFormValue)
+            <-[:LINKS_TO_ACTIVITY_ITEM]-(oiv:OdmItemValue)
+            <-[:ITEM_REF]-(oigv:OdmItemGroupValue)
+            <-[:ITEM_GROUP_REF]-(ofv:OdmFormValue)
             <-[hv:HAS_VERSION]-(ofr:OdmFormRoot)
         
         WITH ofr, ofv, hv ORDER BY hv.end_date DESC

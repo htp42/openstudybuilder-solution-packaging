@@ -110,11 +110,19 @@ const createVisitBody = (isGlobalAnchorVisit, visitWeek, minVisitWindow, maxVisi
         "visit_subclass": "SINGLE_VISIT",
         "visit_window_unit_uid": daysUnitUid,
         "study_epoch_uid": `${epochUid}`,
-        "epoch_allocation_uid": epochAllocationUid,
+        "epoch_allocation": {
+            "term_uid": epochAllocationUid
+        },
         "time_value": visitWeek,
-        "time_reference_uid": timeReferenceUid,
-        "visit_type_uid": visitTypeUid,
-        "visit_contact_mode_uid": contactModeTermUid,
+        "time_reference": {
+            "term_uid": timeReferenceUid
+        },
+        "visit_type": {
+            "term_uid": visitTypeUid
+        },
+        "visit_contact_mode": {
+            "term_uid": contactModeTermUid
+        },
         "study_day_label": `Day ${visitDay}`,
         "study_week_label": `Week ${isGlobalAnchorVisit ? 0 : visitWeek + 1}`,
         "time_unit_uid": weekUnitUid

@@ -332,8 +332,7 @@ class StudyCompoundDosingRepository:
             WITH DISTINCT all_scd
             """
         specific_audit_trail = db.cypher_query(
-            cypher
-            + """
+            cypher + """
             MATCH (all_scd)<-[:STUDY_COMPOUND_HAS_COMPOUND_DOSING]-(sc:StudyCompound)
             MATCH (all_scd)<-[:STUDY_ELEMENT_HAS_COMPOUND_DOSING]-(se:StudyElement)
             MATCH (all_scd)<-[:AFTER]-(asa:StudyAction)

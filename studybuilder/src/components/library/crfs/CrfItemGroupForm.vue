@@ -24,7 +24,6 @@
                 v-model="form.name"
                 :label="$t('CRFItemGroups.name') + '*'"
                 data-cy="item-group-name"
-                density="compact"
                 :clearable="!isReadOnly"
                 :readonly="isReadOnly"
                 :rules="[formRules.required]"
@@ -35,7 +34,6 @@
                 v-model="form.oid"
                 :label="$t('CRFItemGroups.oid')"
                 data-cy="item-group-oid"
-                density="compact"
                 :clearable="!isReadOnly"
                 :readonly="isReadOnly"
               />
@@ -66,7 +64,6 @@
                 data-cy="item-group-domain"
                 :items="domains"
                 :item-props="sdtmDataDomainProps"
-                density="compact"
                 single-line
                 :clearable="!isReadOnly"
                 return-object
@@ -129,7 +126,6 @@
                 v-model="form.sas_dataset_name"
                 :label="$t('CRFItemGroups.sas_dataset')"
                 data-cy="item-group-sas-dataset-name"
-                density="compact"
                 :clearable="!isReadOnly"
                 :readonly="isReadOnly"
               />
@@ -155,7 +151,6 @@
                 :items="origins"
                 item-title="nci_preferred_name"
                 item-value="nci_preferred_name"
-                density="compact"
                 :clearable="!isReadOnly"
                 :readonly="isReadOnly"
               />
@@ -167,7 +162,6 @@
                 v-model="form.purpose"
                 :label="$t('CRFItemGroups.purpose')"
                 data-cy="item-group-purpose"
-                density="compact"
                 :clearable="!isReadOnly"
                 :readonly="isReadOnly"
               />
@@ -177,7 +171,6 @@
                 v-model="form.comment"
                 :label="$t('CRFItemGroups.comment')"
                 data-cy="item-group-comment"
-                density="compact"
                 :clearable="!isReadOnly"
                 :readonly="isReadOnly"
               />
@@ -626,10 +619,11 @@ async function submit() {
     if (isEdit()) {
       await crfs
         .updateItemGroup(form.value, props.selectedGroup.uid)
-        .then(async () => {
+        .then(async (resp) => {
           notificationHub.add({
             msg: t('CRFItemGroups.group_updated'),
           })
+          emit('updateItemGroup', resp.data)
           close()
         })
     } else {

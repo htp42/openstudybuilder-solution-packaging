@@ -7,7 +7,7 @@ from urllib.parse import urljoin
 
 import neo4j.exceptions
 import pytest
-from neomodel.sync_.core import db
+from neomodel import db
 
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTCatalogue,

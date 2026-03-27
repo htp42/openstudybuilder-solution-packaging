@@ -10,7 +10,7 @@
     @save="submit"
   >
     <template #[`step.creationMode`]>
-      <v-radio-group v-model="creationMode" color="primary">
+      <v-radio-group v-model="creationMode">
         <v-radio
           :label="$t('StudyActivityForm.select_from_studies')"
           value="selectFromStudies"
@@ -31,7 +31,11 @@
       <v-form ref="selectStudiesForm">
         <v-row v-if="creationMode === 'selectFromStudies'">
           <v-col>
-            <StudySelectorField v-model="selectedStudy" :data="studies" />
+            <StudySelectorField
+              v-model="selectedStudy"
+              :data="studies"
+              :loading="studiesLoading"
+            />
           </v-col>
         </v-row>
       </v-form>
@@ -175,7 +179,6 @@
           <template #beforeSwitches="">
             <v-switch
               v-model="selectedOnly"
-              color="primary"
               :label="$t('StudyActivityForm.show_selected')"
               data-cy="show-selected"
               class="mt-4"
@@ -202,7 +205,6 @@
           >
             <v-checkbox-btn
               :model-value="isSelected(internalItem)"
-              color="primary"
               data-cy="select-activity"
               :disabled="
                 isStudyActivitySelected(internalItem.raw) ||
@@ -379,7 +381,6 @@
           <template #beforeSwitches="">
             <v-switch
               v-model="selectedOnly"
-              color="primary"
               :label="$t('StudyActivityForm.show_selected')"
               data-cy="show-selected"
               class="mt-6 ml-4"
@@ -400,10 +401,7 @@
               style="min-width: 250px"
               autocomplete="off"
               class="mt-6 ml-2"
-              rounded="lg"
-              variant="outlined"
               color="nnBaseBlue"
-              density="compact"
               :rules="[formRules.required]"
               return-object
               clearable
@@ -425,10 +423,7 @@
               autocomplete="off"
               style="min-width: 250px"
               class="mt-2 mb-n4"
-              rounded="lg"
-              variant="outlined"
               color="nnBaseBlue"
-              density="compact"
               return-object
               clearable
               :disabled="
@@ -461,7 +456,6 @@
           >
             <v-checkbox-btn
               :model-value="isSelected(internalItem)"
-              color="primary"
               data-cy="select-activity"
               :disabled="
                 isActivitySelected(internalItem.raw) ||
@@ -503,10 +497,7 @@
                 :items="groups"
                 item-title="name"
                 item-value="uid"
-                rounded="lg"
-                variant="outlined"
                 color="nnBaseBlue"
-                density="compact"
                 clearable
                 :rules="
                   form.activity_groupings[0].activity_subgroup_uid
@@ -523,10 +514,7 @@
                 :items="subgroups"
                 item-title="name"
                 item-value="uid"
-                rounded="lg"
-                variant="outlined"
                 color="nnBaseBlue"
-                density="compact"
                 clearable
                 :rules="
                   form.activity_groupings[0].activity_group_uid
@@ -540,10 +528,7 @@
                 v-model="form.name"
                 :label="$t('ActivityFormsRequested.name')"
                 data-cy="instance-name"
-                rounded="lg"
-                variant="outlined"
                 color="nnBaseBlue"
-                density="compact"
                 clearable
                 :rules="[formRules.required]"
                 @input="placeholderSearch"
@@ -557,10 +542,7 @@
                 :items="flowchartGroups"
                 :rules="[formRules.required]"
                 item-title="sponsor_preferred_name"
-                rounded="lg"
-                variant="outlined"
                 color="nnBaseBlue"
-                density="compact"
                 return-object
                 clearable
               />
@@ -572,10 +554,7 @@
                 v-model="form.request_rationale"
                 :label="$t('ActivityFormsRequested.rationale_for_request')"
                 data-cy="activity-rationale"
-                rounded="lg"
-                variant="outlined"
                 color="nnBaseBlue"
-                density="compact"
                 clearable
                 auto-grow
                 rows="1"
@@ -622,10 +601,7 @@
                   item-title="sponsor_preferred_name"
                   style="min-width: 250px"
                   class="mt-2 mb-n4"
-                  rounded="lg"
-                  variant="outlined"
                   color="nnBaseBlue"
-                  density="compact"
                   return-object
                   clearable
                   :disabled="
@@ -655,7 +631,6 @@
               >
                 <v-checkbox-btn
                   :model-value="isSelected(internalItem)"
-                  color="primary"
                   :disabled="
                     isActivitySelected(internalItem.raw) ||
                     isActivityNotFinal(internalItem.raw) ||
@@ -747,6 +722,7 @@ const form = ref({
 const groups = ref([])
 const subgroups = ref([])
 const resetLoading = ref(0)
+const studiesLoading = ref(false)
 const confirm = ref()
 const stepper = ref()
 const flowchartGroupForm = ref()
@@ -922,11 +898,18 @@ onMounted(() => {
   terms.getTermsByCodelist('flowchartGroups', null, filters).then((resp) => {
     flowchartGroups.value = resp.data.items
   })
-  study.get({ has_study_activity: true, page_size: 0 }).then((resp) => {
-    studies.value = resp.data.items.filter(
-      (study) => study.uid !== studiesGeneralStore.selectedStudy.uid
-    )
-  })
+
+  studiesLoading.value = true
+  study
+    .getAllList({ has_study_activity: true })
+    .then((resp) => {
+      studies.value = resp.data.filter(
+        (study) => study.uid !== studiesGeneralStore.selectedStudy.uid
+      )
+    })
+    .finally(() => {
+      studiesLoading.value = false
+    })
   getGroups()
   study
     .getStudyActivities(studiesGeneralStore.selectedStudy.uid, { page_size: 0 })
@@ -1062,7 +1045,7 @@ function getActivities(filters, options) {
         el.study_id =
           studies.value[
             studies.value.findIndex((study) => study.uid === el.study_uid)
-          ].current_metadata.identification_metadata.study_id
+          ].id
       })
       const result = []
       for (const item of items) {

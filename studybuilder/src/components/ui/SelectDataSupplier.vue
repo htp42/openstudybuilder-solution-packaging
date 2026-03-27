@@ -7,8 +7,6 @@
     item-value="uid"
     :rules="required ? [(v) => !!v || 'Data Supplier is required'] : []"
     :disabled="disabled"
-    variant="outlined"
-    density="compact"
     clearable
     :loading="loading"
     @update:model-value="handleChange"

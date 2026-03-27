@@ -12,7 +12,7 @@
   >
     <template #[`step.creationMode`]>
       <div class="label mb-4">{{ $t('CohortsStepper.select_class') }}</div>
-      <v-radio-group v-model="creationMode" color="primary">
+      <v-radio-group v-model="creationMode">
         <v-radio
           :label="$t('CohortsStepper.full_stepper')"
           :value="cohortConstants.FULL"
@@ -47,16 +47,13 @@
                 :label="$t('CohortsStepper.study_arm_type')"
                 :rules="[formRules.required]"
                 :items="armTypes"
-                variant="outlined"
                 bg-color="white"
                 open-on-clear
                 color="nnBaseBlue"
                 base-color="nnBaseBlue"
-                rounded="lg"
                 item-title="sponsor_preferred_name"
                 item-value="term_uid"
                 clearable
-                density="compact"
               />
             </v-col>
             <v-col cols="4">
@@ -65,13 +62,10 @@
                 data-cy="arm-name"
                 :label="$t('CohortsStepper.arm_name')"
                 :rules="[formRules.required, formRules.max(arm.name, 200)]"
-                variant="outlined"
                 bg-color="white"
                 color="nnBaseBlue"
                 base-color="nnBaseBlue"
-                rounded="lg"
                 clearable
-                density="compact"
                 class="smallfont"
               />
             </v-col>
@@ -81,13 +75,10 @@
                 data-cy="arm-short-name"
                 :label="$t('CohortsStepper.arm_short_name')"
                 :rules="[formRules.required, formRules.max(arm.short_name, 20)]"
-                variant="outlined"
                 bg-color="white"
                 color="nnBaseBlue"
                 base-color="nnBaseBlue"
-                rounded="lg"
                 clearable
-                density="compact"
               />
             </v-col>
             <v-col cols="1">
@@ -112,13 +103,10 @@
                 data-cy="arm-label"
                 :label="$t('CohortsStepper.arm_label')"
                 :rules="[formRules.max(arm.label, 40)]"
-                variant="outlined"
                 bg-color="white"
                 color="nnBaseBlue"
                 base-color="nnBaseBlue"
-                rounded="lg"
                 clearable
-                density="compact"
               />
             </v-col>
           </v-row>
@@ -133,26 +121,20 @@
                   type="number"
                   :rules="[formRules.min_value(arm.number_of_subjects, 0)]"
                   class="mr-1"
-                  variant="outlined"
                   bg-color="white"
                   color="nnBaseBlue"
                   base-color="nnBaseBlue"
-                  rounded="lg"
                   clearable
-                  density="compact"
                 />
                 <v-text-field
                   v-model="arm.randomization_group"
                   data-cy="randomization-group"
                   :label="$t('CohortsStepper.rand_group_optional')"
                   class="mr-1"
-                  variant="outlined"
                   bg-color="white"
                   color="nnBaseBlue"
                   base-color="nnBaseBlue"
-                  rounded="lg"
                   clearable
-                  density="compact"
                 />
                 <v-text-field
                   v-if="creationMode !== cohortConstants.MANUAL"
@@ -161,13 +143,10 @@
                   :label="$t('CohortsStepper.arm_code_optional')"
                   :rules="[formRules.max(arm.code, 20)]"
                   class="ml-1"
-                  variant="outlined"
                   bg-color="white"
                   color="nnBaseBlue"
                   base-color="nnBaseBlue"
-                  rounded="lg"
                   clearable
-                  density="compact"
                 />
               </div>
             </v-col>
@@ -176,13 +155,10 @@
                 v-model="arm.description"
                 data-cy="arm-description"
                 :label="$t('CohortsStepper.desc')"
-                variant="outlined"
                 bg-color="white"
                 color="nnBaseBlue"
                 base-color="nnBaseBlue"
-                rounded="lg"
                 clearable
-                density="compact"
               />
             </v-col>
             <!-- Hidden for now, will be used later
@@ -192,7 +168,6 @@
                 inset
                 hide-details
                 class="mt-n2"
-                color="nnBaseBlue"
               >
                 <template #label>
                   <div style="font-size: 14px; color: #454b5c">
@@ -208,13 +183,10 @@
                 :label="$t('CohortsStepper.arm_code_optional')"
                 :rules="[formRules.max(arm.code, 20)]"
                 class="ml-1"
-                variant="outlined"
                 bg-color="white"
                 color="nnBaseBlue"
                 base-color="nnBaseBlue"
-                rounded="lg"
                 clearable
-                density="compact"
               />
             </v-col>
             <v-col v-else cols="3">
@@ -223,13 +195,10 @@
                 data-cy="arm-label"
                 :label="$t('CohortsStepper.arm_label')"
                 :rules="[formRules.max(arm.label, 40)]"
-                variant="outlined"
                 bg-color="white"
                 color="nnBaseBlue"
                 base-color="nnBaseBlue"
-                rounded="lg"
                 clearable
-                density="compact"
               />
             </v-col>
           </v-row>
@@ -259,14 +228,11 @@
               data-cy="source-variable"
               :label="$t('CohortsStepper.source_var_optional')"
               :items="sourceVariables"
-              variant="outlined"
               bg-color="white"
               open-on-clear
               color="nnBaseBlue"
               base-color="nnBaseBlue"
-              rounded="lg"
               clearable
-              density="compact"
             />
           </v-col>
           <v-col cols="3">
@@ -274,13 +240,10 @@
               v-model="sourceVariable.source_variable_description"
               data-cy="source-variable-description"
               :label="$t('CohortsStepper.source_var_desc')"
-              variant="outlined"
               bg-color="white"
               color="nnBaseBlue"
               base-color="nnBaseBlue"
-              rounded="lg"
               clearable
-              density="compact"
             />
           </v-col>
         </v-row>
@@ -300,13 +263,10 @@
                 data-cy="cohort-code"
                 :label="$t('CohortsStepper.cohort_code')"
                 :rules="[formRules.required]"
-                variant="outlined"
                 bg-color="white"
                 color="nnBaseBlue"
                 base-color="nnBaseBlue"
-                rounded="lg"
                 clearable
-                density="compact"
               />
             </v-col>
             <v-col cols="4">
@@ -315,13 +275,10 @@
                 data-cy="cohort-name"
                 :label="$t('CohortsStepper.cohort_name')"
                 :rules="[formRules.required, formRules.max(cohort.name, 200)]"
-                variant="outlined"
                 bg-color="white"
                 color="nnBaseBlue"
                 base-color="nnBaseBlue"
-                rounded="lg"
                 clearable
-                density="compact"
               />
             </v-col>
             <v-col cols="4">
@@ -333,13 +290,10 @@
                   formRules.required,
                   formRules.max(cohort.short_name, 20),
                 ]"
-                variant="outlined"
                 bg-color="white"
                 color="nnBaseBlue"
                 base-color="nnBaseBlue"
-                rounded="lg"
                 clearable
-                density="compact"
               />
             </v-col>
             <v-col cols="2">
@@ -360,13 +314,10 @@
                 v-model="cohort.description"
                 data-cy="cohort-description"
                 :label="$t('CohortsStepper.desc')"
-                variant="outlined"
                 bg-color="white"
                 color="nnBaseBlue"
                 base-color="nnBaseBlue"
-                rounded="lg"
                 clearable
-                density="compact"
               />
             </v-col>
           </v-row>
@@ -413,13 +364,11 @@
                 data-cy="total-participants"
                 prepend-inner-icon="mdi-account"
                 width="110px"
-                variant="outlined"
                 bg-color="white"
                 color="nnBaseBlue"
                 rounded
                 clearable
                 disabled
-                density="compact"
               />
             </v-sheet>
             <v-sheet
@@ -459,13 +408,11 @@
                     label="0"
                     single-line
                     width="85px"
-                    variant="outlined"
                     bg-color="white"
                     color="nnBaseBlue"
                     rounded
                     clearable
                     disabled
-                    density="compact"
                     class="mt-1"
                     style="scale: 80%; height: 60px"
                   />
@@ -510,13 +457,11 @@
                     data-cy="number-of-subjects"
                     prepend-inner-icon="mdi-account"
                     width="85px"
-                    variant="outlined"
                     bg-color="white"
                     color="nnBaseBlue"
                     rounded
                     clearable
                     disabled
-                    density="compact"
                     class="mt-1"
                     style="scale: 80%; height: 60px"
                   />
@@ -551,10 +496,8 @@
                       data-cy="number-of-subjects-single-arm"
                       :reverse="false"
                       control-variant="split"
-                      density="compact"
                       :min="0"
                       inset
-                      variant="outlined"
                       style="width: 160px"
                       @update:model-value="
                         (value) => updateParticipants(value, index, armIndex)

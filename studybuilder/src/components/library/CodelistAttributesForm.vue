@@ -12,7 +12,6 @@
               <v-text-field
                 v-model="form.name"
                 :label="$t('CodelistAttributesForm.name')"
-                density="compact"
                 clearable
                 :rules="[formRules.required]"
               />
@@ -23,7 +22,6 @@
               <v-text-field
                 v-model="form.submission_value"
                 :label="$t('CodelistAttributesForm.subm_value')"
-                density="compact"
                 clearable
                 :rules="[formRules.required]"
               />
@@ -34,7 +32,6 @@
               <v-text-field
                 v-model="form.nci_preferred_name"
                 :label="$t('CodelistAttributesForm.nci_pref_name')"
-                density="compact"
                 clearable
               />
             </v-col>
@@ -43,7 +40,6 @@
             <v-col>
               <v-switch
                 v-model="form.extensible"
-                color="primary"
                 :label="$t('CodelistAttributesForm.extensible')"
               />
             </v-col>
@@ -52,7 +48,6 @@
             <v-col>
               <v-switch
                 v-model="form.is_ordinal"
-                color="primary"
                 :label="$t('CodelistAttributesForm.is_ordinal')"
               />
             </v-col>

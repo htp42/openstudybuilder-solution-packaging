@@ -38,13 +38,11 @@ class GenericSyntaxInstanceRepository(
     template_class: type
 
     def next_available_sequence_id(self, uid: str) -> str | None:
-        rs = db.cypher_query(
-            f"""
+        rs = db.cypher_query(f"""
             MATCH (r:SyntaxTemplateRoot {{uid: "{uid}"}})
             OPTIONAL MATCH (pr:{self.root_class.__name__})-[:CREATED_FROM]->(r)
             RETURN pr.sequence_id, r.sequence_id
-            """
-        )
+            """)
 
         if rs[0][0][0]:
             rs[0].sort(key=lambda x: int(x[0].split("P")[1]), reverse=True)

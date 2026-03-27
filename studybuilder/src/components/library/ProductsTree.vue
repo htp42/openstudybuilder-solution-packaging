@@ -4,17 +4,14 @@
       v-model="search"
       clearable
       clear-icon="mdi-close"
-      density="compact"
       prepend-inner-icon="mdi-magnify"
       :label="$t('_global.search')"
       single-line
       color="nnBaseBlue"
       hide-details
       style="min-width: 240px; max-width: 300px"
-      rounded="lg"
       class="searchFieldLabel ml-0"
       data-cy="search-field"
-      variant="outlined"
       @update:model-value="delayedFetchItems()"
     />
     <v-spacer />

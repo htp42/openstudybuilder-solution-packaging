@@ -1,10 +1,4 @@
-from neomodel import (
-    RelationshipFrom,
-    RelationshipTo,
-    StringProperty,
-    ZeroOrMore,
-    ZeroOrOne,
-)
+from neomodel import RelationshipFrom, RelationshipTo, ZeroOrMore, ZeroOrOne
 
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTTermContext,
@@ -16,6 +10,7 @@ from clinical_mdr_api.domain_repositories.models.study_selections import (
     StudySelection,
     StudySoAFootnote,
 )
+from common.neomodel import StringProperty
 
 
 class StudyEpoch(StudySelection):
