@@ -38,6 +38,11 @@ on:
         required: false
         type: boolean
         default: false
+      cdisc_ct_variant:
+        description: 'CDISC CT data variant (leave empty for default). A non-empty value builds the database image using cdisc_ct_<variant> data folder and tags it database-<variant>-<version>.'
+        required: false
+        type: string
+        default: ''
 
 concurrency:
   group: build-and-push
@@ -54,6 +59,8 @@ jobs:
       version: ${{ steps.version.outputs.version }}
       matrix: ${{ steps.matrix.outputs.matrix }}
       should_build: ${{ steps.check-exists.outputs.should_build }}
+      cdisc_ct_variant: ${{ steps.variant.outputs.cdisc_ct_variant }}
+      db_image_tag: ${{ steps.variant.outputs.db_image_tag }}
 
     steps:
       - name: Determine version
@@ -91,6 +98,19 @@ jobs:
           echo "matrix=${MATRIX}" >> $GITHUB_OUTPUT
           echo "Services to build: ${MATRIX}"
 
+      - name: Resolve CDISC CT variant
+        id: variant
+        run: |
+          VARIANT="${{ github.event.inputs.cdisc_ct_variant }}"
+          VERSION="${{ steps.version.outputs.version }}"
+          if [ -n "$VARIANT" ]; then
+            DB_IMAGE_TAG="database-${VARIANT}-${VERSION}"
+          else
+            DB_IMAGE_TAG="database-${VERSION}"
+          fi
+          echo "cdisc_ct_variant=${VARIANT}" >> $GITHUB_OUTPUT
+          echo "db_image_tag=${DB_IMAGE_TAG}" >> $GITHUB_OUTPUT
+
       - name: Check if images already exist
         id: check-exists
         run: |
@@ -106,7 +126,7 @@ jobs:
 
           # Check if the database image exists (use as indicator for all images)
           # Using Docker Hub API v2
-          IMAGE_TAG="database-${VERSION}"
+          IMAGE_TAG="${{ steps.variant.outputs.db_image_tag }}"
 
           echo "Checking if ${{ env.REPOSITORY }}:${IMAGE_TAG} exists..."
 
@@ -156,6 +176,18 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      - name: Resolve database image name and CDISC CT dir
+        run: |
+          VARIANT="${{ needs.prepare.outputs.cdisc_ct_variant }}"
+          VERSION="${{ needs.prepare.outputs.version }}"
+          if [ -n "$VARIANT" ]; then
+            echo "DATABASE_IMAGE=${{ env.REPOSITORY }}:database-${VARIANT}-${VERSION}" >> $GITHUB_ENV
+            echo "CDISC_JSON_DIR=mdr_standards_import/container_booting/packages/cdisc_ct_${VARIANT}" >> $GITHUB_ENV
+          else
+            echo "DATABASE_IMAGE=${{ env.REPOSITORY }}:database-${VERSION}" >> $GITHUB_ENV
+            echo "CDISC_JSON_DIR=mdr_standards_import/container_booting/packages/cdisc_ct" >> $GITHUB_ENV
+          fi
+
       - name: Build and push ${{ matrix.service }}
         uses: docker/bake-action@v6
         with:
@@ -173,9 +205,15 @@ jobs:
         run: |
           VERSION="${{ needs.prepare.outputs.version }}"
           SERVICE="${{ matrix.service }}"
+          VARIANT="${{ needs.prepare.outputs.cdisc_ct_variant }}"
 
-          VERSION_IMAGE="${{ env.REPOSITORY }}:${SERVICE}-${VERSION}"
-          LATEST_IMAGE="${{ env.REPOSITORY }}:${SERVICE}-latest"
+          if [ "$SERVICE" = "database" ] && [ -n "$VARIANT" ]; then
+            VERSION_IMAGE="${{ env.REPOSITORY }}:database-${VARIANT}-${VERSION}"
+            LATEST_IMAGE="${{ env.REPOSITORY }}:database-${VARIANT}-latest"
+          else
+            VERSION_IMAGE="${{ env.REPOSITORY }}:${SERVICE}-${VERSION}"
+            LATEST_IMAGE="${{ env.REPOSITORY }}:${SERVICE}-latest"
+          fi
 
           echo "Creating latest tag for ${SERVICE}..."
           docker buildx imagetools create -t "${LATEST_IMAGE}" "${VERSION_IMAGE}"
@@ -197,6 +235,10 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Set database image name
+        run: |
+          echo "DATABASE_IMAGE=${{ env.REPOSITORY }}:${{ needs.prepare.outputs.db_image_tag }}" >> $GITHUB_ENV
 
       - name: Pull and start all containers
         run: |
@@ -318,11 +360,18 @@ jobs:
       - name: Extract and upload database backup
         run: |
           VERSION="${{ needs.prepare.outputs.version }}"
-          DATABASE_IMAGE="${{ env.REPOSITORY }}:database-${VERSION}"
+          VARIANT="${{ needs.prepare.outputs.cdisc_ct_variant }}"
+          DATABASE_IMAGE="${{ env.REPOSITORY }}:${{ needs.prepare.outputs.db_image_tag }}"
 
           # Convert version format: 2.3.0 -> 2-3-0
           VERSION_DASHES=$(echo "${VERSION}" | tr '.' '-')
-          BACKUP_FILENAME="mdrdb-${VERSION_DASHES}.backup"
+          if [ -n "$VARIANT" ]; then
+            BACKUP_FILENAME="mdrdb-${VARIANT}-${VERSION_DASHES}.backup"
+            S3_PATH="${VARIANT}/${BACKUP_FILENAME}"
+          else
+            BACKUP_FILENAME="mdrdb-${VERSION_DASHES}.backup"
+            S3_PATH="vanilla/${BACKUP_FILENAME}"
+          fi
 
           echo "Pulling database image..."
           docker pull "${DATABASE_IMAGE}"
@@ -333,13 +382,13 @@ jobs:
           docker rm "${CONTAINER_ID}"
 
           echo "Uploading backup to S3..."
-          aws s3 cp "./${BACKUP_FILENAME}" "s3://${{ secrets.S3_BUCKET }}/vanilla/${BACKUP_FILENAME}" \
+          aws s3 cp "./${BACKUP_FILENAME}" "s3://${{ secrets.S3_BUCKET }}/${S3_PATH}" \
             --metadata "version=${VERSION},backup-date=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
           echo "## S3 Upload Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Bucket:** ${{ secrets.S3_BUCKET }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Path:** vanilla/${BACKUP_FILENAME}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Path:** ${S3_PATH}" >> $GITHUB_STEP_SUMMARY
           echo "- **Version:** ${VERSION}" >> $GITHUB_STEP_SUMMARY
 
   summary:
