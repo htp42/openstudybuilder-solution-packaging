@@ -39,7 +39,7 @@ on:
         type: boolean
         default: false
       cdisc_ct_variant:
-        description: 'CDISC CT data variant (leave empty for default). A non-empty value builds the database image using cdisc_ct_<variant> data folder and tags it database-<variant>-<version>.'
+        description: 'CDISC CT data variant (leave empty for default). A non-empty value builds the database image using cdisc_ct_<variant> data folder and tags it database-<variant>-<version>. For variant builds, set exclude_images to: api,consumerapi,extensionsapi,frontend,documentation,neodash'
         required: false
         type: string
         default: ''
