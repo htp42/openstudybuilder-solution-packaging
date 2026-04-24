@@ -11,7 +11,8 @@ services:
         NEO4J_server_memory_heap_initial__size: "3G"
         NEO4J_server_memory_heap_max__size: "3G"
         NEO4J_server_memory_pagecache_size: "2G"
-        CDISC_DATA_DIR: ${CDISC_DATA_DIR:-mdr_standards_import/container_booting/}
+
+        CDISC_DATA_DIR: ${CDISC_DATA_DIR:-mdr_standards_import/container_booting/packages}
         CDISC_JSON_DIR: ${CDISC_JSON_DIR:-mdr_standards_import/container_booting/packages/cdisc_ct}
         NEO4J_MDR_AUTH_PASSWORD: "${NEO4J_PASSWORD:-changeme1234}"
         UID: ${UID:-1000}

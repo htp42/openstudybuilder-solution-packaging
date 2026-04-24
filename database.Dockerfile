@@ -46,6 +46,7 @@ ARG NEO4J_server_memory_pagecache_size="2G"
 ARG reportDate="2024-01-05 14:54:32 +0100"
 
 ARG NEO4J_MDR_AUTH_PASSWORD="changeme1234"
+ARG CDISC_DATA_DIR=mdr_standards_import/container_booting/packages
 ARG CDISC_JSON_DIR=mdr_standards_import/container_booting/packages/cdisc_ct
 
 # Environment variables for database
@@ -61,7 +62,7 @@ ENV NEO4J_MDR_BOLT_PORT=7687 \
     NEO4J_CDISC_IMPORT_AUTH_USER=neo4j \
     NEO4J_CDISC_IMPORT_AUTH_PASSWORD=$NEO4J_MDR_AUTH_PASSWORD \
     NEO4J_CDISC_IMPORT_DATABASE=cdisc-import \
-    CDISC_DATA_DIR=cdisc_data/packages \
+    CDISC_DATA_DIR=$CDISC_DATA_DIR \
     CDISC_JSON_DIR=$CDISC_JSON_DIR \
     CDISC_XLS_DIR=CDISC_xls \
     NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
