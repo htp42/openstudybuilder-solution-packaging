@@ -39,7 +39,7 @@ on:
         type: boolean
         default: false
       cdisc_ct_variant:
-        description: 'CDISC CT data variant (leave empty for default). A non-empty value builds the database image using cdisc_ct_<variant> data folder and tags it database-<variant>-<version>. For variant builds, set exclude_images to: api,consumerapi,extensionsapi,frontend,documentation,neodash'
+        description: 'CDISC CT data variant (leave empty for default). A non-empty value builds the database image using cdisc_ct_<variant> data folder and tags it database-<variant>-<version>. For variant builds, set exclude_images to: api,consumerapi,extensionsapi,frontend,documentation,neodash,gateway'
         required: false
         type: string
         default: ''
@@ -50,6 +50,9 @@ concurrency:
 
 env:
   REPOSITORY: htp42/openstudybuilder
+  # Required by compose.yaml: passed to the database build as a BuildKit secret,
+  # and used at runtime by the validation stack
+  NEO4J_MDR_AUTH_PASSWORD: ${{ secrets.NEO4J_MDR_AUTH_PASSWORD || 'changeme1234' }}
 
 jobs:
   prepare:
@@ -81,7 +84,7 @@ jobs:
         id: matrix
         run: |
           # Define all services
-          ALL_SERVICES='["database", "api", "consumerapi", "extensionsapi", "frontend", "documentation", "neodash"]'
+          ALL_SERVICES='["database", "api", "consumerapi", "extensionsapi", "frontend", "documentation", "neodash", "gateway"]'
 
           # Get excluded images
           EXCLUDE="${{ github.event.inputs.exclude_images }}"
@@ -180,17 +183,21 @@ jobs:
         run: |
           VARIANT="${{ needs.prepare.outputs.cdisc_ct_variant }}"
           VERSION="${{ needs.prepare.outputs.version }}"
+          # CT folder name under import_standards/src/container_booting/packages
           if [ -n "$VARIANT" ]; then
             echo "DATABASE_IMAGE=${{ env.REPOSITORY }}:database-${VARIANT}-${VERSION}" >> $GITHUB_ENV
-            echo "CDISC_JSON_DIR=mdr_standards_import/container_booting/packages/cdisc_ct_${VARIANT}" >> $GITHUB_ENV
+            echo "CDISC_CT_DIR_NAME=cdisc_ct_${VARIANT}" >> $GITHUB_ENV
           else
             echo "DATABASE_IMAGE=${{ env.REPOSITORY }}:database-${VERSION}" >> $GITHUB_ENV
-            echo "CDISC_JSON_DIR=mdr_standards_import/container_booting/packages/cdisc_ct" >> $GITHUB_ENV
+            echo "CDISC_CT_DIR_NAME=cdisc_ct" >> $GITHUB_ENV
           fi
 
       - name: Build and push ${{ matrix.service }}
         uses: docker/bake-action@v6
         with:
+          # Build from the checked-out tag, not bake's default Git context (github.sha),
+          # which is pre-merge main when triggered by the sync workflow
+          source: .
           files: compose.yaml
           targets: ${{ matrix.service }}
           push: true

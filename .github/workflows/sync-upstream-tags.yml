@@ -1,7 +1,11 @@
 name: Sync Upstream Tags
 
 # This workflow checks for new version tags on the upstream repository
-# and syncs them to this fork, triggering the build pipeline
+# and syncs them to this fork, triggering the build pipeline.
+#
+# A tag counts as synced when the fork's tag points to a fork commit (the merge
+# commit created by this workflow) that contains the upstream tagged commit.
+# Fork tags never share a SHA with upstream tags, so SHAs are not compared directly.
 
 permissions:
   contents: write
@@ -17,6 +21,10 @@ on:
         description: 'Specific tag to sync (e.g., v2.3.0). Leave empty to sync latest.'
         required: false
         type: string
+
+concurrency:
+  group: sync-upstream-tags
+  cancel-in-progress: false
 
 env:
   UPSTREAM_REPO: NovoNordisk-OpenSource/openstudybuilder-solution
@@ -34,7 +42,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          # GITHUB_TOKEN cannot push commits that add or modify files under .github/workflows,
+          # which upstream merges regularly do. SYNC_TOKEN must be a PAT with Contents and
+          # Workflows write access on this repository.
+          token: ${{ secrets.SYNC_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Configure Git
         run: |
@@ -49,7 +60,7 @@ jobs:
         id: check-tags
         run: |
           # Get all version tags from upstream (format: v*.*.*) without creating local refs
-          UPSTREAM_TAGS=$(git ls-remote --tags upstream 'refs/tags/v*.*.*' | awk '{print $2}' | sed 's|refs/tags/||' | sort -V -r)
+          UPSTREAM_TAGS=$(git ls-remote --tags upstream 'refs/tags/v*.*.*' | awk '{print $2}' | sed 's|refs/tags/||' | grep -v '\^{}$' | sort -V -r)
 
           # If a specific tag was requested via workflow_dispatch
           if [ -n "${{ github.event.inputs.tag }}" ]; then
@@ -67,19 +78,25 @@ jobs:
             exit 0
           fi
 
-          # Check if this tag already exists in our fork (on origin, not local)
-          # We use ls-remote to check origin since local tags include fetched upstream tags
-          ORIGIN_TAG_SHA=$(git ls-remote --tags origin "${TARGET_TAG}" | cut -f1)
-          UPSTREAM_TAG_SHA=$(git ls-remote --tags upstream "${TARGET_TAG}" | cut -f1)
+          # Fetch the upstream and origin tags into separate namespaces so they cannot clash
+          git fetch --no-tags upstream "+refs/tags/${TARGET_TAG}:refs/upstream-tags/${TARGET_TAG}"
+          UPSTREAM_COMMIT=$(git rev-parse "refs/upstream-tags/${TARGET_TAG}^{commit}")
 
-          if [ -n "$ORIGIN_TAG_SHA" ] && [ "$ORIGIN_TAG_SHA" = "$UPSTREAM_TAG_SHA" ]; then
-            echo "Tag ${TARGET_TAG} already synced (origin and upstream SHAs match)"
+          ORIGIN_COMMIT=""
+          if git ls-remote --exit-code --tags origin "refs/tags/${TARGET_TAG}" >/dev/null; then
+            git fetch --no-tags origin "+refs/tags/${TARGET_TAG}:refs/origin-tags/${TARGET_TAG}"
+            ORIGIN_COMMIT=$(git rev-parse "refs/origin-tags/${TARGET_TAG}^{commit}")
+          fi
+
+          if [ -n "$ORIGIN_COMMIT" ] && [ "$ORIGIN_COMMIT" != "$UPSTREAM_COMMIT" ] \
+            && git merge-base --is-ancestor "$UPSTREAM_COMMIT" "$ORIGIN_COMMIT"; then
+            echo "Tag ${TARGET_TAG} already synced (fork tag ${ORIGIN_COMMIT} contains upstream ${UPSTREAM_COMMIT})"
             echo "new_tag=" >> $GITHUB_OUTPUT
             exit 0
           fi
 
-          if [ -n "$ORIGIN_TAG_SHA" ]; then
-            echo "Tag ${TARGET_TAG} exists on origin but differs from upstream, will re-sync"
+          if [ -n "$ORIGIN_COMMIT" ]; then
+            echo "Tag ${TARGET_TAG} exists on origin but is not a fork merge of upstream ${TARGET_TAG}, will re-sync"
           else
             echo "Tag ${TARGET_TAG} not found on origin, will sync"
           fi
@@ -91,36 +108,50 @@ jobs:
           echo "Version: ${VERSION}"
           echo "new_tag=${TARGET_TAG}" >> $GITHUB_OUTPUT
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "upstream_commit=${UPSTREAM_COMMIT}" >> $GITHUB_OUTPUT
 
       - name: Merge upstream tag into main
         if: steps.check-tags.outputs.new_tag != ''
         run: |
           TAG="${{ steps.check-tags.outputs.new_tag }}"
+          UPSTREAM_COMMIT="${{ steps.check-tags.outputs.upstream_commit }}"
 
           echo "Merging upstream tag ${TAG} into main..."
-
-          # Fetch the specific tag
-          git fetch upstream "refs/tags/${TAG}:refs/tags/${TAG}"
-
-          # Also fetch upstream main to capture any PR merge commits that include the tag
-          git fetch upstream main
 
           # Make sure we're on main
           git checkout main
 
+          # Also fetch upstream main to capture any PR merge commits that include the tag
+          git fetch --no-tags upstream main
+          UPSTREAM_MAIN=$(git rev-parse FETCH_HEAD)
+
           # If the tag has been merged into upstream/main (via a PR), merge upstream/main
           # so we include the PR merge commit too. Otherwise, merge the tag directly.
-          UPSTREAM_MAIN=$(git rev-parse FETCH_HEAD)
-          if git merge-base --is-ancestor "${TAG}" "${UPSTREAM_MAIN}"; then
+          if git merge-base --is-ancestor "${UPSTREAM_COMMIT}" "${UPSTREAM_MAIN}"; then
             echo "Tag ${TAG} is already merged into upstream/main — merging upstream/main to include PR merge commit"
             MERGE_TARGET="${UPSTREAM_MAIN}"
           else
             echo "Tag ${TAG} is not yet in upstream/main — merging tag directly"
-            MERGE_TARGET="${TAG}"
+            MERGE_TARGET="${UPSTREAM_COMMIT}"
           fi
 
           # Merge the upstream changes into main (preserving our custom changes)
-          git merge "${MERGE_TARGET}" --no-edit -m "Merge upstream ${TAG} into main"
+          if ! git merge "${MERGE_TARGET}" --no-edit -m "Merge upstream ${TAG} into main"; then
+            CONFLICTS=$(git diff --name-only --diff-filter=U)
+            git merge --abort
+            {
+              echo "## Merge conflict syncing ${TAG}"
+              echo ""
+              echo "Upstream ${TAG} could not be merged automatically. Merge it manually, then push main and a ${TAG} tag on the merge commit."
+              echo ""
+              echo "Conflicting files:"
+              echo '```'
+              echo "${CONFLICTS}"
+              echo '```'
+            } >> $GITHUB_STEP_SUMMARY
+            echo "::error::Merge conflict syncing upstream ${TAG}; manual merge required"
+            exit 1
+          fi
 
           # Create a fork-specific tag on the merged result
           git tag -f "${TAG}" HEAD

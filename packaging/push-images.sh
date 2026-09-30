@@ -25,6 +25,7 @@
 #   AWS_ACCESS_KEY_ID - AWS access key (required if S3_BUCKET is set)
 #   AWS_SECRET_ACCESS_KEY - AWS secret key (required if S3_BUCKET is set)
 #   AWS_REGION - AWS region (optional, defaults to us-west-3)
+#   NEO4J_MDR_AUTH_PASSWORD - Neo4j password used to build the database image (optional, defaults to changeme1234)
 
 set -e
 
@@ -34,6 +35,8 @@ DOCKER_BUILDER=${DOCKER_BUILDER:-""}
 S3_BUCKET=${S3_BUCKET:-""}
 AWS_REGION=${AWS_REGION:-"eu-west-3"}
 EXCLUDE_IMAGES=${EXCLUDE_IMAGES:-""}
+# Required by compose.yaml (passed to the database build as a BuildKit secret)
+export NEO4J_MDR_AUTH_PASSWORD=${NEO4J_MDR_AUTH_PASSWORD:-changeme1234}
 
 # Parse additional arguments (skip first argument which is version)
 BAKE_ARGS=()
@@ -147,9 +150,11 @@ ALL_SERVICES=(
   "database:database"
   "api:api"
   "consumerapi:consumerapi"
+  "extensionsapi:extensionsapi"
   "frontend:frontend"
   "documentation:documentation"
   "neodash:neodash"
+  "gateway:gateway"
 )
 
 # Filter out excluded services

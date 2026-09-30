@@ -87,6 +87,7 @@ export DOCKER_PASSWORD=your_password_or_token
 | `AWS_ACCESS_KEY_ID` | AWS access key (required if `S3_BUCKET` is set) | Conditional |
 | `AWS_SECRET_ACCESS_KEY` | AWS secret key (required if `S3_BUCKET` is set) | Conditional |
 | `AWS_REGION` | AWS region for S3 uploads | No (default: `eu-west-3`) |
+| `NEO4J_MDR_AUTH_PASSWORD` | Neo4j password used to build the database image (passed as a BuildKit secret) | No (default: `changeme1234`) |
 
 ## Images Built
 
@@ -97,9 +98,11 @@ The script builds and pushes the following images:
 | database | `htp42/openstudybuilder:database-<version>` |
 | api | `htp42/openstudybuilder:api-<version>` |
 | consumerapi | `htp42/openstudybuilder:consumerapi-<version>` |
+| extensionsapi | `htp42/openstudybuilder:extensionsapi-<version>` |
 | frontend | `htp42/openstudybuilder:frontend-<version>` |
 | documentation | `htp42/openstudybuilder:documentation-<version>` |
 | neodash | `htp42/openstudybuilder:neodash-<version>` |
+| gateway | `htp42/openstudybuilder:gateway-<version>` |
 
 Each image is pushed with both a version tag and a `latest` tag (e.g., `database-2.3.0` and `database-latest`).
 
@@ -165,6 +168,7 @@ Configure these secrets in your GitHub repository settings (**Settings > Secrets
 | `AWS_SECRET_ACCESS_KEY` | AWS secret key for S3 uploads | Yes |
 | `S3_BUCKET` | S3 bucket name for database backups | Yes |
 | `AWS_REGION` | AWS region (default: `eu-west-3`) | No |
+| `NEO4J_MDR_AUTH_PASSWORD` | Neo4j password used to build and validate the database image (default: `changeme1234`) | No |
 
 ### Manual Triggers
 
