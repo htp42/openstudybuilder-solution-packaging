@@ -141,6 +141,22 @@ pipelines — `api/`, `frontend/`, `documentation_portal/`, `db_schema_migration
 one component at a time rather than the whole solution; see the component
 README for what each expects.
 
+## Bundled third-party extensions
+
+The `extensionsapi` and `frontend` images built from the root `compose.yaml`
+include the [ELOBS Word Updater](https://github.com/KatjaGlassConsulting/elobs-word-updater)
+extension, which fills `SB_*` content controls in a Word template with study
+data. None of its code is committed here: `api/Dockerfile` (`extensionsapi-stage`)
+and `frontend/Dockerfile` fetch it from GitHub at build time.
+
+- Every build uses the latest commit on its `main` branch. BuildKit re-resolves
+  the branch on each build, so a new upstream commit is picked up even with a
+  warm build cache.
+- To pin a version, set `ELOBS_WORD_UPDATER_REF` to a tag or commit SHA, e.g.
+  `ELOBS_WORD_UPDATER_REF=0.2 docker compose build extensionsapi frontend`.
+- UI: **Studies → ELOBS Word Updater**. API:
+  `POST /extensions-api/elobs-word-updater-ext/generate`.
+
 ## Component documentation
 
 | Component | README |

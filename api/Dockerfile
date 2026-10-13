@@ -1,3 +1,6 @@
+# syntax=docker/dockerfile:1
+# Requires BuildKit for `ADD <git url>` and `RUN --mount` in the extensionsapi-stage.
+
 # Set the build target (either "dev" or "prod") with a default of "dev"
 ARG TARGET=dev
 ARG PYTHON_IMAGE=python:3.14-slim
@@ -73,3 +76,23 @@ HEALTHCHECK --start-period=60s --timeout=3s --interval=10s --retries=2 CMD \
 
 # Run the application using Uvicorn
 CMD ["pipenv", "run", "uvicorn"]
+
+# Third-party ELOBS Word Updater extension (https://github.com/KatjaGlassConsulting/elobs-word-updater),
+# fetched at build time. BuildKit resolves ELOBS_WORD_UPDATER_REF to a commit on every build,
+# so a new commit on that branch invalidates the cache. Set it to a tag or SHA to pin a version.
+FROM scratch AS elobs-word-updater
+ARG ELOBS_WORD_UPDATER_REF=main
+ADD https://github.com/KatjaGlassConsulting/elobs-word-updater.git#${ELOBS_WORD_UPDATER_REF} /
+
+# Extensions API image: final-stage plus the ELOBS Word Updater extension and its core library
+FROM final-stage AS extensionsapi-stage
+COPY --from=elobs-word-updater /osb-api-extension/elobs_word_updater_ext ./extensions/elobs_word_updater_ext
+# Constrain to the already-installed versions so the plugin can never change a package locked
+# by Pipfile.lock; a plugin needing a newer version fails the build instead
+RUN --mount=type=bind,from=elobs-word-updater,source=/core,target=/tmp/elobs-core \
+    pipenv run pip list --format=freeze > /tmp/installed.txt \
+    && pipenv run pip install --no-cache-dir --constraint /tmp/installed.txt /tmp/elobs-core \
+    && rm /tmp/installed.txt && rm -rf ~/.cache
+
+# Default stage for untargeted builds (api, consumerapi): identical to final-stage
+FROM final-stage

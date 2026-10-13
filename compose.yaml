@@ -110,13 +110,16 @@ services:
       UVICORN_ROOT_PATH: "/consumer-api"
       UVICORN_APP: consumer_api.consumer_api:app
 
-  # Extensions API image & service
+  # Extensions API image & service, including the ELOBS Word Updater extension
   extensionsapi:
     build:
       context: ./api
       dockerfile: Dockerfile
+      target: extensionsapi-stage
       args:
         TARGET: ${BUILD_TARGET:-dev}
+        # Branch, tag or commit SHA of github.com/KatjaGlassConsulting/elobs-word-updater
+        ELOBS_WORD_UPDATER_REF: ${ELOBS_WORD_UPDATER_REF:-main}
     image: ${EXTENSIONSAPI_IMAGE:-htp42/openstudybuilder:extensionsapi-${VERSION:-latest}}
     depends_on:
       database:
@@ -142,6 +145,8 @@ services:
         NODE_IMAGE: ${NODE_IMAGE:-node:lts-alpine}
         NGINX_CONF: standalone
         PORT: 5005
+        # Must match the extensionsapi ref: the UI calls that API extension's endpoint
+        ELOBS_WORD_UPDATER_REF: ${ELOBS_WORD_UPDATER_REF:-main}
       context: ./frontend
       dockerfile: Dockerfile
     image: ${FRONTEND_IMAGE:-htp42/openstudybuilder:frontend-${VERSION:-latest}}

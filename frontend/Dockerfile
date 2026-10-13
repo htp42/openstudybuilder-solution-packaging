@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 ARG NGINX_IMAGE=nginx:alpine
 ARG NODE_IMAGE=node:lts-alpine
 
@@ -12,6 +13,13 @@ RUN npm ci
 
 ## Build the app
 COPY ./ .
+
+## Add the third-party ELOBS Word Updater extension (https://github.com/KatjaGlassConsulting/elobs-word-updater),
+## fetched at build time. BuildKit resolves the ref to a commit on every build, so a new commit
+## invalidates the cache. Set ELOBS_WORD_UPDATER_REF to a tag or SHA to pin a version.
+ARG ELOBS_WORD_UPDATER_REF=main
+ADD https://github.com/KatjaGlassConsulting/elobs-word-updater.git#${ELOBS_WORD_UPDATER_REF}:osb-frontend-extension/elobs-word-updater ./src/extensions/elobs-word-updater
+
 RUN npm run build
 
 ## Select which nginx config template to ship as the default one.
