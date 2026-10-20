@@ -102,6 +102,9 @@ ARG CDISC_DATA_DIR="src/container_booting"
 # Name of the CT folder under $CDISC_DATA_DIR/packages (cdisc_ct_<variant> for variant builds)
 ARG CDISC_CT_DIR_NAME="cdisc_ct"
 ARG SPONSOR_DATASET_DIR="import_sponsor_data/datafiles"
+# Protocol datasets to import after the sponsor data: space-separated folder
+# names under import_sponsor_data/protocol_imports (set for the extended variant).
+ARG PROTOCOL_IMPORTS=""
 
 # NEO4J_MDR_AUTH_PASSWORD is intentionally NOT declared as an ARG — it is supplied
 # as a BuildKit secret to the single RUN step that needs it, so it never lands in
@@ -291,6 +294,8 @@ RUN --mount=type=secret,id=neo4j_mdr_auth_password \
     && set -x \
     # imports
     && sleep 10 && cd ../import_sponsor_data && uv run poe import_all && uv run poe import_feature_flags \
+    # protocol datasets, if any
+    && if [ -n "$PROTOCOL_IMPORTS" ]; then sh protocol_imports/import_protocols.sh $PROTOCOL_IMPORTS; fi \
     # stop the api
     && sleep 10 && kill -INT $api_pid && wait $api_pid \
     # get database name

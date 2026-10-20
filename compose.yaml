@@ -25,6 +25,8 @@ services:
         NEO4J_server_memory_pagecache_size: "2G"
         # CT folder under import_standards/src/container_booting/packages (cdisc_ct_<variant> for variant builds)
         CDISC_CT_DIR_NAME: ${CDISC_CT_DIR_NAME:-cdisc_ct}
+        # Protocol datasets under import_sponsor_data/protocol_imports to import, space-separated
+        PROTOCOL_IMPORTS: ${PROTOCOL_IMPORTS:-}
         UID: ${UID:-1000}
         EXTRA_CA_CERT: ${EXTRA_CA_CERT:-}
       context: ./

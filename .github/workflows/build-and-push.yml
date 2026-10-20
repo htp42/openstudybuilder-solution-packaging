@@ -39,7 +39,7 @@ on:
         type: boolean
         default: false
       cdisc_ct_variant:
-        description: 'CDISC CT data variant (leave empty for default). A non-empty value builds the database image using cdisc_ct_<variant> data folder and tags it database-<variant>-<version>. For variant builds, set exclude_images to: api,consumerapi,extensionsapi,frontend,documentation,neodash,gateway'
+        description: 'CDISC CT data variant (leave empty for default). A non-empty value builds the database image using cdisc_ct_<variant> data folder and tags it database-<variant>-<version>. The extended variant also imports the protocol datasets listed in the build job. For variant builds, set exclude_images to: api,consumerapi,extensionsapi,frontend,documentation,neodash,gateway'
         required: false
         type: string
         default: ''
@@ -181,7 +181,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Resolve database image name and CDISC CT dir
+      - name: Resolve database image name, CDISC CT dir and protocol imports
         run: |
           VARIANT="${{ needs.prepare.outputs.cdisc_ct_variant }}"
           VERSION="${{ needs.prepare.outputs.version }}"
@@ -192,6 +192,11 @@ jobs:
           else
             echo "DATABASE_IMAGE=${{ env.REPOSITORY }}:database-${VERSION}" >> $GITHUB_ENV
             echo "CDISC_CT_DIR_NAME=cdisc_ct" >> $GITHUB_ENV
+          fi
+          # Protocol datasets (folders under import_sponsor_data/protocol_imports)
+          # imported into the database image, space-separated
+          if [ "$VARIANT" = "extended" ]; then
+            echo "PROTOCOL_IMPORTS=eCS-DS-001" >> $GITHUB_ENV
           fi
 
       - name: Build and push ${{ matrix.service }}
