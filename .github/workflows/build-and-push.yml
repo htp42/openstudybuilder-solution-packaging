@@ -38,8 +38,8 @@ on:
         required: false
         type: boolean
         default: false
-      cdisc_ct_variant:
-        description: 'CDISC CT data variant (leave empty for default). A non-empty value builds the database image using cdisc_ct_<variant> data folder and tags it database-<variant>-<version>. The extended variant also imports the protocol datasets listed in the build job. For variant builds, set exclude_images to: api,consumerapi,extensionsapi,frontend,documentation,neodash,gateway'
+      bootstrap_data_variant:
+        description: 'Bootstrap data variant (leave empty for default). A non-empty value builds the database image using cdisc_ct_<variant> data folder and tags it database-<variant>-<version>. The extended variant also imports the protocol datasets listed in the build job. For variant builds, set exclude_images to: api,consumerapi,extensionsapi,frontend,documentation,neodash,gateway'
         required: false
         type: string
         default: ''
@@ -62,7 +62,7 @@ jobs:
       version: ${{ steps.version.outputs.version }}
       matrix: ${{ steps.matrix.outputs.matrix }}
       should_build: ${{ steps.check-exists.outputs.should_build }}
-      cdisc_ct_variant: ${{ steps.variant.outputs.cdisc_ct_variant }}
+      bootstrap_data_variant: ${{ steps.variant.outputs.bootstrap_data_variant }}
       db_image_tag: ${{ steps.variant.outputs.db_image_tag }}
 
     steps:
@@ -101,17 +101,17 @@ jobs:
           echo "matrix=${MATRIX}" >> $GITHUB_OUTPUT
           echo "Services to build: ${MATRIX}"
 
-      - name: Resolve CDISC CT variant
+      - name: Resolve bootstrap data variant
         id: variant
         run: |
-          VARIANT="${{ github.event.inputs.cdisc_ct_variant }}"
+          VARIANT="${{ github.event.inputs.bootstrap_data_variant }}"
           VERSION="${{ steps.version.outputs.version }}"
           if [ -n "$VARIANT" ]; then
             DB_IMAGE_TAG="database-${VARIANT}-${VERSION}"
           else
             DB_IMAGE_TAG="database-${VERSION}"
           fi
-          echo "cdisc_ct_variant=${VARIANT}" >> $GITHUB_OUTPUT
+          echo "bootstrap_data_variant=${VARIANT}" >> $GITHUB_OUTPUT
           echo "db_image_tag=${DB_IMAGE_TAG}" >> $GITHUB_OUTPUT
 
       - name: Check if images already exist
@@ -183,7 +183,7 @@ jobs:
 
       - name: Resolve database image name, CDISC CT dir and protocol imports
         run: |
-          VARIANT="${{ needs.prepare.outputs.cdisc_ct_variant }}"
+          VARIANT="${{ needs.prepare.outputs.bootstrap_data_variant }}"
           VERSION="${{ needs.prepare.outputs.version }}"
           # CT folder name under import_standards/src/container_booting/packages
           if [ -n "$VARIANT" ]; then
@@ -219,7 +219,7 @@ jobs:
         run: |
           VERSION="${{ needs.prepare.outputs.version }}"
           SERVICE="${{ matrix.service }}"
-          VARIANT="${{ needs.prepare.outputs.cdisc_ct_variant }}"
+          VARIANT="${{ needs.prepare.outputs.bootstrap_data_variant }}"
 
           if [ "$SERVICE" = "database" ] && [ -n "$VARIANT" ]; then
             VERSION_IMAGE="${{ env.REPOSITORY }}:database-${VARIANT}-${VERSION}"
@@ -375,7 +375,7 @@ jobs:
       - name: Extract and upload database backup
         run: |
           VERSION="${{ needs.prepare.outputs.version }}"
-          VARIANT="${{ needs.prepare.outputs.cdisc_ct_variant }}"
+          VARIANT="${{ needs.prepare.outputs.bootstrap_data_variant }}"
           DATABASE_IMAGE="${{ env.REPOSITORY }}:${{ needs.prepare.outputs.db_image_tag }}"
 
           # Convert version format: 2.3.0 -> 2-3-0
