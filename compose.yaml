@@ -191,7 +191,7 @@ services:
       context: ./neodash
       dockerfile: Dockerfile
       args:
-        NODE_IMAGE: ${NODE_IMAGE:-node:lts-alpine}
+        NODE_IMAGE: ${NODE_IMAGE:-node:24-alpine}
         NGINX_IMAGE: ${NGINX_IMAGE:-nginx:1.30.7-alpine}
         NEODASH_VERSION: ${NEODASH_VERSION:-main}
     depends_on:
