@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-ARG NGINX_IMAGE=nginx:alpine
+ARG NGINX_IMAGE=nginx:1.30.7-alpine
 ARG NODE_IMAGE=node:lts-alpine
 
 ## Build stage - runs on native platform to avoid QEMU emulation issues with Node.js

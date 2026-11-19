@@ -143,7 +143,7 @@ services:
   frontend:
     build:
       args:
-        NGINX_IMAGE: ${NGINX_IMAGE:-nginx:alpine}
+        NGINX_IMAGE: ${NGINX_IMAGE:-nginx:1.30.7-alpine}
         NODE_IMAGE: ${NODE_IMAGE:-node:lts-alpine}
         NGINX_CONF: standalone
         PORT: 5005
@@ -178,7 +178,7 @@ services:
   documentation:
     build:
       args:
-        NGINX_IMAGE: ${NGINX_IMAGE:-nginx:alpine}
+        NGINX_IMAGE: ${NGINX_IMAGE:-nginx:1.30.7-alpine}
         NODE_IMAGE: ${NODE_IMAGE:-node:lts-alpine}
       context: ./documentation_portal
       dockerfile: Dockerfile
@@ -192,7 +192,7 @@ services:
       dockerfile: Dockerfile
       args:
         NODE_IMAGE: ${NODE_IMAGE:-node:lts-alpine}
-        NGINX_IMAGE: ${NGINX_IMAGE:-nginx:alpine}
+        NGINX_IMAGE: ${NGINX_IMAGE:-nginx:1.30.7-alpine}
         NEODASH_VERSION: ${NEODASH_VERSION:-main}
     depends_on:
       database:
@@ -220,7 +220,7 @@ services:
       context: ./gateway
       dockerfile: Dockerfile
       args:
-        NGINX_IMAGE: ${NGINX_IMAGE:-nginx:alpine}
+        NGINX_IMAGE: ${NGINX_IMAGE:-nginx:1.30.7-alpine}
     image: ${GATEWAY_IMAGE:-htp42/openstudybuilder:gateway-${VERSION:-latest}}
     depends_on:
       frontend:
