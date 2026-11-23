@@ -216,9 +216,9 @@
       <img
         class="mr-4 mb-2"
         :src="companyLogoUrl"
-        width="109"
+        width="162"
         height="33"
-        alt=""
+        alt="HealthTech Partners 42"
       />
     </div>
     <v-dialog v-model="showAboutDialog" fullscreen>
@@ -296,7 +296,7 @@ const sbLogoUrl = new URL(
   import.meta.url
 ).href
 const companyLogoUrl = new URL(
-  '../../assets/company_logo_rgb_white_small.svg',
+  '../../assets/company_logo_htp42_white.png',
   import.meta.url
 ).href
 
