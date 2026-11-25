@@ -162,6 +162,19 @@ and `frontend/Dockerfile` fetch it from GitHub at build time.
 - UI: **Studies → ELOBS Word Updater**. API:
   `POST /extensions-api/elobs-word-updater-ext/generate`.
 
+They also include [ODM Transform Export](https://github.com/htp42/odm-transform-export),
+which exports CRFs as ODM XML that Medidata Rave can import, fetched the same way.
+
+- Every build uses the latest commit on its `main` branch; to pin a version, set
+  `ODM_TRANSFORM_EXPORT_REF` to a tag or commit SHA. The `extensionsapi` and
+  `frontend` builds must use the same ref.
+- UI: **Export for Medidata Rave** in the export menu of **Library → CRF Viewer**
+  and of the **CRF Builder → CRF Viewer** tab, through the CRF Viewer export
+  actions extension point. API:
+  `GET /extensions-api/odm-transform-export-ext/rave-exports`.
+- Rave-specific field settings are exported only when the `mdsol:` vendor
+  attributes are defined in **Administration → ODM Vendor Extensions**.
+
 ## Component documentation
 
 | Component | README |

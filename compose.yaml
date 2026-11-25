@@ -124,7 +124,7 @@ services:
       UVICORN_ROOT_PATH: "/consumer-api"
       UVICORN_APP: consumer_api.consumer_api:app
 
-  # Extensions API image & service, including the ELOBS Word Updater extension
+  # Extensions API image & service, including the ELOBS Word Updater and ODM Transform Export extensions
   extensionsapi:
     build:
       context: ./api
@@ -134,6 +134,8 @@ services:
         TARGET: ${BUILD_TARGET:-dev}
         # Branch, tag or commit SHA of github.com/KatjaGlassConsulting/elobs-word-updater
         ELOBS_WORD_UPDATER_REF: ${ELOBS_WORD_UPDATER_REF:-main}
+        # Branch, tag or commit SHA of github.com/htp42/odm-transform-export
+        ODM_TRANSFORM_EXPORT_REF: ${ODM_TRANSFORM_EXPORT_REF:-main}
     image: ${EXTENSIONSAPI_IMAGE:-htp42/openstudybuilder:extensionsapi-${VERSION:-latest}}
     depends_on:
       database:
@@ -159,8 +161,9 @@ services:
         NODE_IMAGE: ${NODE_IMAGE:-node:lts-alpine}
         NGINX_CONF: standalone
         PORT: 5005
-        # Must match the extensionsapi ref: the UI calls that API extension's endpoint
+        # Must match the extensionsapi refs: the UI calls those API extensions' endpoints
         ELOBS_WORD_UPDATER_REF: ${ELOBS_WORD_UPDATER_REF:-main}
+        ODM_TRANSFORM_EXPORT_REF: ${ODM_TRANSFORM_EXPORT_REF:-main}
       context: ./frontend
       dockerfile: Dockerfile
     image: ${FRONTEND_IMAGE:-htp42/openstudybuilder:frontend-${VERSION:-latest}}

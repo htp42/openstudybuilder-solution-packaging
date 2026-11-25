@@ -87,7 +87,13 @@ FROM scratch AS elobs-word-updater
 ARG ELOBS_WORD_UPDATER_REF=main
 ADD https://github.com/KatjaGlassConsulting/elobs-word-updater.git#${ELOBS_WORD_UPDATER_REF} /
 
-# Extensions API image: final-stage plus the ELOBS Word Updater extension and its core library
+# Third-party ODM Transform Export extension (https://github.com/htp42/odm-transform-export),
+# fetched the same way. Set ODM_TRANSFORM_EXPORT_REF to a tag or SHA to pin a version.
+FROM scratch AS odm-transform-export
+ARG ODM_TRANSFORM_EXPORT_REF=main
+ADD https://github.com/htp42/odm-transform-export.git#${ODM_TRANSFORM_EXPORT_REF} /
+
+# Extensions API image: final-stage plus the third-party extensions and their core libraries
 FROM final-stage AS extensionsapi-stage
 COPY --from=elobs-word-updater /osb-api-extension/elobs_word_updater_ext ./extensions/elobs_word_updater_ext
 # Constrain to the already-installed versions so the plugin can never change a package locked
@@ -96,6 +102,11 @@ COPY --from=elobs-word-updater /osb-api-extension/elobs_word_updater_ext ./exten
 RUN --mount=type=bind,from=elobs-word-updater,source=/core,target=/tmp/elobs-core \
     uv pip freeze > /tmp/installed.txt \
     && uv pip install --no-cache --constraint /tmp/installed.txt /tmp/elobs-core \
+    && rm /tmp/installed.txt && rm -rf ~/.cache
+COPY --from=odm-transform-export /osb-api-extension/odm_transform_export_ext ./extensions/odm_transform_export_ext
+RUN --mount=type=bind,from=odm-transform-export,source=/core,target=/tmp/odm-transform-export-core \
+    uv pip freeze > /tmp/installed.txt \
+    && uv pip install --no-cache --constraint /tmp/installed.txt /tmp/odm-transform-export-core \
     && rm /tmp/installed.txt && rm -rf ~/.cache
 
 # Default stage for untargeted builds (api, consumerapi): identical to final-stage
