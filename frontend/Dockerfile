@@ -20,6 +20,11 @@ COPY ./ .
 ARG ELOBS_WORD_UPDATER_REF=main
 ADD https://github.com/KatjaGlassConsulting/elobs-word-updater.git#${ELOBS_WORD_UPDATER_REF}:osb-frontend-extension/elobs-word-updater ./src/extensions/elobs-word-updater
 
+## Add the third-party ODM Transform Export extension (https://github.com/htp42/odm-transform-export)
+## the same way. It adds "Export for Medidata Rave" to the CRF viewers' export menus.
+ARG ODM_TRANSFORM_EXPORT_REF=main
+ADD https://github.com/htp42/odm-transform-export.git#${ODM_TRANSFORM_EXPORT_REF}:osb-frontend-extension/odm-transform-export ./src/extensions/odm-transform-export
+
 RUN npm run build
 
 ## Select which nginx config template to ship as the default one.
